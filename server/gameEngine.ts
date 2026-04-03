@@ -1,0 +1,820 @@
+// ============================================================
+// Kazakh Durak Online — Game Engine (v3)
+// Fixes: bito multi-attacker, transfer choice, bot transfer,
+// winner places, winners exit, validate attacker, edge-only
+// add-cards label, 10-direction, improved bot AI
+// ============================================================
+
+import {
+  Card, Suit, Rank, SUITS, RANKS, RANK_ORDER, COPIES_PER_CARD,
+  HAND_SIZE, FIRST_TRICK_LIMIT,
+  TrumpInfo, Player, BattlePair, Direction, GameState, GamePhase, TurnPhase,
+  ClientGameState, ClientPlayer, AvailableAction, RoomSettings,
+} from '../shared/gameTypes';
+
+// ---- Helpers ----
+
+function shuffleArray<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+// ---- Card creation & identification ----
+
+export function createFullDeck(): Card[] {
+  const cards: Card[] = [];
+  for (let copy = 0; copy < COPIES_PER_CARD; copy++) {
+    for (const suit of SUITS) {
+      for (const rank of RANKS) {
+        cards.push({ id: `${suit}-${rank}-${copy}`, suit, rank, copy });
+      }
+    }
+  }
+  cards.push({ id: '777-0', suit: null, rank: '777', copy: 0 });
+  return cards;
+}
+
+export function getCardValue(card: Card): number {
+  if (card.rank === '777') return 100;
+  return RANK_ORDER[card.rank] ?? 0;
+}
+
+export function isKingOfSpades(card: Card): boolean {
+  return card.rank === 'K' && card.suit === 'spades';
+}
+
+export function is777(card: Card): boolean {
+  return card.rank === '777';
+}
+
+export function isAceOfSpades(card: Card): boolean {
+  return card.rank === 'A' && card.suit === 'spades';
+}
+
+// ---- Combat rules ----
+
+export function canBeat(attack: Card, defense: Card, currentTrump: Suit): boolean {
+  if (is777(defense)) return true;
+  if (is777(attack)) return false;
+  if (isKingOfSpades(attack)) {
+    return isAceOfSpades(defense) || is777(defense);
+  }
+  if (isKingOfSpades(defense)) {
+    if (isKingOfSpades(attack)) return false;
+    return true;
+  }
+  if (attack.suit === defense.suit && attack.rank === defense.rank) {
+    return true;
+  }
+  if (attack.suit === defense.suit) {
+    return getCardValue(defense) > getCardValue(attack);
+  }
+  if (defense.suit === currentTrump && attack.suit !== currentTrump) {
+    return true;
+  }
+  return false;
+}
+
+// ---- Trump selection ----
+
+function pickTrumps(): { mainTrump: Suit; hiddenTrump1: Suit; hiddenTrump2: Suit } {
+  const shuffled = shuffleArray([...SUITS]);
+  return { mainTrump: shuffled[0], hiddenTrump1: shuffled[1], hiddenTrump2: shuffled[2] };
+}
+
+function splitDecks(cards: Card[]): { deck1: Card[]; deck2: Card[] } {
+  const half = Math.ceil(cards.length / 2);
+  return { deck1: cards.slice(0, half), deck2: cards.slice(half) };
+}
+
+// ---- First player logic ----
+
+export function findFirstPlayer(players: Player[], trumpSuit: Suit): number {
+  let bestIdx = 0;
+  let bestValue = Infinity;
+  let bestCount = 0;
+
+  for (let i = 0; i < players.length; i++) {
+    const trumpCards = players[i].hand.filter(c => c.suit === trumpSuit);
+    if (trumpCards.length === 0) continue;
+    const lowestTrump = trumpCards.reduce((min, c) =>
+      getCardValue(c) < getCardValue(min) ? c : min
+    );
+    const val = getCardValue(lowestTrump);
+    const count = trumpCards.filter(c => getCardValue(c) === val).length;
+    if (val < bestValue || (val === bestValue && count < bestCount)) {
+      bestValue = val;
+      bestCount = count;
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+// ---- Game creation ----
+
+export function createGame(
+  roomId: string,
+  playerInfos: { id: string; odId: string; name: string; isBot: boolean }[],
+  settings?: RoomSettings
+): GameState {
+  const allCards = shuffleArray(createFullDeck());
+  const numPlayers = playerInfos.length;
+  const totalDeal = numPlayers * HAND_SIZE;
+
+  const players: Player[] = playerInfos.map((p, idx) => ({
+    id: p.id,
+    odId: p.odId,
+    name: p.name,
+    hand: allCards.slice(idx * HAND_SIZE, (idx + 1) * HAND_SIZE),
+    passThrough: [],
+    isOut: false,
+    seatIndex: idx,
+    isBot: p.isBot,
+    winPlace: null,
+  }));
+
+  const remaining = allCards.slice(totalDeal);
+  const { deck1, deck2 } = splitDecks(remaining);
+  const trumps = pickTrumps();
+
+  const trumpInfo: TrumpInfo = {
+    mainTrump: trumps.mainTrump,
+    hiddenTrump1: trumps.hiddenTrump1,
+    hiddenTrump2: trumps.hiddenTrump2,
+    currentTrump: trumps.mainTrump,
+    phase: 1,
+  };
+
+  const firstPlayerIdx = findFirstPlayer(players, trumpInfo.currentTrump);
+  const defenderIdx = getNextActivePlayer(players, firstPlayerIdx, 'cw');
+  const timerMax = settings?.turnTimer ?? 30;
+
+  return {
+    roomId,
+    players,
+    deck1,
+    deck2,
+    trumpInfo,
+    battleField: [],
+    discardPile: [],
+    currentAttackerIdx: firstPlayerIdx,
+    currentDefenderIdx: defenderIdx,
+    direction: 'cw',
+    turnPhase: 'attack',
+    gamePhase: 'playing',
+    firstTrick: true,
+    trickCount: 0,
+    lastPlayedRank: null,
+    winnersOrder: [],
+    loserId: null,
+    turnTimer: timerMax,
+    turnTimerMax: timerMax,
+    leadCardRank: null,
+    attackerHasPriority: true,
+    passedAttackers: [],
+    nextWinPlace: 1,
+  };
+}
+
+// ---- Navigation helpers ----
+
+export function getNextActivePlayer(players: Player[], fromIdx: number, dir: Direction): number {
+  const n = players.length;
+  let idx = fromIdx;
+  for (let i = 0; i < n; i++) {
+    idx = dir === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
+    if (!players[idx].isOut) return idx;
+  }
+  return fromIdx;
+}
+
+export function getPrevActivePlayer(players: Player[], fromIdx: number, dir: Direction): number {
+  return getNextActivePlayer(players, fromIdx, dir === 'cw' ? 'ccw' : 'cw');
+}
+
+export function isEdgePlayer(players: Player[], playerIdx: number, defenderIdx: number, dir: Direction): boolean {
+  const leftNeighbor = getNextActivePlayer(players, defenderIdx, dir === 'cw' ? 'ccw' : 'cw');
+  const rightNeighbor = getNextActivePlayer(players, defenderIdx, dir);
+  return playerIdx === leftNeighbor || playerIdx === rightNeighbor;
+}
+
+// ---- Trick limits ----
+
+export function getMaxAttackCards(state: GameState): number {
+  if (state.firstTrick) return FIRST_TRICK_LIMIT;
+  const defender = state.players[state.currentDefenderIdx];
+  return defender.hand.length;
+}
+
+// ---- Draw cards ----
+
+export function drawCards(state: GameState): void {
+  const order: number[] = [];
+  let idx = state.currentAttackerIdx;
+  const n = state.players.length;
+  for (let i = 0; i < n; i++) {
+    if (!state.players[idx].isOut) order.push(idx);
+    idx = state.direction === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
+  }
+
+  for (const pIdx of order) {
+    const player = state.players[pIdx];
+    while (player.hand.length < HAND_SIZE) {
+      if (state.deck1.length > 0) {
+        player.hand.push(state.deck1.pop()!);
+      } else if (state.deck2.length > 0) {
+        if (state.trumpInfo.phase === 1) {
+          state.trumpInfo.phase = 2;
+          state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrump1;
+        }
+        player.hand.push(state.deck2.pop()!);
+      } else {
+        break;
+      }
+    }
+  }
+
+  if (state.deck2.length === 0 && state.trumpInfo.phase === 2) {
+    state.trumpInfo.phase = 3;
+    state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrump2;
+  }
+}
+
+// ---- Skip turn (777 only) ----
+
+export function shouldSkipTurn(state: GameState, playerIdx: number): boolean {
+  const player = state.players[playerIdx];
+  return player.hand.length === 1 && is777(player.hand[0]) && playerIdx === state.currentAttackerIdx;
+}
+
+// ---- Attack validation ----
+
+export function canPlayAsAttack(state: GameState, card: Card): boolean {
+  if (is777(card)) return false;
+  if (state.battleField.length === 0) return true;
+  const ranksOnTable = new Set<string>();
+  for (const pair of state.battleField) {
+    ranksOnTable.add(pair.attack.rank);
+    if (pair.defense) ranksOnTable.add(pair.defense.rank);
+  }
+  return ranksOnTable.has(card.rank);
+}
+
+// ---- Edge player / 6-exception ----
+
+export function canPlayerAddCards(state: GameState, playerIdx: number): boolean {
+  if (playerIdx === state.currentDefenderIdx) return false;
+  if (state.players[playerIdx].isOut) return false;
+  if (state.leadCardRank === '6') return true;
+  return isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+}
+
+// ---- Attack card play ----
+
+export function playAttackCard(state: GameState, playerIdx: number, cardId: string): string | null {
+  // #7: Only the current attacker can initiate the first card
+  if (state.battleField.length === 0 && playerIdx !== state.currentAttackerIdx) {
+    return 'Only the attacker can play the first card';
+  }
+
+  // #7: Defender cannot play attack cards
+  if (playerIdx === state.currentDefenderIdx) {
+    return 'Defender cannot attack';
+  }
+
+  const player = state.players[playerIdx];
+  if (player.isOut) return 'Player is out of the game';
+
+  const cardIndex = player.hand.findIndex(c => c.id === cardId);
+  if (cardIndex === -1) return 'Card not in hand';
+  const card = player.hand[cardIndex];
+
+  // After first card, check if this player can add cards
+  if (state.battleField.length > 0 && playerIdx !== state.currentAttackerIdx) {
+    if (state.attackerHasPriority) return 'Attacker has priority';
+    if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
+  }
+
+  if (!canPlayAsAttack(state, card)) return 'Cannot play this card as attack';
+
+  const undefendedCount = state.battleField.filter(p => !p.defense).length;
+  if (undefendedCount >= getMaxAttackCards(state)) return 'Maximum attack cards reached';
+
+  player.hand.splice(cardIndex, 1);
+  state.battleField.push({ attack: card, defense: null });
+  state.lastPlayedRank = card.rank as Rank;
+
+  // 10-card only reverses direction when it's the LEAD card
+  if (state.battleField.length === 1 && card.rank === '10') {
+    state.direction = state.direction === 'cw' ? 'ccw' : 'cw';
+    state.leadCardRank = '10';
+    state.currentDefenderIdx = getNextActivePlayer(state.players, state.currentAttackerIdx, state.direction);
+  }
+
+  if (state.battleField.length === 1) {
+    state.leadCardRank = card.rank as Rank;
+  }
+
+  if (state.battleField.length >= 1) {
+    state.attackerHasPriority = false;
+  }
+
+  state.turnPhase = 'defend';
+  // #1: When someone adds a card, reset passed attackers since new cards appeared
+  state.passedAttackers = [];
+  checkPlayerOut(state, playerIdx);
+  return null;
+}
+
+// ---- Defense card play ----
+
+export function playDefenseCard(state: GameState, playerIdx: number, cardId: string, targetPairIdx?: number): string | null {
+  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn to defend';
+
+  const player = state.players[playerIdx];
+  const cardIndex = player.hand.findIndex(c => c.id === cardId);
+  if (cardIndex === -1) return 'Card not in hand';
+  const card = player.hand[cardIndex];
+
+  let pairIdx = targetPairIdx;
+  if (pairIdx === undefined || pairIdx === null) {
+    pairIdx = state.battleField.findIndex(p => !p.defense && canBeat(p.attack, card, state.trumpInfo.currentTrump));
+  }
+
+  if (pairIdx === -1 || pairIdx === undefined) return 'No valid target for this card';
+  const pair = state.battleField[pairIdx];
+  if (!pair) return 'Invalid target';
+  if (pair.defense) return 'Already defended';
+
+  if (!canBeat(pair.attack, card, state.trumpInfo.currentTrump)) {
+    return 'This card cannot beat the attack card';
+  }
+
+  player.hand.splice(cardIndex, 1);
+  pair.defense = card;
+
+  const allDefended = state.battleField.every(p => p.defense !== null);
+  if (allDefended) {
+    state.turnPhase = 'attack';
+    state.passedAttackers = [];
+  }
+
+  checkPlayerOut(state, playerIdx);
+  return null;
+}
+
+// ---- Transfer (perevod) ----
+
+export function transferAttack(state: GameState, playerIdx: number, cardId: string): string | null {
+  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
+
+  const player = state.players[playerIdx];
+  const cardIndex = player.hand.findIndex(c => c.id === cardId);
+  if (cardIndex === -1) return 'Card not in hand';
+  const card = player.hand[cardIndex];
+
+  if (state.battleField.some(p => p.defense)) return 'Cannot transfer after defending';
+
+  const attackRank = state.battleField[0]?.attack.rank;
+  if (card.rank !== attackRank) return 'Transfer card must match attack rank';
+
+  if (card.rank === '10' && state.leadCardRank === '10') {
+    state.direction = state.direction === 'cw' ? 'ccw' : 'cw';
+  }
+
+  player.hand.splice(cardIndex, 1);
+  state.battleField.push({ attack: card, defense: null });
+
+  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  state.currentAttackerIdx = state.currentDefenderIdx;
+  state.currentDefenderIdx = newDefenderIdx;
+
+  state.turnPhase = 'defend';
+  state.passedAttackers = [];
+  resetTurnTimer(state);
+  checkPlayerOut(state, playerIdx);
+  return null;
+}
+
+// ---- Pass-through (proezdnoy) ----
+
+export function showPassThrough(state: GameState, playerIdx: number, cardId: string): string | null {
+  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
+
+  const player = state.players[playerIdx];
+  const cardIndex = player.hand.findIndex(c => c.id === cardId);
+  if (cardIndex === -1) return 'Card not in hand';
+  const card = player.hand[cardIndex];
+
+  const attackRank = state.battleField[0]?.attack.rank;
+  if (card.rank !== attackRank) return 'Pass-through card must match attack rank';
+
+  player.hand.splice(cardIndex, 1);
+  state.discardPile.push(card);
+
+  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  state.currentAttackerIdx = state.currentDefenderIdx;
+  state.currentDefenderIdx = newDefenderIdx;
+
+  state.passedAttackers = [];
+  resetTurnTimer(state);
+  checkPlayerOut(state, playerIdx);
+  return null;
+}
+
+// ---- Take cards ----
+
+export function takeCards(state: GameState): void {
+  const defender = state.players[state.currentDefenderIdx];
+  for (const pair of state.battleField) {
+    defender.hand.push(pair.attack);
+    if (pair.defense) defender.hand.push(pair.defense);
+  }
+  state.battleField = [];
+  state.turnPhase = 'attack';
+  state.firstTrick = false;
+  state.trickCount++;
+  state.leadCardRank = null;
+  state.attackerHasPriority = true;
+  state.passedAttackers = [];
+
+  drawCards(state);
+
+  const nextAttacker = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  state.currentAttackerIdx = nextAttacker;
+  state.currentDefenderIdx = getNextActivePlayer(state.players, nextAttacker, state.direction);
+
+  ensureActiveAttackerDefender(state);
+  resetTurnTimer(state);
+  checkGameOver(state);
+}
+
+// ---- Successful defense ----
+
+export function successfulDefense(state: GameState): void {
+  for (const pair of state.battleField) {
+    state.discardPile.push(pair.attack);
+    if (pair.defense) state.discardPile.push(pair.defense);
+  }
+  state.battleField = [];
+  state.turnPhase = 'attack';
+  state.firstTrick = false;
+  state.trickCount++;
+  state.leadCardRank = null;
+  state.attackerHasPriority = true;
+  state.passedAttackers = [];
+
+  drawCards(state);
+
+  state.currentAttackerIdx = state.currentDefenderIdx;
+  state.currentDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+
+  ensureActiveAttackerDefender(state);
+  resetTurnTimer(state);
+  checkGameOver(state);
+}
+
+// #1: End attack — multi-attacker "bito" mechanic
+// When attacker clicks "bito"/"end attack", they pass initiative to the next edge player.
+// Only when ALL eligible edge attackers have passed does the defense succeed.
+
+export function endAttack(state: GameState, playerIdx: number): string | null {
+  if (state.battleField.length === 0) return 'No cards on table';
+
+  const isCurrentAttacker = playerIdx === state.currentAttackerIdx;
+  const isEdge = canPlayerAddCards(state, playerIdx);
+  if (!isCurrentAttacker && !isEdge) return 'Not an attacker or edge player';
+
+  const playerId = state.players[playerIdx].id;
+  if (!state.passedAttackers.includes(playerId)) {
+    state.passedAttackers.push(playerId);
+  }
+
+  // If all cards are defended, check if all eligible attackers passed
+  if (state.battleField.every(p => p.defense)) {
+    if (checkAllAttackersPassed(state)) {
+      successfulDefense(state);
+      return null;
+    }
+
+    // Find next eligible attacker who hasn't passed yet
+    const nextAttackerIdx = findNextUnpassedAttacker(state, playerIdx);
+    if (nextAttackerIdx !== null) {
+      state.currentAttackerIdx = nextAttackerIdx;
+      resetTurnTimer(state);
+      return null;
+    }
+
+    // Everyone passed or no one else can add
+    successfulDefense(state);
+    return null;
+  }
+
+  // Not all defended — just pass to next edge player
+  const nextAttackerIdx = findNextUnpassedAttacker(state, playerIdx);
+  if (nextAttackerIdx !== null) {
+    state.currentAttackerIdx = nextAttackerIdx;
+    resetTurnTimer(state);
+    return null;
+  }
+
+  // No one else can add — defender must take or defend remaining
+  return null;
+}
+
+// Find the next edge attacker who hasn't passed yet
+function findNextUnpassedAttacker(state: GameState, fromIdx: number): number | null {
+  const n = state.players.length;
+  let idx = fromIdx;
+  for (let i = 0; i < n; i++) {
+    idx = state.direction === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
+    if (idx === state.currentDefenderIdx) continue;
+    if (state.players[idx].isOut) continue;
+    if (state.passedAttackers.includes(state.players[idx].id)) continue;
+    if (canPlayerAddCards(state, idx)) {
+      return idx;
+    }
+  }
+  return null;
+}
+
+// Check if all eligible attackers have passed
+function checkAllAttackersPassed(state: GameState): boolean {
+  const n = state.players.length;
+  for (let i = 0; i < n; i++) {
+    if (i === state.currentDefenderIdx) continue;
+    if (state.players[i].isOut) continue;
+    if (!canPlayerAddCards(state, i) && i !== state.currentAttackerIdx) continue;
+    if (!state.passedAttackers.includes(state.players[i].id)) return false;
+  }
+  return true;
+}
+
+// ---- Timer ----
+
+export function resetTurnTimer(state: GameState): void {
+  state.turnTimer = state.turnTimerMax;
+}
+
+// ---- Player out check ----
+// #4: Assign winner places when players run out of cards
+
+function checkPlayerOut(state: GameState, playerIdx: number): void {
+  const player = state.players[playerIdx];
+  if (player.hand.length === 0 && state.deck1.length === 0 && state.deck2.length === 0) {
+    if (!player.isOut) {
+      player.isOut = true;
+      player.winPlace = state.nextWinPlace;
+      state.nextWinPlace++;
+      if (!state.winnersOrder.includes(player.id)) {
+        state.winnersOrder.push(player.id);
+      }
+    }
+  }
+}
+
+// #5: Ensure attacker and defender are active players (not winners)
+
+function ensureActiveAttackerDefender(state: GameState): void {
+  const activePlayers = state.players.filter(p => !p.isOut);
+  if (activePlayers.length <= 1) return;
+
+  if (state.players[state.currentAttackerIdx].isOut) {
+    state.currentAttackerIdx = getNextActivePlayer(state.players, state.currentAttackerIdx, state.direction);
+  }
+  if (state.players[state.currentDefenderIdx].isOut || state.currentDefenderIdx === state.currentAttackerIdx) {
+    state.currentDefenderIdx = getNextActivePlayer(state.players, state.currentAttackerIdx, state.direction);
+  }
+}
+
+// ---- Game over check ----
+
+function checkGameOver(state: GameState): void {
+  const activePlayers = state.players.filter(p => !p.isOut);
+  if (activePlayers.length <= 1) {
+    state.gamePhase = 'finished';
+    if (activePlayers.length === 1) {
+      state.loserId = activePlayers[0].id;
+    }
+  }
+}
+
+// ---- Available actions ----
+// #7: Defender cannot attack. #8: "Can add cards" only for actual edge players.
+
+export function getAvailableActions(state: GameState, playerIdx: number): AvailableAction[] {
+  if (state.gamePhase !== 'playing') return [];
+  const player = state.players[playerIdx];
+  if (player.isOut) return [];
+  const actions: AvailableAction[] = [];
+
+  if (shouldSkipTurn(state, playerIdx)) {
+    actions.push({ type: 'skipTurn' });
+    return actions;
+  }
+
+  const isAttacker = playerIdx === state.currentAttackerIdx;
+  const isDefender = playerIdx === state.currentDefenderIdx;
+
+  if (isDefender && state.turnPhase === 'defend') {
+    // Defense cards
+    const undefended = state.battleField.filter(p => !p.defense);
+    const playableIds: string[] = [];
+    for (const card of player.hand) {
+      for (const pair of undefended) {
+        if (canBeat(pair.attack, card, state.trumpInfo.currentTrump)) {
+          if (!playableIds.includes(card.id)) playableIds.push(card.id);
+        }
+      }
+    }
+    if (playableIds.length > 0) {
+      actions.push({ type: 'playCard', cardIds: playableIds });
+    }
+
+    // #2: Transfer option — show all matching cards for choice
+    if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
+      const attackRank = state.battleField[0].attack.rank;
+      const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
+      if (transferCards.length > 0) {
+        actions.push({ type: 'transferCard', cardIds: transferCards });
+      }
+    }
+
+    actions.push({ type: 'takeCards' });
+  }
+
+  if (isAttacker) {
+    if (state.turnPhase === 'attack' || (state.turnPhase === 'defend' && state.battleField.length === 0)) {
+      const playableIds = player.hand
+        .filter(c => canPlayAsAttack(state, c))
+        .map(c => c.id);
+      if (playableIds.length > 0) {
+        actions.push({ type: 'playCard', cardIds: playableIds });
+      }
+    }
+
+    // "Бито" button — when all defended
+    if (state.battleField.length > 0 && state.battleField.every(p => p.defense)) {
+      actions.push({ type: 'endAttack' });
+    }
+
+    // Can still add cards when not all defended
+    if (state.battleField.length > 0 && !state.battleField.every(p => p.defense)) {
+      const playableIds = player.hand
+        .filter(c => canPlayAsAttack(state, c))
+        .map(c => c.id);
+      if (playableIds.length > 0) {
+        actions.push({ type: 'playCard', cardIds: playableIds });
+      }
+    }
+  }
+
+  // #8: Non-attacker, non-defender edge players can add cards
+  if (!isAttacker && !isDefender && !state.attackerHasPriority && canPlayerAddCards(state, playerIdx)) {
+    if (state.battleField.length > 0) {
+      const playableIds = player.hand
+        .filter(c => canPlayAsAttack(state, c))
+        .map(c => c.id);
+      if (playableIds.length > 0) {
+        actions.push({ type: 'playCard', cardIds: playableIds });
+      }
+      // #1: Edge players can also click "bito" to pass
+      if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
+        actions.push({ type: 'endAttack' });
+      }
+    }
+  }
+
+  return actions;
+}
+
+// ---- Client state conversion ----
+
+export function toClientState(state: GameState, playerId: string): ClientGameState {
+  const myIndex = state.players.findIndex(p => p.id === playerId);
+
+  const clientPlayers: ClientPlayer[] = state.players.map(p => ({
+    id: p.id,
+    name: p.name,
+    cardCount: p.hand.length,
+    isOut: p.isOut,
+    seatIndex: p.seatIndex,
+    isBot: p.isBot,
+    winPlace: p.winPlace,
+  }));
+
+  // #8: Compute canAddCards for this specific player
+  const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;
+
+  return {
+    roomId: state.roomId,
+    players: clientPlayers,
+    deck1Count: state.deck1.length,
+    deck2Count: state.deck2.length,
+    trumpInfo: state.trumpInfo,
+    battleField: state.battleField,
+    discardCount: state.discardPile.length,
+    currentAttackerIdx: state.currentAttackerIdx,
+    currentDefenderIdx: state.currentDefenderIdx,
+    direction: state.direction,
+    turnPhase: state.turnPhase,
+    gamePhase: state.gamePhase,
+    firstTrick: state.firstTrick,
+    trickCount: state.trickCount,
+    myHand: myIndex >= 0 ? state.players[myIndex].hand : [],
+    myIndex,
+    winnersOrder: state.winnersOrder,
+    loserId: state.loserId,
+    turnTimer: state.turnTimer,
+    turnTimerMax: state.turnTimerMax,
+    leadCardRank: state.leadCardRank,
+    attackerHasPriority: state.attackerHasPriority,
+    passedAttackers: state.passedAttackers,
+    canAddCards: playerCanAdd,
+  };
+}
+
+// ---- Bot AI ----
+// #3: Bots can now transfer cards
+
+export function getBotAction(state: GameState, botIdx: number): { action: string; cardId?: string; targetPairIdx?: number } | null {
+  const player = state.players[botIdx];
+  if (player.isOut || !player.isBot) return null;
+
+  const actions = getAvailableActions(state, botIdx);
+  if (actions.length === 0) return null;
+
+  const isDefender = botIdx === state.currentDefenderIdx;
+  const isAttacker = botIdx === state.currentAttackerIdx;
+
+  if (shouldSkipTurn(state, botIdx)) {
+    return { action: 'skipTurn' };
+  }
+
+  if (isDefender && state.turnPhase === 'defend') {
+    // #3: Bot tries to transfer first (30% chance if possible, or if hand is weak)
+    const transferAction = actions.find(a => a.type === 'transferCard');
+    if (transferAction && transferAction.type === 'transferCard' && transferAction.cardIds.length > 0) {
+      const shouldTransfer = Math.random() > 0.5 || player.hand.length > 10;
+      if (shouldTransfer) {
+        // Pick the lowest value transfer card
+        const transferCards = player.hand
+          .filter(c => transferAction.cardIds.includes(c.id))
+          .sort((a, b) => getCardValue(a) - getCardValue(b));
+        if (transferCards.length > 0) {
+          return { action: 'transferCard', cardId: transferCards[0].id };
+        }
+      }
+    }
+
+    // Try to defend with the cheapest card possible
+    const undefended = state.battleField.filter(p => !p.defense);
+    for (const pair of undefended) {
+      const pairIdx = state.battleField.indexOf(pair);
+      const candidates = player.hand
+        .filter(c => canBeat(pair.attack, c, state.trumpInfo.currentTrump))
+        .sort((a, b) => getCardValue(a) - getCardValue(b));
+      if (candidates.length > 0) {
+        return { action: 'playDefense', cardId: candidates[0].id, targetPairIdx: pairIdx };
+      }
+    }
+    return { action: 'takeCards' };
+  }
+
+  if (isAttacker) {
+    const playAction = actions.find(a => a.type === 'playCard');
+    if (playAction && playAction.type === 'playCard' && playAction.cardIds.length > 0) {
+      const playableCards = player.hand
+        .filter(c => playAction.cardIds.includes(c.id))
+        .sort((a, b) => getCardValue(a) - getCardValue(b));
+      if (playableCards.length > 0) {
+        return { action: 'playAttack', cardId: playableCards[0].id };
+      }
+    }
+    // #1: Bot clicks "bito" to pass initiative
+    if (actions.find(a => a.type === 'endAttack')) return { action: 'endAttack' };
+  }
+
+  // Edge player adding cards
+  const addAction = actions.find(a => a.type === 'playCard');
+  if (addAction && addAction.type === 'playCard') {
+    const playableCards = player.hand
+      .filter(c => addAction.cardIds.includes(c.id))
+      .sort((a, b) => getCardValue(a) - getCardValue(b));
+    if (playableCards.length > 0 && Math.random() > 0.4) {
+      return { action: 'playAttack', cardId: playableCards[0].id };
+    }
+  }
+
+  // Edge player "bito" pass
+  if (actions.find(a => a.type === 'endAttack')) {
+    return { action: 'endAttack' };
+  }
+
+  return null;
+}
