@@ -356,7 +356,27 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
 
   // When someone adds a card, reset passed attackers since new cards appeared
   state.passedAttackers = [];
-  checkPlayerOut(state, playerIdx);
+  const wentOut = checkPlayerOut(state, playerIdx);
+
+  // If the player who just played went out (last card), handle gracefully
+  if (wentOut) {
+    // Auto-pass this player since they have no more cards
+    if (!state.passedAttackers.includes(player.id)) {
+      state.passedAttackers.push(player.id);
+    }
+    // If this was the current attacker, try to pass to next
+    if (playerIdx === state.currentAttackerIdx) {
+      const nextIdx = findNextUnpassedAttacker(state, playerIdx);
+      if (nextIdx !== null) {
+        state.currentAttackerIdx = nextIdx;
+        state.attackerHasPriority = true;
+      } else if (!state.defenderTaking) {
+        // All attackers done — if all defended, auto-complete
+        state.attackerHasPriority = false;
+      }
+    }
+    checkGameOver(state);
+  }
   return null;
 }
 
@@ -396,7 +416,25 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
     state.passedAttackers = [];
   }
 
-  checkPlayerOut(state, playerIdx);
+  const wentOut = checkPlayerOut(state, playerIdx);
+
+  // If defender went out (defended with last card) and all cards are defended,
+  // auto-complete the trick — no need to wait for attackers to press "бито"
+  if (wentOut && allDefended) {
+    // Auto-pass attackers who can't add matching cards
+    autoPassAttackersWithNoCards(state);
+    if (checkAllAttackersPassed(state)) {
+      successfulDefense(state);
+    } else {
+      // Some attackers can still add cards — let them play
+      // The defender is out, so they just watch
+      checkGameOver(state);
+    }
+  } else if (wentOut) {
+    // Defender went out but not all cards defended — shouldn't happen normally
+    // since defender can only play defense cards, but handle gracefully
+    checkGameOver(state);
+  }
   return null;
 }
 
@@ -517,6 +555,7 @@ export function finalizeTake(state: GameState): void {
   state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
 
   drawCards(state);
+  checkAllPlayersOut(state); // Check if any players ran out of cards after draw
 
   const nextAttacker = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
   state.currentAttackerIdx = nextAttacker;
@@ -545,6 +584,7 @@ export function successfulDefense(state: GameState): void {
   state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
 
   drawCards(state);
+  checkAllPlayersOut(state); // Check if any players ran out of cards after draw
 
   state.currentAttackerIdx = state.currentDefenderIdx;
   state.currentDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
@@ -646,6 +686,34 @@ function findNextUnpassedAttacker(state: GameState, fromIdx: number): number | n
   return null;
 }
 
+// Auto-pass all attackers who have no cards to add (e.g. when defender went out)
+function autoPassAttackersWithNoCards(state: GameState): void {
+  const ranksOnTable = new Set<string>();
+  for (const pair of state.battleField) {
+    ranksOnTable.add(pair.attack.rank);
+    if (pair.defense) ranksOnTable.add(pair.defense.rank);
+  }
+  const n = state.players.length;
+  for (let i = 0; i < n; i++) {
+    if (i === state.currentDefenderIdx) continue;
+    if (state.players[i].isOut) {
+      // Already out — auto-pass
+      if (!state.passedAttackers.includes(state.players[i].id)) {
+        state.passedAttackers.push(state.players[i].id);
+      }
+      continue;
+    }
+    if (!canPlayerAddCards(state, i) && i !== state.currentAttackerIdx) continue;
+    // Check if this player has any matching cards to add
+    const hasMatchingCards = state.players[i].hand.some(c => ranksOnTable.has(c.rank));
+    if (!hasMatchingCards) {
+      if (!state.passedAttackers.includes(state.players[i].id)) {
+        state.passedAttackers.push(state.players[i].id);
+      }
+    }
+  }
+}
+
 // Check if all eligible attackers have passed
 function checkAllAttackersPassed(state: GameState): boolean {
   const n = state.players.length;
@@ -666,7 +734,7 @@ export function resetTurnTimer(state: GameState): void {
 
 // ---- Player out check ----
 
-function checkPlayerOut(state: GameState, playerIdx: number): void {
+export function checkPlayerOut(state: GameState, playerIdx: number): boolean {
   const player = state.players[playerIdx];
   if (player.hand.length === 0 && state.deck1.length === 0 && state.deck2.length === 0) {
     if (!player.isOut) {
@@ -676,7 +744,16 @@ function checkPlayerOut(state: GameState, playerIdx: number): void {
       if (!state.winnersOrder.includes(player.id)) {
         state.winnersOrder.push(player.id);
       }
+      return true; // player just went out
     }
+  }
+  return false;
+}
+
+// Check ALL players for out status (called after drawCards when deck empties)
+function checkAllPlayersOut(state: GameState): void {
+  for (let i = 0; i < state.players.length; i++) {
+    checkPlayerOut(state, i);
   }
 }
 

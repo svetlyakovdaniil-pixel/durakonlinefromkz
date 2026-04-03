@@ -241,7 +241,11 @@ export default function GameTable({
                   </div>
                 )}
                 {p.isOut ? (
-                  <span className="text-xs text-green-400">{p.winPlace}-е место</span>
+                  <div className="flex items-center gap-1.5 bg-green-900/40 border border-green-600/30 rounded-lg px-2 py-1">
+                    <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-xs text-green-300 font-semibold">{p.winPlace}-е место</span>
+                    <span className="text-[10px] text-green-200/50">Наблюдает</span>
+                  </div>
                 ) : (
                   <div className="flex gap-0.5">
                     {Array.from({ length: Math.min(p.cardCount, 14) }).map((_, i) => (
@@ -297,6 +301,19 @@ export default function GameTable({
             </div>
           </div>
         </div>
+
+        {/* Winner/spectator banner */}
+        {gs.players[myIdx]?.isOut && gs.players[myIdx]?.winPlace && (
+          <div className="flex items-center justify-center px-3 py-2">
+            <div className="bg-green-900/60 border border-green-600/40 rounded-lg px-6 py-2 flex items-center gap-3">
+              <Trophy className="w-5 h-5 text-amber-400" />
+              <span className="text-green-300 font-semibold">
+                Вы победили! ({gs.players[myIdx].winPlace}-е место)
+              </span>
+              <span className="text-green-200/60 text-sm">Наблюдайте за игрой</span>
+            </div>
+          </div>
+        )}
 
         {/* Role indicator & Actions */}
         <div className="flex items-center justify-center gap-2 px-3 py-1">
@@ -371,6 +388,13 @@ export default function GameTable({
         </div>
 
         {/* Player hand */}
+        {gs.players[myIdx]?.isOut ? (
+          <div className="px-2 pb-3 pt-1">
+            <div className="text-center text-amber-200/40 text-sm py-4">
+              Вы вышли из игры — наблюдайте за оставшимися игроками
+            </div>
+          </div>
+        ) : (
         <div className="px-2 pb-3 pt-1">
           <div className="flex items-center justify-between mb-1 px-2">
             <span className="text-xs text-amber-200/50">{gs.myHand.length} карт</span>
@@ -414,6 +438,7 @@ export default function GameTable({
             </div>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

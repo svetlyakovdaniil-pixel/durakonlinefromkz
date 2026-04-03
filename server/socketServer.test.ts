@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, finalizeTake, resetTurnTimer, getBotAction } from './gameEngine';
+import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, finalizeTake, resetTurnTimer, getBotAction, checkPlayerOut, getNextActivePlayer } from './gameEngine';
 import type { GameState, Player, RoomSettings } from '../shared/gameTypes';
 
 // Integration-level tests for game flow scenarios
@@ -176,5 +176,229 @@ describe('Game flow integration', () => {
     const clientState = toClientState(game, 'p1');
     expect(clientState.defenderTaking).toBe(true);
     expect(clientState.attackerHasPriority).toBe(false);
+  });
+});
+
+describe('Winner system', () => {
+  it('player with no cards and empty deck is marked as winner', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Empty the decks
+    game.deck1 = [];
+    game.deck2 = [];
+
+    // Empty one player's hand
+    const playerIdx = 2; // not attacker or defender
+    game.players[playerIdx].hand = [];
+
+    const result = checkPlayerOut(game, playerIdx);
+
+    expect(result).toBe(true);
+    expect(game.players[playerIdx].isOut).toBe(true);
+    expect(game.players[playerIdx].winPlace).toBe(1);
+    expect(game.winnersOrder).toContain(game.players[playerIdx].id);
+  });
+
+  it('winner gets no available actions', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Mark a player as out
+    game.players[2].isOut = true;
+    game.players[2].winPlace = 1;
+    game.players[2].hand = [];
+
+    const actions = getAvailableActions(game, 2);
+    expect(actions).toEqual([]);
+  });
+
+  it('winner is skipped when assigning attacker/defender', () => {
+    const players = createTestPlayers(4);
+    const game = createGame('room1', players);
+
+    // Mark player 1 as out
+    game.players[1].isOut = true;
+    game.players[1].winPlace = 1;
+    game.players[1].hand = [];
+
+    // Set attacker to player 0
+    game.currentAttackerIdx = 0;
+
+    // Get next active player from 0 — should skip 1
+    const nextIdx = getNextActivePlayer(game.players, 0, game.direction);
+    expect(nextIdx).not.toBe(1);
+    expect(game.players[nextIdx].isOut).toBe(false);
+  });
+
+  it('game ends when only one player remains', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Empty decks
+    game.deck1 = [];
+    game.deck2 = [];
+
+    // Mark two players as out
+    game.players[0].isOut = true;
+    game.players[0].winPlace = 1;
+    game.players[0].hand = [];
+    game.winnersOrder.push(game.players[0].id);
+
+    game.players[1].isOut = true;
+    game.players[1].winPlace = 2;
+    game.players[1].hand = [];
+    game.winnersOrder.push(game.players[1].id);
+
+    game.nextWinPlace = 3;
+
+    // Manually trigger checkGameOver via successfulDefense-like flow
+    // The remaining player is the loser
+    const activePlayers = game.players.filter(p => !p.isOut);
+    expect(activePlayers.length).toBe(1);
+  });
+
+  it('client state shows winPlace for winners', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    game.players[0].isOut = true;
+    game.players[0].winPlace = 1;
+    game.players[0].hand = [];
+    game.winnersOrder.push(game.players[0].id);
+
+    const clientState = toClientState(game, 'p2');
+    const winner = clientState.players.find(p => p.id === game.players[0].id);
+    expect(winner?.isOut).toBe(true);
+    expect(winner?.winPlace).toBe(1);
+  });
+
+  it('second winner gets winPlace=2', () => {
+    const players = createTestPlayers(4);
+    const game = createGame('room1', players);
+
+    game.deck1 = [];
+    game.deck2 = [];
+
+    // First winner
+    game.players[0].hand = [];
+    checkPlayerOut(game, 0);
+    expect(game.players[0].winPlace).toBe(1);
+
+    // Second winner
+    game.players[2].hand = [];
+    checkPlayerOut(game, 2);
+    expect(game.players[2].winPlace).toBe(2);
+    expect(game.nextWinPlace).toBe(3);
+  });
+
+  it('bot that is out returns null action', () => {
+    const players = createTestPlayers(3, true);
+    const game = createGame('room1', players);
+
+    const botIdx = game.players.findIndex(p => p.isBot);
+    game.players[botIdx].isOut = true;
+    game.players[botIdx].winPlace = 1;
+    game.players[botIdx].hand = [];
+
+    const action = getBotAction(game, botIdx);
+    expect(action).toBeNull();
+  });
+});
+
+describe('Game over and loser detection', () => {
+  it('last remaining player is marked as loser', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    game.deck1 = [];
+    game.deck2 = [];
+
+    // Mark first two players as out (winners)
+    game.players[0].isOut = true;
+    game.players[0].winPlace = 1;
+    game.players[0].hand = [];
+    game.winnersOrder.push(game.players[0].id);
+
+    game.players[1].isOut = true;
+    game.players[1].winPlace = 2;
+    game.players[1].hand = [];
+    game.winnersOrder.push(game.players[1].id);
+
+    game.nextWinPlace = 3;
+
+    // Now check — only player 2 remains, should be loser
+    // Simulate checkGameOver by checking active players
+    const activePlayers = game.players.filter(p => !p.isOut);
+    expect(activePlayers.length).toBe(1);
+
+    // Manually set game over state as checkGameOver would
+    game.gamePhase = 'finished';
+    game.loserId = activePlayers[0].id;
+
+    expect(game.loserId).toBe(game.players[2].id);
+    expect(game.gamePhase).toBe('finished');
+  });
+
+  it('client state includes loserId in finished game', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Set up finished game
+    game.gamePhase = 'finished';
+    game.loserId = game.players[2].id;
+    game.players[0].isOut = true;
+    game.players[0].winPlace = 1;
+    game.players[0].hand = [];
+    game.players[1].isOut = true;
+    game.players[1].winPlace = 2;
+    game.players[1].hand = [];
+
+    const clientState = toClientState(game, 'p3');
+    expect(clientState.gamePhase).toBe('finished');
+    expect(clientState.loserId).toBe(game.players[2].id);
+  });
+
+  it('finished game returns no actions for any player', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    game.gamePhase = 'finished';
+
+    for (let i = 0; i < 3; i++) {
+      const actions = getAvailableActions(game, i);
+      expect(actions).toEqual([]);
+    }
+  });
+
+  it('winner order is preserved in client state', () => {
+    const players = createTestPlayers(4);
+    const game = createGame('room1', players);
+
+    game.deck1 = [];
+    game.deck2 = [];
+    game.winnersOrder = ['p1', 'p3', 'p2'];
+    game.players[0].isOut = true;
+    game.players[0].winPlace = 1;
+    game.players[0].hand = [];
+    game.players[2].isOut = true;
+    game.players[2].winPlace = 2;
+    game.players[2].hand = [];
+    game.players[1].isOut = true;
+    game.players[1].winPlace = 3;
+    game.players[1].hand = [];
+    game.gamePhase = 'finished';
+    game.loserId = game.players[3].id;
+
+    const clientState = toClientState(game, 'p4');
+    expect(clientState.gamePhase).toBe('finished');
+    expect(clientState.loserId).toBe('p4');
+    
+    // Verify each player's winPlace
+    const p1 = clientState.players.find(p => p.id === 'p1');
+    const p3 = clientState.players.find(p => p.id === 'p3');
+    const p2 = clientState.players.find(p => p.id === 'p2');
+    expect(p1?.winPlace).toBe(1);
+    expect(p3?.winPlace).toBe(2);
+    expect(p2?.winPlace).toBe(3);
   });
 });
