@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, resetTurnTimer, getBotAction } from './gameEngine';
+import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, finalizeTake, resetTurnTimer, getBotAction } from './gameEngine';
 import type { GameState, Player, RoomSettings } from '../shared/gameTypes';
 
 // Integration-level tests for game flow scenarios
@@ -141,5 +141,40 @@ describe('Game flow integration', () => {
       expect(defError).toBeNull();
       expect(game.battleField[0].defense).not.toBeNull();
     }
+  });
+
+  it('takeCards enters pickup mode, endAttack finalizes', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+
+    // Attacker plays a card
+    const attackCard = game.players[attackerIdx].hand[0];
+    playAttackCard(game, attackerIdx, attackCard.id);
+    expect(game.turnPhase).toBe('defend');
+
+    // Defender takes
+    takeCards(game);
+    expect(game.defenderTaking).toBe(true);
+    expect(game.turnPhase).toBe('pickup');
+    expect(game.battleField.length).toBe(1); // still on table
+
+    // Attacker presses bito
+    endAttack(game, attackerIdx);
+    // In 2-player game, all attackers passed → finalize
+    expect(game.defenderTaking).toBe(false);
+    expect(game.battleField.length).toBe(0);
+  });
+
+  it('client state includes defenderTaking and attackerHasPriority', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    game.defenderTaking = true;
+    game.attackerHasPriority = false;
+
+    const clientState = toClientState(game, 'p1');
+    expect(clientState.defenderTaking).toBe(true);
+    expect(clientState.attackerHasPriority).toBe(false);
   });
 });

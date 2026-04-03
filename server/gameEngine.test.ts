@@ -4,7 +4,7 @@ import {
   isKingOfSpades, is777, isAceOfSpades, findFirstPlayer,
   getNextActivePlayer, getPrevActivePlayer, isEdgePlayer, canPlayAsAttack,
   canPlayerAddCards, playAttackCard, playDefenseCard,
-  transferAttack, endAttack, showPassThrough, takeCards, successfulDefense,
+  transferAttack, endAttack, showPassThrough, takeCards, finalizeTake, successfulDefense,
   toClientState, getAvailableActions, shouldSkipTurn, getBotAction,
   drawCards, resetTurnTimer, getMaxAttackCards,
 } from './gameEngine';
@@ -59,6 +59,7 @@ function createTestState(numPlayers: number, overrides?: Partial<GameState>): Ga
     attackerHasPriority: true,
     passedAttackers: [],
     nextWinPlace: 1,
+    defenderTaking: false,
     ...overrides,
   };
 }
@@ -408,7 +409,7 @@ describe('FIX #5: Attack priority and endAttack', () => {
     expect(result).not.toBeNull(); // error: attacker has priority
   });
 
-  it('attacker can play first card', () => {
+  it('attacker can play first card and retains priority', () => {
     const state = createTestState(4);
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
@@ -417,7 +418,8 @@ describe('FIX #5: Attack priority and endAttack', () => {
 
     const result = playAttackCard(state, 0, state.players[0].hand[0].id);
     expect(result).toBeNull(); // success
-    expect(state.attackerHasPriority).toBe(false);
+    // Attacker retains priority after playing a card
+    expect(state.attackerHasPriority).toBe(true);
   });
 
   it('endAttack returns error if not the attacker', () => {
@@ -748,7 +750,7 @@ describe('Navigation helpers', () => {
 // TAKE CARDS & SUCCESSFUL DEFENSE
 // ============================================================
 describe('Take cards and successful defense', () => {
-  it('takeCards gives all battlefield cards to defender', () => {
+  it('takeCards sets defenderTaking=true and turnPhase=pickup', () => {
     const state = createTestState(3);
     state.currentDefenderIdx = 1;
     state.currentAttackerIdx = 0;
@@ -759,8 +761,31 @@ describe('Take cards and successful defense', () => {
     ];
 
     takeCards(state);
+    expect(state.defenderTaking).toBe(true);
+    expect(state.turnPhase).toBe('pickup');
+    // Cards are NOT yet taken — they stay on battlefield
+    expect(state.battleField.length).toBe(2);
+    expect(state.players[1].hand.length).toBe(0);
+  });
+
+  it('finalizeTake gives all battlefield cards to defender', () => {
+    const state = createTestState(3);
+    state.currentDefenderIdx = 1;
+    state.currentAttackerIdx = 0;
+    state.players[0].hand = [card('spades', '6')];
+    state.players[1].hand = [];
+    state.players[2].hand = [card('hearts', 'A')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: card('spades', '8') },
+      { attack: card('hearts', '6'), defense: null },
+    ];
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+
+    finalizeTake(state);
     expect(state.players[1].hand.length).toBe(3); // 2 from pair + 1 undefended
     expect(state.battleField.length).toBe(0);
+    expect(state.defenderTaking).toBe(false);
   });
 
   it('successfulDefense moves cards to discard pile', () => {
@@ -776,5 +801,201 @@ describe('Take cards and successful defense', () => {
     expect(state.battleField.length).toBe(0);
     // Defender becomes attacker
     expect(state.currentAttackerIdx).toBe(1);
+  });
+});
+
+// ============================================================
+// ATTACKER PRIORITY & PICKUP MECHANIC
+// ============================================================
+describe('Attacker priority mechanic', () => {
+  it('edge player cannot add cards while attacker has priority', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = true;
+    state.players[0].hand = [card('spades', '7'), card('hearts', '7')];
+    state.players[1].hand = [card('spades', 'A')];
+    state.players[2].hand = [card('spades', '7', 1)]; // edge player has matching card
+    state.battleField = [
+      { attack: card('spades', '7', 2), defense: card('spades', '8') },
+    ];
+    state.turnPhase = 'attack';
+
+    // Edge player (p3) should NOT be able to add cards while attacker has priority
+    const error = playAttackCard(state, 2, state.players[2].hand[0].id);
+    expect(error).toBeTruthy();
+    expect(error).toContain('priority');
+  });
+
+  it('attacker pressing bito passes priority to edge player', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = true;
+    state.players[0].hand = [card('hearts', 'A')];
+    state.players[1].hand = [card('spades', 'A')];
+    state.players[2].hand = [card('spades', '7', 1)];
+    state.battleField = [
+      { attack: card('spades', '7', 2), defense: card('spades', '8') },
+    ];
+    state.turnPhase = 'attack';
+
+    // Attacker presses bito
+    const error = endAttack(state, 0);
+    expect(error).toBeNull();
+    // Priority should pass to edge player (p3 = index 2)
+    expect(state.currentAttackerIdx).toBe(2);
+    expect(state.attackerHasPriority).toBe(true);
+  });
+
+  it('after defender beats a card, attacker regains priority', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = false;
+    state.players[0].hand = [card('hearts', '7')];
+    state.players[1].hand = [card('spades', 'A')];
+    state.players[2].hand = [card('hearts', '7', 1)];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+    state.turnPhase = 'defend';
+
+    // Defender beats the card
+    const error = playDefenseCard(state, 1, state.players[1].hand[0].id, 0);
+    expect(error).toBeNull();
+    // Attacker should regain priority
+    expect(state.attackerHasPriority).toBe(true);
+  });
+});
+
+describe('Pickup mechanic (defender takes)', () => {
+  it('takeCards enters pickup mode, does not immediately take', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.players[0].hand = [card('spades', '7', 1)];
+    state.players[1].hand = [card('hearts', 'A')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+    state.turnPhase = 'defend';
+
+    takeCards(state);
+    expect(state.defenderTaking).toBe(true);
+    expect(state.turnPhase).toBe('pickup');
+    expect(state.battleField.length).toBe(1); // cards still on table
+  });
+
+  it('attacker can add cards in pickup mode', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.firstTrick = false;
+    state.players[0].hand = [card('spades', '7', 1)];
+    state.players[1].hand = [card('hearts', 'A'), card('hearts', 'K'), card('hearts', 'Q')]; // 3 cards = max 3 attack cards
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+
+    const actions = getAvailableActions(state, 0);
+    const playAction = actions.find(a => a.type === 'playCard');
+    expect(playAction).toBeTruthy();
+
+    // Attacker adds a card
+    const error = playAttackCard(state, 0, state.players[0].hand[0].id);
+    expect(error).toBeNull();
+    expect(state.battleField.length).toBe(2);
+  });
+
+  it('defender cannot defend in pickup mode', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.players[1].hand = [card('spades', 'A')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+
+    const error = playDefenseCard(state, 1, state.players[1].hand[0].id, 0);
+    expect(error).toBeTruthy();
+  });
+
+  it('all attackers pressing bito in pickup mode finalizes take', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.players[0].hand = [card('hearts', 'A')];
+    state.players[1].hand = [];
+    state.players[2].hand = [card('hearts', 'K')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+
+    // Attacker (p1) presses bito
+    endAttack(state, 0);
+    // Should pass to edge player (p3)
+    expect(state.currentAttackerIdx).toBe(2);
+    expect(state.defenderTaking).toBe(true);
+
+    // Edge player (p3) presses bito
+    endAttack(state, 2);
+    // All passed — should finalize take
+    expect(state.defenderTaking).toBe(false);
+    expect(state.battleField.length).toBe(0);
+    expect(state.players[1].hand.length).toBe(1); // took 1 card from battlefield
+  });
+
+  it('card limit enforced: first trick max 13 cards', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.firstTrick = true;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    
+    // Fill battlefield with 13 attack cards
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.players[0].hand = [card('hearts', '7')];
+    state.players[1].hand = Array.from({ length: 20 }, (_, i) => card('hearts', 'A', i));
+
+    // Should not be able to add more
+    const error = playAttackCard(state, 0, state.players[0].hand[0].id);
+    expect(error).toBeTruthy();
+    expect(error).toContain('Maximum');
+  });
+
+  it('card limit enforced: after first trick, max = defender hand size', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.firstTrick = false;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    
+    // Defender has 3 cards
+    state.players[1].hand = [card('hearts', 'A'), card('hearts', 'K'), card('hearts', 'Q')];
+    
+    // 3 attack cards already on table (= defender hand size)
+    state.battleField = [
+      { attack: card('spades', '7', 0), defense: null },
+      { attack: card('spades', '7', 1), defense: null },
+      { attack: card('spades', '7', 2), defense: null },
+    ];
+    state.players[0].hand = [card('hearts', '7')];
+
+    // Should not be able to add more (3 attack cards = 3 cards in defender hand)
+    const error = playAttackCard(state, 0, state.players[0].hand[0].id);
+    expect(error).toBeTruthy();
+    expect(error).toContain('Maximum');
   });
 });

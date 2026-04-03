@@ -5,7 +5,7 @@ import { SUIT_SYMBOLS, GAME_TABLE_URL } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal } from 'lucide-react';
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -73,7 +73,7 @@ export default function GameTable({
   const sortedHand = sortHand(gs.myHand, sortMode);
 
   const handleCardClick = (card: Card) => {
-    if (isDefender && gs.turnPhase === 'defend') {
+    if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
       if (transferIds.has(card.id)) {
         if (selectedCardId === card.id) {
           setSelectedCardId(null);
@@ -199,15 +199,19 @@ export default function GameTable({
             return (
               <div key={p.id} className={`flex flex-col items-center px-3 py-2 rounded-xl border transition-all ${
                 isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
-                isOppDefender ? 'bg-blue-900/30 border-blue-500/40' :
+                isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
                 'bg-black/30 border-amber-700/20'
               }`}>
                 <div className="flex items-center gap-1 mb-1">
                   {isOppAttacker && <Swords className="w-3 h-3 text-red-400" />}
-                  {isOppDefender && <Shield className="w-3 h-3 text-blue-400" />}
+                  {isOppDefender && !gs.defenderTaking && <Shield className="w-3 h-3 text-blue-400" />}
+                  {isOppDefender && gs.defenderTaking && <HandMetal className="w-3 h-3 text-orange-400" />}
                   {p.isOut && p.winPlace && <Crown className="w-3 h-3 text-amber-400" />}
                   <span className="text-xs text-amber-100 font-medium truncate max-w-20">{p.name}</span>
                 </div>
+                {isOppDefender && gs.defenderTaking && (
+                  <span className="text-[10px] text-orange-400 mb-0.5">Берёт</span>
+                )}
                 {p.isOut ? (
                   <span className="text-xs text-green-400">{p.winPlace}-е место</span>
                 ) : (
@@ -225,38 +229,66 @@ export default function GameTable({
 
         {/* Battlefield */}
         <div className="flex-1 flex items-center justify-center px-4">
-          <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
-            {gs.battleField.map((pair: BattlePair, i: number) => (
-              <div key={i} className="relative">
-                <PlayingCard card={pair.attack} small />
-                {pair.defense && (
-                  <div className="absolute top-3 left-3">
-                    <PlayingCard card={pair.defense} small />
-                  </div>
-                )}
+          <div className="flex flex-col items-center gap-2">
+            {/* Defender taking banner */}
+            {gs.defenderTaking && (
+              <div className="bg-orange-900/60 border border-orange-600/40 rounded-lg px-4 py-1.5 mb-2">
+                <span className="text-orange-300 text-sm font-medium">
+                  {isDefender ? '🫳 Вы берёте — ждите, пока атакующие докинут' :
+                   isAttacker ? '🔥 Защитник берёт — можно докинуть карты!' :
+                   gs.attackerHasPriority ? '⏳ Ожидание — атакующий решает' :
+                   '🔥 Защитник берёт — можно докинуть карты!'}
+                </span>
               </div>
-            ))}
-            {gs.battleField.length === 0 && (
-              <div className="text-amber-200/30 text-sm italic">Стол пуст</div>
             )}
+            <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
+              {gs.battleField.map((pair: BattlePair, i: number) => (
+                <div key={i} className="relative">
+                  <PlayingCard card={pair.attack} small />
+                  {pair.defense && (
+                    <div className="absolute top-3 left-3">
+                      <PlayingCard card={pair.defense} small />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {gs.battleField.length === 0 && (
+                <div className="text-amber-200/30 text-sm italic">Стол пуст</div>
+              )}
+            </div>
           </div>
         </div>
 
         {/* Role indicator & Actions */}
         <div className="flex items-center justify-center gap-2 px-3 py-1">
-          {isAttacker && (
+          {isAttacker && !gs.defenderTaking && (
             <Badge className="bg-red-900/60 text-red-300 border-red-700/40">
               <Swords className="w-3 h-3 mr-1" /> Вы атакуете
             </Badge>
           )}
-          {isDefender && (
+          {isAttacker && gs.defenderTaking && (
+            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40">
+              <Swords className="w-3 h-3 mr-1" /> Можно докинуть
+            </Badge>
+          )}
+          {isDefender && !gs.defenderTaking && (
             <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40">
               <Shield className="w-3 h-3 mr-1" /> Вы защищаетесь
             </Badge>
           )}
-          {!isAttacker && !isDefender && gs.canAddCards && (
+          {isDefender && gs.defenderTaking && (
+            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40">
+              <HandMetal className="w-3 h-3 mr-1" /> Вы берёте карты
+            </Badge>
+          )}
+          {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
             <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40">
               Можно подкинуть
+            </Badge>
+          )}
+          {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
+            <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40">
+              Ожидание атакующего...
             </Badge>
           )}
         </div>
@@ -279,7 +311,7 @@ export default function GameTable({
           )}
           {canEndAttack && (
             <Button size="sm" className="bg-green-700 hover:bg-green-600 text-white" onClick={onEndAttack}>
-              Бито
+              {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
             </Button>
           )}
           {canSkip && (

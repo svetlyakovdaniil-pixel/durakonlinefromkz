@@ -1,6 +1,7 @@
 // ============================================================
-// Kazakh Durak Online — Socket.IO Server (v3)
-// Fixes: multi-attacker bito, bot transfer, ready+start,
+// Kazakh Durak Online — Socket.IO Server (v4)
+// Fixes: attacker priority handoff, pickup-after-take mechanic,
+// multi-attacker bito, bot transfer, ready+start,
 // improved timer, edge-only add-cards, room cleanup
 // ============================================================
 
@@ -15,6 +16,7 @@ import {
   createGame, toClientState, getAvailableActions,
   playAttackCard, playDefenseCard, transferAttack,
   showPassThrough, takeCards as engineTakeCards,
+  finalizeTake as engineFinalizeTake,
   successfulDefense, shouldSkipTurn, getNextActivePlayer,
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards,
@@ -117,7 +119,6 @@ export function initSocketServer(httpServer: HttpServer) {
       closeRoom(roomId);
     });
 
-    // #10: Toggle ready — separate from startGame
     socket.on('toggleReady', (roomId) => {
       const room = rooms.get(roomId);
       if (!room) return;
@@ -128,14 +129,12 @@ export function initSocketServer(httpServer: HttpServer) {
       }
     });
 
-    // #10: Start game — only when ALL players (including host) are ready
     socket.on('startGame', (roomId) => {
       const room = rooms.get(roomId);
       if (!room) return;
       if (room.hostId !== odId) return;
       if (room.players.length < 2) return;
 
-      // Check all players are ready
       const allReady = room.players.every(p => p.isBot || p.ready);
       if (!allReady) {
         socket.emit('error', 'Не все игроки готовы');
@@ -157,7 +156,6 @@ export function initSocketServer(httpServer: HttpServer) {
       startTurnTimer(roomId);
       broadcastRoomList();
 
-      // Trigger bot action if first player is a bot
       scheduleBotAction(roomId);
     });
 
@@ -173,7 +171,7 @@ export function initSocketServer(httpServer: HttpServer) {
       const isDefender = playerIdx === gameState.currentDefenderIdx;
       let error: string | null = null;
 
-      if (isDefender && gameState.turnPhase === 'defend') {
+      if (isDefender && gameState.turnPhase === 'defend' && !gameState.defenderTaking) {
         error = playDefenseCard(gameState, playerIdx, data.cardId, data.targetPairIdx);
       } else {
         error = playAttackCard(gameState, playerIdx, data.cardId);
@@ -187,7 +185,6 @@ export function initSocketServer(httpServer: HttpServer) {
       scheduleBotAction(data.roomId);
     });
 
-    // #2: Transfer with card choice
     socket.on('transferCard', (data) => {
       const gameState = games.get(data.roomId);
       if (!gameState) return;
@@ -220,6 +217,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       if (playerIdx !== gameState.currentDefenderIdx) return;
+      if (gameState.defenderTaking) return; // Already taking
 
       engineTakeCards(gameState);
       restartTurnTimer(roomId);
@@ -227,7 +225,6 @@ export function initSocketServer(httpServer: HttpServer) {
       scheduleBotAction(roomId);
     });
 
-    // #1: End attack / "Бито" — multi-attacker mechanic
     socket.on('endAttack', (roomId) => {
       const gameState = games.get(roomId);
       if (!gameState) return;
@@ -393,16 +390,17 @@ function restartTurnTimer(roomId: string) {
 }
 
 function handleTimeUp(roomId: string, gameState: GameState) {
-  const activeIdx = gameState.turnPhase === 'defend'
-    ? gameState.currentDefenderIdx
-    : gameState.currentAttackerIdx;
-
-  if (gameState.turnPhase === 'defend') {
-    // Defender time's up — auto take
+  // In pickup mode — auto "бито" for current attacker
+  if (gameState.defenderTaking) {
+    const activeIdx = gameState.currentAttackerIdx;
+    engineEndAttack(gameState, activeIdx);
+  } else if (gameState.turnPhase === 'defend') {
+    // Defender time's up — auto take (enters pickup mode)
     engineTakeCards(gameState);
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
-      // #1: Attacker time's up — auto "bito" / pass initiative
+      // Attacker time's up — auto "бито" / pass initiative
+      const activeIdx = gameState.currentAttackerIdx;
       engineEndAttack(gameState, activeIdx);
     }
   }
@@ -419,10 +417,16 @@ function scheduleBotAction(roomId: string) {
   const gameState = games.get(roomId);
   if (!gameState || gameState.gamePhase !== 'playing') return;
 
-  // Check if current active player is a bot
-  const activeIdx = gameState.turnPhase === 'defend'
-    ? gameState.currentDefenderIdx
-    : gameState.currentAttackerIdx;
+  // Determine active player based on phase
+  let activeIdx: number;
+  if (gameState.defenderTaking) {
+    // In pickup mode, the current attacker is the active player
+    activeIdx = gameState.currentAttackerIdx;
+  } else if (gameState.turnPhase === 'defend') {
+    activeIdx = gameState.currentDefenderIdx;
+  } else {
+    activeIdx = gameState.currentAttackerIdx;
+  }
 
   const activePlayer = gameState.players[activeIdx];
   if (!activePlayer || !activePlayer.isBot) {
@@ -461,6 +465,7 @@ function scheduleEdgeBotActions(roomId: string) {
     const p = gameState.players[i];
     if (!p.isBot || p.isOut) continue;
     if (i === gameState.currentDefenderIdx) continue;
+    if (i === gameState.currentAttackerIdx) continue;
     if (!canPlayerAddCards(gameState, i)) continue;
 
     const actions = getAvailableActions(gameState, i);

@@ -1,8 +1,7 @@
 // ============================================================
-// Kazakh Durak Online — Game Engine (v3)
-// Fixes: bito multi-attacker, transfer choice, bot transfer,
-// winner places, winners exit, validate attacker, edge-only
-// add-cards label, 10-direction, improved bot AI
+// Kazakh Durak Online — Game Engine (v4)
+// Fixes: attacker priority handoff, pickup-after-take mechanic,
+// card limit enforcement, bito multi-attacker
 // ============================================================
 
 import {
@@ -178,6 +177,7 @@ export function createGame(
     attackerHasPriority: true,
     passedAttackers: [],
     nextWinPlace: 1,
+    defenderTaking: false,
   };
 }
 
@@ -274,15 +274,35 @@ export function canPlayerAddCards(state: GameState, playerIdx: number): boolean 
   return isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
 }
 
+// ---- Total cards on table ----
+
+function totalCardsOnTable(state: GameState): number {
+  let count = 0;
+  for (const pair of state.battleField) {
+    count++; // attack card
+    if (pair.defense) count++; // defense card
+  }
+  return count;
+}
+
+// ---- Check if more attack cards can be added ----
+
+function canAddMoreAttackCards(state: GameState): boolean {
+  const maxCards = getMaxAttackCards(state);
+  // Count total attack cards (each pair has one attack card)
+  const attackCardCount = state.battleField.length;
+  return attackCardCount < maxCards;
+}
+
 // ---- Attack card play ----
 
 export function playAttackCard(state: GameState, playerIdx: number, cardId: string): string | null {
-  // #7: Only the current attacker can initiate the first card
+  // Only the current attacker can initiate the first card
   if (state.battleField.length === 0 && playerIdx !== state.currentAttackerIdx) {
     return 'Only the attacker can play the first card';
   }
 
-  // #7: Defender cannot play attack cards
+  // Defender cannot play attack cards
   if (playerIdx === state.currentDefenderIdx) {
     return 'Defender cannot attack';
   }
@@ -296,14 +316,15 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
 
   // After first card, check if this player can add cards
   if (state.battleField.length > 0 && playerIdx !== state.currentAttackerIdx) {
-    if (state.attackerHasPriority) return 'Attacker has priority';
+    // PRIORITY RULE: Edge players cannot add cards while attacker has priority
+    if (state.attackerHasPriority) return 'Attacker has priority — wait for them to press Бито';
     if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
   }
 
   if (!canPlayAsAttack(state, card)) return 'Cannot play this card as attack';
 
-  const undefendedCount = state.battleField.filter(p => !p.defense).length;
-  if (undefendedCount >= getMaxAttackCards(state)) return 'Maximum attack cards reached';
+  // Check card limit
+  if (!canAddMoreAttackCards(state)) return 'Maximum attack cards reached';
 
   player.hand.splice(cardIndex, 1);
   state.battleField.push({ attack: card, defense: null });
@@ -320,12 +341,18 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
     state.leadCardRank = card.rank as Rank;
   }
 
-  if (state.battleField.length >= 1) {
-    state.attackerHasPriority = false;
+  // When attacker plays a card, they regain priority
+  if (playerIdx === state.currentAttackerIdx) {
+    state.attackerHasPriority = true;
   }
 
-  state.turnPhase = 'defend';
-  // #1: When someone adds a card, reset passed attackers since new cards appeared
+  // If defender is NOT taking, set phase to defend
+  if (!state.defenderTaking) {
+    state.turnPhase = 'defend';
+  }
+  // If defender IS taking (pickup mode), stay in pickup — cards just pile up
+
+  // When someone adds a card, reset passed attackers since new cards appeared
   state.passedAttackers = [];
   checkPlayerOut(state, playerIdx);
   return null;
@@ -335,6 +362,7 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
 
 export function playDefenseCard(state: GameState, playerIdx: number, cardId: string, targetPairIdx?: number): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Not your turn to defend';
+  if (state.defenderTaking) return 'You already chose to take cards';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
@@ -360,7 +388,9 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
 
   const allDefended = state.battleField.every(p => p.defense !== null);
   if (allDefended) {
+    // After defender beats a card, attacker regains priority to add more
     state.turnPhase = 'attack';
+    state.attackerHasPriority = true;
     state.passedAttackers = [];
   }
 
@@ -372,6 +402,7 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
 
 export function transferAttack(state: GameState, playerIdx: number, cardId: string): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
+  if (state.defenderTaking) return 'Cannot transfer while taking';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
@@ -396,6 +427,8 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
 
   state.turnPhase = 'defend';
   state.passedAttackers = [];
+  state.attackerHasPriority = true;
+  state.defenderTaking = false;
   resetTurnTimer(state);
   checkPlayerOut(state, playerIdx);
   return null;
@@ -422,14 +455,29 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
   state.currentDefenderIdx = newDefenderIdx;
 
   state.passedAttackers = [];
+  state.attackerHasPriority = true;
+  state.defenderTaking = false;
   resetTurnTimer(state);
   checkPlayerOut(state, playerIdx);
   return null;
 }
 
-// ---- Take cards ----
+// ---- Take cards (defender chooses to take) ----
+// NEW: Does NOT immediately take. Sets defenderTaking=true so attackers can add more cards.
+// Cards are actually picked up when all attackers press "bito" (via finalizeTake).
 
 export function takeCards(state: GameState): void {
+  // Mark that defender is taking — attackers can now add more cards
+  state.defenderTaking = true;
+  state.turnPhase = 'pickup';
+  state.attackerHasPriority = true;
+  state.passedAttackers = [];
+  resetTurnTimer(state);
+}
+
+// ---- Finalize take — actually move cards to defender's hand ----
+
+export function finalizeTake(state: GameState): void {
   const defender = state.players[state.currentDefenderIdx];
   for (const pair of state.battleField) {
     defender.hand.push(pair.attack);
@@ -442,6 +490,7 @@ export function takeCards(state: GameState): void {
   state.leadCardRank = null;
   state.attackerHasPriority = true;
   state.passedAttackers = [];
+  state.defenderTaking = false;
 
   drawCards(state);
 
@@ -468,6 +517,7 @@ export function successfulDefense(state: GameState): void {
   state.leadCardRank = null;
   state.attackerHasPriority = true;
   state.passedAttackers = [];
+  state.defenderTaking = false;
 
   drawCards(state);
 
@@ -479,9 +529,16 @@ export function successfulDefense(state: GameState): void {
   checkGameOver(state);
 }
 
-// #1: End attack — multi-attacker "bito" mechanic
-// When attacker clicks "bito"/"end attack", they pass initiative to the next edge player.
-// Only when ALL eligible edge attackers have passed does the defense succeed.
+// ---- End attack / "Бито" — multi-attacker priority mechanic ----
+// 
+// Flow:
+// 1. Attacker plays cards, has priority. Edge players wait.
+// 2. Attacker presses "бито" → priority passes to next edge player.
+// 3. Edge player can add cards. If defender beats with a rank that attacker has → attacker regains priority.
+// 4. When ALL eligible attackers have pressed "бито":
+//    - If defenderTaking=true → finalizeTake (defender picks up cards)
+//    - If all cards defended → successfulDefense
+//    - Otherwise → defender must still take or defend
 
 export function endAttack(state: GameState, playerIdx: number): string | null {
   if (state.battleField.length === 0) return 'No cards on table';
@@ -495,17 +552,37 @@ export function endAttack(state: GameState, playerIdx: number): string | null {
     state.passedAttackers.push(playerId);
   }
 
-  // If all cards are defended, check if all eligible attackers passed
+  // If defender is taking (pickup mode)
+  if (state.defenderTaking) {
+    if (checkAllAttackersPassed(state)) {
+      finalizeTake(state);
+      return null;
+    }
+    // Pass priority to next unpassed attacker
+    const nextAttackerIdx = findNextUnpassedAttacker(state, playerIdx);
+    if (nextAttackerIdx !== null) {
+      state.currentAttackerIdx = nextAttackerIdx;
+      state.attackerHasPriority = true;
+      resetTurnTimer(state);
+      return null;
+    }
+    // No one else can add — finalize take
+    finalizeTake(state);
+    return null;
+  }
+
+  // Normal mode — all cards defended
   if (state.battleField.every(p => p.defense)) {
     if (checkAllAttackersPassed(state)) {
       successfulDefense(state);
       return null;
     }
 
-    // Find next eligible attacker who hasn't passed yet
+    // Pass to next eligible attacker who hasn't passed yet
     const nextAttackerIdx = findNextUnpassedAttacker(state, playerIdx);
     if (nextAttackerIdx !== null) {
       state.currentAttackerIdx = nextAttackerIdx;
+      state.attackerHasPriority = true;
       resetTurnTimer(state);
       return null;
     }
@@ -515,10 +592,11 @@ export function endAttack(state: GameState, playerIdx: number): string | null {
     return null;
   }
 
-  // Not all defended — just pass to next edge player
+  // Not all defended, not taking — pass to next edge player
   const nextAttackerIdx = findNextUnpassedAttacker(state, playerIdx);
   if (nextAttackerIdx !== null) {
     state.currentAttackerIdx = nextAttackerIdx;
+    state.attackerHasPriority = true;
     resetTurnTimer(state);
     return null;
   }
@@ -536,7 +614,7 @@ function findNextUnpassedAttacker(state: GameState, fromIdx: number): number | n
     if (idx === state.currentDefenderIdx) continue;
     if (state.players[idx].isOut) continue;
     if (state.passedAttackers.includes(state.players[idx].id)) continue;
-    if (canPlayerAddCards(state, idx)) {
+    if (canPlayerAddCards(state, idx) || idx === state.currentAttackerIdx) {
       return idx;
     }
   }
@@ -562,7 +640,6 @@ export function resetTurnTimer(state: GameState): void {
 }
 
 // ---- Player out check ----
-// #4: Assign winner places when players run out of cards
 
 function checkPlayerOut(state: GameState, playerIdx: number): void {
   const player = state.players[playerIdx];
@@ -578,7 +655,7 @@ function checkPlayerOut(state: GameState, playerIdx: number): void {
   }
 }
 
-// #5: Ensure attacker and defender are active players (not winners)
+// Ensure attacker and defender are active players (not winners)
 
 function ensureActiveAttackerDefender(state: GameState): void {
   const activePlayers = state.players.filter(p => !p.isOut);
@@ -605,7 +682,6 @@ function checkGameOver(state: GameState): void {
 }
 
 // ---- Available actions ----
-// #7: Defender cannot attack. #8: "Can add cards" only for actual edge players.
 
 export function getAvailableActions(state: GameState, playerIdx: number): AvailableAction[] {
   if (state.gamePhase !== 'playing') return [];
@@ -621,34 +697,54 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
   const isAttacker = playerIdx === state.currentAttackerIdx;
   const isDefender = playerIdx === state.currentDefenderIdx;
 
-  if (isDefender && state.turnPhase === 'defend') {
-    // Defense cards
-    const undefended = state.battleField.filter(p => !p.defense);
-    const playableIds: string[] = [];
-    for (const card of player.hand) {
-      for (const pair of undefended) {
-        if (canBeat(pair.attack, card, state.trumpInfo.currentTrump)) {
-          if (!playableIds.includes(card.id)) playableIds.push(card.id);
+  // === DEFENDER ACTIONS ===
+  if (isDefender && !state.defenderTaking) {
+    if (state.turnPhase === 'defend') {
+      // Defense cards
+      const undefended = state.battleField.filter(p => !p.defense);
+      const playableIds: string[] = [];
+      for (const card of player.hand) {
+        for (const pair of undefended) {
+          if (canBeat(pair.attack, card, state.trumpInfo.currentTrump)) {
+            if (!playableIds.includes(card.id)) playableIds.push(card.id);
+          }
         }
       }
-    }
-    if (playableIds.length > 0) {
-      actions.push({ type: 'playCard', cardIds: playableIds });
-    }
-
-    // #2: Transfer option — show all matching cards for choice
-    if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
-      const attackRank = state.battleField[0].attack.rank;
-      const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
-      if (transferCards.length > 0) {
-        actions.push({ type: 'transferCard', cardIds: transferCards });
+      if (playableIds.length > 0) {
+        actions.push({ type: 'playCard', cardIds: playableIds });
       }
-    }
 
-    actions.push({ type: 'takeCards' });
+      // Transfer option — show all matching cards for choice
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
+        const attackRank = state.battleField[0].attack.rank;
+        const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
+        if (transferCards.length > 0) {
+          actions.push({ type: 'transferCard', cardIds: transferCards });
+        }
+      }
+
+      actions.push({ type: 'takeCards' });
+    }
   }
 
+  // === ATTACKER ACTIONS ===
   if (isAttacker) {
+    // In pickup mode, attacker can add cards
+    if (state.defenderTaking) {
+      if (canAddMoreAttackCards(state)) {
+        const playableIds = player.hand
+          .filter(c => canPlayAsAttack(state, c))
+          .map(c => c.id);
+        if (playableIds.length > 0) {
+          actions.push({ type: 'playCard', cardIds: playableIds });
+        }
+      }
+      // Always can press "бито" in pickup mode
+      actions.push({ type: 'endAttack' });
+      return actions;
+    }
+
+    // Normal attack phase
     if (state.turnPhase === 'attack' || (state.turnPhase === 'defend' && state.battleField.length === 0)) {
       const playableIds = player.hand
         .filter(c => canPlayAsAttack(state, c))
@@ -663,29 +759,51 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       actions.push({ type: 'endAttack' });
     }
 
-    // Can still add cards when not all defended
-    if (state.battleField.length > 0 && !state.battleField.every(p => p.defense)) {
-      const playableIds = player.hand
-        .filter(c => canPlayAsAttack(state, c))
-        .map(c => c.id);
-      if (playableIds.length > 0) {
-        actions.push({ type: 'playCard', cardIds: playableIds });
+    // Can still add cards when not all defended (attacker can always add)
+    if (state.battleField.length > 0 && !state.battleField.every(p => p.defense) && state.turnPhase === 'defend') {
+      if (canAddMoreAttackCards(state)) {
+        const playableIds = player.hand
+          .filter(c => canPlayAsAttack(state, c))
+          .map(c => c.id);
+        if (playableIds.length > 0) {
+          actions.push({ type: 'playCard', cardIds: playableIds });
+        }
       }
     }
   }
 
-  // #8: Non-attacker, non-defender edge players can add cards
-  if (!isAttacker && !isDefender && !state.attackerHasPriority && canPlayerAddCards(state, playerIdx)) {
+  // === EDGE PLAYER ACTIONS (non-attacker, non-defender) ===
+  if (!isAttacker && !isDefender && canPlayerAddCards(state, playerIdx)) {
     if (state.battleField.length > 0) {
-      const playableIds = player.hand
-        .filter(c => canPlayAsAttack(state, c))
-        .map(c => c.id);
-      if (playableIds.length > 0) {
-        actions.push({ type: 'playCard', cardIds: playableIds });
-      }
-      // #1: Edge players can also click "bito" to pass
-      if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
-        actions.push({ type: 'endAttack' });
+      // PRIORITY RULE: Edge players can only act when attacker does NOT have priority
+      if (!state.attackerHasPriority) {
+        if (state.defenderTaking) {
+          // In pickup mode, edge players can add cards
+          if (canAddMoreAttackCards(state)) {
+            const playableIds = player.hand
+              .filter(c => canPlayAsAttack(state, c))
+              .map(c => c.id);
+            if (playableIds.length > 0) {
+              actions.push({ type: 'playCard', cardIds: playableIds });
+            }
+          }
+          // Edge player can also press "бито" to pass
+          if (!state.passedAttackers.includes(player.id)) {
+            actions.push({ type: 'endAttack' });
+          }
+        } else {
+          // Normal mode — edge can add cards when all defended or when there are cards on table
+          const playableIds = player.hand
+            .filter(c => canPlayAsAttack(state, c))
+            .map(c => c.id);
+          if (playableIds.length > 0) {
+            actions.push({ type: 'playCard', cardIds: playableIds });
+          }
+          // Edge players can also click "бито" to pass
+          if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
+            actions.push({ type: 'endAttack' });
+          }
+        }
       }
     }
   }
@@ -708,7 +826,6 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     winPlace: p.winPlace,
   }));
 
-  // #8: Compute canAddCards for this specific player
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;
 
   return {
@@ -736,11 +853,11 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     attackerHasPriority: state.attackerHasPriority,
     passedAttackers: state.passedAttackers,
     canAddCards: playerCanAdd,
+    defenderTaking: state.defenderTaking,
   };
 }
 
 // ---- Bot AI ----
-// #3: Bots can now transfer cards
 
 export function getBotAction(state: GameState, botIdx: number): { action: string; cardId?: string; targetPairIdx?: number } | null {
   const player = state.players[botIdx];
@@ -756,13 +873,12 @@ export function getBotAction(state: GameState, botIdx: number): { action: string
     return { action: 'skipTurn' };
   }
 
-  if (isDefender && state.turnPhase === 'defend') {
-    // #3: Bot tries to transfer first (30% chance if possible, or if hand is weak)
+  if (isDefender && state.turnPhase === 'defend' && !state.defenderTaking) {
+    // Bot tries to transfer first (50% chance if possible, or if hand is weak)
     const transferAction = actions.find(a => a.type === 'transferCard');
     if (transferAction && transferAction.type === 'transferCard' && transferAction.cardIds.length > 0) {
       const shouldTransfer = Math.random() > 0.5 || player.hand.length > 10;
       if (shouldTransfer) {
-        // Pick the lowest value transfer card
         const transferCards = player.hand
           .filter(c => transferAction.cardIds.includes(c.id))
           .sort((a, b) => getCardValue(a) - getCardValue(b));
@@ -789,14 +905,18 @@ export function getBotAction(state: GameState, botIdx: number): { action: string
   if (isAttacker) {
     const playAction = actions.find(a => a.type === 'playCard');
     if (playAction && playAction.type === 'playCard' && playAction.cardIds.length > 0) {
-      const playableCards = player.hand
-        .filter(c => playAction.cardIds.includes(c.id))
-        .sort((a, b) => getCardValue(a) - getCardValue(b));
-      if (playableCards.length > 0) {
-        return { action: 'playAttack', cardId: playableCards[0].id };
+      // In pickup mode, bot is more aggressive about adding cards
+      const addChance = state.defenderTaking ? 0.8 : 1.0;
+      if (Math.random() < addChance) {
+        const playableCards = player.hand
+          .filter(c => playAction.cardIds.includes(c.id))
+          .sort((a, b) => getCardValue(a) - getCardValue(b));
+        if (playableCards.length > 0) {
+          return { action: 'playAttack', cardId: playableCards[0].id };
+        }
       }
     }
-    // #1: Bot clicks "bito" to pass initiative
+    // Bot clicks "бито" to pass initiative
     if (actions.find(a => a.type === 'endAttack')) return { action: 'endAttack' };
   }
 
@@ -811,7 +931,7 @@ export function getBotAction(state: GameState, botIdx: number): { action: string
     }
   }
 
-  // Edge player "bito" pass
+  // Edge player "бито" pass
   if (actions.find(a => a.type === 'endAttack')) {
     return { action: 'endAttack' };
   }

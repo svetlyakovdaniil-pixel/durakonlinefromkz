@@ -96,6 +96,7 @@ export interface GameState {
   attackerHasPriority: boolean;
   passedAttackers: string[];
   nextWinPlace: number;
+  defenderTaking: boolean; // true when defender pressed "take" but attackers can still add cards
 }
 
 // --- Room ---
@@ -176,6 +177,7 @@ export interface ClientGameState {
   attackerHasPriority: boolean;
   passedAttackers: string[];
   canAddCards: boolean;
+  defenderTaking: boolean;
 }
 
 export interface ClientPlayer {
