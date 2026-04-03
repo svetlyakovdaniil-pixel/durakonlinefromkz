@@ -1,11 +1,12 @@
-import { useState, useMemo, useRef, useCallback } from 'react';
+import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../../shared/gameTypes';
 import { RANK_ORDER } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS, GAME_TABLE_URL } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
+import { useSound } from '@/hooks/useSound';
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -164,11 +165,104 @@ export default function GameTable({
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby,
 }: GameTableProps) {
-  const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-
   const gs = gameState;
   const myIdx = gs.myIndex;
+
+  const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
+  const { play: playSound, enabled: soundEnabled, toggle: toggleSound } = useSound();
+
+  // Track previous state for detecting changes
+  const prevBattleFieldLen = useRef(gs.battleField.length);
+
+  const prevGamePhase = useRef(gs.gamePhase);
+  const prevMyHandLen = useRef(gs.myHand.length);
+  const prevDiscardCount = useRef(gs.discardCount);
+
+  // Sound effects triggered by game state changes
+  useEffect(() => {
+    const bfLen = gs.battleField.length;
+    const prevBf = prevBattleFieldLen.current;
+    const prevHand = prevMyHandLen.current;
+    const prevDiscard = prevDiscardCount.current;
+
+    // Card played on table (new attack or defense card)
+    if (bfLen > prevBf || (bfLen === prevBf && bfLen > 0 && gs.battleField.some(p => p.defense) && prevDiscard === gs.discardCount)) {
+      // Check if a defense card was just played (battlefield same length but a defense appeared)
+      const hasNewDefense = bfLen === prevBf && bfLen > 0;
+      if (bfLen > prevBf || hasNewDefense) {
+        playSound('cardPlay', 0.4);
+      }
+    }
+
+    // Successful defense (bito) — battlefield cleared, discard increased
+    if (prevBf > 0 && bfLen === 0 && gs.discardCount > prevDiscard) {
+      playSound('roundWin', 0.5);
+    }
+
+    // Defender took cards — battlefield cleared, hand grew
+    if (prevBf > 0 && bfLen === 0 && gs.myHand.length > prevHand) {
+      playSound('cardTake', 0.5);
+    }
+
+    // Someone else took cards (battlefield cleared, discard didn't increase, my hand didn't grow)
+    if (prevBf > 0 && bfLen === 0 && gs.discardCount === prevDiscard && gs.myHand.length <= prevHand) {
+      playSound('cardTake', 0.3);
+    }
+
+    prevBattleFieldLen.current = bfLen;
+    prevMyHandLen.current = gs.myHand.length;
+    prevDiscardCount.current = gs.discardCount;
+  }, [gs.battleField.length, gs.defenderTaking, gs.myHand.length, gs.discardCount, playSound]);
+
+  // Deal sound when game starts (transition to playing phase)
+  useEffect(() => {
+    if (gs.gamePhase === 'playing' && prevGamePhase.current !== 'playing') {
+      // Play deal sound with slight delay to feel like cards being dealt
+      playSound('cardDeal', 0.4);
+      const t1 = setTimeout(() => playSound('cardDeal', 0.3), 120);
+      const t2 = setTimeout(() => playSound('cardDeal', 0.35), 240);
+      return () => { clearTimeout(t1); clearTimeout(t2); };
+    }
+  }, [gs.gamePhase, playSound]);
+
+  // Game over sounds
+  useEffect(() => {
+    if (gs.gamePhase === 'finished' && prevGamePhase.current === 'playing') {
+      const myPlayer = gs.players[myIdx];
+      const isLoser = gs.loserId === myPlayer?.id;
+      if (isLoser || myPlayer?.leftGame) {
+        playSound('gameLose', 0.5);
+      } else {
+        playSound('gameWin', 0.6);
+      }
+    }
+    prevGamePhase.current = gs.gamePhase;
+  }, [gs.gamePhase, gs.loserId, gs.players, myIdx, playSound]);
+
+  // Your turn notification sound
+  const prevActionsLen = useRef(availableActions.length);
+  useEffect(() => {
+    if (availableActions.length > 0 && prevActionsLen.current === 0) {
+      // Only play if it's a meaningful turn (not just "skip")
+      const hasMeaningfulAction = availableActions.some(a => 
+        a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard'
+      );
+      if (hasMeaningfulAction) {
+        playSound('yourTurn', 0.3);
+      }
+    }
+    prevActionsLen.current = availableActions.length;
+  }, [availableActions, playSound]);
+
+  // Timer warning sound (at 5 seconds)
+  const prevTimer = useRef(turnTimer);
+  useEffect(() => {
+    if (turnTimer === 5 && prevTimer.current > 5 && availableActions.length > 0) {
+      playSound('timerWarning', 0.3);
+    }
+    prevTimer.current = turnTimer;
+  }, [turnTimer, availableActions.length, playSound]);
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
 
@@ -356,6 +450,13 @@ export default function GameTable({
               <Timer className="w-3 h-3 mr-1" />
               {turnTimer}с
             </Badge>
+            <button
+              className={`transition-colors p-1 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+              onClick={toggleSound}
+              title={soundEnabled ? 'Выключить звук' : 'Включить звук'}
+            >
+              {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            </button>
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
               <button
                 className="text-gray-400 hover:text-red-400 transition-colors p-1 rounded"

@@ -111,3 +111,14 @@
 - [x] passedAttackers в pickup mode не сбрасывается полностью — только текущий игрок удаляется
 - [x] Боты ограничены макс 2 картами подкидывания в pickup mode
 - [x] checkAllAttackersPassed_safe учитывает canPlayerAddCards
+
+## Звуковые эффекты
+- [x] Создать звуковые файлы: card_play, card_deal, card_take, round_win, game_win, game_lose, your_turn, timer_warning
+- [x] Загрузить звуки на CDN через manus-upload-file (8 файлов)
+- [x] Создать useSound hook с предзагрузкой, кэшированием и localStorage персистентностью
+- [x] Интегрировать звуки в GameTable: ход картой (cardPlay при изменении battlefield)
+- [x] Интегрировать звуки в GameTable: взятие карт (cardTake при очистке стола + рост руки)
+- [x] Интегрировать звуки в GameTable: победа/бито (roundWin при очистке стола + рост discard)
+- [x] Интегрировать звуки: gameWin/gameLose при завершении игры
+- [x] Интегрировать звуки: yourTurn при появлении действий, timerWarning при 5с
+- [x] Добавить кнопку включения/выключения звука в HUD (Volume2/VolumeX)
