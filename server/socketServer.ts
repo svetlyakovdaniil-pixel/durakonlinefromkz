@@ -42,8 +42,10 @@ export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
     path: '/api/socket.io',
-    pingTimeout: 30000,     // 30s before considering connection dead
-    pingInterval: 15000,    // ping every 15s
+    pingTimeout: 60000,     // 60s before considering connection dead
+    pingInterval: 25000,    // ping every 25s
+    connectTimeout: 45000,  // 45s connection timeout
+    maxHttpBufferSize: 1e6, // 1MB buffer
   });
 
   io.on('connection', (socket) => {
@@ -77,12 +79,9 @@ export function initSocketServer(httpServer: HttpServer) {
             const clientState = toClientState(gameState, odId);
             socket.emit('gameStateUpdate', clientState);
             const playerIdx = gameState.players.findIndex(p => p.id === odId);
-            if (playerIdx !== -1) {
-              const actions = getAvailableActions(gameState, playerIdx);
-              if (actions.length > 0) {
-                socket.emit('yourTurn', actions);
-              }
-            }
+            // Always send actions — even empty to clear stale client state
+            const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+            socket.emit('yourTurn', actions);
           }
           console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
         }
@@ -111,12 +110,9 @@ export function initSocketServer(httpServer: HttpServer) {
         const clientState = toClientState(gameState, odId);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
-        if (playerIdx !== -1) {
-          const actions = getAvailableActions(gameState, playerIdx);
-          if (actions.length > 0) {
-            socket.emit('yourTurn', actions);
-          }
-        }
+        // Always send actions — even empty to clear stale client state
+        const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+        socket.emit('yourTurn', actions);
       }
 
       cb(true, sanitizeRoom(room));
@@ -684,10 +680,10 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       const clientState = toClientState(gameState, p.id);
       io.to(sid).emit('gameStateUpdate', clientState);
 
-      const actions = getAvailableActions(gameState, p.seatIndex);
-      if (actions.length > 0) {
-        io.to(sid).emit('yourTurn', actions);
-      }
+      // Always send actions — even empty array to clear stale client state
+      const playerIdx = gameState.players.findIndex(pl => pl.id === p.id);
+      const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+      io.to(sid).emit('yourTurn', actions);
     }
   }
 

@@ -31,11 +31,13 @@ export function useSocket(userId: string | null, userName: string | null) {
       path: '/api/socket.io',
       auth: { odId: userId, name: userName || 'Гость' },
       transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true,
       reconnection: true,
-      reconnectionAttempts: 20,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 10000,
-      timeout: 30000,
+      reconnectionAttempts: Infinity,
+      reconnectionDelay: 500,
+      reconnectionDelayMax: 5000,
+      timeout: 45000,
     });
 
     socketRef.current = socket;
@@ -97,6 +99,8 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('gameStateUpdate', (s) => {
       setGameState(s);
       setTurnTimer(s.turnTimer);
+      // Clear stale actions — fresh ones arrive via yourTurn immediately after
+      setAvailableActions([]);
     });
     socket.on('yourTurn', (a) => setAvailableActions(a));
     socket.on('error', (msg) => setError(msg));
