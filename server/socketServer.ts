@@ -29,6 +29,8 @@ const playerSockets = new Map<string, string>(); // odId -> socketId
 const socketPlayers = new Map<string, { odId: string; name: string }>(); // socketId -> player info
 const turnTimers = new Map<string, NodeJS.Timeout>(); // roomId -> interval
 const botTimeouts = new Map<string, NodeJS.Timeout[]>(); // roomId -> pending bot timeouts
+const watchdogTimers = new Map<string, NodeJS.Timeout>(); // roomId -> watchdog interval
+const lastProgressTimestamps = new Map<string, number>(); // roomId -> last time game state changed
 
 // Disconnect grace period — track disconnected players before removing them
 const DISCONNECT_GRACE_MS = 45_000; // 45 seconds grace period
@@ -229,6 +231,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       broadcastGameState(roomId, gameState);
       startTurnTimer(roomId);
+      startWatchdog(roomId);
       broadcastRoomList();
 
       scheduleBotAction(roomId);
@@ -254,6 +257,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       if (error) { socket.emit('error', error); return; }
 
+      markProgress(data.roomId);
       resetTurnTimer(gameState);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);
@@ -268,6 +272,7 @@ export function initSocketServer(httpServer: HttpServer) {
       const error = transferAttack(gameState, playerIdx, data.cardId);
       if (error) { socket.emit('error', error); return; }
 
+      markProgress(data.roomId);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);
       scheduleBotAction(data.roomId);
@@ -281,6 +286,7 @@ export function initSocketServer(httpServer: HttpServer) {
       const error = showPassThrough(gameState, playerIdx, data.cardId);
       if (error) { socket.emit('error', error); return; }
 
+      markProgress(data.roomId);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);
       scheduleBotAction(data.roomId);
@@ -295,6 +301,7 @@ export function initSocketServer(httpServer: HttpServer) {
       if (gameState.defenderTaking) return; // Already taking
 
       engineTakeCards(gameState);
+      markProgress(roomId);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gameState);
       scheduleBotAction(roomId);
@@ -308,6 +315,7 @@ export function initSocketServer(httpServer: HttpServer) {
       const error = engineEndAttack(gameState, playerIdx);
       if (error) { socket.emit('error', error); return; }
 
+      markProgress(roomId);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gameState);
       scheduleBotAction(roomId);
@@ -338,24 +346,38 @@ export function initSocketServer(httpServer: HttpServer) {
       gameState.currentAttackerIdx = nextAttacker;
       gameState.currentDefenderIdx = getNextActivePlayer(gameState.players, nextAttacker, gameState.direction);
 
+      markProgress(roomId);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gameState);
       scheduleBotAction(roomId);
     });
 
     // --- Leave game (forfeit) ---
-    socket.on('leaveGame', (roomId) => {
+    socket.on('leaveGame', (roomId, ack) => {
       const gameState = games.get(roomId);
-      if (!gameState || gameState.gamePhase !== 'playing') return;
+      if (!gameState || gameState.gamePhase !== 'playing') {
+        if (typeof ack === 'function') ack({ ok: false });
+        return;
+      }
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
-      if (playerIdx === -1) return;
-      if (gameState.players[playerIdx].isOut) return;
+      if (playerIdx === -1) {
+        if (typeof ack === 'function') ack({ ok: false });
+        return;
+      }
+      if (gameState.players[playerIdx].isOut) {
+        if (typeof ack === 'function') ack({ ok: false });
+        return;
+      }
 
       forfeitPlayer(gameState, playerIdx);
+      markProgress(roomId);
       resetTurnTimer(gameState);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gameState);
+
+      // Acknowledge to the client
+      if (typeof ack === 'function') ack({ ok: true });
 
       // If game is not over, schedule bot actions
       if (gameState.gamePhase === 'playing') {
@@ -501,7 +523,9 @@ function closeRoom(roomId: string) {
   if (!room) return;
 
   stopTurnTimer(roomId);
+  stopWatchdog(roomId);
   cancelBotTimeouts(roomId);
+  botFailCounts.delete(roomId);
   io.to(roomId).emit('roomClosed', roomId);
 
   for (const p of room.players) {
@@ -524,6 +548,7 @@ function closeRoom(roomId: string) {
 
 function startTurnTimer(roomId: string) {
   stopTurnTimer(roomId);
+  lastProgressTimestamps.set(roomId, Date.now()); // Track progress
   const interval = setInterval(() => {
     const gameState = games.get(roomId);
     if (!gameState || gameState.gamePhase !== 'playing') {
@@ -548,6 +573,75 @@ function startTurnTimer(roomId: string) {
   turnTimers.set(roomId, interval);
 }
 
+// Watchdog: independent timer that detects stuck games
+function startWatchdog(roomId: string) {
+  stopWatchdog(roomId);
+  lastProgressTimestamps.set(roomId, Date.now());
+  const WATCHDOG_INTERVAL = 10_000; // Check every 10 seconds
+  const MAX_STALE_MS = 30_000; // If no progress for 30 seconds, force-resolve
+
+  const interval = setInterval(() => {
+    const gs = games.get(roomId);
+    if (!gs || gs.gamePhase !== 'playing') {
+      stopWatchdog(roomId);
+      return;
+    }
+
+    const lastProgress = lastProgressTimestamps.get(roomId) || Date.now();
+    const staleDuration = Date.now() - lastProgress;
+
+    if (staleDuration > MAX_STALE_MS) {
+      console.error(`[Watchdog] Room ${roomId} stale for ${Math.round(staleDuration / 1000)}s. Force-resolving.`);
+      
+      // Force-resolve the current state
+      if (gs.battleField.length > 0) {
+        if (gs.defenderTaking) {
+          // Force finalize take
+          for (const p of gs.players) {
+            if (!p.isOut && p.id !== gs.players[gs.currentDefenderIdx].id) {
+              if (!gs.passedAttackers.includes(p.id)) {
+                gs.passedAttackers.push(p.id);
+              }
+            }
+          }
+          engineFinalizeTake(gs);
+        } else {
+          successfulDefense(gs);
+        }
+      } else {
+        // No cards on table — advance turn
+        const nextAttacker = getNextActivePlayer(gs.players, gs.currentAttackerIdx, gs.direction);
+        gs.currentAttackerIdx = nextAttacker;
+        gs.currentDefenderIdx = getNextActivePlayer(gs.players, nextAttacker, gs.direction);
+        gs.turnPhase = 'attack';
+        gs.passedAttackers = [];
+        gs.attackerHasPriority = true;
+      }
+
+      lastProgressTimestamps.set(roomId, Date.now());
+      resetTurnTimer(gs);
+      restartTurnTimer(roomId);
+      broadcastGameState(roomId, gs);
+      scheduleBotAction(roomId);
+    }
+  }, WATCHDOG_INTERVAL);
+
+  watchdogTimers.set(roomId, interval);
+}
+
+function stopWatchdog(roomId: string) {
+  const timer = watchdogTimers.get(roomId);
+  if (timer) {
+    clearInterval(timer);
+    watchdogTimers.delete(roomId);
+  }
+  lastProgressTimestamps.delete(roomId);
+}
+
+function markProgress(roomId: string) {
+  lastProgressTimestamps.set(roomId, Date.now());
+}
+
 function stopTurnTimer(roomId: string) {
   const timer = turnTimers.get(roomId);
   if (timer) {
@@ -563,33 +657,62 @@ function restartTurnTimer(roomId: string) {
 }
 
 function handleTimeUp(roomId: string, gameState: GameState) {
-  // In pickup mode — auto "бито" for current attacker
+  console.log(`[Timer] Time up. Phase: ${gameState.turnPhase}, taking: ${gameState.defenderTaking}, bf: ${gameState.battleField.length}, attacker: ${gameState.players[gameState.currentAttackerIdx]?.name}, defender: ${gameState.players[gameState.currentDefenderIdx]?.name}`);
+
   if (gameState.defenderTaking) {
-    const activeIdx = gameState.currentAttackerIdx;
-    engineEndAttack(gameState, activeIdx);
+    // Pickup mode — force-pass all unpassed attackers and finalize
+    for (const p of gameState.players) {
+      if (!p.isOut && p.id !== gameState.players[gameState.currentDefenderIdx].id) {
+        if (!gameState.passedAttackers.includes(p.id)) {
+          gameState.passedAttackers.push(p.id);
+        }
+      }
+    }
+    engineFinalizeTake(gameState);
   } else if (gameState.turnPhase === 'defend') {
-    // Defender time's up — auto take (enters pickup mode)
+    // Defender time's up — auto take and immediately finalize
     engineTakeCards(gameState);
+    // Pass all attackers to finalize immediately
+    for (const p of gameState.players) {
+      if (!p.isOut && p.id !== gameState.players[gameState.currentDefenderIdx].id) {
+        if (!gameState.passedAttackers.includes(p.id)) {
+          gameState.passedAttackers.push(p.id);
+        }
+      }
+    }
+    engineFinalizeTake(gameState);
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
-      // Attacker time's up — auto "бито" / pass initiative
+      // Attacker time's up — auto "бито"
       const activeIdx = gameState.currentAttackerIdx;
       engineEndAttack(gameState, activeIdx);
     }
   }
 
-  // Deadlock safeguard: check if any active player has available actions
-  // If not, force-resolve the current trick
+  // Deadlock safeguard: if game is still playing and no one has actions
   if (gameState.gamePhase === 'playing') {
     const activePlayers = gameState.players.filter(p => !p.isOut);
-    const anyoneHasActions = activePlayers.some((_, i) => {
-      const realIdx = gameState.players.indexOf(activePlayers[i]);
+    const anyoneHasActions = activePlayers.some(p => {
+      const realIdx = gameState.players.indexOf(p);
       return getAvailableActions(gameState, realIdx).length > 0;
     });
-    if (!anyoneHasActions && gameState.battleField.length > 0) {
-      console.warn(`[Deadlock] No player has actions. Force-resolving trick.`);
-      // Force successful defense to clear the table
-      successfulDefense(gameState);
+    if (!anyoneHasActions) {
+      console.warn(`[Deadlock] No player has actions after timeUp. Force-resolving.`);
+      if (gameState.battleField.length > 0) {
+        if (gameState.defenderTaking) {
+          engineFinalizeTake(gameState);
+        } else {
+          successfulDefense(gameState);
+        }
+      } else {
+        // No cards on table, no actions — advance turn
+        const nextAttacker = getNextActivePlayer(gameState.players, gameState.currentAttackerIdx, gameState.direction);
+        gameState.currentAttackerIdx = nextAttacker;
+        gameState.currentDefenderIdx = getNextActivePlayer(gameState.players, nextAttacker, gameState.direction);
+        gameState.turnPhase = 'attack';
+        gameState.passedAttackers = [];
+        gameState.attackerHasPriority = true;
+      }
     }
   }
 
@@ -618,6 +741,10 @@ function trackBotTimeout(roomId: string, timeout: NodeJS.Timeout) {
   arr.push(timeout);
 }
 
+// Track consecutive bot failures per room to detect stuck loops
+const botFailCounts = new Map<string, number>();
+const MAX_BOT_FAILS = 3;
+
 function scheduleBotAction(roomId: string) {
   // Cancel any pending bot timeouts to prevent race conditions
   cancelBotTimeouts(roomId);
@@ -628,7 +755,6 @@ function scheduleBotAction(roomId: string) {
   // Determine active player based on phase
   let activeIdx: number;
   if (gameState.defenderTaking) {
-    // In pickup mode, the current attacker is the active player
     activeIdx = gameState.currentAttackerIdx;
   } else if (gameState.turnPhase === 'defend') {
     activeIdx = gameState.currentDefenderIdx;
@@ -638,7 +764,7 @@ function scheduleBotAction(roomId: string) {
 
   const activePlayer = gameState.players[activeIdx];
   if (!activePlayer || !activePlayer.isBot) {
-    // Also check if any edge bot can add cards
+    // Human player's turn — check if edge bots can act
     scheduleEdgeBotActions(roomId);
     return;
   }
@@ -649,32 +775,12 @@ function scheduleBotAction(roomId: string) {
     if (!gs || gs.gamePhase !== 'playing') return;
 
     const botAction = getBotAction(gs, activeIdx);
+    
     if (!botAction) {
-      // Bot has no action — safety fallback to prevent freeze
-      console.warn(`[Bot] Bot ${activeIdx} (${activePlayer.name}) has no action. Phase: ${gs.turnPhase}, defenderTaking: ${gs.defenderTaking}, battlefield: ${gs.battleField.length}`);
-      
-      if (activeIdx === gs.currentAttackerIdx && gs.battleField.length > 0) {
-        // Attacker bot with no action — auto-end attack
-        engineEndAttack(gs, activeIdx);
-      } else if (activeIdx === gs.currentDefenderIdx && gs.turnPhase === 'defend') {
-        // Defender bot with no action — auto-take cards
-        engineTakeCards(gs);
-        // Also auto-finalize since bot can't do anything
-        if (!gs.passedAttackers.includes(gs.players[gs.currentAttackerIdx].id)) {
-          gs.passedAttackers.push(gs.players[gs.currentAttackerIdx].id);
-        }
-        engineFinalizeTake(gs);
-      } else if (gs.defenderTaking && activeIdx === gs.currentAttackerIdx) {
-        // Attacker in pickup mode with no action — auto-end attack
-        engineEndAttack(gs, activeIdx);
-      } else {
-        // Unknown state — log and try to recover by resetting turn
-        console.error(`[Bot] Unhandled null action state. Forcing endAttack/take.`);
-        if (gs.battleField.length > 0) {
-          engineEndAttack(gs, activeIdx);
-        }
-      }
-      
+      // Bot has no action — force-resolve to prevent freeze
+      console.warn(`[Bot] No action for bot ${activeIdx} (${activePlayer.name}). Phase: ${gs.turnPhase}, taking: ${gs.defenderTaking}, bf: ${gs.battleField.length}`);
+      forceResolveStuckState(gs, activeIdx);
+      botFailCounts.delete(roomId);
       resetTurnTimer(gs);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gs);
@@ -682,17 +788,97 @@ function scheduleBotAction(roomId: string) {
       return;
     }
 
-    executeBotAction(gs, activeIdx, botAction);
+    const success = executeBotAction(gs, activeIdx, botAction);
+    
+    if (!success) {
+      // Bot action FAILED — this is the main freeze cause
+      const fails = (botFailCounts.get(roomId) || 0) + 1;
+      botFailCounts.set(roomId, fails);
+      console.warn(`[Bot] Action failed (attempt ${fails}/${MAX_BOT_FAILS}). Bot: ${activePlayer.name}, action: ${botAction.action}`);
+      
+      if (fails >= MAX_BOT_FAILS) {
+        // Too many failures — force-resolve
+        console.error(`[Bot] Max failures reached. Force-resolving stuck state.`);
+        forceResolveStuckState(gs, activeIdx);
+        botFailCounts.delete(roomId);
+        resetTurnTimer(gs);
+        restartTurnTimer(roomId);
+        broadcastGameState(roomId, gs);
+        scheduleBotAction(roomId);
+      } else {
+        // Retry after a delay — DON'T reset timer (prevents timer freeze)
+        scheduleBotAction(roomId);
+      }
+      return;
+    }
 
+    // Success — reset fail counter
+    botFailCounts.delete(roomId);
+    markProgress(roomId);
     resetTurnTimer(gs);
     restartTurnTimer(roomId);
     broadcastGameState(roomId, gs);
-
-    // Chain bot actions
     scheduleBotAction(roomId);
   }, 800 + Math.random() * 1200);
 
   trackBotTimeout(roomId, timeout);
+}
+
+// Force-resolve a stuck game state
+function forceResolveStuckState(gs: GameState, botIdx: number) {
+  const isAttacker = botIdx === gs.currentAttackerIdx;
+  const isDefender = botIdx === gs.currentDefenderIdx;
+
+  if (gs.defenderTaking) {
+    // Pickup mode — force end attack
+    if (isAttacker) {
+      engineEndAttack(gs, botIdx);
+    } else {
+      // Edge bot — auto-pass
+      if (!gs.passedAttackers.includes(gs.players[botIdx].id)) {
+        gs.passedAttackers.push(gs.players[botIdx].id);
+      }
+      if (checkAllAttackersPassed_safe(gs)) {
+        engineFinalizeTake(gs);
+      }
+    }
+  } else if (isDefender && gs.turnPhase === 'defend') {
+    // Defender can't defend — take cards
+    engineTakeCards(gs);
+    // Auto-pass all attackers to finalize immediately
+    for (const p of gs.players) {
+      if (!p.isOut && p.id !== gs.players[gs.currentDefenderIdx].id) {
+        if (!gs.passedAttackers.includes(p.id)) {
+          gs.passedAttackers.push(p.id);
+        }
+      }
+    }
+    engineFinalizeTake(gs);
+  } else if (isAttacker && gs.battleField.length > 0) {
+    // Attacker with cards on table — end attack
+    engineEndAttack(gs, botIdx);
+  } else if (isAttacker && gs.battleField.length === 0) {
+    // Attacker with no cards on table and no action — skip turn
+    const nextAttacker = getNextActivePlayer(gs.players, botIdx, gs.direction);
+    gs.currentAttackerIdx = nextAttacker;
+    gs.currentDefenderIdx = getNextActivePlayer(gs.players, nextAttacker, gs.direction);
+  } else {
+    // Unknown stuck state — force clear battlefield
+    console.error(`[Bot] Unknown stuck state. Clearing battlefield.`);
+    if (gs.battleField.length > 0) {
+      successfulDefense(gs);
+    }
+  }
+}
+
+// Safe version of checkAllAttackersPassed that doesn't import from engine
+function checkAllAttackersPassed_safe(gs: GameState): boolean {
+  for (let i = 0; i < gs.players.length; i++) {
+    if (i === gs.currentDefenderIdx) continue;
+    if (gs.players[i].isOut) continue;
+    if (!gs.passedAttackers.includes(gs.players[i].id)) return false;
+  }
+  return true;
 }
 
 // Schedule edge bot players to add cards after a delay
@@ -717,9 +903,26 @@ function scheduleEdgeBotActions(roomId: string) {
       if (!gs || gs.gamePhase !== 'playing') return;
 
       const botAction = getBotAction(gs, i);
-      if (!botAction) return;
+      if (!botAction) {
+        // Edge bot has no action — auto-pass
+        if (!gs.passedAttackers.includes(gs.players[i].id)) {
+          gs.passedAttackers.push(gs.players[i].id);
+        }
+        broadcastGameState(roomId, gs);
+        return;
+      }
 
-      executeBotAction(gs, i, botAction);
+      const success = executeBotAction(gs, i, botAction);
+      if (!success) {
+        // Edge bot action failed — auto-pass instead of getting stuck
+        if (!gs.passedAttackers.includes(gs.players[i].id)) {
+          gs.passedAttackers.push(gs.players[i].id);
+        }
+        broadcastGameState(roomId, gs);
+        return;
+      }
+
+      markProgress(roomId);
       resetTurnTimer(gs);
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gs);
@@ -730,28 +933,35 @@ function scheduleEdgeBotActions(roomId: string) {
   }
 }
 
-function executeBotAction(gs: GameState, botIdx: number, botAction: { action: string; cardId?: string; targetPairIdx?: number }) {
+function executeBotAction(gs: GameState, botIdx: number, botAction: { action: string; cardId?: string; targetPairIdx?: number }): boolean {
+  let error: string | null = null;
   switch (botAction.action) {
     case 'playAttack':
       if (botAction.cardId) {
-        playAttackCard(gs, botIdx, botAction.cardId);
+        error = playAttackCard(gs, botIdx, botAction.cardId);
+      } else {
+        error = 'No cardId for playAttack';
       }
       break;
     case 'playDefense':
       if (botAction.cardId) {
-        playDefenseCard(gs, botIdx, botAction.cardId, botAction.targetPairIdx);
+        error = playDefenseCard(gs, botIdx, botAction.cardId, botAction.targetPairIdx);
+      } else {
+        error = 'No cardId for playDefense';
       }
       break;
     case 'transferCard':
       if (botAction.cardId) {
-        transferAttack(gs, botIdx, botAction.cardId);
+        error = transferAttack(gs, botIdx, botAction.cardId);
+      } else {
+        error = 'No cardId for transferCard';
       }
       break;
     case 'takeCards':
       engineTakeCards(gs);
       break;
     case 'endAttack':
-      engineEndAttack(gs, botIdx);
+      error = engineEndAttack(gs, botIdx);
       break;
     case 'skipTurn': {
       const nextAttacker = getNextActivePlayer(gs.players, botIdx, gs.direction);
@@ -759,7 +969,14 @@ function executeBotAction(gs: GameState, botIdx: number, botAction: { action: st
       gs.currentDefenderIdx = getNextActivePlayer(gs.players, nextAttacker, gs.direction);
       break;
     }
+    default:
+      error = `Unknown bot action: ${botAction.action}`;
   }
+  if (error) {
+    console.warn(`[Bot] Action failed for bot ${botIdx} (${gs.players[botIdx]?.name}): ${botAction.action} -> ${error}`);
+    return false;
+  }
+  return true;
 }
 
 // ---- Broadcast helpers ----
@@ -781,7 +998,9 @@ function broadcastGameState(roomId: string, gameState: GameState) {
 
   if (gameState.gamePhase === 'finished') {
     stopTurnTimer(roomId);
+    stopWatchdog(roomId);
     cancelBotTimeouts(roomId);
+    botFailCounts.delete(roomId);
     io.to(roomId).emit('gameOver', {
       winnersOrder: gameState.winnersOrder,
       loserId: gameState.loserId || '',

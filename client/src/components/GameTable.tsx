@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../../shared/gameTypes';
 import { RANK_ORDER } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS, GAME_TABLE_URL } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -19,6 +19,128 @@ function sortHand(hand: Card[], mode: 'suit-rank' | 'rank-only'): Card[] {
     }
     return (RANK_ORDER[a.rank] ?? 0) - (RANK_ORDER[b.rank] ?? 0);
   });
+}
+
+// ---- PlayerHand component with horizontal scroll and navigation arrows ----
+
+function PlayerHand({
+  sortedHand,
+  playableIds,
+  transferIds,
+  passThroughIds,
+  selectedCardId,
+  onCardClick,
+}: {
+  sortedHand: Card[];
+  playableIds: Set<string>;
+  transferIds: Set<string>;
+  passThroughIds: Set<string>;
+  selectedCardId: string | null;
+  onCardClick: (card: Card) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+  }, []);
+
+  // Check scroll on mount and when hand changes
+  useMemo(() => {
+    // Delay to let DOM update
+    setTimeout(checkScroll, 50);
+  }, [sortedHand.length, checkScroll]);
+
+  const scroll = useCallback((direction: 'left' | 'right') => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const cardWidth = 72; // approx card width
+    const scrollAmount = cardWidth * 3; // scroll 3 cards at a time
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+    setTimeout(checkScroll, 300);
+  }, [checkScroll]);
+
+  // Calculate overlap based on card count
+  const getCardMargin = (i: number) => {
+    if (i === 0) return '0';
+    if (sortedHand.length <= 8) return '0'; // No overlap needed
+    if (sortedHand.length <= 12) return '-8px';
+    if (sortedHand.length <= 18) return '-14px';
+    return '-20px'; // Heavy overlap for 18+ cards
+  };
+
+  const needsScroll = sortedHand.length > 8;
+
+  return (
+    <div className="relative">
+      {/* Left scroll arrow */}
+      {needsScroll && canScrollLeft && (
+        <button
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 text-amber-300 rounded-full p-1 shadow-lg border border-amber-700/40 transition-all"
+          onClick={() => scroll('left')}
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+      {/* Right scroll arrow */}
+      {needsScroll && canScrollRight && (
+        <button
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 text-amber-300 rounded-full p-1 shadow-lg border border-amber-700/40 transition-all"
+          onClick={() => scroll('right')}
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      )}
+
+      <div
+        ref={scrollRef}
+        className="flex justify-center overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent"
+        onScroll={checkScroll}
+        style={{
+          scrollbarWidth: 'thin',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
+        <div className="flex items-end px-6">
+          {sortedHand.map((card, i) => {
+            const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
+            const isSelected = selectedCardId === card.id;
+            const isPassThroughCard = passThroughIds.has(card.id);
+            return (
+              <div
+                key={card.id}
+                className="relative flex-shrink-0 transition-transform duration-150"
+                style={{
+                  marginLeft: getCardMargin(i),
+                  zIndex: isSelected ? 50 : i,
+                  transform: isSelected ? 'translateY(-8px)' : undefined,
+                }}
+              >
+                <PlayingCard
+                  card={card}
+                  playable={isPlayable}
+                  selected={isSelected}
+                  onClick={() => onCardClick(card)}
+                />
+                {isPassThroughCard && !isSelected && (
+                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-600 rounded-full flex items-center justify-center border border-yellow-400">
+                    <Eye className="w-2.5 h-2.5 text-white" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export interface GameTableProps {
@@ -456,38 +578,14 @@ export default function GameTable({
               {sortMode === 'suit-rank' ? 'По масти' : 'По рангу'}
             </button>
           </div>
-          <div className="flex justify-center overflow-x-auto pb-2">
-            <div className="flex gap-1" style={{ marginLeft: sortedHand.length > 10 ? `-${Math.min((sortedHand.length - 10) * 8, 40)}px` : '0' }}>
-              {sortedHand.map((card, i) => {
-                const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
-                const isSelected = selectedCardId === card.id;
-                const isPassThroughCard = passThroughIds.has(card.id);
-                return (
-                  <div
-                    key={card.id}
-                    className="relative"
-                    style={{
-                      marginLeft: i > 0 && sortedHand.length > 10 ? `-${Math.min(12, Math.floor(80 / sortedHand.length))}px` : '0',
-                      zIndex: isSelected ? 50 : i,
-                    }}
-                  >
-                    <PlayingCard
-                      card={card}
-                      playable={isPlayable}
-                      selected={isSelected}
-                      onClick={() => handleCardClick(card)}
-                    />
-                    {/* Small pass-through indicator on card */}
-                    {isPassThroughCard && !isSelected && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-600 rounded-full flex items-center justify-center border border-yellow-400">
-                        <Eye className="w-2.5 h-2.5 text-white" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PlayerHand
+            sortedHand={sortedHand}
+            playableIds={playableIds}
+            transferIds={transferIds}
+            passThroughIds={passThroughIds}
+            selectedCardId={selectedCardId}
+            onCardClick={handleCardClick}
+          />
         </div>
         )}
       </div>

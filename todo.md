@@ -82,3 +82,21 @@
 - [x] Add "left game" (leftGame) status field to Player and ClientPlayer
 - [x] UI: "Покинуть игру" button on game table
 - [x] UI: "Покинул игру" status in results screen
+
+## Баг: зависания v2 (глубокий анализ)
+- [x] Глубокий анализ всех путей выполнения в движке и сервере
+- [x] Root cause: executeBotAction игнорировал ошибки → бесконечный цикл сброса таймера
+- [x] executeBotAction теперь возвращает boolean и логирует ошибки
+- [x] Счётчик провалов бота + forceResolveStuckState после 3 попыток
+- [x] Улучшенный handleTimeUp с немедленной финализацией
+- [x] Edge bot auto-pass при ошибке
+- [x] Deadlock safeguard в handleTimeUp
+
+## Выход из игры — полноценный возврат в лобби
+- [x] После покидания игры игрок сразу попадает в лобби (leaveGame очищает всё состояние)
+
+## Прокрутка карт в руке
+- [x] PlayerHand компонент с горизонтальной прокруткой и стрелками навигации
+- [x] Адаптивный overlap карт в зависимости от количества
+- [x] Стрелки влево/вправо появляются при 8+ картах
+- [x] Тонкий scrollbar для свободной прокрутки

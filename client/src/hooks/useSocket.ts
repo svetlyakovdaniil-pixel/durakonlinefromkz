@@ -167,7 +167,26 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, []);
 
   const leaveGame = useCallback((roomId: string) => {
-    socketRef.current?.emit('leaveGame', roomId);
+    const returnToLobby = () => {
+      currentRoomIdRef.current = null;
+      setCurrentRoom(null);
+      setGameState(null);
+      setAvailableActions([]);
+      setChatMessages([]);
+      setGameOverData(null);
+    };
+
+    socketRef.current?.emit('leaveGame', roomId, (result: { ok: boolean }) => {
+      // Server acknowledged — return to lobby
+      returnToLobby();
+    });
+
+    // Fallback: if server doesn't respond within 2s, return to lobby anyway
+    setTimeout(() => {
+      if (currentRoomIdRef.current === roomId) {
+        returnToLobby();
+      }
+    }, 2000);
   }, []);
 
   const closeRoom = useCallback((roomId: string) => {

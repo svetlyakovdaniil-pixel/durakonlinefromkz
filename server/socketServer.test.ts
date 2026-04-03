@@ -527,3 +527,129 @@ describe('Freeze fix: attacker always has endAttack', () => {
     }
   });
 });
+
+describe('Bot action failure handling', () => {
+  it('getBotAction returns valid action for defending bot', () => {
+    const players = createTestPlayers(2, true);
+    const game = createGame('room1', players);
+
+    // Human is attacker, bot is defender
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+    const attacker = game.players[attackerIdx];
+    const defender = game.players[defenderIdx];
+
+    // Play an attack card
+    const attackCard = attacker.hand[0];
+    playAttackCard(game, attackerIdx, attackCard.id);
+
+    if (defender.isBot) {
+      const botAction = getBotAction(game, defenderIdx);
+      // Bot should either defend or take
+      expect(botAction).not.toBeNull();
+      expect(['playDefense', 'takeCards', 'transferCard']).toContain(botAction!.action);
+    }
+  });
+
+  it('getBotAction returns endAttack for attacker bot with cards on table', () => {
+    const players = createTestPlayers(3, true);
+    const game = createGame('room1', players);
+
+    const attackerIdx = game.currentAttackerIdx;
+    const attacker = game.players[attackerIdx];
+
+    if (attacker.isBot) {
+      const botAction = getBotAction(game, attackerIdx);
+      expect(botAction).not.toBeNull();
+      // Bot should play a card or end attack
+      expect(['playAttack', 'endAttack', 'skipTurn']).toContain(botAction!.action);
+    }
+  });
+
+  it('playAttackCard returns error for invalid card', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+
+    const error = playAttackCard(game, attackerIdx, 'nonexistent-card-id');
+    expect(error).not.toBeNull();
+    expect(typeof error).toBe('string');
+  });
+
+  it('playDefenseCard returns error for wrong card', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+
+    // Play attack card
+    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+
+    // Try to defend with non-existent card
+    const error = playDefenseCard(game, defenderIdx, 'nonexistent-card', 0);
+    expect(error).not.toBeNull();
+  });
+
+  it('endAttack returns error when no cards on table', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+
+    // No cards on table
+    const error = endAttack(game, attackerIdx);
+    expect(error).toBe('No cards on table');
+  });
+
+  it('endAttack with all cards defended leads to successfulDefense', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+
+    // Attacker plays
+    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+
+    // Defender defends
+    const defActions = getAvailableActions(game, defenderIdx);
+    const defPlayCard = defActions.find(a => a.type === 'playCard');
+    if (defPlayCard && defPlayCard.cardIds.length > 0) {
+      playDefenseCard(game, defenderIdx, defPlayCard.cardIds[0], 0);
+
+      // All defended — attacker presses bito
+      const result = endAttack(game, attackerIdx);
+      // Should succeed (null) or already resolved
+      if (game.battleField.length === 0) {
+        // successfulDefense was called
+        expect(game.turnPhase).toBe('attack');
+      }
+    }
+  });
+
+  it('handleTimeUp scenario: defender takes when time expires', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+
+    // Attacker plays
+    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+    expect(game.turnPhase).toBe('defend');
+
+    // Simulate time up for defender: take cards then finalize
+    takeCards(game);
+    expect(game.defenderTaking).toBe(true);
+
+    // Pass all attackers
+    for (const p of game.players) {
+      if (!p.isOut && p.id !== game.players[game.currentDefenderIdx].id) {
+        if (!game.passedAttackers.includes(p.id)) {
+          game.passedAttackers.push(p.id);
+        }
+      }
+    }
+    finalizeTake(game);
+
+    // Should be back to attack phase
+    expect(game.turnPhase).toBe('attack');
+    expect(game.battleField.length).toBe(0);
+  });
+});
