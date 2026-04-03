@@ -101,6 +101,17 @@ export function initSocketServer(httpServer: HttpServer) {
       const isInRoom = room.players.some(p => p.id === odId);
       if (!isInRoom) { cb(false); return; }
 
+      // Cancel any pending grace period timer for this player
+      const graceTimer = disconnectTimers.get(odId);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+        disconnectTimers.delete(odId);
+        console.log(`[Socket] Cancelled grace period for ${odId} — player reconnected`);
+      }
+
+      // Update socket mapping
+      playerSockets.set(odId, socket.id);
+
       socket.join(roomId);
       trackPlayerRoom(odId, roomId);
 
@@ -871,11 +882,13 @@ function forceResolveStuckState(gs: GameState, botIdx: number) {
   }
 }
 
-// Safe version of checkAllAttackersPassed that doesn't import from engine
+// Safe version of checkAllAttackersPassed that matches engine logic
 function checkAllAttackersPassed_safe(gs: GameState): boolean {
   for (let i = 0; i < gs.players.length; i++) {
     if (i === gs.currentDefenderIdx) continue;
     if (gs.players[i].isOut) continue;
+    // Skip players who can't add cards and aren't the current attacker
+    if (!canPlayerAddCards(gs, i) && i !== gs.currentAttackerIdx) continue;
     if (!gs.passedAttackers.includes(gs.players[i].id)) return false;
   }
   return true;

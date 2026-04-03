@@ -48,19 +48,30 @@ export function useSocket(userId: string | null, userName: string | null) {
       const roomId = currentRoomIdRef.current;
       if (roomId) {
         console.log(`[Socket] Reconnected — attempting to rejoin room ${roomId}`);
-        socket.emit('rejoinRoom', roomId, (ok, room) => {
-          if (ok && room) {
-            setCurrentRoom(room);
-            toast.success('Переподключение успешно!', { duration: 3000 });
-          } else {
-            console.log(`[Socket] Failed to rejoin room ${roomId}`);
-            toast.error('Не удалось вернуться в комнату', { duration: 4000 });
-            currentRoomIdRef.current = null;
-            setCurrentRoom(null);
-            setGameState(null);
-            setAvailableActions([]);
-          }
-        });
+        
+        // Retry rejoin up to 3 times with increasing delay
+        const attemptRejoin = (attempt: number) => {
+          if (currentRoomIdRef.current !== roomId) return; // Room changed, abort
+          
+          socket.emit('rejoinRoom', roomId, (ok: boolean, room: any) => {
+            if (ok && room) {
+              setCurrentRoom(room);
+              toast.success('Переподключение успешно!', { duration: 3000 });
+            } else if (attempt < 3) {
+              console.log(`[Socket] Rejoin attempt ${attempt} failed, retrying in ${attempt * 1000}ms...`);
+              setTimeout(() => attemptRejoin(attempt + 1), attempt * 1000);
+            } else {
+              console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
+              toast.error('Не удалось вернуться в комнату', { duration: 4000 });
+              currentRoomIdRef.current = null;
+              setCurrentRoom(null);
+              setGameState(null);
+              setAvailableActions([]);
+            }
+          });
+        };
+        
+        attemptRejoin(1);
       }
     });
 
@@ -81,7 +92,14 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
 
     socket.on('roomList', (r) => setRooms(r));
-    socket.on('roomUpdated', (r) => setCurrentRoom(r));
+    socket.on('roomUpdated', (r) => {
+      setCurrentRoom(r);
+      // If server sends roomUpdated (e.g. after auto-rejoin on reconnect),
+      // make sure we track the room ID for future reconnects
+      if (r && r.id && !currentRoomIdRef.current) {
+        currentRoomIdRef.current = r.id;
+      }
+    });
     socket.on('roomClosed', () => {
       currentRoomIdRef.current = null;
       setCurrentRoom(null);

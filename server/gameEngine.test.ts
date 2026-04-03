@@ -1172,3 +1172,87 @@ describe('Pass-through (проездной) mechanic', () => {
     expect(clientState.revealedPassThroughs[0].cards.length).toBe(1);
   });
 });
+
+// ============================================================
+// PICKUP MODE — passedAttackers not fully reset
+// ============================================================
+describe('Pickup mode passedAttackers behavior', () => {
+  it('in pickup mode, adding a card only removes the playing attacker from passedAttackers', () => {
+    const state = createTestState(4);
+    state.players[0].hand = [card('spades', '7'), card('spades', '8')];
+    state.players[1].isOut = true; // Bot1 finished
+    state.players[2].hand = [card('hearts', '7'), card('hearts', '8')]; // Bot2 attacker
+    state.players[3].hand = [card('diamonds', 'A'), card('diamonds', 'K'), card('diamonds', 'Q')]; // Bot3 defender with enough cards
+    state.currentAttackerIdx = 2;
+    state.currentDefenderIdx = 3;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.leadCardRank = '7';
+    state.firstTrick = false;
+
+    // Bot2 (idx 2, id='p3') presses бито
+    endAttack(state, 2);
+    expect(state.passedAttackers).toContain('p3');
+
+    // Now p1 (edge player, idx 0) adds a card matching rank 7
+    state.attackerHasPriority = false; // Edge players can act
+    // currentAttackerIdx may have changed after endAttack, set it to allow edge play
+    state.currentAttackerIdx = 0; // p1 becomes attacker after priority pass
+
+    const err = playAttackCard(state, 0, state.players[0].hand[0].id); // p1 plays 7
+    expect(err).toBeNull();
+    // In pickup mode, p3 should still be in passedAttackers
+    expect(state.passedAttackers).toContain('p3');
+    // p1 just played, so they should NOT be in passedAttackers
+    expect(state.passedAttackers).not.toContain('p1');
+  });
+
+  it('in normal mode, adding a card resets ALL passedAttackers', () => {
+    const state = createTestState(3);
+    state.players[0].hand = [card('spades', '7', 1), card('spades', '9')];
+    state.players[1].hand = [card('hearts', 'A'), card('hearts', 'K'), card('hearts', 'Q')]; // defender with enough cards
+    state.players[2].hand = [card('diamonds', '6')];
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.defenderTaking = false;
+    state.turnPhase = 'attack';
+    state.battleField = [{ attack: card('spades', '7'), defense: card('hearts', '7') }];
+    state.leadCardRank = '7';
+    state.firstTrick = false;
+    state.passedAttackers = ['p3']; // p3 already passed
+    state.deck1 = [card('spades', 'A')]; // deck not empty so player doesn't go out
+
+    // p1 (attacker) adds a card with rank 7 matching the table
+    const err = playAttackCard(state, 0, state.players[0].hand[0].id);
+    expect(err).toBeNull();
+    // In normal mode, ALL passedAttackers should be reset
+    expect(state.passedAttackers).toEqual([]);
+  });
+
+  it('4-player pickup: two bots press бито sequentially, finalizeTake is called', () => {
+    const state = createTestState(4);
+    state.players[0].hand = [card('spades', 'A')]; // human (edge)
+    state.players[1].isOut = true; // Bot1 finished
+    state.players[2].hand = [card('hearts', '7')]; // Bot2 attacker
+    state.players[3].hand = []; // Bot3 defender (taking)
+    state.currentAttackerIdx = 2;
+    state.currentDefenderIdx = 3;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.leadCardRank = '7';
+    state.firstTrick = false;
+
+    // Bot2 (idx 2) presses бито
+    endAttack(state, 2);
+    // Should NOT finalize yet — p1 (idx 0) hasn't passed
+    expect(state.defenderTaking).toBe(true);
+
+    // p1 (idx 0) presses бито  
+    endAttack(state, 0);
+    // Now all attackers passed — should finalize
+    expect(state.defenderTaking).toBe(false);
+    expect(state.battleField.length).toBe(0);
+  });
+});

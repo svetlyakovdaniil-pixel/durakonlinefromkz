@@ -355,8 +355,16 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
   }
   // If defender IS taking (pickup mode), stay in pickup — cards just pile up
 
-  // When someone adds a card, reset passed attackers since new cards appeared
-  state.passedAttackers = [];
+  // When someone adds a card in normal mode, reset passed attackers since new cards appeared
+  // In pickup mode (defenderTaking), do NOT reset — the attacker who just added a card
+  // is still considered "passed" for the purpose of finalizeTake. Only remove THIS player
+  // from passedAttackers (since they just played a card, they haven't "passed" yet).
+  if (state.defenderTaking) {
+    // Remove only this player from passed list — they just played, so they need to press бито again
+    state.passedAttackers = state.passedAttackers.filter(id => id !== player.id);
+  } else {
+    state.passedAttackers = [];
+  }
   const wentOut = checkPlayerOut(state, playerIdx);
 
   // If the player who just played went out (last card), handle gracefully
@@ -1084,9 +1092,25 @@ export function getBotAction(state: GameState, botIdx: number): { action: string
   if (isAttacker) {
     const playAction = actions.find(a => a.type === 'playCard');
     if (playAction && playAction.type === 'playCard' && playAction.cardIds.length > 0) {
-      // In pickup mode, bot is more aggressive about adding cards
-      const addChance = state.defenderTaking ? 0.8 : 1.0;
-      if (Math.random() < addChance) {
+      if (state.defenderTaking) {
+        // In pickup mode, bot adds 1-2 cards then presses бито
+        // Count how many undefended cards are already on the table
+        const undefendedCount = state.battleField.filter(p => !p.defense).length;
+        // If there are already several undefended cards, just press бито
+        if (undefendedCount >= 3) {
+          if (actions.find(a => a.type === 'endAttack')) return { action: 'endAttack' };
+        }
+        // Otherwise add a card with 50% chance
+        if (Math.random() < 0.5) {
+          const playableCards = player.hand
+            .filter(c => playAction.cardIds.includes(c.id))
+            .sort((a, b) => getCardValue(a) - getCardValue(b));
+          if (playableCards.length > 0) {
+            return { action: 'playAttack', cardId: playableCards[0].id };
+          }
+        }
+      } else {
+        // Normal attack mode
         const playableCards = player.hand
           .filter(c => playAction.cardIds.includes(c.id))
           .sort((a, b) => getCardValue(a) - getCardValue(b));
