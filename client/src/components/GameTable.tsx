@@ -5,7 +5,7 @@ import { SUIT_SYMBOLS, GAME_TABLE_URL } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye } from 'lucide-react';
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -65,16 +65,26 @@ export default function GameTable({
     return ids;
   }, [availableActions]);
 
+  const passThroughIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const a of availableActions) {
+      if (a.type === 'showPassThrough') a.cardIds.forEach(id => ids.add(id));
+    }
+    return ids;
+  }, [availableActions]);
+
   const canTake = availableActions.some(a => a.type === 'takeCards');
   const canEndAttack = availableActions.some(a => a.type === 'endAttack');
   const canSkip = availableActions.some(a => a.type === 'skipTurn');
   const canTransfer = transferIds.size > 0;
+  const canPassThrough = passThroughIds.size > 0;
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
   const handleCardClick = (card: Card) => {
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
-      if (transferIds.has(card.id)) {
+      // If card is a transfer or passThrough candidate, select it
+      if (transferIds.has(card.id) || passThroughIds.has(card.id)) {
         if (selectedCardId === card.id) {
           setSelectedCardId(null);
         } else {
@@ -166,9 +176,9 @@ export default function GameTable({
         {/* Top HUD */}
         <div className="flex items-center justify-between px-3 py-2 bg-black/50 backdrop-blur-sm">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40">
-              <span className={trumpColor}>{trumpSymbol}</span>
-              <span className="ml-1 text-xs">Фаза {gs.trumpInfo.phase}/3</span>
+            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 px-3 py-1.5">
+              <span className={`${trumpColor} text-2xl leading-none`}>{trumpSymbol}</span>
+              <span className="ml-2 text-sm font-medium">Фаза {gs.trumpInfo.phase}/3</span>
             </Badge>
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
               <Layers className="w-3 h-3 mr-1" />
@@ -196,6 +206,8 @@ export default function GameTable({
             const pIdx = gs.players.findIndex(pp => pp.id === p.id);
             const isOppAttacker = pIdx === gs.currentAttackerIdx;
             const isOppDefender = pIdx === gs.currentDefenderIdx;
+            // Check if this opponent has revealed pass-through cards
+            const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
             return (
               <div key={p.id} className={`flex flex-col items-center px-3 py-2 rounded-xl border transition-all ${
                 isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
@@ -211,6 +223,22 @@ export default function GameTable({
                 </div>
                 {isOppDefender && gs.defenderTaking && (
                   <span className="text-[10px] text-orange-400 mb-0.5">Берёт</span>
+                )}
+                {/* Show revealed pass-through cards */}
+                {oppRevealed && oppRevealed.cards.length > 0 && (
+                  <div className="flex items-center gap-1 mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded px-2 py-0.5">
+                    <Eye className="w-3 h-3 text-yellow-400" />
+                    <span className="text-[10px] text-yellow-300 font-medium">
+                      Проездной: {oppRevealed.cards.length}
+                    </span>
+                    <div className="flex gap-0.5 ml-1">
+                      {oppRevealed.cards.map(c => (
+                        <span key={c.id} className="text-xs">
+                          {SUIT_SYMBOLS[c.suit as keyof typeof SUIT_SYMBOLS] || ''}{c.rank}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
                 {p.isOut ? (
                   <span className="text-xs text-green-400">{p.winPlace}-е место</span>
@@ -241,13 +269,24 @@ export default function GameTable({
                 </span>
               </div>
             )}
+
+            {/* Revealed pass-through cards banner (my own) */}
+            {gs.revealedPassThroughs && gs.revealedPassThroughs.find(r => r.playerId === gs.players[myIdx]?.id) && (
+              <div className="bg-yellow-900/50 border border-yellow-600/40 rounded-lg px-4 py-1.5 mb-2">
+                <span className="text-yellow-300 text-sm font-medium flex items-center gap-2">
+                  <Eye className="w-4 h-4" />
+                  Вы показали проездной ({gs.revealedPassThroughs.find(r => r.playerId === gs.players[myIdx]?.id)!.cards.length} шт.)
+                </span>
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
               {gs.battleField.map((pair: BattlePair, i: number) => (
                 <div key={i} className="relative">
-                  <PlayingCard card={pair.attack} small />
+                  <PlayingCard card={pair.attack} medium />
                   {pair.defense && (
-                    <div className="absolute top-3 left-3">
-                      <PlayingCard card={pair.defense} small />
+                    <div className="absolute top-4 left-4">
+                      <PlayingCard card={pair.defense} medium />
                     </div>
                   )}
                 </div>
@@ -304,6 +343,16 @@ export default function GameTable({
               Перевести
             </Button>
           )}
+          {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+            <Button
+              size="sm"
+              className="bg-yellow-700 hover:bg-yellow-600 text-white"
+              onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              Проездной
+            </Button>
+          )}
           {canTake && (
             <Button size="sm" variant="destructive" onClick={onTakeCards}>
               Забрать
@@ -335,11 +384,13 @@ export default function GameTable({
           <div className="flex justify-center overflow-x-auto pb-2">
             <div className="flex gap-1" style={{ marginLeft: sortedHand.length > 10 ? `-${Math.min((sortedHand.length - 10) * 8, 40)}px` : '0' }}>
               {sortedHand.map((card, i) => {
-                const isPlayable = playableIds.has(card.id) || transferIds.has(card.id);
+                const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
                 const isSelected = selectedCardId === card.id;
+                const isPassThroughCard = passThroughIds.has(card.id);
                 return (
                   <div
                     key={card.id}
+                    className="relative"
                     style={{
                       marginLeft: i > 0 && sortedHand.length > 10 ? `-${Math.min(12, Math.floor(80 / sortedHand.length))}px` : '0',
                       zIndex: isSelected ? 50 : i,
@@ -351,6 +402,12 @@ export default function GameTable({
                       selected={isSelected}
                       onClick={() => handleCardClick(card)}
                     />
+                    {/* Small pass-through indicator on card */}
+                    {isPassThroughCard && !isSelected && (
+                      <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-600 rounded-full flex items-center justify-center border border-yellow-400">
+                        <Eye className="w-2.5 h-2.5 text-white" />
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -97,6 +97,8 @@ export interface GameState {
   passedAttackers: string[];
   nextWinPlace: number;
   defenderTaking: boolean; // true when defender pressed "take" but attackers can still add cards
+  passThroughUsedIds: string[]; // card IDs that have already been used as pass-through (one-time per card per game)
+  revealedPassThroughs: { playerId: string; cards: Card[] }[]; // currently revealed pass-through cards this trick
 }
 
 // --- Room ---
@@ -149,6 +151,7 @@ export interface ClientToServerEvents {
   endAttack: (roomId: string) => void;
   skipTurn: (roomId: string) => void;
   sendChat: (data: { roomId: string; text: string }) => void;
+  rejoinRoom: (roomId: string, cb: (ok: boolean, room?: Room) => void) => void;
 }
 
 // --- Client-side game state ---
@@ -178,6 +181,7 @@ export interface ClientGameState {
   passedAttackers: string[];
   canAddCards: boolean;
   defenderTaking: boolean;
+  revealedPassThroughs: { playerId: string; cards: { id: string; suit: string | null; rank: string; copy: number }[] }[]; // pass-through cards shown this trick
 }
 
 export interface ClientPlayer {

@@ -1,8 +1,8 @@
 // ============================================================
-// Kazakh Durak Online — Socket.IO Server (v4)
-// Fixes: attacker priority handoff, pickup-after-take mechanic,
-// multi-attacker bito, bot transfer, ready+start,
-// improved timer, edge-only add-cards, room cleanup
+// Kazakh Durak Online — Socket.IO Server (v5)
+// Fixes: reconnect grace period, attacker priority handoff,
+// pickup-after-take mechanic, multi-attacker bito, bot transfer,
+// ready+start, improved timer, edge-only add-cards, room cleanup
 // ============================================================
 
 import { Server as HttpServer } from 'http';
@@ -29,6 +29,11 @@ const playerSockets = new Map<string, string>(); // odId -> socketId
 const socketPlayers = new Map<string, { odId: string; name: string }>(); // socketId -> player info
 const turnTimers = new Map<string, NodeJS.Timeout>(); // roomId -> interval
 
+// Disconnect grace period — track disconnected players before removing them
+const DISCONNECT_GRACE_MS = 45_000; // 45 seconds grace period
+const disconnectTimers = new Map<string, NodeJS.Timeout>(); // odId -> timeout
+const playerRooms = new Map<string, Set<string>>(); // odId -> set of roomIds
+
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
@@ -37,6 +42,8 @@ export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
     path: '/api/socket.io',
+    pingTimeout: 30000,     // 30s before considering connection dead
+    pingInterval: 15000,    // ping every 15s
   });
 
   io.on('connection', (socket) => {
@@ -47,7 +54,73 @@ export function initSocketServer(httpServer: HttpServer) {
     socketPlayers.set(socket.id, { odId, name });
     playerSockets.set(odId, socket.id);
 
+    // Cancel any pending disconnect grace timer for this player
+    const pendingTimer = disconnectTimers.get(odId);
+    if (pendingTimer) {
+      clearTimeout(pendingTimer);
+      disconnectTimers.delete(odId);
+      console.log(`[Socket] Player ${odId} reconnected — grace timer cancelled`);
+    }
+
+    // Rejoin all rooms this player was in
+    const roomSet = playerRooms.get(odId);
+    if (roomSet) {
+      for (const roomId of Array.from(roomSet)) {
+        const room = rooms.get(roomId);
+        if (room && room.players.some(p => p.id === odId)) {
+          socket.join(roomId);
+          // Send current room state
+          socket.emit('roomUpdated', sanitizeRoom(room));
+          // If game is in progress, send game state
+          const gameState = games.get(roomId);
+          if (gameState && gameState.gamePhase === 'playing') {
+            const clientState = toClientState(gameState, odId);
+            socket.emit('gameStateUpdate', clientState);
+            const playerIdx = gameState.players.findIndex(p => p.id === odId);
+            if (playerIdx !== -1) {
+              const actions = getAvailableActions(gameState, playerIdx);
+              if (actions.length > 0) {
+                socket.emit('yourTurn', actions);
+              }
+            }
+          }
+          console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
+        }
+      }
+    }
+
     socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
+
+    // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
+    socket.on('rejoinRoom', (roomId, cb) => {
+      const room = rooms.get(roomId);
+      if (!room) { cb(false); return; }
+
+      const isInRoom = room.players.some(p => p.id === odId);
+      if (!isInRoom) { cb(false); return; }
+
+      socket.join(roomId);
+      trackPlayerRoom(odId, roomId);
+
+      // Send current room state
+      socket.emit('roomUpdated', sanitizeRoom(room));
+
+      // If game is in progress, send full game state
+      const gameState = games.get(roomId);
+      if (gameState && gameState.gamePhase === 'playing') {
+        const clientState = toClientState(gameState, odId);
+        socket.emit('gameStateUpdate', clientState);
+        const playerIdx = gameState.players.findIndex(p => p.id === odId);
+        if (playerIdx !== -1) {
+          const actions = getAvailableActions(gameState, playerIdx);
+          if (actions.length > 0) {
+            socket.emit('yourTurn', actions);
+          }
+        }
+      }
+
+      cb(true, sanitizeRoom(room));
+    });
 
     // --- Room Management ---
 
@@ -85,6 +158,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       rooms.set(roomId, room);
       socket.join(roomId);
+      trackPlayerRoom(odId, roomId);
       broadcastRoomList();
       cb(sanitizeRoom(room));
     });
@@ -96,12 +170,14 @@ export function initSocketServer(httpServer: HttpServer) {
       if (room.gameState) { cb(false); return; }
       if (room.players.find(p => p.id === odId)) {
         socket.join(roomId);
+        trackPlayerRoom(odId, roomId);
         cb(true, sanitizeRoom(room));
         return;
       }
 
       room.players.push({ id: odId, name, ready: false, isBot: false });
       socket.join(roomId);
+      trackPlayerRoom(odId, roomId);
       io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
       io.to(roomId).emit('playerJoined', { id: odId, name });
       broadcastRoomList();
@@ -109,6 +185,8 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     socket.on('leaveRoom', (roomId) => {
+      // Explicit leave — no grace period
+      untrackPlayerRoom(odId, roomId);
       handlePlayerLeaveRoom(odId, roomId);
     });
 
@@ -276,24 +354,78 @@ export function initSocketServer(httpServer: HttpServer) {
       });
     });
 
-    // Disconnect — remove from all rooms
+    // Disconnect — start grace period instead of immediate removal
     socket.on('disconnect', () => {
-      console.log(`[Socket] Disconnected: ${socket.id}`);
-
-      const allRoomIds = Array.from(rooms.keys());
-      for (const rid of allRoomIds) {
-        const r = rooms.get(rid);
-        if (r && r.players.some((p: { id: string }) => p.id === odId)) {
-          handlePlayerLeaveRoom(odId, rid);
-        }
-      }
+      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId})`);
 
       socketPlayers.delete(socket.id);
-      playerSockets.delete(odId);
+      // Don't delete from playerSockets yet — wait for grace period
+
+      // Check if this player is in any active game rooms
+      const roomSet = playerRooms.get(odId);
+      const isInActiveGame = roomSet && Array.from(roomSet).some(rid => {
+        const gs = games.get(rid);
+        return gs && gs.gamePhase === 'playing';
+      });
+
+      if (isInActiveGame) {
+        // Start grace period — give player time to reconnect
+        console.log(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId}`);
+        const timer = setTimeout(() => {
+          console.log(`[Socket] Grace period expired for ${odId} — removing from rooms`);
+          disconnectTimers.delete(odId);
+          playerSockets.delete(odId);
+
+          const allRoomIds = playerRooms.get(odId);
+          if (allRoomIds) {
+            for (const rid of Array.from(allRoomIds)) {
+              const r = rooms.get(rid);
+              if (r && r.players.some((p: { id: string }) => p.id === odId)) {
+                handlePlayerLeaveRoom(odId, rid);
+              }
+            }
+          }
+          playerRooms.delete(odId);
+        }, DISCONNECT_GRACE_MS);
+
+        disconnectTimers.set(odId, timer);
+      } else {
+        // Not in active game — remove immediately
+        playerSockets.delete(odId);
+        const allRoomIds = playerRooms.get(odId);
+        if (allRoomIds) {
+          for (const rid of Array.from(allRoomIds)) {
+            const r = rooms.get(rid);
+            if (r && r.players.some((p: { id: string }) => p.id === odId)) {
+              handlePlayerLeaveRoom(odId, rid);
+            }
+          }
+        }
+        playerRooms.delete(odId);
+      }
     });
   });
 
   return io;
+}
+
+// ---- Player-Room tracking ----
+
+function trackPlayerRoom(odId: string, roomId: string) {
+  let set = playerRooms.get(odId);
+  if (!set) {
+    set = new Set();
+    playerRooms.set(odId, set);
+  }
+  set.add(roomId);
+}
+
+function untrackPlayerRoom(odId: string, roomId: string) {
+  const set = playerRooms.get(odId);
+  if (set) {
+    set.delete(roomId);
+    if (set.size === 0) playerRooms.delete(odId);
+  }
 }
 
 // ---- Room helpers ----
@@ -303,7 +435,29 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
   if (!room) return;
 
   if (room.hostId === playerId) {
-    closeRoom(roomId);
+    // Transfer host to next human player if possible
+    const nextHost = room.players.find(p => p.id !== playerId && !p.isBot);
+    if (nextHost) {
+      room.hostId = nextHost.id;
+      room.players = room.players.filter(p => p.id !== playerId);
+      
+      const sid = playerSockets.get(playerId);
+      if (sid) {
+        const s = io.sockets.sockets.get(sid);
+        if (s) s.leave(roomId);
+      }
+
+      if (room.players.filter(p => !p.isBot).length === 0) {
+        closeRoom(roomId);
+        return;
+      }
+
+      io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+      io.to(roomId).emit('playerLeft', playerId);
+      broadcastRoomList();
+    } else {
+      closeRoom(roomId);
+    }
     return;
   }
 
@@ -339,6 +493,7 @@ function closeRoom(roomId: string) {
         const s = io.sockets.sockets.get(sid);
         if (s) s.leave(roomId);
       }
+      untrackPlayerRoom(p.id, roomId);
     }
   }
 

@@ -178,6 +178,8 @@ export function createGame(
     passedAttackers: [],
     nextWinPlace: 1,
     defenderTaking: false,
+    passThroughUsedIds: [],
+    revealedPassThroughs: [],
   };
 }
 
@@ -435,21 +437,43 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
 }
 
 // ---- Pass-through (proezdnoy) ----
+// The defender SHOWS a trump card of the same rank as the attack card.
+// The card stays in hand (not played to the table).
+// Each specific card can only be shown as pass-through ONCE per game.
+// Multiple cards can be shown if the defender has multiple qualifying cards.
 
 export function showPassThrough(state: GameState, playerIdx: number, cardId: string): string | null {
-  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
+  if (playerIdx !== state.currentDefenderIdx) return 'Не ваш ход';
+  if (state.defenderTaking) return 'Вы уже берёте карты';
+  if (state.battleField.length === 0) return 'Нет карт на столе';
 
   const player = state.players[playerIdx];
-  const cardIndex = player.hand.findIndex(c => c.id === cardId);
-  if (cardIndex === -1) return 'Card not in hand';
-  const card = player.hand[cardIndex];
+  const card = player.hand.find(c => c.id === cardId);
+  if (!card) return 'Карта не в руке';
 
+  // Card must match the attack rank
   const attackRank = state.battleField[0]?.attack.rank;
-  if (card.rank !== attackRank) return 'Pass-through card must match attack rank';
+  if (card.rank !== attackRank) return 'Проездной должен совпадать по номиналу с атакующей картой';
 
-  player.hand.splice(cardIndex, 1);
-  state.discardPile.push(card);
+  // Card must be a trump card
+  if (card.suit !== state.trumpInfo.currentTrump) return 'Проездной должен быть козырной картой';
 
+  // Each card can only be used as pass-through once per game
+  if (state.passThroughUsedIds.includes(cardId)) return 'Эта карта уже использовалась как проездной';
+
+  // Mark this card as used for pass-through (one-time per game)
+  state.passThroughUsedIds.push(cardId);
+
+  // Add to revealed pass-throughs for this trick (visible to all players)
+  const existing = state.revealedPassThroughs.find(r => r.playerId === player.id);
+  if (existing) {
+    existing.cards.push(card);
+  } else {
+    state.revealedPassThroughs.push({ playerId: player.id, cards: [card] });
+  }
+
+  // The card stays in the player's hand — NOT removed
+  // Transfer the attack: defender becomes attacker, next player becomes defender
   const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
   state.currentAttackerIdx = state.currentDefenderIdx;
   state.currentDefenderIdx = newDefenderIdx;
@@ -458,7 +482,6 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
   state.attackerHasPriority = true;
   state.defenderTaking = false;
   resetTurnTimer(state);
-  checkPlayerOut(state, playerIdx);
   return null;
 }
 
@@ -491,6 +514,7 @@ export function finalizeTake(state: GameState): void {
   state.attackerHasPriority = true;
   state.passedAttackers = [];
   state.defenderTaking = false;
+  state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
 
   drawCards(state);
 
@@ -518,6 +542,7 @@ export function successfulDefense(state: GameState): void {
   state.attackerHasPriority = true;
   state.passedAttackers = [];
   state.defenderTaking = false;
+  state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
 
   drawCards(state);
 
@@ -723,6 +748,19 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
         }
       }
 
+      // Pass-through (проездной) — show trump cards matching attack rank that haven't been used yet
+      if (state.battleField.length > 0) {
+        const attackRank = state.battleField[0].attack.rank;
+        const passThroughCards = player.hand.filter(c =>
+          c.rank === attackRank &&
+          c.suit === state.trumpInfo.currentTrump &&
+          !state.passThroughUsedIds.includes(c.id)
+        ).map(c => c.id);
+        if (passThroughCards.length > 0) {
+          actions.push({ type: 'showPassThrough', cardIds: passThroughCards });
+        }
+      }
+
       actions.push({ type: 'takeCards' });
     }
   }
@@ -854,6 +892,10 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     passedAttackers: state.passedAttackers,
     canAddCards: playerCanAdd,
     defenderTaking: state.defenderTaking,
+    revealedPassThroughs: state.revealedPassThroughs.map(r => ({
+      playerId: r.playerId,
+      cards: r.cards.map(c => ({ id: c.id, suit: c.suit, rank: c.rank, copy: c.copy })),
+    })),
   };
 }
 

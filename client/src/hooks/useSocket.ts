@@ -21,6 +21,9 @@ export function useSocket(userId: string | null, userName: string | null) {
   const [turnTimer, setTurnTimer] = useState(0);
   const [gameOverData, setGameOverData] = useState<{ winnersOrder: string[]; loserId: string | null } | null>(null);
 
+  // Track the room ID we're currently in for reconnect
+  const currentRoomIdRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -28,15 +31,57 @@ export function useSocket(userId: string | null, userName: string | null) {
       path: '/api/socket.io',
       auth: { odId: userId, name: userName || 'Гость' },
       transports: ['websocket', 'polling'],
+      reconnection: true,
+      reconnectionAttempts: 20,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      timeout: 30000,
     });
 
     socketRef.current = socket;
 
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('connect', () => {
+      setConnected(true);
+      // On reconnect, try to rejoin the room we were in
+      const roomId = currentRoomIdRef.current;
+      if (roomId) {
+        console.log(`[Socket] Reconnected — attempting to rejoin room ${roomId}`);
+        socket.emit('rejoinRoom', roomId, (ok, room) => {
+          if (ok && room) {
+            setCurrentRoom(room);
+            toast.success('Переподключение успешно!', { duration: 3000 });
+          } else {
+            console.log(`[Socket] Failed to rejoin room ${roomId}`);
+            toast.error('Не удалось вернуться в комнату', { duration: 4000 });
+            currentRoomIdRef.current = null;
+            setCurrentRoom(null);
+            setGameState(null);
+            setAvailableActions([]);
+          }
+        });
+      }
+    });
+
+    socket.on('disconnect', (reason) => {
+      setConnected(false);
+      console.log(`[Socket] Disconnected: ${reason}`);
+      if (currentRoomIdRef.current) {
+        toast.warning('Соединение потеряно — переподключение...', { duration: 5000 });
+      }
+    });
+
+    socket.io.on('reconnect_attempt', (attempt) => {
+      console.log(`[Socket] Reconnect attempt ${attempt}`);
+    });
+
+    socket.io.on('reconnect_failed', () => {
+      toast.error('Не удалось переподключиться. Обновите страницу.', { duration: 10000 });
+    });
+
     socket.on('roomList', (r) => setRooms(r));
     socket.on('roomUpdated', (r) => setCurrentRoom(r));
     socket.on('roomClosed', () => {
+      currentRoomIdRef.current = null;
       setCurrentRoom(null);
       setGameState(null);
       setAvailableActions([]);
@@ -89,6 +134,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     return new Promise((resolve) => {
       socketRef.current?.emit('createRoom', { name, maxPlayers, settings }, (room) => {
         setCurrentRoom(room);
+        currentRoomIdRef.current = room.id;
         resolve(room);
       });
     });
@@ -97,7 +143,10 @@ export function useSocket(userId: string | null, userName: string | null) {
   const joinRoom = useCallback((roomId: string): Promise<boolean> => {
     return new Promise((resolve) => {
       socketRef.current?.emit('joinRoom', roomId, (ok, room) => {
-        if (ok && room) setCurrentRoom(room);
+        if (ok && room) {
+          setCurrentRoom(room);
+          currentRoomIdRef.current = room.id;
+        }
         resolve(ok);
       });
     });
@@ -105,6 +154,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const leaveRoom = useCallback((roomId: string) => {
     socketRef.current?.emit('leaveRoom', roomId);
+    currentRoomIdRef.current = null;
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);
@@ -114,6 +164,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const closeRoom = useCallback((roomId: string) => {
     socketRef.current?.emit('closeRoom', roomId);
+    currentRoomIdRef.current = null;
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);
@@ -162,6 +213,7 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, []);
 
   const returnToLobby = useCallback(() => {
+    currentRoomIdRef.current = null;
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);

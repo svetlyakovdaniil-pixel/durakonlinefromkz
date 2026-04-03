@@ -60,6 +60,8 @@ function createTestState(numPlayers: number, overrides?: Partial<GameState>): Ga
     passedAttackers: [],
     nextWinPlace: 1,
     defenderTaking: false,
+    passThroughUsedIds: [],
+    revealedPassThroughs: [],
     ...overrides,
   };
 }
@@ -556,10 +558,10 @@ describe('777 special rules', () => {
 describe('Edge player rules', () => {
   it('identifies edge players correctly in clockwise direction', () => {
     const players: Player[] = [
-      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false },
-      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: false, seatIndex: 1, isBot: false },
-      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false },
-      { id: 'p4', odId: 'p4', name: 'P4', hand: [], passThrough: [], isOut: false, seatIndex: 3, isBot: false },
+      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false, winPlace: null },
+      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: false, seatIndex: 1, isBot: false, winPlace: null },
+      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false, winPlace: null },
+      { id: 'p4', odId: 'p4', name: 'P4', hand: [], passThrough: [], isOut: false, seatIndex: 3, isBot: false, winPlace: null },
     ];
     expect(isEdgePlayer(players, 0, 1, 'cw')).toBe(true);
     expect(isEdgePlayer(players, 2, 1, 'cw')).toBe(true);
@@ -729,18 +731,18 @@ describe('Draw cards and trump transitions', () => {
 describe('Navigation helpers', () => {
   it('getNextActivePlayer skips out players', () => {
     const players: Player[] = [
-      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false },
-      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: true, seatIndex: 1, isBot: false },
-      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false },
+      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false, winPlace: null },
+      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: true, seatIndex: 1, isBot: false, winPlace: null },
+      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false, winPlace: null },
     ];
     expect(getNextActivePlayer(players, 0, 'cw')).toBe(2);
   });
 
   it('getPrevActivePlayer goes in reverse direction', () => {
     const players: Player[] = [
-      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false },
-      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: false, seatIndex: 1, isBot: false },
-      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false },
+      { id: 'p1', odId: 'p1', name: 'P1', hand: [], passThrough: [], isOut: false, seatIndex: 0, isBot: false, winPlace: null },
+      { id: 'p2', odId: 'p2', name: 'P2', hand: [], passThrough: [], isOut: false, seatIndex: 1, isBot: false, winPlace: null },
+      { id: 'p3', odId: 'p3', name: 'P3', hand: [], passThrough: [], isOut: false, seatIndex: 2, isBot: false, winPlace: null },
     ];
     expect(getPrevActivePlayer(players, 2, 'cw')).toBe(1);
   });
@@ -997,5 +999,176 @@ describe('Pickup mechanic (defender takes)', () => {
     const error = playAttackCard(state, 0, state.players[0].hand[0].id);
     expect(error).toBeTruthy();
     expect(error).toContain('Maximum');
+  });
+});
+
+// ============================================================
+// PASS-THROUGH (ПРОЕЗДНОЙ) MECHANIC
+// ============================================================
+describe('Pass-through (проездной) mechanic', () => {
+  it('defender can show a trump card matching attack rank as pass-through', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    // Attack with 7 of spades, defender has 7 of hearts (trump)
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
+
+    const error = showPassThrough(state, 1, state.players[1].hand[0].id);
+    expect(error).toBeNull();
+
+    // Card should STAY in hand
+    expect(state.players[1].hand.length).toBe(2);
+    expect(state.players[1].hand[0].id).toBe('hearts-7-0');
+
+    // Card should be in passThroughUsedIds
+    expect(state.passThroughUsedIds).toContain('hearts-7-0');
+
+    // Card should be in revealedPassThroughs
+    expect(state.revealedPassThroughs.length).toBe(1);
+    expect(state.revealedPassThroughs[0].playerId).toBe('p2');
+    expect(state.revealedPassThroughs[0].cards.length).toBe(1);
+
+    // Defender becomes attacker, next player becomes defender
+    expect(state.currentAttackerIdx).toBe(1);
+    expect(state.currentDefenderIdx).toBe(2);
+  });
+
+  it('cannot use same card as pass-through twice', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.players[1].hand = [card('hearts', '7')];
+    state.passThroughUsedIds = ['hearts-7-0']; // already used
+
+    const error = showPassThrough(state, 1, 'hearts-7-0');
+    expect(error).toBeTruthy();
+    expect(error).toContain('уже использовалась');
+  });
+
+  it('cannot use non-trump card as pass-through', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    // clubs-7 is NOT a trump (trump is hearts)
+    state.players[1].hand = [card('clubs', '7')];
+
+    const error = showPassThrough(state, 1, 'clubs-7-0');
+    expect(error).toBeTruthy();
+    expect(error).toContain('козырной');
+  });
+
+  it('cannot use card with wrong rank as pass-through', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    // hearts-8 is trump but wrong rank
+    state.players[1].hand = [card('hearts', '8')];
+
+    const error = showPassThrough(state, 1, 'hearts-8-0');
+    expect(error).toBeTruthy();
+    expect(error).toContain('номиналу');
+  });
+
+  it('defender can show multiple pass-through cards if they have them', () => {
+    const state = createTestState(4);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    // Defender has TWO trump 7s
+    state.players[1].hand = [card('hearts', '7', 0), card('hearts', '7', 1), card('clubs', 'A')];
+
+    // Show first pass-through
+    const error1 = showPassThrough(state, 1, 'hearts-7-0');
+    expect(error1).toBeNull();
+    expect(state.revealedPassThroughs[0].cards.length).toBe(1);
+
+    // Now defender is attacker (idx 1), new defender is idx 2
+    // Simulate new attack on new defender who also has trump 7
+    state.currentDefenderIdx = 2;
+    state.currentAttackerIdx = 1;
+    state.battleField = [{ attack: card('spades', '7', 1), defense: null }];
+    state.players[2].hand = [card('hearts', '7', 2)];
+
+    // New defender shows pass-through
+    const error2 = showPassThrough(state, 2, 'hearts-7-2');
+    expect(error2).toBeNull();
+    expect(state.revealedPassThroughs.length).toBe(2); // Two different players
+  });
+
+  it('showPassThrough action appears in available actions for defender with trump matching card', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
+
+    const actions = getAvailableActions(state, 1);
+    const ptAction = actions.find(a => a.type === 'showPassThrough');
+    expect(ptAction).toBeDefined();
+    if (ptAction && ptAction.type === 'showPassThrough') {
+      expect(ptAction.cardIds).toContain('hearts-7-0');
+    }
+  });
+
+  it('showPassThrough action does NOT appear for non-trump matching card', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    // Only has clubs-7 (not trump)
+    state.players[1].hand = [card('clubs', '7')];
+
+    const actions = getAvailableActions(state, 1);
+    const ptAction = actions.find(a => a.type === 'showPassThrough');
+    expect(ptAction).toBeUndefined();
+  });
+
+  it('revealedPassThroughs are cleared after successful defense', () => {
+    const state = createTestState(3);
+    state.revealedPassThroughs = [{ playerId: 'p2', cards: [card('hearts', '7')] }];
+    state.currentDefenderIdx = 1;
+    state.currentAttackerIdx = 0;
+    state.battleField = [{ attack: card('spades', '8'), defense: card('spades', '9') }];
+
+    successfulDefense(state);
+    expect(state.revealedPassThroughs.length).toBe(0);
+  });
+
+  it('revealedPassThroughs are cleared after finalizeTake', () => {
+    const state = createTestState(3);
+    state.revealedPassThroughs = [{ playerId: 'p2', cards: [card('hearts', '7')] }];
+    state.currentDefenderIdx = 1;
+    state.currentAttackerIdx = 0;
+    state.defenderTaking = true;
+    state.turnPhase = 'pickup';
+    state.players[0].hand = [card('hearts', 'A')];
+    state.players[1].hand = [];
+    state.players[2].hand = [card('hearts', 'K')];
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+
+    finalizeTake(state);
+    expect(state.revealedPassThroughs.length).toBe(0);
+  });
+
+  it('revealedPassThroughs visible in client state', () => {
+    const state = createTestState(3);
+    state.revealedPassThroughs = [{ playerId: 'p2', cards: [card('hearts', '7')] }];
+    state.players[0].hand = [card('spades', 'A')];
+
+    const clientState = toClientState(state, 'p1');
+    expect(clientState.revealedPassThroughs.length).toBe(1);
+    expect(clientState.revealedPassThroughs[0].playerId).toBe('p2');
+    expect(clientState.revealedPassThroughs[0].cards.length).toBe(1);
   });
 });
