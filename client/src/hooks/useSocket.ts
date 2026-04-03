@@ -166,6 +166,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     setGameOverData(null);
   }, []);
 
+  const leaveGame = useCallback((roomId: string) => {
+    socketRef.current?.emit('leaveGame', roomId);
+  }, []);
+
   const closeRoom = useCallback((roomId: string) => {
     socketRef.current?.emit('closeRoom', roomId);
     currentRoomIdRef.current = null;
@@ -238,6 +242,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     createRoom,
     joinRoom,
     leaveRoom,
+    leaveGame,
     closeRoom,
     toggleReady,
     startGame,

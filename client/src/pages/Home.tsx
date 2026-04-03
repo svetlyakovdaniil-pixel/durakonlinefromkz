@@ -15,7 +15,7 @@ export default function Home() {
   const {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
     gameOverData,
-    createRoom, joinRoom, leaveRoom, closeRoom, toggleReady, startGame,
+    createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError,
   } = useSocket(
@@ -50,6 +50,7 @@ export default function Home() {
         onEndAttack={() => endAttack(gameState.roomId)}
         onSkipTurn={() => skipTurn(gameState.roomId)}
         onShowPassThrough={(cardId) => showPassThrough(gameState.roomId, cardId)}
+        onLeaveGame={() => leaveGame(gameState.roomId)}
         onReturnToLobby={returnToLobby}
       />
     );

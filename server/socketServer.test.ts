@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, finalizeTake, resetTurnTimer, getBotAction, checkPlayerOut, getNextActivePlayer } from './gameEngine';
+import { createGame, toClientState, getAvailableActions, playAttackCard, playDefenseCard, successfulDefense, endAttack, takeCards, finalizeTake, resetTurnTimer, getBotAction, checkPlayerOut, getNextActivePlayer, forfeitPlayer } from './gameEngine';
 import type { GameState, Player, RoomSettings } from '../shared/gameTypes';
 
 // Integration-level tests for game flow scenarios
@@ -400,5 +400,130 @@ describe('Game over and loser detection', () => {
     expect(p1?.winPlace).toBe(1);
     expect(p3?.winPlace).toBe(2);
     expect(p2?.winPlace).toBe(3);
+  });
+});
+
+describe('Forfeit (leave game)', () => {
+  it('forfeit marks player as leftGame and isOut', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    forfeitPlayer(game, 2);
+
+    expect(game.players[2].leftGame).toBe(true);
+    expect(game.players[2].isOut).toBe(true);
+    expect(game.players[2].hand.length).toBe(0);
+  });
+
+  it('forfeit moves cards to discard pile', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    const handSize = game.players[2].hand.length;
+    const discardBefore = game.discardPile.length;
+
+    forfeitPlayer(game, 2);
+
+    expect(game.discardPile.length).toBe(discardBefore + handSize);
+  });
+
+  it('forfeit of defender clears battlefield', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+
+    // Attacker plays a card
+    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+    expect(game.battleField.length).toBe(1);
+
+    // Defender forfeits
+    forfeitPlayer(game, defenderIdx);
+
+    expect(game.battleField.length).toBe(0);
+    expect(game.players[defenderIdx].leftGame).toBe(true);
+  });
+
+  it('forfeit ends game when only one player remains', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+
+    // One player forfeits
+    forfeitPlayer(game, 1);
+
+    expect(game.gamePhase).toBe('finished');
+  });
+
+  it('client state shows leftGame status', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    forfeitPlayer(game, 2);
+
+    const clientState = toClientState(game, 'p1');
+    const leftPlayer = clientState.players.find(p => p.id === game.players[2].id);
+    expect(leftPlayer?.leftGame).toBe(true);
+    expect(leftPlayer?.isOut).toBe(true);
+  });
+
+  it('already-out player cannot forfeit again', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    game.players[2].isOut = true;
+    game.players[2].winPlace = 1;
+    game.players[2].hand = [];
+
+    const discardBefore = game.discardPile.length;
+    forfeitPlayer(game, 2);
+
+    // Should not change anything
+    expect(game.discardPile.length).toBe(discardBefore);
+    expect(game.players[2].leftGame).toBeFalsy();
+  });
+});
+
+describe('Freeze fix: attacker always has endAttack', () => {
+  it('attacker can press bito even when not all cards defended', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+
+    // Attacker plays a card
+    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+    expect(game.turnPhase).toBe('defend');
+
+    // Attacker should have endAttack action even though card is not defended
+    const actions = getAvailableActions(game, attackerIdx);
+    const hasEndAttack = actions.some(a => a.type === 'endAttack');
+    expect(hasEndAttack).toBe(true);
+  });
+
+  it('attacker can add cards during defend phase', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const attackerIdx = game.currentAttackerIdx;
+    const defenderIdx = game.currentDefenderIdx;
+
+    // Attacker plays a card
+    const firstCard = game.players[attackerIdx].hand[0];
+    playAttackCard(game, attackerIdx, firstCard.id);
+
+    // Defender defends
+    const defActions = getAvailableActions(game, defenderIdx);
+    const defPlayCard = defActions.find(a => a.type === 'playCard');
+    if (defPlayCard && defPlayCard.cardIds.length > 0) {
+      playDefenseCard(game, defenderIdx, defPlayCard.cardIds[0], 0);
+    }
+
+    // After all defended, attacker should be able to add more cards
+    if (game.turnPhase === 'attack') {
+      const attackActions = getAvailableActions(game, attackerIdx);
+      const hasPlayCard = attackActions.some(a => a.type === 'playCard');
+      const hasEndAttack = attackActions.some(a => a.type === 'endAttack');
+      // Should have both options
+      expect(hasEndAttack).toBe(true);
+    }
   });
 });

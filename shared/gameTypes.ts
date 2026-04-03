@@ -47,6 +47,7 @@ export interface Player {
   seatIndex: number;
   isBot: boolean;
   winPlace: number | null;
+  leftGame: boolean; // true if player voluntarily left the game (auto-lose)
 }
 
 // --- Battle pair ---
@@ -140,6 +141,7 @@ export interface ClientToServerEvents {
   createRoom: (data: { name: string; maxPlayers: number; settings: RoomSettings }, cb: (room: Room) => void) => void;
   joinRoom: (roomId: string, cb: (ok: boolean, room?: Room) => void) => void;
   leaveRoom: (roomId: string) => void;
+  leaveGame: (roomId: string) => void;
   closeRoom: (roomId: string) => void;
   toggleReady: (roomId: string) => void;
   startGame: (roomId: string) => void;
@@ -192,6 +194,7 @@ export interface ClientPlayer {
   seatIndex: number;
   isBot: boolean;
   winPlace: number | null;
+  leftGame: boolean;
 }
 
 // --- Available actions ---

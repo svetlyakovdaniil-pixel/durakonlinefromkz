@@ -69,3 +69,16 @@
 - [x] UI: "Дурак" бейдж для проигравшего
 - [x] UI: экран результатов с полным рейтингом всех игроков
 - [x] Тесты для системы победителей (101 тест проходит)
+
+## Баг: зависание игры
+- [x] Fix race condition: cancel pending bot timeouts on new actions
+- [x] Fix getBotAction returning null silently killing game loop
+- [x] Fix attacker should always be able to press "бито" when cards are on table
+- [x] Add safety fallback: if no actions available for anyone, auto-resolve trick
+
+## Выход из игры (покинул игру)
+- [x] Add forfeitGame engine function — player auto-loses, cards go to discard
+- [x] Add leaveGame socket event
+- [x] Add "left game" (leftGame) status field to Player and ClientPlayer
+- [x] UI: "Покинуть игру" button on game table
+- [x] UI: "Покинул игру" status in results screen

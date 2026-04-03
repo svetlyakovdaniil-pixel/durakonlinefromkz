@@ -5,7 +5,7 @@ import { SUIT_SYMBOLS, GAME_TABLE_URL } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen } from 'lucide-react';
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -33,13 +33,14 @@ export interface GameTableProps {
   onEndAttack: () => void;
   onSkipTurn: () => void;
   onShowPassThrough: (cardId: string) => void;
+  onLeaveGame?: () => void;
   onReturnToLobby?: () => void;
 }
 
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
-  onReturnToLobby,
+  onLeaveGame, onReturnToLobby,
 }: GameTableProps) {
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -114,36 +115,41 @@ export default function GameTable({
 
   const opponents = gs.players.filter((_, i) => i !== myIdx);
 
+  const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+
   // Game over overlay
   if (gs.gamePhase === 'finished') {
     const myPlayer = gs.players[myIdx];
     const isLoser = gs.loserId === myPlayer?.id;
     const isWinner = myPlayer?.winPlace !== null && myPlayer?.winPlace !== undefined;
+    const didLeave = myPlayer?.leftGame;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center p-4">
         <div className="bg-[#1a2d45]/90 border border-amber-700/30 rounded-2xl p-8 max-w-md w-full text-center space-y-6">
           <div className="text-6xl mb-4">
-            {isLoser ? '😢' : '🎉'}
+            {isLoser ? '😢' : didLeave ? '🚶' : '🎉'}
           </div>
           <h2 className="text-3xl font-bold text-amber-100">
-            {isLoser ? 'Вы проиграли!' : isWinner ? `Вы победили! (${myPlayer.winPlace}-е место)` : 'Игра окончена!'}
+            {didLeave ? 'Вы покинули игру' : isLoser ? 'Вы проиграли!' : isWinner ? `Вы победили! (${myPlayer.winPlace}-е место)` : 'Игра окончена!'}
           </h2>
 
           <div className="space-y-2">
             <h3 className="text-amber-400 font-semibold text-lg">Результаты:</h3>
             {gs.players.map(p => (
               <div key={p.id} className={`flex items-center justify-between px-4 py-2 rounded-lg ${
+                p.leftGame ? 'bg-gray-800/40 border border-gray-600/30' :
                 p.id === gs.loserId ? 'bg-red-900/30 border border-red-700/30' :
                 p.winPlace ? 'bg-green-900/20 border border-green-700/20' : 'bg-[#0f2035]/50'
               }`}>
                 <span className="text-amber-100 flex items-center gap-2">
-                  {p.winPlace && <Trophy className="w-4 h-4 text-amber-400" />}
-                  {p.id === gs.loserId && <Frown className="w-4 h-4 text-red-400" />}
+                  {p.leftGame && <DoorOpen className="w-4 h-4 text-gray-400" />}
+                  {!p.leftGame && p.winPlace && <Trophy className="w-4 h-4 text-amber-400" />}
+                  {!p.leftGame && p.id === gs.loserId && <Frown className="w-4 h-4 text-red-400" />}
                   {p.name}
                 </span>
-                <span className={p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}>
-                  {p.id === gs.loserId ? 'Дурак' : p.winPlace ? `${p.winPlace}-е место` : ''}
+                <span className={p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}>
+                  {p.leftGame ? 'Покинул игру' : p.id === gs.loserId ? 'Дурак' : p.winPlace ? `${p.winPlace}-е место` : ''}
                 </span>
               </div>
             ))}
@@ -172,6 +178,37 @@ export default function GameTable({
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
+      {/* Leave game confirmation dialog */}
+      {showLeaveConfirm && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#1a2d45] border border-amber-700/40 rounded-2xl p-6 max-w-sm w-full mx-4 text-center space-y-4">
+            <DoorOpen className="w-12 h-12 text-red-400 mx-auto" />
+            <h3 className="text-xl font-bold text-amber-100">Покинуть игру?</h3>
+            <p className="text-amber-200/60 text-sm">
+              Вы автоматически проиграете. Ваши карты уйдут в бито.
+            </p>
+            <div className="flex gap-3">
+              <Button
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white"
+                onClick={() => setShowLeaveConfirm(false)}
+              >
+                Остаться
+              </Button>
+              <Button
+                className="flex-1 bg-red-700 hover:bg-red-600 text-white"
+                onClick={() => {
+                  setShowLeaveConfirm(false);
+                  onLeaveGame?.();
+                }}
+              >
+                <LogOut className="w-4 h-4 mr-1" />
+                Покинуть
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="relative z-10 flex flex-col h-screen">
         {/* Top HUD */}
         <div className="flex items-center justify-between px-3 py-2 bg-black/50 backdrop-blur-sm">
@@ -197,6 +234,15 @@ export default function GameTable({
               <Timer className="w-3 h-3 mr-1" />
               {turnTimer}с
             </Badge>
+            {onLeaveGame && !gs.players[myIdx]?.isOut && (
+              <button
+                className="text-gray-400 hover:text-red-400 transition-colors p-1 rounded"
+                onClick={() => setShowLeaveConfirm(true)}
+                title="Покинуть игру"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -240,7 +286,12 @@ export default function GameTable({
                     </div>
                   </div>
                 )}
-                {p.isOut ? (
+                {p.leftGame ? (
+                  <div className="flex items-center gap-1.5 bg-gray-800/50 border border-gray-600/30 rounded-lg px-2 py-1">
+                    <DoorOpen className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-400 font-semibold">Покинул игру</span>
+                  </div>
+                ) : p.isOut ? (
                   <div className="flex items-center gap-1.5 bg-green-900/40 border border-green-600/30 rounded-lg px-2 py-1">
                     <Trophy className="w-3.5 h-3.5 text-amber-400" />
                     <span className="text-xs text-green-300 font-semibold">{p.winPlace}-е место</span>

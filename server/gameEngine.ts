@@ -135,6 +135,7 @@ export function createGame(
     seatIndex: idx,
     isBot: p.isBot,
     winPlace: null,
+    leftGame: false,
   }));
 
   const remaining = allCards.slice(totalDeal);
@@ -667,6 +668,10 @@ export function endAttack(state: GameState, playerIdx: number): string | null {
   }
 
   // No one else can add — defender must take or defend remaining
+  // Make sure turnPhase is 'defend' so defender gets actions
+  state.turnPhase = 'defend';
+  state.attackerHasPriority = false;
+  resetTurnTimer(state);
   return null;
 }
 
@@ -771,6 +776,61 @@ function ensureActiveAttackerDefender(state: GameState): void {
   }
 }
 
+// ---- Forfeit (player leaves game voluntarily) ----
+
+export function forfeitPlayer(state: GameState, playerIdx: number): void {
+  const player = state.players[playerIdx];
+  if (player.isOut) return; // Already out
+
+  // Mark player as left and out
+  player.leftGame = true;
+  player.isOut = true;
+
+  // Move all cards from hand to discard pile
+  for (const card of player.hand) {
+    state.discardPile.push(card);
+  }
+  player.hand = [];
+
+  // If this player was involved in current battle, handle it
+  const isAttacker = playerIdx === state.currentAttackerIdx;
+  const isDefender = playerIdx === state.currentDefenderIdx;
+
+  if (isDefender) {
+    // Defender left — all battlefield cards go to discard
+    for (const pair of state.battleField) {
+      state.discardPile.push(pair.attack);
+      if (pair.defense) state.discardPile.push(pair.defense);
+    }
+    state.battleField = [];
+    state.turnPhase = 'attack';
+    state.defenderTaking = false;
+    state.passedAttackers = [];
+    state.revealedPassThroughs = [];
+    state.attackerHasPriority = true;
+  }
+
+  if (isAttacker) {
+    // Auto-pass this attacker
+    if (!state.passedAttackers.includes(player.id)) {
+      state.passedAttackers.push(player.id);
+    }
+  }
+
+  // Reassign attacker/defender if needed
+  ensureActiveAttackerDefender(state);
+
+  // If defender left and we cleared the battlefield, set up new trick
+  if (isDefender) {
+    state.currentAttackerIdx = getNextActivePlayer(state.players, playerIdx, state.direction);
+    state.currentDefenderIdx = getNextActivePlayer(state.players, state.currentAttackerIdx, state.direction);
+    resetTurnTimer(state);
+  }
+
+  // Check if game is over
+  checkGameOver(state);
+}
+
 // ---- Game over check ----
 
 function checkGameOver(state: GameState): void {
@@ -859,23 +919,16 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       return actions;
     }
 
-    // Normal attack phase
-    if (state.turnPhase === 'attack' || (state.turnPhase === 'defend' && state.battleField.length === 0)) {
+    // Attacker can play cards in attack phase, or add cards during defend phase
+    if (state.turnPhase === 'attack' || state.battleField.length === 0) {
       const playableIds = player.hand
         .filter(c => canPlayAsAttack(state, c))
         .map(c => c.id);
       if (playableIds.length > 0) {
         actions.push({ type: 'playCard', cardIds: playableIds });
       }
-    }
-
-    // "Бито" button — when all defended
-    if (state.battleField.length > 0 && state.battleField.every(p => p.defense)) {
-      actions.push({ type: 'endAttack' });
-    }
-
-    // Can still add cards when not all defended (attacker can always add)
-    if (state.battleField.length > 0 && !state.battleField.every(p => p.defense) && state.turnPhase === 'defend') {
+    } else if (state.turnPhase === 'defend' && state.battleField.length > 0) {
+      // Attacker can always add matching cards during defend phase
       if (canAddMoreAttackCards(state)) {
         const playableIds = player.hand
           .filter(c => canPlayAsAttack(state, c))
@@ -884,6 +937,12 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           actions.push({ type: 'playCard', cardIds: playableIds });
         }
       }
+    }
+
+    // "Бито" button — attacker can ALWAYS press бито when cards are on table
+    // This prevents deadlocks where attacker has no way to end their turn
+    if (state.battleField.length > 0) {
+      actions.push({ type: 'endAttack' });
     }
   }
 
@@ -939,6 +998,7 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     seatIndex: p.seatIndex,
     isBot: p.isBot,
     winPlace: p.winPlace,
+    leftGame: p.leftGame,
   }));
 
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;
