@@ -385,10 +385,17 @@ export function initSocketServer(httpServer: HttpServer) {
       markProgress(roomId);
       resetTurnTimer(gameState);
       restartTurnTimer(roomId);
-      broadcastGameState(roomId, gameState);
 
-      // Acknowledge to the client
+      // Acknowledge FIRST so client can clean up before receiving further updates
       if (typeof ack === 'function') ack({ ok: true });
+
+      // Remove the player from the socket.io room so they don't receive further updates
+      socket.leave(roomId);
+
+      // Clean up player mappings so reconnect won't rejoin this room
+      untrackPlayerRoom(odId, roomId);
+
+      broadcastGameState(roomId, gameState);
 
       // If game is not over, schedule bot actions
       if (gameState.gamePhase === 'playing') {

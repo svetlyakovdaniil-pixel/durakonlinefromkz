@@ -23,6 +23,8 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   // Track the room ID we're currently in for reconnect
   const currentRoomIdRef = useRef<string | null>(null);
+  // Flag to prevent game state updates after leaving
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -115,6 +117,8 @@ export function useSocket(userId: string | null, userName: string | null) {
       setGameOverData(null);
     });
     socket.on('gameStateUpdate', (s) => {
+      // Ignore updates if we're in the process of leaving
+      if (leavingRef.current) return;
       setGameState(s);
       setTurnTimer(s.turnTimer);
       // Clear stale actions — fresh ones arrive via yourTurn immediately after
@@ -185,24 +189,29 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, []);
 
   const leaveGame = useCallback((roomId: string) => {
-    const returnToLobby = () => {
+    // Set leaving flag IMMEDIATELY to block any incoming gameStateUpdate
+    leavingRef.current = true;
+
+    const doReturnToLobby = () => {
       currentRoomIdRef.current = null;
       setCurrentRoom(null);
       setGameState(null);
       setAvailableActions([]);
       setChatMessages([]);
       setGameOverData(null);
+      // Reset leaving flag after state is cleared
+      setTimeout(() => { leavingRef.current = false; }, 100);
     };
 
     socketRef.current?.emit('leaveGame', roomId, (result: { ok: boolean }) => {
       // Server acknowledged — return to lobby
-      returnToLobby();
+      doReturnToLobby();
     });
 
     // Fallback: if server doesn't respond within 2s, return to lobby anyway
     setTimeout(() => {
-      if (currentRoomIdRef.current === roomId) {
-        returnToLobby();
+      if (leavingRef.current) {
+        doReturnToLobby();
       }
     }, 2000);
   }, []);

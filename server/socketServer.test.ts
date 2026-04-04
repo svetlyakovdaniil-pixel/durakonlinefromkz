@@ -490,6 +490,9 @@ describe('Freeze fix: attacker always has endAttack', () => {
     const game = createGame('room1', players);
     const attackerIdx = game.currentAttackerIdx;
 
+    // Skip firstTrick so turnPhase goes to 'defend' after attack
+    game.firstTrick = false;
+
     // Attacker plays a card
     playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
     expect(game.turnPhase).toBe('defend');
