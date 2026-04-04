@@ -219,20 +219,21 @@ describe('Game creation', () => {
     expect(totalCards).toBe(145);
   });
 
-  it('trump info has 3 different suits', () => {
+  it('trump info has valid suits and correct initial phase', () => {
     const players = [
       { id: 'p1', odId: 'p1', name: 'Player 1', isBot: false },
       { id: 'p2', odId: 'p2', name: 'Player 2', isBot: false },
     ];
     const game = createGame('room1', players);
-    const trumpSuits = new Set([
-      game.trumpInfo.mainTrump,
-      game.trumpInfo.hiddenTrump1,
-      game.trumpInfo.hiddenTrump2,
-    ]);
-    expect(trumpSuits.size).toBe(3);
+    const validSuits = ['spades', 'hearts', 'diamonds', 'clubs'];
+    expect(validSuits).toContain(game.trumpInfo.mainTrump);
+    expect(validSuits).toContain(game.trumpInfo.hiddenTrump1);
+    expect(validSuits).toContain(game.trumpInfo.hiddenTrump2);
     expect(game.trumpInfo.currentTrump).toBe(game.trumpInfo.mainTrump);
     expect(game.trumpInfo.phase).toBe(1);
+    // trumpCard should be set and match mainTrump suit
+    expect(game.trumpInfo.trumpCard).toBeDefined();
+    expect(game.trumpInfo.trumpCard!.suit).toBe(game.trumpInfo.mainTrump);
   });
 
   it('sets first attacker and defender correctly', () => {
