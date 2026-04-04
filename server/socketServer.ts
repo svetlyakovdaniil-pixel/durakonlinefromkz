@@ -305,6 +305,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       if (error) { socket.emit('error', error); return; }
 
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
       markProgress(data.roomId);
       resetTurnTimer(gameState);
       restartTurnTimer(data.roomId);
@@ -320,6 +325,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const error = transferAttack(gameState, playerIdx, data.cardId);
       if (error) { socket.emit('error', error); return; }
 
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
       markProgress(data.roomId);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);
@@ -333,6 +343,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = showPassThrough(gameState, playerIdx, data.cardId);
       if (error) { socket.emit('error', error); return; }
+
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
 
       markProgress(data.roomId);
       restartTurnTimer(data.roomId);
@@ -348,6 +363,11 @@ export function initSocketServer(httpServer: HttpServer) {
       if (playerIdx !== gameState.currentDefenderIdx) return;
       if (gameState.defenderTaking) return; // Already taking
 
+      // Reset consecutive timeout counter — player took action (voluntary take)
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
       engineTakeCards(gameState);
       markProgress(roomId);
       restartTurnTimer(roomId);
@@ -362,6 +382,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = engineEndAttack(gameState, playerIdx);
       if (error) { socket.emit('error', error); return; }
+
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
 
       markProgress(roomId);
       restartTurnTimer(roomId);
@@ -828,17 +853,54 @@ function handleTimeUp(roomId: string, gameState: GameState) {
     }
     engineFinalizeTake(gameState);
   } else if (gameState.turnPhase === 'defend') {
-    // Defender time's up — auto take and immediately finalize
-    engineTakeCards(gameState);
-    // Pass all attackers to finalize immediately
-    for (const p of gameState.players) {
-      if (!p.isOut && p.id !== gameState.players[gameState.currentDefenderIdx].id) {
-        if (!gameState.passedAttackers.includes(p.id)) {
-          gameState.passedAttackers.push(p.id);
+    // Defender time's up — track consecutive timeouts
+    const defender = gameState.players[gameState.currentDefenderIdx];
+    if (defender && !defender.isBot) {
+      const prevCount = gameState.consecutiveTimeouts[defender.id] || 0;
+      gameState.consecutiveTimeouts[defender.id] = prevCount + 1;
+      console.log(`[Timer] Defender ${defender.name} timeout #${prevCount + 1}`);
+
+      // 2 consecutive timeouts = auto-forfeit
+      if (prevCount + 1 >= 2) {
+        console.log(`[Timer] Defender ${defender.name} forfeited due to 2 consecutive timeouts`);
+        const defenderIdx = gameState.currentDefenderIdx;
+        forfeitPlayer(gameState, defenderIdx);
+        // Mark as forfeited to prevent rejoin
+        forfeitedFromRoom.add(`${defender.id}:${roomId}`);
+        untrackPlayerRoom(defender.id, roomId);
+        // Remove from room.players
+        const room = rooms.get(roomId);
+        if (room) {
+          room.players = room.players.filter(rp => rp.id !== defender.id);
+          if (room.players.filter(rp => !rp.isBot).length === 0) {
+            closeRoom(roomId);
+            return;
+          }
+          if (room.hostId === defender.id) {
+            const nextHost = room.players.find(rp => !rp.isBot);
+            if (nextHost) room.hostId = nextHost.id;
+          }
+          io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
         }
+        // Notify the player
+        const sid = playerSockets.get(defender.id);
+        if (sid) {
+          const s = io.sockets.sockets.get(sid);
+          if (s) s.leave(roomId);
+          io.to(sid).emit('forcedToLobby', { reason: 'kicked' });
+        }
+        // Reset and continue
+        resetTurnTimer(gameState);
+        restartTurnTimer(roomId);
+        broadcastGameState(roomId, gameState);
+        if (gameState.gamePhase === 'playing') scheduleBotAction(roomId);
+        return;
       }
     }
-    engineFinalizeTake(gameState);
+
+    // First timeout: defender takes cards, but attackers can still add more
+    engineTakeCards(gameState);
+    // Do NOT finalize immediately — let attackers add cards
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
       // Attacker time's up — auto "бито"

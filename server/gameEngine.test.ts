@@ -62,6 +62,7 @@ function createTestState(numPlayers: number, overrides?: Partial<GameState>): Ga
     defenderTaking: false,
     passThroughUsedIds: [],
     revealedPassThroughs: [],
+    consecutiveTimeouts: {},
     ...overrides,
   };
 }
@@ -1714,5 +1715,168 @@ describe('Trump determined by last drawn card on phase change', () => {
     // Phase should change to 3, trump should be clubs (suit of last card from deck2)
     expect(state.trumpInfo.phase).toBe(3);
     expect(state.trumpInfo.currentTrump).toBe('clubs');
+  });
+});
+
+// ============================================================
+// FIX: 13-CARD LIMIT ENFORCED IN getAvailableActions (attack phase)
+// ============================================================
+describe('13-card limit enforced in getAvailableActions during attack phase', () => {
+  it('hides playCard action for attacker when 13 attack cards already on table (firstTrick)', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = true;
+    // Give attacker a card that matches table ranks
+    state.players[0].hand = [card('spades', '7', 50)];
+    state.players[1].hand = Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100));
+    // Put 13 attack cards on the table (all defended)
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: card('hearts', '7', i),
+    }));
+    state.leadCardRank = '7';
+
+    const actions = getAvailableActions(state, 0);
+    const playAction = actions.find(a => a.type === 'playCard');
+    // Should NOT have playCard — already at 13 limit
+    expect(playAction).toBeUndefined();
+    // But should still have endAttack
+    expect(actions.some(a => a.type === 'endAttack')).toBe(true);
+  });
+
+  it('allows playCard when under 13 attack cards (firstTrick)', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = true;
+    state.players[0].hand = [card('spades', '7', 50)];
+    state.players[1].hand = Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100));
+    // Put 12 attack cards on the table (all defended)
+    state.battleField = Array.from({ length: 12 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: card('hearts', '7', i),
+    }));
+    state.leadCardRank = '7';
+
+    const actions = getAvailableActions(state, 0);
+    const playAction = actions.find(a => a.type === 'playCard');
+    // Should have playCard — only 12, under limit of 13
+    expect(playAction).toBeDefined();
+  });
+
+  it('hides playCard for edge player in normal mode when at 13 limit', () => {
+    const state = createTestState(4);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = true;
+    state.attackerHasPriority = false;
+    // Edge player (idx 3) has matching cards
+    state.players[3].hand = [card('spades', '7', 50)];
+    state.players[1].hand = Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100));
+    // 13 attack cards on table
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: card('hearts', '7', i),
+    }));
+    state.leadCardRank = '7';
+
+    const actions = getAvailableActions(state, 3);
+    const playAction = actions.find(a => a.type === 'playCard');
+    expect(playAction).toBeUndefined();
+  });
+});
+
+// ============================================================
+// DEFENDER TIMEOUT: takeCards without immediate finalize
+// ============================================================
+describe('Defender timeout behavior', () => {
+  it('engineTakeCards sets defenderTaking=true and attackers get playCard actions', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    state.players[0].hand = [card('spades', '7', 1)]; // attacker has matching card
+    state.players[1].hand = [card('hearts', 'A', 0), card('hearts', 'K', 0)]; // defender
+    state.players[2].hand = [card('clubs', 'A', 0)]; // other player
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.leadCardRank = '7';
+
+    // Simulate defender timeout: call takeCards (not finalizeTake)
+    takeCards(state);
+
+    expect(state.defenderTaking).toBe(true);
+    // Attacker should be able to add cards
+    const attackerActions = getAvailableActions(state, 0);
+    expect(attackerActions.some(a => a.type === 'playCard')).toBe(true);
+    expect(attackerActions.some(a => a.type === 'endAttack')).toBe(true);
+  });
+
+  it('after takeCards, finalizeTake only happens when all attackers pass', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    state.players[0].hand = [card('spades', '7', 1)];
+    state.players[1].hand = [card('hearts', 'A', 0)];
+    state.players[2].hand = [card('clubs', 'A', 0)];
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.leadCardRank = '7';
+
+    takeCards(state);
+    expect(state.defenderTaking).toBe(true);
+
+    // Attacker presses бито
+    endAttack(state, 0);
+    // Player 2 hasn't passed yet — should still be taking
+    expect(state.defenderTaking).toBe(true);
+
+    // Player 2 presses бито
+    endAttack(state, 2);
+    // Now all passed — finalize should happen
+    expect(state.defenderTaking).toBe(false);
+    expect(state.battleField.length).toBe(0);
+  });
+});
+
+// ============================================================
+// CONSECUTIVE TIMEOUTS TRACKING
+// ============================================================
+describe('Consecutive timeouts tracking', () => {
+  it('consecutiveTimeouts increments correctly', () => {
+    const state = createTestState(2);
+    state.consecutiveTimeouts = {};
+    expect(state.consecutiveTimeouts['p1'] || 0).toBe(0);
+
+    // Simulate first timeout
+    state.consecutiveTimeouts['p1'] = (state.consecutiveTimeouts['p1'] || 0) + 1;
+    expect(state.consecutiveTimeouts['p1']).toBe(1);
+
+    // Simulate second timeout
+    state.consecutiveTimeouts['p1'] = (state.consecutiveTimeouts['p1'] || 0) + 1;
+    expect(state.consecutiveTimeouts['p1']).toBe(2);
+  });
+
+  it('consecutiveTimeouts resets on player action', () => {
+    const state = createTestState(2);
+    state.consecutiveTimeouts = { 'p1': 1 };
+
+    // Simulate player action (reset)
+    state.consecutiveTimeouts['p1'] = 0;
+    expect(state.consecutiveTimeouts['p1']).toBe(0);
+  });
+
+  it('consecutiveTimeouts is initialized empty in createGame', () => {
+    const players = [
+      { odId: 'p1', name: 'Player 1', isBot: false },
+      { odId: 'p2', name: 'Player 2', isBot: false },
+    ];
+    const game = createGame('room1', players);
+    expect(game.consecutiveTimeouts).toEqual({});
   });
 });

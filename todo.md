@@ -232,3 +232,21 @@
 
 ## Улучшение: количество карт в бито в метрике
 - [x] Добавлен Badge "Бито: N" рядом с колодами и фазой
+
+## Баг: правило первой биты 13 карт не работает
+- [x] Root cause: getAvailableActions не проверял canAddMoreAttackCards в attack phase и edge player normal mode
+- [x] Добавлена проверка canAddMoreAttackCards во всех 3 ветках: attack phase, defend phase, edge player normal mode
+
+## Улучшение: таймер защитника — забирает карты при бездействии
+- [x] При таймауте защитника: engineTakeCards (defenderTaking=true), атакующие могут подкинуть
+- [x] Не finalizeTake сразу — ждём пока атакующие нажмут "бито"
+
+## Улучшение: 2 таймаута подряд = forfeit
+- [x] consecutiveTimeouts поле в GameState (Record<string, number>)
+- [x] При 2 таймаутах подряд — forfeitPlayer + forcedToLobby
+- [x] Сброс счётчика в playCard, transferCard, showPassThrough, takeCards, endAttack
+## Тесты (новые)
+- [x] 3 теста: 13-карт лимит в getAvailableActions (attack phase, under limit, edge player)
+- [x] 2 теста: defender timeout → defenderTaking=true, finalize after all pass
+- [x] 3 теста: consecutiveTimeouts increment, reset, initialization
+- [x] Всего 163 теста проходят (115 gameEngine + 47 socketServer + 1 auth)

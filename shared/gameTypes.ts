@@ -100,6 +100,7 @@ export interface GameState {
   defenderTaking: boolean; // true when defender pressed "take" but attackers can still add cards
   passThroughUsedIds: string[]; // card IDs that have already been used as pass-through (one-time per card per game)
   revealedPassThroughs: { playerId: string; cards: Card[] }[]; // currently revealed pass-through cards this trick
+  consecutiveTimeouts: Record<string, number>; // player id -> consecutive timeout count (2 = forfeit)
 }
 
 // --- Room ---

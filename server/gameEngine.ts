@@ -181,6 +181,7 @@ export function createGame(
     defenderTaking: false,
     passThroughUsedIds: [],
     revealedPassThroughs: [],
+    consecutiveTimeouts: {},
   };
 }
 
@@ -1009,11 +1010,13 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
 
     // Attacker can play cards in attack phase, or add cards during defend phase
     if (state.turnPhase === 'attack' || state.battleField.length === 0) {
-      const playableIds = player.hand
-        .filter(c => canPlayAsAttack(state, c) && (state.battleField.length === 0 || canNonNeighborPlayCard(state, playerIdx, c)))
-        .map(c => c.id);
-      if (playableIds.length > 0) {
-        actions.push({ type: 'playCard', cardIds: playableIds });
+      if (state.battleField.length === 0 || canAddMoreAttackCards(state)) {
+        const playableIds = player.hand
+          .filter(c => canPlayAsAttack(state, c) && (state.battleField.length === 0 || canNonNeighborPlayCard(state, playerIdx, c)))
+          .map(c => c.id);
+        if (playableIds.length > 0) {
+          actions.push({ type: 'playCard', cardIds: playableIds });
+        }
       }
     } else if (state.turnPhase === 'defend' && state.battleField.length > 0) {
       // Attacker can always add matching cards during defend phase
@@ -1055,11 +1058,13 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           }
         } else {
           // Normal mode — edge can add cards when all defended or when there are cards on table
-          const playableIds = player.hand
-            .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
-            .map(c => c.id);
-          if (playableIds.length > 0) {
-            actions.push({ type: 'playCard', cardIds: playableIds });
+          if (canAddMoreAttackCards(state)) {
+            const playableIds = player.hand
+              .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
+              .map(c => c.id);
+            if (playableIds.length > 0) {
+              actions.push({ type: 'playCard', cardIds: playableIds });
+            }
           }
           // Edge players can also click "бито" to pass
           if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
