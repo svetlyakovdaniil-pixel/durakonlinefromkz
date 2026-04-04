@@ -23,8 +23,10 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   // Track the room ID we're currently in for reconnect
   const currentRoomIdRef = useRef<string | null>(null);
-  // Flag to prevent game state updates after leaving
+  // Flag to prevent game state updates after leaving (temporary)
   const leavingRef = useRef(false);
+  // Persistent set of room IDs we intentionally left — blocks rejoin/updates permanently
+  const blockedRoomIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!userId) return;
@@ -47,8 +49,9 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('connect', () => {
       setConnected(true);
       // On reconnect, try to rejoin the room we were in
+      // But NOT if we intentionally left the game
       const roomId = currentRoomIdRef.current;
-      if (roomId) {
+      if (roomId && !leavingRef.current && !blockedRoomIdsRef.current.has(roomId)) {
         console.log(`[Socket] Reconnected — attempting to rejoin room ${roomId}`);
         
         // Retry rejoin up to 3 times with increasing delay
@@ -95,6 +98,9 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     socket.on('roomList', (r) => setRooms(r));
     socket.on('roomUpdated', (r) => {
+      // Ignore room updates if we're leaving or room is blocked
+      if (leavingRef.current) return;
+      if (r && r.id && blockedRoomIdsRef.current.has(r.id)) return;
       setCurrentRoom(r);
       // If server sends roomUpdated (e.g. after auto-rejoin on reconnect),
       // make sure we track the room ID for future reconnects
@@ -111,6 +117,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setGameOverData(null);
     });
     socket.on('gameStarted', (s) => {
+      if (leavingRef.current) return;
       setGameState(s);
       setAvailableActions([]);
       setTurnTimer(s.turnTimerMax);
@@ -124,10 +131,16 @@ export function useSocket(userId: string | null, userName: string | null) {
       // Clear stale actions — fresh ones arrive via yourTurn immediately after
       setAvailableActions([]);
     });
-    socket.on('yourTurn', (a) => setAvailableActions(a));
+    socket.on('yourTurn', (a) => {
+      if (leavingRef.current) return;
+      setAvailableActions(a);
+    });
     socket.on('error', (msg) => setError(msg));
     socket.on('chatMessage', (msg) => setChatMessages(prev => [...prev.slice(-99), msg]));
-    socket.on('timerUpdate', (seconds) => setTurnTimer(seconds));
+    socket.on('timerUpdate', (seconds) => {
+      if (leavingRef.current) return;
+      setTurnTimer(seconds);
+    });
 
     socket.on('playerJoined', (player) => {
       console.log(`Player joined: ${player.name}`);
@@ -148,6 +161,20 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('transferChoice', () => {
       // Transfer choice is handled via gameStateUpdate
+    });
+
+    // Server forces us back to lobby (e.g. disconnect timeout expired)
+    socket.on('forcedToLobby', (data) => {
+      console.log(`[Socket] Forced to lobby: ${data.reason}`);
+      currentRoomIdRef.current = null;
+      setCurrentRoom(null);
+      setGameState(null);
+      setAvailableActions([]);
+      setChatMessages([]);
+      setGameOverData(null);
+      if (data.reason === 'disconnect_timeout') {
+        toast.error('Вы были удалены из игры из-за долгого отсутствия соединения', { duration: 6000 });
+      }
     });
 
     return () => {
@@ -191,6 +218,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   const leaveGame = useCallback((roomId: string) => {
     // Set leaving flag IMMEDIATELY to block any incoming gameStateUpdate
     leavingRef.current = true;
+    // Permanently block this room from auto-rejoin
+    blockedRoomIdsRef.current.add(roomId);
 
     const doReturnToLobby = () => {
       currentRoomIdRef.current = null;
@@ -199,8 +228,9 @@ export function useSocket(userId: string | null, userName: string | null) {
       setAvailableActions([]);
       setChatMessages([]);
       setGameOverData(null);
-      // Reset leaving flag after state is cleared
-      setTimeout(() => { leavingRef.current = false; }, 100);
+      // Reset leaving flag after state is cleared — keep it long enough
+      // to block any delayed server updates (roomUpdated, gameStateUpdate)
+      setTimeout(() => { leavingRef.current = false; }, 5000);
     };
 
     socketRef.current?.emit('leaveGame', roomId, (result: { ok: boolean }) => {

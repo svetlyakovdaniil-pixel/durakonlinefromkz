@@ -135,6 +135,7 @@ export interface ServerToClientEvents {
   timerUpdate: (seconds: number) => void;
   transferChoice: (data: { cardIds: string[] }) => void;
   yourTurnNotification: (data: { role: 'attacker' | 'defender' | 'addCards' }) => void;
+  forcedToLobby: (data: { reason: 'disconnect_timeout' | 'kicked' }) => void;
 }
 
 export interface ClientToServerEvents {

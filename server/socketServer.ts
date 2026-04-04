@@ -33,9 +33,11 @@ const watchdogTimers = new Map<string, NodeJS.Timeout>(); // roomId -> watchdog 
 const lastProgressTimestamps = new Map<string, number>(); // roomId -> last time game state changed
 
 // Disconnect grace period — track disconnected players before removing them
-const DISCONNECT_GRACE_MS = 45_000; // 45 seconds grace period
+const DISCONNECT_GRACE_MS = 30_000; // 30 seconds grace period
 const disconnectTimers = new Map<string, NodeJS.Timeout>(); // odId -> timeout
 const playerRooms = new Map<string, Set<string>>(); // odId -> set of roomIds
+// Players who intentionally left a game — prevent auto-rejoin for these room+player combos
+const forfeitedFromRoom = new Set<string>(); // "odId:roomId" entries
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
@@ -67,10 +69,17 @@ export function initSocketServer(httpServer: HttpServer) {
       console.log(`[Socket] Player ${odId} reconnected — grace timer cancelled`);
     }
 
-    // Rejoin all rooms this player was in
+    // Rejoin all rooms this player was in (skip rooms they forfeited from)
     const roomSet = playerRooms.get(odId);
     if (roomSet) {
       for (const roomId of Array.from(roomSet)) {
+        // Skip if player intentionally left this room
+        if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
+          console.log(`[Socket] Skipping auto-rejoin for ${odId} in room ${roomId} (forfeited)`);
+          untrackPlayerRoom(odId, roomId);
+          forfeitedFromRoom.delete(`${odId}:${roomId}`);
+          continue;
+        }
         const room = rooms.get(roomId);
         if (room && room.players.some(p => p.id === odId)) {
           socket.join(roomId);
@@ -95,6 +104,15 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
     socket.on('rejoinRoom', (roomId, cb) => {
+      // Block rejoin if player intentionally forfeited from this room
+      if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
+        console.log(`[Socket] Blocking rejoin for ${odId} in room ${roomId} (forfeited)`);
+        forfeitedFromRoom.delete(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        cb(false);
+        return;
+      }
+
       const room = rooms.get(roomId);
       if (!room) { cb(false); return; }
 
@@ -392,8 +410,18 @@ export function initSocketServer(httpServer: HttpServer) {
       // Remove the player from the socket.io room so they don't receive further updates
       socket.leave(roomId);
 
+      // Mark as intentionally forfeited — prevents auto-rejoin on reconnect
+      forfeitedFromRoom.add(`${odId}:${roomId}`);
+
       // Clean up player mappings so reconnect won't rejoin this room
       untrackPlayerRoom(odId, roomId);
+
+      // Also cancel any pending disconnect grace timer
+      const graceTimer = disconnectTimers.get(odId);
+      if (graceTimer) {
+        clearTimeout(graceTimer);
+        disconnectTimers.delete(odId);
+      }
 
       broadcastGameState(roomId, gameState);
 
@@ -429,13 +457,33 @@ export function initSocketServer(httpServer: HttpServer) {
         // Start grace period — give player time to reconnect
         console.log(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId}`);
         const timer = setTimeout(() => {
-          console.log(`[Socket] Grace period expired for ${odId} — removing from rooms`);
+          console.log(`[Socket] Grace period expired for ${odId} — forfeiting from active games`);
           disconnectTimers.delete(odId);
           playerSockets.delete(odId);
 
           const allRoomIds = playerRooms.get(odId);
           if (allRoomIds) {
             for (const rid of Array.from(allRoomIds)) {
+              // Mark as forfeited so reconnect won't rejoin
+              forfeitedFromRoom.add(`${odId}:${rid}`);
+
+              // If player is in an active game, forfeit them (auto-lose)
+              const gameState = games.get(rid);
+              if (gameState && gameState.gamePhase === 'playing') {
+                const playerIdx = gameState.players.findIndex(p => p.id === odId);
+                if (playerIdx !== -1 && !gameState.players[playerIdx].isOut) {
+                  forfeitPlayer(gameState, playerIdx);
+                  markProgress(rid);
+                  resetTurnTimer(gameState);
+                  restartTurnTimer(rid);
+                  broadcastGameState(rid, gameState);
+                  if (gameState.gamePhase === 'playing') {
+                    scheduleBotAction(rid);
+                  }
+                  console.log(`[Socket] Player ${odId} forfeited from game in room ${rid} (grace expired)`);
+                }
+              }
+              // Also clean up room membership
               const r = rooms.get(rid);
               if (r && r.players.some((p: { id: string }) => p.id === odId)) {
                 handlePlayerLeaveRoom(odId, rid);
@@ -443,6 +491,13 @@ export function initSocketServer(httpServer: HttpServer) {
             }
           }
           playerRooms.delete(odId);
+
+          // Send forcedToLobby to the player if they reconnect later
+          // We emit to the specific socket if it exists, or it will be handled on next connect
+          const playerSocketId = playerSockets.get(odId);
+          if (playerSocketId) {
+            io.to(playerSocketId).emit('forcedToLobby', { reason: 'disconnect_timeout' });
+          }
         }, DISCONNECT_GRACE_MS);
 
         disconnectTimers.set(odId, timer);

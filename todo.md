@@ -132,3 +132,13 @@
 - [x] Сервер: ack отправляется ДО broadcast, игрок удаляется из socket.io комнаты
 - [x] Клиент: leavingRef флаг блокирует gameStateUpdate после выхода
 - [x] untrackPlayerRoom предотвращает авто-rejoin при reconnect
+
+## Баг: reconnect и выход в лобби
+- [x] Grace period 30с при потере соединения — после 30с forfeit и выброс в лобби
+- [x] При восстановлении соединения в течении 30с — продолжить игру
+- [x] После нажатия "выйти в лобби" — не возвращать обратно в игру
+- [x] Сервер: forfeitedFromRoom Set блокирует auto-rejoin и rejoinRoom
+- [x] Клиент: blockedRoomIdsRef постоянно блокирует комнату (не временный флаг)
+- [x] Сервер: forcedToLobby event при disconnect timeout expiry
+- [x] Клиент: forcedToLobby handler очищает состояние и показывает toast
+- [x] leavingRef блокирует yourTurn и timerUpdate помимо gameStateUpdate
