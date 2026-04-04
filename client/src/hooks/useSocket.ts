@@ -100,13 +100,14 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('roomUpdated', (r) => {
       // Ignore room updates if we're leaving or room is blocked
       if (leavingRef.current) return;
-      if (r && r.id && blockedRoomIdsRef.current.has(r.id)) return;
-      setCurrentRoom(r);
-      // If server sends roomUpdated (e.g. after auto-rejoin on reconnect),
-      // make sure we track the room ID for future reconnects
-      if (r && r.id && !currentRoomIdRef.current) {
-        currentRoomIdRef.current = r.id;
+      if (r && r.id && blockedRoomIdsRef.current.has(r.id)) {
+        console.log(`[Socket] Ignoring roomUpdated for blocked room ${r.id}`);
+        return;
       }
+      setCurrentRoom(r);
+      // Track the room ID for future reconnects — but ONLY if we explicitly
+      // joined this room (currentRoomIdRef is set in joinRoom/createRoom/rejoinRoom).
+      // Do NOT auto-set it from server-pushed roomUpdated to prevent ghost rejoin.
     });
     socket.on('roomClosed', () => {
       currentRoomIdRef.current = null;
@@ -118,6 +119,11 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('gameStarted', (s) => {
       if (leavingRef.current) return;
+      // Block game started for blocked rooms
+      if (s && s.roomId && blockedRoomIdsRef.current.has(s.roomId)) {
+        console.log(`[Socket] Ignoring gameStarted for blocked room`);
+        return;
+      }
       setGameState(s);
       setAvailableActions([]);
       setTurnTimer(s.turnTimerMax);
@@ -126,6 +132,17 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('gameStateUpdate', (s) => {
       // Ignore updates if we're in the process of leaving
       if (leavingRef.current) return;
+      // Block game state updates for rooms we intentionally left
+      if (s && s.roomId && blockedRoomIdsRef.current.has(s.roomId)) {
+        console.log(`[Socket] Ignoring gameStateUpdate for blocked room`);
+        return;
+      }
+      // Extra safety: if we have no currentRoomIdRef, don't accept game state updates
+      // (this means we're in the lobby and shouldn't be pulled back into a game)
+      if (!currentRoomIdRef.current) {
+        console.log(`[Socket] Ignoring gameStateUpdate — no current room (in lobby)`);
+        return;
+      }
       setGameState(s);
       setTurnTimer(s.turnTimer);
       // Clear stale actions — fresh ones arrive via yourTurn immediately after
@@ -133,12 +150,15 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('yourTurn', (a) => {
       if (leavingRef.current) return;
+      // Don't accept turn actions if we're in the lobby
+      if (!currentRoomIdRef.current) return;
       setAvailableActions(a);
     });
     socket.on('error', (msg) => setError(msg));
     socket.on('chatMessage', (msg) => setChatMessages(prev => [...prev.slice(-99), msg]));
     socket.on('timerUpdate', (seconds) => {
       if (leavingRef.current) return;
+      if (!currentRoomIdRef.current) return;
       setTurnTimer(seconds);
     });
 
@@ -157,6 +177,8 @@ export function useSocket(userId: string | null, userName: string | null) {
       toast.info(`Направление изменилось ${arrow}`, { duration: 3000 });
     });
     socket.on('gameOver', (data) => {
+      if (leavingRef.current) return;
+      if (!currentRoomIdRef.current) return;
       setGameOverData(data);
     });
     socket.on('transferChoice', () => {
@@ -185,6 +207,8 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const createRoom = useCallback((name: string, maxPlayers: number, settings: RoomSettings): Promise<Room> => {
     return new Promise((resolve) => {
+      // Reset leaving flag when creating a new room
+      leavingRef.current = false;
       socketRef.current?.emit('createRoom', { name, maxPlayers, settings }, (room) => {
         setCurrentRoom(room);
         currentRoomIdRef.current = room.id;
@@ -195,6 +219,8 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const joinRoom = useCallback((roomId: string): Promise<boolean> => {
     return new Promise((resolve) => {
+      // Reset leaving flag when joining a new room
+      leavingRef.current = false;
       socketRef.current?.emit('joinRoom', roomId, (ok, room) => {
         if (ok && room) {
           setCurrentRoom(room);
@@ -230,7 +256,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setGameOverData(null);
       // Reset leaving flag after state is cleared — keep it long enough
       // to block any delayed server updates (roomUpdated, gameStateUpdate)
-      setTimeout(() => { leavingRef.current = false; }, 5000);
+      setTimeout(() => { leavingRef.current = false; }, 10000);
     };
 
     socketRef.current?.emit('leaveGame', roomId, (result: { ok: boolean }) => {

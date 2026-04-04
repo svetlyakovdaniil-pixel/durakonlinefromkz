@@ -74,10 +74,10 @@ export function initSocketServer(httpServer: HttpServer) {
     if (roomSet) {
       for (const roomId of Array.from(roomSet)) {
         // Skip if player intentionally left this room
+        // NOTE: Do NOT delete from forfeitedFromRoom — keep the block permanent
         if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
           console.log(`[Socket] Skipping auto-rejoin for ${odId} in room ${roomId} (forfeited)`);
           untrackPlayerRoom(odId, roomId);
-          forfeitedFromRoom.delete(`${odId}:${roomId}`);
           continue;
         }
         const room = rooms.get(roomId);
@@ -105,9 +105,9 @@ export function initSocketServer(httpServer: HttpServer) {
     // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
     socket.on('rejoinRoom', (roomId, cb) => {
       // Block rejoin if player intentionally forfeited from this room
+      // NOTE: Do NOT delete from forfeitedFromRoom — keep the block permanent
       if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
         console.log(`[Socket] Blocking rejoin for ${odId} in room ${roomId} (forfeited)`);
-        forfeitedFromRoom.delete(`${odId}:${roomId}`);
         untrackPlayerRoom(odId, roomId);
         cb(false);
         return;
@@ -410,7 +410,7 @@ export function initSocketServer(httpServer: HttpServer) {
       // Remove the player from the socket.io room so they don't receive further updates
       socket.leave(roomId);
 
-      // Mark as intentionally forfeited — prevents auto-rejoin on reconnect
+      // Mark as intentionally forfeited — prevents auto-rejoin on reconnect (PERMANENT)
       forfeitedFromRoom.add(`${odId}:${roomId}`);
 
       // Clean up player mappings so reconnect won't rejoin this room
@@ -421,6 +421,24 @@ export function initSocketServer(httpServer: HttpServer) {
       if (graceTimer) {
         clearTimeout(graceTimer);
         disconnectTimers.delete(odId);
+      }
+
+      // Remove the player from the room's player list entirely
+      // This prevents auto-rejoin loop from finding them in room.players
+      const room = rooms.get(roomId);
+      if (room) {
+        room.players = room.players.filter(p => p.id !== odId);
+        // If no human players left, close the room
+        if (room.players.filter(p => !p.isBot).length === 0) {
+          closeRoom(roomId);
+          return; // closeRoom handles cleanup and broadcast
+        }
+        // Transfer host if needed
+        if (room.hostId === odId) {
+          const nextHost = room.players.find(p => !p.isBot);
+          if (nextHost) room.hostId = nextHost.id;
+        }
+        io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
       }
 
       broadcastGameState(roomId, gameState);

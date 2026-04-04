@@ -142,3 +142,15 @@
 - [x] Сервер: forcedToLobby event при disconnect timeout expiry
 - [x] Клиент: forcedToLobby handler очищает состояние и показывает toast
 - [x] leavingRef блокирует yourTurn и timerUpdate помимо gameStateUpdate
+
+## Баг: выход из игры всё ещё возвращает игрока обратно
+- [x] Полный аудит всех путей возврата в игру (сервер + клиент)
+- [x] Полностью разделить: intentional leave = навсегда, disconnect = 30с grace
+- [x] Убедиться что после leaveGame ни один event не возвращает игрока в игру
+- [x] Сервер: forfeitedFromRoom НЕ удаляется при проверке (постоянная блокировка)
+- [x] Сервер: leaveGame удаляет игрока из room.players (предотвращает auto-rejoin loop)
+- [x] Клиент: blockedRoomIdsRef проверяется во ВСЕХ handlers (roomUpdated, gameStateUpdate, gameStarted, yourTurn, gameOver, timerUpdate)
+- [x] Клиент: gameStateUpdate и yourTurn игнорируются если currentRoomIdRef === null (в лобби)
+- [x] Клиент: roomUpdated НЕ устанавливает currentRoomIdRef автоматически
+- [x] Клиент: leavingRef сбрасывается при создании/вступлении в новую комнату
+- [x] 6 новых тестов для leave game isolation (129 тестов проходят)

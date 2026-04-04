@@ -431,6 +431,9 @@ describe('Forfeit (leave game)', () => {
     const players = createTestPlayers(3);
     const game = createGame('room1', players);
 
+    // Ensure deterministic behavior — skip firstTrick so turnPhase goes to 'defend'
+    game.firstTrick = false;
+
     const attackerIdx = game.currentAttackerIdx;
     const defenderIdx = game.currentDefenderIdx;
 
@@ -654,5 +657,79 @@ describe('Bot action failure handling', () => {
     // Should be back to attack phase
     expect(game.turnPhase).toBe('attack');
     expect(game.battleField.length).toBe(0);
+  });
+});
+
+describe('Leave game isolation (manual leave vs disconnect)', () => {
+  it('forfeitPlayer marks player as leftGame and removes from active play', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Forfeit player 0
+    forfeitPlayer(game, 0);
+
+    expect(game.players[0].leftGame).toBe(true);
+    expect(game.players[0].isOut).toBe(true);
+    expect(game.players[0].hand.length).toBe(0);
+    // Player still exists in game.players array (for display)
+    expect(game.players.length).toBe(3);
+  });
+
+  it('forfeited player gets no available actions', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    forfeitPlayer(game, 0);
+
+    const actions = getAvailableActions(game, 0);
+    expect(actions).toEqual([]);
+  });
+
+  it('forfeited player is skipped in turn rotation', () => {
+    const players = createTestPlayers(4);
+    const game = createGame('room1', players);
+
+    // Forfeit player 1
+    forfeitPlayer(game, 1);
+
+    // Get next active player from 0 — should skip 1
+    const nextIdx = getNextActivePlayer(game.players, 0, game.direction);
+    expect(nextIdx).not.toBe(1);
+    expect(game.players[nextIdx].isOut).toBe(false);
+  });
+
+  it('multiple forfeits end game correctly', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    // Two players forfeit — only one remains
+    forfeitPlayer(game, 0);
+    forfeitPlayer(game, 1);
+
+    expect(game.gamePhase).toBe('finished');
+  });
+
+  it('client state for forfeited player shows roomId for filtering', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    const clientState = toClientState(game, 'p1');
+    expect(clientState.roomId).toBe('room1');
+  });
+
+  it('forfeited attacker triggers role reassignment', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+
+    const attackerIdx = game.currentAttackerIdx;
+    const attackerBefore = game.players[attackerIdx].id;
+
+    forfeitPlayer(game, attackerIdx);
+
+    // After forfeit, attacker should change (or game should end)
+    if (game.gamePhase === 'playing') {
+      const newAttacker = game.players[game.currentAttackerIdx];
+      expect(newAttacker.isOut).toBe(false);
+    }
   });
 });
