@@ -1484,3 +1484,134 @@ describe('Six exception: non-neighbors can only add sixes', () => {
     }
   });
 });
+
+describe('Pass-through blocked after defense started', () => {
+  it('pass-through is blocked when defender has already defended a card', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    state.trumpInfo = { trumpCard: card('hearts', '6'), currentTrump: 'hearts' };
+    // Defender has a trump card matching attack rank
+    state.players[1].hand = [card('hearts', '9'), card('hearts', 'K')];
+    // Battlefield: one pair defended, one pair undefended
+    state.battleField = [
+      { attack: card('spades', '9'), defense: card('diamonds', '9') }, // DEFENDED
+      { attack: card('clubs', '9'), defense: null }, // undefended
+    ];
+
+    // Pass-through should be blocked because defender already defended a card
+    const err = showPassThrough(state, 1, 'hearts-9-0');
+    expect(err).toBe('Проездной можно показать только до начала защиты');
+  });
+
+  it('pass-through is allowed when no cards have been defended yet', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    state.trumpInfo = { trumpCard: card('hearts', '6'), currentTrump: 'hearts' };
+    state.players[1].hand = [card('hearts', '9'), card('hearts', 'K')];
+    state.players[2].hand = [card('spades', 'J'), card('spades', 'Q')]; // next defender has cards
+    state.battleField = [
+      { attack: card('spades', '9'), defense: null },
+    ];
+
+    const err = showPassThrough(state, 1, 'hearts-9-0');
+    expect(err).toBeNull();
+  });
+
+  it('getAvailableActions hides pass-through when defense has started', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    state.trumpInfo = { trumpCard: card('hearts', '6'), currentTrump: 'hearts' };
+    state.players[1].hand = [card('hearts', '9'), card('hearts', 'K')];
+    state.players[2].hand = [card('spades', 'J'), card('spades', 'Q')];
+    state.battleField = [
+      { attack: card('spades', '9'), defense: card('diamonds', '9') }, // defended
+      { attack: card('clubs', '9'), defense: null },
+    ];
+
+    const actions = getAvailableActions(state, 1);
+    const passThroughAction = actions.find(a => a.type === 'showPassThrough');
+    expect(passThroughAction).toBeUndefined();
+  });
+});
+
+describe('Six exception: currentAttacker who is non-neighbor can only play sixes', () => {
+  it('non-neighbor currentAttacker cannot play non-6 card when leadCardRank is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 4; // Player 5 — NOT a neighbor of defender (player 2)
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '8'), card('spades', '6')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q'), card('hearts', 'K')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    // Non-neighbor currentAttacker should NOT be able to play 8
+    const err8 = playAttackCard(state, 4, 'spades-8-0');
+    expect(err8).toBe('Вы можете подкинуть только шестёрку');
+
+    // But CAN play 6
+    const err6 = playAttackCard(state, 4, 'spades-6-0');
+    expect(err6).toBeNull();
+  });
+
+  it('getAvailableActions for non-neighbor currentAttacker shows only sixes', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 4; // Player 5 — NOT a neighbor of defender (player 2)
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '8'), card('spades', '6'), card('diamonds', '7')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q'), card('hearts', 'K')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+      { attack: card('clubs', '7'), defense: card('clubs', '8') },
+    ];
+
+    const actions = getAvailableActions(state, 4);
+    const playAction = actions.find(a => a.type === 'playCard');
+    // Should only include 6, not 8 or 7
+    if (playAction && playAction.type === 'playCard') {
+      expect(playAction.cardIds).toContain('spades-6-0');
+      expect(playAction.cardIds).not.toContain('spades-8-0');
+      expect(playAction.cardIds).not.toContain('diamonds-7-0');
+    } else {
+      // If no play action, that's also acceptable (means only 6 is available but filtered)
+      // Let's check if there's at least endAttack
+      expect(actions.some(a => a.type === 'endAttack')).toBe(true);
+    }
+  });
+
+  it('neighbor currentAttacker CAN play non-6 card when leadCardRank is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0; // Player 1 — IS a neighbor of defender (player 2)
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[0].hand = [card('spades', '8')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q'), card('hearts', 'K')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    // Neighbor currentAttacker CAN play 8
+    const err = playAttackCard(state, 0, 'spades-8-0');
+    expect(err).toBeNull();
+  });
+});

@@ -149,6 +149,10 @@ describe('Game flow integration', () => {
     const attackerIdx = game.currentAttackerIdx;
     const defenderIdx = game.currentDefenderIdx;
 
+    // Give attacker a known non-special card to avoid 777 or other issues
+    game.players[attackerIdx].hand[0] = { id: 'test-atk-0', suit: 'spades', rank: '9', copy: 0 };
+    game.firstTrick = false;
+
     // Attacker plays a card
     const attackCard = game.players[attackerIdx].hand[0];
     playAttackCard(game, attackerIdx, attackCard.id);
@@ -517,6 +521,11 @@ describe('Freeze fix: attacker always has endAttack', () => {
     const game = createGame('room1', players);
     const attackerIdx = game.currentAttackerIdx;
     const defenderIdx = game.currentDefenderIdx;
+    game.firstTrick = false;
+
+    // Give attacker known cards to avoid 777
+    game.players[attackerIdx].hand[0] = { id: 'test-atk-0', suit: 'spades', rank: '9', copy: 0 };
+    game.players[attackerIdx].hand[1] = { id: 'test-atk-1', suit: 'clubs', rank: '9', copy: 0 };
 
     // Attacker plays a card
     const firstCard = game.players[attackerIdx].hand[0];

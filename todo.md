@@ -180,3 +180,15 @@
 - [x] Клиент получает действия от сервера через getAvailableActions — нет stale карт
 - [x] Интеграционные тесты: card limit regression + six-exception с 6 игроками
 - [x] Стабилизация flaky тестов: фиксированный козырь + детерминистические карты
+
+## Баг: проездной работает после начала защиты
+- [x] showPassThrough: проверка battleField.some(p => p.defense !== null) — блокирует после начала защиты
+- [x] getAvailableActions: проездной показывается только когда все карты неотбиты
+- [x] 3 новых теста (blocked, allowed, hidden)
+
+## Баг: не-соседи подкидывают не только шестёрки
+- [x] Корневая причина: currentAttackerIdx менялся на не-соседа, обходя canNonNeighborPlayCard
+- [x] playAttackCard: canNonNeighborPlayCard теперь проверяется для ВСЕХ игроков (включая currentAttacker)
+- [x] getAvailableActions: фильтрация canNonNeighborPlayCard добавлена во ВСЕ секции (attacker, pickup, edge)
+- [x] 3 новых теста (non-neighbor currentAttacker blocked, actions filtered, neighbor allowed)
+- [x] Всего 151 тест стабильно (5/5)
