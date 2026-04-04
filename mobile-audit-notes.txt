@@ -1,0 +1,3 @@
+Desktop lobby view: looks good - header, "Создать комнату" button, empty state all render correctly.
+All 168 tests pass.
+Need to verify mobile viewport rendering.

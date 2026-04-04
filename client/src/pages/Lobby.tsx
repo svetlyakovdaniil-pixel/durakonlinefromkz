@@ -53,20 +53,20 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
       {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
-        <div className="container flex items-center justify-between py-3">
-          <div className="flex items-center gap-3">
-            <Gamepad2 className="w-6 h-6 text-amber-400" />
-            <h1 className="text-xl font-bold text-amber-100">Казахский Дурак</h1>
-            <Badge variant="outline" className={`text-xs ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-              {connected ? <><Wifi className="w-3 h-3 mr-1" /> Онлайн</> : <><WifiOff className="w-3 h-3 mr-1" /> Оффлайн</>}
+        <div className="container flex items-center justify-between py-2 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
+            <h1 className="text-base sm:text-xl font-bold text-amber-100">Казахский Дурак</h1>
+            <Badge variant="outline" className={`text-[10px] sm:text-xs ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+              {connected ? <><Wifi className="w-3 h-3 mr-0.5 sm:mr-1" /> <span className="hidden sm:inline">Онлайн</span><span className="sm:hidden">Он</span></> : <><WifiOff className="w-3 h-3 mr-0.5 sm:mr-1" /> <span className="hidden sm:inline">Оффлайн</span><span className="sm:hidden">Офф</span></>}
             </Badge>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-amber-200/60">{userName}</span>
-            <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100" onClick={onLogout}>
+          <div className="flex items-center gap-1.5 sm:gap-3">
+            <span className="text-xs sm:text-sm text-amber-200/60 truncate max-w-20 sm:max-w-none">{userName}</span>
+            <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1 sm:p-2" onClick={onLogout}>
               <LogOut className="w-4 h-4" />
             </Button>
           </div>
@@ -74,33 +74,33 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       </div>
 
       {/* Content */}
-      <div className="container py-8">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-amber-100">Комнаты</h2>
+      <div className="container py-4 sm:py-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-amber-100">Комнаты</h2>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-amber-600 hover:bg-amber-500 text-white">
-                <Plus className="w-4 h-4 mr-2" /> Создать комнату
+              <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm sm:text-base h-8 sm:h-10 px-3 sm:px-4">
+                <Plus className="w-4 h-4 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Создать комнату</span><span className="sm:hidden">Создать</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100">
+            <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto">
               <DialogHeader>
                 <DialogTitle className="text-amber-100">Новая комната</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label className="text-amber-200/70">Название</Label>
+                  <Label className="text-amber-200/70 text-sm">Название</Label>
                   <Input
                     value={roomName}
                     onChange={e => setRoomName(e.target.value)}
                     placeholder={`Комната ${userName}`}
-                    className="bg-[#0f2035] border-amber-700/30 text-amber-100"
+                    className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10"
                   />
                 </div>
                 <div>
-                  <Label className="text-amber-200/70">Макс. игроков</Label>
+                  <Label className="text-amber-200/70 text-sm">Макс. игроков</Label>
                   <Select value={maxPlayers} onValueChange={setMaxPlayers}>
-                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100">
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
@@ -111,7 +111,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70">Таймер хода: {turnTimer}с</Label>
+                  <Label className="text-amber-200/70 text-sm">Таймер хода: {turnTimer}с</Label>
                   <Slider
                     value={[turnTimer]}
                     onValueChange={v => setTurnTimer(v[0])}
@@ -122,13 +122,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-amber-200/70">Добавить ботов</Label>
+                  <Label className="text-amber-200/70 text-sm">Добавить ботов</Label>
                   <Switch checked={withBots} onCheckedChange={setWithBots} />
                 </div>
                 <div>
-                  <Label className="text-amber-200/70">Колода карт</Label>
+                  <Label className="text-amber-200/70 text-sm">Колода карт</Label>
                   <Select value={deckStyle} onValueChange={(v) => setDeckStyle(v as DeckStyle)}>
-                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100">
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
@@ -139,7 +139,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
                 {withBots && (
                   <div>
-                    <Label className="text-amber-200/70">Количество ботов: {botCount}</Label>
+                    <Label className="text-amber-200/70 text-sm">Количество ботов: {botCount}</Label>
                     <Slider
                       value={[botCount]}
                       onValueChange={v => setBotCount(v[0])}
@@ -163,71 +163,70 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
         </div>
 
         {rooms.length === 0 ? (
-          <div className="text-center py-20">
-            <Gamepad2 className="w-16 h-16 text-amber-700/30 mx-auto mb-4" />
-            <p className="text-amber-200/40 text-lg">Пока нет комнат</p>
-            <p className="text-amber-200/30 text-sm mt-1">Создайте первую комнату, чтобы начать игру</p>
+          <div className="text-center py-12 sm:py-20">
+            <Gamepad2 className="w-12 h-12 sm:w-16 sm:h-16 text-amber-700/30 mx-auto mb-3 sm:mb-4" />
+            <p className="text-amber-200/40 text-base sm:text-lg">Пока нет комнат</p>
+            <p className="text-amber-200/30 text-xs sm:text-sm mt-1">Создайте первую комнату, чтобы начать игру</p>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {rooms.map(room => {
-              // Check if this player can rejoin an active game in this room
               const canRejoin = room.hasActiveGame && room.activeGamePlayerIds?.includes(userId);
 
               return (
                 <div
                   key={room.id}
-                  className={`bg-[#1a2d45]/60 border rounded-xl p-4 hover:border-amber-500/30 transition-colors ${
+                  className={`bg-[#1a2d45]/60 border rounded-xl p-3 sm:p-4 hover:border-amber-500/30 transition-colors ${
                     canRejoin ? 'border-green-500/40 ring-1 ring-green-500/20' : 'border-amber-700/20'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-amber-100 truncate">{room.name}</h3>
-                    <div className="flex items-center gap-1.5">
+                  <div className="flex items-center justify-between mb-2 sm:mb-3">
+                    <h3 className="font-semibold text-amber-100 truncate text-sm sm:text-base">{room.name}</h3>
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-2">
                       {room.hasActiveGame && (
-                        <Badge className="bg-green-900/50 text-green-300 border-green-700/30 text-xs animate-pulse">
+                        <Badge className="bg-green-900/50 text-green-300 border-green-700/30 text-[10px] sm:text-xs animate-pulse px-1.5 sm:px-2">
                           В игре
                         </Badge>
                       )}
-                      <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-xs">
-                        <Users className="w-3 h-3 mr-1" />
+                      <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                        <Users className="w-3 h-3 mr-0.5 sm:mr-1" />
                         {room.players.length}/{room.maxPlayers}
                       </Badge>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                      <Timer className="w-3 h-3 mr-1" /> {room.settings.turnTimer}с
+                  <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                      <Timer className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.turnTimer}с
                     </Badge>
                     {room.settings.withBots && (
-                      <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                        <Bot className="w-3 h-3 mr-1" /> {room.settings.botCount} бот
+                      <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                        <Bot className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.botCount} бот
                       </Badge>
                     )}
-                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                      <Layers className="w-3 h-3 mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                      <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? '№2' : '№1'}
                     </Badge>
                   </div>
-                  <div className="flex items-center gap-1 mb-3 flex-wrap">
+                  <div className="flex items-center gap-1 mb-2 sm:mb-3 flex-wrap">
                     {room.players.map(p => (
-                      <Badge key={p.id} className={`text-xs ${p.isBot ? 'bg-purple-900/40 text-purple-300 border-purple-700/30' : p.ready ? 'bg-green-900/40 text-green-300 border-green-700/30' : 'bg-amber-900/40 text-amber-300 border-amber-700/30'}`}>
+                      <Badge key={p.id} className={`text-[10px] sm:text-xs ${p.isBot ? 'bg-purple-900/40 text-purple-300 border-purple-700/30' : p.ready ? 'bg-green-900/40 text-green-300 border-green-700/30' : 'bg-amber-900/40 text-amber-300 border-amber-700/30'}`}>
                         {p.isBot && <Bot className="w-2.5 h-2.5 mr-0.5" />}
-                        {p.name}
+                        <span className="truncate max-w-16 sm:max-w-none">{p.name}</span>
                       </Badge>
                     ))}
                   </div>
                   {canRejoin ? (
                     <Button
-                      className="w-full bg-green-700 hover:bg-green-600 text-white"
+                      className="w-full bg-green-700 hover:bg-green-600 text-white text-sm h-8 sm:h-10"
                       onClick={() => handleRejoin(room.id)}
                       disabled={rejoining === room.id}
                     >
-                      <RotateCcw className={`w-4 h-4 mr-2 ${rejoining === room.id ? 'animate-spin' : ''}`} />
+                      <RotateCcw className={`w-4 h-4 mr-1 sm:mr-2 ${rejoining === room.id ? 'animate-spin' : ''}`} />
                       {rejoining === room.id ? 'Возвращение...' : 'Вернуться в игру'}
                     </Button>
                   ) : (
                     <Button
-                      className="w-full bg-amber-700/60 hover:bg-amber-600/60 text-amber-100"
+                      className="w-full bg-amber-700/60 hover:bg-amber-600/60 text-amber-100 text-sm h-8 sm:h-10"
                       disabled={room.players.length >= room.maxPlayers || !!room.hasActiveGame}
                       onClick={() => onJoinRoom(room.id)}
                     >

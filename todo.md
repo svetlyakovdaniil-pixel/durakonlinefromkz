@@ -288,3 +288,17 @@
 ## Улучшение: оповещение о смене козыря
 - [x] Добавить визуальное оповещение всем игрокам когда козырь меняется
 - [x] Показать новый козырь крупно на экране с анимацией
+
+## Мобильная адаптация (responsive)
+- [x] PlayingCard: уменьшить карты на мобильных (max-[640px]) — hand ~60%, battlefield ~70% от десктопных
+- [x] GameTable: компактный HUD на мобильных — badges в 1 строку, мелкий шрифт
+- [x] GameTable: opponents — горизонтальный scroll вместо wrap, компактнее на мобильных
+- [x] GameTable: battlefield — gap и max-width адаптированы для мобильных
+- [x] GameTable: trump indicator — меньше на мобильных, не перекрывает карты
+- [x] GameTable: action buttons — полная ширина на мобильных
+- [x] GameTable: player hand — адаптивный overlap и scroll для мобильных
+- [x] GameTable: overlays (ВАШ ХОД, козырь) — меньше на мобильных
+- [x] Lobby: header и кнопки адаптированы для мобильных
+- [x] Lobby: dialog создания комнаты — адаптирован для мобильных
+- [x] WaitingRoom: кнопки и layout адаптированы для мобильных
+- [x] Общее: viewport height fix для мобильных (dvh/svh)

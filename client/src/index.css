@@ -120,8 +120,19 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    overscroll-behavior: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Prevent pull-to-refresh and bounce on mobile during game */
+  html {
+    overflow: hidden;
+    height: 100%;
+  }
+  body {
+    overflow: auto;
+    height: 100%;
   }
   button:not(:disabled),
   [role="button"]:not([aria-disabled="true"]),

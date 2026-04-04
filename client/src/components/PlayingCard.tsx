@@ -24,7 +24,7 @@ function NumberCard({ card }: { card: Card }) {
   const color = card.suit ? SUIT_COLORS[card.suit] || '#1a1a2e' : '#1a1a2e';
 
   return (
-    <div className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-between p-1.5 relative overflow-hidden">
+    <div className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-between p-1 sm:p-1.5 relative overflow-hidden">
       {/* Ornament background */}
       <svg className="absolute inset-0 w-full h-full opacity-5" viewBox="0 0 100 140">
         <circle cx="50" cy="70" r="35" fill={color} />
@@ -32,30 +32,32 @@ function NumberCard({ card }: { card: Card }) {
       </svg>
       {/* Top-left rank */}
       <div className="self-start z-10 leading-none" style={{ color }}>
-        <div className="text-sm font-bold">{card.rank}</div>
-        <div className="text-sm -mt-0.5">{symbol}</div>
+        <div className="text-[10px] sm:text-sm font-bold">{card.rank}</div>
+        <div className="text-[10px] sm:text-sm -mt-0.5">{symbol}</div>
       </div>
       {/* Center suit */}
-      <div className="z-10 text-3xl" style={{ color }}>
+      <div className="z-10 text-xl sm:text-3xl" style={{ color }}>
         {symbol}
       </div>
       {/* Bottom-right rank */}
       <div className="self-end z-10 leading-none rotate-180" style={{ color }}>
-        <div className="text-sm font-bold">{card.rank}</div>
-        <div className="text-sm -mt-0.5">{symbol}</div>
+        <div className="text-[10px] sm:text-sm font-bold">{card.rank}</div>
+        <div className="text-[10px] sm:text-sm -mt-0.5">{symbol}</div>
       </div>
     </div>
   );
 }
 
 export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
-  // small = opponent mini cards, medium = battlefield cards, default = hand cards
-  // Sizes increased ~35% from original
+  // Responsive card sizes:
+  // small = opponent mini cards (same on all screens)
+  // medium = battlefield cards (smaller on mobile)
+  // default = hand cards (smaller on mobile, full on desktop)
   const sizeClasses = small
-    ? 'w-14 h-19'
+    ? 'w-8 h-12 sm:w-14 sm:h-19'
     : medium
-      ? 'w-22 h-32 sm:w-27 sm:h-40'
-      : 'w-24 h-35 sm:w-30 sm:h-43';
+      ? 'w-16 h-24 sm:w-27 sm:h-40'
+      : 'w-16 h-24 sm:w-30 sm:h-43';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
