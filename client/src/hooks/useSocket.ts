@@ -54,29 +54,36 @@ export function useSocket(userId: string | null, userName: string | null) {
       if (roomId && !leavingRef.current && !blockedRoomIdsRef.current.has(roomId)) {
         console.log(`[Socket] Reconnected — attempting to rejoin room ${roomId}`);
         
-        // Retry rejoin up to 3 times with increasing delay
-        const attemptRejoin = (attempt: number) => {
-          if (currentRoomIdRef.current !== roomId) return; // Room changed, abort
+        // Wait a short moment for server auto-rejoin to kick in first
+        setTimeout(() => {
+          if (currentRoomIdRef.current !== roomId) return; // Already handled
           
-          socket.emit('rejoinRoom', roomId, (ok: boolean, room: any) => {
-            if (ok && room) {
-              setCurrentRoom(room);
-              toast.success('Переподключение успешно!', { duration: 3000 });
-            } else if (attempt < 3) {
-              console.log(`[Socket] Rejoin attempt ${attempt} failed, retrying in ${attempt * 1000}ms...`);
-              setTimeout(() => attemptRejoin(attempt + 1), attempt * 1000);
-            } else {
-              console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
-              toast.error('Не удалось вернуться в комнату', { duration: 4000 });
-              currentRoomIdRef.current = null;
-              setCurrentRoom(null);
-              setGameState(null);
-              setAvailableActions([]);
-            }
-          });
-        };
-        
-        attemptRejoin(1);
+          // Retry rejoin up to 5 times with increasing delay
+          const attemptRejoin = (attempt: number) => {
+            if (currentRoomIdRef.current !== roomId) return; // Room changed, abort
+            if (leavingRef.current || blockedRoomIdsRef.current.has(roomId)) return;
+            
+            socket.emit('rejoinRoom', roomId, (ok: boolean, room: any) => {
+              if (ok && room) {
+                setCurrentRoom(room);
+                toast.success('Переподключение успешно!', { duration: 3000 });
+              } else if (attempt < 5) {
+                const delay = Math.min(attempt * 800, 3000);
+                console.log(`[Socket] Rejoin attempt ${attempt} failed, retrying in ${delay}ms...`);
+                setTimeout(() => attemptRejoin(attempt + 1), delay);
+              } else {
+                console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
+                toast.error('Не удалось вернуться в комнату. Вы можете вернуться через лобби.', { duration: 6000 });
+                currentRoomIdRef.current = null;
+                setCurrentRoom(null);
+                setGameState(null);
+                setAvailableActions([]);
+              }
+            });
+          };
+          
+          attemptRejoin(1);
+        }, 300); // Small delay to let server auto-rejoin fire first
       }
     });
 
@@ -170,7 +177,20 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('trumpChanged', (info) => {
       const sym = SUIT_SYMBOLS[info.newTrump] || info.newTrump;
-      toast.info(`Новый козырь: ${sym} (Фаза ${info.phase}/3)`, { duration: 4000 });
+      const suitNames: Record<string, string> = {
+        spades: 'Пики', hearts: 'Черви', diamonds: 'Бубны', clubs: 'Трефы',
+      };
+      const suitName = suitNames[info.newTrump] || info.newTrump;
+      toast.warning(`🃏 Козырь изменился! Новый козырь: ${sym} ${suitName} (Фаза ${info.phase}/3)`, {
+        duration: 6000,
+        style: {
+          fontSize: '16px',
+          fontWeight: 'bold',
+          background: '#1a2d45',
+          border: '2px solid #d97706',
+          color: '#fde68a',
+        },
+      });
     });
     socket.on('directionChanged', (dir) => {
       const arrow = dir === 'cw' ? '➡️' : '⬅️';
@@ -219,8 +239,10 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const joinRoom = useCallback((roomId: string): Promise<boolean> => {
     return new Promise((resolve) => {
-      // Reset leaving flag when joining a new room
+      // Reset leaving flag when joining/rejoining a room
       leavingRef.current = false;
+      // Remove from blocked list so game state updates are accepted
+      blockedRoomIdsRef.current.delete(roomId);
       socketRef.current?.emit('joinRoom', roomId, (ok, room) => {
         if (ok && room) {
           setCurrentRoom(room);

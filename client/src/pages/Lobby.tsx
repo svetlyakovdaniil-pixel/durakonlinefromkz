@@ -8,19 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2, Layers } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2, Layers, RotateCcw } from 'lucide-react';
 import type { DeckStyle } from '../../../shared/gameTypes';
 
 interface LobbyProps {
   rooms: Room[];
   connected: boolean;
   userName: string;
+  userId: string;
   onCreateRoom: (name: string, maxPlayers: number, settings: RoomSettings) => Promise<Room>;
   onJoinRoom: (roomId: string) => Promise<boolean>;
   onLogout: () => void;
 }
 
-export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoinRoom, onLogout }: LobbyProps) {
+export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout }: LobbyProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
@@ -29,6 +30,7 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
   const [turnTimer, setTurnTimer] = useState(30);
   const [deckStyle, setDeckStyle] = useState<DeckStyle>('classic');
   const [loading, setLoading] = useState(false);
+  const [rejoining, setRejoining] = useState<string | null>(null);
 
   const handleCreate = async () => {
     setLoading(true);
@@ -42,6 +44,12 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
     setLoading(false);
     setDialogOpen(false);
     setRoomName('');
+  };
+
+  const handleRejoin = async (roomId: string) => {
+    setRejoining(roomId);
+    await onJoinRoom(roomId);
+    setRejoining(null);
   };
 
   return (
@@ -162,48 +170,73 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rooms.map(room => (
-              <div
-                key={room.id}
-                className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-4 hover:border-amber-500/30 transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-amber-100 truncate">{room.name}</h3>
-                  <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-xs">
-                    <Users className="w-3 h-3 mr-1" />
-                    {room.players.length}/{room.maxPlayers}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                  <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                    <Timer className="w-3 h-3 mr-1" /> {room.settings.turnTimer}с
-                  </Badge>
-                  {room.settings.withBots && (
-                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                      <Bot className="w-3 h-3 mr-1" /> {room.settings.botCount} бот
-                    </Badge>
-                  )}
-                  <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
-                    <Layers className="w-3 h-3 mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-1 mb-3 flex-wrap">
-                  {room.players.map(p => (
-                    <Badge key={p.id} className={`text-xs ${p.isBot ? 'bg-purple-900/40 text-purple-300 border-purple-700/30' : p.ready ? 'bg-green-900/40 text-green-300 border-green-700/30' : 'bg-amber-900/40 text-amber-300 border-amber-700/30'}`}>
-                      {p.isBot && <Bot className="w-2.5 h-2.5 mr-0.5" />}
-                      {p.name}
-                    </Badge>
-                  ))}
-                </div>
-                <Button
-                  className="w-full bg-amber-700/60 hover:bg-amber-600/60 text-amber-100"
-                  disabled={room.players.length >= room.maxPlayers || !!room.gameState}
-                  onClick={() => onJoinRoom(room.id)}
+            {rooms.map(room => {
+              // Check if this player can rejoin an active game in this room
+              const canRejoin = room.hasActiveGame && room.activeGamePlayerIds?.includes(userId);
+
+              return (
+                <div
+                  key={room.id}
+                  className={`bg-[#1a2d45]/60 border rounded-xl p-4 hover:border-amber-500/30 transition-colors ${
+                    canRejoin ? 'border-green-500/40 ring-1 ring-green-500/20' : 'border-amber-700/20'
+                  }`}
                 >
-                  {room.gameState ? 'Идёт игра' : room.players.length >= room.maxPlayers ? 'Полная' : 'Войти'}
-                </Button>
-              </div>
-            ))}
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-amber-100 truncate">{room.name}</h3>
+                    <div className="flex items-center gap-1.5">
+                      {room.hasActiveGame && (
+                        <Badge className="bg-green-900/50 text-green-300 border-green-700/30 text-xs animate-pulse">
+                          В игре
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-xs">
+                        <Users className="w-3 h-3 mr-1" />
+                        {room.players.length}/{room.maxPlayers}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
+                      <Timer className="w-3 h-3 mr-1" /> {room.settings.turnTimer}с
+                    </Badge>
+                    {room.settings.withBots && (
+                      <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
+                        <Bot className="w-3 h-3 mr-1" /> {room.settings.botCount} бот
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
+                      <Layers className="w-3 h-3 mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-1 mb-3 flex-wrap">
+                    {room.players.map(p => (
+                      <Badge key={p.id} className={`text-xs ${p.isBot ? 'bg-purple-900/40 text-purple-300 border-purple-700/30' : p.ready ? 'bg-green-900/40 text-green-300 border-green-700/30' : 'bg-amber-900/40 text-amber-300 border-amber-700/30'}`}>
+                        {p.isBot && <Bot className="w-2.5 h-2.5 mr-0.5" />}
+                        {p.name}
+                      </Badge>
+                    ))}
+                  </div>
+                  {canRejoin ? (
+                    <Button
+                      className="w-full bg-green-700 hover:bg-green-600 text-white"
+                      onClick={() => handleRejoin(room.id)}
+                      disabled={rejoining === room.id}
+                    >
+                      <RotateCcw className={`w-4 h-4 mr-2 ${rejoining === room.id ? 'animate-spin' : ''}`} />
+                      {rejoining === room.id ? 'Возвращение...' : 'Вернуться в игру'}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full bg-amber-700/60 hover:bg-amber-600/60 text-amber-100"
+                      disabled={room.players.length >= room.maxPlayers || !!room.hasActiveGame}
+                      onClick={() => onJoinRoom(room.id)}
+                    >
+                      {room.hasActiveGame ? 'Идёт игра' : room.players.length >= room.maxPlayers ? 'Полная' : 'Войти'}
+                    </Button>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

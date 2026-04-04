@@ -76,6 +76,7 @@ export default function Home() {
       rooms={rooms}
       connected={connected}
       userName={user?.name || 'Гость'}
+      userId={user?.openId || ''}
       onCreateRoom={createRoom}
       onJoinRoom={joinRoom}
       onLogout={logout}

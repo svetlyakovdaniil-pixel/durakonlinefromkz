@@ -50,11 +50,12 @@ function NumberCard({ card }: { card: Card }) {
 
 export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
   // small = opponent mini cards, medium = battlefield cards, default = hand cards
+  // Sizes increased ~35% from original
   const sizeClasses = small
-    ? 'w-10 h-14'
+    ? 'w-14 h-19'
     : medium
-      ? 'w-16 h-24 sm:w-20 sm:h-30'
-      : 'w-18 h-26 sm:w-22 sm:h-32';
+      ? 'w-22 h-32 sm:w-27 sm:h-40'
+      : 'w-24 h-35 sm:w-30 sm:h-43';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;

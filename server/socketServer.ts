@@ -38,6 +38,9 @@ const disconnectTimers = new Map<string, NodeJS.Timeout>(); // odId -> timeout
 const playerRooms = new Map<string, Set<string>>(); // odId -> set of roomIds
 // Players who intentionally left a game — prevent auto-rejoin for these room+player combos
 const forfeitedFromRoom = new Set<string>(); // "odId:roomId" entries
+// Track trump phase per room to detect changes and emit trumpChanged event
+const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump phase
+const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
@@ -214,6 +217,48 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on('joinRoom', (roomId, cb) => {
       const room = rooms.get(roomId);
       if (!room) { cb(false); return; }
+
+      // Allow reconnecting player who is still in the game (within grace period)
+      const gameState = games.get(roomId);
+      const isInGame = gameState && gameState.gamePhase === 'playing' &&
+        gameState.players.some(p => p.id === odId && !p.leftGame && !p.isOut);
+      const isForfeited = forfeitedFromRoom.has(`${odId}:${roomId}`);
+
+      if (isInGame && !isForfeited) {
+        // Player is reconnecting to their active game via lobby
+        console.log(`[Socket] Player ${odId} rejoining active game in room ${roomId} via joinRoom`);
+        
+        // Cancel any pending grace period timer
+        const graceTimer = disconnectTimers.get(odId);
+        if (graceTimer) {
+          clearTimeout(graceTimer);
+          disconnectTimers.delete(odId);
+          console.log(`[Socket] Cancelled grace period for ${odId} — player reconnected via joinRoom`);
+        }
+
+        // Re-add to room.players if not there
+        if (!room.players.some(p => p.id === odId)) {
+          room.players.push({ id: odId, name, ready: true, isBot: false });
+        }
+
+        playerSockets.set(odId, socket.id);
+        socket.join(roomId);
+        trackPlayerRoom(odId, roomId);
+
+        // Send room state
+        socket.emit('roomUpdated', sanitizeRoom(room));
+
+        // Send game state
+        const clientState = toClientState(gameState, odId);
+        socket.emit('gameStateUpdate', clientState);
+        const playerIdx = gameState.players.findIndex(p => p.id === odId);
+        const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+        socket.emit('yourTurn', actions);
+
+        cb(true, sanitizeRoom(room));
+        return;
+      }
+
       if (room.players.length >= room.maxPlayers) { cb(false); return; }
       if (room.gameState) { cb(false); return; }
       if (room.players.find(p => p.id === odId)) {
@@ -277,6 +322,10 @@ export function initSocketServer(httpServer: HttpServer) {
       const gameState = createGame(roomId, playerInfos, room.settings);
       games.set(roomId, gameState);
       room.gameState = gameState;
+
+      // Initialize trump tracking for change detection
+      lastTrumpPhase.set(roomId, gameState.trumpInfo.phase);
+      lastTrumpSuit.set(roomId, gameState.trumpInfo.currentTrump);
 
       broadcastGameState(roomId, gameState);
       startTurnTimer(roomId);
@@ -672,6 +721,8 @@ function closeRoom(roomId: string) {
   stopWatchdog(roomId);
   cancelBotTimeouts(roomId);
   botFailCounts.delete(roomId);
+  lastTrumpPhase.delete(roomId);
+  lastTrumpSuit.delete(roomId);
   io.to(roomId).emit('roomClosed', roomId);
 
   for (const p of room.players) {
@@ -1244,6 +1295,26 @@ function executeBotAction(gs: GameState, botIdx: number, botAction: { action: st
 // ---- Broadcast helpers ----
 
 function broadcastGameState(roomId: string, gameState: GameState) {
+  // Detect trump phase/suit changes and emit trumpChanged event
+  const prevPhase = lastTrumpPhase.get(roomId);
+  const prevSuit = lastTrumpSuit.get(roomId);
+  const currentPhase = gameState.trumpInfo.phase;
+  const currentSuit = gameState.trumpInfo.currentTrump;
+  
+  if (prevPhase !== undefined && prevSuit !== undefined &&
+      (prevPhase !== currentPhase || prevSuit !== currentSuit)) {
+    // Trump has changed! Notify all players in the room
+    io.to(roomId).emit('trumpChanged', {
+      newTrump: currentSuit,
+      phase: currentPhase,
+    });
+    console.log(`[Game] Trump changed in room ${roomId}: phase ${prevPhase}→${currentPhase}, suit ${prevSuit}→${currentSuit}`);
+  }
+  
+  // Update tracking
+  lastTrumpPhase.set(roomId, currentPhase);
+  lastTrumpSuit.set(roomId, currentSuit);
+
   for (const p of gameState.players) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
@@ -1275,5 +1346,11 @@ function broadcastRoomList() {
 }
 
 function sanitizeRoom(room: Room): Room {
-  return { ...room, gameState: null };
+  // Keep gameState null for security, but mark if game is active
+  // so lobby can show 'Вернуться в игру' for reconnecting players
+  const hasActiveGame = !!(room.gameState && room.gameState.gamePhase === 'playing');
+  const activeGamePlayerIds = hasActiveGame && room.gameState
+    ? room.gameState.players.filter(p => !p.leftGame && !p.isOut && !p.isBot).map(p => p.id)
+    : [];
+  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds };
 }

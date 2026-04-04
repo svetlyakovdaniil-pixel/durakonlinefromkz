@@ -61,7 +61,7 @@ function PlayerHand({
   const scroll = useCallback((direction: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = 72; // approx card width
+    const cardWidth = 96; // approx card width (increased ~35%)
     const scrollAmount = cardWidth * 3; // scroll 3 cards at a time
     el.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -70,13 +70,14 @@ function PlayerHand({
     setTimeout(checkScroll, 300);
   }, [checkScroll]);
 
-  // Calculate overlap based on card count
+  // Calculate overlap based on card count (adjusted for larger cards)
   const getCardMargin = (i: number) => {
     if (i === 0) return '0';
-    if (sortedHand.length <= 8) return '0'; // No overlap needed
-    if (sortedHand.length <= 12) return '-8px';
-    if (sortedHand.length <= 18) return '-14px';
-    return '-20px'; // Heavy overlap for 18+ cards
+    if (sortedHand.length <= 6) return '0'; // No overlap needed
+    if (sortedHand.length <= 10) return '-12px';
+    if (sortedHand.length <= 14) return '-20px';
+    if (sortedHand.length <= 18) return '-28px';
+    return '-36px'; // Heavy overlap for 18+ cards
   };
 
   const needsScroll = sortedHand.length > 8;
@@ -177,6 +178,14 @@ export default function GameTable({
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
+
+  // Trump change overlay state
+  const [showTrumpChange, setShowTrumpChange] = useState(false);
+  const [trumpChangePhase, setTrumpChangePhase] = useState<'enter' | 'exit' | null>(null);
+  const [trumpChangeInfo, setTrumpChangeInfo] = useState<{ suit: string; phase: number } | null>(null);
+  const prevTrumpSuit = useRef(gs.trumpInfo.currentTrump);
+  const prevTrumpPhaseNum = useRef(gs.trumpInfo.phase);
+  const trumpChangeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Track previous state for detecting changes
@@ -272,6 +281,34 @@ export default function GameTable({
   }, [turnTimer, availableActions.length, playSound]);
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
+
+  // Detect trump change from game state and show overlay
+  useEffect(() => {
+    const currentSuit = gs.trumpInfo.currentTrump;
+    const currentPhase = gs.trumpInfo.phase;
+    if (prevTrumpSuit.current !== currentSuit || prevTrumpPhaseNum.current !== currentPhase) {
+      // Trump changed! Show overlay
+      trumpChangeTimers.current.forEach(t => clearTimeout(t));
+      trumpChangeTimers.current = [];
+
+      setTrumpChangeInfo({ suit: currentSuit, phase: currentPhase });
+      setShowTrumpChange(true);
+      setTrumpChangePhase('enter');
+
+      const exitTimer = setTimeout(() => {
+        setTrumpChangePhase('exit');
+      }, 2800);
+      const hideTimer = setTimeout(() => {
+        setShowTrumpChange(false);
+        setTrumpChangePhase(null);
+        setTrumpChangeInfo(null);
+        trumpChangeTimers.current = [];
+      }, 3200);
+      trumpChangeTimers.current = [exitTimer, hideTimer];
+    }
+    prevTrumpSuit.current = currentSuit;
+    prevTrumpPhaseNum.current = currentPhase;
+  }, [gs.trumpInfo.currentTrump, gs.trumpInfo.phase]);
 
   // Show "YOUR TURN" overlay for 2 seconds when it becomes player's turn
   useEffect(() => {
@@ -574,13 +611,31 @@ export default function GameTable({
           </div>
         )}
 
+        {/* TRUMP CHANGE overlay */}
+        {showTrumpChange && trumpChangeInfo && (() => {
+          const SUIT_NAMES: Record<string, string> = { spades: 'Пики', hearts: 'Черви', diamonds: 'Бубны', clubs: 'Трефы' };
+          const sym = SUIT_SYMBOLS[trumpChangeInfo.suit] || trumpChangeInfo.suit;
+          const suitName = SUIT_NAMES[trumpChangeInfo.suit] || trumpChangeInfo.suit;
+          const color = trumpChangeInfo.suit === 'hearts' || trumpChangeInfo.suit === 'diamonds' ? 'text-red-500' : 'text-gray-100';
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+              <div className={`flex flex-col items-center gap-2 bg-black/70 backdrop-blur-md rounded-2xl px-8 py-6 border-2 border-amber-500/60 ${trumpChangePhase === 'enter' ? 'trump-change-enter' : trumpChangePhase === 'exit' ? 'trump-change-exit' : ''}`}>
+                <span className="text-amber-300 text-lg font-semibold tracking-wider uppercase">Козырь изменился!</span>
+                <span className={`${color} text-8xl md:text-9xl leading-none drop-shadow-[0_0_20px_rgba(217,119,6,0.5)]`}>{sym}</span>
+                <span className="text-amber-100 text-2xl font-bold">{suitName}</span>
+                <span className="text-amber-200/60 text-sm">Фаза {trumpChangeInfo.phase}/3</span>
+              </div>
+            </div>
+          );
+        })()}
+
         {/* Battlefield */}
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="flex flex-col items-center gap-2 relative">
-            {/* Trump indicator on the field */}
-            <div className="absolute -top-4 -right-4 md:top-0 md:-right-20 z-20 flex flex-col items-center gap-0.5 bg-black/50 backdrop-blur-sm rounded-xl px-3 py-2 border border-amber-700/40 shadow-lg shadow-black/30">
-              <span className={`${trumpColor} text-5xl md:text-6xl leading-none drop-shadow-lg`}>{trumpSymbol}</span>
-              <span className="text-amber-200/70 text-xs font-semibold tracking-wide">Козырь</span>
+            {/* Trump indicator on the field — increased 25% */}
+            <div className="absolute -top-6 -right-6 md:top-0 md:-right-24 z-20 flex flex-col items-center gap-1 bg-black/50 backdrop-blur-sm rounded-xl px-4 py-3 border border-amber-700/40 shadow-lg shadow-black/30">
+              <span className={`${trumpColor} text-6xl md:text-8xl leading-none drop-shadow-lg`}>{trumpSymbol}</span>
+              <span className="text-amber-200/70 text-sm font-semibold tracking-wide">Козырь</span>
             </div>
             {/* Defender taking banner */}
             {gs.defenderTaking && (
@@ -604,12 +659,12 @@ export default function GameTable({
               </div>
             )}
 
-            <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
+            <div className="flex flex-wrap gap-4 justify-center max-w-3xl">
               {gs.battleField.map((pair: BattlePair, i: number) => (
                 <div key={i} className="relative">
                   <PlayingCard card={pair.attack} medium deckStyle={gs.deckStyle} />
                   {pair.defense && (
-                    <div className="absolute top-4 left-4 z-10">
+                    <div className="absolute top-5 left-5 z-10">
                       <PlayingCard card={pair.defense} medium deckStyle={gs.deckStyle} />
                     </div>
                   )}

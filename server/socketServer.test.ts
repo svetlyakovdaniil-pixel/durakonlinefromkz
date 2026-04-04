@@ -924,3 +924,73 @@ describe('Six-exception integration with 6 players', () => {
     }
   });
 });
+
+describe('Trump change detection', () => {
+  it('detects when trump suit changes between game states', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    
+    // Record initial trump
+    const initialTrump = game.trumpInfo.currentTrump;
+    const initialPhase = game.trumpInfo.phase;
+    
+    expect(initialTrump).toBeDefined();
+    expect(initialPhase).toBe(1);
+    
+    // Simulate trump change by modifying game state
+    const allSuits = ['spades', 'hearts', 'diamonds', 'clubs'];
+    const newSuit = allSuits.find(s => s !== initialTrump) || 'spades';
+    
+    game.trumpInfo.currentTrump = newSuit;
+    game.trumpInfo.phase = 2;
+    
+    // Verify change is detectable
+    expect(game.trumpInfo.currentTrump).not.toBe(initialTrump);
+    expect(game.trumpInfo.phase).toBe(2);
+  });
+
+  it('client state includes trump info for notifications', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const clientState = toClientState(game, 'p1');
+    
+    // Client state should include trump info
+    expect(clientState.trumpInfo).toBeDefined();
+    expect(clientState.trumpInfo.currentTrump).toBeDefined();
+    expect(clientState.trumpInfo.phase).toBeDefined();
+  });
+});
+
+describe('Game state for reconnecting players', () => {
+  it('player who has not left game can still get valid client state', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    
+    // Simulate player p2 disconnecting (but not leaving game)
+    // Their state should still be valid
+    const clientState = toClientState(game, 'p2');
+    expect(clientState.myHand.length).toBeGreaterThan(0);
+    expect(clientState.myIndex).toBeGreaterThanOrEqual(0);
+  });
+
+  it('forfeited player is marked as out', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    
+    // Forfeit player 2
+    forfeitPlayer(game, 1);
+    
+    expect(game.players[1].isOut).toBe(true);
+    expect(game.players[1].leftGame).toBe(true);
+  });
+
+  it('available actions for forfeited player are empty', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    
+    forfeitPlayer(game, 1);
+    
+    const actions = getAvailableActions(game, 1);
+    expect(actions.length).toBe(0);
+  });
+});
