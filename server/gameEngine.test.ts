@@ -6,7 +6,7 @@ import {
   canPlayerAddCards, playAttackCard, playDefenseCard,
   transferAttack, endAttack, showPassThrough, takeCards, finalizeTake, successfulDefense,
   toClientState, getAvailableActions, shouldSkipTurn, getBotAction,
-  drawCards, resetTurnTimer, getMaxAttackCards,
+  drawCards, resetTurnTimer, getMaxAttackCards, canNonNeighborPlayCard,
 } from './gameEngine';
 import type { Card, Suit, Rank, GameState, Player, TrumpInfo, RoomSettings } from '../shared/gameTypes';
 
@@ -313,7 +313,8 @@ describe('FIX #2: Transfer attack (perevod)', () => {
     const state = createTestState(3);
     state.players[0].hand = [card('spades', '7')];
     state.players[1].hand = [card('hearts', '7'), card('clubs', '8')];
-    state.players[2].hand = [card('diamonds', '9')];
+    // Player 2 needs at least 2 cards (1 existing on table + 1 transfer = 2 total attack cards)
+    state.players[2].hand = [card('diamonds', '9'), card('diamonds', '10')];
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.turnPhase = 'defend';
     state.currentAttackerIdx = 0;
@@ -353,6 +354,8 @@ describe('FIX #2: Transfer attack (perevod)', () => {
   it('transfer option appears in available actions for defender', () => {
     const state = createTestState(3);
     state.players[1].hand = [card('hearts', '7'), card('clubs', '9')];
+    // Player 2 needs at least 2 cards for transfer
+    state.players[2].hand = [card('diamonds', '9'), card('diamonds', '10')];
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.turnPhase = 'defend';
     state.currentAttackerIdx = 0;
@@ -1014,6 +1017,8 @@ describe('Pass-through (проездной) mechanic', () => {
     // Attack with 7 of spades, defender has 7 of hearts (trump)
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
+    // Next defender (player 2) needs enough cards to handle the pass-through
+    state.players[2].hand = [card('clubs', '9'), card('clubs', '10')];
 
     const error = showPassThrough(state, 1, state.players[1].hand[0].id);
     expect(error).toBeNull();
@@ -1085,6 +1090,8 @@ describe('Pass-through (проездной) mechanic', () => {
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     // Defender has TWO trump 7s
     state.players[1].hand = [card('hearts', '7', 0), card('hearts', '7', 1), card('clubs', 'A')];
+    // Next defender (player 2) needs enough cards
+    state.players[2].hand = [card('clubs', '9'), card('clubs', '10')];
 
     // Show first pass-through
     const error1 = showPassThrough(state, 1, 'hearts-7-0');
@@ -1097,6 +1104,8 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 1;
     state.battleField = [{ attack: card('spades', '7', 1), defense: null }];
     state.players[2].hand = [card('hearts', '7', 2)];
+    // Next defender (player 3) needs enough cards
+    state.players[3].hand = [card('clubs', 'J'), card('clubs', 'Q')];
 
     // New defender shows pass-through
     const error2 = showPassThrough(state, 2, 'hearts-7-2');
@@ -1111,6 +1120,8 @@ describe('Pass-through (проездной) mechanic', () => {
     state.turnPhase = 'defend';
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
+    // Next defender (player 2) needs enough cards
+    state.players[2].hand = [card('clubs', '9'), card('clubs', '10')];
 
     const actions = getAvailableActions(state, 1);
     const ptAction = actions.find(a => a.type === 'showPassThrough');
@@ -1254,5 +1265,222 @@ describe('Pickup mode passedAttackers behavior', () => {
     // Now all attackers passed — should finalize
     expect(state.defenderTaking).toBe(false);
     expect(state.battleField.length).toBe(0);
+  });
+});
+
+// ============================================================
+// FIX: ATTACK CARD LIMIT (defender original hand size)
+// ============================================================
+describe('Attack card limit uses defender original hand size', () => {
+  it('allows adding cards when defender has defended some but originally had enough', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false;
+    // Defender originally had 6 cards, defended 3, has 3 left
+    state.players[1].hand = [card('hearts', '9'), card('hearts', '10'), card('hearts', 'J')];
+    state.players[0].hand = [card('spades', '7'), card('spades', '8')];
+    state.battleField = [
+      { attack: card('spades', '7', 0), defense: card('hearts', '7') },
+      { attack: card('spades', '8', 0), defense: card('hearts', '8') },
+      { attack: card('spades', '9', 0), defense: card('hearts', '6') },
+    ];
+    // Max should be 3 (hand) + 3 (defense on table) = 6
+    expect(getMaxAttackCards(state)).toBe(6);
+  });
+
+  it('getMaxAttackCards counts defense cards on table', () => {
+    const state = createTestState(3);
+    state.currentDefenderIdx = 1;
+    state.firstTrick = false;
+    state.players[1].hand = [card('hearts', '9')]; // 1 card left
+    state.battleField = [
+      { attack: card('spades', '7', 0), defense: card('hearts', '7') },
+      { attack: card('spades', '8', 0), defense: card('hearts', '8') },
+    ];
+    // Max = 1 (hand) + 2 (defense on table) = 3
+    expect(getMaxAttackCards(state)).toBe(3);
+  });
+});
+
+// ============================================================
+// FIX: TRANSFER BLOCKED WHEN NEXT DEFENDER HAS TOO FEW CARDS
+// ============================================================
+describe('Transfer blocked when next defender has insufficient cards', () => {
+  it('blocks transfer when next defender has fewer cards than total attack cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.players[1].hand = [card('hearts', '7'), card('clubs', '8')];
+    // Player 2 has only 1 card but after transfer there will be 2 attack cards
+    state.players[2].hand = [card('diamonds', '9')];
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+
+    const result = transferAttack(state, 1, state.players[1].hand[0].id);
+    expect(result).not.toBeNull();
+    expect(result).toContain('Нельзя перевести');
+  });
+
+  it('allows transfer when next defender has enough cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.players[1].hand = [card('hearts', '7'), card('clubs', '8')];
+    state.players[2].hand = [card('diamonds', '9'), card('diamonds', '10')];
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+
+    const result = transferAttack(state, 1, state.players[1].hand[0].id);
+    expect(result).toBeNull();
+  });
+
+  it('transfer action hidden in getAvailableActions when next defender has too few cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.players[1].hand = [card('hearts', '7'), card('clubs', '9')];
+    state.players[2].hand = [card('diamonds', '9')]; // only 1 card, need 2
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+
+    const actions = getAvailableActions(state, 1);
+    const transferAction = actions.find(a => a.type === 'transferCard');
+    expect(transferAction).toBeUndefined();
+  });
+
+  it('blocks pass-through when next defender has too few cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7'), defense: null }];
+    state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
+    state.players[2].hand = []; // 0 cards, need 1
+
+    const error = showPassThrough(state, 1, state.players[1].hand[0].id);
+    expect(error).not.toBeNull();
+    expect(error).toContain('Нельзя проехать');
+  });
+});
+
+// ============================================================
+// FIX: SIX EXCEPTION — only sixes can be added by non-neighbors
+// ============================================================
+describe('Six exception: non-neighbors can only add sixes', () => {
+  it('canNonNeighborPlayCard returns true for neighbors regardless of card rank', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    // Player 0 is neighbor (attacker/left neighbor)
+    expect(canNonNeighborPlayCard(state, 0, card('spades', '8'))).toBe(true);
+    // Player 2 is neighbor (right neighbor)
+    expect(canNonNeighborPlayCard(state, 2, card('spades', '8'))).toBe(true);
+  });
+
+  it('canNonNeighborPlayCard allows non-neighbor to play 6 when leadCardRank is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    // Player 4 is NOT a neighbor of defender (player 1)
+    expect(canNonNeighborPlayCard(state, 4, card('spades', '6'))).toBe(true);
+  });
+
+  it('canNonNeighborPlayCard blocks non-neighbor from playing non-6 when leadCardRank is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    // Player 4 is NOT a neighbor — cannot play 8
+    expect(canNonNeighborPlayCard(state, 4, card('spades', '8'))).toBe(false);
+  });
+
+  it('playAttackCard blocks non-neighbor from adding non-6 card when lead is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    // Player 4 is not neighbor, has a 6 and an 8 on table
+    state.players[4].hand = [card('spades', '6'), card('spades', '8')];
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    // Playing 8 should be blocked (8 is on table, but non-neighbor can only add 6)
+    const error = playAttackCard(state, 4, state.players[4].hand[1].id);
+    expect(error).toBeTruthy();
+    expect(error).toContain('шестёрку');
+  });
+
+  it('playAttackCard allows non-neighbor to add 6 when lead is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '6')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    const error = playAttackCard(state, 4, state.players[4].hand[0].id);
+    expect(error).toBeNull();
+  });
+
+  it('getAvailableActions only shows 6 for non-neighbor when lead is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    // Player 4 has a 6 and an 8
+    state.players[4].hand = [card('spades', '6'), card('spades', '8')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    const actions = getAvailableActions(state, 4);
+    const playAction = actions.find(a => a.type === 'playCard');
+    expect(playAction).toBeDefined();
+    if (playAction && playAction.type === 'playCard') {
+      // Only the 6 should be playable, not the 8
+      expect(playAction.cardIds).toContain('spades-6-0');
+      expect(playAction.cardIds).not.toContain('spades-8-0');
+    }
+  });
+
+  it('neighbor can add non-6 card when lead is 6', () => {
+    const state = createTestState(6);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    // Player 2 IS a neighbor (right of defender)
+    state.players[2].hand = [card('spades', '8')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q')]; // defender has cards
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    const actions = getAvailableActions(state, 2);
+    const playAction = actions.find(a => a.type === 'playCard');
+    expect(playAction).toBeDefined();
+    if (playAction && playAction.type === 'playCard') {
+      expect(playAction.cardIds).toContain('spades-8-0');
+    }
   });
 });

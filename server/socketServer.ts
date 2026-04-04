@@ -81,21 +81,31 @@ export function initSocketServer(httpServer: HttpServer) {
           continue;
         }
         const room = rooms.get(roomId);
-        if (room && room.players.some(p => p.id === odId)) {
-          socket.join(roomId);
-          // Send current room state
-          socket.emit('roomUpdated', sanitizeRoom(room));
-          // If game is in progress, send game state
-          const gameState = games.get(roomId);
-          if (gameState && gameState.gamePhase === 'playing') {
-            const clientState = toClientState(gameState, odId);
-            socket.emit('gameStateUpdate', clientState);
-            const playerIdx = gameState.players.findIndex(p => p.id === odId);
-            // Always send actions — even empty to clear stale client state
-            const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
-            socket.emit('yourTurn', actions);
+        const gameState = games.get(roomId);
+        // Check both room.players AND gameState.players for reconnect
+        const isInRoom = room && room.players.some(p => p.id === odId);
+        const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame);
+        if (isInRoom || isInGame) {
+          // If player is in game but not in room.players, re-add them
+          if (!isInRoom && isInGame && room) {
+            room.players.push({ id: odId, name, ready: true, isBot: false });
+            console.log(`[Socket] Re-added ${odId} to room.players during auto-rejoin`);
           }
-          console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
+          if (room) {
+            socket.join(roomId);
+            // Send current room state
+            socket.emit('roomUpdated', sanitizeRoom(room));
+            // If game is in progress, send game state
+            if (gameState && gameState.gamePhase === 'playing') {
+              const clientState = toClientState(gameState, odId);
+              socket.emit('gameStateUpdate', clientState);
+              const playerIdx = gameState.players.findIndex(p => p.id === odId);
+              // Always send actions — even empty to clear stale client state
+              const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+              socket.emit('yourTurn', actions);
+            }
+            console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
+          }
         }
       }
     }
@@ -116,8 +126,18 @@ export function initSocketServer(httpServer: HttpServer) {
       const room = rooms.get(roomId);
       if (!room) { cb(false); return; }
 
+      // Check both room.players AND gameState.players — the player might be in the game
+      // but removed from room.players due to a race condition
       const isInRoom = room.players.some(p => p.id === odId);
-      if (!isInRoom) { cb(false); return; }
+      const gameState = games.get(roomId);
+      const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame);
+      if (!isInRoom && !isInGame) { cb(false); return; }
+
+      // If player is in game but not in room.players, re-add them
+      if (!isInRoom && isInGame) {
+        room.players.push({ id: odId, name, ready: true, isBot: false });
+        console.log(`[Socket] Re-added ${odId} to room.players during rejoin`);
+      }
 
       // Cancel any pending grace period timer for this player
       const graceTimer = disconnectTimers.get(odId);
@@ -136,8 +156,7 @@ export function initSocketServer(httpServer: HttpServer) {
       // Send current room state
       socket.emit('roomUpdated', sanitizeRoom(room));
 
-      // If game is in progress, send full game state
-      const gameState = games.get(roomId);
+      // If game is in progress, send full game state (reuse gameState from above)
       if (gameState && gameState.gamePhase === 'playing') {
         const clientState = toClientState(gameState, odId);
         socket.emit('gameStateUpdate', clientState);

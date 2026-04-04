@@ -211,7 +211,10 @@ export function isEdgePlayer(players: Player[], playerIdx: number, defenderIdx: 
 export function getMaxAttackCards(state: GameState): number {
   if (state.firstTrick) return FIRST_TRICK_LIMIT;
   const defender = state.players[state.currentDefenderIdx];
-  return defender.hand.length;
+  // Limit = defender's ORIGINAL hand size at start of trick
+  // = current hand + defense cards already played on the table
+  const defenseCardsOnTable = state.battleField.filter(p => p.defense !== null).length;
+  return defender.hand.length + defenseCardsOnTable;
 }
 
 // ---- Draw cards ----
@@ -273,8 +276,20 @@ export function canPlayAsAttack(state: GameState, card: Card): boolean {
 export function canPlayerAddCards(state: GameState, playerIdx: number): boolean {
   if (playerIdx === state.currentDefenderIdx) return false;
   if (state.players[playerIdx].isOut) return false;
+  // Six exception: when lead card is 6, ALL players can add sixes (not just neighbors)
   if (state.leadCardRank === '6') return true;
   return isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+}
+
+// Check if a specific non-neighbor player can play a specific card
+// When leadCardRank === '6', non-neighbors can ONLY add sixes, not other ranks
+export function canNonNeighborPlayCard(state: GameState, playerIdx: number, card: Card): boolean {
+  const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+  if (isNeighbor) return true; // Neighbors can play any valid card
+  // Non-neighbor can only participate if leadCardRank === '6'
+  if (state.leadCardRank !== '6') return false;
+  // Non-neighbors can ONLY add sixes
+  return card.rank === '6';
 }
 
 // ---- Total cards on table ----
@@ -322,6 +337,8 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
     // PRIORITY RULE: Edge players cannot add cards while attacker has priority
     if (state.attackerHasPriority) return 'Attacker has priority — wait for them to press Бито';
     if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
+    // Six exception: non-neighbors can only add sixes, not other ranks
+    if (!canNonNeighborPlayCard(state, playerIdx, card)) return 'Вы можете подкинуть только шестёрку';
   }
 
   if (!canPlayAsAttack(state, card)) return 'Cannot play this card as attack';
@@ -463,6 +480,18 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
   const attackRank = state.battleField[0]?.attack.rank;
   if (card.rank !== attackRank) return 'Transfer card must match attack rank';
 
+  // Check if the next defender has enough cards to handle all attack cards
+  // Total attack cards after transfer = current battlefield cards + 1 (the transfer card)
+  const totalAttackCards = state.battleField.length + 1;
+  const potentialDir = (card.rank === '10' && state.leadCardRank === '10')
+    ? (state.direction === 'cw' ? 'ccw' : 'cw')
+    : state.direction;
+  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
+  const nextDefender = state.players[newDefenderIdx];
+  if (nextDefender.hand.length < totalAttackCards) {
+    return `Нельзя перевести — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе будет ${totalAttackCards}`;
+  }
+
   if (card.rank === '10' && state.leadCardRank === '10') {
     state.direction = state.direction === 'cw' ? 'ccw' : 'cw';
   }
@@ -470,7 +499,7 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
   player.hand.splice(cardIndex, 1);
   state.battleField.push({ attack: card, defense: null });
 
-  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  // newDefenderIdx already computed above with correct direction
   state.currentAttackerIdx = state.currentDefenderIdx;
   state.currentDefenderIdx = newDefenderIdx;
 
@@ -507,6 +536,14 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
 
   // Each card can only be used as pass-through once per game
   if (state.passThroughUsedIds.includes(cardId)) return 'Эта карта уже использовалась как проездной';
+
+  // Check if the next defender has enough cards to handle all attack cards
+  const totalAttackCards = state.battleField.length; // pass-through doesn't add to battlefield
+  const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  const nextDefender = state.players[newDefenderIdxCheck];
+  if (nextDefender.hand.length < totalAttackCards) {
+    return `Нельзя проехать — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе ${totalAttackCards}`;
+  }
 
   // Mark this card as used for pass-through (one-time per game)
   state.passThroughUsedIds.push(cardId);
@@ -718,7 +755,10 @@ function autoPassAttackersWithNoCards(state: GameState): void {
     }
     if (!canPlayerAddCards(state, i) && i !== state.currentAttackerIdx) continue;
     // Check if this player has any matching cards to add
-    const hasMatchingCards = state.players[i].hand.some(c => ranksOnTable.has(c.rank));
+    // For non-neighbors in six-exception, only check for sixes
+    const hasMatchingCards = state.players[i].hand.some(c => 
+      ranksOnTable.has(c.rank) && canNonNeighborPlayCard(state, i, c)
+    );
     if (!hasMatchingCards) {
       if (!state.passedAttackers.includes(state.players[i].id)) {
         state.passedAttackers.push(state.players[i].id);
@@ -885,15 +925,22 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       }
 
       // Transfer option — show all matching cards for choice
+      // Only show if next defender has enough cards to handle the transfer
       if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
         const attackRank = state.battleField[0].attack.rank;
         const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
         if (transferCards.length > 0) {
-          actions.push({ type: 'transferCard', cardIds: transferCards });
+          // Check next defender has enough cards (battlefield + 1 transfer card)
+          const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+          const nextDef = state.players[nextDefIdx];
+          if (nextDef.hand.length >= state.battleField.length + 1) {
+            actions.push({ type: 'transferCard', cardIds: transferCards });
+          }
         }
       }
 
       // Pass-through (проездной) — show trump cards matching attack rank that haven't been used yet
+      // Only show if next defender has enough cards
       if (state.battleField.length > 0) {
         const attackRank = state.battleField[0].attack.rank;
         const passThroughCards = player.hand.filter(c =>
@@ -902,7 +949,11 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           !state.passThroughUsedIds.includes(c.id)
         ).map(c => c.id);
         if (passThroughCards.length > 0) {
-          actions.push({ type: 'showPassThrough', cardIds: passThroughCards });
+          const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+          const nextDef = state.players[nextDefIdx];
+          if (nextDef.hand.length >= state.battleField.length) {
+            actions.push({ type: 'showPassThrough', cardIds: passThroughCards });
+          }
         }
       }
 
@@ -963,7 +1014,7 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           // In pickup mode, edge players can add cards
           if (canAddMoreAttackCards(state)) {
             const playableIds = player.hand
-              .filter(c => canPlayAsAttack(state, c))
+              .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
               .map(c => c.id);
             if (playableIds.length > 0) {
               actions.push({ type: 'playCard', cardIds: playableIds });
@@ -976,7 +1027,7 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
         } else {
           // Normal mode — edge can add cards when all defended or when there are cards on table
           const playableIds = player.hand
-            .filter(c => canPlayAsAttack(state, c))
+            .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
             .map(c => c.id);
           if (playableIds.length > 0) {
             actions.push({ type: 'playCard', cardIds: playableIds });

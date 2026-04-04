@@ -431,21 +431,27 @@ describe('Forfeit (leave game)', () => {
     const players = createTestPlayers(3);
     const game = createGame('room1', players);
 
-    // Ensure deterministic behavior — skip firstTrick so turnPhase goes to 'defend'
+    // Ensure deterministic behavior
     game.firstTrick = false;
+    game.currentAttackerIdx = 0;
+    game.currentDefenderIdx = 1;
+    game.turnPhase = 'attack';
+    game.battleField = [];
 
-    const attackerIdx = game.currentAttackerIdx;
-    const defenderIdx = game.currentDefenderIdx;
+    // Give attacker a specific card
+    game.players[0].hand = [{ id: 'test-6-0', suit: 'spades', rank: '6', copy: 0 }];
+    game.players[1].hand = [{ id: 'def-7-0', suit: 'hearts', rank: '7', copy: 0 }];
 
     // Attacker plays a card
-    playAttackCard(game, attackerIdx, game.players[attackerIdx].hand[0].id);
+    const err = playAttackCard(game, 0, 'test-6-0');
+    expect(err).toBeNull();
     expect(game.battleField.length).toBe(1);
 
     // Defender forfeits
-    forfeitPlayer(game, defenderIdx);
+    forfeitPlayer(game, 1);
 
     expect(game.battleField.length).toBe(0);
-    expect(game.players[defenderIdx].leftGame).toBe(true);
+    expect(game.players[1].leftGame).toBe(true);
   });
 
   it('forfeit ends game when only one player remains', () => {
@@ -730,6 +736,182 @@ describe('Leave game isolation (manual leave vs disconnect)', () => {
     if (game.gamePhase === 'playing') {
       const newAttacker = game.players[game.currentAttackerIdx];
       expect(newAttacker.isOut).toBe(false);
+    }
+  });
+});
+
+// ============================================================
+// INTEGRATION: Card limit regression — defender original hand size
+// ============================================================
+describe('Card limit regression', () => {
+  it('attacker can keep adding cards while defender has original capacity', () => {
+    const players = createTestPlayers(3);
+    const game = createGame('room1', players);
+    game.firstTrick = false;
+
+    // Fix trump to hearts so defender can beat non-trump with trump
+    game.trumpInfo = { mainTrump: 'hearts', hiddenTrump1: 'hearts', hiddenTrump2: 'hearts', currentTrump: 'hearts', phase: 1 as const };
+
+    // Set up: attacker = 0, defender = 1
+    game.currentAttackerIdx = 0;
+    game.currentDefenderIdx = 1;
+    game.turnPhase = 'attack';
+    game.battleField = [];
+
+    // Trump is hearts. Attacker plays spades (non-trump), defender beats with trump.
+    // Give defender 6 trump cards (hearts) to beat non-trump attacks
+    game.players[1].hand = [
+      { id: 'd-6-0', suit: 'hearts', rank: '6', copy: 0 },
+      { id: 'd-7-0', suit: 'hearts', rank: '7', copy: 0 },
+      { id: 'd-8-0', suit: 'hearts', rank: '8', copy: 0 },
+      { id: 'd-9-0', suit: 'hearts', rank: '9', copy: 0 },
+      { id: 'd-10-0', suit: 'hearts', rank: '10', copy: 0 },
+      { id: 'd-J-0', suit: 'hearts', rank: 'J', copy: 0 },
+    ];
+
+    // Give attacker cards — all spades (non-trump)
+    game.players[0].hand = [
+      { id: 'a-6-0', suit: 'spades', rank: '6', copy: 0 },
+      { id: 'a-6-1', suit: 'clubs', rank: '6', copy: 1 },
+      { id: 'a-6-2', suit: 'diamonds', rank: '6', copy: 2 },
+      { id: 'a-7-0', suit: 'spades', rank: '7', copy: 0 },
+    ];
+
+    // Attack with spades 6
+    const err1 = playAttackCard(game, 0, 'a-6-0');
+    expect(err1).toBeNull();
+    game.leadCardRank = '6';
+
+    // Defender beats spades 6 with hearts 6 (trump beats non-trump)
+    const err2 = playDefenseCard(game, 1, 'd-6-0', 0);
+    expect(err2).toBeNull();
+
+    // Attacker adds clubs 6 (matching rank on table)
+    const err3 = playAttackCard(game, 0, 'a-6-1');
+    expect(err3).toBeNull();
+
+    // Defender beats clubs 6 with hearts 7 (trump beats non-trump)
+    const err4 = playDefenseCard(game, 1, 'd-7-0', 1);
+    expect(err4).toBeNull();
+
+    // Attacker adds diamonds 6
+    const err5 = playAttackCard(game, 0, 'a-6-2');
+    expect(err5).toBeNull();
+
+    // Defender beats diamonds 6 with hearts 8 (trump beats non-trump)
+    const err6 = playDefenseCard(game, 1, 'd-8-0', 2);
+    expect(err6).toBeNull();
+
+    // Now: 3 pairs on table, defender has 3 cards left, original was 6
+    // Attacker should still be able to add (3 pairs < 6 original)
+    const err7 = playAttackCard(game, 0, 'a-7-0');
+    expect(err7).toBeNull(); // Should work because original hand was 6
+  });
+});
+
+// ============================================================
+// INTEGRATION: Six-exception with multiple players
+// ============================================================
+describe('Six-exception integration with 6 players', () => {
+  it('non-neighbor can add 6 but not other ranks in a 6-player game', () => {
+    const players = createTestPlayers(6);
+    const game = createGame('room1', players);
+    game.firstTrick = false;
+
+    // Fix trump to hearts
+    game.trumpInfo = { mainTrump: 'hearts', hiddenTrump1: 'hearts', hiddenTrump2: 'hearts', currentTrump: 'hearts', phase: 1 as const };
+
+    // Set up: attacker = 0, defender = 1
+    game.currentAttackerIdx = 0;
+    game.currentDefenderIdx = 1;
+    game.turnPhase = 'attack';
+    game.battleField = [];
+    game.attackerHasPriority = false; // Allow edge players to act
+
+    // Give defender enough cards
+    game.players[1].hand = [
+      { id: 'd-6-0', suit: 'hearts', rank: '6', copy: 0 },
+      { id: 'd-8-0', suit: 'hearts', rank: '8', copy: 0 },
+      { id: 'd-9-0', suit: 'hearts', rank: '9', copy: 0 },
+      { id: 'd-10-0', suit: 'hearts', rank: '10', copy: 0 },
+    ];
+
+    // Attacker plays a 6
+    game.players[0].hand = [
+      { id: 'a-6-0', suit: 'spades', rank: '6', copy: 0 },
+    ];
+    const err1 = playAttackCard(game, 0, 'a-6-0');
+    expect(err1).toBeNull();
+    expect(game.leadCardRank).toBe('6');
+
+    // Defender defends with hearts 8
+    const err2 = playDefenseCard(game, 1, 'd-8-0', 0);
+    expect(err2).toBeNull();
+
+    // Attacker presses бито to release priority to edge players
+    game.attackerHasPriority = false;
+
+    // Player 4 (non-neighbor) has a 6 and an 8
+    game.players[4].hand = [
+      { id: 'p5-6-0', suit: 'clubs', rank: '6', copy: 0 },
+      { id: 'p5-8-0', suit: 'clubs', rank: '8', copy: 0 },
+    ];
+
+    // Player 4 tries to add 8 (on table from defense) — should be BLOCKED (non-neighbor, only 6 allowed)
+    const err3 = playAttackCard(game, 4, 'p5-8-0');
+    expect(err3).toBeTruthy();
+    expect(err3).toContain('шестёрку');
+
+    // Player 4 adds 6 — should WORK
+    const err4 = playAttackCard(game, 4, 'p5-6-0');
+    expect(err4).toBeNull();
+
+    // Player 2 (neighbor, right of defender) has an 8
+    game.players[2].hand = [
+      { id: 'p3-8-0', suit: 'diamonds', rank: '8', copy: 0 },
+    ];
+
+    // Player 2 adds 8 — should WORK (neighbor can add any matching rank)
+    const err5 = playAttackCard(game, 2, 'p3-8-0');
+    expect(err5).toBeNull();
+  });
+
+  it('getAvailableActions shows only 6 for non-neighbor when lead is 6', () => {
+    const players = createTestPlayers(6);
+    const game = createGame('room1', players);
+    game.firstTrick = false;
+
+    game.currentAttackerIdx = 0;
+    game.currentDefenderIdx = 1;
+    game.turnPhase = 'defend';
+    game.leadCardRank = '6';
+    game.attackerHasPriority = false;
+
+    // Defender has cards
+    game.players[1].hand = [
+      { id: 'd-9-0', suit: 'hearts', rank: '9', copy: 0 },
+      { id: 'd-10-0', suit: 'hearts', rank: '10', copy: 0 },
+    ];
+
+    game.battleField = [
+      { attack: { id: 'a-6-0', suit: 'spades', rank: '6', copy: 0 }, defense: { id: 'd-6-0', suit: 'hearts', rank: '6', copy: 0 } },
+    ];
+
+    // Player 4 (non-neighbor) has 6 and 8
+    game.players[4].hand = [
+      { id: 'p5-6-0', suit: 'clubs', rank: '6', copy: 0 },
+      { id: 'p5-6-1', suit: 'diamonds', rank: '6', copy: 1 },
+      { id: 'p5-8-0', suit: 'clubs', rank: '8', copy: 0 },
+    ];
+
+    const actions = getAvailableActions(game, 4);
+    const playAction = actions.find(a => a.type === 'playCard');
+    expect(playAction).toBeDefined();
+    if (playAction && playAction.type === 'playCard') {
+      // Only 6s should be playable
+      expect(playAction.cardIds).toContain('p5-6-0');
+      expect(playAction.cardIds).toContain('p5-6-1');
+      expect(playAction.cardIds).not.toContain('p5-8-0');
     }
   });
 });

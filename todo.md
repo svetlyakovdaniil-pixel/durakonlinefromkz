@@ -154,3 +154,29 @@
 - [x] Клиент: roomUpdated НЕ устанавливает currentRoomIdRef автоматически
 - [x] Клиент: leavingRef сбрасывается при создании/вступлении в новую комнату
 - [x] 6 новых тестов для leave game isolation (129 тестов проходят)
+
+## Баг: reconnect иногда выкидывает в лобби
+- [x] Аудит rejoin logic — почему "не удалось вернуться в комнату" если прошло < 30с
+- [x] Исправить rejoin: проверка gameState.players как fallback помимо room.players
+
+## Баг: нельзя подкинуть карту (лимит карт на столе)
+- [x] Корневая причина: getMaxAttackCards считал только текущие карты в руке, не учитывая сыгранные на стол
+- [x] Исправлено: лимит = hand.length + defenseCardsOnTable (начальное кол-во карт)
+- [x] 2 новых теста для проверки лимита
+
+## Баг: перевод хода на игрока с недостаточным количеством карт
+- [x] transferAttack: проверка nextDefender.hand.length >= totalAttackCards
+- [x] showPassThrough: аналогичная проверка для проездного
+- [x] getAvailableActions: скрывает кнопки перевода/проездного если недостаточно карт
+- [x] 4 новых теста (transfer blocked, transfer allowed, transfer hidden, pass-through blocked)
+
+## Баг: шестёрки подкидываются всеми, но другие карты — только соседями
+- [x] Новая функция canNonNeighborPlayCard: не-соседи могут подкидывать ТОЛЬКО шестёрки
+- [x] playAttackCard: проверка canNonNeighborPlayCard при подкидывании
+- [x] getAvailableActions: фильтрация карт для edge players через canNonNeighborPlayCard
+- [x] autoPassAttackersWithNoCards: учёт ограничения не-соседей
+- [x] 7 новых тестов для правила шестёрок
+- [x] Всего 145 тестов проходят стабильно (5/5 запусков)
+- [x] Клиент получает действия от сервера через getAvailableActions — нет stale карт
+- [x] Интеграционные тесты: card limit regression + six-exception с 6 игроками
+- [x] Стабилизация flaky тестов: фиксированный козырь + детерминистические карты
