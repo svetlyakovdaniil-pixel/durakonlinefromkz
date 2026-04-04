@@ -59,7 +59,7 @@ function PlayerHand({
   const scroll = useCallback((direction: 'left' | 'right') => {
     const el = scrollRef.current;
     if (!el) return;
-    const cardWidth = 64;
+    const cardWidth = 56;
     const scrollAmount = cardWidth * 3;
     el.scrollBy({
       left: direction === 'left' ? -scrollAmount : scrollAmount,
@@ -71,11 +71,11 @@ function PlayerHand({
   const getCardMargin = (i: number) => {
     if (i === 0) return '0';
     if (sortedHand.length <= 6) return '0';
-    if (sortedHand.length <= 8) return '-8px';
-    if (sortedHand.length <= 10) return '-12px';
-    if (sortedHand.length <= 14) return '-18px';
-    if (sortedHand.length <= 18) return '-24px';
-    return '-30px';
+    if (sortedHand.length <= 8) return '-6px';
+    if (sortedHand.length <= 10) return '-10px';
+    if (sortedHand.length <= 14) return '-16px';
+    if (sortedHand.length <= 18) return '-20px';
+    return '-26px';
   };
 
   const needsScroll = sortedHand.length > 6;
@@ -144,7 +144,9 @@ function PlayerHand({
   );
 }
 
-// ---- Deck visual component — card-sized, horizontal trump peeking from under ----
+// ---- Deck visual: vertical deck body on top, horizontal trump/hidden card peeking from under (like reference photo #3) ----
+// Layout: trump card (horizontal, half visible) sits BEHIND the vertical deck stack
+// The deck body (face-down cards) is vertical and sits on top, covering the bottom half of the horizontal trump card
 function DeckVisual({
   deckCount,
   trumpSuit,
@@ -160,38 +162,61 @@ function DeckVisual({
 }) {
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
   const trumpSymbol = SUIT_SYMBOLS[trumpSuit] || trumpSuit;
-  const trumpColor = trumpSuit === 'hearts' || trumpSuit === 'diamonds' ? '#c41e3a' : '#1a1a2e';
+  const isRed = trumpSuit === 'hearts' || trumpSuit === 'diamonds';
+  const trumpColor = isRed ? '#c41e3a' : '#1a1a2e';
 
   if (deckCount === 0) return null;
 
-  // Deck uses same size as medium battlefield cards: w-27 h-40 on desktop (108px x 160px)
-  const deckW = 108;
-  const deckH = 160;
+  // Card sizes matching PlayingCard medium: sm:w-22 sm:h-32 => 88px x 128px
+  const cardW = 88;
+  const cardH = 128;
+  // Horizontal trump: rotated 90deg, so its visual width = cardH, visual height = cardW
+  const trumpVisualW = cardH; // 128px
+  const trumpVisualH = cardW; // 88px
+  // Trump peeks out by half its height above the deck
+  const trumpPeekAmount = trumpVisualH / 2; // 44px visible above deck
+
+  // Total container: width = max(cardW, trumpVisualW), height = trumpPeekAmount + cardH
+  const containerW = Math.max(cardW, trumpVisualW);
+  const containerH = trumpPeekAmount + cardH;
 
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-amber-200/60 text-[9px] sm:text-xs font-medium">{label}</span>
-      <div className="relative" style={{ width: `${deckW}px`, height: `${deckH + 80}px` }}>
-        {/* Horizontal trump/hidden card peeking from under the deck — half visible */}
+      <div className="relative" style={{ width: `${containerW}px`, height: `${containerH}px` }}>
+        {/* Horizontal trump/hidden card — peeking from ABOVE the deck */}
         {deckCount > 1 && (
           <div
             className="absolute rounded-lg overflow-hidden border-2 shadow-md"
             style={{
-              width: `${deckH}px`,  // rotated: height becomes width
-              height: `${deckW}px`, // rotated: width becomes height
-              top: `${(deckH - deckW) / 2 + deckW / 2}px`, // centered vertically, half peeking
-              left: `${(deckW - deckH) / 2}px`,
+              width: `${cardW}px`,
+              height: `${cardH}px`,
+              // Rotate 90deg to make it horizontal
+              transform: 'rotate(90deg)',
+              transformOrigin: 'center center',
+              // Position so top half peeks out above deck body
+              top: `${trumpPeekAmount - cardH / 2 + (cardH - cardW) / 2}px`,
+              left: `${(containerW - cardW) / 2}px`,
               zIndex: 0,
               borderColor: showOpenTrump ? 'rgba(245,158,11,0.5)' : 'rgba(120,80,20,0.3)',
             }}
           >
             {showOpenTrump ? (
-              /* Open trump card — show suit symbol */
-              <div className="w-full h-full bg-white flex flex-col items-center justify-center">
+              /* Open trump card — white card with large suit symbol and suit name */
+              <div className="w-full h-full bg-white flex flex-col items-center justify-center relative">
+                {/* Top-left corner */}
+                <div className="absolute top-1 left-1.5 leading-none" style={{ color: trumpColor }}>
+                  <div className="text-xs font-bold">{trumpSymbol}</div>
+                </div>
+                {/* Center suit */}
                 <span style={{ color: trumpColor }} className="text-4xl leading-none">{trumpSymbol}</span>
-                <span style={{ color: trumpColor }} className="text-sm font-bold mt-1">
+                <span style={{ color: trumpColor }} className="text-[10px] font-bold mt-1">
                   {trumpSuit === 'hearts' ? 'Черви' : trumpSuit === 'diamonds' ? 'Бубны' : trumpSuit === 'spades' ? 'Пики' : 'Трефы'}
                 </span>
+                {/* Bottom-right corner (rotated) */}
+                <div className="absolute bottom-1 right-1.5 leading-none rotate-180" style={{ color: trumpColor }}>
+                  <div className="text-xs font-bold">{trumpSymbol}</div>
+                </div>
               </div>
             ) : (
               /* Hidden trump — face down */
@@ -200,24 +225,24 @@ function DeckVisual({
           </div>
         )}
 
-        {/* Stack of face-down cards (deck body) — same size as medium cards */}
+        {/* Stack of face-down cards (deck body) — vertical, same size as medium cards */}
         {deckCount > 0 && (
           <>
             {deckCount > 4 && (
               <div className="absolute rounded-lg overflow-hidden border border-amber-900/20 shadow-sm"
-                style={{ width: `${deckW - 4}px`, height: `${deckH - 4}px`, top: '4px', left: '4px', zIndex: 1 }}>
+                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount + 4}px`, left: `${(containerW - cardW) / 2 + 4}px`, zIndex: 1 }}>
                 <img src={backUrl} alt="" className="w-full h-full object-cover" />
               </div>
             )}
             {deckCount > 2 && (
               <div className="absolute rounded-lg overflow-hidden border border-amber-900/25 shadow-sm"
-                style={{ width: `${deckW - 4}px`, height: `${deckH - 4}px`, top: '2px', left: '2px', zIndex: 2 }}>
+                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount + 2}px`, left: `${(containerW - cardW) / 2 + 2}px`, zIndex: 2 }}>
                 <img src={backUrl} alt="" className="w-full h-full object-cover" />
               </div>
             )}
             {/* Main face-down card */}
             <div className="absolute rounded-lg overflow-hidden border border-amber-900/30 shadow-md"
-              style={{ width: `${deckW - 4}px`, height: `${deckH - 4}px`, top: '0', left: '0', zIndex: 3 }}>
+              style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount}px`, left: `${(containerW - cardW) / 2}px`, zIndex: 3 }}>
               <img src={backUrl} alt="card back" className="w-full h-full object-cover" />
             </div>
           </>
@@ -225,7 +250,7 @@ function DeckVisual({
 
         {/* Card count badge */}
         <div className="absolute bg-black/80 border border-amber-700/40 rounded-full w-7 h-7 flex items-center justify-center"
-          style={{ bottom: '70px', right: '-8px', zIndex: 10 }}>
+          style={{ bottom: '4px', right: `${(containerW - cardW) / 2 - 8}px`, zIndex: 10 }}>
           <span className="text-amber-300 text-xs font-bold">{deckCount}</span>
         </div>
       </div>
@@ -237,15 +262,15 @@ function DeckVisual({
 function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 'large' }) {
   const symbol = SUIT_SYMBOLS[suit] || suit;
   const isRed = suit === 'hearts' || suit === 'diamonds';
-  const color = isRed ? '#ef4444' : '#e5e7eb'; // red for hearts/diamonds, light gray for spades/clubs (visible on dark bg)
+  const color = isRed ? '#ef4444' : '#e5e7eb';
 
   if (size === 'large') {
     return (
-      <div className="flex flex-col items-center justify-center gap-2" style={{ width: '200px', height: '200px' }}>
+      <div className="flex flex-col items-center justify-center gap-2" style={{ width: '180px', height: '180px' }}>
         <span
           style={{
             color,
-            fontSize: '7rem',
+            fontSize: '6rem',
             lineHeight: 1,
             filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
             textShadow: isRed
@@ -255,20 +280,20 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
         >
           {symbol}
         </span>
-        <span className="text-white text-lg font-bold tracking-wide" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
+        <span className="text-white text-lg font-bold tracking-wide not-italic" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
           Козырь
         </span>
       </div>
     );
   }
 
-  // Normal size — fills ~80% of deck area
+  // Normal size — fills ~80% of deck area (88x128 card)
   return (
-    <div className="flex flex-col items-center justify-center gap-1" style={{ width: '108px', height: '160px' }}>
+    <div className="flex flex-col items-center justify-center gap-1" style={{ width: '88px', height: '128px' }}>
       <span
         style={{
           color,
-          fontSize: '5rem',
+          fontSize: '4rem',
           lineHeight: 1,
           filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.6)) drop-shadow(0 2px 4px rgba(0,0,0,0.4))',
           textShadow: isRed
@@ -278,7 +303,7 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
       >
         {symbol}
       </span>
-      <span className="text-white text-sm font-bold tracking-wide" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
+      <span className="text-white text-xs font-bold tracking-wide not-italic" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
         Козырь
       </span>
     </div>
@@ -305,9 +330,9 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
     return positions;
   }, []);
 
-  // Same size as medium battlefield cards: 108x160 on desktop
-  const cardW = 104;
-  const cardH = 156;
+  // Same size as medium cards: 88x128
+  const cardW = 84;
+  const cardH = 124;
 
   if (count === 0) return null;
 
@@ -336,7 +361,7 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
           );
         })}
       </div>
-      {/* Counter — large font, ~5x bigger */}
+      {/* Counter — large font */}
       <div className="bg-black/60 border border-amber-700/30 rounded-lg px-4 py-1.5">
         <span className="text-amber-300 text-3xl sm:text-4xl font-black">{count}</span>
       </div>
@@ -704,11 +729,10 @@ export default function GameTable({
       )}
 
       <div className="relative z-10 flex flex-col h-[100dvh]">
-        {/* Top HUD — minimal: only direction, sound, leave on desktop. Mobile keeps timer + trump info */}
+        {/* Top HUD — minimal: only direction, sound, leave. No deck counters on desktop */}
         <div className="flex items-center justify-between px-2 sm:px-3 py-1 sm:py-2 bg-black/50 backdrop-blur-sm">
-          {/* Left side — mobile: deck counts + phase; desktop: nothing (removed counters) */}
+          {/* Left side — mobile only: deck counts + phase */}
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-            {/* Mobile only: show deck counts and phase */}
             <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-[10px] px-1.5">
               К1:{gs.deck1Count} К2:{gs.deck2Count} Ф{gs.trumpInfo.phase}/3
             </Badge>
@@ -899,7 +923,6 @@ export default function GameTable({
               <div className="flex flex-col gap-4 items-center">
                 {/* Deck 1 */}
                 {deck1Empty ? (
-                  /* Deck 1 empty — show trump icon in its place */
                   <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
                 ) : (
                   <DeckVisual
@@ -961,35 +984,35 @@ export default function GameTable({
           </div>
         )}
 
-        {/* Role indicator & Actions */}
+        {/* Role indicator — 2x larger badges for "Атакуете" and "Защита" */}
         <div className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1">
           {isAttacker && !gs.defenderTaking && (
-            <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-[10px] sm:text-xs">
-              <Swords className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Атакуете
+            <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+              <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Атакуете
             </Badge>
           )}
           {isAttacker && gs.defenderTaking && (
-            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-[10px] sm:text-xs">
-              <Swords className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Докиньте
+            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+              <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Докиньте
             </Badge>
           )}
           {isDefender && !gs.defenderTaking && (
-            <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-[10px] sm:text-xs">
-              <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Защита
+            <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+              <Shield className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Защита
             </Badge>
           )}
           {isDefender && gs.defenderTaking && (
-            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-[10px] sm:text-xs">
-              <HandMetal className="w-2.5 h-2.5 sm:w-3 sm:h-3 mr-0.5 sm:mr-1" /> Берёте
+            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+              <HandMetal className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Берёте
             </Badge>
           )}
           {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
-            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-[10px] sm:text-xs">
+            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
               Подкинуть
             </Badge>
           )}
           {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
-            <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-[10px] sm:text-xs">
+            <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
               Ожидание...
             </Badge>
           )}
@@ -999,7 +1022,7 @@ export default function GameTable({
         <div className="flex items-center justify-center gap-2 sm:gap-3 px-2 sm:px-3 py-1 sm:py-1.5 flex-wrap">
           {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
             <Button
-              className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 font-semibold"
+              className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
               onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
             >
               Перевести
@@ -1007,25 +1030,25 @@ export default function GameTable({
           )}
           {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
             <Button
-              className="bg-yellow-700 hover:bg-yellow-600 text-white text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 font-semibold"
+              className="bg-yellow-700 hover:bg-yellow-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
               onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
             >
-              <Eye className="w-4 h-4 mr-1 sm:mr-1.5" />
+              <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5" />
               Проездной
             </Button>
           )}
           {canTake && (
-            <Button variant="destructive" className="text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 font-semibold" onClick={onTakeCards}>
+            <Button variant="destructive" className="text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onTakeCards}>
               Забрать
             </Button>
           )}
           {canEndAttack && (
-            <Button className="bg-green-700 hover:bg-green-600 text-white text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 font-semibold" onClick={onEndAttack}>
+            <Button className="bg-green-700 hover:bg-green-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onEndAttack}>
               {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
             </Button>
           )}
           {canSkip && (
-            <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 font-semibold" onClick={onSkipTurn}>
+            <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onSkipTurn}>
               Пропустить
             </Button>
           )}
@@ -1041,9 +1064,9 @@ export default function GameTable({
         ) : (
         <div className="px-1 sm:px-2 pb-2 sm:pb-3 pt-0.5 sm:pt-1">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
-            <span className="text-[10px] sm:text-xs text-white">{gs.myHand.length} карт</span>
+            <span className="text-xs sm:text-base text-white font-medium">{gs.myHand.length} карт</span>
             <button
-              className="text-[10px] sm:text-xs text-white/70 hover:text-white transition-colors"
+              className="text-xs sm:text-base text-white/70 hover:text-white transition-colors font-medium"
               onClick={() => setSortMode(m => m === 'suit-rank' ? 'rank-only' : 'suit-rank')}
             >
               {sortMode === 'suit-rank' ? 'По масти' : 'По рангу'}

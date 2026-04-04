@@ -32,32 +32,32 @@ function NumberCard({ card }: { card: Card }) {
       </svg>
       {/* Top-left rank */}
       <div className="self-start z-10 leading-none" style={{ color }}>
-        <div className="text-[10px] sm:text-sm font-bold">{card.rank}</div>
-        <div className="text-[10px] sm:text-sm -mt-0.5">{symbol}</div>
+        <div className="text-[9px] sm:text-xs font-bold">{card.rank}</div>
+        <div className="text-[9px] sm:text-xs -mt-0.5">{symbol}</div>
       </div>
       {/* Center suit */}
-      <div className="z-10 text-xl sm:text-3xl" style={{ color }}>
+      <div className="z-10 text-lg sm:text-2xl" style={{ color }}>
         {symbol}
       </div>
       {/* Bottom-right rank */}
       <div className="self-end z-10 leading-none rotate-180" style={{ color }}>
-        <div className="text-[10px] sm:text-sm font-bold">{card.rank}</div>
-        <div className="text-[10px] sm:text-sm -mt-0.5">{symbol}</div>
+        <div className="text-[9px] sm:text-xs font-bold">{card.rank}</div>
+        <div className="text-[9px] sm:text-xs -mt-0.5">{symbol}</div>
       </div>
     </div>
   );
 }
 
 export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
-  // Responsive card sizes:
-  // small = opponent mini cards (same on all screens)
-  // medium = battlefield cards (smaller on mobile)
-  // default = hand cards (smaller on mobile, full on desktop)
+  // Responsive card sizes (20% smaller than previous):
+  // small = opponent mini cards
+  // medium = battlefield cards
+  // default = hand cards
   const sizeClasses = small
-    ? 'w-8 h-12 sm:w-14 sm:h-19'
+    ? 'w-6 h-10 sm:w-11 sm:h-15'
     : medium
-      ? 'w-16 h-24 sm:w-27 sm:h-40'
-      : 'w-16 h-24 sm:w-30 sm:h-43';
+      ? 'w-13 h-19 sm:w-22 sm:h-32'
+      : 'w-13 h-19 sm:w-24 sm:h-34';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
