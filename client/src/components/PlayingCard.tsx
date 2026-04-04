@@ -74,7 +74,9 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
       onClick={playable || onClick ? onClick : undefined}
     >
       {hasImage ? (
-        <img src={CARD_IMAGES[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover" loading="lazy" />
+        <div className="w-full h-full bg-white relative">
+          <img src={CARD_IMAGES[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10" loading="lazy" />
+        </div>
       ) : (
         <NumberCard card={card} />
       )}
