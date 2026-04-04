@@ -250,3 +250,13 @@
 - [x] 2 теста: defender timeout → defenderTaking=true, finalize after all pass
 - [x] 3 теста: consecutiveTimeouts increment, reset, initialization
 - [x] Всего 163 теста проходят (115 gameEngine + 47 socketServer + 1 auth)
+
+## Баг: при таймауте защитника карты уходят в биту вместо руки защитника
+- [x] handleTimeUp в defend фазе вызывает engineTakeCards (не successfulDefense)
+- [x] После забора: defenderTaking=true, атакующие могут подкинуть
+- [x] finalizeTake перемещает карты в руку защитника (defender.hand.push)
+
+## Баг: 2 таймаута подряд должны работать для ЛЮБОГО игрока в ЛЮБОЙ фазе
+- [x] Универсальный 2-strike: работает для защитника, атакующего, и в pickup mode
+- [x] kickPlayerForTimeouts — вынесено в отдельную функцию для переиспользования
+- [x] Счётчик сбрасывается при любом действии игрока

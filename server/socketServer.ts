@@ -403,6 +403,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const error = engineEndAttack(gameState, playerIdx);
       if (error) { socket.emit('error', error); return; }
 
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
       restartTurnTimer(roomId);
       broadcastGameState(roomId, gameState);
       scheduleBotAction(roomId);
@@ -414,6 +419,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       if (!shouldSkipTurn(gameState, playerIdx)) return;
+
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
 
       const nextAttacker = getNextActivePlayer(gameState.players, playerIdx, gameState.direction);
       gameState.currentAttackerIdx = nextAttacker;
@@ -839,9 +849,81 @@ function restartTurnTimer(roomId: string) {
   startTurnTimer(roomId);
 }
 
+// Helper: kick a player due to consecutive timeouts (reused for any phase)
+function kickPlayerForTimeouts(roomId: string, gameState: GameState, playerIdx: number) {
+  const player = gameState.players[playerIdx];
+  console.log(`[Timer] ${player.name} forfeited due to 2 consecutive timeouts`);
+  forfeitPlayer(gameState, playerIdx);
+  forfeitedFromRoom.add(`${player.id}:${roomId}`);
+  untrackPlayerRoom(player.id, roomId);
+  const room = rooms.get(roomId);
+  if (room) {
+    room.players = room.players.filter(rp => rp.id !== player.id);
+    if (room.players.filter(rp => !rp.isBot).length === 0) {
+      closeRoom(roomId);
+      return;
+    }
+    if (room.hostId === player.id) {
+      const nextHost = room.players.find(rp => !rp.isBot);
+      if (nextHost) room.hostId = nextHost.id;
+    }
+    io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+  }
+  const sid = playerSockets.get(player.id);
+  if (sid) {
+    const s = io.sockets.sockets.get(sid);
+    if (s) s.leave(roomId);
+    io.to(sid).emit('forcedToLobby', { reason: 'kicked' });
+  }
+  resetTurnTimer(gameState);
+  restartTurnTimer(roomId);
+  broadcastGameState(roomId, gameState);
+  if (gameState.gamePhase === 'playing') scheduleBotAction(roomId);
+}
+
 function handleTimeUp(roomId: string, gameState: GameState) {
   console.log(`[Timer] Time up. Phase: ${gameState.turnPhase}, taking: ${gameState.defenderTaking}, bf: ${gameState.battleField.length}, attacker: ${gameState.players[gameState.currentAttackerIdx]?.name}, defender: ${gameState.players[gameState.currentDefenderIdx]?.name}`);
 
+  // ── Determine which player "owns" this timeout ──
+  let timeoutPlayerId: string | null = null;
+  let timeoutPlayerIdx = -1;
+
+  if (gameState.defenderTaking) {
+    // In pickup mode, the timer is on the attackers (they can add cards)
+    // The current attacker is the one who timed out
+    const attacker = gameState.players[gameState.currentAttackerIdx];
+    if (attacker && !attacker.isBot && !attacker.isOut) {
+      timeoutPlayerId = attacker.id;
+      timeoutPlayerIdx = gameState.currentAttackerIdx;
+    }
+  } else if (gameState.turnPhase === 'defend') {
+    const defender = gameState.players[gameState.currentDefenderIdx];
+    if (defender && !defender.isBot && !defender.isOut) {
+      timeoutPlayerId = defender.id;
+      timeoutPlayerIdx = gameState.currentDefenderIdx;
+    }
+  } else if (gameState.turnPhase === 'attack') {
+    const attacker = gameState.players[gameState.currentAttackerIdx];
+    if (attacker && !attacker.isBot && !attacker.isOut) {
+      timeoutPlayerId = attacker.id;
+      timeoutPlayerIdx = gameState.currentAttackerIdx;
+    }
+  }
+
+  // ── Track consecutive timeouts for this player ──
+  if (timeoutPlayerId) {
+    const prevCount = gameState.consecutiveTimeouts[timeoutPlayerId] || 0;
+    gameState.consecutiveTimeouts[timeoutPlayerId] = prevCount + 1;
+    console.log(`[Timer] Player ${gameState.players[timeoutPlayerIdx]?.name} timeout #${prevCount + 1}`);
+
+    // 2 consecutive timeouts = auto-forfeit
+    if (prevCount + 1 >= 2) {
+      kickPlayerForTimeouts(roomId, gameState, timeoutPlayerIdx);
+      return;
+    }
+  }
+
+  // ── Handle the actual timeout action ──
   if (gameState.defenderTaking) {
     // Pickup mode — force-pass all unpassed attackers and finalize
     for (const p of gameState.players) {
@@ -853,57 +935,12 @@ function handleTimeUp(roomId: string, gameState: GameState) {
     }
     engineFinalizeTake(gameState);
   } else if (gameState.turnPhase === 'defend') {
-    // Defender time's up — track consecutive timeouts
-    const defender = gameState.players[gameState.currentDefenderIdx];
-    if (defender && !defender.isBot) {
-      const prevCount = gameState.consecutiveTimeouts[defender.id] || 0;
-      gameState.consecutiveTimeouts[defender.id] = prevCount + 1;
-      console.log(`[Timer] Defender ${defender.name} timeout #${prevCount + 1}`);
-
-      // 2 consecutive timeouts = auto-forfeit
-      if (prevCount + 1 >= 2) {
-        console.log(`[Timer] Defender ${defender.name} forfeited due to 2 consecutive timeouts`);
-        const defenderIdx = gameState.currentDefenderIdx;
-        forfeitPlayer(gameState, defenderIdx);
-        // Mark as forfeited to prevent rejoin
-        forfeitedFromRoom.add(`${defender.id}:${roomId}`);
-        untrackPlayerRoom(defender.id, roomId);
-        // Remove from room.players
-        const room = rooms.get(roomId);
-        if (room) {
-          room.players = room.players.filter(rp => rp.id !== defender.id);
-          if (room.players.filter(rp => !rp.isBot).length === 0) {
-            closeRoom(roomId);
-            return;
-          }
-          if (room.hostId === defender.id) {
-            const nextHost = room.players.find(rp => !rp.isBot);
-            if (nextHost) room.hostId = nextHost.id;
-          }
-          io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
-        }
-        // Notify the player
-        const sid = playerSockets.get(defender.id);
-        if (sid) {
-          const s = io.sockets.sockets.get(sid);
-          if (s) s.leave(roomId);
-          io.to(sid).emit('forcedToLobby', { reason: 'kicked' });
-        }
-        // Reset and continue
-        resetTurnTimer(gameState);
-        restartTurnTimer(roomId);
-        broadcastGameState(roomId, gameState);
-        if (gameState.gamePhase === 'playing') scheduleBotAction(roomId);
-        return;
-      }
-    }
-
-    // First timeout: defender takes cards, but attackers can still add more
+    // Defender timed out — defender TAKES cards into hand, attackers can add more
     engineTakeCards(gameState);
     // Do NOT finalize immediately — let attackers add cards
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
-      // Attacker time's up — auto "бито"
+      // Attacker timed out — auto "бито"
       const activeIdx = gameState.currentAttackerIdx;
       engineEndAttack(gameState, activeIdx);
     }
@@ -922,6 +959,8 @@ function handleTimeUp(roomId: string, gameState: GameState) {
         if (gameState.defenderTaking) {
           engineFinalizeTake(gameState);
         } else {
+          // If no one can act and defender is NOT taking, this means
+          // all cards are defended and no one can add more — successful defense
           successfulDefense(gameState);
         }
       } else {
