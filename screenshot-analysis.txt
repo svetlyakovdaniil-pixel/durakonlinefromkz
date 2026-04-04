@@ -1,0 +1,31 @@
+Screenshot Analysis:
+
+Screenshot 1 (4343.webp) - Shows current game state:
+- Red rectangle in bottom-right area (between cards and deck area) = where action buttons should go
+- Currently "Ожидание..." text is in center of screen
+- Timer (30 сек) in top-left, Bito pile (24) in bottom-left
+- Deck area on right side with "Колода 2" label and card count 38
+- Trump icon (red diamond) in top-right with "Козырь" label
+- Player cards at bottom
+
+Screenshot 2 (34444.png) - Shows current incorrect deck:
+- Trump card sticks out from TOP of deck showing only suit symbol
+- Need to change to show actual card from CENTER
+
+Screenshot 3 (344.jpg) - Shows CORRECT deck layout:
+- Trump card (King of Hearts) positioned to the LEFT of the deck
+- Card back (deck) positioned to the RIGHT, overlapping the trump card
+- The trump card shows about 50% of the card face (left half visible)
+- The deck card back covers the right half of the trump card
+- Both cards are VERTICAL (not rotated)
+- Key insight: trump card is BEHIND the deck, peeking out from the LEFT side
+
+Required changes:
+1. DeckVisual: Trump card should be vertical, positioned to the LEFT of the deck stack
+   - The deck stack (card backs) sits on top/right, covering ~50% of the trump card
+   - Trump card shows actual card face (rank + suit) using PlayingCard component
+   - For deck 2: same layout but with card back instead of trump card face
+
+2. Action buttons: Move from center to bottom-right area (between player hand and deck panel)
+
+3. Server already sends trumpCard in TrumpInfo - just need to use it in DeckVisual

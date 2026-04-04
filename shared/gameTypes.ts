@@ -34,6 +34,10 @@ export interface TrumpInfo {
   hiddenTrump2: Suit;
   currentTrump: Suit;
   phase: 1 | 2 | 3;
+  /** The actual trump card at the bottom of deck1 (visible to all players) */
+  trumpCard?: Card;
+  /** The hidden trump card at the bottom of deck2 (face down, revealed when deck2 starts) */
+  hiddenTrumpCard?: Card;
 }
 
 // --- Player ---

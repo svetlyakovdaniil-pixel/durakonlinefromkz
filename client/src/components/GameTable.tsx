@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../../shared/gameTypes';
 import { RANK_ORDER } from '../../../shared/gameTypes';
-import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL } from '../../../shared/cardAssets';
+import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -144,80 +144,91 @@ function PlayerHand({
   );
 }
 
-// ---- Deck visual: vertical deck body on top, horizontal trump/hidden card peeking from under (like reference photo #3) ----
-// Layout: trump card (horizontal, half visible) sits BEHIND the vertical deck stack
-// The deck body (face-down cards) is vertical and sits on top, covering the bottom half of the horizontal trump card
+// ---- Deck visual: trump card peeks from LEFT side of deck (like reference photo #3) ----
+// Layout: trump card (vertical) sits to the LEFT, deck stack (vertical card backs) overlaps its right half
+// Result: left 50% of trump card visible, right 50% hidden behind deck
 function DeckVisual({
   deckCount,
-  trumpSuit,
+  trumpCard,
   showOpenTrump,
   deckStyle,
   label,
 }: {
   deckCount: number;
-  trumpSuit: string;
+  trumpCard?: { suit: string | null; rank: string; copy: number; id: string } | null;
   showOpenTrump: boolean;
   deckStyle: 'classic' | 'custom';
   label: string;
 }) {
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
-  const trumpSymbol = SUIT_SYMBOLS[trumpSuit] || trumpSuit;
-  const isRed = trumpSuit === 'hearts' || trumpSuit === 'diamonds';
-  const trumpColor = isRed ? '#c41e3a' : '#1a1a2e';
 
   if (deckCount === 0) return null;
 
   // Card sizes matching PlayingCard medium: sm:w-22 sm:h-32 => 88px x 128px
   const cardW = 88;
   const cardH = 128;
-  // Horizontal trump: rotated 90deg, so its visual width = cardH, visual height = cardW
-  const trumpVisualW = cardH; // 128px
-  const trumpVisualH = cardW; // 88px
-  // Trump peeks out by half its height above the deck
-  const trumpPeekAmount = trumpVisualH / 2; // 44px visible above deck
+  // Trump card peeks out from the LEFT by half its width
+  const trumpPeekAmount = Math.round(cardW * 0.5); // 44px visible on left
 
-  // Total container: width = max(cardW, trumpVisualW), height = trumpPeekAmount + cardH
-  const containerW = Math.max(cardW, trumpVisualW);
-  const containerH = trumpPeekAmount + cardH;
+  // Total container: width = trumpPeekAmount + cardW (trump peek + deck), height = cardH
+  const containerW = trumpPeekAmount + cardW;
+  const containerH = cardH + 8; // small padding for stacked cards offset
+
+  // Determine trump card image
+  const isCustom = deckStyle === 'custom';
+  const trumpImageKey = trumpCard && showOpenTrump
+    ? (isCustom
+        ? getCustomCardImageKey(trumpCard.rank, trumpCard.suit)
+        : getCardImageKey(trumpCard.rank, trumpCard.suit))
+    : null;
+  const trumpImageMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+  const trumpImageUrl = trumpImageKey ? trumpImageMap[trumpImageKey] : null;
+
+  // For number cards without images, render rank+suit
+  const trumpSuit = trumpCard?.suit || '';
+  const trumpSymbol = SUIT_SYMBOLS[trumpSuit] || trumpSuit;
+  const isRed = trumpSuit === 'hearts' || trumpSuit === 'diamonds';
+  const trumpColor = isRed ? '#c41e3a' : '#1a1a2e';
 
   return (
     <div className="flex flex-col items-center gap-1">
       <span className="text-amber-200/60 text-[9px] sm:text-xs font-medium">{label}</span>
       <div className="relative" style={{ width: `${containerW}px`, height: `${containerH}px` }}>
-        {/* Horizontal trump/hidden card — peeking from ABOVE the deck */}
+        {/* Trump/hidden card — peeking from LEFT side of deck */}
         {deckCount > 1 && (
           <div
             className="absolute rounded-lg overflow-hidden border-2 shadow-md"
             style={{
               width: `${cardW}px`,
               height: `${cardH}px`,
-              // Rotate 90deg to make it horizontal
-              transform: 'rotate(90deg)',
-              transformOrigin: 'center center',
-              // Position so top half peeks out above deck body
-              top: `${trumpPeekAmount - cardH / 2 + (cardH - cardW) / 2}px`,
-              left: `${(containerW - cardW) / 2}px`,
+              top: '0px',
+              left: '0px',
               zIndex: 0,
               borderColor: showOpenTrump ? 'rgba(245,158,11,0.5)' : 'rgba(120,80,20,0.3)',
             }}
           >
-            {showOpenTrump ? (
-              /* Open trump card — white card with large suit symbol and suit name */
-              <div className="w-full h-full bg-white flex flex-col items-center justify-center relative">
-                {/* Top-left corner */}
-                <div className="absolute top-1 left-1.5 leading-none" style={{ color: trumpColor }}>
-                  <div className="text-xs font-bold">{trumpSymbol}</div>
+            {showOpenTrump && trumpCard ? (
+              /* Open trump card — show actual card face */
+              trumpImageUrl ? (
+                <div className="w-full h-full bg-white">
+                  <img src={trumpImageUrl} alt={`${trumpCard.rank} ${trumpCard.suit}`} className="w-full h-full object-cover" loading="lazy" />
                 </div>
-                {/* Center suit */}
-                <span style={{ color: trumpColor }} className="text-4xl leading-none">{trumpSymbol}</span>
-                <span style={{ color: trumpColor }} className="text-[10px] font-bold mt-1">
-                  {trumpSuit === 'hearts' ? 'Черви' : trumpSuit === 'diamonds' ? 'Бубны' : trumpSuit === 'spades' ? 'Пики' : 'Трефы'}
-                </span>
-                {/* Bottom-right corner (rotated) */}
-                <div className="absolute bottom-1 right-1.5 leading-none rotate-180" style={{ color: trumpColor }}>
-                  <div className="text-xs font-bold">{trumpSymbol}</div>
+              ) : (
+                /* Number card without image — render rank + suit */
+                <div className="w-full h-full bg-white flex flex-col items-center justify-between p-1.5 relative overflow-hidden">
+                  <div className="self-start leading-none" style={{ color: trumpColor }}>
+                    <div className="text-xs font-bold">{trumpCard.rank}</div>
+                    <div className="text-xs -mt-0.5">{trumpSymbol}</div>
+                  </div>
+                  <div className="text-2xl" style={{ color: trumpColor }}>
+                    {trumpSymbol}
+                  </div>
+                  <div className="self-end leading-none rotate-180" style={{ color: trumpColor }}>
+                    <div className="text-xs font-bold">{trumpCard.rank}</div>
+                    <div className="text-xs -mt-0.5">{trumpSymbol}</div>
+                  </div>
                 </div>
-              </div>
+              )
             ) : (
               /* Hidden trump — face down */
               <img src={backUrl} alt="hidden trump" className="w-full h-full object-cover" />
@@ -225,24 +236,24 @@ function DeckVisual({
           </div>
         )}
 
-        {/* Stack of face-down cards (deck body) — vertical, same size as medium cards */}
+        {/* Stack of face-down cards (deck body) — vertical, positioned to the RIGHT, overlapping trump */}
         {deckCount > 0 && (
           <>
             {deckCount > 4 && (
               <div className="absolute rounded-lg overflow-hidden border border-amber-900/20 shadow-sm"
-                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount + 4}px`, left: `${(containerW - cardW) / 2 + 4}px`, zIndex: 1 }}>
+                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: '4px', left: `${trumpPeekAmount + 4}px`, zIndex: 1 }}>
                 <img src={backUrl} alt="" className="w-full h-full object-cover" />
               </div>
             )}
             {deckCount > 2 && (
               <div className="absolute rounded-lg overflow-hidden border border-amber-900/25 shadow-sm"
-                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount + 2}px`, left: `${(containerW - cardW) / 2 + 2}px`, zIndex: 2 }}>
+                style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: '2px', left: `${trumpPeekAmount + 2}px`, zIndex: 2 }}>
                 <img src={backUrl} alt="" className="w-full h-full object-cover" />
               </div>
             )}
             {/* Main face-down card */}
             <div className="absolute rounded-lg overflow-hidden border border-amber-900/30 shadow-md"
-              style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: `${trumpPeekAmount}px`, left: `${(containerW - cardW) / 2}px`, zIndex: 3 }}>
+              style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: '0px', left: `${trumpPeekAmount}px`, zIndex: 3 }}>
               <img src={backUrl} alt="card back" className="w-full h-full object-cover" />
             </div>
           </>
@@ -250,7 +261,7 @@ function DeckVisual({
 
         {/* Card count badge */}
         <div className="absolute bg-black/80 border border-amber-700/40 rounded-full w-7 h-7 flex items-center justify-center"
-          style={{ bottom: '4px', right: `${(containerW - cardW) / 2 - 8}px`, zIndex: 10 }}>
+          style={{ bottom: '-2px', right: '-4px', zIndex: 10 }}>
           <span className="text-amber-300 text-xs font-bold">{deckCount}</span>
         </div>
       </div>
@@ -927,7 +938,7 @@ export default function GameTable({
                 ) : (
                   <DeckVisual
                     deckCount={gs.deck1Count}
-                    trumpSuit={gs.trumpInfo.mainTrump}
+                    trumpCard={gs.trumpInfo.trumpCard || null}
                     showOpenTrump={true}
                     deckStyle={gs.deckStyle}
                     label="Колода 1"
@@ -945,7 +956,7 @@ export default function GameTable({
                 ) : (
                   <DeckVisual
                     deckCount={gs.deck2Count}
-                    trumpSuit={gs.trumpInfo.hiddenTrump2}
+                    trumpCard={gs.trumpInfo.hiddenTrumpCard || null}
                     showOpenTrump={false}
                     deckStyle={gs.deckStyle}
                     label="Колода 2"
@@ -984,74 +995,79 @@ export default function GameTable({
           </div>
         )}
 
-        {/* Role indicator — 2x larger badges for "Атакуете" and "Защита" */}
-        <div className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-0.5 sm:py-1">
-          {isAttacker && !gs.defenderTaking && (
-            <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-              <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Атакуете
-            </Badge>
-          )}
-          {isAttacker && gs.defenderTaking && (
-            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-              <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Докиньте
-            </Badge>
-          )}
-          {isDefender && !gs.defenderTaking && (
-            <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-              <Shield className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Защита
-            </Badge>
-          )}
-          {isDefender && gs.defenderTaking && (
-            <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-              <HandMetal className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Берёте
-            </Badge>
-          )}
-          {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
-            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
-              Подкинуть
-            </Badge>
-          )}
-          {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
-            <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
-              Ожидание...
-            </Badge>
-          )}
-        </div>
+        {/* Role indicator + Action buttons — right-aligned on desktop, centered on mobile */}
+        <div className="flex items-end justify-center sm:justify-end gap-2 sm:gap-3 px-2 sm:px-6 py-1 sm:py-2">
+          <div className="flex flex-col items-center sm:items-end gap-1.5 sm:gap-2">
+            {/* Role badges */}
+            <div className="flex items-center gap-1 sm:gap-2">
+              {isAttacker && !gs.defenderTaking && (
+                <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+                  <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Атакуете
+                </Badge>
+              )}
+              {isAttacker && gs.defenderTaking && (
+                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+                  <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Докиньте
+                </Badge>
+              )}
+              {isDefender && !gs.defenderTaking && (
+                <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+                  <Shield className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Защита
+                </Badge>
+              )}
+              {isDefender && gs.defenderTaking && (
+                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
+                  <HandMetal className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Берёте
+                </Badge>
+              )}
+              {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
+                <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
+                  Подкинуть
+                </Badge>
+              )}
+              {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
+                <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
+                  Ожидание...
+                </Badge>
+              )}
+            </div>
 
-        {/* Action buttons — 50% larger */}
-        <div className="flex items-center justify-center gap-2 sm:gap-3 px-2 sm:px-3 py-1 sm:py-1.5 flex-wrap">
-          {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
-            <Button
-              className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
-              onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
-            >
-              Перевести
-            </Button>
-          )}
-          {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
-            <Button
-              className="bg-yellow-700 hover:bg-yellow-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
-              onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
-            >
-              <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5" />
-              Проездной
-            </Button>
-          )}
-          {canTake && (
-            <Button variant="destructive" className="text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onTakeCards}>
-              Забрать
-            </Button>
-          )}
-          {canEndAttack && (
-            <Button className="bg-green-700 hover:bg-green-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onEndAttack}>
-              {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
-            </Button>
-          )}
-          {canSkip && (
-            <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onSkipTurn}>
-              Пропустить
-            </Button>
-          )}
+            {/* Action buttons */}
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+              {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
+                <Button
+                  className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
+                  onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
+                >
+                  Перевести
+                </Button>
+              )}
+              {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+                <Button
+                  className="bg-yellow-700 hover:bg-yellow-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
+                  onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+                >
+                  <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5" />
+                  Проездной
+                </Button>
+              )}
+              {canTake && (
+                <Button variant="destructive" className="text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onTakeCards}>
+                  Забрать
+                </Button>
+              )}
+              {canEndAttack && (
+                <Button className="bg-green-700 hover:bg-green-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onEndAttack}>
+                  {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
+                </Button>
+              )}
+              {canSkip && (
+                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onSkipTurn}>
+                  Пропустить
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Player hand */}

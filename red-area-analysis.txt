@@ -1,0 +1,28 @@
+Red area analysis from screenshot #1 (4343.webp):
+
+The red rectangle is positioned in the BOTTOM-RIGHT area of the screen:
+- It's between the player's card hand (bottom) and the battlefield (center)
+- It's to the RIGHT of center, roughly aligned with the right edge of the card hand area
+- It's below the deck panel and above the player's cards
+- Approximately: right side of the screen, vertically between battlefield and hand
+
+Current layout (top to bottom):
+1. HUD bar (top)
+2. Opponents (top)
+3. Main area: left panel (timer+discard) | center (battlefield) | right panel (decks)
+4. Winner banner (if applicable)
+5. Role indicator badges (Атакуете/Защита) - CENTER
+6. Action buttons (Бито, Забрать, etc.) - CENTER
+7. Player hand (bottom)
+
+Required change:
+- Move items 5 (role badges) and 6 (action buttons) to the RIGHT side
+- They should appear in the bottom-right area, between the battlefield and the player hand
+- On desktop: position them to the right, roughly where the red rectangle is
+- On mobile: keep them centered (since there's no right panel on mobile)
+
+Implementation approach:
+- Instead of separate centered rows for role badges and action buttons,
+  create a flex row where the left side has the hand info and the right side has role+actions
+- Or: position them absolutely in the bottom-right of the main game area
+- Best approach: make the bottom section a flex row with cards on left/center and actions on right

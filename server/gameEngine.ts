@@ -142,12 +142,22 @@ export function createGame(
   const { deck1, deck2 } = splitDecks(remaining);
   const trumps = pickTrumps();
 
+  // The bottom card of deck1 is the visible trump card (determines mainTrump suit)
+  // The bottom card of deck2 is the hidden trump card (face down, revealed when deck2 starts)
+  const trumpCard = deck1.length > 0 ? deck1[0] : undefined;
+  const hiddenTrumpCard = deck2.length > 0 ? deck2[0] : undefined;
+
+  // Override mainTrump with the actual trump card's suit
+  const actualMainTrump = trumpCard?.suit ?? trumps.mainTrump;
+
   const trumpInfo: TrumpInfo = {
-    mainTrump: trumps.mainTrump,
+    mainTrump: actualMainTrump,
     hiddenTrump1: trumps.hiddenTrump1,
     hiddenTrump2: trumps.hiddenTrump2,
-    currentTrump: trumps.mainTrump,
+    currentTrump: actualMainTrump,
     phase: 1,
+    trumpCard,
+    hiddenTrumpCard,
   };
 
   const firstPlayerIdx = findFirstPlayer(players, trumpInfo.currentTrump);
@@ -1102,7 +1112,17 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     players: clientPlayers,
     deck1Count: state.deck1.length,
     deck2Count: state.deck2.length,
-    trumpInfo: state.trumpInfo,
+    trumpInfo: {
+      ...state.trumpInfo,
+      // Always send the trump card (visible to all)
+      trumpCard: state.trumpInfo.trumpCard,
+      // Hidden trump card: only send as face-down (no suit/rank) while deck2 hasn't started
+      hiddenTrumpCard: state.trumpInfo.hiddenTrumpCard
+        ? (state.trumpInfo.phase === 1
+          ? { id: 'hidden', suit: null, rank: '777' as const, copy: 0 } // face down
+          : undefined) // once phase 2+, it's been drawn
+        : undefined,
+    },
     battleField: state.battleField,
     discardCount: state.discardPile.length,
     currentAttackerIdx: state.currentAttackerIdx,
