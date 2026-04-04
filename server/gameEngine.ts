@@ -228,26 +228,50 @@ export function drawCards(state: GameState): void {
     idx = state.direction === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
   }
 
+  let lastCardBeforePhaseChange: Card | null = null;
+
   for (const pIdx of order) {
     const player = state.players[pIdx];
     while (player.hand.length < HAND_SIZE) {
       if (state.deck1.length > 0) {
-        player.hand.push(state.deck1.pop()!);
-      } else if (state.deck2.length > 0) {
-        if (state.trumpInfo.phase === 1) {
-          state.trumpInfo.phase = 2;
-          state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrump1;
+        const card = state.deck1.pop()!;
+        player.hand.push(card);
+        // Track the last card drawn from deck1 — when deck1 empties,
+        // this card's suit becomes the new trump for phase 2
+        if (state.deck1.length === 0 && state.trumpInfo.phase === 1) {
+          lastCardBeforePhaseChange = card;
         }
-        player.hand.push(state.deck2.pop()!);
+      } else if (state.deck2.length > 0) {
+        if (state.trumpInfo.phase === 1 && lastCardBeforePhaseChange) {
+          state.trumpInfo.phase = 2;
+          state.trumpInfo.currentTrump = lastCardBeforePhaseChange.suit ?? state.trumpInfo.currentTrump;
+        } else if (state.trumpInfo.phase === 1) {
+          // Edge case: deck1 was already empty at start of drawCards
+          state.trumpInfo.phase = 2;
+          // Use suit of first card from deck2 as fallback
+          const card = state.deck2.pop()!;
+          state.trumpInfo.currentTrump = card.suit ?? state.trumpInfo.currentTrump;
+          player.hand.push(card);
+          continue;
+        }
+        const card = state.deck2.pop()!;
+        player.hand.push(card);
+        // Track last card from deck2 for phase 3 transition
+        if (state.deck2.length === 0 && state.trumpInfo.phase === 2) {
+          state.trumpInfo.phase = 3;
+          state.trumpInfo.currentTrump = card.suit ?? state.trumpInfo.currentTrump;
+        }
       } else {
         break;
       }
     }
   }
 
+  // Handle case where deck2 was already empty before drawing started
+  // but phase wasn't updated yet
   if (state.deck2.length === 0 && state.trumpInfo.phase === 2) {
+    // Phase 3 should have been set above; this is a safety net
     state.trumpInfo.phase = 3;
-    state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrump2;
   }
 }
 
@@ -449,20 +473,14 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
   const wentOut = checkPlayerOut(state, playerIdx);
 
   // If defender went out (defended with last card) and all cards are defended,
-  // auto-complete the trick — no need to wait for attackers to press "бито"
+  // auto-complete the trick IMMEDIATELY — no point waiting for attackers
+  // since defender has no cards left to defend with anyway
   if (wentOut && allDefended) {
-    // Auto-pass attackers who can't add matching cards
-    autoPassAttackersWithNoCards(state);
-    if (checkAllAttackersPassed(state)) {
-      successfulDefense(state);
-    } else {
-      // Some attackers can still add cards — let them play
-      // The defender is out, so they just watch
-      checkGameOver(state);
-    }
+    successfulDefense(state);
+  } else if (allDefended && player.hand.length === 0) {
+    // Defender used last card to defend — same logic
+    successfulDefense(state);
   } else if (wentOut) {
-    // Defender went out but not all cards defended — shouldn't happen normally
-    // since defender can only play defense cards, but handle gracefully
     checkGameOver(state);
   }
   return null;

@@ -136,6 +136,40 @@
   }
 }
 
+@keyframes your-turn-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes your-turn-out {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.5);
+  }
+}
+
+.your-turn-enter {
+  animation: your-turn-in 0.4s ease-out forwards;
+}
+
+.your-turn-exit {
+  animation: your-turn-out 0.4s ease-in forwards;
+}
+
 @layer components {
   .container {
     width: 100%;

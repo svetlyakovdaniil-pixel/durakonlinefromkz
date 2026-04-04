@@ -171,6 +171,9 @@ export default function GameTable({
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound } = useSound();
+  const [showYourTurn, setShowYourTurn] = useState(false);
+  const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
+  const prevIsMyTurn = useRef(false);
 
   // Track previous state for detecting changes
   const prevBattleFieldLen = useRef(gs.battleField.length);
@@ -265,6 +268,26 @@ export default function GameTable({
   }, [turnTimer, availableActions.length, playSound]);
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
+
+  // Show "YOUR TURN" overlay for 2 seconds when it becomes player's turn
+  useEffect(() => {
+    const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
+      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
+    );
+    if (isMyTurn && !prevIsMyTurn.current) {
+      setShowYourTurn(true);
+      setYourTurnPhase('enter');
+      const exitTimer = setTimeout(() => {
+        setYourTurnPhase('exit');
+      }, 1600);
+      const hideTimer = setTimeout(() => {
+        setShowYourTurn(false);
+        setYourTurnPhase(null);
+      }, 2000);
+      return () => { clearTimeout(exitTimer); clearTimeout(hideTimer); };
+    }
+    prevIsMyTurn.current = isMyTurn;
+  }, [availableActions]);
 
   const playableIds = useMemo(() => {
     const ids = new Set<string>();
@@ -429,17 +452,14 @@ export default function GameTable({
         {/* Top HUD */}
         <div className="flex items-center justify-between px-3 py-2 bg-black/50 backdrop-blur-sm">
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 px-3 py-1.5">
-              <span className={`${trumpColor} text-2xl leading-none`}>{trumpSymbol}</span>
-              <span className="ml-2 text-sm font-medium">Фаза {gs.trumpInfo.phase}/3</span>
+            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
+              Колода 1: {gs.deck1Count}
             </Badge>
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
-              <Layers className="w-3 h-3 mr-1" />
-              {gs.deck1Count + gs.deck2Count}
+              Колода 2: {gs.deck2Count}
             </Badge>
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
-              <Trash2 className="w-3 h-3 mr-1" />
-              {gs.discardCount}
+              Фаза {gs.trumpInfo.phase}/3
             </Badge>
           </div>
           <div className="flex items-center gap-2">
@@ -533,9 +553,23 @@ export default function GameTable({
           })}
         </div>
 
+        {/* YOUR TURN overlay */}
+        {showYourTurn && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+            <div className={`text-5xl md:text-7xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
+              ВАШ ХОД
+            </div>
+          </div>
+        )}
+
         {/* Battlefield */}
         <div className="flex-1 flex items-center justify-center px-4">
-          <div className="flex flex-col items-center gap-2">
+          <div className="flex flex-col items-center gap-2 relative">
+            {/* Trump indicator on the field */}
+            <div className="absolute -top-2 -right-2 md:top-0 md:-right-16 z-20 flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/30">
+              <span className={`${trumpColor} text-3xl md:text-4xl leading-none drop-shadow-lg`}>{trumpSymbol}</span>
+              <span className="text-amber-200/60 text-[10px] font-medium">Козырь</span>
+            </div>
             {/* Defender taking banner */}
             {gs.defenderTaking && (
               <div className="bg-orange-900/60 border border-orange-600/40 rounded-lg px-4 py-1.5 mb-2">

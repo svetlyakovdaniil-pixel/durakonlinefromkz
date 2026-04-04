@@ -1615,3 +1615,104 @@ describe('Six exception: currentAttacker who is non-neighbor can only play sixes
     expect(err).toBeNull();
   });
 });
+
+describe('Auto-complete trick when defender has no cards', () => {
+  it('should auto-complete trick when defender uses last card to defend', () => {
+    const state = createTestState(3);
+    state.trumpInfo.currentTrump = 'hearts';
+    // Give defender exactly 1 card (trump 10 to beat spades 6)
+    state.players[1].hand = [card('hearts', '10', 0)];
+    // Attacker has a 6 of spades
+    state.players[0].hand = [card('spades', '6', 0)];
+    // Player 2 has cards so game doesn't end
+    state.players[2].hand = [card('clubs', 'A', 0), card('clubs', 'K', 0)];
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = false;
+
+    // Attacker plays
+    const err1 = playAttackCard(state, 0, 'spades-6-0');
+    expect(err1).toBeNull();
+
+    // Defender uses last card to defend (hearts 10 beats spades 6 as trump)
+    const err2 = playDefenseCard(state, 1, 'hearts-10-0');
+    expect(err2).toBeNull();
+
+    // Trick should auto-complete — battlefield should be cleared
+    expect(state.battleField.length).toBe(0);
+  });
+
+  it('should NOT auto-complete if defender still has cards', () => {
+    const state = createTestState(3);
+    state.trumpInfo.currentTrump = 'hearts';
+    // Give defender 2 cards
+    state.players[1].hand = [
+      card('hearts', '10', 0),
+      card('hearts', 'J', 0),
+    ];
+    state.players[0].hand = [card('spades', '6', 0)];
+    state.players[2].hand = [card('clubs', 'A', 0), card('clubs', 'K', 0)];
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = false;
+
+    playAttackCard(state, 0, 'spades-6-0');
+    playDefenseCard(state, 1, 'hearts-10-0');
+
+    // Should NOT auto-complete — defender still has 1 card left
+    expect(state.battleField.length).toBe(1);
+    expect(state.turnPhase).toBe('attack');
+  });
+});
+
+describe('Trump determined by last drawn card on phase change', () => {
+  it('should set trump to suit of last card from deck1 when deck1 empties', () => {
+    const state = createTestState(2);
+    state.trumpInfo.currentTrump = 'spades';
+    state.trumpInfo.phase = 1;
+    // Give players 13 cards each so they only need 1 more (HAND_SIZE=14)
+    const makeHand = (prefix: string) => Array.from({ length: 13 }, (_, i) =>
+      card('spades', '6', i + 100 * (prefix === 'a' ? 1 : 2))
+    );
+    state.players[0].hand = makeHand('a');
+    state.players[1].hand = makeHand('b');
+    // Set up deck1 with exactly 1 card left — this card's suit becomes new trump
+    state.deck1 = [card('hearts', 'A', 99)];
+    // deck2 has enough cards so it doesn't empty (player 1 needs 1 card from deck2)
+    state.deck2 = [
+      card('diamonds', 'J', 99), card('clubs', 'Q', 99),
+      card('hearts', 'K', 99), card('spades', 'A', 99),
+    ];
+    state.currentAttackerIdx = 0;
+
+    drawCards(state);
+
+    // Phase should change to 2, trump should be hearts (suit of last card from deck1)
+    expect(state.trumpInfo.phase).toBe(2);
+    expect(state.trumpInfo.currentTrump).toBe('hearts');
+  });
+
+  it('should set trump to suit of last card from deck2 when deck2 empties', () => {
+    const state = createTestState(2);
+    state.trumpInfo.currentTrump = 'spades';
+    state.trumpInfo.phase = 2;
+    state.deck1 = [];
+    // Give players 13 cards each so they only need 1 more (HAND_SIZE=14)
+    const makeHand = (prefix: string) => Array.from({ length: 13 }, (_, i) =>
+      card('spades', '6', i + 100 * (prefix === 'a' ? 1 : 2))
+    );
+    state.players[0].hand = makeHand('a');
+    state.players[1].hand = makeHand('b');
+    // Set up deck2 with exactly 1 card left — this card's suit becomes new trump
+    state.deck2 = [card('clubs', 'K', 99)];
+    state.currentAttackerIdx = 0;
+
+    drawCards(state);
+
+    // Phase should change to 3, trump should be clubs (suit of last card from deck2)
+    expect(state.trumpInfo.phase).toBe(3);
+    expect(state.trumpInfo.currentTrump).toBe('clubs');
+  });
+});
