@@ -700,6 +700,54 @@ function startWatchdog(roomId: string) {
     const lastProgress = lastProgressTimestamps.get(roomId) || Date.now();
     const staleDuration = Date.now() - lastProgress;
 
+    // Check for disconnected human players who are still in the game
+    // This catches the edge case where a player reconnects to socket.io
+    // (cancelling grace timer) but fails to rejoin the room
+    for (const p of gs.players) {
+      if (p.isBot || p.isOut || p.leftGame) continue;
+      const sid = playerSockets.get(p.id);
+      const playerSocket = sid ? io.sockets.sockets.get(sid) : null;
+      const isInSocketRoom = playerSocket ? playerSocket.rooms.has(roomId) : false;
+      
+      if (!isInSocketRoom) {
+        // Player has no active socket connection to this room
+        const playerIdx = gs.players.indexOf(p);
+        console.warn(`[Watchdog] Player ${p.name} (${p.id}) has no socket connection to room ${roomId}. Auto-forfeiting.`);
+        forfeitedFromRoom.add(`${p.id}:${roomId}`);
+        untrackPlayerRoom(p.id, roomId);
+        forfeitPlayer(gs, playerIdx);
+        markProgress(roomId);
+        resetTurnTimer(gs);
+        restartTurnTimer(roomId);
+        broadcastGameState(roomId, gs);
+        
+        // Remove from room.players
+        const room = rooms.get(roomId);
+        if (room) {
+          room.players = room.players.filter(rp => rp.id !== p.id);
+          if (room.players.filter(rp => !rp.isBot).length === 0) {
+            closeRoom(roomId);
+            return;
+          }
+          if (room.hostId === p.id) {
+            const nextHost = room.players.find(rp => !rp.isBot);
+            if (nextHost) room.hostId = nextHost.id;
+          }
+          io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+        }
+        
+        // Send forcedToLobby if they have a socket
+        if (sid) {
+          io.to(sid).emit('forcedToLobby', { reason: 'disconnect_timeout' });
+        }
+        
+        if (gs.gamePhase === 'playing') {
+          scheduleBotAction(roomId);
+        }
+        return; // Re-check on next watchdog tick
+      }
+    }
+
     if (staleDuration > MAX_STALE_MS) {
       console.error(`[Watchdog] Room ${roomId} stale for ${Math.round(staleDuration / 1000)}s. Force-resolving.`);
       

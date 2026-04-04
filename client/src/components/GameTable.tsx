@@ -174,6 +174,7 @@ export default function GameTable({
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
+  const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // Track previous state for detecting changes
   const prevBattleFieldLen = useRef(gs.battleField.length);
@@ -275,6 +276,10 @@ export default function GameTable({
       a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
     );
     if (isMyTurn && !prevIsMyTurn.current) {
+      // Clear any previous timers first
+      yourTurnTimers.current.forEach(t => clearTimeout(t));
+      yourTurnTimers.current = [];
+      
       setShowYourTurn(true);
       setYourTurnPhase('enter');
       const exitTimer = setTimeout(() => {
@@ -283,8 +288,9 @@ export default function GameTable({
       const hideTimer = setTimeout(() => {
         setShowYourTurn(false);
         setYourTurnPhase(null);
+        yourTurnTimers.current = [];
       }, 2000);
-      return () => { clearTimeout(exitTimer); clearTimeout(hideTimer); };
+      yourTurnTimers.current = [exitTimer, hideTimer];
     }
     prevIsMyTurn.current = isMyTurn;
   }, [availableActions]);
@@ -461,6 +467,9 @@ export default function GameTable({
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
               Фаза {gs.trumpInfo.phase}/3
             </Badge>
+            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
+              Бито: {gs.discardCount}
+            </Badge>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs">
@@ -566,9 +575,9 @@ export default function GameTable({
         <div className="flex-1 flex items-center justify-center px-4">
           <div className="flex flex-col items-center gap-2 relative">
             {/* Trump indicator on the field */}
-            <div className="absolute -top-2 -right-2 md:top-0 md:-right-16 z-20 flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/30">
-              <span className={`${trumpColor} text-3xl md:text-4xl leading-none drop-shadow-lg`}>{trumpSymbol}</span>
-              <span className="text-amber-200/60 text-[10px] font-medium">Козырь</span>
+            <div className="absolute -top-4 -right-4 md:top-0 md:-right-20 z-20 flex flex-col items-center gap-0.5 bg-black/50 backdrop-blur-sm rounded-xl px-3 py-2 border border-amber-700/40 shadow-lg shadow-black/30">
+              <span className={`${trumpColor} text-5xl md:text-6xl leading-none drop-shadow-lg`}>{trumpSymbol}</span>
+              <span className="text-amber-200/70 text-xs font-semibold tracking-wide">Козырь</span>
             </div>
             {/* Defender taking banner */}
             {gs.defenderTaking && (

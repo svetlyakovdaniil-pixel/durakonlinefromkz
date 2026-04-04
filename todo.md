@@ -217,3 +217,18 @@
 
 ## Тесты
 - [x] Всего 155 тестов проходят (107 gameEngine + 47 socketServer + 1 auth)
+
+## Баг: надпись "ВАШ ХОД" зависает на экране
+- [x] Root cause: useEffect cleanup очищал таймеры при перезапуске effect, overlay оставался видимым
+- [x] Исправлено: таймеры хранятся в ref, prevIsMyTurn обновляется всегда (не только в if)
+
+## Баг: отключённый игрок остаётся активным в игре
+- [x] Root cause: socket reconnect отменял grace timer, но rejoin не удавался — игрок оставался в gameState без сокета
+- [x] Watchdog проверяет socket.rooms.has(roomId) для каждого игрока каждые 10с
+- [x] Авто-forfeit если игрок не в socket.io room + удаление из room.players + forcedToLobby event
+
+## Улучшение: увеличить иконку козыря
+- [x] Увеличена с text-3xl/4xl до text-5xl/6xl, увеличен padding и добавлен shadow
+
+## Улучшение: количество карт в бито в метрике
+- [x] Добавлен Badge "Бито: N" рядом с колодами и фазой
