@@ -66,10 +66,13 @@ export type GamePhase = 'waiting' | 'dealing' | 'playing' | 'finished';
 export type TurnPhase = 'attack' | 'defend' | 'addCards' | 'pickup';
 
 // --- Room Settings ---
+export type DeckStyle = 'classic' | 'custom';
+
 export interface RoomSettings {
   turnTimer: number;
   withBots: boolean;
   botCount: number;
+  deckStyle: DeckStyle;
 }
 
 // --- Game State ---
@@ -101,6 +104,7 @@ export interface GameState {
   passThroughUsedIds: string[]; // card IDs that have already been used as pass-through (one-time per card per game)
   revealedPassThroughs: { playerId: string; cards: Card[] }[]; // currently revealed pass-through cards this trick
   consecutiveTimeouts: Record<string, number>; // player id -> consecutive timeout count (2 = forfeit)
+  deckStyle: DeckStyle;
 }
 
 // --- Room ---
@@ -162,6 +166,7 @@ export interface ClientToServerEvents {
 export interface ClientGameState {
   roomId: string;
   players: ClientPlayer[];
+  deckStyle: DeckStyle;
   deck1Count: number;
   deck2Count: number;
   trumpInfo: TrumpInfo;

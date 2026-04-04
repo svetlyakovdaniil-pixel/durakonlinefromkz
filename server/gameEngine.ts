@@ -182,6 +182,7 @@ export function createGame(
     passThroughUsedIds: [],
     revealedPassThroughs: [],
     consecutiveTimeouts: {},
+    deckStyle: settings?.deckStyle ?? 'classic',
   };
 }
 
@@ -1126,6 +1127,7 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
       playerId: r.playerId,
       cards: r.cards.map(c => ({ id: c.id, suit: c.suit, rank: c.rank, copy: c.copy })),
     })),
+    deckStyle: state.deckStyle,
   };
 }
 

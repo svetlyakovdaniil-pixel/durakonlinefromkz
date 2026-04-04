@@ -177,6 +177,7 @@ export function initSocketServer(httpServer: HttpServer) {
         turnTimer: Math.min(Math.max(data.settings?.turnTimer || 30, 15), 60),
         withBots: data.settings?.withBots || false,
         botCount: data.settings?.botCount || 0,
+        deckStyle: data.settings?.deckStyle === 'custom' ? 'custom' : 'classic',
       };
       const room: Room = {
         id: roomId,

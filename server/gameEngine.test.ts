@@ -63,6 +63,7 @@ function createTestState(numPlayers: number, overrides?: Partial<GameState>): Ga
     passThroughUsedIds: [],
     revealedPassThroughs: [],
     consecutiveTimeouts: {},
+    deckStyle: 'classic',
     ...overrides,
   };
 }

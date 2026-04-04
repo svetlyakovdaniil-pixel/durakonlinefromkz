@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2 } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2, Layers } from 'lucide-react';
+import type { DeckStyle } from '../../../shared/gameTypes';
 
 interface LobbyProps {
   rooms: Room[];
@@ -26,6 +27,7 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
   const [withBots, setWithBots] = useState(true);
   const [botCount, setBotCount] = useState(3);
   const [turnTimer, setTurnTimer] = useState(30);
+  const [deckStyle, setDeckStyle] = useState<DeckStyle>('classic');
   const [loading, setLoading] = useState(false);
 
   const handleCreate = async () => {
@@ -34,6 +36,7 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
       turnTimer,
       withBots,
       botCount: withBots ? botCount : 0,
+      deckStyle,
     };
     await onCreateRoom(roomName || `Комната ${userName}`, parseInt(maxPlayers), settings);
     setLoading(false);
@@ -114,6 +117,18 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
                   <Label className="text-amber-200/70">Добавить ботов</Label>
                   <Switch checked={withBots} onCheckedChange={setWithBots} />
                 </div>
+                <div>
+                  <Label className="text-amber-200/70">Колода карт</Label>
+                  <Select value={deckStyle} onValueChange={(v) => setDeckStyle(v as DeckStyle)}>
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="classic" className="text-amber-100">Колода №1 (классическая)</SelectItem>
+                      <SelectItem value="custom" className="text-amber-100">Колода №2 (кастомная)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 {withBots && (
                   <div>
                     <Label className="text-amber-200/70">Количество ботов: {botCount}</Label>
@@ -168,6 +183,9 @@ export default function Lobby({ rooms, connected, userName, onCreateRoom, onJoin
                       <Bot className="w-3 h-3 mr-1" /> {room.settings.botCount} бот
                     </Badge>
                   )}
+                  <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-xs">
+                    <Layers className="w-3 h-3 mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
+                  </Badge>
                 </div>
                 <div className="flex items-center gap-1 mb-3 flex-wrap">
                   {room.players.map(p => (

@@ -1,7 +1,7 @@
 import type { Room } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Timer, Bot, Crown, Check, X, Gamepad2 } from 'lucide-react';
+import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers } from 'lucide-react';
 
 interface WaitingRoomProps {
   room: Room;
@@ -35,6 +35,9 @@ export default function WaitingRoom({ room, userId, onToggleReady, onStartGame, 
                 <Bot className="w-3 h-3 mr-1" /> {room.settings.botCount}
               </Badge>
             )}
+            <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-xs">
+              <Layers className="w-3 h-3 mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
+            </Badge>
           </div>
         </div>
 

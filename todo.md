@@ -260,3 +260,14 @@
 - [x] Универсальный 2-strike: работает для защитника, атакующего, и в pickup mode
 - [x] kickPlayerForTimeouts — вынесено в отдельную функцию для переиспользования
 - [x] Счётчик сбрасывается при любом действии игрока
+
+## Фича: выбор колоды карт в настройках комнаты
+- [x] Добавлен deckStyle ('classic' | 'custom') в shared types (RoomSettings, GameState, ClientGameState)
+- [x] UI выбор колоды в диалоге создания комнаты ("Колода №1 (классическая)" / "Колода №2 (кастомная)")
+- [x] 37 изображений карт загружены на CDN (36 карт + 1 рубашка 777.jpg)
+- [x] Маппинг card ID → CDN URL в cardAssets.ts (CUSTOM_CARD_IMAGES + CUSTOM_CARD_BACK)
+- [x] PlayingCard компонент обновлён: при deckStyle='custom' показывает изображения с CDN
+- [x] Размеры обеих колод одинаковые (object-cover + одинаковые size classes)
+- [x] deckStyle передаётся через socket при createRoom и сохраняется в GameState
+- [x] Отображение колоды в WaitingRoom и Lobby карточках комнат
+- [x] Проверено в браузере: кастомные карты отображаются на столе и в руке

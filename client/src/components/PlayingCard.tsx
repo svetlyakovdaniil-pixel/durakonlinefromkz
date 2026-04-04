@@ -1,5 +1,10 @@
-import { Card } from '../../../shared/gameTypes';
-import { CARD_IMAGES, CARD_BACK_URL, SUIT_SYMBOLS, SUIT_COLORS, getCardImageKey } from '../../../shared/cardAssets';
+import { Card, DeckStyle } from '../../../shared/gameTypes';
+import {
+  CARD_IMAGES, CARD_IMAGES_CUSTOM,
+  CARD_BACK_URL, CARD_BACK_CUSTOM_URL,
+  SUIT_SYMBOLS, SUIT_COLORS,
+  getCardImageKey, getCustomCardImageKey,
+} from '../../../shared/cardAssets';
 
 interface PlayingCardProps {
   card?: Card;
@@ -9,6 +14,7 @@ interface PlayingCardProps {
   small?: boolean;
   medium?: boolean;
   revealed?: boolean;
+  deckStyle?: DeckStyle;
   onClick?: () => void;
   className?: string;
 }
@@ -42,7 +48,7 @@ function NumberCard({ card }: { card: Card }) {
   );
 }
 
-export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, onClick, className }: PlayingCardProps) {
+export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
   // small = opponent mini cards, medium = battlefield cards, default = hand cards
   const sizeClasses = small
     ? 'w-10 h-14'
@@ -50,19 +56,26 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
       ? 'w-16 h-24 sm:w-20 sm:h-30'
       : 'w-18 h-26 sm:w-22 sm:h-32';
 
+  const isCustom = deckStyle === 'custom';
+  const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+
   if (faceDown || !card) {
     return (
       <div
         className={`${sizeClasses} rounded-lg overflow-hidden shadow-md border border-amber-900/30 ${className || ''}`}
         onClick={onClick}
       >
-        <img src={CARD_BACK_URL} alt="card back" className="w-full h-full object-cover" loading="lazy" />
+        <img src={backUrl} alt="card back" className="w-full h-full object-cover" loading="lazy" />
       </div>
     );
   }
 
-  const imageKey = getCardImageKey(card.rank, card.suit);
-  const hasImage = imageKey && CARD_IMAGES[imageKey];
+  // For custom deck, all cards have images; for classic, only face cards/aces/777
+  const imageKey = isCustom
+    ? getCustomCardImageKey(card.rank, card.suit)
+    : getCardImageKey(card.rank, card.suit);
+  const imageMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+  const hasImage = imageKey && imageMap[imageKey];
 
   return (
     <div
@@ -75,7 +88,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
     >
       {hasImage ? (
         <div className="w-full h-full bg-white relative">
-          <img src={CARD_IMAGES[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10" loading="lazy" />
+          <img src={imageMap[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10" loading="lazy" />
         </div>
       ) : (
         <NumberCard card={card} />

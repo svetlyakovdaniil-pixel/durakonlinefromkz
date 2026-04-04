@@ -31,6 +31,7 @@ function PlayerHand({
   passThroughIds,
   selectedCardId,
   onCardClick,
+  deckStyle,
 }: {
   sortedHand: Card[];
   playableIds: Set<string>;
@@ -38,6 +39,7 @@ function PlayerHand({
   passThroughIds: Set<string>;
   selectedCardId: string | null;
   onCardClick: (card: Card) => void;
+  deckStyle?: 'classic' | 'custom';
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -128,6 +130,7 @@ function PlayerHand({
                   card={card}
                   playable={isPlayable}
                   selected={isSelected}
+                  deckStyle={deckStyle}
                   onClick={() => onCardClick(card)}
                 />
                 {isPassThroughCard && !isSelected && (
@@ -604,10 +607,10 @@ export default function GameTable({
             <div className="flex flex-wrap gap-3 justify-center max-w-2xl">
               {gs.battleField.map((pair: BattlePair, i: number) => (
                 <div key={i} className="relative">
-                  <PlayingCard card={pair.attack} medium />
+                  <PlayingCard card={pair.attack} medium deckStyle={gs.deckStyle} />
                   {pair.defense && (
                     <div className="absolute top-4 left-4 z-10">
-                      <PlayingCard card={pair.defense} medium />
+                      <PlayingCard card={pair.defense} medium deckStyle={gs.deckStyle} />
                     </div>
                   )}
                 </div>
@@ -729,6 +732,7 @@ export default function GameTable({
             passThroughIds={passThroughIds}
             selectedCardId={selectedCardId}
             onCardClick={handleCardClick}
+            deckStyle={gs.deckStyle}
           />
         </div>
         )}
