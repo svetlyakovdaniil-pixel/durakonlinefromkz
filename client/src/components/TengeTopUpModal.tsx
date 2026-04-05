@@ -178,7 +178,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
               >
                 <div className="flex items-center gap-2">
                   <img src={TENGE_ICON} alt="" className="h-[30px] w-[30px] rounded-full object-contain" />
-                  <span className="text-amber-200 font-bold">{formatBalance(tier.tenge)}</span>
+                  <span className="text-amber-200 font-bold text-[17px] leading-tight">{formatBalance(tier.tenge)}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ShoppingCart className="w-3.5 h-3.5 text-amber-400/60" />

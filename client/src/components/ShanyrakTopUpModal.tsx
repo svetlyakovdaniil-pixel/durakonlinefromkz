@@ -223,12 +223,12 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                 }`}
                 onClick={() => handleBuyClick(tier.id, tier.tenge)}
               >
-                <div className="flex items-center gap-1.5">
+                <div className="flex-1 flex items-center gap-1.5 justify-start">
                   <span>{formatBalance(tier.shanyrak)}</span>
                   <img src={SHANYRAK_ICON} alt="" className="h-6 object-contain" />
                 </div>
-                <span className="text-gray-400 text-xs">за</span>
-                <div className="flex items-center gap-1">
+                <span className="text-gray-400 text-xs shrink-0">за</span>
+                <div className="flex-1 flex items-center gap-1 justify-end">
                   <span>{formatBalance(tier.tenge)}</span>
                   <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
                 </div>
