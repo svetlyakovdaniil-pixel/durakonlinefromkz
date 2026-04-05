@@ -88,53 +88,94 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
-      {/* Header — expanded */}
+      {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
         <div className="container py-3 sm:py-4">
-          {/* Top row: title + user info */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Gamepad2 className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" />
-              <h1 className="text-lg sm:text-xl font-bold text-amber-100">Казахский Дурак</h1>
+          {/* === MOBILE LAYOUT (< sm) === */}
+          <div className="sm:hidden">
+            {/* Row 1: Title + Logout */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Gamepad2 className="w-6 h-6 text-amber-400" />
+                <h1 className="text-lg font-bold text-amber-100">Казахский Дурак</h1>
+              </div>
+              <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1.5" onClick={onLogout}>
+                <LogOut className="w-5 h-5" />
+              </Button>
             </div>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <Badge variant="outline" className={`text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
-              </Badge>
-              {/* Profile ID badge */}
-              {profile && (
-                <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-xs sm:text-sm px-2 sm:px-2.5 py-0.5">
-                  <Hash className="w-3.5 h-3.5 mr-0.5" />{profile.gameId}
-                </Badge>
-              )}
-              {/* Profile drawer trigger */}
+            {/* Row 2: Centered avatar */}
+            <div className="flex flex-col items-center mt-3">
               <ProfileDrawer
                 profile={profile}
                 onlineFriendIds={onlineFriendIds}
                 inRoom={false}
               >
-                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
+                <button className="hover:opacity-80 transition-opacity">
+                  <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-500/50 shadow-lg shadow-amber-900/30">
                     <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
                   </div>
                 </button>
               </ProfileDrawer>
-              <span className="text-sm sm:text-base text-amber-200/70 truncate max-w-24 sm:max-w-none font-medium">{userName}</span>
-              <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1.5 sm:p-2" onClick={onLogout}>
-                <LogOut className="w-5 h-5" />
-              </Button>
+              {/* Name + ID below avatar */}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-sm text-amber-200/70 font-medium">{userName}</span>
+                {profile && (
+                  <span className="text-xs text-amber-300/60">ID {profile.gameId}</span>
+                )}
+              </div>
+            </div>
+            {/* Row 3: Онлайн status (left-aligned, where Комнаты was) */}
+            <div className="flex items-center mt-2">
+              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+                {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
+              </Badge>
             </div>
           </div>
-          {/* Bottom row: Комнаты + Создать */}
-          <div className="flex items-center justify-between mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-amber-700/15">
-            <h2 className="text-xl sm:text-2xl font-bold text-amber-100">Комнаты</h2>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm sm:text-base h-8 sm:h-10 px-3 sm:px-4">
-                <Plus className="w-4 h-4 mr-1 sm:mr-2" /> <span className="hidden sm:inline">Создать комнату</span><span className="sm:hidden">Создать</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto">
+
+          {/* === DESKTOP LAYOUT (≥ sm) === */}
+          <div className="hidden sm:block">
+            {/* Top row: title + user info */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Gamepad2 className="w-7 h-7 text-amber-400" />
+                <h1 className="text-xl font-bold text-amber-100">Казахский Дурак</h1>
+              </div>
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
+                </Badge>
+                {profile && (
+                  <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-sm px-2.5 py-0.5">
+                    ID {profile.gameId}
+                  </Badge>
+                )}
+                <ProfileDrawer
+                  profile={profile}
+                  onlineFriendIds={onlineFriendIds}
+                  inRoom={false}
+                >
+                  <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
+                      <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  </button>
+                </ProfileDrawer>
+                <span className="text-base text-amber-200/70 font-medium">{userName}</span>
+                <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-2" onClick={onLogout}>
+                  <LogOut className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+            {/* Bottom row: Комнаты + Создать */}
+            <div className="flex items-center justify-between mt-4 pt-3 border-t border-amber-700/15">
+              <h2 className="text-2xl font-bold text-amber-100">Комнаты</h2>
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="bg-amber-600 hover:bg-amber-500 text-white text-base h-10 px-4">
+                    <Plus className="w-4 h-4 mr-2" /> Создать комнату
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto">
               <DialogHeader>
                 <DialogTitle className="text-amber-100">Новая комната</DialogTitle>
               </DialogHeader>
@@ -228,9 +269,20 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   {loading ? 'Создание...' : 'Создать'}
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile: Комнаты + Создать (below header, only on mobile) */}
+      <div className="sm:hidden container pt-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-amber-100">Комнаты</h2>
+          <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-8 px-3" onClick={() => setDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Создать
+          </Button>
         </div>
       </div>
 
