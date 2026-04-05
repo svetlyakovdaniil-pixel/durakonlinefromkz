@@ -156,7 +156,33 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       </div>
                     </button>
                   </ProfileDrawer>
-
+                  {/* Mobile currency icons - right of avatar */}
+                  <div className="flex flex-col gap-1">
+                    {/* Tenge row - aligns with settings gear */}
+                    <div className="flex items-center gap-0.5">
+                      <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
+                      </div>
+                      <button
+                        className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
+                        onClick={() => { /* TODO: top up tenge */ }}
+                      >
+                        +
+                      </button>
+                    </div>
+                    {/* Shanyrak row - aligns with bell */}
+                    <div className="flex items-center gap-0.5">
+                      <div className="h-7 flex items-center justify-center">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
+                      </div>
+                      <button
+                        className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                        onClick={() => { /* TODO: top up shanyrak */ }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
@@ -165,7 +191,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right: Settings gear + Bell + Currency icons */}
+              {/* Right: Settings gear + Bell */}
               <div className="flex flex-col items-center gap-1">
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
@@ -183,30 +209,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </span>
                   )}
                 </button>
-                {/* Currency: Tenge */}
-                <div className="flex items-center gap-0.5">
-                  <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
-                  </div>
-                  <button
-                    className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
-                    onClick={() => { /* TODO: top up tenge */ }}
-                  >
-                    +
-                  </button>
-                </div>
-                {/* Currency: Shanyrak */}
-                <div className="flex items-center gap-0.5">
-                  <div className="h-7 flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
-                  </div>
-                  <button
-                    className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                    onClick={() => { /* TODO: top up shanyrak */ }}
-                  >
-                    +
-                  </button>
-                </div>
               </div>
             </div>
           </div>
