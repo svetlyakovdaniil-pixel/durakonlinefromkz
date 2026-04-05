@@ -8,10 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2, Layers, RotateCcw, Lock, User, Hash } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
+import SettingsSheet from '@/components/SettingsSheet';
 
 interface LobbyProps {
   rooms: Room[];
@@ -122,10 +123,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right: Logout */}
-              <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1.5" onClick={onLogout}>
-                <LogOut className="w-5 h-5" />
-              </Button>
+              {/* Right: Settings gear */}
+              <SettingsSheet onLogout={onLogout} currentName={userName}>
+                <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
+                  <Settings className="w-5 h-5" />
+                </button>
+              </SettingsSheet>
             </div>
           </div>
 
@@ -158,9 +161,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </button>
                 </ProfileDrawer>
                 <span className="text-base text-amber-200/70 font-medium">{userName}</span>
-                <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-2" onClick={onLogout}>
-                  <LogOut className="w-5 h-5" />
-                </Button>
+                <SettingsSheet onLogout={onLogout} currentName={userName}>
+                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded">
+                    <Settings className="w-5 h-5" />
+                  </button>
+                </SettingsSheet>
               </div>
             </div>
             {/* Bottom row: Комнаты + Создать */}

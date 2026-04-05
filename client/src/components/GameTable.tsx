@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
 import { useSound } from '@/hooks/useSound';
+import { useSettings } from '@/contexts/SettingsContext';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -525,6 +526,7 @@ export default function GameTable({
 
   // Sound effects for alert
   const { play: playSound, enabled: soundEnabled } = useSound();
+  const { settings: gameSettings } = useSettings();
 
   // Urgent turn alert when timer reaches 15 seconds
   useEffect(() => {
@@ -540,9 +542,9 @@ export default function GameTable({
       // Play alert sound (only if sound is enabled)
       playSound('timerWarning', 0.8);
 
-      // Vibrate on mobile (works even if sound is muted)
+      // Vibrate on mobile (works even if sound is muted, but respects vibration setting)
       try {
-        if (navigator.vibrate) {
+        if (gameSettings.vibrationEnabled && navigator.vibrate) {
           navigator.vibrate([200, 100, 200, 100, 200]);
         }
       } catch {}

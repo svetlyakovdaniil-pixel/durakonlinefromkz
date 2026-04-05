@@ -15,24 +15,43 @@ const SOUND_URLS = {
 export type SoundName = keyof typeof SOUND_URLS;
 
 const STORAGE_KEY = 'kazakh-durak-sound-enabled';
+const SETTINGS_KEY = 'kazakh-durak-settings';
+
+function readSoundEnabled(): boolean {
+  try {
+    // First try the settings context key (primary source)
+    const settingsRaw = localStorage.getItem(SETTINGS_KEY);
+    if (settingsRaw) {
+      const parsed = JSON.parse(settingsRaw);
+      if (typeof parsed.soundEnabled === 'boolean') return parsed.soundEnabled;
+    }
+    // Fallback to legacy key
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return stored !== 'false';
+  } catch {
+    return true;
+  }
+}
 
 /**
  * Sound manager hook for the card game.
  * Preloads all sounds on first user interaction and provides play functions.
- * Persists mute preference to localStorage.
+ * Reads sound enabled state from SettingsContext localStorage.
  */
 export function useSound() {
-  const [enabled, setEnabled] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored !== 'false'; // default to enabled
-    } catch {
-      return true;
-    }
-  });
+  const [enabled, setEnabled] = useState(readSoundEnabled);
 
   const audioCache = useRef<Map<SoundName, HTMLAudioElement>>(new Map());
   const preloaded = useRef(false);
+
+  // Listen for storage changes (from SettingsContext updates)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const current = readSoundEnabled();
+      setEnabled(prev => prev !== current ? current : prev);
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
 
   // Preload all sounds
   const preload = useCallback(() => {
@@ -74,26 +93,29 @@ export function useSound() {
 
     const cached = audioCache.current.get(name);
     if (cached) {
-      // Clone the audio to allow overlapping plays
       const clone = cached.cloneNode() as HTMLAudioElement;
       clone.volume = volume ?? 0.5;
-      clone.play().catch(() => {
-        // Ignore autoplay errors
-      });
+      clone.play().catch(() => {});
     } else {
-      // Fallback: create and play immediately
       const audio = new Audio(SOUND_URLS[name]);
       audio.volume = volume ?? 0.5;
       audio.play().catch(() => {});
     }
   }, [enabled]);
 
-  // Toggle sound on/off
+  // Toggle sound on/off (updates both keys for sync)
   const toggle = useCallback(() => {
     setEnabled(prev => {
       const next = !prev;
       try {
         localStorage.setItem(STORAGE_KEY, String(next));
+        // Also update settings context key
+        const settingsRaw = localStorage.getItem(SETTINGS_KEY);
+        if (settingsRaw) {
+          const parsed = JSON.parse(settingsRaw);
+          parsed.soundEnabled = next;
+          localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
+        }
       } catch {}
       return next;
     });

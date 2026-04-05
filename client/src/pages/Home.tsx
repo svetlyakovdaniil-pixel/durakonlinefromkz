@@ -117,7 +117,16 @@ export default function Home() {
   if (isAuthenticated && !music.choiceMade) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
-        <MusicChoiceDialog onChoice={music.makeChoice} />
+        <MusicChoiceDialog onChoice={(enable) => {
+          music.makeChoice(enable);
+          // Sync with settings context
+          try {
+            const raw = localStorage.getItem('kazakh-durak-settings');
+            const settings = raw ? JSON.parse(raw) : {};
+            settings.musicEnabled = enable;
+            localStorage.setItem('kazakh-durak-settings', JSON.stringify(settings));
+          } catch {}
+        }} />
       </div>
     );
   }
