@@ -88,47 +88,46 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
-      {/* Header */}
+      {/* Header — expanded */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
-        <div className="container flex items-center justify-between py-2 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <Gamepad2 className="w-5 h-5 sm:w-6 sm:h-6 text-amber-400" />
-            <h1 className="text-base sm:text-xl font-bold text-amber-100">Казахский Дурак</h1>
-            <Badge variant="outline" className={`text-[10px] sm:text-xs ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-              {connected ? <><Wifi className="w-3 h-3 mr-0.5 sm:mr-1" /> <span className="hidden sm:inline">Онлайн</span><span className="sm:hidden">Он</span></> : <><WifiOff className="w-3 h-3 mr-0.5 sm:mr-1" /> <span className="hidden sm:inline">Оффлайн</span><span className="sm:hidden">Офф</span></>}
-            </Badge>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            {/* Profile ID badge */}
-            {profile && (
-              <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                <Hash className="w-3 h-3 mr-0.5" />{profile.gameId}
+        <div className="container py-3 sm:py-4">
+          {/* Top row: title + user info */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Gamepad2 className="w-6 h-6 sm:w-7 sm:h-7 text-amber-400" />
+              <h1 className="text-lg sm:text-xl font-bold text-amber-100">Казахский Дурак</h1>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Badge variant="outline" className={`text-xs sm:text-sm px-2 sm:px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+                {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
               </Badge>
-            )}
-            {/* Profile drawer trigger */}
-            <ProfileDrawer
-              profile={profile}
-              onlineFriendIds={onlineFriendIds}
-              inRoom={false}
-            >
-              <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-amber-500/50">
-                  <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
-                </div>
-              </button>
-            </ProfileDrawer>
-            <span className="text-xs sm:text-sm text-amber-200/60 truncate max-w-20 sm:max-w-none">{userName}</span>
-            <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1 sm:p-2" onClick={onLogout}>
-              <LogOut className="w-4 h-4" />
-            </Button>
+              {/* Profile ID badge */}
+              {profile && (
+                <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-xs sm:text-sm px-2 sm:px-2.5 py-0.5">
+                  <Hash className="w-3.5 h-3.5 mr-0.5" />{profile.gameId}
+                </Badge>
+              )}
+              {/* Profile drawer trigger */}
+              <ProfileDrawer
+                profile={profile}
+                onlineFriendIds={onlineFriendIds}
+                inRoom={false}
+              >
+                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
+                    <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                  </div>
+                </button>
+              </ProfileDrawer>
+              <span className="text-sm sm:text-base text-amber-200/70 truncate max-w-24 sm:max-w-none font-medium">{userName}</span>
+              <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1.5 sm:p-2" onClick={onLogout}>
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
           </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="container py-4 sm:py-8">
-        <div className="flex items-center justify-between mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl font-bold text-amber-100">Комнаты</h2>
+          {/* Bottom row: Комнаты + Создать */}
+          <div className="flex items-center justify-between mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-amber-700/15">
+            <h2 className="text-xl sm:text-2xl font-bold text-amber-100">Комнаты</h2>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm sm:text-base h-8 sm:h-10 px-3 sm:px-4">
@@ -231,8 +230,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
+      </div>
 
+      {/* Content */}
+      <div className="container py-4 sm:py-6">
         {rooms.length === 0 ? (
           <div className="text-center py-12 sm:py-20">
             <Gamepad2 className="w-12 h-12 sm:w-16 sm:h-16 text-amber-700/30 mx-auto mb-3 sm:mb-4" />

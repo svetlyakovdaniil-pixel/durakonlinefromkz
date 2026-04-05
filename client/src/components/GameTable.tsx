@@ -8,6 +8,7 @@ import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
+import { useSound } from '@/hooks/useSound';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -429,7 +430,7 @@ export default function GameTable({
   const trumpChangeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Urgent "YOUR TURN" alert at 10 seconds
+  // Urgent "YOUR TURN" alert at 15 seconds
   const [showUrgentTurn, setShowUrgentTurn] = useState(false);
   const [urgentTurnPhase, setUrgentTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const urgentTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -522,16 +523,29 @@ export default function GameTable({
     prevIsMyTurn.current = isMyTurn;
   }, [availableActions]);
 
-  // Urgent turn alert when timer reaches 10 seconds
+  // Sound effects for alert
+  const { play: playSound, enabled: soundEnabled } = useSound();
+
+  // Urgent turn alert when timer reaches 15 seconds
   useEffect(() => {
     const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
       a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
     );
 
-    if (isMyTurn && turnTimer !== undefined && turnTimer <= 10 && turnTimer > 0 && urgentAlertShownForTrick.current !== gs.trickCount) {
+    if (isMyTurn && turnTimer !== undefined && turnTimer <= 15 && turnTimer > 0 && urgentAlertShownForTrick.current !== gs.trickCount) {
       urgentAlertShownForTrick.current = gs.trickCount;
       urgentTurnTimers.current.forEach(t => clearTimeout(t));
       urgentTurnTimers.current = [];
+
+      // Play alert sound (only if sound is enabled)
+      playSound('timerWarning', 0.8);
+
+      // Vibrate on mobile (works even if sound is muted)
+      try {
+        if (navigator.vibrate) {
+          navigator.vibrate([200, 100, 200, 100, 200]);
+        }
+      } catch {}
 
       setShowUrgentTurn(true);
       setUrgentTurnPhase('enter');
@@ -816,44 +830,44 @@ export default function GameTable({
       )}
 
       <div className="relative z-10 flex flex-col h-[100dvh]">
-        {/* Top HUD */}
-        <div className="flex items-center justify-between px-2 sm:px-3 py-1 sm:py-2 bg-black/50 backdrop-blur-sm">
-          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-[10px] px-1.5">
-              К1:{gs.deck1Count} К2:{gs.deck2Count} Ф{gs.trumpInfo.phase}/3
+        {/* Top HUD — expanded panel */}
+        <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2.5 py-1">
+              КОЛОДА1:{gs.deck1Count} КОЛОДА2:{gs.deck2Count}
             </Badge>
           </div>
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-[10px] sm:text-xs px-1 sm:px-2">
-              {gs.direction === 'cw' ? <ArrowRight className="w-3 h-3" /> : <ArrowLeft className="w-3 h-3" />}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-sm px-2.5 sm:px-3 py-1">
+              {gs.direction === 'cw' ? <ArrowRight className="w-5 h-5" /> : <ArrowLeft className="w-5 h-5" />}
             </Badge>
-            <Badge className={`sm:hidden text-[10px] px-1.5 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
-              <Timer className="w-3 h-3 mr-0.5" />
+            <Badge className={`sm:hidden text-sm px-2.5 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
+              <Timer className="w-4 h-4 mr-1" />
               {turnTimer}с
             </Badge>
             {onToggleMusic && (
               <button
-                className={`transition-colors p-0.5 sm:p-1 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+                className={`transition-colors p-1 sm:p-1.5 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
                 onClick={onToggleMusic}
                 title={musicEnabled ? 'Выключить музыку' : 'Включить музыку'}
               >
-                {musicEnabled ? <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+                {musicEnabled ? <Music className="w-5 h-5 sm:w-6 sm:h-6" /> : <VolumeX className="w-5 h-5 sm:w-6 sm:h-6" />}
               </button>
             )}
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
               <button
-                className="text-gray-400 hover:text-red-400 transition-colors p-0.5 sm:p-1 rounded"
+                className="text-gray-400 hover:text-red-400 transition-colors p-1 sm:p-1.5 rounded"
                 onClick={() => setShowLeaveConfirm(true)}
                 title="Покинуть игру"
               >
-                <LogOut className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Opponents */}
-        <div className="flex justify-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1 sm:py-2 overflow-x-auto">
+        {/* Opponents — positioned below expanded HUD */}
+        <div className="flex justify-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2.5 overflow-x-auto">
           {opponents.map(p => {
             const pIdx = gs.players.findIndex(pp => pp.id === p.id);
             const isOppAttacker = pIdx === gs.currentAttackerIdx;
@@ -896,9 +910,9 @@ export default function GameTable({
                 ) : (
                   <div className="flex gap-px sm:gap-0.5">
                     {Array.from({ length: Math.min(p.cardCount, 10) }).map((_, i) => (
-                      <div key={i} className="w-2 h-3 sm:w-3 sm:h-5 bg-amber-900/60 rounded-sm border border-amber-700/30" />
+                      <div key={i} className="w-2.5 h-3.5 sm:w-3.5 sm:h-5.5 bg-amber-500/50 rounded-sm border border-amber-400/40" />
                     ))}
-                    {p.cardCount > 10 && <span className="text-[8px] sm:text-xs text-amber-400 ml-0.5">+{p.cardCount - 10}</span>}
+                    {p.cardCount > 10 && <span className="text-[9px] sm:text-sm text-amber-300 ml-0.5">+{p.cardCount - 10}</span>}
                   </div>
                 )}
               </div>
@@ -915,7 +929,7 @@ export default function GameTable({
           </div>
         )}
 
-        {/* URGENT TURN ALERT at 10 seconds */}
+        {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && (
           <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
             <div className={`text-5xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
@@ -1071,7 +1085,7 @@ export default function GameTable({
           <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/40">
             <span className={`${mobileTrumpColor} text-2xl leading-none`}>{trumpSymbol}</span>
             <span className="text-amber-200/60 text-[7px] font-semibold">Козырь</span>
-            <span className="text-amber-200/40 text-[7px]">Ф{gs.trumpInfo.phase}</span>
+
           </div>
 
           {/* MOBILE: Discard count */}
