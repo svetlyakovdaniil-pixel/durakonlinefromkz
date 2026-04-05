@@ -58,7 +58,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
     ? 'w-7 h-11 sm:w-11 sm:h-15'
     : medium
       ? 'w-14 h-21 sm:w-22 sm:h-32'
-      : 'w-14 h-21 sm:w-24 sm:h-34';
+      : 'w-[62px] h-[92px] sm:w-24 sm:h-34';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;

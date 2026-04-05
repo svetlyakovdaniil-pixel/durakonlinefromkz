@@ -834,7 +834,10 @@ export default function GameTable({
         <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2.5 py-1">
-              КОЛОДА1:{gs.deck1Count} КОЛОДА2:{gs.deck2Count}
+              К-ДА1:{gs.deck1Count} К-ДА2:{gs.deck2Count}
+            </Badge>
+            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-amber-300 text-sm px-2.5 py-1">
+              Бито:{gs.discardCount}
             </Badge>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">

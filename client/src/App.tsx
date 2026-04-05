@@ -23,7 +23,7 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <MusicProvider>
           <TooltipProvider>
-            <Toaster />
+            <Toaster position="top-center" />
             <Router />
           </TooltipProvider>
         </MusicProvider>
