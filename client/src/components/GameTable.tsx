@@ -4,7 +4,7 @@ import { RANK_ORDER } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import DraggableCard from './DraggableCard';
-import { DealAnimation, BitoAnimation } from './CardAnimations';
+import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
@@ -429,18 +429,17 @@ export default function GameTable({
   const trumpChangeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // Urgent "YOUR TURN" alert at 10 seconds
+  const [showUrgentTurn, setShowUrgentTurn] = useState(false);
+  const [urgentTurnPhase, setUrgentTurnPhase] = useState<'enter' | 'exit' | null>(null);
+  const urgentTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const urgentAlertShownForTrick = useRef(-1);
+
   // Animation states
-  const [showDealAnim, setShowDealAnim] = useState(false);
-  const [dealCardCount, setDealCardCount] = useState(0);
-  const [dealFromDeck, setDealFromDeck] = useState<'deck1' | 'deck2'>('deck1');
   const [showBitoAnim, setShowBitoAnim] = useState(false);
   const [bitoCardCount, setBitoCardCount] = useState(0);
   const prevBattleFieldLen = useRef(gs.battleField.length);
   const prevDiscardCount = useRef(gs.discardCount);
-  const prevHandSize = useRef(gs.myHand.length);
-  const prevTrickCount = useRef(gs.trickCount);
-  const prevDeck1Count = useRef(gs.deck1Count);
-  const prevDeck2Count = useRef(gs.deck2Count);
   const isFirstRender = useRef(true);
 
   // Drop zone highlight
@@ -449,44 +448,11 @@ export default function GameTable({
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
 
-  // Skip deal animation on first render (game start — cards already in hand)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
-      prevHandSize.current = gs.myHand.length;
-      prevTrickCount.current = gs.trickCount;
-      prevDeck1Count.current = gs.deck1Count;
-      prevDeck2Count.current = gs.deck2Count;
     }
   }, []);
-
-  // Deal animation: triggered when hand grows after a trick completes (trickCount increased)
-  // and at least one deck had cards to draw from
-  useEffect(() => {
-    if (isFirstRender.current) return;
-
-    const handGrew = gs.myHand.length > prevHandSize.current;
-    const trickAdvanced = gs.trickCount > prevTrickCount.current;
-    const deckDecreased = (gs.deck1Count < prevDeck1Count.current) || (gs.deck2Count < prevDeck2Count.current);
-    const bothDecksWereEmpty = prevDeck1Count.current === 0 && prevDeck2Count.current === 0;
-
-    if (handGrew && (trickAdvanced || deckDecreased) && !bothDecksWereEmpty && !showBitoAnim) {
-      const cardsDrawn = gs.myHand.length - prevHandSize.current;
-      // Determine which deck the cards came from
-      const deck1Decreased = gs.deck1Count < prevDeck1Count.current;
-      setDealFromDeck(deck1Decreased ? 'deck1' : 'deck2');
-      setDealCardCount(cardsDrawn);
-      // Delay deal animation slightly to let bito animation finish first
-      setTimeout(() => {
-        setShowDealAnim(true);
-      }, showBitoAnim ? 900 : 100);
-    }
-
-    prevHandSize.current = gs.myHand.length;
-    prevTrickCount.current = gs.trickCount;
-    prevDeck1Count.current = gs.deck1Count;
-    prevDeck2Count.current = gs.deck2Count;
-  }, [gs.myHand.length, gs.trickCount, gs.deck1Count, gs.deck2Count]);
 
   // Bito animation when battlefield clears and discard grows
   useEffect(() => {
@@ -555,6 +521,37 @@ export default function GameTable({
     }
     prevIsMyTurn.current = isMyTurn;
   }, [availableActions]);
+
+  // Urgent turn alert when timer reaches 10 seconds
+  useEffect(() => {
+    const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
+      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
+    );
+
+    if (isMyTurn && turnTimer !== undefined && turnTimer <= 10 && turnTimer > 0 && urgentAlertShownForTrick.current !== gs.trickCount) {
+      urgentAlertShownForTrick.current = gs.trickCount;
+      urgentTurnTimers.current.forEach(t => clearTimeout(t));
+      urgentTurnTimers.current = [];
+
+      setShowUrgentTurn(true);
+      setUrgentTurnPhase('enter');
+
+      const exitTimer = setTimeout(() => {
+        setUrgentTurnPhase('exit');
+      }, 1700);
+      const hideTimer = setTimeout(() => {
+        setShowUrgentTurn(false);
+        setUrgentTurnPhase(null);
+        urgentTurnTimers.current = [];
+      }, 2000);
+      urgentTurnTimers.current = [exitTimer, hideTimer];
+    }
+
+    // Reset when it's no longer my turn
+    if (!isMyTurn) {
+      urgentAlertShownForTrick.current = -1;
+    }
+  }, [turnTimer, availableActions, gs.trickCount]);
 
   const playableIds = useMemo(() => {
     const ids = new Set<string>();
@@ -738,16 +735,6 @@ export default function GameTable({
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
-      {/* Deal animation */}
-      {showDealAnim && (
-        <DealAnimation
-          cardCount={dealCardCount}
-          deckStyle={gs.deckStyle}
-          fromDeck={dealFromDeck}
-          onComplete={() => setShowDealAnim(false)}
-        />
-      )}
-
       {/* Bito animation */}
       {showBitoAnim && (
         <BitoAnimation
@@ -924,6 +911,15 @@ export default function GameTable({
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className={`text-3xl sm:text-5xl md:text-7xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               ВАШ ХОД
+            </div>
+          </div>
+        )}
+
+        {/* URGENT TURN ALERT at 10 seconds */}
+        {showUrgentTurn && (
+          <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
+            <div className={`text-5xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
+              <span className="urgent-blink">ВАШ ХОД</span>
             </div>
           </div>
         )}
@@ -1263,7 +1259,7 @@ export default function GameTable({
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
             <span className="text-xs sm:text-base text-white font-medium">{gs.myHand.length} карт</span>
             <button
-              className="text-xs sm:text-base text-white/70 hover:text-white transition-colors font-medium"
+              className="text-xs sm:text-base text-white hover:text-amber-300 transition-colors font-medium"
               onClick={() => setSortMode(m => m === 'suit-rank' ? 'rank-only' : 'suit-rank')}
             >
               {sortMode === 'suit-rank' ? 'По масти' : 'По рангу'}
