@@ -46,6 +46,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   balanceTenge: int("balanceTenge").default(0).notNull(),
   /** Shanyrak balance (premium currency) */
   balanceShanyrak: int("balanceShanyrak").default(0).notNull(),
+  /** Last time the player used the free shanyrak top-up (for 12h cooldown) */
+  lastFreeTopup: timestamp("lastFreeTopup"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

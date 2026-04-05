@@ -15,6 +15,7 @@ import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
+import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -54,6 +55,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [rejoining, setRejoining] = useState<string | null>(null);
   const [passwordRoom, setPasswordRoom] = useState<Room | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [shanyrakTopUpOpen, setShanyrakTopUpOpen] = useState(false);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -198,7 +200,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => { /* TODO: top up shanyrak */ }} style={{marginTop: '-6px'}}
+                      onClick={() => setShanyrakTopUpOpen(true)} style={{marginTop: '-6px'}}
                     >
                       +
                     </button>
@@ -252,7 +254,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
-                    onClick={() => { /* TODO: top up shanyrak */ }}
+                    onClick={() => setShanyrakTopUpOpen(true)}
                     title="Пополнить шаныраки"
                   >
                     +
@@ -512,6 +514,15 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
         onOpenChange={(open) => { if (!open) setPasswordRoom(null); }}
         roomName={passwordRoom?.name || ''}
         onSubmit={handlePasswordSubmit}
+      />
+
+      {/* Shanyrak Top-Up Modal */}
+      <ShanyrakTopUpModal
+        open={shanyrakTopUpOpen}
+        onClose={() => setShanyrakTopUpOpen(false)}
+        currentShanyrak={profile?.balanceShanyrak ?? 0}
+        currentTenge={profile?.balanceTenge ?? 0}
+        onBalanceUpdated={() => refetchProfile?.()}
       />
 
       {/* Notification Panel */}

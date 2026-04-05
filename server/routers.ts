@@ -24,6 +24,9 @@ import {
   deleteNotification,
   getPlayerProfileWithFriendStatus,
   getFriendshipById,
+  freeShanyrakTopup,
+  buyShanyrakWithTenge,
+  getFreeTopupStatus,
 } from "./db";
 
 export const appRouter = router({
@@ -217,6 +220,38 @@ export const appRouter = router({
         if (!profile) return { success: false };
         const ok = await deleteNotification(input.notificationId, profile.id);
         return { success: ok };
+      }),
+  }),
+
+  // ============================================================
+  // BALANCE / SHOP
+  // ============================================================
+  balance: router({
+    /** Get free topup cooldown status */
+    freeTopupStatus: protectedProcedure.query(async ({ ctx }) => {
+      return getFreeTopupStatus(ctx.user.id);
+    }),
+
+    /** Free top-up: set shanyrak to 2000 (12h cooldown) */
+    freeShanyrakTopup: protectedProcedure.mutation(async ({ ctx }) => {
+      return freeShanyrakTopup(ctx.user.id);
+    }),
+
+    /** Buy shanyrak with tenge */
+    buyShanyrak: protectedProcedure
+      .input(z.object({
+        tier: z.enum(['10k', '50k', '100k', '500k']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const tiers: Record<string, { shanyrak: number; tenge: number }> = {
+          '10k': { shanyrak: 10000, tenge: 50 },
+          '50k': { shanyrak: 50000, tenge: 220 },
+          '100k': { shanyrak: 100000, tenge: 400 },
+          '500k': { shanyrak: 500000, tenge: 1500 },
+        };
+        const t = tiers[input.tier];
+        if (!t) return { success: false, reason: 'invalid_tier' as const };
+        return buyShanyrakWithTenge(ctx.user.id, t.shanyrak, t.tenge);
       }),
   }),
 

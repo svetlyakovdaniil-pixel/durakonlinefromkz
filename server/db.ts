@@ -121,6 +121,8 @@ export async function getOrCreateProfile(userId: number, displayName?: string | 
     gamesPlayed: 0,
     wins: 0,
     losses: 0,
+    balanceTenge: 25,
+    balanceShanyrak: 5000,
   });
 
   const [created] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
@@ -455,6 +457,111 @@ export async function getFriendshipById(friendshipId: number) {
   if (!db) return null;
   const [row] = await db.select().from(friendships).where(eq(friendships.id, friendshipId)).limit(1);
   return row ?? null;
+}
+
+// ============================================================
+// BALANCE helpers
+// ============================================================
+
+/**
+ * Free top-up: set shanyrak balance to 2000 if below, with 12h cooldown.
+ * Returns { success, added, newBalance, cooldownUntil } or { success: false, reason }
+ */
+export async function freeShanyrakTopup(userId: number): Promise<{
+  success: boolean;
+  added?: number;
+  newBalance?: number;
+  cooldownUntil?: Date;
+  reason?: string;
+}> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  // Check 12h cooldown using server time
+  const now = new Date();
+  if (profile.lastFreeTopup) {
+    const cooldownEnd = new Date(profile.lastFreeTopup.getTime() + 12 * 60 * 60 * 1000);
+    if (now < cooldownEnd) {
+      return { success: false, reason: 'cooldown', cooldownUntil: cooldownEnd };
+    }
+  }
+
+  // Already at or above 2000
+  if (profile.balanceShanyrak >= 2000) {
+    return { success: false, reason: 'already_max' };
+  }
+
+  const added = 2000 - profile.balanceShanyrak;
+  const newBalance = 2000;
+
+  await db.update(playerProfiles).set({
+    balanceShanyrak: newBalance,
+    lastFreeTopup: now,
+  }).where(eq(playerProfiles.userId, userId));
+
+  return { success: true, added, newBalance };
+}
+
+/**
+ * Buy shanyrak with tenge. Returns { success, newShanyrak, newTenge } or { success: false, reason }
+ */
+export async function buyShanyrakWithTenge(
+  userId: number,
+  shanyrakAmount: number,
+  tengeCost: number
+): Promise<{
+  success: boolean;
+  newShanyrak?: number;
+  newTenge?: number;
+  reason?: string;
+}> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+
+  const newTenge = profile.balanceTenge - tengeCost;
+  const newShanyrak = profile.balanceShanyrak + shanyrakAmount;
+
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    balanceShanyrak: newShanyrak,
+  }).where(eq(playerProfiles.userId, userId));
+
+  return { success: true, newShanyrak, newTenge };
+}
+
+/**
+ * Get the free topup cooldown status for a player.
+ */
+export async function getFreeTopupStatus(userId: number): Promise<{
+  available: boolean;
+  cooldownUntil?: Date;
+  currentBalance: number;
+}> {
+  const db = await getDb();
+  if (!db) return { available: false, currentBalance: 0 };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { available: false, currentBalance: 0 };
+
+  const now = new Date();
+  if (profile.lastFreeTopup) {
+    const cooldownEnd = new Date(profile.lastFreeTopup.getTime() + 12 * 60 * 60 * 1000);
+    if (now < cooldownEnd) {
+      return { available: false, cooldownUntil: cooldownEnd, currentBalance: profile.balanceShanyrak };
+    }
+  }
+
+  return { available: profile.balanceShanyrak < 2000, currentBalance: profile.balanceShanyrak };
 }
 
 /**
