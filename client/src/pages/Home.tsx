@@ -1,8 +1,10 @@
+import { useEffect, useRef } from 'react';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSocket } from "@/hooks/useSocket";
+import { useProfile } from "@/hooks/useProfile";
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
 import GameTable from "@/components/GameTable";
@@ -10,22 +12,89 @@ import { CARD_IMAGES } from "../../../shared/cardAssets";
 import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
 import { useMusicContext } from "@/contexts/MusicContext";
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
+import { toast } from 'sonner';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const { profile, profileLoading } = useProfile(isAuthenticated);
 
   const {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
-    gameOverData,
+    gameOverData, onlineFriendIds, pendingInvite, setPendingInvite,
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
-    returnToLobby, clearError,
+    returnToLobby, clearError, inviteFriend, registerProfile, sendChat,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
     isAuthenticated ? user?.name || 'Гость' : null
   );
 
   const music = useMusicContext();
+  const registeredRef = useRef(false);
+
+  // Register profile with socket when profile loads
+  useEffect(() => {
+    if (profile && connected && !registeredRef.current) {
+      registerProfile(profile.gameId, profile.displayName || 'Игрок');
+      registeredRef.current = true;
+    }
+  }, [profile, connected, registerProfile]);
+
+  // Reset registration flag on disconnect
+  useEffect(() => {
+    if (!connected) registeredRef.current = false;
+  }, [connected]);
+
+  // Handle pending invites
+  useEffect(() => {
+    if (!pendingInvite) return;
+    const invite = pendingInvite;
+    
+    toast(
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-amber-400 shrink-0" />
+          <div>
+            <div className="text-sm font-medium">Приглашение в комнату</div>
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium">{invite.fromName}</span>
+              <span className="opacity-60"> (#{invite.fromGameId})</span>
+              {' '}приглашает вас в «{invite.roomName}»
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            className="flex-1 bg-amber-600 hover:bg-amber-500 text-white h-7 text-xs"
+            onClick={() => {
+              joinRoom(invite.roomId);
+              toast.dismiss();
+            }}
+          >
+            Принять
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="flex-1 h-7 text-xs"
+            onClick={() => toast.dismiss()}
+          >
+            Отклонить
+          </Button>
+        </div>
+      </div>,
+      {
+        duration: 15000,
+        style: {
+          background: '#1a2d45',
+          border: '1px solid rgba(217, 119, 6, 0.3)',
+          color: '#fde68a',
+        },
+      }
+    );
+    setPendingInvite(null);
+  }, [pendingInvite, joinRoom, setPendingInvite]);
 
   if (loading) {
     return (
@@ -81,6 +150,9 @@ export default function Home() {
         onStartGame={() => startGame(currentRoom.id)}
         onLeave={() => leaveRoom(currentRoom.id)}
         onCloseRoom={() => closeRoom(currentRoom.id)}
+        profile={profile}
+        onlineFriendIds={onlineFriendIds}
+        onInviteFriend={(targetGameId) => inviteFriend(currentRoom.id, targetGameId)}
       />
     );
   }
@@ -95,6 +167,9 @@ export default function Home() {
       onCreateRoom={createRoom}
       onJoinRoom={joinRoom}
       onLogout={logout}
+      profile={profile}
+      onlineFriendIds={onlineFriendIds}
+      onInviteFriend={undefined}
     />
   );
 }

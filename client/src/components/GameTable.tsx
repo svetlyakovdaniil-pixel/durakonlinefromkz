@@ -3,6 +3,8 @@ import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../.
 import { RANK_ORDER } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
+import DraggableCard from './DraggableCard';
+import { DealAnimation, BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
@@ -22,7 +24,7 @@ function sortHand(hand: Card[], mode: 'suit-rank' | 'rank-only'): Card[] {
   });
 }
 
-// ---- PlayerHand component with horizontal scroll and navigation arrows ----
+// ---- PlayerHand component with drag-and-drop support ----
 
 function PlayerHand({
   sortedHand,
@@ -31,6 +33,7 @@ function PlayerHand({
   passThroughIds,
   selectedCardId,
   onCardClick,
+  onCardDrop,
   deckStyle,
 }: {
   sortedHand: Card[];
@@ -39,6 +42,7 @@ function PlayerHand({
   passThroughIds: Set<string>;
   selectedCardId: string | null;
   onCardClick: (card: Card) => void;
+  onCardDrop?: (card: Card) => boolean;
   deckStyle?: 'classic' | 'custom';
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -113,26 +117,45 @@ function PlayerHand({
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id;
             const isPassThroughCard = passThroughIds.has(card.id);
+            const canDrag = playableIds.has(card.id) || transferIds.has(card.id);
             return (
               <div
                 key={card.id}
-                className="relative flex-shrink-0 transition-transform duration-150"
+                className="relative flex-shrink-0"
                 style={{
                   marginLeft: getCardMargin(i),
                   zIndex: isSelected ? 50 : i,
-                  transform: isSelected ? 'translateY(-8px)' : undefined,
                 }}
               >
-                <PlayingCard
-                  card={card}
-                  playable={isPlayable}
-                  selected={isSelected}
-                  deckStyle={deckStyle}
-                  onClick={() => onCardClick(card)}
-                />
-                {isPassThroughCard && !isSelected && (
-                  <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-yellow-600 rounded-full flex items-center justify-center border border-yellow-400">
-                    <Eye className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
+                {canDrag && onCardDrop ? (
+                  <DraggableCard
+                    card={card}
+                    playable={isPlayable}
+                    selected={isSelected}
+                    isPassThrough={isPassThroughCard}
+                    deckStyle={deckStyle}
+                    onClick={() => onCardClick(card)}
+                    onDrop={() => onCardDrop(card)}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      transform: isSelected ? 'translateY(-8px)' : undefined,
+                      transition: 'transform 0.15s',
+                    }}
+                  >
+                    <PlayingCard
+                      card={card}
+                      playable={isPlayable}
+                      selected={isSelected}
+                      deckStyle={deckStyle}
+                      onClick={() => onCardClick(card)}
+                    />
+                    {isPassThroughCard && !isSelected && (
+                      <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-yellow-600 rounded-full flex items-center justify-center border border-yellow-400">
+                        <Eye className="w-2 h-2 sm:w-2.5 sm:h-2.5 text-white" />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -144,9 +167,7 @@ function PlayerHand({
   );
 }
 
-// ---- Deck visual: trump card peeks from LEFT side of deck (like reference photo #3) ----
-// Layout: trump card (vertical) sits to the LEFT, deck stack (vertical card backs) overlaps its right half
-// Result: left 50% of trump card visible, right 50% hidden behind deck
+// ---- Deck visual: trump card peeks from LEFT side of deck ----
 function DeckVisual({
   deckCount,
   trumpCard,
@@ -164,17 +185,12 @@ function DeckVisual({
 
   if (deckCount === 0) return null;
 
-  // Card sizes matching PlayingCard medium: sm:w-22 sm:h-32 => 88px x 128px
   const cardW = 88;
   const cardH = 128;
-  // Trump card peeks out from the LEFT by half its width
-  const trumpPeekAmount = Math.round(cardW * 0.5); // 44px visible on left
-
-  // Total container: width = trumpPeekAmount + cardW (trump peek + deck), height = cardH
+  const trumpPeekAmount = Math.round(cardW * 0.5);
   const containerW = trumpPeekAmount + cardW;
-  const containerH = cardH + 8; // small padding for stacked cards offset
+  const containerH = cardH + 8;
 
-  // Determine trump card image
   const isCustom = deckStyle === 'custom';
   const trumpImageKey = trumpCard && showOpenTrump
     ? (isCustom
@@ -184,7 +200,6 @@ function DeckVisual({
   const trumpImageMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
   const trumpImageUrl = trumpImageKey ? trumpImageMap[trumpImageKey] : null;
 
-  // For number cards without images, render rank+suit
   const trumpSuit = trumpCard?.suit || '';
   const trumpSymbol = SUIT_SYMBOLS[trumpSuit] || trumpSuit;
   const isRed = trumpSuit === 'hearts' || trumpSuit === 'diamonds';
@@ -194,7 +209,6 @@ function DeckVisual({
     <div className="flex flex-col items-center gap-1">
       <span className="text-amber-200/60 text-[9px] sm:text-xs font-medium">{label}</span>
       <div className="relative" style={{ width: `${containerW}px`, height: `${containerH}px` }}>
-        {/* Trump/hidden card — peeking from LEFT side of deck */}
         {deckCount > 1 && (
           <div
             className="absolute rounded-lg overflow-hidden border-2 shadow-md"
@@ -208,13 +222,11 @@ function DeckVisual({
             }}
           >
             {showOpenTrump && trumpCard ? (
-              /* Open trump card — show actual card face */
               trumpImageUrl ? (
                 <div className="w-full h-full bg-white">
                   <img src={trumpImageUrl} alt={`${trumpCard.rank} ${trumpCard.suit}`} className="w-full h-full object-cover" loading="lazy" />
                 </div>
               ) : (
-                /* Number card without image — render rank + suit */
                 <div className="w-full h-full bg-white flex flex-col items-center justify-between p-1.5 relative overflow-hidden">
                   <div className="self-start leading-none" style={{ color: trumpColor }}>
                     <div className="text-xs font-bold">{trumpCard.rank}</div>
@@ -230,13 +242,11 @@ function DeckVisual({
                 </div>
               )
             ) : (
-              /* Hidden trump — face down */
               <img src={backUrl} alt="hidden trump" className="w-full h-full object-cover" />
             )}
           </div>
         )}
 
-        {/* Stack of face-down cards (deck body) — vertical, positioned to the RIGHT, overlapping trump */}
         {deckCount > 0 && (
           <>
             {deckCount > 4 && (
@@ -251,7 +261,6 @@ function DeckVisual({
                 <img src={backUrl} alt="" className="w-full h-full object-cover" />
               </div>
             )}
-            {/* Main face-down card */}
             <div className="absolute rounded-lg overflow-hidden border border-amber-900/30 shadow-md"
               style={{ width: `${cardW - 4}px`, height: `${cardH - 4}px`, top: '0px', left: `${trumpPeekAmount}px`, zIndex: 3 }}>
               <img src={backUrl} alt="card back" className="w-full h-full object-cover" />
@@ -259,7 +268,6 @@ function DeckVisual({
           </>
         )}
 
-        {/* Card count badge */}
         <div className="absolute bg-black/80 border border-amber-700/40 rounded-full w-7 h-7 flex items-center justify-center"
           style={{ bottom: '-2px', right: '-4px', zIndex: 10 }}>
           <span className="text-amber-300 text-xs font-bold">{deckCount}</span>
@@ -269,7 +277,7 @@ function DeckVisual({
   );
 }
 
-// ---- Trump icon that replaces empty deck — 3D style, no white card background ----
+// ---- Trump icon ----
 function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 'large' }) {
   const symbol = SUIT_SYMBOLS[suit] || suit;
   const isRed = suit === 'hearts' || suit === 'diamonds';
@@ -298,7 +306,6 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
     );
   }
 
-  // Normal size — fills ~80% of deck area (88x128 card)
   return (
     <div className="flex flex-col items-center justify-center gap-1" style={{ width: '88px', height: '128px' }}>
       <span
@@ -321,11 +328,10 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
   );
 }
 
-// ---- Discard pile visual — static messy stack, no animation ----
+// ---- Discard pile visual ----
 function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic' | 'custom' }) {
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
 
-  // Pre-compute static random rotations/offsets (seeded by index for consistency)
   const cardPositions = useMemo(() => {
     const positions: { rotation: number; offsetX: number; offsetY: number }[] = [];
     const rotations = [3, -5, 7, -2, 8, -6, 4, -3, 5, -7, 2, -4];
@@ -341,7 +347,6 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
     return positions;
   }, []);
 
-  // Same size as medium cards: 88x128
   const cardW = 84;
   const cardH = 124;
 
@@ -372,7 +377,6 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
           );
         })}
       </div>
-      {/* Counter — large font */}
       <div className="bg-black/60 border border-amber-700/30 rounded-lg px-4 py-1.5">
         <span className="text-amber-300 text-3xl sm:text-4xl font-black">{count}</span>
       </div>
@@ -424,11 +428,46 @@ export default function GameTable({
   const trumpChangeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
+  // Animation states
+  const [showDealAnim, setShowDealAnim] = useState(false);
+  const [showBitoAnim, setShowBitoAnim] = useState(false);
+  const [bitoCardCount, setBitoCardCount] = useState(0);
+  const prevBattleFieldLen = useRef(gs.battleField.length);
+  const prevDiscardCount = useRef(gs.discardCount);
+  const isFirstRender = useRef(true);
+
+  // Drop zone highlight
+  const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
 
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
 
-  // Detect trump change from game state and show overlay
+  // Deal animation on first game state (trickCount === 0)
+  useEffect(() => {
+    if (isFirstRender.current && gs.gamePhase === 'playing' && gs.trickCount === 0) {
+      setShowDealAnim(true);
+      isFirstRender.current = false;
+    } else {
+      isFirstRender.current = false;
+    }
+  }, [gs.gamePhase, gs.trickCount]);
+
+  // Bito animation when battlefield clears and discard grows
+  useEffect(() => {
+    const battleCleared = prevBattleFieldLen.current > 0 && gs.battleField.length === 0;
+    const discardGrew = gs.discardCount > prevDiscardCount.current;
+
+    if (battleCleared && discardGrew) {
+      const cardsCleared = prevBattleFieldLen.current * 2; // attack + defense pairs
+      setBitoCardCount(cardsCleared);
+      setShowBitoAnim(true);
+    }
+
+    prevBattleFieldLen.current = gs.battleField.length;
+    prevDiscardCount.current = gs.discardCount;
+  }, [gs.battleField.length, gs.discardCount]);
+
+  // Detect trump change
   useEffect(() => {
     const currentSuit = gs.trumpInfo.currentTrump;
     const currentPhase = gs.trumpInfo.phase;
@@ -512,17 +551,6 @@ export default function GameTable({
   const sortedHand = sortHand(gs.myHand, sortMode);
 
   const handleCardClick = (card: Card) => {
-    console.log('[CardClick]', card.id, card.rank, card.suit, {
-      playable: playableIds.has(card.id),
-      transfer: transferIds.has(card.id),
-      passThrough: passThroughIds.has(card.id),
-      isDefender,
-      isAttacker,
-      turnPhase: gs.turnPhase,
-      defenderTaking: gs.defenderTaking,
-      actionsCount: availableActions.length,
-      playableCount: playableIds.size,
-    });
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
       if (transferIds.has(card.id) || passThroughIds.has(card.id)) {
         if (selectedCardId === card.id) {
@@ -563,16 +591,49 @@ export default function GameTable({
     }
   };
 
+  // Handle drag-and-drop card play
+  const handleCardDrop = useCallback((card: Card): boolean => {
+    // Attacker or non-defender adding cards
+    if (!isDefender || gs.defenderTaking) {
+      if (playableIds.has(card.id)) {
+        onPlayCard(card.id);
+        setSelectedCardId(null);
+        return true;
+      }
+      if (transferIds.has(card.id)) {
+        onTransferCard(card.id);
+        setSelectedCardId(null);
+        return true;
+      }
+    }
+
+    // Defender: auto-target if only one undefended pair
+    if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
+      if (playableIds.has(card.id)) {
+        const undefended = gs.battleField
+          .map((p, i) => ({ pair: p, idx: i }))
+          .filter(x => !x.pair.defense);
+        if (undefended.length === 1) {
+          onPlayCard(card.id, undefended[0].idx);
+          setSelectedCardId(null);
+          return true;
+        }
+        // Multiple targets — select the card instead
+        setSelectedCardId(card.id);
+        return false; // Return to hand, let player click target
+      }
+    }
+
+    return false; // Invalid drop — card returns to hand
+  }, [isDefender, gs.defenderTaking, gs.turnPhase, gs.battleField, playableIds, transferIds, onPlayCard, onTransferCard]);
+
   const trumpSymbol = SUIT_SYMBOLS[gs.trumpInfo.currentTrump] || gs.trumpInfo.currentTrump;
-  // Mobile trump: white for spades/clubs so they're visible on dark bg
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
-  // Opponents = all players except me
   const opponents = gs.players.filter((_, i) => i !== myIdx);
 
-  // Determine what to show in the deck area (right side)
   const deck1Empty = gs.deck1Count === 0;
   const deck2Empty = gs.deck2Count === 0;
   const bothDecksEmpty = deck1Empty && deck2Empty;
@@ -638,6 +699,24 @@ export default function GameTable({
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
 
+      {/* Deal animation */}
+      {showDealAnim && (
+        <DealAnimation
+          cardCount={gs.myHand.length}
+          deckStyle={gs.deckStyle}
+          onComplete={() => setShowDealAnim(false)}
+        />
+      )}
+
+      {/* Bito animation */}
+      {showBitoAnim && (
+        <BitoAnimation
+          cardCount={bitoCardCount}
+          deckStyle={gs.deckStyle}
+          onComplete={() => setShowBitoAnim(false)}
+        />
+      )}
+
       {/* Leave game confirmation dialog */}
       {showLeaveConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -670,9 +749,8 @@ export default function GameTable({
       )}
 
       <div className="relative z-10 flex flex-col h-[100dvh]">
-        {/* Top HUD — minimal: only direction, sound, leave. No deck counters on desktop */}
+        {/* Top HUD */}
         <div className="flex items-center justify-between px-2 sm:px-3 py-1 sm:py-2 bg-black/50 backdrop-blur-sm">
-          {/* Left side — mobile only: deck counts + phase */}
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-[10px] px-1.5">
               К1:{gs.deck1Count} К2:{gs.deck2Count} Ф{gs.trumpInfo.phase}/3
@@ -682,7 +760,6 @@ export default function GameTable({
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-[10px] sm:text-xs px-1 sm:px-2">
               {gs.direction === 'cw' ? <ArrowRight className="w-3 h-3" /> : <ArrowLeft className="w-3 h-3" />}
             </Badge>
-            {/* Timer stays in HUD on mobile only */}
             <Badge className={`sm:hidden text-[10px] px-1.5 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
               <Timer className="w-3 h-3 mr-0.5" />
               {turnTimer}с
@@ -708,7 +785,7 @@ export default function GameTable({
           </div>
         </div>
 
-        {/* Opponents — horizontal scroll on mobile */}
+        {/* Opponents */}
         <div className="flex justify-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1 sm:py-2 overflow-x-auto">
           {opponents.map(p => {
             const pIdx = gs.players.findIndex(pp => pp.id === p.id);
@@ -789,11 +866,10 @@ export default function GameTable({
           );
         })()}
 
-        {/* Main game area: left panel (timer + discard) | center (battlefield) | right panel (decks) */}
+        {/* Main game area */}
         <div className="flex-1 flex relative">
-          {/* LEFT PANEL — Timer (top) + Discard pile (bottom) — DESKTOP ONLY */}
+          {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-between items-center w-36 md:w-44 py-4 px-2">
-            {/* Timer — blue area */}
             <div className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
               turnTimer <= 5
                 ? 'bg-red-900/60 border-red-500/50 animate-pulse'
@@ -808,15 +884,19 @@ export default function GameTable({
               <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>сек</span>
             </div>
 
-            {/* Discard pile — yellow area — only shown when count > 0 */}
             {gs.discardCount > 0 && (
               <DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} />
             )}
           </div>
 
-          {/* CENTER — Battlefield */}
+          {/* CENTER — Battlefield (drop zone) */}
           <div className="flex-1 flex items-center justify-center px-2 sm:px-4">
-            <div className="flex flex-col items-center gap-1 sm:gap-2 relative">
+            <div
+              id="battlefield-drop-zone"
+              className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all ${
+                dropZoneHighlight ? 'drop-zone-active' : ''
+              }`}
+            >
               {/* Defender taking banner */}
               {gs.defenderTaking && (
                 <div className="bg-orange-900/60 border border-orange-600/40 rounded-lg px-2 sm:px-4 py-1 sm:py-1.5 mb-1 sm:mb-2">
@@ -829,7 +909,7 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Revealed pass-through cards banner (my own) */}
+              {/* Revealed pass-through cards banner */}
               {gs.revealedPassThroughs && gs.revealedPassThroughs.find(r => r.playerId === gs.players[myIdx]?.id) && (
                 <div className="bg-yellow-900/50 border border-yellow-600/40 rounded-lg px-2 sm:px-4 py-1 sm:py-1.5 mb-1 sm:mb-2">
                   <span className="text-yellow-300 text-[10px] sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
@@ -841,7 +921,20 @@ export default function GameTable({
 
               <div className="flex flex-wrap gap-2 sm:gap-4 justify-center max-w-xs sm:max-w-3xl">
                 {gs.battleField.map((pair: BattlePair, i: number) => (
-                  <div key={i} className="relative">
+                  <div
+                    key={i}
+                    className={`relative ${
+                      selectedCardId && isDefender && !pair.defense
+                        ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (selectedCardId && isDefender && !pair.defense && playableIds.has(selectedCardId)) {
+                        onPlayCard(selectedCardId, i);
+                        setSelectedCardId(null);
+                      }
+                    }}
+                  >
                     <PlayingCard card={pair.attack} medium deckStyle={gs.deckStyle} />
                     {pair.defense && (
                       <div className="absolute top-3 left-3 sm:top-5 sm:left-5 z-10">
@@ -857,19 +950,15 @@ export default function GameTable({
             </div>
           </div>
 
-          {/* RIGHT PANEL — Decks with trumps — DESKTOP ONLY */}
+          {/* RIGHT PANEL — Decks — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
             {bothDecksEmpty ? (
-              /* Both decks empty — single trump icon */
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" />
             ) : (
               <div className="flex flex-col gap-3 items-center">
-                {/* Single trump icon: above deck1 when deck1 exists, replaces deck1 when deck1 empty */}
                 {deck1Empty ? (
-                  /* Deck 1 is empty — trump icon takes its place */
                   <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
                 ) : (
-                  /* Deck 1 exists — trump icon above it, then deck visual */
                   <>
                     <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
                     <DeckVisual
@@ -882,7 +971,6 @@ export default function GameTable({
                   </>
                 )}
 
-                {/* Deck 2 */}
                 {deck2Empty ? (
                   deck1Empty ? null : (
                     <div className="flex flex-col items-center gap-1">
@@ -903,14 +991,14 @@ export default function GameTable({
             )}
           </div>
 
-          {/* MOBILE: Static trump icon in top-right corner of battlefield */}
+          {/* MOBILE: Trump icon */}
           <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/40">
             <span className={`${mobileTrumpColor} text-2xl leading-none`}>{trumpSymbol}</span>
             <span className="text-amber-200/60 text-[7px] font-semibold">Козырь</span>
             <span className="text-amber-200/40 text-[7px]">Ф{gs.trumpInfo.phase}</span>
           </div>
 
-          {/* MOBILE: Discard count badge in top-left of battlefield */}
+          {/* MOBILE: Discard count */}
           {gs.discardCount > 0 && (
             <div className="sm:hidden absolute top-2 left-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/30">
               <Trash2 className="w-3 h-3 text-amber-200/40" />
@@ -932,7 +1020,7 @@ export default function GameTable({
           </div>
         )}
 
-        {/* Role indicator + Action buttons — right-aligned on desktop (shifted left to avoid overlap with deck panel), centered on mobile */}
+        {/* Role indicator + Action buttons */}
         <div className="flex items-end justify-center sm:justify-end gap-2 sm:gap-3 px-2 sm:pr-52 md:pr-56 py-1 sm:py-2">
           <div className="flex flex-col items-center sm:items-end gap-1.5 sm:gap-2">
             {/* Role badges */}
@@ -970,7 +1058,7 @@ export default function GameTable({
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-center sm:justify-end">
+            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-end">
               {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                 <Button
                   className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
@@ -1032,6 +1120,7 @@ export default function GameTable({
             passThroughIds={passThroughIds}
             selectedCardId={selectedCardId}
             onCardClick={handleCardClick}
+            onCardDrop={handleCardDrop}
             deckStyle={gs.deckStyle}
           />
         </div>

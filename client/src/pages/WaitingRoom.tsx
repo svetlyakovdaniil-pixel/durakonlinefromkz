@@ -1,7 +1,8 @@
 import type { Room } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers } from 'lucide-react';
+import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus } from 'lucide-react';
+import ProfileDrawer from '@/components/ProfileDrawer';
 
 interface WaitingRoomProps {
   room: Room;
@@ -10,9 +11,22 @@ interface WaitingRoomProps {
   onStartGame: () => void;
   onLeave: () => void;
   onCloseRoom: () => void;
+  profile?: {
+    gameId: number;
+    displayName: string | null;
+    rating: number;
+    gamesPlayed: number;
+    wins: number;
+    losses: number;
+  } | null;
+  onlineFriendIds?: number[];
+  onInviteFriend?: (targetGameId: number) => void;
 }
 
-export default function WaitingRoom({ room, userId, onToggleReady, onStartGame, onLeave, onCloseRoom }: WaitingRoomProps) {
+export default function WaitingRoom({
+  room, userId, onToggleReady, onStartGame, onLeave, onCloseRoom,
+  profile, onlineFriendIds = [], onInviteFriend,
+}: WaitingRoomProps) {
   const isHost = room.hostId === userId;
   const myPlayer = room.players.find(p => p.id === userId);
   const allReady = room.players.length >= 2 && room.players.every(p => p.isBot || p.ready);
@@ -38,6 +52,11 @@ export default function WaitingRoom({ room, userId, onToggleReady, onStartGame, 
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-[10px] sm:text-xs">
               <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
             </Badge>
+            {room.hasPassword && (
+              <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-[10px] sm:text-xs">
+                <Lock className="w-3 h-3 mr-0.5 sm:mr-1" /> Закрытая
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -55,6 +74,9 @@ export default function WaitingRoom({ room, userId, onToggleReady, onStartGame, 
                 {p.id === room.hostId && <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />}
                 {p.isBot && <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />}
                 <span className="text-amber-100 font-medium text-sm sm:text-base truncate max-w-32 sm:max-w-none">{p.name}</span>
+                {p.gameId && (
+                  <span className="text-amber-200/30 text-[10px]">#{p.gameId}</span>
+                )}
               </div>
               {p.isBot ? (
                 <Badge className="bg-green-900/40 text-green-300 border-green-700/30 text-[10px] sm:text-xs">Готов</Badge>
@@ -77,6 +99,34 @@ export default function WaitingRoom({ room, userId, onToggleReady, onStartGame, 
             </div>
           ))}
         </div>
+
+        {/* Invite friends button (host only, when room has space) */}
+        {isHost && room.players.length < room.maxPlayers && (
+          <div className="mb-3">
+            <ProfileDrawer
+              profile={profile ?? null}
+              onlineFriendIds={onlineFriendIds}
+              inRoom={true}
+              onInviteFriend={onInviteFriend}
+            >
+              <Button
+                variant="outline"
+                className="w-full border-amber-700/30 text-amber-200 hover:bg-amber-900/20 text-sm h-8 sm:h-9"
+              >
+                <UserPlus className="w-4 h-4 mr-1.5" /> Пригласить друзей
+              </Button>
+            </ProfileDrawer>
+          </div>
+        )}
+
+        {/* My ID display */}
+        {profile && (
+          <div className="mb-3 text-center">
+            <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-xs px-2 py-0.5">
+              <Hash className="w-3 h-3 mr-0.5" /> Ваш ID: {profile.gameId}
+            </Badge>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-2">
           {isHost ? (

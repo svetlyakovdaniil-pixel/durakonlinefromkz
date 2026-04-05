@@ -21,6 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer,
 } from './gameEngine';
+import { recordGameResult } from './db';
 
 // In-memory store
 const rooms = new Map<string, Room>();
@@ -41,6 +42,7 @@ const forfeitedFromRoom = new Set<string>(); // "odId:roomId" entries
 // Track trump phase per room to detect changes and emit trumpChanged event
 const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump phase
 const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
+const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
@@ -183,6 +185,8 @@ export function initSocketServer(httpServer: HttpServer) {
         withBots: data.settings?.withBots || false,
         botCount: data.settings?.botCount || 0,
         deckStyle: data.settings?.deckStyle === 'custom' ? 'custom' : 'classic',
+        password: data.settings?.password || undefined,
+        isPrivate: data.settings?.isPrivate || false,
       };
       const room: Room = {
         id: roomId,
@@ -216,7 +220,9 @@ export function initSocketServer(httpServer: HttpServer) {
       cb(sanitizeRoom(room));
     });
 
-    socket.on('joinRoom', (roomId, cb) => {
+    socket.on('joinRoom', (data, cb) => {
+      const roomId = typeof data === 'string' ? data : data.roomId;
+      const password = typeof data === 'string' ? undefined : data.password;
       const room = rooms.get(roomId);
       if (!room) { cb(false); return; }
 
@@ -268,6 +274,16 @@ export function initSocketServer(httpServer: HttpServer) {
         trackPlayerRoom(odId, roomId);
         cb(true, sanitizeRoom(room));
         return;
+      }
+
+      // Password check: skip if player is invited or is the host
+      const isInvited = room.invitedPlayerIds?.includes(odId);
+      if (room.settings.password && !isInvited && room.hostId !== odId) {
+        if (!password || password !== room.settings.password) {
+          socket.emit('error', 'Неверный пароль');
+          cb(false);
+          return;
+        }
       }
 
       room.players.push({ id: odId, name, ready: false, isBot: false });
@@ -561,6 +577,50 @@ export function initSocketServer(httpServer: HttpServer) {
         text: data.text,
         ts: Date.now(),
       });
+    });
+
+    // --- Invite friend to room ---
+    socket.on('inviteFriend', (data) => {
+      const room = rooms.get(data.roomId);
+      if (!room) return;
+      // Only room host or players in the room can invite
+      if (!room.players.some(p => p.id === odId)) return;
+
+      // Find the target player's socket by their gameId
+      // We need to look up their odId from gameId
+      // Iterate over all connected sockets to find the target
+      for (const [sid, info] of Array.from(socketPlayers.entries())) {
+        // We need to check if this player has the target gameId
+        // For now, store gameId mapping when players connect
+        const targetGameId = data.targetGameId;
+        const playerGameId = playerGameIds.get(info.odId);
+        if (playerGameId === targetGameId) {
+          // Add to invited list
+          if (!room.invitedPlayerIds) room.invitedPlayerIds = [];
+          if (!room.invitedPlayerIds.includes(info.odId)) {
+            room.invitedPlayerIds.push(info.odId);
+          }
+          // Send invitation to the target player
+          const senderGameId = playerGameIds.get(odId) || 0;
+          io.to(sid).emit('roomInvite', {
+            roomId: data.roomId,
+            roomName: room.name,
+            fromName: name,
+            fromGameId: senderGameId,
+          });
+          console.log(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
+          break;
+        }
+      }
+    });
+
+    // --- Register player profile (store gameId mapping) ---
+    socket.on('registerProfile', (data, cb) => {
+      if (data.gameId && data.gameId > 0) {
+        playerGameIds.set(odId, data.gameId);
+        console.log(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
+      }
+      if (typeof cb === 'function') cb(true);
     });
 
     // Disconnect — start grace period instead of immediate removal
@@ -1337,6 +1397,29 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       winnersOrder: gameState.winnersOrder,
       loserId: gameState.loserId || '',
     });
+
+    // Record game result in database (async, non-blocking)
+    const humanPlayers = gameState.players.filter(p => !p.isBot);
+    if (humanPlayers.length > 0) {
+      // Look up profile IDs from playerGameIds map (odId -> gameId)
+      const allPlayerProfileIds = humanPlayers
+        .map(p => playerGameIds.get(p.id))
+        .filter((id): id is number => id !== undefined && id > 0);
+      const winnerOdId = gameState.winnersOrder[0] || null;
+      const loserOdId = gameState.loserId || null;
+      const winnerProfileId = winnerOdId ? (playerGameIds.get(winnerOdId) ?? null) : null;
+      const loserProfileId = loserOdId ? (playerGameIds.get(loserOdId) ?? null) : null;
+      if (allPlayerProfileIds.length > 0) {
+        recordGameResult({
+          roomId,
+          playerCount: humanPlayers.length,
+          winnerProfileId,
+          loserProfileId,
+          allPlayerProfileIds,
+          durationSeconds: 0,
+        }).catch(err => console.error('[DB] Failed to record game result:', err));
+      }
+    }
   }
 }
 
@@ -1351,5 +1434,8 @@ function sanitizeRoom(room: Room): Room {
   const activeGamePlayerIds = hasActiveGame && room.gameState
     ? room.gameState.players.filter(p => !p.leftGame && !p.isOut && !p.isBot).map(p => p.id)
     : [];
-  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds };
+  const hasPassword = !!room.settings.password;
+  // Strip password from settings before sending to clients
+  const sanitizedSettings = { ...room.settings, password: undefined };
+  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, settings: sanitizedSettings };
 }

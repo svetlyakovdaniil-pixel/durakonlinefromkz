@@ -77,6 +77,10 @@ export interface RoomSettings {
   withBots: boolean;
   botCount: number;
   deckStyle: DeckStyle;
+  /** If set, room requires password to join */
+  password?: string;
+  /** If true, room is private (only visible to invited players) */
+  isPrivate?: boolean;
 }
 
 // --- Game State ---
@@ -117,13 +121,17 @@ export interface Room {
   name: string;
   hostId: string;
   maxPlayers: number;
-  players: { id: string; name: string; ready: boolean; isBot: boolean }[];
+  players: { id: string; name: string; ready: boolean; isBot: boolean; gameId?: number }[];
   gameState: GameState | null;
   settings: RoomSettings;
   createdAt: number;
   hasActiveGame?: boolean; // true when a game is in progress (set by sanitizeRoom)
   /** IDs of game players who can rejoin (set by sanitizeRoom for lobby) */
   activeGamePlayerIds?: string[];
+  /** IDs of players invited to this room (can join without password) */
+  invitedPlayerIds?: string[];
+  /** Whether room has a password (sent to lobby, actual password is NOT sent) */
+  hasPassword?: boolean;
 }
 
 // --- Hand sorting ---
@@ -148,11 +156,15 @@ export interface ServerToClientEvents {
   transferChoice: (data: { cardIds: string[] }) => void;
   yourTurnNotification: (data: { role: 'attacker' | 'defender' | 'addCards' }) => void;
   forcedToLobby: (data: { reason: 'disconnect_timeout' | 'kicked' }) => void;
+  /** Friend invitation to join a room */
+  roomInvite: (data: { roomId: string; roomName: string; fromName: string; fromGameId: number }) => void;
+  /** Online friends list update */
+  onlineFriendsUpdate: (data: { onlineGameIds: number[] }) => void;
 }
 
 export interface ClientToServerEvents {
   createRoom: (data: { name: string; maxPlayers: number; settings: RoomSettings }, cb: (room: Room) => void) => void;
-  joinRoom: (roomId: string, cb: (ok: boolean, room?: Room) => void) => void;
+  joinRoom: (data: { roomId: string; password?: string }, cb: (ok: boolean, room?: Room) => void) => void;
   leaveRoom: (roomId: string) => void;
   leaveGame: (roomId: string, ack?: (result: { ok: boolean }) => void) => void;
   closeRoom: (roomId: string) => void;
@@ -167,6 +179,10 @@ export interface ClientToServerEvents {
   skipTurn: (roomId: string) => void;
   sendChat: (data: { roomId: string; text: string }) => void;
   rejoinRoom: (roomId: string, cb: (ok: boolean, room?: Room) => void) => void;
+  /** Invite a friend to the current room */
+  inviteFriend: (data: { roomId: string; targetGameId: number }) => void;
+  /** Register player profile (called on first connect after auth) */
+  registerProfile: (data: { gameId: number; displayName: string }, cb?: (ok: boolean) => void) => void;
 }
 
 // --- Client-side game state ---
