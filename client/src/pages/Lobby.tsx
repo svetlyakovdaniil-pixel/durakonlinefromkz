@@ -92,13 +92,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
         <div className="container py-3 sm:py-4">
           {/* === MOBILE LAYOUT (< sm) === */}
-          <div className="sm:hidden">
+          <div className="sm:hidden pb-8">
             {/* Row 1: Title left + Avatar center + Logout right */}
             <div className="relative flex items-start justify-between">
-              {/* Left: Title + Online — centered text */}
-              <div className="flex flex-col items-center">
+              {/* Left: Title + Online */}
+              <div className="flex flex-col">
                 <h1 className="text-xl font-bold text-amber-100 leading-tight text-center">Казахский<br/>Дурак</h1>
-                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 w-fit ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
                   {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
                 </Badge>
               </div>

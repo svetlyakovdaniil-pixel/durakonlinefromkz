@@ -831,18 +831,18 @@ export default function GameTable({
 
       <div className="relative z-10 flex flex-col h-[100dvh]">
         {/* Top HUD — compact panel */}
-        <div className="flex items-center justify-between px-2 sm:px-4 py-1.5 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-xs px-1.5 py-0.5">
-              К1:{gs.deck1Count} К2:{gs.deck2Count} Б:{gs.discardCount}
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
+              К1:<span className="font-bold">{gs.deck1Count}</span> К2:<span className="font-bold">{gs.deck2Count}</span> Бито:<span className="font-bold">{gs.discardCount}</span>
             </Badge>
           </div>
-          <div className="flex items-center gap-1.5 sm:gap-3">
-            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-xs sm:text-sm px-1.5 sm:px-3 py-0.5 sm:py-1">
-              {gs.direction === 'cw' ? <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" /> : <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-sm px-2 sm:px-3 py-1">
+              {gs.direction === 'cw' ? <ArrowRight className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <ArrowLeft className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
             </Badge>
-            <Badge className={`sm:hidden text-xs px-1.5 py-0.5 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
-              <Timer className="w-3.5 h-3.5 mr-0.5" />
+            <Badge className={`sm:hidden text-sm px-2 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
+              <Timer className="w-4 h-4 mr-0.5" />
               {turnTimer}с
             </Badge>
             {onToggleMusic && (
@@ -851,7 +851,7 @@ export default function GameTable({
                 onClick={onToggleMusic}
                 title={musicEnabled ? 'Выключить музыку' : 'Включить музыку'}
               >
-                {musicEnabled ? <Music className="w-4 h-4 sm:w-6 sm:h-6" /> : <VolumeX className="w-4 h-4 sm:w-6 sm:h-6" />}
+                {musicEnabled ? <Music className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
               </button>
             )}
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
@@ -860,7 +860,7 @@ export default function GameTable({
                 onClick={() => setShowLeaveConfirm(true)}
                 title="Покинуть игру"
               >
-                <LogOut className="w-4 h-4 sm:w-6 sm:h-6" />
+                <LogOut className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
             )}
           </div>
