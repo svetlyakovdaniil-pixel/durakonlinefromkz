@@ -834,7 +834,11 @@ export default function GameTable({
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
-              К1:<span className="font-bold">{gs.deck1Count}</span> К2:<span className="font-bold">{gs.deck2Count}</span> Бито:<span className="font-bold">{gs.discardCount}</span>
+              К1:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
+              <span className="text-amber-300 mx-1">|</span>
+              К2:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span>
+              <span className="text-amber-300 mx-1">|</span>
+              Бито:<span className="font-bold">{gs.discardCount}</span>
             </Badge>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1082,9 +1086,9 @@ export default function GameTable({
           </div>
 
           {/* MOBILE: Trump icon */}
-          <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/40">
-            <span className={`${mobileTrumpColor} text-2xl leading-none`}>{trumpSymbol}</span>
-            <span className="text-amber-200/60 text-[7px] font-semibold">Козырь</span>
+          <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-2 border border-amber-700/40">
+            <span className={`${mobileTrumpColor} text-3xl leading-none`}>{trumpSymbol}</span>
+            <span className="text-amber-200/60 text-[8px] font-semibold">Козырь</span>
 
           </div>
 
