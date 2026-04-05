@@ -192,13 +192,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <div className="flex items-center gap-0.5">
                     <div className="flex flex-col items-center">
                       <div className="h-7 flex items-center justify-center">
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" style={{marginTop: '15px'}} />
                       </div>
-                      <span className="text-[10px] text-green-400 font-semibold">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
+                      <span className="text-[10px] text-green-400 font-semibold" style={{marginTop: '6px'}}>{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => { /* TODO: top up shanyrak */ }}
+                      onClick={() => { /* TODO: top up shanyrak */ }} style={{marginTop: '-6px'}}
                     >
                       +
                     </button>
@@ -207,7 +207,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                     onClick={handleOpenNotifications}
                   >
-                    <Bell className="w-5 h-5" />
+                    <Bell className="w-5 h-5" style={{marginTop: '5px'}} />
                     {unreadCount > 0 && (
                       <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
                         {unreadCount > 9 ? '9+' : unreadCount}
@@ -246,7 +246,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <div className="flex items-center gap-1">
                   <div className="flex flex-col items-center">
                     <div className="h-[42px] flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-[42px] object-contain" />
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
                     </div>
                     <span className="text-xs text-green-400 font-semibold -mt-1">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   </div>
