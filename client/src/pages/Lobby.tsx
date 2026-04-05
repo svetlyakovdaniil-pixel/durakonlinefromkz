@@ -14,6 +14,7 @@ import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
 import { trpc } from '@/lib/trpc';
+import { formatBalance } from '../../../shared/formatBalance';
 
 interface LobbyProps {
   rooms: Room[];
@@ -31,6 +32,8 @@ interface LobbyProps {
     wins: number;
     losses: number;
     avatarId?: string | null;
+    balanceTenge?: number;
+    balanceShanyrak?: number;
   } | null;
   onlineFriendIds: number[];
   onInviteFriend: ((targetGameId: number) => void) | undefined;
@@ -167,6 +170,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Settings + Tenge row */}
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-0.5">
+                    <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                     <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
                       <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
                     </div>
@@ -185,16 +189,19 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
                 {/* Bell + Shanyrak row */}
                 <div className="flex items-center gap-1">
-                  <div className="flex items-center gap-0.5">
-                    <div className="h-7 flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
+                  <div className="flex flex-col items-center">
+                    <div className="flex items-center gap-0.5">
+                      <div className="h-7 flex items-center justify-center">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
+                      </div>
+                      <button
+                        className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                        onClick={() => { /* TODO: top up shanyrak */ }}
+                      >
+                        +
+                      </button>
                     </div>
-                    <button
-                      className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => { /* TODO: top up shanyrak */ }}
-                    >
-                      +
-                    </button>
+                    <span className="text-[10px] text-green-400 font-semibold">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   </div>
                   <button
                     className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
@@ -223,6 +230,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div className="flex items-center gap-3">
                 {/* Currency: Tenge */}
                 <div className="flex items-center gap-1">
+                  <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                   <div className="w-[51px] h-[51px] rounded-full overflow-hidden flex items-center justify-center">
                     <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] object-contain" />
                   </div>
@@ -235,17 +243,20 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </button>
                 </div>
                 {/* Currency: Shanyrak */}
-                <div className="flex items-center gap-1">
-                  <div className="h-[42px] flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-[42px] object-contain" />
+                <div className="flex flex-col items-center gap-0">
+                  <div className="flex items-center gap-1">
+                    <div className="h-[42px] flex items-center justify-center">
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-[42px] object-contain" />
+                    </div>
+                    <button
+                      className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
+                      onClick={() => { /* TODO: top up shanyrak */ }}
+                      title="Пополнить шаныраки"
+                    >
+                      +
+                    </button>
                   </div>
-                  <button
-                    className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
-                    onClick={() => { /* TODO: top up shanyrak */ }}
-                    title="Пополнить шаныраки"
-                  >
-                    +
-                  </button>
+                  <span className="text-xs text-green-400 font-semibold -mt-1">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                 </div>
                 <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
                   {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}

@@ -42,6 +42,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   wins: int("wins").default(0).notNull(),
   /** Total losses (last place / durak) */
   losses: int("losses").default(0).notNull(),
+  /** Tenge balance (in-game currency) */
+  balanceTenge: int("balanceTenge").default(0).notNull(),
+  /** Shanyrak balance (premium currency) */
+  balanceShanyrak: int("balanceShanyrak").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
