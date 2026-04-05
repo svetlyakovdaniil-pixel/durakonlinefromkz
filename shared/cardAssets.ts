@@ -61,7 +61,7 @@ export const CARD_IMAGES_CUSTOM: Record<string, string> = {
 };
 
 export const CARD_BACK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/card_back-kqTDCf9Jwvt75TYv8Mh5D3.webp';
-export const CARD_BACK_CUSTOM_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/777_66c2a698.jpg';
+export const CARD_BACK_CUSTOM_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/custom-card-back_30cd578f.jpg';
 export const GAME_TABLE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/game_table-9KeBRLr2mzuAL8uVYsQsVq.webp';
 
 export const SUIT_SYMBOLS: Record<string, string> = {

@@ -198,6 +198,8 @@ export interface ClientGameState {
   canAddCards: boolean;
   defenderTaking: boolean;
   revealedPassThroughs: { playerId: string; cards: { id: string; suit: string | null; rank: string; copy: number }[] }[]; // pass-through cards shown this trick
+  /** Actions available to this player — bundled atomically with game state to prevent desync */
+  availableActions: AvailableAction[];
 }
 
 export interface ClientPlayer {

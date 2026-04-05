@@ -39,9 +39,12 @@ export function useSocket(userId: string | null, userName: string | null) {
       rememberUpgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 5000,
-      timeout: 45000,
+      reconnectionDelay: 300,
+      reconnectionDelayMax: 3000,
+      randomizationFactor: 0.3,
+      timeout: 30000,
+      // Aggressive keepalive to detect dead connections faster
+      // and prevent proxy/firewall timeouts
     });
 
     socketRef.current = socket;
@@ -73,7 +76,7 @@ export function useSocket(userId: string | null, userName: string | null) {
                 setTimeout(() => attemptRejoin(attempt + 1), delay);
               } else {
                 console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
-                toast.error('Не удалось вернуться в комнату. Вы можете вернуться через лобби.', { duration: 6000 });
+                toast.error('Не удалось переподключиться к игре. Попробуйте найти комнату в лобби.', { duration: 6000 });
                 currentRoomIdRef.current = null;
                 setCurrentRoom(null);
                 setGameState(null);
@@ -132,7 +135,8 @@ export function useSocket(userId: string | null, userName: string | null) {
         return;
       }
       setGameState(s);
-      setAvailableActions([]);
+      // Extract actions atomically from the game state
+      setAvailableActions(s.availableActions || []);
       setTurnTimer(s.turnTimerMax);
       setGameOverData(null);
     });
@@ -152,9 +156,10 @@ export function useSocket(userId: string | null, userName: string | null) {
       }
       setGameState(s);
       setTurnTimer(s.turnTimer);
-      // Don't clear actions here — yourTurn always arrives right after gameStateUpdate
-      // Clearing here causes a brief window where actions are empty, making cards unclickable
+      // Extract availableActions atomically from the game state — no more desync!
+      setAvailableActions(s.availableActions || []);
     });
+    // Keep yourTurn listener as fallback for reconnect scenarios
     socket.on('yourTurn', (a) => {
       if (leavingRef.current) return;
       // Don't accept turn actions if we're in the lobby

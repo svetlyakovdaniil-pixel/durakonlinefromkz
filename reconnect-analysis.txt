@@ -1,0 +1,50 @@
+RECONNECT/REJOIN ANALYSIS
+=========================
+
+CURRENT FLOW:
+1. Player disconnects → server starts 30s grace period
+2. If player reconnects within 30s → grace timer cancelled, auto-rejoin works
+3. If grace period expires → player forfeited, added to forfeitedFromRoom (permanent), removed from room
+4. On forcedToLobby → client clears room/game state, shows error toast
+5. Lobby shows "Вернуться в игру" if sanitizeRoom says hasActiveGame && player in activeGamePlayerIds
+
+BUG: When grace period expires, the player is forfeited AND removed from room.players AND added to forfeitedFromRoom.
+So when they see the lobby, sanitizeRoom no longer includes them in activeGamePlayerIds (because they're now leftGame or isOut).
+BUT the toast says "Вы можете вернуться через лобби" which is FALSE — they can't.
+
+ALSO: The forcedToLobby is sent to playerSocketId AFTER the grace period expires.
+But if the player reconnected (new socket), the old socketId is gone. The new socket's connect handler
+already cancelled the grace timer... WAIT, no — the disconnect handler does socketPlayers.delete(socket.id)
+but NOT playerSockets.delete(odId). So when a new socket connects, it sets playerSockets.set(odId, newSocketId).
+Then the grace timer fires and does playerSockets.delete(odId) — DELETING THE NEW SOCKET MAPPING!
+
+THIS IS THE ROOT CAUSE OF INSTABILITY:
+- Player disconnects, grace timer starts
+- Player reconnects quickly (new socket), grace timer cancelled — OK
+- But if there's a SECOND disconnect/reconnect cycle within 30s, the grace timer from the first
+  disconnect might not be properly cancelled because disconnectTimers.get(odId) returns the SECOND timer
+
+Actually wait — the connect handler cancels pendingTimer. So:
+1. Disconnect → timer1 stored in disconnectTimers
+2. Reconnect → timer1 cancelled, disconnectTimers.delete(odId)
+3. Disconnect again → timer2 stored in disconnectTimers
+4. Reconnect → timer2 cancelled
+
+That seems OK. But the issue is that when the grace period DOES expire (30s no reconnect),
+the player is permanently blocked from rejoining. The lobby UI should NOT show "Вернуться в игру"
+for forfeited players. Let me check sanitizeRoom...
+
+sanitizeRoom filters: p => !p.leftGame && !p.isOut && !p.isBot
+After forfeit: player.isOut = true, player.leftGame = true
+So they WON'T be in activeGamePlayerIds. Good.
+
+But the toast message on reconnect failure says "Вы можете вернуться через лобби" — that's the
+client-side message in useSocket.ts line 76. This is shown when rejoinRoom fails 5 times.
+The player sees this, goes to lobby, but the room doesn't show "Вернуться в игру" because
+they've been forfeited. So the message is misleading.
+
+FIXES NEEDED:
+1. Remove the misleading "return via lobby" message from reconnect failure toast
+2. Improve WebSocket stability: add ping/pong heartbeat, reduce reconnection delays
+3. Increase grace period or make it configurable
+4. Ensure forcedToLobby is sent to the correct socket after grace expiry

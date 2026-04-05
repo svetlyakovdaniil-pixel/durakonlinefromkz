@@ -1148,6 +1148,7 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
       cards: r.cards.map(c => ({ id: c.id, suit: c.suit, rank: c.rank, copy: c.copy })),
     })),
     deckStyle: state.deckStyle,
+    availableActions: myIndex >= 0 ? getAvailableActions(state, myIndex) : [],
   };
 }
 

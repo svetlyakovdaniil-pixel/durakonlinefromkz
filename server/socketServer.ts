@@ -33,7 +33,7 @@ const watchdogTimers = new Map<string, NodeJS.Timeout>(); // roomId -> watchdog 
 const lastProgressTimestamps = new Map<string, number>(); // roomId -> last time game state changed
 
 // Disconnect grace period — track disconnected players before removing them
-const DISCONNECT_GRACE_MS = 30_000; // 30 seconds grace period
+const DISCONNECT_GRACE_MS = 60_000; // 60 seconds grace period (increased for unstable connections)
 const disconnectTimers = new Map<string, NodeJS.Timeout>(); // odId -> timeout
 const playerRooms = new Map<string, Set<string>>(); // odId -> set of roomIds
 // Players who intentionally left a game — prevent auto-rejoin for these room+player combos
@@ -50,10 +50,12 @@ export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
     path: '/api/socket.io',
-    pingTimeout: 60000,     // 60s before considering connection dead
-    pingInterval: 25000,    // ping every 25s
-    connectTimeout: 45000,  // 45s connection timeout
+    pingTimeout: 30000,     // 30s before considering connection dead (was 60s)
+    pingInterval: 10000,    // ping every 10s for faster dead connection detection (was 25s)
+    connectTimeout: 30000,  // 30s connection timeout (was 45s)
     maxHttpBufferSize: 1e6, // 1MB buffer
+    transports: ['websocket', 'polling'], // Allow both transports
+    allowUpgrades: true,
   });
 
   io.on('connection', (socket) => {
@@ -614,12 +616,9 @@ export function initSocketServer(httpServer: HttpServer) {
           }
           playerRooms.delete(odId);
 
-          // Send forcedToLobby to the player if they reconnect later
-          // We emit to the specific socket if it exists, or it will be handled on next connect
-          const playerSocketId = playerSockets.get(odId);
-          if (playerSocketId) {
-            io.to(playerSocketId).emit('forcedToLobby', { reason: 'disconnect_timeout' });
-          }
+          // Note: playerSockets was already deleted above, so we can't send forcedToLobby here.
+          // The client will detect the forfeit when it reconnects and rejoinRoom fails,
+          // or via the next gameStateUpdate showing them as isOut.
         }, DISCONNECT_GRACE_MS);
 
         disconnectTimers.set(odId, timer);

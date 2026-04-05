@@ -11,36 +11,39 @@ const MUSIC_TRACKS = [
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
 ];
 
-const STORAGE_KEY = 'kazakh-durak-music-enabled';
-const STORAGE_CHOICE_KEY = 'kazakh-durak-music-choice-made';
-
 /**
  * Background music manager hook.
  * Plays 7 tracks sequentially in a loop.
- * Persists enabled/disabled preference to localStorage.
+ * choiceMade is session-only (not persisted) — dialog shows every time user enters lobby.
+ * enabled state is NOT persisted either — fresh choice every session.
  */
 export function useMusic() {
-  // Whether the user has made the initial choice (dialog shown)
-  const [choiceMade, setChoiceMade] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_CHOICE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  // Whether the user has made the initial choice THIS SESSION (not persisted)
+  const [choiceMade, setChoiceMade] = useState(false);
 
   // Whether music is enabled
-  const [enabled, setEnabled] = useState(() => {
-    try {
-      return localStorage.getItem(STORAGE_KEY) === 'true';
-    } catch {
-      return false;
-    }
-  });
+  const [enabled, setEnabled] = useState(false);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const trackIndexRef = useRef(0);
   const isPlayingRef = useRef(false);
+
+  // When a track ends, play the next one
+  const handleTrackEnd = useCallback(() => {
+    const nextIndex = (trackIndexRef.current + 1) % MUSIC_TRACKS.length;
+    trackIndexRef.current = nextIndex;
+
+    if (audioRef.current) {
+      audioRef.current.removeEventListener('ended', handleTrackEnd);
+    }
+
+    const audio = new Audio(MUSIC_TRACKS[nextIndex]);
+    audio.volume = 0.3;
+    audioRef.current = audio;
+    audio.addEventListener('ended', handleTrackEnd);
+    audio.play().catch(() => {});
+    isPlayingRef.current = true;
+  }, []);
 
   // Play the current track
   const playTrack = useCallback((index: number) => {
@@ -59,40 +62,17 @@ export function useMusic() {
       // Autoplay blocked — will retry on next user interaction
     });
     isPlayingRef.current = true;
-  }, []);
-
-  // When a track ends, play the next one
-  function handleTrackEnd() {
-    const nextIndex = (trackIndexRef.current + 1) % MUSIC_TRACKS.length;
-    trackIndexRef.current = nextIndex;
-
-    if (audioRef.current) {
-      audioRef.current.removeEventListener('ended', handleTrackEnd);
-    }
-
-    const audio = new Audio(MUSIC_TRACKS[nextIndex]);
-    audio.volume = 0.3;
-    audioRef.current = audio;
-    audio.addEventListener('ended', handleTrackEnd);
-    audio.play().catch(() => {});
-    isPlayingRef.current = true;
-  }
+  }, [handleTrackEnd]);
 
   // Start playing music
   const startMusic = useCallback(() => {
     setEnabled(true);
-    try {
-      localStorage.setItem(STORAGE_KEY, 'true');
-    } catch {}
     playTrack(trackIndexRef.current);
   }, [playTrack]);
 
   // Stop playing music
   const stopMusic = useCallback(() => {
     setEnabled(false);
-    try {
-      localStorage.setItem(STORAGE_KEY, 'false');
-    } catch {}
     if (audioRef.current) {
       audioRef.current.pause();
       isPlayingRef.current = false;
@@ -108,28 +88,15 @@ export function useMusic() {
     }
   }, [enabled, startMusic, stopMusic]);
 
-  // Make the initial choice
+  // Make the initial choice (session-only, no localStorage)
   const makeChoice = useCallback((enableMusic: boolean) => {
     setChoiceMade(true);
-    try {
-      localStorage.setItem(STORAGE_CHOICE_KEY, 'true');
-    } catch {}
     if (enableMusic) {
       startMusic();
     } else {
       stopMusic();
     }
   }, [startMusic, stopMusic]);
-
-  // Auto-resume music on mount if enabled
-  useEffect(() => {
-    if (enabled && choiceMade && !isPlayingRef.current) {
-      playTrack(trackIndexRef.current);
-    }
-    return () => {
-      // Don't stop music on unmount — it should persist across page transitions
-    };
-  }, [enabled, choiceMade, playTrack]);
 
   // Cleanup on full unmount
   useEffect(() => {
@@ -140,7 +107,7 @@ export function useMusic() {
         audioRef.current = null;
       }
     };
-  }, []);
+  }, [handleTrackEnd]);
 
   return {
     enabled,

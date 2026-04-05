@@ -53,11 +53,12 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
   // small = opponent mini cards
   // medium = battlefield cards
   // default = hand cards
+  // Mobile sizes increased ~10% (w-13→w-14, h-19→h-21), desktop unchanged
   const sizeClasses = small
-    ? 'w-6 h-10 sm:w-11 sm:h-15'
+    ? 'w-7 h-11 sm:w-11 sm:h-15'
     : medium
-      ? 'w-13 h-19 sm:w-22 sm:h-32'
-      : 'w-13 h-19 sm:w-24 sm:h-34';
+      ? 'w-14 h-21 sm:w-22 sm:h-32'
+      : 'w-14 h-21 sm:w-24 sm:h-34';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
