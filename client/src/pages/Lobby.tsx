@@ -8,11 +8,12 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
+import { trpc } from '@/lib/trpc';
 
 interface LobbyProps {
   rooms: Room[];
@@ -49,6 +50,43 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [loading, setLoading] = useState(false);
   const [rejoining, setRejoining] = useState<string | null>(null);
   const [passwordRoom, setPasswordRoom] = useState<Room | null>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  // Notifications
+  const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
+  const { data: notifList = [], refetch: refetchNotifs } = trpc.notifications.list.useQuery(undefined, { enabled: notifOpen });
+  const markAllRead = trpc.notifications.markAllRead.useMutation();
+  const deleteNotif = trpc.notifications.delete.useMutation();
+  const acceptFriend = trpc.friends.acceptRequest.useMutation();
+  const rejectFriend = trpc.friends.rejectRequest.useMutation();
+  const utils = trpc.useUtils();
+
+  const handleOpenNotifications = () => {
+    setNotifOpen(!notifOpen);
+    if (!notifOpen && unreadCount > 0) {
+      markAllRead.mutateAsync().then(() => {
+        utils.notifications.unreadCount.invalidate();
+      });
+    }
+  };
+
+  const handleAcceptFriend = async (friendshipId: number) => {
+    await acceptFriend.mutateAsync({ friendshipId });
+    refetchNotifs();
+    utils.notifications.unreadCount.invalidate();
+  };
+
+  const handleRejectFriend = async (friendshipId: number) => {
+    await rejectFriend.mutateAsync({ friendshipId });
+    refetchNotifs();
+    utils.notifications.unreadCount.invalidate();
+  };
+
+  const handleDeleteNotif = async (id: number) => {
+    await deleteNotif.mutateAsync({ notificationId: id });
+    refetchNotifs();
+    utils.notifications.unreadCount.invalidate();
+  };
 
   const handleCreate = async () => {
     setLoading(true);
@@ -106,17 +144,46 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Center: Avatar + Name/ID — absolutely centered on screen */}
               <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
-                <ProfileDrawer
-                  profile={profile}
-                  onlineFriendIds={onlineFriendIds}
-                  inRoom={false}
-                >
-                  <button className="hover:opacity-80 transition-opacity">
-                    <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
-                      <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                <div className="flex items-center gap-1.5">
+                  <ProfileDrawer
+                    profile={profile}
+                    onlineFriendIds={onlineFriendIds}
+                    inRoom={false}
+                  >
+                    <button className="hover:opacity-80 transition-opacity">
+                      <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
+                        <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                    </button>
+                  </ProfileDrawer>
+                  {/* Mobile currency icons - right of avatar */}
+                  <div className="flex flex-col gap-1">
+                    {/* Tenge row */}
+                    <div className="flex items-center gap-0.5">
+                      <div className="w-7 h-7 rounded-full overflow-hidden flex items-center justify-center">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-7 h-7 object-contain" />
+                      </div>
+                      <button
+                        className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
+                        onClick={() => { /* TODO: top up tenge */ }}
+                      >
+                        +
+                      </button>
                     </div>
-                  </button>
-                </ProfileDrawer>
+                    {/* Shanyrak row */}
+                    <div className="flex items-center gap-0.5">
+                      <div className="h-7 flex items-center justify-center">
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" />
+                      </div>
+                      <button
+                        className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                        onClick={() => { /* TODO: top up shanyrak */ }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
                 <div className="flex items-center gap-1.5 mt-1">
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
                   {profile && (
@@ -124,12 +191,25 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right: Settings gear */}
-              <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
-                <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
-                  <Settings className="w-5 h-5" />
+              {/* Right: Settings gear + Bell */}
+              <div className="flex flex-col items-center gap-1">
+                <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
+                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
+                    <Settings className="w-5 h-5" />
+                  </button>
+                </SettingsSheet>
+                <button
+                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                  onClick={handleOpenNotifications}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </button>
-              </SettingsSheet>
+              </div>
             </div>
           </div>
 
@@ -142,6 +222,32 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <h1 className="text-xl font-bold text-amber-100">Казахский Дурак</h1>
               </div>
               <div className="flex items-center gap-3">
+                {/* Currency: Tenge */}
+                <div className="flex items-center gap-1">
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-8 h-8 object-contain" />
+                  </div>
+                  <button
+                    className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
+                    onClick={() => { /* TODO: top up tenge */ }}
+                    title="Пополнить тенге"
+                  >
+                    +
+                  </button>
+                </div>
+                {/* Currency: Shanyrak */}
+                <div className="flex items-center gap-1">
+                  <div className="h-8 flex items-center justify-center">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-8 object-contain" />
+                  </div>
+                  <button
+                    className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
+                    onClick={() => { /* TODO: top up shanyrak */ }}
+                    title="Пополнить шаныраки"
+                  >
+                    +
+                  </button>
+                </div>
                 <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
                   {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
                 </Badge>
@@ -167,6 +273,17 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     <Settings className="w-5 h-5" />
                   </button>
                 </SettingsSheet>
+                <button
+                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={handleOpenNotifications}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
               </div>
             </div>
             {/* Bottom row: Комнаты + Создать */}
@@ -386,6 +503,97 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
         roomName={passwordRoom?.name || ''}
         onSubmit={handlePasswordSubmit}
       />
+
+      {/* Notification Panel */}
+      {notifOpen && (
+        <div className="fixed inset-0 z-50" onClick={() => setNotifOpen(false)}>
+          <div className="absolute inset-0 bg-black/30" />
+          <div
+            className="absolute top-14 right-2 sm:right-8 w-[320px] sm:w-[380px] max-h-[70vh] bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-xl shadow-2xl overflow-hidden"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20">
+              <h3 className="text-amber-100 font-bold text-sm">Уведомления</h3>
+              <button className="text-amber-200/50 hover:text-amber-100 p-1" onClick={() => setNotifOpen(false)}>
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* List */}
+            <div className="overflow-y-auto max-h-[calc(70vh-48px)] divide-y divide-amber-700/10">
+              {notifList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-amber-200/40">
+                  <Bell className="w-8 h-8 mb-2 opacity-40" />
+                  <span className="text-sm">Нет уведомлений</span>
+                </div>
+              ) : (
+                notifList.map(n => (
+                  <div key={n.id} className={`px-4 py-3 flex items-start gap-3 ${!n.isRead ? 'bg-amber-900/10' : ''}`}>
+                    <div className="flex-1">
+                      {n.type === 'friend_request' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <UserPlus className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span className="text-amber-100 text-sm font-medium">Запрос в друзья</span>
+                          </div>
+                          <p className="text-amber-200/60 text-xs mb-2">
+                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) хочет добавить вас в друзья
+                          </p>
+                          <div className="flex gap-2">
+                            <button
+                              className="flex items-center gap-1 bg-green-700/60 hover:bg-green-600/60 text-green-200 text-xs px-3 py-1 rounded-md transition-colors"
+                              onClick={() => n.data?.friendshipId && handleAcceptFriend(n.data.friendshipId)}
+                            >
+                              <Check className="w-3 h-3" /> Принять
+                            </button>
+                            <button
+                              className="flex items-center gap-1 bg-red-900/40 hover:bg-red-800/40 text-red-300 text-xs px-3 py-1 rounded-md transition-colors"
+                              onClick={() => n.data?.friendshipId && handleRejectFriend(n.data.friendshipId)}
+                            >
+                              <X className="w-3 h-3" /> Отклонить
+                            </button>
+                          </div>
+                        </>
+                      )}
+                      {n.type === 'friend_accepted' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Check className="w-4 h-4 text-green-400 shrink-0" />
+                            <span className="text-amber-100 text-sm font-medium">Дружба принята</span>
+                          </div>
+                          <p className="text-amber-200/60 text-xs">
+                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> принял(а) ваш запрос в друзья
+                          </p>
+                        </>
+                      )}
+                      {n.type === 'balance_topup' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-amber-400 text-sm">₸</span>
+                            <span className="text-amber-100 text-sm font-medium">Пополнение баланса</span>
+                          </div>
+                          <p className="text-amber-200/60 text-xs">
+                            Баланс пополнен на {n.data?.amount} {n.data?.currency}
+                          </p>
+                        </>
+                      )}
+                      <span className="text-amber-200/30 text-[10px] mt-1 block">
+                        {new Date(n.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <button
+                      className="text-amber-200/30 hover:text-red-400 transition-colors p-1 shrink-0"
+                      onClick={() => handleDeleteNotif(n.id)}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

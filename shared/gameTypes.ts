@@ -190,7 +190,7 @@ export interface ClientToServerEvents {
   /** Invite a friend to the current room */
   inviteFriend: (data: { roomId: string; targetGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
-  registerProfile: (data: { gameId: number; displayName: string }, cb?: (ok: boolean) => void) => void;
+  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string }, cb?: (ok: boolean) => void) => void;
 }
 
 // --- Client-side game state ---
@@ -235,6 +235,10 @@ export interface ClientPlayer {
   isBot: boolean;
   winPlace: number | null;
   leftGame: boolean;
+  /** Player's game ID for profile lookup */
+  gameId?: number;
+  /** Player's avatar preset ID */
+  avatarId?: string;
 }
 
 // --- Available actions ---

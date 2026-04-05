@@ -90,3 +90,24 @@ export const gameHistory = mysqlTable("game_history", {
 
 export type GameHistoryRecord = typeof gameHistory.$inferSelect;
 export type InsertGameHistory = typeof gameHistory.$inferInsert;
+
+/**
+ * Notifications for players.
+ * type: 'friend_request' | 'friend_accepted' | 'balance_topup'
+ * data: JSON string with extra info (e.g. { friendshipId, senderName, senderGameId } or { amount, currency })
+ */
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The player who receives this notification (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Notification type */
+  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup"]).notNull(),
+  /** JSON data with extra info */
+  data: text("data"),
+  /** Whether the notification has been read */
+  isRead: boolean("isRead").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

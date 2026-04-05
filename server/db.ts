@@ -1,6 +1,6 @@
 import { eq, and, or, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -161,11 +161,11 @@ export async function updateProfileAvatar(userId: number, avatarId: string) {
  * Send a friend request from senderProfileId to receiverProfileId.
  * Returns 'sent' | 'already_friends' | 'already_pending' | 'not_found'
  */
-export async function sendFriendRequest(senderProfileId: number, receiverProfileId: number): Promise<string> {
+export async function sendFriendRequest(senderProfileId: number, receiverProfileId: number): Promise<{ result: string; friendshipId?: number }> {
   const db = await getDb();
-  if (!db) return 'not_found';
+  if (!db) return { result: 'not_found' };
 
-  if (senderProfileId === receiverProfileId) return 'not_found';
+  if (senderProfileId === receiverProfileId) return { result: 'not_found' };
 
   // Check if friendship already exists in either direction
   const existing = await db.select().from(friendships).where(
@@ -176,20 +176,20 @@ export async function sendFriendRequest(senderProfileId: number, receiverProfile
   ).limit(1);
 
   if (existing.length > 0) {
-    if (existing[0].status === 'accepted') return 'already_friends';
-    if (existing[0].status === 'pending') return 'already_pending';
+    if (existing[0].status === 'accepted') return { result: 'already_friends' };
+    if (existing[0].status === 'pending') return { result: 'already_pending' };
     // If rejected, allow re-sending by updating
     await db.update(friendships).set({ status: 'pending', senderId: senderProfileId, receiverId: receiverProfileId }).where(eq(friendships.id, existing[0].id));
-    return 'sent';
+    return { result: 'sent', friendshipId: existing[0].id };
   }
 
-  await db.insert(friendships).values({
+  const [inserted] = await db.insert(friendships).values({
     senderId: senderProfileId,
     receiverId: receiverProfileId,
     status: 'pending',
-  });
+  }).$returningId();
 
-  return 'sent';
+  return { result: 'sent', friendshipId: inserted?.id };
 }
 
 /**
@@ -374,4 +374,131 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
   return db.select().from(gameHistory).where(
     sql`JSON_CONTAINS(${gameHistory.playersJson}, CAST(${profileId} AS JSON))`
   ).orderBy(desc(gameHistory.createdAt)).limit(limit);
+}
+
+// ============================================================
+// NOTIFICATION helpers
+// ============================================================
+
+/**
+ * Create a notification for a player.
+ */
+export async function createNotification(profileId: number, type: 'friend_request' | 'friend_accepted' | 'balance_topup', data: Record<string, unknown>) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [result] = await db.insert(notifications).values({
+    profileId,
+    type,
+    data: JSON.stringify(data),
+    isRead: false,
+  }).$returningId();
+
+  return result?.id ?? null;
+}
+
+/**
+ * Get notifications for a player (newest first).
+ */
+export async function getNotifications(profileId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(notifications)
+    .where(eq(notifications.profileId, profileId))
+    .orderBy(desc(notifications.createdAt))
+    .limit(limit);
+}
+
+/**
+ * Count unread notifications for a player.
+ */
+export async function getUnreadNotificationCount(profileId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const [row] = await db.select({ count: sql<number>`COUNT(*)` }).from(notifications)
+    .where(and(eq(notifications.profileId, profileId), eq(notifications.isRead, false)));
+
+  return row?.count ?? 0;
+}
+
+/**
+ * Mark all notifications as read for a player.
+ */
+export async function markNotificationsRead(profileId: number) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.update(notifications).set({ isRead: true })
+    .where(and(eq(notifications.profileId, profileId), eq(notifications.isRead, false)));
+}
+
+/**
+ * Delete a specific notification.
+ */
+export async function deleteNotification(notificationId: number, profileId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.delete(notifications).where(
+    and(eq(notifications.id, notificationId), eq(notifications.profileId, profileId))
+  );
+  return true;
+}
+
+/**
+ * Get a friendship record by ID.
+ */
+export async function getFriendshipById(friendshipId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(friendships).where(eq(friendships.id, friendshipId)).limit(1);
+  return row ?? null;
+}
+
+/**
+ * Get player profile with friendship status relative to another player.
+ */
+export async function getPlayerProfileWithFriendStatus(targetGameId: number, myProfileId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [target] = await db.select().from(playerProfiles).where(eq(playerProfiles.gameId, targetGameId)).limit(1);
+  if (!target) return null;
+
+  // Check friendship status
+  let friendStatus: 'none' | 'pending_sent' | 'pending_received' | 'friends' = 'none';
+  let friendshipId: number | null = null;
+
+  if (target.id !== myProfileId) {
+    const [friendship] = await db.select().from(friendships).where(
+      or(
+        and(eq(friendships.senderId, myProfileId), eq(friendships.receiverId, target.id)),
+        and(eq(friendships.senderId, target.id), eq(friendships.receiverId, myProfileId))
+      )
+    ).limit(1);
+
+    if (friendship) {
+      friendshipId = friendship.id;
+      if (friendship.status === 'accepted') {
+        friendStatus = 'friends';
+      } else if (friendship.status === 'pending') {
+        friendStatus = friendship.senderId === myProfileId ? 'pending_sent' : 'pending_received';
+      }
+    }
+  }
+
+  return {
+    profileId: target.id,
+    gameId: target.gameId,
+    displayName: target.displayName,
+    avatarId: target.avatarId,
+    rating: target.rating,
+    gamesPlayed: target.gamesPlayed,
+    wins: target.wins,
+    losses: target.losses,
+    friendStatus,
+    friendshipId,
+  };
 }

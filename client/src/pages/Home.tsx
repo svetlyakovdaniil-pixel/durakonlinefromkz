@@ -35,7 +35,7 @@ export default function Home() {
   // Register profile with socket when profile loads
   useEffect(() => {
     if (profile && connected && !registeredRef.current) {
-      registerProfile(profile.gameId, profile.displayName || 'Игрок');
+      registerProfile(profile.gameId, profile.displayName || 'Игрок', profile.avatarId || undefined);
       registeredRef.current = true;
     }
   }, [profile, connected, registerProfile]);

@@ -247,8 +247,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, [userId, userName]);
 
   // Register profile with socket server (called from Home when profile loads)
-  const registerProfile = useCallback((gameId: number, displayName: string) => {
-    socketRef.current?.emit('registerProfile', { gameId, displayName }, (ok: boolean) => {
+  const registerProfile = useCallback((gameId: number, displayName: string, avatarId?: string) => {
+    socketRef.current?.emit('registerProfile', { gameId, displayName, avatarId }, (ok: boolean) => {
       if (ok) console.log(`[Socket] Profile registered: gameId=${gameId}`);
     });
   }, []);

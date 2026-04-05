@@ -7,9 +7,11 @@ import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX, X, UserPlus, Clock, Check } from 'lucide-react';
 import { useSound } from '@/hooks/useSound';
 import { useSettings } from '@/contexts/SettingsContext';
+import { getAvatarUrl } from '../../../shared/avatars';
+import { trpc } from '@/lib/trpc';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -683,6 +685,7 @@ export default function GameTable({
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
 
   const opponents = gs.players.filter((_, i) => i !== myIdx);
 
@@ -888,6 +891,18 @@ export default function GameTable({
                     isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
                     'bg-black/30 border-amber-700/20'
                   }`}>
+                    {/* Avatar — clickable for profile popup */}
+                    <button
+                      className="focus:outline-none mb-0.5 sm:mb-1"
+                      onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
+                      disabled={p.isBot || !p.gameId}
+                    >
+                      <img
+                        src={getAvatarUrl(p.avatarId)}
+                        alt={p.name}
+                        className={`${manyOpponents ? 'w-5 h-5' : 'w-7 h-7'} sm:w-9 sm:h-9 rounded-full border ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
+                      />
+                    </button>
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
                       {isOppAttacker && <Swords className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-red-400`} />}
                       {isOppDefender && !gs.defenderTaking && <Shield className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-blue-400`} />}
@@ -1303,6 +1318,125 @@ export default function GameTable({
             deckStyle={gs.deckStyle}
           />
         </div>
+        )}
+      </div>
+
+      {/* Player Profile Popup */}
+      {profilePopupGameId !== null && (
+        <PlayerProfilePopup
+          gameId={profilePopupGameId}
+          onClose={() => setProfilePopupGameId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---- Player Profile Popup ----
+function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () => void }) {
+  const { data: profile, isLoading } = trpc.profile.withFriendStatus.useQuery({ targetGameId: gameId });
+  const sendRequest = trpc.friends.sendRequest.useMutation();
+  const utils = trpc.useUtils();
+
+  const handleAddFriend = async () => {
+    const result = await sendRequest.mutateAsync({ targetGameId: gameId });
+    if (result.result === 'sent') {
+      utils.profile.withFriendStatus.invalidate({ targetGameId: gameId });
+    }
+  };
+
+  const winRate = profile && profile.gamesPlayed > 0
+    ? Math.round((profile.wins / profile.gamesPlayed) * 100)
+    : 0;
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50" />
+      <div
+        className="relative bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-xl shadow-2xl w-[280px] sm:w-[320px] p-4 sm:p-5"
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Close button */}
+        <button
+          className="absolute top-2 right-2 text-amber-200/60 hover:text-amber-200 transition-colors p-1"
+          onClick={onClose}
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="w-6 h-6 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : profile ? (
+          <div className="flex flex-col items-center gap-3">
+            {/* Avatar & Name */}
+            <img
+              src={getAvatarUrl(profile.avatarId)}
+              alt={profile.displayName || 'Player'}
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60 object-cover"
+            />
+            <div className="text-center">
+              <h3 className="text-amber-100 font-bold text-base sm:text-lg">{profile.displayName || 'Игрок'}</h3>
+              <span className="text-amber-200/50 text-xs">ID {profile.gameId}</span>
+            </div>
+
+            {/* Stats */}
+            <div className="w-full grid grid-cols-2 gap-2 text-center">
+              <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">Игры</div>
+                <div className="text-amber-100 font-bold text-sm sm:text-base">{profile.gamesPlayed}</div>
+              </div>
+              <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">Рейтинг</div>
+                <div className="text-amber-100 font-bold text-sm sm:text-base">{profile.rating}</div>
+              </div>
+              <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">Победы / Поражения</div>
+                <div className="text-amber-100 font-bold text-sm sm:text-base">
+                  <span className="text-green-400">{profile.wins}</span>
+                  <span className="text-amber-200/40 mx-0.5">/</span>
+                  <span className="text-red-400">{profile.losses}</span>
+                </div>
+              </div>
+              <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">Винрейт</div>
+                <div className="text-amber-100 font-bold text-sm sm:text-base">{winRate}%</div>
+              </div>
+            </div>
+
+            {/* Add Friend button */}
+            {profile.friendStatus === 'none' && (
+              <button
+                className="w-full flex items-center justify-center gap-2 bg-amber-600/80 hover:bg-amber-600 text-white font-semibold rounded-lg px-4 py-2 transition-colors text-sm"
+                onClick={handleAddFriend}
+                disabled={sendRequest.isPending}
+              >
+                <UserPlus className="w-4 h-4" />
+                {sendRequest.isPending ? 'Отправка...' : 'Добавить в друзья'}
+              </button>
+            )}
+            {profile.friendStatus === 'pending_sent' && (
+              <div className="w-full flex items-center justify-center gap-2 bg-amber-900/40 text-amber-300 rounded-lg px-4 py-2 text-sm border border-amber-700/30">
+                <Clock className="w-4 h-4" />
+                Запрос отправлен
+              </div>
+            )}
+            {profile.friendStatus === 'pending_received' && (
+              <div className="w-full flex items-center justify-center gap-2 bg-blue-900/40 text-blue-300 rounded-lg px-4 py-2 text-sm border border-blue-700/30">
+                <UserPlus className="w-4 h-4" />
+                Ожидает вашего ответа
+              </div>
+            )}
+            {profile.friendStatus === 'friends' && (
+              <div className="w-full flex items-center justify-center gap-2 bg-green-900/40 text-green-300 rounded-lg px-4 py-2 text-sm border border-green-700/30">
+                <Check className="w-4 h-4" />
+                Друзья
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="text-center py-6 text-amber-200/50 text-sm">Профиль не найден</div>
         )}
       </div>
     </div>

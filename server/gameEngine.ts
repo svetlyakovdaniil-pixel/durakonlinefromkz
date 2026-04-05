@@ -1091,7 +1091,12 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
 
 // ---- Client state conversion ----
 
-export function toClientState(state: GameState, playerId: string): ClientGameState {
+export function toClientState(
+  state: GameState,
+  playerId: string,
+  playerGameIdsMap?: Map<string, number>,
+  playerAvatarIdsMap?: Map<string, string>,
+): ClientGameState {
   const myIndex = state.players.findIndex(p => p.id === playerId);
 
   const clientPlayers: ClientPlayer[] = state.players.map(p => ({
@@ -1103,6 +1108,8 @@ export function toClientState(state: GameState, playerId: string): ClientGameSta
     isBot: p.isBot,
     winPlace: p.winPlace,
     leftGame: p.leftGame,
+    gameId: playerGameIdsMap?.get(p.id),
+    avatarId: playerAvatarIdsMap?.get(p.id) ?? (p.isBot ? 'bot' : undefined),
   }));
 
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;
