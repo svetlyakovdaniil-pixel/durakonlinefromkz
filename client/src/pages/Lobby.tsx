@@ -9,6 +9,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Wifi, WifiOff, LogOut, Gamepad2, Layers, RotateCcw, Lock, User, Hash } from 'lucide-react';
+import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 
@@ -27,6 +28,7 @@ interface LobbyProps {
     gamesPlayed: number;
     wins: number;
     losses: number;
+    avatarId?: string | null;
   } | null;
   onlineFriendIds: number[];
   onInviteFriend: ((targetGameId: number) => void) | undefined;
@@ -109,9 +111,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               onlineFriendIds={onlineFriendIds}
               inRoom={false}
             >
-              <Button variant="ghost" size="sm" className="text-amber-200/60 hover:text-amber-100 p-1 sm:p-2">
-                <User className="w-4 h-4" />
-              </Button>
+              <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden border-2 border-amber-500/50">
+                  <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                </div>
+              </button>
             </ProfileDrawer>
             <span className="text-xs sm:text-sm text-amber-200/60 truncate max-w-20 sm:max-w-none">{userName}</span>
             <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1 sm:p-2" onClick={onLogout}>

@@ -8,6 +8,7 @@ import {
   getProfileByUserId,
   getProfileByGameId,
   updateProfileDisplayName,
+  updateProfileAvatar,
   sendFriendRequest,
   acceptFriendRequest,
   rejectFriendRequest,
@@ -63,6 +64,14 @@ export const appRouter = router({
       .input(z.object({ displayName: z.string().min(1).max(50) }))
       .mutation(async ({ ctx, input }) => {
         await updateProfileDisplayName(ctx.user.id, input.displayName);
+        return { success: true };
+      }),
+
+    /** Update avatar */
+    updateAvatar: protectedProcedure
+      .input(z.object({ avatarId: z.string().min(1).max(32) }))
+      .mutation(async ({ ctx, input }) => {
+        await updateProfileAvatar(ctx.user.id, input.avatarId);
         return { success: true };
       }),
   }),

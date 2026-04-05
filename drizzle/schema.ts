@@ -32,6 +32,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   displayName: varchar("displayName", { length: 100 }),
   /** Avatar URL */
   avatarUrl: text("avatarUrl"),
+  /** Avatar preset ID (wolf, eagle, bear, fox, snow-leopard) */
+  avatarId: varchar("avatarId", { length: 32 }).default("wolf"),
   /** ELO rating — starts at 1000 */
   rating: int("rating").default(1000).notNull(),
   /** Total games played */

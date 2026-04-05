@@ -147,6 +147,12 @@ export async function updateProfileDisplayName(userId: number, displayName: stri
   await db.update(playerProfiles).set({ displayName }).where(eq(playerProfiles.userId, userId));
 }
 
+export async function updateProfileAvatar(userId: number, avatarId: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(playerProfiles).set({ avatarId }).where(eq(playerProfiles.userId, userId));
+}
+
 // ============================================================
 // FRIENDS helpers
 // ============================================================

@@ -160,6 +160,12 @@ export interface ServerToClientEvents {
   roomInvite: (data: { roomId: string; roomName: string; fromName: string; fromGameId: number }) => void;
   /** Online friends list update */
   onlineFriendsUpdate: (data: { onlineGameIds: number[] }) => void;
+  /** Room frozen because a player disconnected */
+  roomFrozen: (data: { roomId: string; disconnectedPlayerName: string; timeoutSeconds: number }) => void;
+  /** Room unfrozen because the player reconnected */
+  roomUnfrozen: (data: { roomId: string; reconnectedPlayerName: string }) => void;
+  /** Frozen timer tick */
+  frozenTimerTick: (data: { roomId: string; secondsLeft: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -179,6 +185,8 @@ export interface ClientToServerEvents {
   skipTurn: (roomId: string) => void;
   sendChat: (data: { roomId: string; text: string }) => void;
   rejoinRoom: (roomId: string, cb: (ok: boolean, room?: Room) => void) => void;
+  /** Rejoin a game in progress (after disconnect) */
+  rejoinGame: (roomId: string, cb: (ok: boolean) => void) => void;
   /** Invite a friend to the current room */
   inviteFriend: (data: { roomId: string; targetGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */

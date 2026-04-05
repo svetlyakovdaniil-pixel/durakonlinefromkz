@@ -43,6 +43,9 @@ const forfeitedFromRoom = new Set<string>(); // "odId:roomId" entries
 const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump phase
 const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
 const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
+// Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
+const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
+const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; disconnectedName: string; timer: NodeJS.Timeout; tickInterval: NodeJS.Timeout; secondsLeft: number }>(); // roomId -> freeze info
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
@@ -74,6 +77,29 @@ export function initSocketServer(httpServer: HttpServer) {
       clearTimeout(pendingTimer);
       disconnectTimers.delete(odId);
       console.log(`[Socket] Player ${odId} reconnected — grace timer cancelled`);
+    }
+
+    // Unfreeze any rooms frozen for this player
+    for (const [frozenRoomId, freezeInfo] of Array.from(frozenRooms.entries())) {
+      if (freezeInfo.disconnectedOdId === odId) {
+        clearTimeout(freezeInfo.timer);
+        clearInterval(freezeInfo.tickInterval);
+        frozenRooms.delete(frozenRoomId);
+        console.log(`[Socket] Unfreezing room ${frozenRoomId} — player ${odId} reconnected`);
+
+        // Notify all players in the room that the game is unfrozen
+        io.to(frozenRoomId).emit('roomUnfrozen', {
+          roomId: frozenRoomId,
+          reconnectedPlayerName: name,
+        });
+
+        // Restart the turn timer and watchdog
+        const gameState = games.get(frozenRoomId);
+        if (gameState && gameState.gamePhase === 'playing') {
+          restartTurnTimer(frozenRoomId);
+          startWatchdog(frozenRoomId);
+        }
+      }
     }
 
     // Rejoin all rooms this player was in (skip rooms they forfeited from)
@@ -674,48 +700,96 @@ export function initSocketServer(httpServer: HttpServer) {
 
       if (isInActiveGame) {
         // Start grace period — give player time to reconnect
-        console.log(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId}`);
-        const timer = setTimeout(() => {
-          console.log(`[Socket] Grace period expired for ${odId} — forfeiting from active games`);
-          disconnectTimers.delete(odId);
-          playerSockets.delete(odId);
+        console.log(`[Socket] Starting ${FREEZE_TIMEOUT_MS / 1000}s freeze period for ${odId}`);
 
+        // Freeze all active game rooms this player is in
+        const activeRoomIds = roomSet ? Array.from(roomSet).filter(rid => {
+          const gs = games.get(rid);
+          return gs && gs.gamePhase === 'playing' && gs.players.some(p => p.id === odId && !p.isOut && !p.leftGame);
+        }) : [];
+
+        for (const rid of activeRoomIds) {
+          // Stop the turn timer to freeze the game
+          stopTurnTimer(rid);
+          stopWatchdog(rid);
+
+          // Set up freeze countdown
+          const freezeInfo = {
+            roomId: rid,
+            disconnectedOdId: odId,
+            disconnectedName: name,
+            secondsLeft: Math.floor(FREEZE_TIMEOUT_MS / 1000),
+            timer: null as any,
+            tickInterval: null as any,
+          };
+
+          // Notify other players in the room
+          io.to(rid).emit('roomFrozen', {
+            roomId: rid,
+            disconnectedPlayerName: name,
+            timeoutSeconds: freezeInfo.secondsLeft,
+          });
+
+          // Tick every second
+          freezeInfo.tickInterval = setInterval(() => {
+            freezeInfo.secondsLeft--;
+            io.to(rid).emit('frozenTimerTick', { roomId: rid, secondsLeft: freezeInfo.secondsLeft });
+          }, 1000);
+
+          // After timeout, forfeit the player
+          freezeInfo.timer = setTimeout(() => {
+            console.log(`[Socket] Freeze expired for ${odId} in room ${rid} — forfeiting`);
+            clearInterval(freezeInfo.tickInterval);
+            frozenRooms.delete(rid);
+            disconnectTimers.delete(odId);
+            playerSockets.delete(odId);
+
+            forfeitedFromRoom.add(`${odId}:${rid}`);
+            const gameState = games.get(rid);
+            if (gameState && gameState.gamePhase === 'playing') {
+              const playerIdx = gameState.players.findIndex(p => p.id === odId);
+              if (playerIdx !== -1 && !gameState.players[playerIdx].isOut) {
+                forfeitPlayer(gameState, playerIdx);
+                markProgress(rid);
+                resetTurnTimer(gameState);
+                restartTurnTimer(rid);
+                startWatchdog(rid);
+                broadcastGameState(rid, gameState);
+                if (gameState.gamePhase === 'playing') {
+                  scheduleBotAction(rid);
+                }
+              }
+            }
+            const r = rooms.get(rid);
+            if (r && r.players.some((p: { id: string }) => p.id === odId)) {
+              handlePlayerLeaveRoom(odId, rid);
+            }
+            // Send forcedToLobby to the disconnected player if they reconnect later
+            const reconnectedSid = playerSockets.get(odId);
+            if (reconnectedSid) {
+              io.to(reconnectedSid).emit('forcedToLobby', { reason: 'disconnect_timeout' });
+            }
+          }, FREEZE_TIMEOUT_MS);
+
+          frozenRooms.set(rid, freezeInfo);
+        }
+
+        // Also set the old disconnect timer as a fallback
+        const timer = setTimeout(() => {
+          disconnectTimers.delete(odId);
+          // Cleanup any rooms not handled by freeze
           const allRoomIds = playerRooms.get(odId);
           if (allRoomIds) {
             for (const rid of Array.from(allRoomIds)) {
-              // Mark as forfeited so reconnect won't rejoin
-              forfeitedFromRoom.add(`${odId}:${rid}`);
-
-              // If player is in an active game, forfeit them (auto-lose)
-              const gameState = games.get(rid);
-              if (gameState && gameState.gamePhase === 'playing') {
-                const playerIdx = gameState.players.findIndex(p => p.id === odId);
-                if (playerIdx !== -1 && !gameState.players[playerIdx].isOut) {
-                  forfeitPlayer(gameState, playerIdx);
-                  markProgress(rid);
-                  resetTurnTimer(gameState);
-                  restartTurnTimer(rid);
-                  broadcastGameState(rid, gameState);
-                  if (gameState.gamePhase === 'playing') {
-                    scheduleBotAction(rid);
-                  }
-                  console.log(`[Socket] Player ${odId} forfeited from game in room ${rid} (grace expired)`);
+              if (!frozenRooms.has(rid)) {
+                const r = rooms.get(rid);
+                if (r && r.players.some((p: { id: string }) => p.id === odId)) {
+                  handlePlayerLeaveRoom(odId, rid);
                 }
-              }
-              // Also clean up room membership
-              const r = rooms.get(rid);
-              if (r && r.players.some((p: { id: string }) => p.id === odId)) {
-                handlePlayerLeaveRoom(odId, rid);
               }
             }
           }
-          playerRooms.delete(odId);
-
-          // Note: playerSockets was already deleted above, so we can't send forcedToLobby here.
-          // The client will detect the forfeit when it reconnects and rejoinRoom fails,
-          // or via the next gameStateUpdate showing them as isOut.
         }, DISCONNECT_GRACE_MS);
-
         disconnectTimers.set(odId, timer);
       } else {
         // Not in active game — remove immediately

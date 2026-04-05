@@ -24,6 +24,9 @@ export function useSocket(userId: string | null, userName: string | null) {
   const [pendingInvite, setPendingInvite] = useState<{
     roomId: string; roomName: string; fromName: string; fromGameId: number;
   } | null>(null);
+  const [frozenInfo, setFrozenInfo] = useState<{
+    disconnectedPlayerName: string; secondsLeft: number;
+  } | null>(null);
 
   // Track the room ID we're currently in for reconnect
   const currentRoomIdRef = useRef<string | null>(null);
@@ -220,6 +223,23 @@ export function useSocket(userId: string | null, userName: string | null) {
       setOnlineFriendIds(data.onlineGameIds);
     });
 
+    // Room freeze/unfreeze events
+    socket.on('roomFrozen', (data) => {
+      console.log(`[Socket] Room ${data.roomId} frozen — ${data.disconnectedPlayerName} disconnected`);
+      setFrozenInfo({
+        disconnectedPlayerName: data.disconnectedPlayerName,
+        secondsLeft: data.timeoutSeconds,
+      });
+    });
+    socket.on('frozenTimerTick', (data) => {
+      setFrozenInfo(prev => prev ? { ...prev, secondsLeft: data.secondsLeft } : null);
+    });
+    socket.on('roomUnfrozen', (data) => {
+      console.log(`[Socket] Room ${data.roomId} unfrozen — ${data.reconnectedPlayerName} reconnected`);
+      setFrozenInfo(null);
+      toast.success(`${data.reconnectedPlayerName} вернулся в игру!`, { duration: 3000 });
+    });
+
     return () => {
       socket.disconnect();
       socketRef.current = null;
@@ -370,6 +390,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     onlineFriendIds,
     pendingInvite,
     setPendingInvite,
+    frozenInfo,
     createRoom,
     joinRoom,
     leaveRoom,

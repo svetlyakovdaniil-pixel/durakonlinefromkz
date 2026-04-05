@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback, useEffect } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import type { Card } from '../../../shared/gameTypes';
 import PlayingCard from './PlayingCard';
 
@@ -15,6 +15,12 @@ interface DraggableCardProps {
   dropZoneId?: string;
 }
 
+/**
+ * DraggableCard — supports both desktop and mobile interaction:
+ * - Desktop: pointer down + move > 8px = drag. Release on drop zone = play. Click = select.
+ * - Mobile: tap = select/click. Only a SELECTED card can be dragged (long press > 200ms starts drag).
+ *   Horizontal swipe on non-selected cards = scroll (no touch-none).
+ */
 export default function DraggableCard({
   card, playable, selected, isPassThrough, deckStyle, onClick, onDrop, dropZoneId = 'battlefield-drop-zone',
 }: DraggableCardProps) {
@@ -24,11 +30,12 @@ export default function DraggableCard({
   const [dragPos, setDragPos] = useState({ x: 0, y: 0 });
   const [returning, setReturning] = useState(false);
   const startPos = useRef({ x: 0, y: 0 });
-  const startTime = useRef(0);
   const hasMoved = useRef(false);
   const origRect = useRef<DOMRect | null>(null);
+  const isTouchDevice = useRef(false);
+  const dragStarted = useRef(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Check if a point is inside the drop zone
   const isOverDropZone = useCallback((clientX: number, clientY: number) => {
     const dropZone = document.getElementById(dropZoneId);
     if (!dropZone) return false;
@@ -36,135 +43,197 @@ export default function DraggableCard({
     return clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom;
   }, [dropZoneId]);
 
-  // Start drag
-  const handlePointerDown = useCallback((e: React.PointerEvent) => {
-    if (!playable || !onDrop) return;
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
+  const beginDrag = useCallback((clientX: number, clientY: number) => {
     const el = cardRef.current;
     if (!el) return;
+    const rect = el.getBoundingClientRect();
+    origRect.current = rect;
+    dragStarted.current = true;
+    setDragging(true);
+    setDragOffset({ x: clientX - rect.left, y: clientY - rect.top });
+    setDragPos({ x: rect.left, y: rect.top });
+  }, []);
 
+  const endDrag = useCallback((clientX: number, clientY: number) => {
+    cancelLongPress();
+    if (!dragging && !dragStarted.current) return;
+
+    const overDrop = isOverDropZone(clientX, clientY);
+    if (overDrop && onDrop) {
+      const accepted = onDrop(card, clientX, clientY);
+      if (accepted) {
+        setDragging(false);
+        dragStarted.current = false;
+        origRect.current = null;
+        return;
+      }
+    }
+
+    // Return card to original position
+    setReturning(true);
+    if (origRect.current) {
+      setDragPos({ x: origRect.current.left, y: origRect.current.top });
+    }
+    setTimeout(() => {
+      setDragging(false);
+      setReturning(false);
+      dragStarted.current = false;
+      origRect.current = null;
+    }, 300);
+  }, [dragging, isOverDropZone, onDrop, card, cancelLongPress]);
+
+  // ---- POINTER (desktop) events ----
+  const handlePointerDown = useCallback((e: React.PointerEvent) => {
+    if (!playable || !onDrop) return;
+    if (e.pointerType === 'touch') {
+      isTouchDevice.current = true;
+      return; // Touch is handled by touch events below
+    }
+    isTouchDevice.current = false;
+
+    const el = cardRef.current;
+    if (!el) return;
     e.preventDefault();
     el.setPointerCapture(e.pointerId);
 
     const rect = el.getBoundingClientRect();
     origRect.current = rect;
     startPos.current = { x: e.clientX, y: e.clientY };
-    startTime.current = Date.now();
     hasMoved.current = false;
-
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
-    setDragPos({
-      x: rect.left,
-      y: rect.top,
-    });
+    setDragOffset({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    setDragPos({ x: rect.left, y: rect.top });
   }, [playable, onDrop]);
 
-  // Move drag
   const handlePointerMove = useCallback((e: React.PointerEvent) => {
-    if (!startPos.current || !origRect.current) return;
-    if (!playable || !onDrop) return;
+    if (isTouchDevice.current) return;
+    if (!origRect.current || !playable || !onDrop) return;
 
     const dx = e.clientX - startPos.current.x;
     const dy = e.clientY - startPos.current.y;
     const dist = Math.sqrt(dx * dx + dy * dy);
 
-    // Only start dragging after 8px movement
     if (!dragging && dist < 8) return;
-
-    if (!dragging) {
-      setDragging(true);
-    }
+    if (!dragging) setDragging(true);
     hasMoved.current = true;
 
-    setDragPos({
-      x: e.clientX - dragOffset.x,
-      y: e.clientY - dragOffset.y,
-    });
+    setDragPos({ x: e.clientX - dragOffset.x, y: e.clientY - dragOffset.y });
   }, [dragging, dragOffset, playable, onDrop]);
 
-  // End drag
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
+    if (isTouchDevice.current) return;
     if (!playable) return;
 
     const el = cardRef.current;
-    if (el) {
-      try { el.releasePointerCapture(e.pointerId); } catch {}
-    }
+    if (el) { try { el.releasePointerCapture(e.pointerId); } catch {} }
 
     if (!dragging || !hasMoved.current) {
-      // It was a click, not a drag
       setDragging(false);
       startPos.current = { x: 0, y: 0 };
       origRect.current = null;
-      if (!hasMoved.current) {
-        onClick();
-      }
+      if (!hasMoved.current) onClick();
       return;
     }
 
-    // Check if dropped on battlefield
-    const overDrop = isOverDropZone(e.clientX, e.clientY);
+    endDrag(e.clientX, e.clientY);
+  }, [dragging, playable, onClick, endDrag]);
 
-    if (overDrop && onDrop) {
-      const accepted = onDrop(card, e.clientX, e.clientY);
-      if (accepted) {
-        // Card was accepted — just hide it
-        setDragging(false);
-        startPos.current = { x: 0, y: 0 };
-        origRect.current = null;
-        return;
+  // ---- TOUCH (mobile) events ----
+  // On mobile: tap = click/select. Only selected cards can be dragged.
+  // Long press (200ms) on a selected card starts drag.
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!playable || !onDrop) return;
+    isTouchDevice.current = true;
+
+    const touch = e.touches[0];
+    startPos.current = { x: touch.clientX, y: touch.clientY };
+    hasMoved.current = false;
+
+    // Only allow drag on already-selected cards
+    if (selected) {
+      // Start long press timer — after 200ms, begin drag
+      longPressTimer.current = setTimeout(() => {
+        beginDrag(touch.clientX, touch.clientY);
+        hasMoved.current = true;
+      }, 200);
+    }
+  }, [playable, onDrop, selected, beginDrag]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isTouchDevice.current) return;
+    const touch = e.touches[0];
+    const dx = touch.clientX - startPos.current.x;
+    const dy = touch.clientY - startPos.current.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // If moved more than 10px before long press fires, cancel drag and allow scroll
+    if (!dragStarted.current && dist > 10) {
+      cancelLongPress();
+      hasMoved.current = true;
+      return;
+    }
+
+    // If drag has started, update position and prevent scroll
+    if (dragStarted.current && dragging) {
+      e.preventDefault();
+      setDragPos({ x: touch.clientX - dragOffset.x, y: touch.clientY - dragOffset.y });
+    }
+  }, [dragging, dragOffset, cancelLongPress]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!isTouchDevice.current) return;
+    cancelLongPress();
+
+    if (dragStarted.current && dragging) {
+      const touch = e.changedTouches[0];
+      endDrag(touch.clientX, touch.clientY);
+      return;
+    }
+
+    // If no significant movement, treat as tap/click
+    if (!hasMoved.current) {
+      onClick();
+    }
+  }, [dragging, cancelLongPress, endDrag, onClick]);
+
+  const handleTouchCancel = useCallback(() => {
+    cancelLongPress();
+    if (dragStarted.current) {
+      setReturning(true);
+      if (origRect.current) {
+        setDragPos({ x: origRect.current.left, y: origRect.current.top });
       }
+      setTimeout(() => {
+        setDragging(false);
+        setReturning(false);
+        dragStarted.current = false;
+        origRect.current = null;
+      }, 300);
     }
-
-    // Card was rejected or dropped outside — animate return
-    setReturning(true);
-    if (origRect.current) {
-      setDragPos({
-        x: origRect.current.left,
-        y: origRect.current.top,
-      });
-    }
-
-    setTimeout(() => {
-      setDragging(false);
-      setReturning(false);
-      startPos.current = { x: 0, y: 0 };
-      origRect.current = null;
-    }, 300);
-  }, [dragging, isOverDropZone, onDrop, card, onClick, playable]);
-
-  // Cancel on pointer cancel
-  const handlePointerCancel = useCallback((e: React.PointerEvent) => {
-    setReturning(true);
-    if (origRect.current) {
-      setDragPos({
-        x: origRect.current.left,
-        y: origRect.current.top,
-      });
-    }
-    setTimeout(() => {
-      setDragging(false);
-      setReturning(false);
-      startPos.current = { x: 0, y: 0 };
-      origRect.current = null;
-    }, 300);
-  }, []);
+  }, [cancelLongPress]);
 
   return (
     <>
-      {/* Placeholder to keep layout space when dragging */}
       <div
         ref={cardRef}
-        className={`relative flex-shrink-0 transition-transform duration-150 touch-none ${dragging ? 'opacity-30' : ''}`}
+        className={`relative flex-shrink-0 transition-transform duration-150 ${dragging ? 'opacity-30' : ''}`}
         style={{
           transform: selected && !dragging ? 'translateY(-8px)' : undefined,
+          // NO touch-none — allow horizontal scroll on mobile
         }}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerCancel}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchCancel}
       >
         {!dragging && (
           <PlayingCard

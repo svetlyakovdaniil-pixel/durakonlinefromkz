@@ -402,13 +402,14 @@ export interface GameTableProps {
   onReturnToLobby?: () => void;
   musicEnabled?: boolean;
   onToggleMusic?: () => void;
+  frozenInfo?: { disconnectedPlayerName: string; secondsLeft: number } | null;
 }
 
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby,
-  musicEnabled = false, onToggleMusic,
+  musicEnabled = false, onToggleMusic, frozenInfo,
 }: GameTableProps) {
   const gs = gameState;
   const myIdx = gs.myIndex;
@@ -584,6 +585,7 @@ export default function GameTable({
   const canSkip = availableActions.some(a => a.type === 'skipTurn');
   const canTransfer = transferIds.size > 0;
   const canPassThrough = passThroughIds.size > 0;
+  const hasAnyAction = canTake || canEndAttack || canSkip || (canTransfer && selectedCardId && transferIds.has(selectedCardId)) || (canPassThrough && selectedCardId && passThroughIds.has(selectedCardId));
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -782,6 +784,46 @@ export default function GameTable({
                 Покинуть
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Room frozen overlay */}
+      {frozenInfo && (
+        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#1a2d45] border-2 border-amber-600/60 rounded-2xl p-5 sm:p-8 max-w-sm w-full mx-4 text-center space-y-4">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-amber-900/40 border-2 border-amber-600/40 flex items-center justify-center">
+              <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 11-12.728 0M12 9v4" />
+              </svg>
+            </div>
+            <h3 className="text-lg sm:text-xl font-bold text-amber-100">
+              Игра приостановлена
+            </h3>
+            <p className="text-amber-200/80 text-sm sm:text-base">
+              <span className="font-semibold text-amber-300">{frozenInfo.disconnectedPlayerName}</span>{' '}
+              потерял соединение и пытается войти обратно...
+            </p>
+            <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto">
+              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="rgba(245,158,11,0.2)" strokeWidth="6" />
+                <circle
+                  cx="50" cy="50" r="45" fill="none" stroke="#f59e0b" strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={`${2 * Math.PI * 45}`}
+                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - frozenInfo.secondsLeft / 30)}`}
+                  style={{ transition: 'stroke-dashoffset 1s linear' }}
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-3xl sm:text-4xl font-bold ${frozenInfo.secondsLeft <= 10 ? 'text-red-400 animate-pulse' : 'text-amber-300'}`}>
+                  {frozenInfo.secondsLeft}
+                </span>
+              </div>
+            </div>
+            <p className="text-amber-200/50 text-xs">
+              Если игрок не вернётся, он автоматически выбывает из игры
+            </p>
           </div>
         </div>
       )}
@@ -1058,48 +1100,49 @@ export default function GameTable({
           </div>
         )}
 
-        {/* Role indicator + Action buttons */}
-        <div className="flex items-end justify-center sm:justify-end gap-2 sm:gap-3 px-2 sm:pr-52 md:pr-56 py-1 sm:py-2">
-          <div className="flex flex-col items-center sm:items-end gap-1.5 sm:gap-2">
+        {/* Role indicator + Action buttons — DESKTOP: inline, MOBILE: floating overlay */}
+        {/* Desktop version */}
+        <div className="hidden sm:flex items-end justify-end gap-3 pr-52 md:pr-56 py-2">
+          <div className="flex flex-col items-end gap-2">
             {/* Role badges */}
-            <div className="flex items-center gap-1 sm:gap-2">
+            <div className="flex items-center gap-2">
               {isAttacker && !gs.defenderTaking && (
-                <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-                  <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Атакуете
+                <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-xl px-5 py-2">
+                  <Swords className="w-6 h-6 mr-2" /> Атакуете
                 </Badge>
               )}
               {isAttacker && gs.defenderTaking && (
-                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-                  <Swords className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Докиньте
+                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-xl px-5 py-2">
+                  <Swords className="w-6 h-6 mr-2" /> Докиньте
                 </Badge>
               )}
               {isDefender && !gs.defenderTaking && (
-                <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-                  <Shield className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Защита
+                <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-xl px-5 py-2">
+                  <Shield className="w-6 h-6 mr-2" /> Защита
                 </Badge>
               )}
               {isDefender && gs.defenderTaking && (
-                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-sm sm:text-xl px-3 sm:px-5 py-1 sm:py-2">
-                  <HandMetal className="w-4 h-4 sm:w-6 sm:h-6 mr-1 sm:mr-2" /> Берёте
+                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-xl px-5 py-2">
+                  <HandMetal className="w-6 h-6 mr-2" /> Берёте
                 </Badge>
               )}
               {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
-                <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
+                <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-lg px-4 py-1.5">
                   Подкинуть
                 </Badge>
               )}
               {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
-                <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-sm sm:text-lg px-3 sm:px-4 py-1 sm:py-1.5">
+                <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-lg px-4 py-1.5">
                   Ожидание...
                 </Badge>
               )}
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap justify-center sm:justify-end">
+            <div className="flex items-center gap-2 flex-wrap justify-end">
               {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                 <Button
-                  className="bg-purple-700 hover:bg-purple-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
+                  className="bg-purple-700 hover:bg-purple-600 text-white text-lg h-14 px-6 font-semibold"
                   onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                 >
                   Перевести
@@ -1107,31 +1150,106 @@ export default function GameTable({
               )}
               {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                 <Button
-                  className="bg-yellow-700 hover:bg-yellow-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold"
+                  className="bg-yellow-700 hover:bg-yellow-600 text-white text-lg h-14 px-6 font-semibold"
                   onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                 >
-                  <Eye className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-1.5" />
+                  <Eye className="w-5 h-5 mr-1.5" />
                   Проездной
                 </Button>
               )}
               {canTake && (
-                <Button variant="destructive" className="text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onTakeCards}>
+                <Button variant="destructive" className="text-lg h-14 px-6 font-semibold" onClick={onTakeCards}>
                   Забрать
                 </Button>
               )}
               {canEndAttack && (
-                <Button className="bg-green-700 hover:bg-green-600 text-white text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onEndAttack}>
+                <Button className="bg-green-700 hover:bg-green-600 text-white text-lg h-14 px-6 font-semibold" onClick={onEndAttack}>
                   {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                 </Button>
               )}
               {canSkip && (
-                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-sm sm:text-lg h-10 sm:h-14 px-4 sm:px-6 font-semibold" onClick={onSkipTurn}>
+                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-lg h-14 px-6 font-semibold" onClick={onSkipTurn}>
                   Пропустить
                 </Button>
               )}
             </div>
           </div>
         </div>
+
+        {/* MOBILE: Floating action buttons — always visible over battlefield */}
+        {hasAnyAction && (
+          <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex flex-col items-center gap-1.5 pointer-events-none">
+            {/* Role badge */}
+            <div className="pointer-events-auto">
+              {isAttacker && !gs.defenderTaking && (
+                <Badge className="bg-red-900/80 text-red-300 border-red-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  <Swords className="w-3.5 h-3.5 mr-1" /> Атакуете
+                </Badge>
+              )}
+              {isAttacker && gs.defenderTaking && (
+                <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  <Swords className="w-3.5 h-3.5 mr-1" /> Докиньте
+                </Badge>
+              )}
+              {isDefender && !gs.defenderTaking && (
+                <Badge className="bg-blue-900/80 text-blue-300 border-blue-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  <Shield className="w-3.5 h-3.5 mr-1" /> Защита
+                </Badge>
+              )}
+              {isDefender && gs.defenderTaking && (
+                <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  <HandMetal className="w-3.5 h-3.5 mr-1" /> Берёте
+                </Badge>
+              )}
+              {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
+                <Badge className="bg-amber-900/80 text-amber-300 border-amber-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  Подкинуть
+                </Badge>
+              )}
+              {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
+                <Badge className="bg-gray-800/80 text-gray-400 border-gray-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                  Ожидание...
+                </Badge>
+              )}
+            </div>
+
+            {/* Floating action buttons */}
+            <div className="flex items-center gap-2 pointer-events-auto">
+              {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
+                <Button
+                  className="bg-purple-700/90 hover:bg-purple-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/30"
+                  onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
+                >
+                  Перевести
+                </Button>
+              )}
+              {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+                <Button
+                  className="bg-yellow-700/90 hover:bg-yellow-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/30"
+                  onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+                >
+                  <Eye className="w-4 h-4 mr-1" />
+                  Проездной
+                </Button>
+              )}
+              {canTake && (
+                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onTakeCards}>
+                  Забрать
+                </Button>
+              )}
+              {canEndAttack && (
+                <Button className="bg-green-700/90 hover:bg-green-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/30" onClick={onEndAttack}>
+                  {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
+                </Button>
+              )}
+              {canSkip && (
+                <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/50 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
+                  Пропустить
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Player hand */}
         {gs.players[myIdx]?.isOut ? (

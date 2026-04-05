@@ -9,8 +9,10 @@ import { toast } from 'sonner';
 import {
   User, Users, Trophy, UserPlus, UserCheck, UserX, Crown,
   Swords, Shield, TrendingUp, Hash, Clock, Check, X, Loader2,
-  Eye, ArrowLeft, Send,
+  Eye, ArrowLeft, Send, Camera,
 } from 'lucide-react';
+import { getAvatarUrl } from '../../../shared/avatars';
+import AvatarPicker from './AvatarPicker';
 
 interface ProfileDrawerProps {
   /** Current user's profile data */
@@ -21,6 +23,7 @@ interface ProfileDrawerProps {
     gamesPlayed: number;
     wins: number;
     losses: number;
+    avatarId?: string | null;
   } | null;
   /** Online friend gameIds from socket */
   onlineFriendIds: number[];
@@ -80,6 +83,18 @@ export default function ProfileDrawer({
 // Profile Tab
 // ============================================================
 function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
+  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const utils = trpc.useUtils();
+
+  const updateAvatar = trpc.profile.updateAvatar.useMutation({
+    onSuccess: () => {
+      toast.success('Аватар обновлён!');
+      utils.profile.me.invalidate();
+      setShowAvatarPicker(false);
+    },
+    onError: () => toast.error('Ошибка при обновлении аватара'),
+  });
+
   if (!profile) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -94,8 +109,28 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
 
   return (
     <div className="space-y-4 mt-3">
-      {/* Game ID card */}
+      {/* Avatar + Game ID card */}
       <div className="bg-gradient-to-r from-amber-700/30 to-amber-600/20 border border-amber-600/30 rounded-xl p-4 text-center">
+        {/* Avatar */}
+        <div className="flex justify-center mb-3">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
+              <img
+                src={getAvatarUrl(profile.avatarId)}
+                alt="Avatar"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <button
+              onClick={() => setShowAvatarPicker(true)}
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-600 hover:bg-amber-500 border-2 border-[#0f2035] flex items-center justify-center transition-colors shadow-md"
+              title="Сменить аватар"
+            >
+              <Camera className="w-3.5 h-3.5 text-white" />
+            </button>
+          </div>
+        </div>
+
         <div className="text-amber-200/60 text-xs mb-1">Ваш ID</div>
         <div className="text-4xl font-bold text-amber-300 flex items-center justify-center gap-2">
           <Hash className="w-7 h-7" />
@@ -123,6 +158,16 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         <div className="text-amber-200/60 text-xs mb-1">Винрейт</div>
         <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
       </div>
+
+      {/* Avatar Picker Modal */}
+      {showAvatarPicker && (
+        <AvatarPicker
+          currentAvatarId={profile.avatarId}
+          onSelect={(avatarId) => updateAvatar.mutate({ avatarId })}
+          onClose={() => setShowAvatarPicker(false)}
+          loading={updateAvatar.isPending}
+        />
+      )}
     </div>
   );
 }
@@ -187,8 +232,18 @@ function FriendProfileView({
         <ArrowLeft className="w-4 h-4 mr-1" /> Назад к друзьям
       </Button>
 
-      {/* Friend's Game ID */}
+      {/* Friend's Avatar + Game ID */}
       <div className="bg-gradient-to-r from-blue-700/30 to-blue-600/20 border border-blue-600/30 rounded-xl p-4 text-center">
+        {/* Avatar */}
+        <div className="flex justify-center mb-2">
+          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-400/50 shadow-lg">
+            <img
+              src={getAvatarUrl((profile as any).avatarId)}
+              alt="Avatar"
+              className="w-full h-full object-cover"
+            />
+          </div>
+        </div>
         <div className="flex items-center justify-center gap-2 mb-1">
           <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
           <span className="text-blue-200/60 text-xs">{isOnline ? 'В сети' : 'Не в сети'}</span>

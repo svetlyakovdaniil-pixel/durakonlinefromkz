@@ -20,7 +20,7 @@ export default function Home() {
 
   const {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
-    gameOverData, onlineFriendIds, pendingInvite, setPendingInvite,
+    gameOverData, onlineFriendIds, pendingInvite, setPendingInvite, frozenInfo,
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, registerProfile, sendChat,
@@ -141,6 +141,7 @@ export default function Home() {
         onReturnToLobby={returnToLobby}
         musicEnabled={music.enabled}
         onToggleMusic={music.toggle}
+        frozenInfo={frozenInfo}
       />
     );
   }

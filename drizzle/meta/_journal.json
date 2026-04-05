@@ -15,6 +15,13 @@
       "when": 1775388643655,
       "tag": "0001_unknown_meggan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775397827234,
+      "tag": "0002_yellow_excalibur",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `player_profiles` ADD `avatarId` varchar(32) DEFAULT 'wolf';

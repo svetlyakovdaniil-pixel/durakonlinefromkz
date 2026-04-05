@@ -3,22 +3,22 @@ import { CARD_BACK_URL, CARD_BACK_CUSTOM_URL } from '../../../shared/cardAssets'
 
 // ---- Deal Animation ----
 // Shows cards flying from deck area to hand area when cards are drawn after a trick.
-// Triggered by hand size increase after battlefield clears.
-// Cards fly from the deck position (top-right area) to the player's hand (bottom-center).
+// Desktop: cards fly from the deck position (right side) to hand (bottom center).
+// Mobile: a mini deck appears at center-top, deals cards downward, then disappears.
 
 interface DealAnimationProps {
-  /** Number of cards being dealt to the current player */
   cardCount: number;
   deckStyle: 'classic' | 'custom';
-  /** Which deck to animate from: 'deck1' (right) or 'deck2' (left of deck1) */
   fromDeck: 'deck1' | 'deck2';
   onComplete?: () => void;
 }
 
 export function DealAnimation({ cardCount, deckStyle, fromDeck, onComplete }: DealAnimationProps) {
   const [cards, setCards] = useState<{ id: number; phase: 'waiting' | 'flying' | 'done' }[]>([]);
+  const [deckVisible, setDeckVisible] = useState(false);
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
   const completedRef = useRef(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   useEffect(() => {
     completedRef.current = false;
@@ -35,35 +35,128 @@ export function DealAnimation({ cardCount, deckStyle, fromDeck, onComplete }: De
     setCards(initialCards);
 
     const timers: ReturnType<typeof setTimeout>[] = [];
-    initialCards.forEach((_, i) => {
-      // Stagger each card by 120ms for a more visible sequential deal
-      const timer = setTimeout(() => {
-        setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'flying' } : c));
-      }, i * 120);
-      timers.push(timer);
 
-      const doneTimer = setTimeout(() => {
-        setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'done' } : c));
-      }, i * 120 + 450);
-      timers.push(doneTimer);
-    });
+    // On mobile, show the deck first, then deal
+    if (isMobile) {
+      setDeckVisible(true);
+      // Start dealing after deck appears (200ms)
+      const dealDelay = 200;
+      initialCards.forEach((_, i) => {
+        const timer = setTimeout(() => {
+          setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'flying' } : c));
+        }, dealDelay + i * 100);
+        timers.push(timer);
 
-    const completeTimer = setTimeout(() => {
-      if (!completedRef.current) {
-        completedRef.current = true;
-        onComplete?.();
-      }
-    }, total * 120 + 550);
-    timers.push(completeTimer);
+        const doneTimer = setTimeout(() => {
+          setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'done' } : c));
+        }, dealDelay + i * 100 + 350);
+        timers.push(doneTimer);
+      });
 
-    return () => timers.forEach(t => clearTimeout(t));
-  }, [cardCount, onComplete, fromDeck]);
+      // Hide deck after all cards dealt
+      const hideDeckTimer = setTimeout(() => {
+        setDeckVisible(false);
+      }, dealDelay + total * 100 + 400);
+      timers.push(hideDeckTimer);
 
-  // Deck position: deck1 is on the right side, deck2 is slightly left of deck1
-  // These match the DeckVisual positions in GameTable
+      const completeTimer = setTimeout(() => {
+        if (!completedRef.current) {
+          completedRef.current = true;
+          onComplete?.();
+        }
+      }, dealDelay + total * 100 + 500);
+      timers.push(completeTimer);
+    } else {
+      // Desktop: standard animation
+      initialCards.forEach((_, i) => {
+        const timer = setTimeout(() => {
+          setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'flying' } : c));
+        }, i * 120);
+        timers.push(timer);
+
+        const doneTimer = setTimeout(() => {
+          setCards(prev => prev.map(c => c.id === i ? { ...c, phase: 'done' } : c));
+        }, i * 120 + 450);
+        timers.push(doneTimer);
+      });
+
+      const completeTimer = setTimeout(() => {
+        if (!completedRef.current) {
+          completedRef.current = true;
+          onComplete?.();
+        }
+      }, total * 120 + 550);
+      timers.push(completeTimer);
+    }
+
+    return () => {
+      timers.forEach(t => clearTimeout(t));
+      setDeckVisible(false);
+    };
+  }, [cardCount, onComplete, fromDeck, isMobile]);
+
+  // Desktop deck position
   const deckStartRight = fromDeck === 'deck1' ? '10%' : '25%';
   const deckStartTop = '35%';
 
+  if (isMobile) {
+    // Mobile: deck appears at center-top, cards fly to bottom
+    return (
+      <div className="fixed inset-0 z-[100] pointer-events-none">
+        {/* Mini deck that appears and disappears */}
+        {deckVisible && (
+          <div
+            className="absolute left-1/2 -translate-x-1/2 transition-all duration-200"
+            style={{
+              top: '30%',
+              opacity: deckVisible ? 1 : 0,
+              transform: `translateX(-50%) scale(${deckVisible ? 1 : 0.5})`,
+            }}
+          >
+            <div className="w-10 h-14 rounded-md overflow-hidden shadow-xl border-2 border-amber-600/60">
+              <img src={backUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+            {/* Stack effect */}
+            <div className="absolute -top-0.5 -left-0.5 w-10 h-14 rounded-md overflow-hidden shadow-md border border-amber-700/30 -z-10">
+              <img src={backUrl} alt="" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        )}
+
+        {/* Flying cards */}
+        {cards.map(card => {
+          if (card.phase === 'done') return null;
+          const isFlying = card.phase === 'flying';
+          const spreadX = (card.id - Math.floor(cardCount / 2)) * 3;
+
+          return (
+            <div
+              key={card.id}
+              className="absolute left-1/2"
+              style={{
+                top: isFlying ? 'calc(100dvh - 100px)' : '30%',
+                marginLeft: isFlying ? `${spreadX}px` : '0px',
+                width: '36px',
+                height: '52px',
+                transition: isFlying ? 'all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                opacity: card.phase === 'waiting' ? 0.8 : isFlying ? 1 : 0,
+                transform: isFlying
+                  ? `translateX(-50%) rotate(${(card.id - Math.floor(cardCount / 2)) * 2}deg) scale(0.9)`
+                  : 'translateX(-50%) rotate(0deg) scale(0.5)',
+                zIndex: 100 + card.id,
+              }}
+            >
+              <div className="w-full h-full rounded-md overflow-hidden shadow-lg border border-amber-700/40">
+                <img src={backUrl} alt="" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  // Desktop version
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
       {cards.map(card => {
@@ -76,7 +169,6 @@ export function DealAnimation({ cardCount, deckStyle, fromDeck, onComplete }: De
             key={card.id}
             className="absolute"
             style={{
-              // Start from deck area, fly to hand area (bottom center)
               top: isFlying ? 'calc(100vh - 130px)' : deckStartTop,
               right: isFlying ? `calc(50% - ${spreadX}px)` : deckStartRight,
               width: '52px',
@@ -101,6 +193,7 @@ export function DealAnimation({ cardCount, deckStyle, fromDeck, onComplete }: De
 
 // ---- Bito Animation ----
 // Shows cards flying from battlefield to discard pile when round ends (successful defense)
+// Desktop only — mobile skips this animation per user request
 
 interface BitoAnimationProps {
   cardCount: number;
@@ -112,6 +205,7 @@ export function BitoAnimation({ cardCount, deckStyle, onComplete }: BitoAnimatio
   const [cards, setCards] = useState<{ id: number; phase: 'start' | 'flying' | 'done' }[]>([]);
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
   const completedRef = useRef(false);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
   const startPositions = useMemo(() => {
     return Array.from({ length: Math.min(cardCount, 12) }, (_, i) => ({
@@ -123,6 +217,13 @@ export function BitoAnimation({ cardCount, deckStyle, onComplete }: BitoAnimatio
 
   useEffect(() => {
     completedRef.current = false;
+
+    // On mobile, skip bito animation entirely — just complete immediately
+    if (isMobile) {
+      onComplete?.();
+      return;
+    }
+
     const total = Math.min(cardCount, 12);
     if (total === 0) {
       onComplete?.();
@@ -156,7 +257,9 @@ export function BitoAnimation({ cardCount, deckStyle, onComplete }: BitoAnimatio
     timers.push(completeTimer);
 
     return () => timers.forEach(t => clearTimeout(t));
-  }, [cardCount, onComplete]);
+  }, [cardCount, onComplete, isMobile]);
+
+  if (isMobile) return null;
 
   return (
     <div className="fixed inset-0 z-[100] pointer-events-none">
