@@ -1,0 +1,20 @@
+CRITICAL FINDING:
+
+When I clicked the 7♠ card, the console log showed:
+- turnPhase: "pickup" (NOT "defend" as expected)
+- defenderTaking: true
+- actionsCount: 0
+- playableCount: 0
+- isDefender: true
+
+This means the game already transitioned to pickup phase before I could play.
+The issue is that the defender's available actions are EMPTY (actionsCount: 0).
+
+The bug seems to be a TIMING issue:
+1. When gameStateUpdate arrives, availableActions gets reset
+2. Before yourTurn arrives with new actions, the player has 0 actions
+3. If the player clicks during this gap, nothing happens
+
+OR the server is not sending yourTurn events properly.
+
+Let me check the server-side socket handling for yourTurn emissions.

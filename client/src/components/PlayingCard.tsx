@@ -24,9 +24,9 @@ function NumberCard({ card }: { card: Card }) {
   const color = card.suit ? SUIT_COLORS[card.suit] || '#1a1a2e' : '#1a1a2e';
 
   return (
-    <div className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-between p-1 sm:p-1.5 relative overflow-hidden">
+    <div className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-between p-1 sm:p-1.5 relative overflow-hidden pointer-events-none">
       {/* Ornament background */}
-      <svg className="absolute inset-0 w-full h-full opacity-5" viewBox="0 0 100 140">
+      <svg className="absolute inset-0 w-full h-full opacity-5 pointer-events-none" viewBox="0 0 100 140">
         <circle cx="50" cy="70" r="35" fill={color} />
         <path d="M50 20 L65 50 L50 80 L35 50 Z" fill={color} opacity="0.5" />
       </svg>
@@ -90,8 +90,8 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
       onClick={playable || onClick ? onClick : undefined}
     >
       {hasImage ? (
-        <div className="w-full h-full bg-white relative">
-          <img src={imageMap[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10" loading="lazy" />
+        <div className="w-full h-full bg-white relative pointer-events-none">
+          <img src={imageMap[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10 pointer-events-none" loading="lazy" />
         </div>
       ) : (
         <NumberCard card={card} />

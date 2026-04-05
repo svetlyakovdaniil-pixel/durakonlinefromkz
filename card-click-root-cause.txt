@@ -1,0 +1,37 @@
+ROOT CAUSE ANALYSIS:
+
+Line 156 in useSocket.ts:
+  setAvailableActions([]);
+
+This is called on EVERY gameStateUpdate event. The problem:
+1. Server emits gameStateUpdate
+2. Client immediately clears availableActions to []
+3. Server then emits yourTurn with new actions
+4. But between steps 2 and 3, if user clicks a card, playableIds is empty
+
+The comment says "Clear stale actions — fresh ones arrive via yourTurn immediately after"
+But "immediately after" is not truly immediate - there's a network round-trip gap.
+
+The fix: Instead of clearing actions to [], we should NOT clear them.
+The yourTurn event will replace them with fresh ones anyway.
+If the turn changes to another player, yourTurn won't fire and the old actions
+would be stale - but the gameState itself will show different turnPhase/roles,
+so the UI will correctly disable cards based on isDefender/isAttacker checks.
+
+Actually, a better approach: only clear actions when the game state indicates
+it's no longer our turn (i.e., we're neither attacker nor defender).
+
+SIMPLEST FIX: Remove the setAvailableActions([]) from gameStateUpdate handler.
+The yourTurn event will always send the correct actions. If it's not our turn,
+yourTurn won't fire, but the actions from the previous turn won't match the
+new game state (different turnPhase, different roles), so they'll be harmless.
+
+Wait - actually that's risky. If we keep old actions and the game state changes,
+the user might try to play a card that's no longer valid.
+
+BETTER FIX: Keep the old actions until yourTurn arrives. Add a flag or use
+the gameState's myIndex/turnPhase to determine if actions should be used.
+
+SIMPLEST SAFE FIX: Don't clear actions in gameStateUpdate. The server will
+send yourTurn with empty array if it's not our turn, or with new actions if it is.
+Let me check if the server always sends yourTurn after gameStateUpdate...

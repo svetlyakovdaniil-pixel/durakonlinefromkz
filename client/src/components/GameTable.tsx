@@ -593,6 +593,17 @@ export default function GameTable({
   const sortedHand = sortHand(gs.myHand, sortMode);
 
   const handleCardClick = (card: Card) => {
+    console.log('[CardClick]', card.id, card.rank, card.suit, {
+      playable: playableIds.has(card.id),
+      transfer: transferIds.has(card.id),
+      passThrough: passThroughIds.has(card.id),
+      isDefender,
+      isAttacker,
+      turnPhase: gs.turnPhase,
+      defenderTaking: gs.defenderTaking,
+      actionsCount: availableActions.length,
+      playableCount: playableIds.size,
+    });
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
       if (transferIds.has(card.id) || passThroughIds.has(card.id)) {
         if (selectedCardId === card.id) {
@@ -928,36 +939,26 @@ export default function GameTable({
           {/* RIGHT PANEL — Decks with trumps — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
             {bothDecksEmpty ? (
-              /* Both decks empty — show current trump icon filling the area */
+              /* Both decks empty — single trump icon */
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" />
             ) : (
               <div className="flex flex-col gap-3 items-center">
-                {/* Trump suit icon — above deck 1 (like mobile version) */}
-                {(() => {
-                  // Determine which trump suit to display as icon
-                  const iconSuit = gs.trumpInfo.currentTrump;
-                  const iconSymbol = SUIT_SYMBOLS[iconSuit] || iconSuit;
-                  const iconIsRed = iconSuit === 'hearts' || iconSuit === 'diamonds';
-                  const iconColor = iconIsRed ? 'text-red-500' : 'text-white';
-                  return (
-                    <div className="flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-3 py-2 border border-amber-700/40">
-                      <span className={`${iconColor} text-3xl leading-none`}>{iconSymbol}</span>
-                      <span className="text-amber-200/60 text-[9px] font-semibold mt-0.5">Козырь</span>
-                    </div>
-                  );
-                })()}
-
-                {/* Deck 1 */}
+                {/* Single trump icon: above deck1 when deck1 exists, replaces deck1 when deck1 empty */}
                 {deck1Empty ? (
+                  /* Deck 1 is empty — trump icon takes its place */
                   <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
                 ) : (
-                  <DeckVisual
-                    deckCount={gs.deck1Count}
-                    trumpCard={gs.trumpInfo.trumpCard || null}
-                    showOpenTrump={true}
-                    deckStyle={gs.deckStyle}
-                    label="Колода 1"
-                  />
+                  /* Deck 1 exists — trump icon above it, then deck visual */
+                  <>
+                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
+                    <DeckVisual
+                      deckCount={gs.deck1Count}
+                      trumpCard={gs.trumpInfo.trumpCard || null}
+                      showOpenTrump={true}
+                      deckStyle={gs.deckStyle}
+                      label="Колода 1"
+                    />
+                  </>
                 )}
 
                 {/* Deck 2 */}

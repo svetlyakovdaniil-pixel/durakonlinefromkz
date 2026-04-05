@@ -649,6 +649,7 @@ describe('Bot action failure handling', () => {
   it('handleTimeUp scenario: defender takes when time expires', () => {
     const players = createTestPlayers(2);
     const game = createGame('room1', players);
+    game.firstTrick = false; // Ensure normal trick behavior
     const attackerIdx = game.currentAttackerIdx;
 
     // Attacker plays

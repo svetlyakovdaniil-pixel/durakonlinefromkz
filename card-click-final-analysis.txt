@@ -1,0 +1,38 @@
+DEFINITIVE ROOT CAUSE:
+
+The server ALWAYS sends yourTurn immediately after gameStateUpdate in broadcastGameState().
+Lines 1322-1328 show: emit gameStateUpdate, then immediately emit yourTurn.
+
+So the client receives:
+1. gameStateUpdate -> clears availableActions to []
+2. yourTurn -> sets availableActions to new actions
+
+The problem is that React batches state updates. When both events arrive in rapid succession,
+React may re-render after step 1 (with empty actions) before processing step 2.
+
+But actually, the console log showed:
+- turnPhase: "pickup"
+- defenderTaking: true
+- actionsCount: 0
+
+This means the game was ALREADY in pickup mode when the user clicked.
+The user was the defender who was taking cards. In pickup mode, the DEFENDER
+has no actions (they already chose to take). Only attackers can add cards.
+
+So the bug might not be a timing issue at all - the user may have been
+clicking when it was already too late (bots already played and the game
+moved to pickup phase).
+
+However, the user reports this as a persistent bug. Let me re-examine:
+The user said "when there IS something to beat or add, clicking the card
+doesn't send it to the table."
+
+This suggests the issue happens during the DEFEND phase, not pickup.
+The console log I captured was from a different moment (after the game
+had already progressed to pickup).
+
+FIX APPROACH:
+Since the server always sends yourTurn right after gameStateUpdate,
+the safest fix is to NOT clear availableActions on gameStateUpdate.
+Instead, let yourTurn always replace them. This eliminates the brief
+window where actions are empty between the two events.

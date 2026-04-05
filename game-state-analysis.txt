@@ -1,0 +1,15 @@
+Game state analysis from screenshot:
+- Game started with 4 players (1 human + 3 bots)
+- I'm the defender (Защита badge visible, Забрать button visible)
+- Two 6♠ cards on the battlefield
+- My hand has 14 cards
+- Trump suit icon shows ♣ (clubs) above deck - looks good! Single icon, correct position
+- Deck 1 shows 8♣ card peeking from left - correct!
+- Deck 2 shows card back peeking from left - correct!
+- Action buttons (Защита, Забрать) are in the right-lower area - good position
+- Need to test clicking a card to see if it plays
+
+Key observation: The trump icon above deck 1 now shows the large ♣ symbol with "Козырь" label.
+This is the unified style (not the mobile small badge style). Looks correct!
+
+Now need to test card clicking...

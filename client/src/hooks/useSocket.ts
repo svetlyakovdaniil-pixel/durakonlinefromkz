@@ -152,8 +152,8 @@ export function useSocket(userId: string | null, userName: string | null) {
       }
       setGameState(s);
       setTurnTimer(s.turnTimer);
-      // Clear stale actions — fresh ones arrive via yourTurn immediately after
-      setAvailableActions([]);
+      // Don't clear actions here — yourTurn always arrives right after gameStateUpdate
+      // Clearing here causes a brief window where actions are empty, making cards unclickable
     });
     socket.on('yourTurn', (a) => {
       if (leavingRef.current) return;
