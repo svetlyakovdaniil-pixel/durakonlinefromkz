@@ -94,16 +94,16 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Logout right */}
-            <div className="flex items-start justify-between">
-              {/* Left: Title + Online */}
-              <div className="flex flex-col">
-                <h1 className="text-xl font-bold text-amber-100 leading-tight">Казахский<br/>Дурак</h1>
-                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 w-fit ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+            <div className="relative flex items-start justify-between">
+              {/* Left: Title + Online — centered text */}
+              <div className="flex flex-col items-center">
+                <h1 className="text-xl font-bold text-amber-100 leading-tight text-center">Казахский<br/>Дурак</h1>
+                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
                   {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
                 </Badge>
               </div>
-              {/* Center: Avatar + Name/ID */}
-              <div className="flex flex-col items-center">
+              {/* Center: Avatar + Name/ID — absolutely centered on screen */}
+              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
                 <ProfileDrawer
                   profile={profile}
                   onlineFriendIds={onlineFriendIds}
