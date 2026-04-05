@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import {
   User, Users, Trophy, UserPlus, UserCheck, UserX, Crown,
   Swords, Shield, TrendingUp, Hash, Clock, Check, X, Loader2,
-  Eye, ArrowLeft, Send, Camera,
+  Eye, ArrowLeft, Send, Camera, History, ArrowUpCircle, ArrowDownCircle,
+  Coins, Banknote,
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import AvatarPicker from './AvatarPicker';
@@ -58,6 +59,9 @@ export default function ProfileDrawer({
             <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
               <Trophy className="w-3.5 h-3.5 mr-1" /> Рейтинг
             </TabsTrigger>
+            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
+              <History className="w-3.5 h-3.5 mr-1" /> История
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4">
@@ -72,6 +76,9 @@ export default function ProfileDrawer({
           </TabsContent>
           <TabsContent value="leaderboard" className="flex-1 overflow-y-auto px-4 pb-4">
             <LeaderboardTab myGameId={profile?.gameId} />
+          </TabsContent>
+          <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4">
+            <TransactionHistoryTab />
           </TabsContent>
         </Tabs>
       </SheetContent>
@@ -504,6 +511,86 @@ function FriendsTab({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// Leaderboard Tab
+// ============================================================
+// ============================================================
+// Transaction History Tab (private - only own transactions)
+// ============================================================
+function TransactionHistoryTab() {
+  const txQuery = trpc.balance.myTransactions.useQuery(undefined, {
+    staleTime: 10_000,
+  });
+
+  const data = txQuery.data ?? [];
+
+  if (txQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="mt-3 text-center py-8 text-amber-200/30 text-sm">
+        Пока нет транзакций
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      {data.map((tx) => {
+        const isPositive = tx.amount > 0;
+        const currencyIcon = tx.currency === 'tenge' ? (
+          <Coins className="w-3.5 h-3.5 text-amber-400" />
+        ) : (
+          <Banknote className="w-3.5 h-3.5 text-green-400" />
+        );
+        const amountColor = isPositive ? 'text-green-400' : 'text-red-400';
+        const amountPrefix = isPositive ? '+' : '';
+        const currencyLabel = tx.currency === 'tenge' ? 'тенге' : 'шаныраков';
+
+        const date = new Date(tx.createdAt);
+        const timeStr = date.toLocaleString('ru-RU', {
+          day: '2-digit', month: '2-digit', year: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        });
+
+        return (
+          <div key={tx.id} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2.5">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5">
+                {isPositive ? (
+                  <ArrowUpCircle className="w-3.5 h-3.5 text-green-400" />
+                ) : (
+                  <ArrowDownCircle className="w-3.5 h-3.5 text-red-400" />
+                )}
+                <span className="text-amber-100 text-xs font-medium truncate max-w-[180px]">
+                  {tx.description || 'Операция'}
+                </span>
+              </div>
+              <span className={`text-xs font-bold ${amountColor} flex items-center gap-0.5`}>
+                {amountPrefix}{tx.amount.toLocaleString('ru-RU')} {currencyIcon}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-amber-200/30 text-[10px]">{timeStr}</span>
+              {tx.balanceAfter !== null && (
+                <span className="text-amber-200/40 text-[10px]">
+                  Баланс: {tx.balanceAfter.toLocaleString('ru-RU')} {currencyLabel}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

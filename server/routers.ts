@@ -27,6 +27,8 @@ import {
   freeShanyrakTopup,
   buyShanyrakWithTenge,
   getFreeTopupStatus,
+  recordTransaction,
+  getMyTransactions,
 } from "./db";
 
 export const appRouter = router({
@@ -190,6 +192,28 @@ export const appRouter = router({
     list: protectedProcedure.query(async ({ ctx }) => {
       const profile = await getProfileByUserId(ctx.user.id);
       if (!profile) return [];
+
+      // Auto-generate cooldown_expired notification if 12h has passed since lastFreeTopup
+      // and there's no recent unread cooldown_expired notification
+      if (profile.lastFreeTopup) {
+        const cooldownEnd = new Date(profile.lastFreeTopup.getTime() + 12 * 60 * 60 * 1000);
+        const now = new Date();
+        if (now >= cooldownEnd) {
+          // Check if we already have an unread cooldown_expired notification after the cooldown ended
+          const existingNotifs = await getNotifications(profile.id, 10);
+          const hasCooldownNotif = existingNotifs.some(n => {
+            if (n.type !== 'cooldown_expired') return false;
+            // Only consider notifications created after the cooldown end
+            return n.createdAt >= cooldownEnd;
+          });
+          if (!hasCooldownNotif) {
+            await createNotification(profile.id, 'cooldown_expired', {
+              message: 'Вы снова можете добить баланс шаныраков до 2000!',
+            });
+          }
+        }
+      }
+
       const rows = await getNotifications(profile.id);
       return rows.map(r => ({
         ...r,
@@ -234,7 +258,19 @@ export const appRouter = router({
 
     /** Free top-up: set shanyrak to 2000 (12h cooldown) */
     freeShanyrakTopup: protectedProcedure.mutation(async ({ ctx }) => {
-      return freeShanyrakTopup(ctx.user.id);
+      const profile = await getProfileByUserId(ctx.user.id);
+      const result = await freeShanyrakTopup(ctx.user.id);
+      if (result.success && profile && result.added && result.newBalance !== undefined) {
+        await recordTransaction({
+          profileId: profile.id,
+          type: 'free_topup',
+          amount: result.added,
+          currency: 'shanyrak',
+          description: `Добить баланс до 2000 (+${result.added} шаныраков)`,
+          balanceAfter: result.newBalance,
+        });
+      }
+      return result;
     }),
 
     /** Buy shanyrak with tenge */
@@ -251,7 +287,39 @@ export const appRouter = router({
         };
         const t = tiers[input.tier];
         if (!t) return { success: false, reason: 'invalid_tier' as const };
-        return buyShanyrakWithTenge(ctx.user.id, t.shanyrak, t.tenge);
+        const result = await buyShanyrakWithTenge(ctx.user.id, t.shanyrak, t.tenge);
+        if (result.success) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            // Record shanyrak gain
+            await recordTransaction({
+              profileId: profile.id,
+              type: 'buy_shanyrak',
+              amount: t.shanyrak,
+              currency: 'shanyrak',
+              description: `Куплено ${(t.shanyrak / 1000)}K шаныраков за ${t.tenge} тенге`,
+              balanceAfter: result.newShanyrak ?? 0,
+            });
+            // Record tenge spend
+            await recordTransaction({
+              profileId: profile.id,
+              type: 'buy_shanyrak',
+              amount: -t.tenge,
+              currency: 'tenge',
+              description: `Оплата за ${(t.shanyrak / 1000)}K шаныраков`,
+              balanceAfter: result.newTenge ?? 0,
+            });
+          }
+        }
+        return result;
+      }),
+    /** Get my transaction history (private, only own) */
+    myTransactions: protectedProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) return [];
+        return getMyTransactions(profile.id, input?.limit ?? 50);
       }),
   }),
 

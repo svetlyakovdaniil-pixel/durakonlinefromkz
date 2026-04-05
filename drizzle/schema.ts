@@ -107,7 +107,7 @@ export const notifications = mysqlTable("notifications", {
   /** The player who receives this notification (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Notification type */
-  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup"]).notNull(),
+  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired"]).notNull(),
   /** JSON data with extra info */
   data: text("data"),
   /** Whether the notification has been read */
@@ -117,3 +117,27 @@ export const notifications = mysqlTable("notifications", {
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = typeof notifications.$inferInsert;
+
+/**
+ * Transaction history — records all balance operations for a player.
+ * type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward'
+ */
+export const transactions = mysqlTable("transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The player who performed this transaction (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Transaction type */
+  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward"]).notNull(),
+  /** Amount changed (positive = gained, negative = spent) */
+  amount: int("amount").notNull(),
+  /** Currency affected: 'tenge' or 'shanyrak' */
+  currency: mysqlEnum("currency", ["tenge", "shanyrak"]).notNull(),
+  /** Human-readable description */
+  description: text("description"),
+  /** Balance after this transaction */
+  balanceAfter: int("balanceAfter"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Transaction = typeof transactions.$inferSelect;
+export type InsertTransaction = typeof transactions.$inferInsert;

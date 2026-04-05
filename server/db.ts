@@ -1,6 +1,6 @@
 import { eq, and, or, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -385,7 +385,7 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
 /**
  * Create a notification for a player.
  */
-export async function createNotification(profileId: number, type: 'friend_request' | 'friend_accepted' | 'balance_topup', data: Record<string, unknown>) {
+export async function createNotification(profileId: number, type: 'friend_request' | 'friend_accepted' | 'balance_topup' | 'cooldown_expired', data: Record<string, unknown>) {
   const db = await getDb();
   if (!db) return null;
 
@@ -562,6 +562,50 @@ export async function getFreeTopupStatus(userId: number): Promise<{
   }
 
   return { available: profile.balanceShanyrak < 2000, currentBalance: profile.balanceShanyrak };
+}
+
+// ============================================================
+// TRANSACTION helpers
+// ============================================================
+
+/**
+ * Record a transaction in the history.
+ */
+export async function recordTransaction(data: {
+  profileId: number;
+  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward';
+  amount: number;
+  currency: 'tenge' | 'shanyrak';
+  description: string;
+  balanceAfter: number;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [result] = await db.insert(transactions).values({
+    profileId: data.profileId,
+    type: data.type,
+    amount: data.amount,
+    currency: data.currency,
+    description: data.description,
+    balanceAfter: data.balanceAfter,
+  }).$returningId();
+
+  return result?.id ?? null;
+}
+
+/**
+ * Get transaction history for a player (newest first).
+ * Only the player themselves should call this.
+ */
+export async function getMyTransactions(profileId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select().from(transactions)
+    .where(eq(transactions.profileId, profileId))
+    .orderBy(desc(transactions.createdAt))
+    .limit(limit);
 }
 
 /**

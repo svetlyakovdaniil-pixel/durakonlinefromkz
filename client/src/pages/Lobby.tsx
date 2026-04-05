@@ -16,6 +16,7 @@ import SettingsSheet from '@/components/SettingsSheet';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
+import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -55,7 +56,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [rejoining, setRejoining] = useState<string | null>(null);
   const [passwordRoom, setPasswordRoom] = useState<Room | null>(null);
   const [notifOpen, setNotifOpen] = useState(false);
-  const [shanyrakTopUpOpen, setShanyrakTopUpOpen] = useState(false);
+  const [showShanyrakTopUp, setShowShanyrakTopUp] = useState(false);
+  const [showTengeTopUp, setShowTengeTopUp] = useState(false);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -178,7 +180,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => { /* TODO: top up tenge */ }}
+                      onClick={() => setShowTengeTopUp(true)}
                     >
                       +
                     </button>
@@ -200,7 +202,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => setShanyrakTopUpOpen(true)} style={{marginTop: '-6px'}}
+                      onClick={() => setShowShanyrakTopUp(true)} style={{marginTop: '-6px'}}
                     >
                       +
                     </button>
@@ -238,8 +240,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
-                    onClick={() => { /* TODO: top up tenge */ }}
-                    title="Пополнить тенге"
+onClick={() => setShowTengeTopUp(true)}
+                     title="Пополнить тенге"
                   >
                     +
                   </button>
@@ -254,7 +256,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
-                    onClick={() => setShanyrakTopUpOpen(true)}
+                    onClick={() => setShowShanyrakTopUp(true)}
                     title="Пополнить шаныраки"
                   >
                     +
@@ -518,11 +520,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
       {/* Shanyrak Top-Up Modal */}
       <ShanyrakTopUpModal
-        open={shanyrakTopUpOpen}
-        onClose={() => setShanyrakTopUpOpen(false)}
+        open={showShanyrakTopUp}
+        onClose={() => setShowShanyrakTopUp(false)}
         currentShanyrak={profile?.balanceShanyrak ?? 0}
         currentTenge={profile?.balanceTenge ?? 0}
         onBalanceUpdated={() => refetchProfile?.()}
+      />
+
+      {/* Tenge Top-Up Modal */}
+      <TengeTopUpModal
+        open={showTengeTopUp}
+        onClose={() => setShowTengeTopUp(false)}
+        currentTenge={profile?.balanceTenge ?? 0}
       />
 
       {/* Notification Panel */}
@@ -595,6 +604,17 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                           </div>
                           <p className="text-amber-200/60 text-xs">
                             Баланс пополнен на {n.data?.amount} {n.data?.currency}
+                          </p>
+                        </>
+                      )}
+                      {n.type === 'cooldown_expired' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Timer className="w-4 h-4 text-green-400 shrink-0" />
+                            <span className="text-amber-100 text-sm font-medium">Ограничение снято</span>
+                          </div>
+                          <p className="text-amber-200/60 text-xs">
+                            {n.data?.message || 'Вы снова можете добить баланс шаныраков до 2000!'}
                           </p>
                         </>
                       )}
