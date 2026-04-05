@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
-  const { profile, profileLoading } = useProfile(isAuthenticated);
+  const { profile, profileLoading, refetchProfile } = useProfile(isAuthenticated);
 
   const {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
@@ -177,7 +177,7 @@ export default function Home() {
     <Lobby
       rooms={rooms}
       connected={connected}
-      userName={user?.name || 'Гость'}
+      userName={profile?.displayName || user?.name || 'Гость'}
       userId={user?.openId || ''}
       onCreateRoom={createRoom}
       onJoinRoom={joinRoom}
@@ -185,6 +185,7 @@ export default function Home() {
       profile={profile}
       onlineFriendIds={onlineFriendIds}
       onInviteFriend={undefined}
+      refetchProfile={refetchProfile}
     />
   );
 }

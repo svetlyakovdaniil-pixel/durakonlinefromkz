@@ -14,10 +14,11 @@ import { toast } from 'sonner';
 interface SettingsSheetProps {
   onLogout: () => void;
   currentName: string;
+  onNameChanged?: () => void;
   children?: React.ReactNode;
 }
 
-export default function SettingsSheet({ onLogout, currentName, children }: SettingsSheetProps) {
+export default function SettingsSheet({ onLogout, currentName, onNameChanged, children }: SettingsSheetProps) {
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled } = useSettings();
   const music = useMusicContext();
   const utils = trpc.useUtils();
@@ -32,6 +33,7 @@ export default function SettingsSheet({ onLogout, currentName, children }: Setti
       toast.success('Имя изменено');
       utils.profile.me.invalidate();
       setEditingName(false);
+      onNameChanged?.();
     },
     onError: (err) => {
       toast.error(err.message || 'Ошибка при смене имени');

@@ -873,58 +873,65 @@ export default function GameTable({
         </div>
 
         {/* Opponents — positioned below expanded HUD */}
-        <div className="flex justify-center gap-1.5 sm:gap-3 px-2 sm:px-3 py-1.5 sm:py-2.5 overflow-x-auto">
-          {opponents.map(p => {
-            const pIdx = gs.players.findIndex(pp => pp.id === p.id);
-            const isOppAttacker = pIdx === gs.currentAttackerIdx;
-            const isOppDefender = pIdx === gs.currentDefenderIdx;
-            const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
-            return (
-              <div key={p.id} className={`flex flex-col items-center px-1.5 sm:px-3 py-1 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
-                isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
-                isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
-                'bg-black/30 border-amber-700/20'
-              }`}>
-                <div className="flex items-center gap-0.5 sm:gap-1 mb-0.5 sm:mb-1">
-                  {isOppAttacker && <Swords className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-red-400" />}
-                  {isOppDefender && !gs.defenderTaking && <Shield className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-blue-400" />}
-                  {isOppDefender && gs.defenderTaking && <HandMetal className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-orange-400" />}
-                  {p.isOut && p.winPlace && <Crown className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-400" />}
-                  <span className="text-[10px] sm:text-xs text-amber-100 font-medium truncate max-w-14 sm:max-w-20">{p.name}</span>
-                </div>
-                {isOppDefender && gs.defenderTaking && (
-                  <span className="text-[8px] sm:text-[10px] text-orange-400 mb-0.5">Берёт</span>
-                )}
-                {oppRevealed && oppRevealed.cards.length > 0 && (
-                  <div className="flex items-center gap-0.5 mb-0.5 sm:mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded px-1 sm:px-2 py-0.5">
-                    <Eye className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400" />
-                    <span className="text-[8px] sm:text-[10px] text-yellow-300 font-medium">
-                      {oppRevealed.cards.length}
-                    </span>
+        {(() => {
+          const manyOpponents = opponents.length >= 4;
+          return (
+            <div className={`flex justify-center flex-wrap px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`}>
+              {opponents.map(p => {
+                const pIdx = gs.players.findIndex(pp => pp.id === p.id);
+                const isOppAttacker = pIdx === gs.currentAttackerIdx;
+                const isOppDefender = pIdx === gs.currentDefenderIdx;
+                const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
+                return (
+                  <div key={p.id} className={`flex flex-col items-center ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
+                    isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
+                    isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
+                    'bg-black/30 border-amber-700/20'
+                  }`}>
+                    <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
+                      {isOppAttacker && <Swords className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-red-400`} />}
+                      {isOppDefender && !gs.defenderTaking && <Shield className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-blue-400`} />}
+                      {isOppDefender && gs.defenderTaking && <HandMetal className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-orange-400`} />}
+                      {p.isOut && p.winPlace && <Crown className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-amber-400`} />}
+                      <span className={`${manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
+                    </div>
+                    {isOppDefender && gs.defenderTaking && (
+                      <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>Берёт</span>
+                    )}
+                    {oppRevealed && oppRevealed.cards.length > 0 && (
+                      <div className={`flex items-center gap-0.5 mb-0.5 sm:mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded ${manyOpponents ? 'px-0.5' : 'px-1'} sm:px-2 py-0.5`}>
+                        <Eye className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-yellow-400`} />
+                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-yellow-300 font-medium`}>
+                          {oppRevealed.cards.length}
+                        </span>
+                      </div>
+                    )}
+                    {p.leftGame ? (
+                      <div className={`flex items-center gap-0.5 bg-gray-800/50 border border-gray-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
+                        <DoorOpen className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-gray-400`} />
+                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-gray-400 font-semibold`}>Ушёл</span>
+                      </div>
+                    ) : p.isOut ? (
+                      <div className={`flex items-center gap-0.5 bg-green-900/40 border border-green-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
+                        <Trophy className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-amber-400`} />
+                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-green-300 font-semibold`}>{p.winPlace}м</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-0.5 sm:gap-1.5">
+                        <img
+                          src={gs.deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL}
+                          alt="cards"
+                          className={`${manyOpponents ? 'w-3 h-[18px]' : 'w-4 h-6'} sm:w-5 sm:h-7 rounded-sm object-cover`}
+                        />
+                        <span className={`${manyOpponents ? 'text-[10px]' : 'text-xs'} sm:text-sm text-amber-200 font-bold`}>{p.cardCount}</span>
+                      </div>
+                    )}
                   </div>
-                )}
-                {p.leftGame ? (
-                  <div className="flex items-center gap-1 bg-gray-800/50 border border-gray-600/30 rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
-                    <DoorOpen className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-gray-400" />
-                    <span className="text-[8px] sm:text-xs text-gray-400 font-semibold">Ушёл</span>
-                  </div>
-                ) : p.isOut ? (
-                  <div className="flex items-center gap-1 bg-green-900/40 border border-green-600/30 rounded px-1.5 sm:px-2 py-0.5 sm:py-1">
-                    <Trophy className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5 text-amber-400" />
-                    <span className="text-[8px] sm:text-xs text-green-300 font-semibold">{p.winPlace}м</span>
-                  </div>
-                ) : (
-                  <div className="flex gap-px sm:gap-0.5">
-                    {Array.from({ length: Math.min(p.cardCount, 10) }).map((_, i) => (
-                      <div key={i} className="w-2.5 h-3.5 sm:w-3.5 sm:h-5.5 bg-amber-500/50 rounded-sm border border-amber-400/40" />
-                    ))}
-                    {p.cardCount > 10 && <span className="text-[9px] sm:text-sm text-amber-300 ml-0.5">+{p.cardCount - 10}</span>}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* YOUR TURN overlay */}
         {showYourTurn && (

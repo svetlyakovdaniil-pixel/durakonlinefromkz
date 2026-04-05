@@ -33,9 +33,10 @@ interface LobbyProps {
   } | null;
   onlineFriendIds: number[];
   onInviteFriend: ((targetGameId: number) => void) | undefined;
+  refetchProfile?: () => void;
 }
 
-export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds }: LobbyProps) {
+export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile }: LobbyProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
@@ -124,7 +125,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
               </div>
               {/* Right: Settings gear */}
-              <SettingsSheet onLogout={onLogout} currentName={userName}>
+              <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                 <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
                   <Settings className="w-5 h-5" />
                 </button>
@@ -161,7 +162,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </button>
                 </ProfileDrawer>
                 <span className="text-base text-amber-200/70 font-medium">{userName}</span>
-                <SettingsSheet onLogout={onLogout} currentName={userName}>
+                <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded">
                     <Settings className="w-5 h-5" />
                   </button>
