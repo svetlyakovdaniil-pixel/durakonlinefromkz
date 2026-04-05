@@ -93,39 +93,39 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
         <div className="container py-3 sm:py-4">
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
-            {/* Row 1: Title left + Logout right */}
-            <div className="flex items-center justify-between">
-              <h1 className="text-xl font-bold text-amber-100 leading-tight">Казахский<br/>Дурак</h1>
+            {/* Row 1: Title left + Avatar center + Logout right */}
+            <div className="flex items-start justify-between">
+              {/* Left: Title + Online */}
+              <div className="flex flex-col">
+                <h1 className="text-xl font-bold text-amber-100 leading-tight">Казахский<br/>Дурак</h1>
+                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 w-fit ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
+                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
+                </Badge>
+              </div>
+              {/* Center: Avatar + Name/ID */}
+              <div className="flex flex-col items-center">
+                <ProfileDrawer
+                  profile={profile}
+                  onlineFriendIds={onlineFriendIds}
+                  inRoom={false}
+                >
+                  <button className="hover:opacity-80 transition-opacity">
+                    <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
+                      <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  </button>
+                </ProfileDrawer>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
+                  {profile && (
+                    <span className="text-xs text-amber-300/60">ID {profile.gameId}</span>
+                  )}
+                </div>
+              </div>
+              {/* Right: Logout */}
               <Button variant="ghost" size="sm" className="text-amber-200/50 hover:text-amber-100 p-1.5" onClick={onLogout}>
                 <LogOut className="w-5 h-5" />
               </Button>
-            </div>
-            {/* Row 2: Онлайн status below title, left-aligned */}
-            <div className="flex items-center mt-1">
-              <Badge variant="outline" className={`text-xs px-2 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
-              </Badge>
-            </div>
-            {/* Row 3: Centered large avatar */}
-            <div className="flex flex-col items-center mt-2">
-              <ProfileDrawer
-                profile={profile}
-                onlineFriendIds={onlineFriendIds}
-                inRoom={false}
-              >
-                <button className="hover:opacity-80 transition-opacity">
-                  <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-500/60 shadow-xl shadow-amber-900/40">
-                    <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
-                  </div>
-                </button>
-              </ProfileDrawer>
-              {/* Name + ID below avatar */}
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-base text-amber-200/80 font-semibold">{userName}</span>
-                {profile && (
-                  <span className="text-sm text-amber-300/60">ID {profile.gameId}</span>
-                )}
-              </div>
             </div>
           </div>
 
