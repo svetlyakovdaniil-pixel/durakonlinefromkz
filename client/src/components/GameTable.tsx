@@ -5,8 +5,8 @@ import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TA
 import PlayingCard from './PlayingCard';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Volume2, VolumeX } from 'lucide-react';
-import { useSound } from '@/hooks/useSound';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX } from 'lucide-react';
+
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
 
@@ -396,19 +396,21 @@ export interface GameTableProps {
   onShowPassThrough: (cardId: string) => void;
   onLeaveGame?: () => void;
   onReturnToLobby?: () => void;
+  musicEnabled?: boolean;
+  onToggleMusic?: () => void;
 }
 
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby,
+  musicEnabled = false, onToggleMusic,
 }: GameTableProps) {
   const gs = gameState;
   const myIdx = gs.myIndex;
 
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const { play: playSound, enabled: soundEnabled, toggle: toggleSound } = useSound();
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
@@ -422,89 +424,6 @@ export default function GameTable({
   const trumpChangeTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const yourTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
 
-  // Track previous state for detecting changes
-  const prevBattleFieldLen = useRef(gs.battleField.length);
-  const prevGamePhase = useRef(gs.gamePhase);
-  const prevMyHandLen = useRef(gs.myHand.length);
-  const prevDiscardCount = useRef(gs.discardCount);
-
-  // Sound effects triggered by game state changes
-  useEffect(() => {
-    const bfLen = gs.battleField.length;
-    const prevBf = prevBattleFieldLen.current;
-    const prevHand = prevMyHandLen.current;
-    const prevDiscard = prevDiscardCount.current;
-
-    if (bfLen > prevBf || (bfLen === prevBf && bfLen > 0 && gs.battleField.some(p => p.defense) && prevDiscard === gs.discardCount)) {
-      const hasNewDefense = bfLen === prevBf && bfLen > 0;
-      if (bfLen > prevBf || hasNewDefense) {
-        playSound('cardPlay', 0.4);
-      }
-    }
-
-    if (prevBf > 0 && bfLen === 0 && gs.discardCount > prevDiscard) {
-      playSound('roundWin', 0.5);
-    }
-
-    if (prevBf > 0 && bfLen === 0 && gs.myHand.length > prevHand) {
-      playSound('cardTake', 0.5);
-    }
-
-    if (prevBf > 0 && bfLen === 0 && gs.discardCount === prevDiscard && gs.myHand.length <= prevHand) {
-      playSound('cardTake', 0.3);
-    }
-
-    prevBattleFieldLen.current = bfLen;
-    prevMyHandLen.current = gs.myHand.length;
-    prevDiscardCount.current = gs.discardCount;
-  }, [gs.battleField.length, gs.defenderTaking, gs.myHand.length, gs.discardCount, playSound]);
-
-  // Deal sound when game starts
-  useEffect(() => {
-    if (gs.gamePhase === 'playing' && prevGamePhase.current !== 'playing') {
-      playSound('cardDeal', 0.4);
-      const t1 = setTimeout(() => playSound('cardDeal', 0.3), 120);
-      const t2 = setTimeout(() => playSound('cardDeal', 0.35), 240);
-      return () => { clearTimeout(t1); clearTimeout(t2); };
-    }
-  }, [gs.gamePhase, playSound]);
-
-  // Game over sounds
-  useEffect(() => {
-    if (gs.gamePhase === 'finished' && prevGamePhase.current === 'playing') {
-      const myPlayer = gs.players[myIdx];
-      const isLoser = gs.loserId === myPlayer?.id;
-      if (isLoser || myPlayer?.leftGame) {
-        playSound('gameLose', 0.5);
-      } else {
-        playSound('gameWin', 0.6);
-      }
-    }
-    prevGamePhase.current = gs.gamePhase;
-  }, [gs.gamePhase, gs.loserId, gs.players, myIdx, playSound]);
-
-  // Your turn notification sound
-  const prevActionsLen = useRef(availableActions.length);
-  useEffect(() => {
-    if (availableActions.length > 0 && prevActionsLen.current === 0) {
-      const hasMeaningfulAction = availableActions.some(a => 
-        a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard'
-      );
-      if (hasMeaningfulAction) {
-        playSound('yourTurn', 0.3);
-      }
-    }
-    prevActionsLen.current = availableActions.length;
-  }, [availableActions, playSound]);
-
-  // Timer warning sound (at 5 seconds)
-  const prevTimerRef = useRef(turnTimer);
-  useEffect(() => {
-    if (turnTimer === 5 && prevTimerRef.current > 5 && availableActions.length > 0) {
-      playSound('timerWarning', 0.4);
-    }
-    prevTimerRef.current = turnTimer;
-  }, [turnTimer, availableActions.length, playSound]);
 
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
@@ -768,13 +687,15 @@ export default function GameTable({
               <Timer className="w-3 h-3 mr-0.5" />
               {turnTimer}с
             </Badge>
-            <button
-              className={`transition-colors p-0.5 sm:p-1 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-              onClick={toggleSound}
-              title={soundEnabled ? 'Выключить звук' : 'Включить звук'}
-            >
-              {soundEnabled ? <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
-            </button>
+            {onToggleMusic && (
+              <button
+                className={`transition-colors p-0.5 sm:p-1 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+                onClick={onToggleMusic}
+                title={musicEnabled ? 'Выключить музыку' : 'Включить музыку'}
+              >
+                {musicEnabled ? <Music className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+              </button>
+            )}
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
               <button
                 className="text-gray-400 hover:text-red-400 transition-colors p-0.5 sm:p-1 rounded"

@@ -8,6 +8,8 @@ import WaitingRoom from "./WaitingRoom";
 import GameTable from "@/components/GameTable";
 import { CARD_IMAGES } from "../../../shared/cardAssets";
 import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
+import { useMusicContext } from "@/contexts/MusicContext";
+import MusicChoiceDialog from "@/components/MusicChoiceDialog";
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -23,6 +25,8 @@ export default function Home() {
     isAuthenticated ? user?.name || 'Гость' : null
   );
 
+  const music = useMusicContext();
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center">
@@ -33,6 +37,15 @@ export default function Home() {
 
   if (!isAuthenticated) {
     return <LandingPage />;
+  }
+
+  // Music choice dialog — shown once on first visit
+  if (isAuthenticated && !music.choiceMade) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
+        <MusicChoiceDialog onChoice={music.makeChoice} />
+      </div>
+    );
   }
 
   // In game
@@ -52,6 +65,8 @@ export default function Home() {
         onShowPassThrough={(cardId) => showPassThrough(gameState.roomId, cardId)}
         onLeaveGame={() => leaveGame(gameState.roomId)}
         onReturnToLobby={returnToLobby}
+        musicEnabled={music.enabled}
+        onToggleMusic={music.toggle}
       />
     );
   }
