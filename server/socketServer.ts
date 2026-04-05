@@ -587,31 +587,62 @@ export function initSocketServer(httpServer: HttpServer) {
       if (!room.players.some(p => p.id === odId)) return;
 
       // Find the target player's socket by their gameId
-      // We need to look up their odId from gameId
-      // Iterate over all connected sockets to find the target
+      const targetGameId = data.targetGameId;
+      let targetOdId: string | null = null;
+      let targetSid: string | null = null;
+
       for (const [sid, info] of Array.from(socketPlayers.entries())) {
-        // We need to check if this player has the target gameId
-        // For now, store gameId mapping when players connect
-        const targetGameId = data.targetGameId;
         const playerGameId = playerGameIds.get(info.odId);
         if (playerGameId === targetGameId) {
-          // Add to invited list
-          if (!room.invitedPlayerIds) room.invitedPlayerIds = [];
-          if (!room.invitedPlayerIds.includes(info.odId)) {
-            room.invitedPlayerIds.push(info.odId);
-          }
-          // Send invitation to the target player
-          const senderGameId = playerGameIds.get(odId) || 0;
-          io.to(sid).emit('roomInvite', {
-            roomId: data.roomId,
-            roomName: room.name,
-            fromName: name,
-            fromGameId: senderGameId,
-          });
-          console.log(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
+          targetOdId = info.odId;
+          targetSid = sid;
           break;
         }
       }
+
+      if (!targetOdId || !targetSid) {
+        socket.emit('error', 'Игрок не найден или не в сети');
+        return;
+      }
+
+      // Check if target is in lobby (not in any active game)
+      const targetRoomSet = playerRooms.get(targetOdId);
+      if (targetRoomSet && targetRoomSet.size > 0) {
+        // Check if any of their rooms have an active game
+        const isInActiveGame = Array.from(targetRoomSet).some(rid => {
+          const gs = games.get(rid);
+          return gs && gs.gamePhase === 'playing';
+        });
+        if (isInActiveGame) {
+          socket.emit('error', 'Игрок сейчас в игре, приглашение невозможно');
+          return;
+        }
+        // Also check if they're in a waiting room (they should be in lobby)
+        const isInWaitingRoom = Array.from(targetRoomSet).some(rid => {
+          const r = rooms.get(rid);
+          return r && !r.hasActiveGame;
+        });
+        if (isInWaitingRoom) {
+          socket.emit('error', 'Игрок уже в другой комнате');
+          return;
+        }
+      }
+
+      // Add to invited list
+      if (!room.invitedPlayerIds) room.invitedPlayerIds = [];
+      if (!room.invitedPlayerIds.includes(targetOdId)) {
+        room.invitedPlayerIds.push(targetOdId);
+      }
+
+      // Send invitation to the target player
+      const senderGameId = playerGameIds.get(odId) || 0;
+      io.to(targetSid).emit('roomInvite', {
+        roomId: data.roomId,
+        roomName: room.name,
+        fromName: name,
+        fromGameId: senderGameId,
+      });
+      console.log(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
     });
 
     // --- Register player profile (store gameId mapping) ---
@@ -619,6 +650,8 @@ export function initSocketServer(httpServer: HttpServer) {
       if (data.gameId && data.gameId > 0) {
         playerGameIds.set(odId, data.gameId);
         console.log(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
+        // Broadcast online status to friends
+        broadcastOnlineFriends(odId);
       }
       if (typeof cb === 'function') cb(true);
     });
@@ -628,6 +661,8 @@ export function initSocketServer(httpServer: HttpServer) {
       console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId})`);
 
       socketPlayers.delete(socket.id);
+      // Broadcast offline status to friends
+      broadcastOnlineFriends(odId);
       // Don't delete from playerSockets yet — wait for grace period
 
       // Check if this player is in any active game rooms
@@ -697,11 +732,51 @@ export function initSocketServer(httpServer: HttpServer) {
         playerRooms.delete(odId);
       }
     });
-  });
+    });
+
+  // ---- Online friends broadcasting ----
+  // When a player connects/disconnects, notify all their friends about online status
+  function broadcastOnlineFriends(changedOdId: string) {
+    // Get the gameId of the changed player
+    const changedGameId = playerGameIds.get(changedOdId);
+    if (!changedGameId) return;
+
+    // Find all connected players and check mutual friendship via gameId matching
+    // For each connected player, compute which of their friends are online
+    // This is a simple approach: iterate all connected players with registered gameIds
+    const allOnlineGameIds = new Set<number>();
+    for (const [, gid] of Array.from(playerGameIds.entries())) {
+      // Check if this player is actually connected (has an active socket)
+      const odIdForGameId = findOdIdByGameId(gid);
+      if (odIdForGameId && playerSockets.has(odIdForGameId)) {
+        allOnlineGameIds.add(gid);
+      }
+    }
+
+    // Notify all connected players who have registered gameIds
+    // Each player gets their own filtered list based on their friends
+    // Since we don't have friend lists in memory, we broadcast the full online set
+    // and let the client filter based on their friend list
+    for (const [sid, info] of Array.from(socketPlayers.entries())) {
+      const gid = playerGameIds.get(info.odId);
+      if (gid) {
+        io.to(sid).emit('onlineFriendsUpdate', {
+          onlineGameIds: Array.from(allOnlineGameIds).filter(id => id !== gid),
+        });
+      }
+    }
+  }
+
+  // Helper: find odId by gameId
+  function findOdIdByGameId(gameId: number): string | null {
+    for (const [oid, gid] of Array.from(playerGameIds.entries())) {
+      if (gid === gameId) return oid;
+    }
+    return null;
+  }
 
   return io;
 }
-
 // ---- Player-Room tracking ----
 
 function trackPlayerRoom(odId: string, roomId: string) {

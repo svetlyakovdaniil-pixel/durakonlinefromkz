@@ -430,10 +430,16 @@ export default function GameTable({
 
   // Animation states
   const [showDealAnim, setShowDealAnim] = useState(false);
+  const [dealCardCount, setDealCardCount] = useState(0);
+  const [dealFromDeck, setDealFromDeck] = useState<'deck1' | 'deck2'>('deck1');
   const [showBitoAnim, setShowBitoAnim] = useState(false);
   const [bitoCardCount, setBitoCardCount] = useState(0);
   const prevBattleFieldLen = useRef(gs.battleField.length);
   const prevDiscardCount = useRef(gs.discardCount);
+  const prevHandSize = useRef(gs.myHand.length);
+  const prevTrickCount = useRef(gs.trickCount);
+  const prevDeck1Count = useRef(gs.deck1Count);
+  const prevDeck2Count = useRef(gs.deck2Count);
   const isFirstRender = useRef(true);
 
   // Drop zone highlight
@@ -442,18 +448,49 @@ export default function GameTable({
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
 
-  // Deal animation on first game state (trickCount === 0)
+  // Skip deal animation on first render (game start — cards already in hand)
   useEffect(() => {
-    if (isFirstRender.current && gs.gamePhase === 'playing' && gs.trickCount === 0) {
-      setShowDealAnim(true);
+    if (isFirstRender.current) {
       isFirstRender.current = false;
-    } else {
-      isFirstRender.current = false;
+      prevHandSize.current = gs.myHand.length;
+      prevTrickCount.current = gs.trickCount;
+      prevDeck1Count.current = gs.deck1Count;
+      prevDeck2Count.current = gs.deck2Count;
     }
-  }, [gs.gamePhase, gs.trickCount]);
+  }, []);
+
+  // Deal animation: triggered when hand grows after a trick completes (trickCount increased)
+  // and at least one deck had cards to draw from
+  useEffect(() => {
+    if (isFirstRender.current) return;
+
+    const handGrew = gs.myHand.length > prevHandSize.current;
+    const trickAdvanced = gs.trickCount > prevTrickCount.current;
+    const deckDecreased = (gs.deck1Count < prevDeck1Count.current) || (gs.deck2Count < prevDeck2Count.current);
+    const bothDecksWereEmpty = prevDeck1Count.current === 0 && prevDeck2Count.current === 0;
+
+    if (handGrew && (trickAdvanced || deckDecreased) && !bothDecksWereEmpty && !showBitoAnim) {
+      const cardsDrawn = gs.myHand.length - prevHandSize.current;
+      // Determine which deck the cards came from
+      const deck1Decreased = gs.deck1Count < prevDeck1Count.current;
+      setDealFromDeck(deck1Decreased ? 'deck1' : 'deck2');
+      setDealCardCount(cardsDrawn);
+      // Delay deal animation slightly to let bito animation finish first
+      setTimeout(() => {
+        setShowDealAnim(true);
+      }, showBitoAnim ? 900 : 100);
+    }
+
+    prevHandSize.current = gs.myHand.length;
+    prevTrickCount.current = gs.trickCount;
+    prevDeck1Count.current = gs.deck1Count;
+    prevDeck2Count.current = gs.deck2Count;
+  }, [gs.myHand.length, gs.trickCount, gs.deck1Count, gs.deck2Count]);
 
   // Bito animation when battlefield clears and discard grows
   useEffect(() => {
+    if (isFirstRender.current) return;
+
     const battleCleared = prevBattleFieldLen.current > 0 && gs.battleField.length === 0;
     const discardGrew = gs.discardCount > prevDiscardCount.current;
 
@@ -702,8 +739,9 @@ export default function GameTable({
       {/* Deal animation */}
       {showDealAnim && (
         <DealAnimation
-          cardCount={gs.myHand.length}
+          cardCount={dealCardCount}
           deckStyle={gs.deckStyle}
+          fromDeck={dealFromDeck}
           onComplete={() => setShowDealAnim(false)}
         />
       )}

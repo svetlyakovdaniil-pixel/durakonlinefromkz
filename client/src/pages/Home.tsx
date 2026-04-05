@@ -45,9 +45,14 @@ export default function Home() {
     if (!connected) registeredRef.current = false;
   }, [connected]);
 
-  // Handle pending invites
+  // Handle pending invites — only show if player is in lobby (not in a game or room)
   useEffect(() => {
     if (!pendingInvite) return;
+    // Don't show invite if player is already in a game or waiting room
+    if (gameState || currentRoom) {
+      setPendingInvite(null);
+      return;
+    }
     const invite = pendingInvite;
     
     toast(
@@ -85,7 +90,7 @@ export default function Home() {
         </div>
       </div>,
       {
-        duration: 15000,
+        duration: 30000,
         style: {
           background: '#1a2d45',
           border: '1px solid rgba(217, 119, 6, 0.3)',
@@ -94,7 +99,7 @@ export default function Home() {
       }
     );
     setPendingInvite(null);
-  }, [pendingInvite, joinRoom, setPendingInvite]);
+  }, [pendingInvite, joinRoom, setPendingInvite, gameState, currentRoom]);
 
   if (loading) {
     return (

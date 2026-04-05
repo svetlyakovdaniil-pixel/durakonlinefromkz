@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import {
   User, Users, Trophy, UserPlus, UserCheck, UserX, Crown,
   Swords, Shield, TrendingUp, Hash, Clock, Check, X, Loader2,
+  Eye, ArrowLeft, Send,
 } from 'lucide-react';
 
 interface ProfileDrawerProps {
@@ -43,7 +44,7 @@ export default function ProfileDrawer({
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-amber-100">Профиль</SheetTitle>
         </SheetHeader>
-        <Tabs defaultValue="profile" className="flex flex-col h-[calc(100%-60px)]">
+        <Tabs defaultValue={inRoom ? 'friends' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
           <TabsList className="mx-4 bg-[#1a2d45] border border-amber-700/20">
             <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
               <User className="w-3.5 h-3.5 mr-1" /> Профиль
@@ -137,6 +138,100 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
 }
 
 // ============================================================
+// Friend Profile View (inline, replaces friends list)
+// ============================================================
+function FriendProfileView({
+  gameId,
+  onBack,
+  onInviteFriend,
+  inRoom,
+  isOnline,
+}: {
+  gameId: number;
+  onBack: () => void;
+  onInviteFriend?: (targetGameId: number) => void;
+  inRoom?: boolean;
+  isOnline: boolean;
+}) {
+  const profileQuery = trpc.profile.byGameId.useQuery({ gameId }, { staleTime: 10_000 });
+  const profile = profileQuery.data;
+
+  if (profileQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="space-y-4 mt-3">
+        <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> Назад
+        </Button>
+        <div className="text-center py-8 text-amber-200/30 text-sm">
+          Профиль не найден
+        </div>
+      </div>
+    );
+  }
+
+  const winRate = profile.gamesPlayed > 0
+    ? ((profile.wins / profile.gamesPlayed) * 100).toFixed(1)
+    : '0.0';
+
+  return (
+    <div className="space-y-4 mt-3">
+      <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> Назад к друзьям
+      </Button>
+
+      {/* Friend's Game ID */}
+      <div className="bg-gradient-to-r from-blue-700/30 to-blue-600/20 border border-blue-600/30 rounded-xl p-4 text-center">
+        <div className="flex items-center justify-center gap-2 mb-1">
+          <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
+          <span className="text-blue-200/60 text-xs">{isOnline ? 'В сети' : 'Не в сети'}</span>
+        </div>
+        <div className="text-amber-100 font-medium text-lg mb-1">{profile.displayName || 'Игрок'}</div>
+        <div className="text-3xl font-bold text-blue-300 flex items-center justify-center gap-2">
+          <Hash className="w-6 h-6" />
+          {profile.gameId}
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label="Рейтинг" value={String(profile.rating)} />
+        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label="Игры" value={String(profile.gamesPlayed)} />
+        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label="Победы" value={String(profile.wins)} />
+        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label="Поражения" value={String(profile.losses)} />
+      </div>
+
+      {/* Win rate */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 text-center">
+        <div className="text-amber-200/60 text-xs mb-1">Винрейт</div>
+        <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
+      </div>
+
+      {/* Invite button */}
+      {inRoom && isOnline && onInviteFriend && (
+        <Button
+          className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+          onClick={() => {
+            onInviteFriend(profile.gameId);
+            toast.success(`Приглашение отправлено игроку ${profile.displayName || 'Игрок'}!`);
+          }}
+        >
+          <Send className="w-4 h-4 mr-2" />
+          Пригласить в комнату
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
 // Friends Tab
 // ============================================================
 function FriendsTab({
@@ -147,6 +242,7 @@ function FriendsTab({
   inRoom?: boolean;
 }) {
   const [addGameId, setAddGameId] = useState('');
+  const [viewingFriendGameId, setViewingFriendGameId] = useState<number | null>(null);
   const utils = trpc.useUtils();
 
   const friendsQuery = trpc.friends.list.useQuery(undefined, {
@@ -205,6 +301,20 @@ function FriendsTab({
 
   const friends = friendsQuery.data ?? [];
   const pending = pendingQuery.data ?? [];
+
+  // If viewing a friend's profile, show that instead
+  if (viewingFriendGameId !== null) {
+    const isOnline = onlineFriendIds.includes(viewingFriendGameId);
+    return (
+      <FriendProfileView
+        gameId={viewingFriendGameId}
+        onBack={() => setViewingFriendGameId(null)}
+        onInviteFriend={onInviteFriend}
+        inRoom={inRoom}
+        isOnline={isOnline}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4 mt-3">
@@ -286,32 +396,49 @@ function FriendsTab({
               const isOnline = onlineFriendIds.includes(friend.gameId);
               return (
                 <div key={friend.profileId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
-                    <div>
+                  <div
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1 min-w-0"
+                    onClick={() => setViewingFriendGameId(friend.gameId)}
+                  >
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
+                    <div className="min-w-0">
                       <span className="text-amber-100 text-sm font-medium">{friend.displayName || 'Игрок'}</span>
                       <span className="text-amber-200/40 text-xs ml-1.5">#{friend.gameId}</span>
                     </div>
-                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] px-1.5">
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] px-1.5 shrink-0">
                       {friend.rating}
                     </Badge>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 shrink-0 ml-1">
+                    {/* View profile */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-blue-700/40 text-blue-300 hover:bg-blue-900/30 h-7 w-7 p-0"
+                      onClick={() => setViewingFriendGameId(friend.gameId)}
+                      title="Посмотреть профиль"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    {/* Invite button (only in room, only if friend is online) */}
                     {inRoom && isOnline && onInviteFriend && (
                       <Button
                         size="sm"
                         className="bg-amber-600 hover:bg-amber-500 text-white h-7 px-2 text-[10px]"
                         onClick={() => onInviteFriend(friend.gameId)}
                       >
+                        <Send className="w-3 h-3 mr-0.5" />
                         Пригласить
                       </Button>
                     )}
+                    {/* Remove friend */}
                     <Button
                       size="sm"
                       variant="outline"
                       className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
                       onClick={() => removeFriend.mutate({ friendProfileId: friend.profileId })}
                       disabled={removeFriend.isPending}
+                      title="Удалить друга"
                     >
                       <UserX className="w-3.5 h-3.5" />
                     </Button>
