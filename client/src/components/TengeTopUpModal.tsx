@@ -177,9 +177,8 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                 onClick={() => setSelectedTier(tier.id)}
               >
                 <div className="flex items-center gap-2">
-                  <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
+                  <img src={TENGE_ICON} alt="" className="h-[30px] w-[30px] rounded-full object-contain" />
                   <span className="text-amber-200 font-bold">{formatBalance(tier.tenge)}</span>
-                  <span className="text-amber-200/50 text-xs">тенге</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <ShoppingCart className="w-3.5 h-3.5 text-amber-400/60" />
