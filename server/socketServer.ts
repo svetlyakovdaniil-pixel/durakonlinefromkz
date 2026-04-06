@@ -304,6 +304,7 @@ export function initSocketServer(httpServer: HttpServer) {
       rooms.set(roomId, room);
       socket.join(roomId);
       trackPlayerRoom(odId, roomId);
+      console.log(`[Socket] Room created: ${roomId}, password=${settings.password ? '***(' + settings.password.length + ' chars)' : 'none'}, isPrivate=${settings.isPrivate}`);
       broadcastRoomList();
       cb(sanitizeRoom(room));
     });
@@ -366,12 +367,16 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // Password check: skip if player is invited or is the host
       const isInvited = room.invitedPlayerIds?.includes(odId);
-      if (room.settings.password && !isInvited && room.hostId !== odId) {
-        if (!password || password !== room.settings.password) {
+      const roomHasPassword = !!room.settings.password && room.settings.password.trim().length > 0;
+      console.log(`[Socket] joinRoom password check: roomHasPassword=${roomHasPassword}, isInvited=${isInvited}, isHost=${room.hostId === odId}, providedPassword=${password ? '***' : 'none'}`);
+      if (roomHasPassword && !isInvited && room.hostId !== odId) {
+        if (!password || password.trim() !== room.settings.password!.trim()) {
+          console.log(`[Socket] joinRoom: password mismatch for room ${roomId}`);
           socket.emit('error', 'Неверный пароль');
           cb(false);
           return;
         }
+        console.log(`[Socket] joinRoom: password correct for room ${roomId}`);
       }
 
       // Balance check: player must have enough shanyraks for the bet

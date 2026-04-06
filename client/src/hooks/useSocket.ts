@@ -162,7 +162,10 @@ export function useSocket(userId: string | null, userName: string | null) {
       if (!currentRoomIdRef.current) return;
       setAvailableActions(a);
     });
-    socket.on('error', (msg) => setError(msg));
+    socket.on('error', (msg) => {
+      setError(msg);
+      toast.error(msg, { duration: 4000 });
+    });
     socket.on('chatMessage', (msg) => setChatMessages(prev => [...prev.slice(-99), msg]));
     socket.on('timerUpdate', (seconds) => {
       if (leavingRef.current) return;
@@ -242,6 +245,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     // Room invitation from a friend
     socket.on('roomInvite', (data) => {
+      console.log('[Socket] Received roomInvite:', data);
       setPendingInvite(data);
     });
 

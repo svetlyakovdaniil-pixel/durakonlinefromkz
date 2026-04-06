@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
 import { useMusicContext } from "@/contexts/MusicContext";
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
 import { toast } from 'sonner';
+import InviteModal from '@/components/InviteModal';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -45,15 +46,12 @@ export default function Home() {
     if (!connected) registeredRef.current = false;
   }, [connected]);
 
-  // Keep a ref to joinRoom so the toast callback always uses the latest version
-  const joinRoomRef = useRef(joinRoom);
-  joinRoomRef.current = joinRoom;
+  // Invite modal state — shown when a friend invites us to a room
+  const [activeInvite, setActiveInvite] = useState<{
+    roomId: string; roomName: string; fromName: string; fromGameId: number;
+  } | null>(null);
 
-  // Keep a ref to declineInvite so the toast callback always uses the latest version
-  const declineInviteRef = useRef(declineInvite);
-  declineInviteRef.current = declineInvite;
-
-  // Handle pending invites — only show if player is in lobby (not in a game or room)
+  // Handle pending invites — transfer to activeInvite for modal display
   useEffect(() => {
     if (!pendingInvite) return;
     // Don't show invite if player is already in a game or waiting room
@@ -61,61 +59,20 @@ export default function Home() {
       setPendingInvite(null);
       return;
     }
-    const invite = pendingInvite;
-    const toastId = `invite-${invite.roomId}`;
-    
-    // Dismiss any previous invite toast
-    toast.dismiss(toastId);
-    
-    toast(
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Users className="w-4 h-4 text-amber-400 shrink-0" />
-          <div>
-            <div className="text-sm font-medium">Приглашение в комнату</div>
-            <div className="text-xs text-muted-foreground">
-              <span className="font-medium">{invite.fromName}</span>
-              <span className="opacity-60"> (#{invite.fromGameId})</span>
-              {' '}приглашает вас в «{invite.roomName}»
-            </div>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            className="flex-1 bg-amber-600 hover:bg-amber-500 text-white h-7 text-xs"
-            onClick={() => {
-              joinRoomRef.current(invite.roomId);
-              toast.dismiss(toastId);
-            }}
-          >
-            Принять
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="flex-1 h-7 text-xs"
-            onClick={() => {
-              declineInviteRef.current(invite.roomId, invite.fromGameId);
-              toast.dismiss(toastId);
-            }}
-          >
-            Отклонить
-          </Button>
-        </div>
-      </div>,
-      {
-        id: toastId,
-        duration: 30000,
-        style: {
-          background: '#1a2d45',
-          border: '1px solid rgba(217, 119, 6, 0.3)',
-          color: '#fde68a',
-        },
-      }
-    );
+    console.log('[Home] Setting activeInvite from pendingInvite:', pendingInvite);
+    setActiveInvite(pendingInvite);
     setPendingInvite(null);
-  }, [pendingInvite, joinRoom, setPendingInvite, gameState, currentRoom]);
+  }, [pendingInvite, setPendingInvite, gameState, currentRoom]);
+
+  const handleAcceptInvite = useCallback((roomId: string) => {
+    joinRoom(roomId);
+    setActiveInvite(null);
+  }, [joinRoom]);
+
+  const handleDeclineInvite = useCallback((roomId: string, fromGameId: number) => {
+    declineInvite(roomId, fromGameId);
+    setActiveInvite(null);
+  }, [declineInvite]);
 
   if (loading) {
     return (
@@ -191,19 +148,26 @@ export default function Home() {
 
   // Lobby
   return (
-    <Lobby
-      rooms={rooms}
-      connected={connected}
-      userName={profile?.displayName || user?.name || 'Гость'}
-      userId={user?.openId || ''}
-      onCreateRoom={createRoom}
-      onJoinRoom={joinRoom}
-      onLogout={logout}
-      profile={profile}
-      onlineFriendIds={onlineFriendIds}
-      onInviteFriend={undefined}
-      refetchProfile={refetchProfile}
-    />
+    <>
+      <Lobby
+        rooms={rooms}
+        connected={connected}
+        userName={profile?.displayName || user?.name || 'Гость'}
+        userId={user?.openId || ''}
+        onCreateRoom={createRoom}
+        onJoinRoom={joinRoom}
+        onLogout={logout}
+        profile={profile}
+        onlineFriendIds={onlineFriendIds}
+        onInviteFriend={undefined}
+        refetchProfile={refetchProfile}
+      />
+      <InviteModal
+        invite={activeInvite}
+        onAccept={handleAcceptInvite}
+        onDecline={handleDeclineInvite}
+      />
+    </>
   );
 }
 
