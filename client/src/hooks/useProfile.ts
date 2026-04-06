@@ -9,8 +9,8 @@ export function useProfile(isAuthenticated: boolean) {
   const profileQuery = trpc.profile.me.useQuery(undefined, {
     enabled: isAuthenticated,
     retry: 2,
-    refetchOnWindowFocus: false,
-    staleTime: 60_000,
+    refetchOnWindowFocus: true,
+    staleTime: 5_000,
   });
 
   return {

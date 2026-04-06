@@ -21,7 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer,
 } from './gameEngine';
-import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize } from './db';
+import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId } from './db';
 
 // In-memory store
 const rooms = new Map<string, Room>();
@@ -51,6 +51,24 @@ const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
+
+/** Emit balanceUpdated to a player by openId so their client refreshes the balance */
+async function emitBalanceUpdated(odId: string) {
+  const sid = playerSockets.get(odId);
+  if (!sid) return;
+  try {
+    const user = await getUserByOpenId(odId);
+    if (!user) return;
+    const profile = await getProfileByUserId(user.id);
+    if (!profile) return;
+    io.to(sid).emit('balanceUpdated', {
+      shanyrak: profile.balanceShanyrak,
+      tenge: profile.balanceTenge,
+    });
+  } catch (err) {
+    console.error('[Socket] Failed to emit balanceUpdated:', err);
+  }
+}
 
 export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
@@ -427,6 +445,11 @@ export function initSocketServer(httpServer: HttpServer) {
                 console.error('[Socket] Failed to refund bet:', e)
               );
             }
+          }
+        } else {
+          // Notify all human players that their balance changed
+          for (const hp of humanPlayers) {
+            emitBalanceUpdated(hp.id);
           }
         }
       }).catch(err => {
@@ -1593,9 +1616,11 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       creditedSet.add(prizeKey);
       const player = gameState.players.find(p => p.id === prize.playerId);
       if (player && !player.isBot) {
-        creditShanyrakPrize(prize.playerId, prize.amount, roomId, prize.place).catch(err =>
-          console.error(`[Prize] Failed to credit ${prize.amount} to ${prize.playerId}:`, err)
-        );
+        creditShanyrakPrize(prize.playerId, prize.amount, roomId, prize.place)
+          .then(() => emitBalanceUpdated(prize.playerId))
+          .catch(err =>
+            console.error(`[Prize] Failed to credit ${prize.amount} to ${prize.playerId}:`, err)
+          );
         console.log(`[Prize] Credited ${prize.amount} shanyraks to ${prize.playerId} (place ${prize.place}) in room ${roomId}`);
       }
     }

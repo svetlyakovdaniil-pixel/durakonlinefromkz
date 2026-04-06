@@ -189,6 +189,8 @@ export interface ServerToClientEvents {
   roomUnfrozen: (data: { roomId: string; reconnectedPlayerName: string }) => void;
   /** Frozen timer tick */
   frozenTimerTick: (data: { roomId: string; secondsLeft: number }) => void;
+  /** Balance updated (shanyrak/tenge changed) */
+  balanceUpdated: (data: { shanyrak: number; tenge: number }) => void;
   /** Prize pool distribution after game ends */
   prizeDistributed: (data: { pool: number; prizes: { playerId: string; place: number; amount: number }[] }) => void;
 }

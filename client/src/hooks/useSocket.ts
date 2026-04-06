@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
+import { trpc } from '@/lib/trpc';
 import type {
   ServerToClientEvents, ClientToServerEvents,
   Room, ClientGameState, AvailableAction, RoomSettings,
@@ -11,6 +12,9 @@ type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 export function useSocket(userId: string | null, userName: string | null) {
   const socketRef = useRef<TypedSocket | null>(null);
+  const trpcUtils = trpc.useUtils();
+  const trpcUtilsRef = useRef(trpcUtils);
+  trpcUtilsRef.current = trpcUtils;
   const [connected, setConnected] = useState(false);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
@@ -217,6 +221,14 @@ export function useSocket(userId: string | null, userName: string | null) {
       setPrizeData(null);
       if (data.reason === 'disconnect_timeout') {
         toast.error('Вы были удалены из игры из-за долгого отсутствия соединения', { duration: 6000 });
+      }
+    });
+
+    // Balance updated in real-time
+    socket.on('balanceUpdated', () => {
+      // Invalidate profile query so balance refreshes everywhere
+      if (trpcUtilsRef.current) {
+        trpcUtilsRef.current.profile.me.invalidate();
       }
     });
 
