@@ -431,8 +431,9 @@ export default function GameTable({
 
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  // Multi-card opening attack selection
+  // Multi-card opening attack / transfer selection
   const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
+  const [multiSelectMode, setMultiSelectMode] = useState<'attack' | 'transfer' | null>(null);
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
@@ -622,25 +623,26 @@ export default function GameTable({
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
-  // Compute highlighted card IDs: cards of the same rank as selected multi-attack cards
+  // Compute highlighted card IDs: cards of the same rank as selected multi-attack/transfer cards
   const highlightedIds = useMemo(() => {
     if (multiSelectIds.size === 0) return new Set<string>();
-    // Find the rank of the multi-selected cards
     const selectedCards = gs.myHand.filter(c => multiSelectIds.has(c.id));
     if (selectedCards.length === 0) return new Set<string>();
     const rank = selectedCards[0].rank;
     const ids = new Set<string>();
+    const validPool = multiSelectMode === 'transfer' ? transferIds : playableIds;
     for (const c of gs.myHand) {
-      if (c.rank === rank && !multiSelectIds.has(c.id) && playableIds.has(c.id)) {
+      if (c.rank === rank && !multiSelectIds.has(c.id) && validPool.has(c.id)) {
         ids.add(c.id);
       }
     }
     return ids;
-  }, [multiSelectIds, gs.myHand, playableIds]);
+  }, [multiSelectIds, multiSelectMode, gs.myHand, playableIds, transferIds]);
 
   // Clear multi-select when trick changes
   useEffect(() => {
     setMultiSelectIds(new Set());
+    setMultiSelectMode(null);
   }, [gs.trickCount]);
 
   // Clear multi-select when battlefield gets cards (someone played)
@@ -650,6 +652,7 @@ export default function GameTable({
       // Only clear if battlefield grew (cards were played by someone)
       if (gs.battleField.length > prevBattleLen.current) {
         setMultiSelectIds(new Set());
+        setMultiSelectMode(null);
       }
       prevBattleLen.current = gs.battleField.length;
     }
@@ -662,15 +665,28 @@ export default function GameTable({
       onPlayCard(id);
     }
     setMultiSelectIds(new Set());
+    setMultiSelectMode(null);
     setSelectedCardId(null);
   }, [multiSelectIds, onPlayCard]);
+
+  // Transfer all multi-selected cards sequentially
+  const handleMultiTransfer = useCallback(() => {
+    const ids = Array.from(multiSelectIds);
+    for (const id of ids) {
+      onTransferCard(id);
+    }
+    setMultiSelectIds(new Set());
+    setMultiSelectMode(null);
+    setSelectedCardId(null);
+  }, [multiSelectIds, onTransferCard]);
 
   const handleCardClick = (card: Card) => {
     // If in multi-select mode, handle toggling cards of the same rank
     if (isMultiSelecting) {
       const selectedCards = gs.myHand.filter(c => multiSelectIds.has(c.id));
       const multiRank = selectedCards.length > 0 ? selectedCards[0].rank : null;
-      if (card.rank === multiRank && playableIds.has(card.id)) {
+      const validPool = multiSelectMode === 'transfer' ? transferIds : playableIds;
+      if (card.rank === multiRank && validPool.has(card.id)) {
         const newSet = new Set(multiSelectIds);
         if (newSet.has(card.id)) {
           newSet.delete(card.id);
@@ -682,11 +698,32 @@ export default function GameTable({
       }
       // Clicking a different rank card cancels multi-select
       setMultiSelectIds(new Set());
+      setMultiSelectMode(null);
       // Fall through to normal handling
     }
 
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
-      if (transferIds.has(card.id) || passThroughIds.has(card.id)) {
+      // Multi-card transfer: if defender clicks a transfer card and has more of the same rank
+      if (transferIds.has(card.id)) {
+        const sameRankTransfer = gs.myHand.filter(
+          c => c.rank === card.rank && transferIds.has(c.id) && c.id !== card.id
+        );
+        if (sameRankTransfer.length > 0) {
+          // Enter multi-select mode for transfer
+          setMultiSelectIds(new Set([card.id]));
+          setMultiSelectMode('transfer');
+          setSelectedCardId(null);
+          return;
+        }
+        // Single transfer card — use old select behavior
+        if (selectedCardId === card.id) {
+          setSelectedCardId(null);
+        } else {
+          setSelectedCardId(card.id);
+        }
+        return;
+      }
+      if (passThroughIds.has(card.id)) {
         if (selectedCardId === card.id) {
           setSelectedCardId(null);
         } else {
@@ -733,6 +770,7 @@ export default function GameTable({
       if (sameRankPlayable.length > 0) {
         // Enter multi-select mode with this card pre-selected
         setMultiSelectIds(new Set([card.id]));
+        setMultiSelectMode('attack');
         setSelectedCardId(null);
         return;
       }
@@ -1418,14 +1456,16 @@ export default function GameTable({
               {isMultiSelecting && (
                 <div className="text-center mb-1">
                   <span className="text-amber-200 text-sm sm:text-base bg-black/50 px-3 py-1 rounded-lg backdrop-blur-sm">
-                    Выберите сколько карт положить на стол ({multiSelectIds.size} выбрано)
+                    {multiSelectMode === 'transfer'
+                      ? `Выберите сколько карт перевести (${multiSelectIds.size} выбрано)`
+                      : `Выберите сколько карт положить на стол (${multiSelectIds.size} выбрано)`}
                   </span>
                 </div>
               )}
 
               {/* Action buttons — semi-transparent so cards underneath are visible */}
               <div className="flex items-center gap-2 flex-wrap justify-center">
-                {isMultiSelecting && (
+                {isMultiSelecting && multiSelectMode === 'attack' && (
                   <>
                     <Button
                       className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-emerald-500/20"
@@ -1436,7 +1476,24 @@ export default function GameTable({
                     <Button
                       variant="outline"
                       className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
-                      onClick={() => setMultiSelectIds(new Set())}
+                      onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
+                    >
+                      Отмена
+                    </Button>
+                  </>
+                )}
+                {isMultiSelecting && multiSelectMode === 'transfer' && (
+                  <>
+                    <Button
+                      className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
+                      onClick={handleMultiTransfer}
+                    >
+                      Перевести ({multiSelectIds.size})
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                      onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
                       Отмена
                     </Button>
@@ -1520,14 +1577,16 @@ export default function GameTable({
             {isMultiSelecting && (
               <div className="pointer-events-auto text-center mb-0.5">
                 <span className="text-amber-200 text-xs bg-black/60 px-2.5 py-0.5 rounded-lg backdrop-blur-sm">
-                  Выберите карты ({multiSelectIds.size} выбрано)
+                  {multiSelectMode === 'transfer'
+                    ? `Выберите карты для перевода (${multiSelectIds.size} выбрано)`
+                    : `Выберите карты (${multiSelectIds.size} выбрано)`}
                 </span>
               </div>
             )}
 
             {/* Floating action buttons */}
             <div className="flex items-center gap-2 pointer-events-auto">
-              {isMultiSelecting && (
+              {isMultiSelecting && multiSelectMode === 'attack' && (
                 <>
                   <Button
                     className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-emerald-500/20"
@@ -1538,7 +1597,24 @@ export default function GameTable({
                   <Button
                     variant="outline"
                     className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
-                    onClick={() => setMultiSelectIds(new Set())}
+                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
+                  >
+                    Отмена
+                  </Button>
+                </>
+              )}
+              {isMultiSelecting && multiSelectMode === 'transfer' && (
+                <>
+                  <Button
+                    className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
+                    onClick={handleMultiTransfer}
+                  >
+                    Перевести ({multiSelectIds.size})
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
+                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                   >
                     Отмена
                   </Button>

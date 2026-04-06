@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -20,6 +20,7 @@ import { formatBalance } from '../../../shared/formatBalance';
 import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 import ShopModal from '@/components/ShopModal';
+import RulesModal from '@/components/RulesModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -64,6 +65,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showShanyrakTopUp, setShowShanyrakTopUp] = useState(false);
   const [showTengeTopUp, setShowTengeTopUp] = useState(false);
   const [showShop, setShowShop] = useState(false);
+  const [showRules, setShowRules] = useState(false);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -248,6 +250,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </button>
                     <button
                       className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                      onClick={() => setShowRules(true)}
+                    >
+                      <HelpCircle className="w-5 h-5" style={{marginTop: '4px'}} />
+                    </button>
+                    <button
+                      className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                       onClick={() => setShowShop(true)}
                     >
                       <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
@@ -267,6 +275,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <h1 className="text-xl font-bold text-amber-100">Казахский Дурак</h1>
               </div>
               <div className="flex items-center gap-3">
+                {/* Rules button */}
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowRules(true)}
+                  title="Правила игры"
+                >
+                  <HelpCircle className="w-5 h-5" />
+                </button>
                 {/* Currency: Tenge */}
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
@@ -645,6 +661,12 @@ onClick={() => setShowTengeTopUp(true)}
           refetchProfile?.();
           utils.shop.ownedDecks.invalidate();
         }}
+      />
+
+      {/* Rules Modal */}
+      <RulesModal
+        open={showRules}
+        onClose={() => setShowRules(false)}
       />
 
       {/* Notification Panel */}
