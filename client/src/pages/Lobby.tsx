@@ -164,7 +164,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
       {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
-        <div className="container py-3 sm:py-4">
+        <div className="container py-3 sm:py-4" style={{marginBottom: '-40px'}}>
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden pb-8">
             {/* Row 1: Title left + Avatar center + Logout right */}
@@ -250,7 +250,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                       onClick={() => setShowShop(true)}
                     >
-                      <ShoppingCart className="w-5 h-5" />
+                      <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
                     </button>
                   </div>
                 </div>
