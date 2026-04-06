@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -18,6 +18,7 @@ import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 import { TengeTopUpModal } from '@/components/TengeTopUpModal';
+import ShopModal from '@/components/ShopModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -60,12 +61,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [notifOpen, setNotifOpen] = useState(false);
   const [showShanyrakTopUp, setShowShanyrakTopUp] = useState(false);
   const [showTengeTopUp, setShowTengeTopUp] = useState(false);
+  const [showShop, setShowShop] = useState(false);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
   const { data: notifList = [], refetch: refetchNotifs } = trpc.notifications.list.useQuery(undefined, { enabled: notifOpen });
   const markAllRead = trpc.notifications.markAllRead.useMutation();
   const deleteNotif = trpc.notifications.delete.useMutation();
+  const deleteAllNotifs = trpc.notifications.deleteAll.useMutation();
+
+  // Shop / Owned decks
+  const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
+  const isCustomDeckOwned = ownedDecks.includes('custom');
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
   const utils = trpc.useUtils();
@@ -222,17 +229,25 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       +
                     </button>
                   </div>
-                  <button
-                    className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                    onClick={handleOpenNotifications}
-                  >
-                    <Bell className="w-5 h-5" style={{marginTop: '5px'}} />
-                    {unreadCount > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </span>
-                    )}
-                  </button>
+                  <div className="flex flex-col items-center gap-1">
+                    <button
+                      className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                      onClick={handleOpenNotifications}
+                    >
+                      <Bell className="w-5 h-5" style={{marginTop: '5px'}} />
+                      {unreadCount > 0 && (
+                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                      onClick={() => setShowShop(true)}
+                    >
+                      <ShoppingCart className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -313,6 +328,13 @@ onClick={() => setShowTengeTopUp(true)}
                     </span>
                   )}
                 </button>
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowShop(true)}
+                  title="Магазин"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </button>
               </div>
             </div>
             {/* Bottom row: Комнаты + Создать */}
@@ -386,13 +408,26 @@ onClick={() => setShowTengeTopUp(true)}
                 </div>
                 <div>
                   <Label className="text-amber-200/70 text-sm">Колода карт</Label>
-                  <Select value={deckStyle} onValueChange={(v) => setDeckStyle(v as DeckStyle)}>
+                  <Select value={deckStyle} onValueChange={(v) => {
+                    if (v === 'custom' && !isCustomDeckOwned) return;
+                    setDeckStyle(v as DeckStyle);
+                  }}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                       <SelectItem value="classic" className="text-amber-100">Колода №1 (классическая)</SelectItem>
-                      <SelectItem value="custom" className="text-amber-100">Колода №2 (кастомная)</SelectItem>
+                      <SelectItem
+                        value="custom"
+                        className={isCustomDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                        disabled={!isCustomDeckOwned}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          {!isCustomDeckOwned && <Lock className="w-3 h-3" />}
+                          Колода №2 (кастомная)
+                          {!isCustomDeckOwned && <span className="text-[10px] text-gray-400 ml-1">— купите в магазине</span>}
+                        </span>
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -571,6 +606,17 @@ onClick={() => setShowTengeTopUp(true)}
         currentTenge={profile?.balanceTenge ?? 0}
       />
 
+      {/* Shop Modal */}
+      <ShopModal
+        open={showShop}
+        onClose={() => setShowShop(false)}
+        currentTenge={profile?.balanceTenge ?? 0}
+        onPurchased={() => {
+          refetchProfile?.();
+          utils.shop.ownedDecks.invalidate();
+        }}
+      />
+
       {/* Notification Panel */}
       {notifOpen && (
         <div className="fixed inset-0 z-50" onClick={() => setNotifOpen(false)}>
@@ -582,9 +628,24 @@ onClick={() => setShowTengeTopUp(true)}
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20">
               <h3 className="text-amber-100 font-bold text-sm">Уведомления</h3>
-              <button className="text-amber-200/50 hover:text-amber-100 p-1" onClick={() => setNotifOpen(false)}>
-                <X className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                {notifList.length > 0 && (
+                  <button
+                    className="text-amber-200/40 hover:text-red-400 transition-colors p-1"
+                    title="Удалить все уведомления"
+                    onClick={async () => {
+                      await deleteAllNotifs.mutateAsync();
+                      refetchNotifs();
+                      utils.notifications.unreadCount.invalidate();
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button className="text-amber-200/50 hover:text-amber-100 p-1" onClick={() => setNotifOpen(false)}>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
             {/* List */}
             <div className="overflow-y-auto max-h-[calc(70vh-48px)] divide-y divide-amber-700/10">

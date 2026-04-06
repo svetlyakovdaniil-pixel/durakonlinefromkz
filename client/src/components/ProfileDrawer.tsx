@@ -44,23 +44,23 @@ export default function ProfileDrawer({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[340px] sm:w-[400px] p-0 overflow-hidden">
+      <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[400px] p-0 overflow-hidden">
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-amber-100">Профиль</SheetTitle>
         </SheetHeader>
         <Tabs defaultValue={inRoom ? 'friends' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
-          <TabsList className="mx-4 bg-[#1a2d45] border border-amber-700/20">
-            <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
-              <User className="w-3.5 h-3.5 mr-1" /> Профиль
+          <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
+            <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+              <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Профиль</span>
             </TabsTrigger>
-            <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
-              <Users className="w-3.5 h-3.5 mr-1" /> Друзья
+            <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+              <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Друзья</span>
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
-              <Trophy className="w-3.5 h-3.5 mr-1" /> Рейтинг
+            <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+              <Trophy className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Рейтинг</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs">
-              <History className="w-3.5 h-3.5 mr-1" /> История
+            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+              <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">История</span>
             </TabsTrigger>
           </TabsList>
 

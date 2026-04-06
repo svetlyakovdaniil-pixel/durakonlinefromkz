@@ -334,10 +334,10 @@ export async function recordGameResult(data: {
     const isWinner = profileId === data.winnerProfileId;
     const isLoser = profileId === data.loserProfileId;
 
-    // ELO-like rating change
+    // Rating change: +15 for win, -10 for loss
     let ratingChange = 0;
-    if (isWinner) ratingChange = 25;
-    else if (isLoser) ratingChange = -25;
+    if (isWinner) ratingChange = 15;
+    else if (isLoser) ratingChange = -10;
     else ratingChange = 0; // middle finishers get no change
 
     await db.update(playerProfiles).set({
@@ -446,6 +446,17 @@ export async function deleteNotification(notificationId: number, profileId: numb
   await db.delete(notifications).where(
     and(eq(notifications.id, notificationId), eq(notifications.profileId, profileId))
   );
+  return true;
+}
+
+/**
+ * Delete all notifications for a profile.
+ */
+export async function deleteAllNotifications(profileId: number) {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.delete(notifications).where(eq(notifications.profileId, profileId));
   return true;
 }
 
@@ -573,7 +584,7 @@ export async function getFreeTopupStatus(userId: number): Promise<{
  */
 export async function recordTransaction(data: {
   profileId: number;
-  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward' | 'game_entry';
+  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward' | 'game_entry' | 'shop_purchase';
   amount: number;
   currency: 'tenge' | 'shanyrak';
   description: string;
@@ -606,6 +617,75 @@ export async function getMyTransactions(profileId: number, limit = 50) {
     .where(eq(transactions.profileId, profileId))
     .orderBy(desc(transactions.createdAt))
     .limit(limit);
+}
+
+// ============================================================
+// SHOP / DECK OWNERSHIP helpers
+// ============================================================
+
+/**
+ * Get owned deck IDs for a player profile.
+ */
+export async function getOwnedDecks(profileId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const [profile] = await db.select({ ownedDecks: playerProfiles.ownedDecks })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile || !profile.ownedDecks) return [];
+  try {
+    return JSON.parse(profile.ownedDecks) as string[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Purchase a deck for a player. Deducts tenge and adds deck to ownedDecks.
+ * Returns { success, newTenge } or { success: false, reason }.
+ */
+export async function purchaseDeck(
+  userId: number,
+  deckId: string,
+  tengeCost: number
+): Promise<{ success: boolean; newTenge?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  // Check if already owned
+  const owned: string[] = profile.ownedDecks ? JSON.parse(profile.ownedDecks) : [];
+  if (owned.includes(deckId)) {
+    return { success: false, reason: 'already_owned' };
+  }
+
+  // Check balance
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+
+  // Deduct and add deck
+  const newTenge = profile.balanceTenge - tengeCost;
+  owned.push(deckId);
+
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    ownedDecks: JSON.stringify(owned),
+  }).where(eq(playerProfiles.id, profile.id));
+
+  // Record transaction
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'shop_purchase',
+    amount: -tengeCost,
+    currency: 'tenge',
+    description: `Покупка колоды: ${deckId}`,
+    balanceAfter: newTenge,
+  });
+
+  return { success: true, newTenge };
 }
 
 /**

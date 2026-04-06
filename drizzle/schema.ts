@@ -48,6 +48,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   balanceShanyrak: int("balanceShanyrak").default(0).notNull(),
   /** Last time the player used the free shanyrak top-up (for 12h cooldown) */
   lastFreeTopup: timestamp("lastFreeTopup"),
+  /** JSON array of owned deck IDs, e.g. ["custom"] */
+  ownedDecks: text("ownedDecks"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -127,7 +129,7 @@ export const transactions = mysqlTable("transactions", {
   /** The player who performed this transaction (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Transaction type */
-  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry"]).notNull(),
+  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry", "shop_purchase"]).notNull(),
   /** Amount changed (positive = gained, negative = spent) */
   amount: int("amount").notNull(),
   /** Currency affected: 'tenge' or 'shanyrak' */

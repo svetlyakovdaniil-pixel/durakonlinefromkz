@@ -89,24 +89,24 @@ describe('Profile System', () => {
 });
 
 describe('ELO Rating System', () => {
-  it('should award +25 for a win', () => {
+  it('should award +15 for a win', () => {
     const currentRating = 1000;
     const isWinner = true;
     const isLoser = false;
     let ratingChange = 0;
-    if (isWinner) ratingChange = 25;
-    else if (isLoser) ratingChange = -25;
-    expect(currentRating + ratingChange).toBe(1025);
+    if (isWinner) ratingChange = 15;
+    else if (isLoser) ratingChange = -10;
+    expect(currentRating + ratingChange).toBe(1015);
   });
 
-  it('should deduct -25 for a loss', () => {
+  it('should deduct -10 for a loss', () => {
     const currentRating = 1000;
     const isWinner = false;
     const isLoser = true;
     let ratingChange = 0;
-    if (isWinner) ratingChange = 25;
-    else if (isLoser) ratingChange = -25;
-    expect(currentRating + ratingChange).toBe(975);
+    if (isWinner) ratingChange = 15;
+    else if (isLoser) ratingChange = -10;
+    expect(currentRating + ratingChange).toBe(990);
   });
 
   it('should not change rating for middle finishers', () => {
@@ -114,21 +114,21 @@ describe('ELO Rating System', () => {
     const isWinner = false;
     const isLoser = false;
     let ratingChange = 0;
-    if (isWinner) ratingChange = 25;
-    else if (isLoser) ratingChange = -25;
+    if (isWinner) ratingChange = 15;
+    else if (isLoser) ratingChange = -10;
     expect(currentRating + ratingChange).toBe(1000);
   });
 
   it('should not go below 0', () => {
-    const currentRating = 10;
-    const ratingChange = -25;
+    const currentRating = 5;
+    const ratingChange = -10;
     const newRating = Math.max(0, currentRating + ratingChange);
     expect(newRating).toBe(0);
   });
 
   it('should handle rating at 0 with loss', () => {
     const currentRating = 0;
-    const ratingChange = -25;
+    const ratingChange = -10;
     const newRating = Math.max(0, currentRating + ratingChange);
     expect(newRating).toBe(0);
   });
@@ -311,8 +311,8 @@ describe('Game Stats Recording', () => {
       const isWinner = id === winnerProfileId;
       const isLoser = id === loserProfileId;
       let ratingChange = 0;
-      if (isWinner) ratingChange = 25;
-      else if (isLoser) ratingChange = -25;
+      if (isWinner) ratingChange = 15;
+      else if (isLoser) ratingChange = -10;
 
       return {
         profileId: id,
@@ -323,10 +323,10 @@ describe('Game Stats Recording', () => {
       };
     });
 
-    expect(statsUpdates[0].ratingChange).toBe(25);  // winner
+    expect(statsUpdates[0].ratingChange).toBe(15);  // winner
     expect(statsUpdates[1].ratingChange).toBe(0);    // middle
     expect(statsUpdates[2].ratingChange).toBe(0);    // middle
-    expect(statsUpdates[3].ratingChange).toBe(-25);  // loser
+    expect(statsUpdates[3].ratingChange).toBe(-10);  // loser
     expect(statsUpdates.every(s => s.gamesPlayedDelta === 1)).toBe(true);
   });
 });

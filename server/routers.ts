@@ -22,6 +22,7 @@ import {
   getUnreadNotificationCount,
   markNotificationsRead,
   deleteNotification,
+  deleteAllNotifications,
   getPlayerProfileWithFriendStatus,
   getFriendshipById,
   freeShanyrakTopup,
@@ -31,6 +32,8 @@ import {
   getMyTransactions,
   testAddShanyrak,
   testAddTenge,
+  getOwnedDecks,
+  purchaseDeck,
 } from "./db";
 import { emitNotificationToProfile } from "./socketServer";
 
@@ -252,6 +255,14 @@ export const appRouter = router({
         const ok = await deleteNotification(input.notificationId, profile.id);
         return { success: ok };
       }),
+
+    /** Delete all notifications */
+    deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return { success: false };
+      const ok = await deleteAllNotifications(profile.id);
+      return { success: ok };
+    }),
   }),
 
   // ============================================================
@@ -339,6 +350,26 @@ export const appRouter = router({
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) return [];
         return getMyTransactions(profile.id, input?.limit ?? 50);
+      }),
+  }),
+
+  // ============================================================
+  // SHOP
+  // ============================================================
+  shop: router({
+    /** Get owned deck IDs for the current user */
+    ownedDecks: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return [];
+      return getOwnedDecks(profile.id);
+    }),
+
+    /** Purchase a deck */
+    purchaseDeck: protectedProcedure
+      .input(z.object({ deckId: z.string(), tengeCost: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await purchaseDeck(ctx.user.id, input.deckId, input.tengeCost);
+        return result;
       }),
   }),
 

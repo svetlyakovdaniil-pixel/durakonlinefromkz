@@ -1,0 +1,2 @@
+ALTER TABLE `transactions` MODIFY COLUMN `type` enum('free_topup','buy_shanyrak','buy_tenge','game_reward','game_entry','shop_purchase') NOT NULL;--> statement-breakpoint
+ALTER TABLE `player_profiles` ADD `ownedDecks` text DEFAULT ('[]');
