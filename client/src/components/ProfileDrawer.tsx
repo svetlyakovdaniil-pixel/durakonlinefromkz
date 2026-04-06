@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import AvatarPicker from './AvatarPicker';
+import { useTranslation } from '@/i18n';
 
 interface ProfileDrawerProps {
   /** Current user's profile data */
@@ -40,27 +41,28 @@ export default function ProfileDrawer({
   profile, onlineFriendIds, children, onInviteFriend, inRoom,
 }: ProfileDrawerProps) {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[400px] p-0 overflow-hidden">
         <SheetHeader className="px-4 pt-4 pb-2">
-          <SheetTitle className="text-amber-100">Профиль</SheetTitle>
+          <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
         </SheetHeader>
         <Tabs defaultValue={inRoom ? 'friends' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
           <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
             <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Профиль</span>
+              <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.title')}</span>
             </TabsTrigger>
             <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Друзья</span>
+              <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.friends')}</span>
             </TabsTrigger>
             <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <Trophy className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Рейтинг</span>
+              <Trophy className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.rating')}</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">История</span>
+              <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.history')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -92,14 +94,15 @@ export default function ProfileDrawer({
 function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const utils = trpc.useUtils();
+  const { t } = useTranslation();
 
   const updateAvatar = trpc.profile.updateAvatar.useMutation({
     onSuccess: () => {
-      toast.success('Аватар обновлён!');
+      toast.success(t('profile.avatarUpdated'));
       utils.profile.me.invalidate();
       setShowAvatarPicker(false);
     },
-    onError: () => toast.error('Ошибка при обновлении аватара'),
+    onError: () => toast.error(t('profile.avatarError')),
   });
 
   if (!profile) {
@@ -131,38 +134,38 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             <button
               onClick={() => setShowAvatarPicker(true)}
               className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-600 hover:bg-amber-500 border-2 border-[#0f2035] flex items-center justify-center transition-colors shadow-md"
-              title="Сменить аватар"
+              title={t('profile.changeAvatar')}
             >
               <Camera className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
         </div>
 
-        <div className="text-amber-200/60 text-xs mb-1">Ваш ID</div>
+        <div className="text-amber-200/60 text-xs mb-1">{t('profile.yourId')}</div>
         <div className="text-4xl font-bold text-amber-300 flex items-center justify-center gap-2">
           <Hash className="w-7 h-7" />
           {profile.gameId}
         </div>
-        <div className="text-amber-200/50 text-xs mt-1">Дайте друзьям этот ID, чтобы они добавили вас</div>
+        <div className="text-amber-200/50 text-xs mt-1">{t('profile.shareIdHint')}</div>
       </div>
 
       {/* Display name */}
       <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
-        <div className="text-amber-200/60 text-xs mb-1">Имя</div>
-        <div className="text-amber-100 font-medium">{profile.displayName || 'Игрок'}</div>
+        <div className="text-amber-200/60 text-xs mb-1">{t('profile.name')}</div>
+        <div className="text-amber-100 font-medium">{profile.displayName || t('profile.player')}</div>
       </div>
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-2">
-        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label="Рейтинг" value={String(profile.rating)} />
-        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label="Игры" value={String(profile.gamesPlayed)} />
-        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label="Победы" value={String(profile.wins)} />
-        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label="Поражения" value={String(profile.losses)} />
+        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label={t('profile.rating')} value={String(profile.rating)} />
+        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label={t('profile.gamesPlayed')} value={String(profile.gamesPlayed)} />
+        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label={t('profile.wins')} value={String(profile.wins)} />
+        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label={t('profile.losses')} value={String(profile.losses)} />
       </div>
 
       {/* Win rate */}
       <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 text-center">
-        <div className="text-amber-200/60 text-xs mb-1">Винрейт</div>
+        <div className="text-amber-200/60 text-xs mb-1">{t('profile.winRate')}</div>
         <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
       </div>
 
@@ -207,6 +210,7 @@ function FriendProfileView({
 }) {
   const profileQuery = trpc.profile.byGameId.useQuery({ gameId }, { staleTime: 10_000 });
   const profile = profileQuery.data;
+  const { t } = useTranslation();
 
   if (profileQuery.isLoading) {
     return (
@@ -220,10 +224,10 @@ function FriendProfileView({
     return (
       <div className="space-y-4 mt-3">
         <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
-          <ArrowLeft className="w-4 h-4 mr-1" /> Назад
+          <ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back')}
         </Button>
         <div className="text-center py-8 text-amber-200/30 text-sm">
-          Профиль не найден
+          {t('profile.profileNotFound')}
         </div>
       </div>
     );
@@ -236,7 +240,7 @@ function FriendProfileView({
   return (
     <div className="space-y-4 mt-3">
       <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
-        <ArrowLeft className="w-4 h-4 mr-1" /> Назад к друзьям
+        <ArrowLeft className="w-4 h-4 mr-1" /> {t('profile.backToFriends')}
       </Button>
 
       {/* Friend's Avatar + Game ID */}
@@ -253,9 +257,9 @@ function FriendProfileView({
         </div>
         <div className="flex items-center justify-center gap-2 mb-1">
           <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
-          <span className="text-blue-200/60 text-xs">{isOnline ? 'В сети' : 'Не в сети'}</span>
+          <span className="text-blue-200/60 text-xs">{isOnline ? t('profile.online') : t('profile.offline')}</span>
         </div>
-        <div className="text-amber-100 font-medium text-lg mb-1">{profile.displayName || 'Игрок'}</div>
+        <div className="text-amber-100 font-medium text-lg mb-1">{profile.displayName || t('profile.player')}</div>
         <div className="text-3xl font-bold text-blue-300 flex items-center justify-center gap-2">
           <Hash className="w-6 h-6" />
           {profile.gameId}
@@ -264,15 +268,15 @@ function FriendProfileView({
 
       {/* Stats grid */}
       <div className="grid grid-cols-2 gap-2">
-        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label="Рейтинг" value={String(profile.rating)} />
-        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label="Игры" value={String(profile.gamesPlayed)} />
-        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label="Победы" value={String(profile.wins)} />
-        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label="Поражения" value={String(profile.losses)} />
+        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label={t('profile.rating')} value={String(profile.rating)} />
+        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label={t('profile.gamesPlayed')} value={String(profile.gamesPlayed)} />
+        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label={t('profile.wins')} value={String(profile.wins)} />
+        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label={t('profile.losses')} value={String(profile.losses)} />
       </div>
 
       {/* Win rate */}
       <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 text-center">
-        <div className="text-amber-200/60 text-xs mb-1">Винрейт</div>
+        <div className="text-amber-200/60 text-xs mb-1">{t('profile.winRate')}</div>
         <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
       </div>
 
@@ -282,11 +286,11 @@ function FriendProfileView({
           className="w-full bg-amber-600 hover:bg-amber-500 text-white"
           onClick={() => {
             onInviteFriend(profile.gameId);
-            toast.success(`Приглашение отправлено игроку ${profile.displayName || 'Игрок'}!`);
+            toast.success(t('profile.inviteSent').replace('{name}', profile.displayName || t('profile.player')));
           }}
         >
           <Send className="w-4 h-4 mr-2" />
-          Пригласить в комнату
+          {t('profile.inviteToRoom')}
         </Button>
       )}
     </div>
@@ -306,6 +310,7 @@ function FriendsTab({
   const [addGameId, setAddGameId] = useState('');
   const [viewingFriendGameId, setViewingFriendGameId] = useState<number | null>(null);
   const utils = trpc.useUtils();
+  const { t } = useTranslation();
 
   const friendsQuery = trpc.friends.list.useQuery(undefined, {
     refetchInterval: 15_000,
@@ -317,22 +322,22 @@ function FriendsTab({
   const sendRequest = trpc.friends.sendRequest.useMutation({
     onSuccess: (data) => {
       if (data.result === 'sent') {
-        toast.success('Заявка отправлена!');
+        toast.success(t('profile.requestSent'));
         setAddGameId('');
       } else if (data.result === 'already_friends') {
-        toast.info('Вы уже друзья!');
+        toast.info(t('profile.alreadyFriends'));
       } else if (data.result === 'already_pending') {
-        toast.info('Заявка уже отправлена');
+        toast.info(t('profile.alreadyPending'));
       } else {
-        toast.error('Игрок не найден');
+        toast.error(t('profile.playerNotFound'));
       }
     },
-    onError: () => toast.error('Ошибка при отправке заявки'),
+    onError: () => toast.error(t('profile.requestError')),
   });
 
   const acceptRequest = trpc.friends.acceptRequest.useMutation({
     onSuccess: () => {
-      toast.success('Заявка принята!');
+      toast.success(t('profile.requestAccepted'));
       utils.friends.list.invalidate();
       utils.friends.pendingRequests.invalidate();
     },
@@ -340,14 +345,14 @@ function FriendsTab({
 
   const rejectRequest = trpc.friends.rejectRequest.useMutation({
     onSuccess: () => {
-      toast.info('Заявка отклонена');
+      toast.info(t('profile.requestDeclined'));
       utils.friends.pendingRequests.invalidate();
     },
   });
 
   const removeFriend = trpc.friends.remove.useMutation({
     onSuccess: () => {
-      toast.info('Друг удалён');
+      toast.info(t('profile.friendRemoved'));
       utils.friends.list.invalidate();
     },
   });
@@ -355,7 +360,7 @@ function FriendsTab({
   const handleSendRequest = () => {
     const id = parseInt(addGameId);
     if (!id || id <= 0) {
-      toast.error('Введите корректный ID игрока');
+      toast.error(t('profile.invalidId'));
       return;
     }
     sendRequest.mutate({ targetGameId: id });
@@ -383,12 +388,12 @@ function FriendsTab({
       {/* Add friend */}
       <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
         <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
-          <UserPlus className="w-3.5 h-3.5" /> Добавить друга по ID
+          <UserPlus className="w-3.5 h-3.5" /> {t('profile.addFriendById')}
         </div>
         <div className="flex gap-2">
           <Input
             type="number"
-            placeholder="ID игрока"
+            placeholder={t('profile.playerIdPlaceholder')}
             value={addGameId}
             onChange={e => setAddGameId(e.target.value)}
             className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-sm"
@@ -409,7 +414,7 @@ function FriendsTab({
       {pending.length > 0 && (
         <div>
           <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5" /> Входящие заявки ({pending.length})
+            <Clock className="w-3.5 h-3.5" /> {t('profile.incomingRequests')} ({pending.length})
           </div>
           <div className="space-y-1.5">
             {pending.map(req => (
@@ -446,11 +451,11 @@ function FriendsTab({
       {/* Friends list */}
       <div>
         <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
-          <UserCheck className="w-3.5 h-3.5" /> Друзья ({friends.length})
+          <UserCheck className="w-3.5 h-3.5" /> {t('profile.friendsList')} ({friends.length})
         </div>
         {friends.length === 0 ? (
           <div className="text-center py-6 text-amber-200/30 text-sm">
-            Пока нет друзей. Добавьте по ID!
+            {t('profile.noFriends')}
           </div>
         ) : (
           <div className="space-y-1.5">
@@ -464,7 +469,7 @@ function FriendsTab({
                   >
                     <div className={`w-2 h-2 rounded-full shrink-0 ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
                     <div className="min-w-0">
-                      <span className="text-amber-100 text-sm font-medium">{friend.displayName || 'Игрок'}</span>
+                      <span className="text-amber-100 text-sm font-medium">{friend.displayName || t('profile.player')}</span>
                       <span className="text-amber-200/40 text-xs ml-1.5">#{friend.gameId}</span>
                     </div>
                     <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] px-1.5 shrink-0">
@@ -478,7 +483,7 @@ function FriendsTab({
                       variant="outline"
                       className="border-blue-700/40 text-blue-300 hover:bg-blue-900/30 h-7 w-7 p-0"
                       onClick={() => setViewingFriendGameId(friend.gameId)}
-                      title="Посмотреть профиль"
+                      title={t('profile.viewProfile')}
                     >
                       <Eye className="w-3.5 h-3.5" />
                     </Button>
@@ -490,7 +495,7 @@ function FriendsTab({
                         onClick={() => onInviteFriend(friend.gameId)}
                       >
                         <Send className="w-3 h-3 mr-0.5" />
-                        Пригласить
+                        {t('profile.invite')}
                       </Button>
                     )}
                     {/* Remove friend */}
@@ -500,7 +505,7 @@ function FriendsTab({
                       className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
                       onClick={() => removeFriend.mutate({ friendProfileId: friend.profileId })}
                       disabled={removeFriend.isPending}
-                      title="Удалить друга"
+                      title={t('profile.removeFriendTitle')}
                     >
                       <UserX className="w-3.5 h-3.5" />
                     </Button>
@@ -525,6 +530,7 @@ function TransactionHistoryTab() {
   const txQuery = trpc.balance.myTransactions.useQuery(undefined, {
     staleTime: 10_000,
   });
+  const { t } = useTranslation();
 
   const data = txQuery.data ?? [];
 
@@ -539,7 +545,7 @@ function TransactionHistoryTab() {
   if (data.length === 0) {
     return (
       <div className="mt-3 text-center py-8 text-amber-200/30 text-sm">
-        Пока нет транзакций
+        {t('profile.noTransactions')}
       </div>
     );
   }
@@ -555,10 +561,10 @@ function TransactionHistoryTab() {
         );
         const amountColor = isPositive ? 'text-green-400' : 'text-red-400';
         const amountPrefix = isPositive ? '+' : '';
-        const currencyLabel = tx.currency === 'tenge' ? 'тенге' : 'шаныраков';
+        const currencyLabel = tx.currency === 'tenge' ? t('profile.tenge') : t('profile.shanyrak');
 
         const date = new Date(tx.createdAt);
-        const timeStr = date.toLocaleString('ru-RU', {
+        const timeStr = date.toLocaleString(undefined, {
           day: '2-digit', month: '2-digit', year: '2-digit',
           hour: '2-digit', minute: '2-digit',
         });
@@ -573,18 +579,18 @@ function TransactionHistoryTab() {
                   <ArrowDownCircle className="w-3.5 h-3.5 text-red-400" />
                 )}
                 <span className="text-amber-100 text-xs font-medium truncate max-w-[180px]">
-                  {tx.description || 'Операция'}
+                  {tx.description || t('profile.operation')}
                 </span>
               </div>
               <span className={`text-xs font-bold ${amountColor} flex items-center gap-0.5`}>
-                {amountPrefix}{tx.amount.toLocaleString('ru-RU')} {currencyIcon}
+                {amountPrefix}{tx.amount.toLocaleString()} {currencyIcon}
               </span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-amber-200/30 text-[10px]">{timeStr}</span>
               {tx.balanceAfter !== null && (
                 <span className="text-amber-200/40 text-[10px]">
-                  Баланс: {tx.balanceAfter.toLocaleString('ru-RU')} {currencyLabel}
+                  {t('profile.balanceAfter')}: {tx.balanceAfter.toLocaleString()} {currencyLabel}
                 </span>
               )}
             </div>
@@ -602,6 +608,7 @@ function LeaderboardTab({ myGameId }: { myGameId?: number }) {
   const leaderboardQuery = trpc.stats.leaderboard.useQuery({ limit: 50 }, {
     staleTime: 30_000,
   });
+  const { t } = useTranslation();
 
   const data = leaderboardQuery.data ?? [];
 
@@ -631,7 +638,7 @@ function LeaderboardTab({ myGameId }: { myGameId?: number }) {
                   {medal || `${idx + 1}.`}
                 </span>
                 <span className={`text-sm font-medium ${isMe ? 'text-amber-300' : 'text-amber-100'}`}>
-                  {player.displayName || 'Игрок'}
+                  {player.displayName || t('profile.player')}
                 </span>
                 <span className="text-amber-200/30 text-[10px]">#{player.gameId}</span>
               </div>
@@ -646,7 +653,7 @@ function LeaderboardTab({ myGameId }: { myGameId?: number }) {
         })}
         {data.length === 0 && (
           <div className="text-center py-8 text-amber-200/30 text-sm">
-            Пока нет данных рейтинга
+            {t('profile.noLeaderboard')}
           </div>
         )}
       </div>

@@ -3,6 +3,7 @@ import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { X, ShoppingCart, Check, AlertTriangle } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
@@ -29,6 +30,7 @@ interface ConfirmPurchase {
 
 export default function ShopModal({ open, onClose, currentTenge, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<ShopTab>('decks');
   const [confirmPurchase, setConfirmPurchase] = useState<ConfirmPurchase | null>(null);
   const { data: ownedDecks = [], refetch: refetchOwned } = trpc.shop.ownedDecks.useQuery(undefined, { enabled: open });
@@ -46,34 +48,34 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
       if (item.type === 'deck') {
         const result = await purchaseMutation.mutateAsync({ deckId: item.id, tengeCost: item.price });
         if (result.success) {
-          toast.success('Колода куплена!');
+          toast.success(t('toast.purchaseSuccess'));
           refetchOwned();
           onPurchased?.();
         } else if (result.reason === 'already_owned') {
-          toast.info('Эта колода уже куплена');
+          toast.info(t('shop.owned'));
           refetchOwned();
         } else if (result.reason === 'insufficient_tenge') {
-          toast.error('Недостаточно тенге!');
+          toast.error(t('shop.notEnough'));
         } else {
-          toast.error('Ошибка покупки');
+          toast.error(t('common.error'));
         }
       } else {
         const result = await purchaseTableMutation.mutateAsync({ tableId: item.id, tengeCost: item.price });
         if (result.success) {
-          toast.success('Стол куплен!');
+          toast.success(t('toast.purchaseSuccess'));
           refetchOwnedTables();
           onPurchased?.();
         } else if (result.reason === 'already_owned') {
-          toast.info('Этот стол уже куплен');
+          toast.info(t('shop.owned'));
           refetchOwnedTables();
         } else if (result.reason === 'insufficient_tenge') {
-          toast.error('Недостаточно тенге!');
+          toast.error(t('shop.notEnough'));
         } else {
-          toast.error('Ошибка покупки');
+          toast.error(t('common.error'));
         }
       }
     } catch {
-      toast.error('Ошибка покупки');
+      toast.error(t('common.error'));
     } finally {
       setPurchasing(false);
     }
@@ -96,7 +98,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
         <div className="flex items-center justify-between px-5 py-4 border-b border-amber-700/20">
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-bold text-amber-100">Магазин</h2>
+            <h2 className="text-lg font-bold text-amber-100">{t('shop.title')}</h2>
           </div>
           <button className="text-amber-200/50 hover:text-amber-100 p-1" onClick={onClose}>
             <X className="w-5 h-5" />
@@ -106,7 +108,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
         {/* Balance */}
         <div className="px-5 py-3 bg-amber-900/10 border-b border-amber-700/10">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-amber-200/60">Ваш баланс:</span>
+            <span className="text-amber-200/60">{t('shop.balance')}:</span>
             <span className="text-amber-100 font-bold">{currentTenge}</span>
             <img src={TENGE_ICON} alt="₸" className="w-6 h-6 rounded-full object-cover aspect-square" />
           </div>
@@ -122,7 +124,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
             }`}
             onClick={() => setActiveTab('decks')}
           >
-            Колоды карт
+            {t('shop.decks')}
           </button>
           <button
             className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
@@ -132,7 +134,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
             }`}
             onClick={() => setActiveTab('tables')}
           >
-            Игровой стол
+            {t('shop.tables')}
           </button>
         </div>
 
@@ -161,22 +163,22 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
                 {/* Info + Buy */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-amber-100 font-bold text-sm mb-1">Кастомная колода</h3>
-                  <p className="text-amber-200/50 text-xs mb-3">Уникальный дизайн карт для вашей игры</p>
+                  <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.customDeck')}</h3>
+                  <p className="text-amber-200/50 text-xs mb-3">{t('shop.customDeckDesc')}</p>
 
                   {isCustomOwned ? (
                     <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                       <Check className="w-4 h-4" />
-                      <span>Куплено</span>
+                      <span>{t('shop.purchased')}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
                       <Button
                         className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: 'Кастомная колода', price: CUSTOM_DECK_PRICE })}
+                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: t('shop.customDeck'), price: CUSTOM_DECK_PRICE })}
                         disabled={purchasing || !canAfford}
                       >
-                        {purchasing ? 'Покупка...' : 'Купить'}
+                        {purchasing ? '...' : t('shop.buy')}
                       </Button>
                       <div className="flex items-center gap-1">
                         <span className="text-amber-100 font-bold text-base">{CUSTOM_DECK_PRICE}</span>
@@ -186,7 +188,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   )}
 
                   {!isCustomOwned && !canAfford && (
-                    <p className="text-red-400/80 text-xs mt-2">Недостаточно тенге для покупки</p>
+                    <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>
                   )}
                 </div>
               </div>
@@ -214,13 +216,13 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-amber-100 font-bold text-sm">{table.name}</h3>
-                          <p className="text-amber-200/50 text-xs mt-0.5">Чёрный, тёмно-синий и золотой</p>
+                          <p className="text-amber-200/50 text-xs mt-0.5">{t('shop.darkTableDesc')}</p>
                         </div>
 
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                             <Check className="w-4 h-4" />
-                            <span>Куплено</span>
+                            <span>{t('shop.purchased')}</span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-3">
@@ -229,7 +231,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                               onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: table.name, price: table.price })}
                               disabled={purchasing || !canAffordTable}
                             >
-                              {purchasing ? '...' : 'Купить'}
+                              {purchasing ? '...' : t('shop.buy')}
                             </Button>
                             <div className="flex items-center gap-1">
                               <span className="text-amber-100 font-bold text-base">{table.price}</span>
@@ -240,7 +242,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                       </div>
 
                       {!isOwned && !canAffordTable && (
-                        <p className="text-red-400/80 text-xs">Недостаточно тенге для покупки</p>
+                        <p className="text-red-400/80 text-xs">{t('shop.notEnough')}</p>
                       )}
                     </div>
                   </div>
@@ -252,7 +254,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
         {/* Footer hint */}
         <div className="px-5 pb-4 text-center">
-          <p className="text-amber-200/30 text-xs">Больше предметов скоро появится в магазине</p>
+          <p className="text-amber-200/30 text-xs">{t('shop.comingSoon')}</p>
         </div>
 
         {/* Purchase confirmation overlay */}
@@ -261,13 +263,13 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
             <div className="bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-xl shadow-2xl p-6 mx-6 max-w-sm w-full">
               <div className="flex items-center gap-2 mb-4">
                 <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <h3 className="text-amber-100 font-bold text-base">Подтверждение покупки</h3>
+                <h3 className="text-amber-100 font-bold text-base">{t('shop.confirmTitle')}</h3>
               </div>
               <p className="text-amber-200/70 text-sm mb-2">
-                Вы уверены, что хотите купить <span className="text-amber-100 font-semibold">{confirmPurchase.name}</span>?
+                {t('shop.confirmText').replace('{name}', confirmPurchase.name).replace('{price}', String(confirmPurchase.price))}
               </p>
               <div className="flex items-center gap-1.5 mb-5">
-                <span className="text-amber-200/60 text-sm">Стоимость:</span>
+                <span className="text-amber-200/60 text-sm">{t('shop.price')}:</span>
                 <span className="text-amber-100 font-bold text-lg">{confirmPurchase.price}</span>
                 <img src={TENGE_ICON} alt="₸" className="w-5 h-5 rounded-full object-cover aspect-square" />
               </div>
@@ -277,7 +279,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   onClick={() => executePurchase(confirmPurchase)}
                   disabled={purchasing}
                 >
-                  {purchasing ? 'Покупка...' : 'Подтвердить'}
+                  {purchasing ? '...' : t('shop.confirmBuy')}
                 </Button>
                 <Button
                   variant="outline"
@@ -285,7 +287,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   onClick={() => setConfirmPurchase(null)}
                   disabled={purchasing}
                 >
-                  Отмена
+                  {t('common.cancel')}
                 </Button>
               </div>
             </div>

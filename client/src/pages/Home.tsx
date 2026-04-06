@@ -14,10 +14,12 @@ import { useMusicContext } from "@/contexts/MusicContext";
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
 import { toast } from 'sonner';
 import InviteModal from '@/components/InviteModal';
+import { useTranslation } from '@/i18n';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { profile, profileLoading, refetchProfile } = useProfile(isAuthenticated);
+  const { t } = useTranslation();
 
   const {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
@@ -27,7 +29,7 @@ export default function Home() {
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
-    isAuthenticated ? user?.name || 'Гость' : null
+    isAuthenticated ? user?.name || t('landing.guest') : null
   );
 
   const music = useMusicContext();
@@ -36,7 +38,7 @@ export default function Home() {
   // Register profile with socket when profile loads
   useEffect(() => {
     if (profile && connected && !registeredRef.current) {
-      registerProfile(profile.gameId, profile.displayName || 'Игрок', profile.avatarId || undefined);
+      registerProfile(profile.gameId, profile.displayName || t('landing.player'), profile.avatarId || undefined);
       registeredRef.current = true;
     }
   }, [profile, connected, registerProfile]);
@@ -152,7 +154,7 @@ export default function Home() {
       <Lobby
         rooms={rooms}
         connected={connected}
-        userName={profile?.displayName || user?.name || 'Гость'}
+        userName={profile?.displayName || user?.name || t('landing.guest')}
         userId={user?.openId || ''}
         onCreateRoom={createRoom}
         onJoinRoom={joinRoom}
@@ -172,6 +174,7 @@ export default function Home() {
 }
 
 function LandingPage() {
+  const { t } = useTranslation();
   const faceCards = [
     CARD_IMAGES['K-spades'], CARD_IMAGES['Q-hearts'],
     CARD_IMAGES['J-diamonds'], CARD_IMAGES['A-clubs'],
@@ -190,31 +193,30 @@ function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
               <Badge className="bg-amber-900/50 text-amber-300 border-amber-700 mb-4">
-                <Star className="w-3 h-3 mr-1" /> Новая карточная игра
+                <Star className="w-3 h-3 mr-1" /> {t('landing.subtitle')}
               </Badge>
               <h1 className="text-5xl lg:text-6xl font-bold text-amber-100 mb-4 leading-tight">
-                Казахский<br />
+                {t('landing.title')}<br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-amber-600">
-                  Дурак Онлайн
+                  {t('lobby.subtitle')}
                 </span>
               </h1>
               <p className="text-amber-200/60 text-lg mb-8 max-w-lg">
-                Классическая карточная игра с уникальными казахскими правилами. 145 карт, 3 козыря,
-                легендарный Король Пик и мистическая карта 777.
+                {t('landing.feature2Desc')}
               </p>
 
               <div className="flex flex-wrap gap-3 mb-8">
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Users className="w-3 h-3 mr-1" /> 2-6 игроков
+                  <Users className="w-3 h-3 mr-1" /> 2-6
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Swords className="w-3 h-3 mr-1" /> 145 карт
+                  <Swords className="w-3 h-3 mr-1" /> 145
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Crown className="w-3 h-3 mr-1" /> 3 козыря
+                  <Crown className="w-3 h-3 mr-1" /> 3
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Zap className="w-3 h-3 mr-1" /> Реальное время
+                  <Zap className="w-3 h-3 mr-1" /> {t('landing.feature3Title')}
                 </Badge>
               </div>
 
@@ -224,7 +226,7 @@ function LandingPage() {
                 className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg shadow-amber-900/40 text-lg px-8"
               >
                 <a href={getLoginUrl()}>
-                  Войти и играть
+                  {t('landing.login')}
                 </a>
               </Button>
             </div>
@@ -252,22 +254,22 @@ function LandingPage() {
 
         <div className="bg-[#0d1f33]/80 border-t border-b border-amber-700/10 py-16">
           <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-3xl font-bold text-amber-100 text-center mb-12">Уникальные правила</h2>
+            <h2 className="text-3xl font-bold text-amber-100 text-center mb-12">{t('landing.feature1Title')}</h2>
             <div className="grid md:grid-cols-3 gap-8">
               <FeatureCard
                 icon={<Crown className="w-8 h-8 text-amber-400" />}
-                title="Король Пик"
-                desc="Бьёт любую карту, кроме себя и 777. Его может остановить только Туз Пик или легендарная 777."
+                title={t('landing.feature1Title')}
+                desc={t('landing.feature1Desc')}
               />
               <FeatureCard
                 icon={<Zap className="w-8 h-8 text-amber-400" />}
-                title="Три козыря"
-                desc="Основной козырь и два потайных. Когда одна колода заканчивается — открывается новый козырь!"
+                title={t('landing.feature2Title')}
+                desc={t('landing.feature2Desc')}
               />
               <FeatureCard
                 icon={<Shield className="w-8 h-8 text-amber-400" />}
-                title="Карта 777"
-                desc="Единственная в колоде. Бьёт всё, но с неё нельзя ходить. Если осталась последней — ловушка!"
+                title="777"
+                desc={t('landing.feature3Desc')}
               />
             </div>
           </div>
@@ -275,7 +277,7 @@ function LandingPage() {
 
         <div className="container mx-auto px-4 py-8 text-center">
           <p className="text-amber-200/30 text-sm">
-            Казахский Дурак Онлайн — карточная игра с национальным колоритом
+            {t('rules.footer')}
           </p>
         </div>
       </div>

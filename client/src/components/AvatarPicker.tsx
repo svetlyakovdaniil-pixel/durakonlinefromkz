@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AVATAR_OPTIONS, getAvatarUrl } from '../../../shared/avatars';
 import { Button } from '@/components/ui/button';
 import { Check, X } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -11,13 +12,14 @@ interface AvatarPickerProps {
 }
 
 export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loading }: AvatarPickerProps) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState(currentAvatarId || 'wolf');
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
       <div className="bg-[#1a2d45] border border-amber-700/40 rounded-2xl p-4 sm:p-6 max-w-md w-full space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-bold text-amber-100">Выберите аватар</h3>
+          <h3 className="text-lg font-bold text-amber-100">{t('avatarPicker.title')}</h3>
           <button onClick={onClose} className="text-amber-200/50 hover:text-amber-200 transition-colors">
             <X className="w-5 h-5" />
           </button>
@@ -72,14 +74,14 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
             className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm"
             onClick={onClose}
           >
-            Отмена
+            {t('avatarPicker.cancel')}
           </Button>
           <Button
             className="flex-1 bg-amber-700 hover:bg-amber-600 text-white text-sm"
             onClick={() => onSelect(selected)}
             disabled={loading || selected === currentAvatarId}
           >
-            {loading ? 'Сохранение...' : 'Сохранить'}
+            {loading ? t('avatarPicker.saving') : t('avatarPicker.save')}
           </Button>
         </div>
       </div>

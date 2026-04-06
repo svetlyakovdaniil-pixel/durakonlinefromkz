@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { X, ShoppingCart, AlertTriangle } from "lucide-react";
 import { formatBalance } from "@shared/formatBalance";
 import { trpc } from "@/lib/trpc";
+import { useTranslation } from "@/i18n";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
 
@@ -21,91 +22,34 @@ const TIERS = [
   { id: 6, tenge: 5000, usd: 60 },
 ];
 
-/**
- * Detect user's local currency from browser locale.
- * Maps common locales to currency codes.
- * Falls back to USD.
- */
 function detectCurrency(): { code: string; locale: string } {
   const lang = navigator.language || "en-US";
   const region = lang.split("-")[1]?.toUpperCase() || "";
 
   const regionToCurrency: Record<string, string> = {
-    RU: "RUB",
-    KZ: "KZT",
-    UA: "UAH",
-    BY: "BYN",
-    UZ: "UZS",
-    KG: "KGS",
-    TJ: "TJS",
-    TM: "TMT",
-    AZ: "AZN",
-    GE: "GEL",
-    AM: "AMD",
-    TR: "TRY",
-    GB: "GBP",
-    DE: "EUR",
-    FR: "EUR",
-    IT: "EUR",
-    ES: "EUR",
-    PT: "EUR",
-    NL: "EUR",
-    BE: "EUR",
-    AT: "EUR",
-    FI: "EUR",
-    IE: "EUR",
-    GR: "EUR",
-    JP: "JPY",
-    CN: "CNY",
-    KR: "KRW",
-    IN: "INR",
-    BR: "BRL",
-    MX: "MXN",
-    CA: "CAD",
-    AU: "AUD",
-    US: "USD",
+    RU: "RUB", KZ: "KZT", UA: "UAH", BY: "BYN", UZ: "UZS", KG: "KGS",
+    TJ: "TJS", TM: "TMT", AZ: "AZN", GE: "GEL", AM: "AMD", TR: "TRY",
+    GB: "GBP", DE: "EUR", FR: "EUR", IT: "EUR", ES: "EUR", PT: "EUR",
+    NL: "EUR", BE: "EUR", AT: "EUR", FI: "EUR", IE: "EUR", GR: "EUR",
+    JP: "JPY", CN: "CNY", KR: "KRW", IN: "INR", BR: "BRL", MX: "MXN",
+    CA: "CAD", AU: "AUD", US: "USD",
   };
 
   const code = regionToCurrency[region] || "USD";
   return { code, locale: lang };
 }
 
-/**
- * Approximate exchange rates from USD.
- * In production, these would come from a real-time API.
- * For now, we use reasonable approximate rates.
- */
 const USD_RATES: Record<string, number> = {
-  USD: 1,
-  RUB: 92,
-  KZT: 460,
-  UAH: 41,
-  BYN: 3.3,
-  UZS: 12700,
-  KGS: 89,
-  TJS: 11,
-  TMT: 3.5,
-  AZN: 1.7,
-  GEL: 2.7,
-  AMD: 390,
-  TRY: 32,
-  GBP: 0.79,
-  EUR: 0.92,
-  JPY: 150,
-  CNY: 7.25,
-  KRW: 1340,
-  INR: 83,
-  BRL: 5,
-  MXN: 17.2,
-  CAD: 1.36,
-  AUD: 1.53,
+  USD: 1, RUB: 92, KZT: 460, UAH: 41, BYN: 3.3, UZS: 12700, KGS: 89,
+  TJS: 11, TMT: 3.5, AZN: 1.7, GEL: 2.7, AMD: 390, TRY: 32, GBP: 0.79,
+  EUR: 0.92, JPY: 150, CNY: 7.25, KRW: 1340, INR: 83, BRL: 5, MXN: 17.2,
+  CAD: 1.36, AUD: 1.53,
 };
 
 function formatLocalPrice(usd: number, currencyCode: string, locale: string): string {
   const rate = USD_RATES[currencyCode] ?? 1;
   let localAmount = usd * rate;
 
-  // Round nicely
   if (localAmount >= 100) {
     localAmount = Math.round(localAmount);
   } else if (localAmount >= 10) {
@@ -127,6 +71,7 @@ function formatLocalPrice(usd: number, currencyCode: string, locale: string): st
 }
 
 export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModalProps) {
+  const { t } = useTranslation();
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const utils = trpc.useUtils();
@@ -134,7 +79,6 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
 
   const { code: currencyCode, locale } = useMemo(() => detectCurrency(), []);
 
-  // Reset state when modal closes
   useEffect(() => {
     if (!open) {
       setSelectedTier(null);
@@ -159,14 +103,14 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
 
         {/* Title */}
         <div className="flex items-center gap-2 mb-4">
-          <img src={TENGE_ICON} alt="Тенге" className="h-8 w-8 rounded-full object-contain" />
-          <h2 className="text-lg font-bold text-amber-100">Купить тенге</h2>
+          <img src={TENGE_ICON} alt="" className="h-8 w-8 rounded-full object-contain" />
+          <h2 className="text-lg font-bold text-amber-100">{t('topUp.tengeTitle')}</h2>
         </div>
 
         {/* Current balance */}
         <div className="flex items-center gap-2 mb-5 bg-slate-700/40 rounded-xl p-3">
           <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
-          <span className="text-amber-300/60 font-bold text-sm">Текущий баланс:</span>
+          <span className="text-amber-300/60 font-bold text-sm">{t('topUp.currentBalance')}:</span>
           <span className="text-amber-300 font-bold text-sm">{formatBalance(currentTenge)}</span>
         </div>
 
@@ -185,7 +129,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
               testTengeMutation.mutate(undefined, {
                 onSuccess: (data) => {
                   if (data.success) {
-                    setSuccessMessage('+10 000 тенге!');
+                    setSuccessMessage(`+10 000 ${t('topUp.tengeUnit')}!`);
                     utils.profile.me.invalidate();
                     setTimeout(() => setSuccessMessage(null), 3000);
                   }
@@ -194,9 +138,9 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
             }}
             disabled={testTengeMutation.isPending}
           >
-            {testTengeMutation.isPending ? 'Начисляем...' : '🧪 Получить 10K тенге'}
+            {testTengeMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10kTenge')}`}
           </button>
-          <p className="text-[10px] text-purple-400/60 text-center mt-1">Тестовая кнопка — будет удалена</p>
+          <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
         </div>
 
         {/* Tiers */}
@@ -223,7 +167,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         </div>
 
         <p className="text-[10px] text-gray-500 text-center">
-          Цены указаны в {currencyCode}. Окончательная сумма может отличаться в зависимости от платёжной системы.
+          {t('topUp.priceDisclaimer').replace('{currency}', currencyCode)}
         </p>
 
         {/* Confirm purchase dialog */}
@@ -232,7 +176,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
             <div className="bg-slate-800 border border-amber-600/40 rounded-2xl p-5 max-w-xs w-[90vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-center gap-2 mb-3">
                 <AlertTriangle className="w-5 h-5 text-amber-400" />
-                <h3 className="text-amber-100 font-bold">Подтвердите покупку</h3>
+                <h3 className="text-amber-100 font-bold">{t('topUp.confirmTitle')}</h3>
               </div>
               {(() => {
                 const tier = TIERS.find(t => t.id === selectedTier);
@@ -243,10 +187,10 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
                       <span className="text-amber-300 font-bold text-xl">{formatBalance(tier.tenge)}</span>
-                      <span className="text-amber-200/50 text-sm">тенге</span>
+                      <span className="text-amber-200/50 text-sm">{t('topUp.tengeUnit')}</span>
                     </div>
                     <div className="text-gray-300 text-sm">
-                      за <span className="text-amber-400 font-bold">{localPrice}</span>
+                      {t('topUp.for')} <span className="text-amber-400 font-bold">{localPrice}</span>
                     </div>
                   </div>
                 );
@@ -256,18 +200,16 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold text-sm transition-colors"
                   onClick={() => setSelectedTier(null)}
                 >
-                  Нет
+                  {t('common.no')}
                 </button>
                 <button
                   className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm transition-colors"
                   onClick={() => {
-                    // TODO: integrate real payment (App Store / Google Play / Stripe)
                     setSelectedTier(null);
-                    // For now, show a placeholder toast
-                    alert("Функция покупки за реальную валюту будет добавлена позже. Следите за обновлениями!");
+                    alert(t('topUp.purchaseComingSoon'));
                   }}
                 >
-                  Купить
+                  {t('topUp.buyBtn')}
                 </button>
               </div>
             </div>

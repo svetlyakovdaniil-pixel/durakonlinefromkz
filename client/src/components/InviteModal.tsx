@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, X } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface InviteModalProps {
   invite: {
@@ -14,6 +15,7 @@ interface InviteModalProps {
 }
 
 export default function InviteModal({ invite, onAccept, onDecline }: InviteModalProps) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [currentInvite, setCurrentInvite] = useState(invite);
 
@@ -60,14 +62,14 @@ export default function InviteModal({ invite, onAccept, onDecline }: InviteModal
 
         {/* Title */}
         <h3 className="text-center text-lg font-bold text-amber-100 mb-2">
-          Приглашение в комнату
+          {t('invite.inviteTitle')}
         </h3>
 
         {/* Description */}
         <p className="text-center text-amber-200/70 text-sm mb-6">
           <span className="font-semibold text-amber-200">{currentInvite.fromName}</span>
           <span className="text-amber-200/50"> (#{currentInvite.fromGameId})</span>
-          {' '}приглашает вас в комнату{' '}
+          {' '}{t('invite.invitesYou')}{' '}
           <span className="font-semibold text-amber-200">«{currentInvite.roomName}»</span>
         </p>
 
@@ -78,13 +80,13 @@ export default function InviteModal({ invite, onAccept, onDecline }: InviteModal
             variant="outline"
             className="flex-1 h-11 text-sm border-amber-700/40 text-amber-200/80 hover:bg-amber-900/30 hover:text-amber-100"
           >
-            Отклонить
+            {t('invite.decline')}
           </Button>
           <Button
             onClick={handleAccept}
             className="flex-1 h-11 text-sm bg-amber-600 hover:bg-amber-500 text-white font-semibold shadow-lg shadow-amber-900/30"
           >
-            Принять
+            {t('invite.accept')}
           </Button>
         </div>
 

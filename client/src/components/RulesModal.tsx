@@ -1,6 +1,7 @@
 import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight, Timer, Coins, Wifi, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useTranslation } from '@/i18n';
 
 interface RulesModalProps {
   open: boolean;
@@ -8,6 +9,8 @@ interface RulesModalProps {
 }
 
 export default function RulesModal({ open, onClose }: RulesModalProps) {
+  const { t } = useTranslation();
+
   if (!open) return null;
 
   return (
@@ -21,7 +24,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
         <div className="flex items-center justify-between px-5 py-4 border-b border-amber-700/20 bg-black/20">
           <div className="flex items-center gap-2">
             <BookOpen className="w-5 h-5 text-amber-400" />
-            <h2 className="text-lg font-bold text-amber-100">Правила игры</h2>
+            <h2 className="text-lg font-bold text-amber-100">{t('rules.title')}</h2>
           </div>
           <button
             className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
@@ -39,7 +42,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
               <AccordionTrigger className="px-4 py-3 text-amber-100 hover:text-amber-200 hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-amber-400" />
-                  <span className="text-base font-semibold">Глава 1: Казахский Дурак</span>
+                  <span className="text-base font-semibold">{t('rules.chapter1')}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
@@ -47,64 +50,54 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                   {/* Deck */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-amber-400" /> Колода и раздача
+                      <Layers className="w-4 h-4 text-amber-400" /> {t('rules.deckTitle')}
                     </h4>
-                    <p>
-                      Используется <strong className="text-amber-100">4 стандартные колоды по 36 карт</strong> (от 6 до туза, четыре масти).
-                      Итого <strong className="text-amber-100">144 карты + 1 специальная карта «777» = 145 карт</strong>.
-                      Каждой карты в игре по <strong className="text-amber-100">4 копии</strong>.
-                      Каждому игроку раздаётся по <strong className="text-amber-100">14 карт</strong>.
-                      В игре может участвовать от 2 до 8 игроков.
-                    </p>
+                    <p>{t('rules.deckText')}</p>
                   </div>
 
                   {/* Copy cards beat themselves */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-amber-400" /> Копии карт
+                      <Layers className="w-4 h-4 text-amber-400" /> {t('rules.copiesTitle')}
                     </h4>
-                    <p>
-                      Так как каждой карты по 4 копии, <strong className="text-amber-100">копии бьют сами себя</strong>.
-                    </p>
+                    <p>{t('rules.copiesText')}</p>
                     <ul className="space-y-1 ml-4 mt-1.5">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>7♣ бьёт 7♣</span>
+                        <span>{t('rules.copiesEx1')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Дама♥ бьёт Даму♥</span>
+                        <span>{t('rules.copiesEx2')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Туз♦ бьёт Туза♦</span>
+                        <span>{t('rules.copiesEx3')}</span>
                       </li>
                     </ul>
                     <p className="mt-1.5">
-                      <strong className="text-red-400">Исключение:</strong> Король пик ♠К <strong className="text-amber-100">не бьёт сам себя</strong>.
+                      <strong className="text-red-400">{t('rules.copiesException')}</strong>
                     </p>
                   </div>
 
                   {/* Trump system */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Swords className="w-4 h-4 text-amber-400" /> Система козырей (3 фазы)
+                      <Swords className="w-4 h-4 text-amber-400" /> {t('rules.trumpTitle')}
                     </h4>
-                    <p className="mb-2">
-                      Козырная масть меняется в процессе игры. Колода разделена на две части (колода 1 и колода 2).
-                    </p>
+                    <p className="mb-2">{t('rules.trumpIntro')}</p>
                     <ul className="space-y-1.5 ml-4">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400 font-bold mt-0.5">1.</span>
-                        <span><strong className="text-amber-100">Фаза 1</strong> — козырь определяется нижней картой колоды 1 (видна всем). Под ней лежит скрытая карта.</span>
+                        <span><strong className="text-amber-100">{t('rules.trumpPhase1')}</strong></span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400 font-bold mt-0.5">2.</span>
-                        <span><strong className="text-amber-100">Фаза 2</strong> — когда колода 1 заканчивается, скрытая карта переворачивается. Её масть становится новым козырем.</span>
+                        <span><strong className="text-amber-100">{t('rules.trumpPhase2')}</strong></span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400 font-bold mt-0.5">3.</span>
-                        <span><strong className="text-amber-100">Фаза 3</strong> — когда колода 2 заканчивается, масть последней взятой из неё карты становится финальным козырем до конца игры.</span>
+                        <span><strong className="text-amber-100">{t('rules.trumpPhase3')}</strong></span>
                       </li>
                     </ul>
                   </div>
@@ -112,146 +105,95 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                   {/* Special cards */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-amber-400" /> Специальные карты
+                      <Shield className="w-4 h-4 text-amber-400" /> {t('rules.specialTitle')}
                     </h4>
                     <ul className="space-y-2 ml-4">
-                      <li>
-                        <strong className="text-amber-100">Карта «777»</strong> — бьёт абсолютно любую карту в игре. Её нельзя использовать для атаки, только для защиты. Единственная в колоде.
-                      </li>
-                      <li>
-                        <strong className="text-amber-100">Король пик ♠К</strong> — бьёт любую карту в игре, <strong className="text-red-400">кроме самого себя</strong>. Можно использовать и для атаки, и для защиты. Короля пик могут побить только <strong className="text-amber-100">Туз пик ♠Т</strong> и <strong className="text-amber-100">карта «777»</strong>.
-                      </li>
-                      <li>
-                        <strong className="text-amber-100">Туз пик ♠Т</strong> — бьёт Короля пик. В остальном действует как обычный туз.
-                      </li>
+                      <li><strong className="text-amber-100">{t('rules.special777')}</strong></li>
+                      <li><strong className="text-amber-100">{t('rules.specialKing')}</strong></li>
+                      <li><strong className="text-amber-100">{t('rules.specialAce')}</strong></li>
                     </ul>
                   </div>
 
                   {/* First bita rule */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Layers className="w-4 h-4 text-amber-400" /> Первая бита
+                      <Layers className="w-4 h-4 text-amber-400" /> {t('rules.firstBitaTitle')}
                     </h4>
-                    <p>
-                      <strong className="text-amber-100">Первая бита — 13 карт.</strong> В самом начале игры, когда в бито ещё нет ни одной карты, 
-                      защитник обязан отбить максимум 13 атакующих карт. 
-                      Как только в бито появляется хотя бы одна карта, правило меняется: 
-                      <strong className="text-amber-100">игрок обязан бить столько карт, сколько у него в руке</strong>.
-                    </p>
+                    <p>{t('rules.firstBitaText')}</p>
                   </div>
 
                   {/* Throwing cards */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Users className="w-4 h-4 text-amber-400" /> Подкидывание карт
+                      <Users className="w-4 h-4 text-amber-400" /> {t('rules.throwingTitle')}
                     </h4>
-                    <p>
-                      Подкидывать карты защитнику могут <strong className="text-amber-100">только крайние игроки</strong> (сидящие слева и справа от защитника).
-                    </p>
-                    <p className="mt-1.5">
-                      <strong className="text-amber-100">Исключение — шестёрка:</strong> если атакующий начал ход с шестёрки, 
-                      <strong className="text-amber-100">все игроки за столом</strong> могут подкинуть шестёрку. 
-                      Это правило работает только если ход был начат именно с шестёрки.
-                    </p>
+                    <p>{t('rules.throwingText')}</p>
+                    <p className="mt-1.5">{t('rules.throwingSixRule')}</p>
                   </div>
 
                   {/* Ten reverses */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <ArrowRight className="w-4 h-4 text-amber-400" /> Десятка — разворот
+                      <ArrowRight className="w-4 h-4 text-amber-400" /> {t('rules.tenReverseTitle')}
                     </h4>
-                    <p>
-                      Если игрок походил с <strong className="text-amber-100">десятки</strong>, направление хода игры <strong className="text-amber-100">переворачивается</strong> — 
-                      по аналогии с картой разворота в игре UNO. Если игра шла по часовой стрелке, 
-                      она начинает идти против часовой, и наоборот.
-                    </p>
+                    <p>{t('rules.tenReverseText')}</p>
                   </div>
 
                   {/* Transfer */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <ArrowRight className="w-4 h-4 text-amber-400" /> Перевод
+                      <ArrowRight className="w-4 h-4 text-amber-400" /> {t('rules.transferTitle')}
                     </h4>
-                    <p>
-                      Игра всегда по системе <strong className="text-amber-100">«переводной»</strong>. 
-                      Защитник может перевести атаку на следующего игрока, 
-                      положив карту того же номинала, что и атакующая. Перевод возможен, только если 
-                      ни одна карта ещё не отбита. Можно перевести сразу несколько карт одного номинала.
-                    </p>
+                    <p>{t('rules.transferText')}</p>
                   </div>
 
                   {/* Pass-through */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Shield className="w-4 h-4 text-amber-400" /> Проездной
+                      <Shield className="w-4 h-4 text-amber-400" /> {t('rules.passThroughTitle')}
                     </h4>
-                    <p>
-                      Если у защитника есть <strong className="text-amber-100">козырная карта того же номинала</strong>, что и атакующая, 
-                      он может показать её как «проездной». При этом карта <strong className="text-amber-100">остаётся в руке</strong> защитника, 
-                      но атака переводится на следующего игрока. 
-                      Проездной — это способ перенаправить атаку, не тратя карту и не отбиваясь.
-                      Каждая карта может быть использована как проездной только <strong className="text-amber-100">один раз за игру</strong>.
-                    </p>
+                    <p>{t('rules.passThroughText')}</p>
                   </div>
 
                   {/* Multi-card attack */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Swords className="w-4 h-4 text-amber-400" /> Множественная атака и перевод
+                      <Swords className="w-4 h-4 text-amber-400" /> {t('rules.multiAttackTitle')}
                     </h4>
-                    <p>
-                      При начале хода, если у атакующего есть несколько карт одного номинала, 
-                      он может <strong className="text-amber-100">выбрать сколько из них положить на стол за раз</strong>. 
-                      Нажмите на карту — она вытянется из руки, а карты того же номинала подсветятся. 
-                      Выберите нужные и нажмите «Походить».
-                    </p>
-                    <p className="mt-1.5">
-                      Аналогично работает и <strong className="text-amber-100">множественный перевод</strong>: 
-                      если у защитника есть несколько карт одного номинала для перевода, 
-                      он может выбрать сколько из них перевести за раз.
-                    </p>
+                    <p>{t('rules.multiAttackText')}</p>
+                    <p className="mt-1.5">{t('rules.multiTransferText')}</p>
                   </div>
 
                   {/* Timer */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Timer className="w-4 h-4 text-amber-400" /> Таймер хода
+                      <Timer className="w-4 h-4 text-amber-400" /> {t('rules.timerTitle')}
                     </h4>
-                    <p>
-                      На каждый ход отводится ограниченное время (настраивается при создании комнаты: 30, 60 или 90 секунд). 
-                      Если время истекло — ход пропускается автоматически: 
-                      для атакующего это означает «бито», для защитника — «забрать карты».
-                    </p>
+                    <p>{t('rules.timerText')}</p>
                     <p className="mt-1.5">
-                      <strong className="text-red-400">Два пропуска подряд = автоматический проигрыш.</strong> Игрок считается проигравшим и выбывает из игры.
+                      <strong className="text-red-400">{t('rules.timerPenalty')}</strong>
                     </p>
                   </div>
 
                   {/* Shanyrak currency */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Crown className="w-4 h-4 text-amber-400" /> Шаныраки (игровая валюта)
+                      <Crown className="w-4 h-4 text-amber-400" /> {t('rules.shanyrakTitle')}
                     </h4>
-                    <p>
-                      <strong className="text-amber-100">Шаныраки</strong> — основная игровая валюта, на которую игроки играют. 
-                      При создании комнаты устанавливается ставка в шаныраках. 
-                      Все игроки вносят ставку, и призовой фонд распределяется между победителями по местам.
-                    </p>
-                    <p className="mt-1.5">
-                      <strong className="text-amber-100">Как заработать шаныраки:</strong>
-                    </p>
+                    <p>{t('rules.shanyrakText')}</p>
+                    <p className="mt-1.5"><strong className="text-amber-100">{t('rules.shanyrakEarn')}</strong></p>
                     <ul className="space-y-1 ml-4 mt-1">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Выигрывать игры — чем выше место, тем больше награда</span>
+                        <span>{t('rules.shanyrakWin')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Ежедневный бонус при входе в игру</span>
+                        <span>{t('rules.shanyrakDaily')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Начальный баланс при регистрации</span>
+                        <span>{t('rules.shanyrakStart')}</span>
                       </li>
                     </ul>
                   </div>
@@ -259,27 +201,22 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                   {/* Tenge currency */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Coins className="w-4 h-4 text-amber-400" /> Тенге (валюта магазина)
+                      <Coins className="w-4 h-4 text-amber-400" /> {t('rules.tengeTitle')}
                     </h4>
-                    <p>
-                      <strong className="text-amber-100">Тенге</strong> — валюта магазина, используется для покупки косметических предметов: 
-                      колод карт и игровых столов.
-                    </p>
-                    <p className="mt-1.5">
-                      <strong className="text-amber-100">Как заработать тенге:</strong>
-                    </p>
+                    <p>{t('rules.tengeText')}</p>
+                    <p className="mt-1.5"><strong className="text-amber-100">{t('rules.tengeEarn')}</strong></p>
                     <ul className="space-y-1 ml-4 mt-1">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Выигрывать игры — победители получают тенге</span>
+                        <span>{t('rules.tengeWin')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Ежедневный бонус при входе</span>
+                        <span>{t('rules.tengeDaily')}</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>Начальный баланс при регистрации</span>
+                        <span>{t('rules.tengeStart')}</span>
                       </li>
                     </ul>
                   </div>
@@ -287,29 +224,18 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                   {/* Disconnect */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Wifi className="w-4 h-4 text-amber-400" /> Выход из игры / потеря связи
+                      <Wifi className="w-4 h-4 text-amber-400" /> {t('rules.disconnectTitle')}
                     </h4>
-                    <p>
-                      Если игрок <strong className="text-amber-100">выходит из начатой игры</strong> или <strong className="text-amber-100">полностью теряет связь с сервером</strong>, 
-                      он автоматически считается <strong className="text-red-400">проигравшим</strong>. 
-                      Его ставка в шаныраках не возвращается и распределяется между оставшимися игроками.
-                    </p>
-                    <p className="mt-1.5">
-                      При кратковременной потере связи игрок может переподключиться и продолжить игру, 
-                      если таймер хода ещё не истёк дважды подряд.
-                    </p>
+                    <p>{t('rules.disconnectText')}</p>
+                    <p className="mt-1.5">{t('rules.disconnectReconnect')}</p>
                   </div>
 
                   {/* Winning */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Crown className="w-4 h-4 text-amber-400" /> Победа и проигрыш
+                      <Crown className="w-4 h-4 text-amber-400" /> {t('rules.winTitle')}
                     </h4>
-                    <p>
-                      Цель — избавиться от всех карт. Игроки выбывают по мере опустошения руки. 
-                      Последний игрок с картами — <strong className="text-amber-100">проигравший (дурак)</strong>. 
-                      Призовой фонд (шаныраки) распределяется между победителями по местам.
-                    </p>
+                    <p>{t('rules.winText')}</p>
                   </div>
                 </div>
               </AccordionContent>
@@ -320,78 +246,43 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
               <AccordionTrigger className="px-4 py-3 text-amber-100 hover:text-amber-200 hover:no-underline">
                 <div className="flex items-center gap-2">
                   <Swords className="w-5 h-5 text-amber-400" />
-                  <span className="text-base font-semibold">Глава 2: Стандартные правила «Дурака»</span>
+                  <span className="text-base font-semibold">{t('rules.chapter2')}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4 text-amber-200/80 text-sm leading-relaxed">
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Общие сведения</h4>
-                    <p>
-                      «Дурак» — популярная карточная игра, в которой цель — избавиться от всех карт на руках. 
-                      Последний игрок, оставшийся с картами, считается проигравшим и получает звание «дурак».
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdGeneralTitle')}</h4>
+                    <p>{t('rules.stdGeneral')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Колода</h4>
-                    <p>
-                      В стандартной версии используется колода из 36 карт (от шестёрки до туза, четыре масти). 
-                      Козырная масть определяется одной картой, вытянутой из колоды и положенной под неё рубашкой вверх.
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDeckTitle')}</h4>
+                    <p>{t('rules.stdDeck')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Раздача</h4>
-                    <p>
-                      Каждому игроку раздаётся по 6 карт. Оставшиеся карты образуют колоду для добора. 
-                      Первым ходит игрок с наименьшим козырем (или определяется случайно).
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDealTitle')}</h4>
+                    <p>{t('rules.stdDeal')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Атака и защита</h4>
-                    <p>
-                      Атакующий кладёт карту на стол. Защитник должен побить её картой той же масти, но старше, 
-                      или любым козырем (если атакующая карта не козырная). Козырную карту можно побить только старшим козырем.
-                    </p>
-                    <p className="mt-1.5">
-                      Другие игроки могут подкидывать карты того же номинала, что уже есть на столе, 
-                      но общее количество атакующих карт не может превышать количество карт в руке защитника.
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdAttackTitle')}</h4>
+                    <p>{t('rules.stdAttack')}</p>
+                    <p className="mt-1.5">{t('rules.stdAttackMore')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Забрать карты</h4>
-                    <p>
-                      Если защитник не может или не хочет отбиваться, он забирает все карты со стола в свою руку. 
-                      После этого ход переходит к следующему игроку (защитник пропускает свой ход атаки).
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdTakeTitle')}</h4>
+                    <p>{t('rules.stdTake')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Бито</h4>
-                    <p>
-                      Если все атакующие карты отбиты и никто не подкидывает, атакующий объявляет «Бито». 
-                      Все карты со стола уходят в отбой (сброс). Ход переходит к бывшему защитнику — теперь он атакует.
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdBitoTitle')}</h4>
+                    <p>{t('rules.stdBito')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Добор карт</h4>
-                    <p>
-                      После каждого розыгрыша игроки добирают карты из колоды до нужного количества (6 в стандартной версии). 
-                      Первым добирает атакующий, затем остальные по кругу. Защитник добирает последним.
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDrawTitle')}</h4>
+                    <p>{t('rules.stdDraw')}</p>
                   </div>
-
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">Окончание игры</h4>
-                    <p>
-                      Когда колода заканчивается, игроки доигрывают оставшимися картами. 
-                      Игрок, избавившийся от всех карт, выходит из игры. 
-                      Последний оставшийся с картами — проигравший.
-                    </p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdEndTitle')}</h4>
+                    <p>{t('rules.stdEnd')}</p>
                   </div>
                 </div>
               </AccordionContent>
@@ -400,9 +291,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
 
           {/* Footer note */}
           <div className="mt-4 mb-2 text-center">
-            <p className="text-amber-200/40 text-xs">
-              Казахский Дурак Онлайн — карточная игра с уникальными правилами
-            </p>
+            <p className="text-amber-200/40 text-xs">{t('rules.footer')}</p>
           </div>
         </ScrollArea>
       </div>

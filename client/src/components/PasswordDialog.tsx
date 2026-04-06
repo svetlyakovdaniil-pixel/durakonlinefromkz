@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Lock, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface PasswordDialogProps {
   open: boolean;
@@ -12,13 +13,14 @@ interface PasswordDialogProps {
 }
 
 export default function PasswordDialog({ open, onOpenChange, roomName, onSubmit }: PasswordDialogProps) {
+  const { t } = useTranslation();
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async () => {
     if (!password.trim()) {
-      setError('Введите пароль');
+      setError(t('passwordDialog.empty'));
       return;
     }
     setLoading(true);
@@ -26,7 +28,7 @@ export default function PasswordDialog({ open, onOpenChange, roomName, onSubmit 
     const ok = await onSubmit(password);
     setLoading(false);
     if (!ok) {
-      setError('Неверный пароль');
+      setError(t('passwordDialog.wrong'));
       setPassword('');
     } else {
       setPassword('');
@@ -40,16 +42,16 @@ export default function PasswordDialog({ open, onOpenChange, roomName, onSubmit 
         <DialogHeader>
           <DialogTitle className="text-amber-100 flex items-center gap-2">
             <Lock className="w-5 h-5 text-amber-400" />
-            Закрытая комната
+            {t('passwordDialog.title')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <p className="text-amber-200/60 text-sm">
-            Комната «{roomName}» защищена паролем
+            {t('passwordDialog.description').replace('{room}', roomName)}
           </p>
           <Input
             type="password"
-            placeholder="Введите пароль"
+            placeholder={t('passwordDialog.placeholder')}
             value={password}
             onChange={e => { setPassword(e.target.value); setError(''); }}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
@@ -63,7 +65,7 @@ export default function PasswordDialog({ open, onOpenChange, roomName, onSubmit 
             disabled={loading}
           >
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            Войти
+            {t('passwordDialog.join')}
           </Button>
         </div>
       </DialogContent>

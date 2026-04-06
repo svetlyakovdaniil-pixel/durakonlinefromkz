@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { X, Clock, Play, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
+import { useTranslation } from "@/i18n";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
 const SHANYRAK_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png";
@@ -31,6 +32,7 @@ function formatTime(ms: number): string {
 }
 
 export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTenge, onBalanceUpdated }: ShanyrakTopUpModalProps) {
+  const { t } = useTranslation();
   const [confirmTier, setConfirmTier] = useState<string | null>(null);
   const [showInsufficientTenge, setShowInsufficientTenge] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
@@ -46,7 +48,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
   const freeTopupMutation = trpc.balance.freeShanyrakTopup.useMutation({
     onSuccess: (data) => {
       if (data.success) {
-        setSuccessMessage(`+${formatBalance(data.added ?? 0)} шаныраков!`);
+        setSuccessMessage(`+${formatBalance(data.added ?? 0)} ${t('topUp.shanyrakUnit')}!`);
         onBalanceUpdated();
         utils.balance.freeTopupStatus.invalidate();
         utils.profile.me.invalidate();
@@ -61,7 +63,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     onSuccess: (data) => {
       if (data.success) {
         const tier = TIERS.find(t => t.id === confirmTier);
-        setSuccessMessage(`+${formatBalance(tier?.shanyrak ?? 0)} шаныраков!`);
+        setSuccessMessage(`+${formatBalance(tier?.shanyrak ?? 0)} ${t('topUp.shanyrakUnit')}!`);
         setConfirmTier(null);
         onBalanceUpdated();
         utils.profile.me.invalidate();
@@ -129,8 +131,8 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
 
         {/* Title */}
         <div className="flex items-center gap-2 mb-4">
-          <img src={SHANYRAK_ICON} alt="Шаныраки" className="h-8 object-contain" />
-          <h2 className="text-lg font-bold text-amber-100">Пополнить шаныраки</h2>
+          <img src={SHANYRAK_ICON} alt="" className="h-8 object-contain" />
+          <h2 className="text-lg font-bold text-amber-100">{t('topUp.shanyrakTitle')}</h2>
         </div>
 
         {/* Current balance */}
@@ -161,7 +163,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
               testShanyrakMutation.mutate(undefined, {
                 onSuccess: (data) => {
                   if (data.success) {
-                    setSuccessMessage('+10 000 шаныраков!');
+                    setSuccessMessage(`+10 000 ${t('topUp.shanyrakUnit')}!`);
                     onBalanceUpdated();
                     utils.profile.me.invalidate();
                     setTimeout(() => setSuccessMessage(null), 3000);
@@ -171,9 +173,9 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             }}
             disabled={testShanyrakMutation.isPending}
           >
-            {testShanyrakMutation.isPending ? 'Начисляем...' : '🧪 Получить 10K шаныраков'}
+            {testShanyrakMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10k')}`}
           </button>
-          <p className="text-[10px] text-purple-400/60 text-center mt-1">Тестовая кнопка — будет удалена</p>
+          <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
         </div>
 
         {/* Option 1: Free top-up to 2000 */}
@@ -188,22 +190,22 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             disabled={!isFreeAvailable || isAlreadyMax || freeTopupMutation.isPending}
           >
             {freeTopupMutation.isPending ? (
-              <span>Пополняем...</span>
+              <span>{t('topUp.crediting')}</span>
             ) : isCooldown ? (
               <>
                 <Clock className="w-4 h-4" />
                 <span>{formatTime(cooldownRemaining)}</span>
               </>
             ) : isAlreadyMax ? (
-              <span>Баланс уже 2000+</span>
+              <span>{t('topUp.alreadyMax')}</span>
             ) : (
               <>
-                <span>Добить баланс до 2000</span>
+                <span>{t('topUp.freeTopup')}</span>
                 <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain" />
               </>
             )}
           </button>
-          <p className="text-[10px] text-gray-500 text-center mt-1">Бесплатно раз в 12 часов</p>
+          <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.freeNote')}</p>
         </div>
 
         {/* Option 2: Watch ad */}
@@ -214,14 +216,14 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
           >
             <div className="flex items-center gap-2">
               <Play className="w-4 h-4" />
-              <span>Посмотреть рекламу</span>
+              <span>{t('topUp.watchAd')}</span>
             </div>
             <div className="flex items-center gap-1">
               <span className="text-green-400/50">+1000</span>
               <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain opacity-50" />
             </div>
           </button>
-          <p className="text-[10px] text-gray-500 text-center mt-1">Скоро будет доступно</p>
+          <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.comingSoon')}</p>
         </div>
 
         {/* Divider */}
@@ -229,7 +231,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
           <div className="flex-1 h-px bg-slate-600/50" />
           <div className="flex items-center gap-1 text-xs text-gray-400">
             <ArrowRightLeft className="w-3 h-3" />
-            <span>Обмен тенге на шаныраки</span>
+            <span>{t('topUp.exchangeTitle')}</span>
           </div>
           <div className="flex-1 h-px bg-slate-600/50" />
         </div>
@@ -252,7 +254,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   <span>{formatBalance(tier.shanyrak)}</span>
                   <img src={SHANYRAK_ICON} alt="" className="h-6 object-contain" />
                 </div>
-                <span className="text-gray-400 text-xs shrink-0">за</span>
+                <span className="text-gray-400 text-xs shrink-0">{t('topUp.for')}</span>
                 <div className="flex-1 flex items-center gap-1 justify-end">
                   <span>{formatBalance(tier.tenge)}</span>
                   <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
@@ -266,18 +268,18 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
         {confirmTier && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50" onClick={() => setConfirmTier(null)}>
             <div className="bg-slate-800 border border-amber-600/40 rounded-2xl p-5 max-w-xs w-[90vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-amber-100 font-bold text-center mb-3">Подтвердите покупку</h3>
+              <h3 className="text-amber-100 font-bold text-center mb-3">{t('topUp.confirmTitle')}</h3>
               {(() => {
                 const tier = TIERS.find(t => t.id === confirmTier);
                 if (!tier) return null;
                 return (
                   <div className="text-center mb-4">
-                    <div className="flex items-center justify-center gap-1.5 mb-2">
+                    <div className="flex items-center justify-center gap-1.5 text-lg mb-1">
                       <span className="text-green-400 font-bold">{formatBalance(tier.shanyrak)}</span>
                       <img src={SHANYRAK_ICON} alt="" className="h-5 object-contain" />
                     </div>
                     <div className="flex items-center justify-center gap-1.5 text-sm text-gray-300">
-                      <span>за</span>
+                      <span>{t('topUp.for')}</span>
                       <span className="text-amber-300 font-bold">{formatBalance(tier.tenge)}</span>
                       <img src={TENGE_ICON} alt="" className="h-4 w-4 rounded-full object-contain" />
                     </div>
@@ -289,14 +291,14 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold text-sm transition-colors"
                   onClick={() => setConfirmTier(null)}
                 >
-                  Нет
+                  {t('common.no')}
                 </button>
                 <button
                   className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm transition-colors"
                   onClick={handleBuyConfirm}
                   disabled={buyShanyrakMutation.isPending}
                 >
-                  {buyShanyrakMutation.isPending ? '...' : 'Да'}
+                  {buyShanyrakMutation.isPending ? '...' : t('common.yes')}
                 </button>
               </div>
             </div>
@@ -309,25 +311,24 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             <div className="bg-slate-800 border border-red-600/40 rounded-2xl p-5 max-w-xs w-[90vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-center gap-2 mb-3">
                 <AlertTriangle className="w-5 h-5 text-red-400" />
-                <h3 className="text-red-300 font-bold">Недостаточно тенге</h3>
+                <h3 className="text-red-300 font-bold">{t('topUp.insufficientTenge')}</h3>
               </div>
               <p className="text-gray-400 text-sm text-center mb-4">
-                У вас не хватает тенге для этой покупки. Пополните баланс тенге, чтобы продолжить.
+                {t('topUp.insufficientTengeDesc')}
               </p>
               <button
                 className="w-full py-2.5 rounded-xl bg-amber-600/30 hover:bg-amber-600/40 text-amber-200 font-semibold text-sm transition-colors border border-amber-600/30 mb-2"
                 onClick={() => {
                   setShowInsufficientTenge(false);
-                  // TODO: open tenge purchase flow
                 }}
               >
-                Купить тенге (скоро)
+                {t('topUp.buyTenge')}
               </button>
               <button
                 className="w-full py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold text-sm transition-colors"
                 onClick={() => setShowInsufficientTenge(false)}
               >
-                Закрыть
+                {t('common.close')}
               </button>
             </div>
           </div>

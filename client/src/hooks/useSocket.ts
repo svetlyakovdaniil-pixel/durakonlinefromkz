@@ -7,12 +7,16 @@ import type {
   Room, ClientGameState, AvailableAction, RoomSettings,
 } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS } from '../../../shared/cardAssets';
+import { useTranslation } from '@/i18n';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 export function useSocket(userId: string | null, userName: string | null) {
   const socketRef = useRef<TypedSocket | null>(null);
   const trpcUtils = trpc.useUtils();
+  const { t } = useTranslation();
+  const tRef = useRef(t);
+  tRef.current = t;
   const trpcUtilsRef = useRef(trpcUtils);
   trpcUtilsRef.current = trpcUtils;
   const [connected, setConnected] = useState(false);
@@ -45,7 +49,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     const socket: TypedSocket = io({
       path: '/api/socket.io',
-      auth: { odId: userId, name: userName || 'Гость' },
+      auth: { odId: userId, name: userName || tRef.current('socket.guest') },
       transports: ['websocket', 'polling'],
       upgrade: true,
       rememberUpgrade: true,
@@ -76,14 +80,14 @@ export function useSocket(userId: string | null, userName: string | null) {
             socket.emit('rejoinRoom', roomId, (ok: boolean, room: any) => {
               if (ok && room) {
                 setCurrentRoom(room);
-                toast.success('Переподключение успешно!', { duration: 3000 });
+                toast.success(tRef.current('socket.reconnectSuccess'), { duration: 3000 });
               } else if (attempt < 5) {
                 const delay = Math.min(attempt * 800, 3000);
                 console.log(`[Socket] Rejoin attempt ${attempt} failed, retrying in ${delay}ms...`);
                 setTimeout(() => attemptRejoin(attempt + 1), delay);
               } else {
                 console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
-                toast.error('Не удалось переподключиться к игре. Попробуйте найти комнату в лобби.', { duration: 6000 });
+                toast.error(tRef.current('socket.reconnectFailed'), { duration: 6000 });
                 currentRoomIdRef.current = null;
                 setCurrentRoom(null);
                 setGameState(null);
@@ -101,7 +105,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setConnected(false);
       console.log(`[Socket] Disconnected: ${reason}`);
       if (currentRoomIdRef.current) {
-        toast.warning('Соединение потеряно — переподключение...', { duration: 5000 });
+        toast.warning(tRef.current('socket.connectionLost'), { duration: 5000 });
       }
     });
 
@@ -110,7 +114,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
 
     socket.io.on('reconnect_failed', () => {
-      toast.error('Не удалось переподключиться. Обновите страницу.', { duration: 10000 });
+      toast.error(tRef.current('socket.reconnectPageFailed'), { duration: 10000 });
     });
 
     socket.on('roomList', (r) => setRooms(r));
@@ -181,11 +185,11 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('trumpChanged', (info) => {
       const sym = SUIT_SYMBOLS[info.newTrump] || info.newTrump;
-      const suitNames: Record<string, string> = {
-        spades: 'Пики', hearts: 'Черви', diamonds: 'Бубны', clubs: 'Трефы',
+      const suitKeyMap: Record<string, string> = {
+        spades: 'game.suitSpades', hearts: 'game.suitHearts', diamonds: 'game.suitDiamonds', clubs: 'game.suitClubs',
       };
-      const suitName = suitNames[info.newTrump] || info.newTrump;
-      toast.warning(`🃏 Козырь изменился! Новый козырь: ${sym} ${suitName} (Фаза ${info.phase}/3)`, {
+      const suitName = tRef.current(suitKeyMap[info.newTrump] || info.newTrump);
+      toast.warning(tRef.current('socket.trumpChanged', { sym, suit: suitName, phase: String(info.phase) }), {
         duration: 6000,
         style: {
           fontSize: '16px',
@@ -198,7 +202,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
     socket.on('directionChanged', (dir) => {
       const arrow = dir === 'cw' ? '➡️' : '⬅️';
-      toast.info(`Направление изменилось ${arrow}`, { duration: 3000 });
+      toast.info(tRef.current('socket.directionChanged', { arrow }), { duration: 3000 });
     });
     socket.on('gameOver', (data) => {
       if (leavingRef.current) return;
@@ -223,7 +227,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setGameOverData(null);
       setPrizeData(null);
       if (data.reason === 'disconnect_timeout') {
-        toast.error('Вы были удалены из игры из-за долгого отсутствия соединения', { duration: 6000 });
+        toast.error(tRef.current('socket.forcedToLobby'), { duration: 6000 });
       }
     });
 
@@ -251,7 +255,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     // Invite was declined by the target player
     socket.on('inviteDeclined', (data) => {
-      toast.error(`${data.declinedByName} (# ${data.declinedByGameId}) отклонил приглашение в комнату`, { duration: 5000 });
+      toast.error(tRef.current('socket.inviteDeclined', { name: data.declinedByName, id: String(data.declinedByGameId) }), { duration: 5000 });
     });
 
     // Online friends update
@@ -273,7 +277,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('roomUnfrozen', (data) => {
       console.log(`[Socket] Room ${data.roomId} unfrozen — ${data.reconnectedPlayerName} reconnected`);
       setFrozenInfo(null);
-      toast.success(`${data.reconnectedPlayerName} вернулся в игру!`, { duration: 3000 });
+      toast.success(tRef.current('socket.playerReconnected', { name: data.reconnectedPlayerName }), { duration: 3000 });
     });
 
     return () => {
@@ -404,7 +408,7 @@ export function useSocket(userId: string | null, userName: string | null) {
 
   const inviteFriend = useCallback((roomId: string, targetGameId: number) => {
     socketRef.current?.emit('inviteFriend', { roomId, targetGameId });
-    toast.success('Приглашение отправлено!', { duration: 3000 });
+    toast.success(tRef.current('socket.inviteSent'), { duration: 3000 });
   }, []);
 
   const declineInvite = useCallback((roomId: string, fromGameId: number) => {
