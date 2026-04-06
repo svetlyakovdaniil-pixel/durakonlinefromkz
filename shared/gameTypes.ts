@@ -132,6 +132,10 @@ export interface GameState {
   revealedPassThroughs: { playerId: string; cards: Card[] }[]; // currently revealed pass-through cards this trick
   consecutiveTimeouts: Record<string, number>; // player id -> consecutive timeout count (2 = forfeit)
   deckStyle: DeckStyle;
+  /** Prize pool for this game (total shanyraks collected from all players) */
+  prizePool: number;
+  /** Prizes already awarded to winners (accumulated as players finish) */
+  playerPrizes: { playerId: string; place: number; amount: number }[];
 }
 
 // --- Room ---
@@ -245,6 +249,10 @@ export interface ClientGameState {
   revealedPassThroughs: { playerId: string; cards: { id: string; suit: string | null; rank: string; copy: number }[] }[]; // pass-through cards shown this trick
   /** Actions available to this player — bundled atomically with game state to prevent desync */
   availableActions: AvailableAction[];
+  /** Prizes already awarded to winners (accumulated as players finish) */
+  playerPrizes: { playerId: string; place: number; amount: number }[];
+  /** Total prize pool for this game */
+  prizePool: number;
 }
 
 export interface ClientPlayer {

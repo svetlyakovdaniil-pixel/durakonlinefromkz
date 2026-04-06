@@ -196,9 +196,7 @@ function DeckVisual({
   const cardH = 128;
   const trumpPeekAmount = Math.round(cardW * 0.5);
   const containerW = trumpPeekAmount + cardW;
-  // Add extra height when hidden trump card is shown under the trump card
-  const extraHeight = (showOpenTrump && hiddenTrumpCard1) ? 20 : 0;
-  const containerH = cardH + 8 + extraHeight;
+  const containerH = cardH + 8;
 
   const isCustom = deckStyle === 'custom';
   const trumpImageKey = trumpCard && showOpenTrump
@@ -256,21 +254,6 @@ function DeckVisual({
           </div>
         )}
 
-        {/* Hidden trump card under deck1 trump (face down) */}
-        {showOpenTrump && hiddenTrumpCard1 && (
-          <div
-            className="absolute rounded-lg overflow-hidden border border-amber-900/30 shadow-sm"
-            style={{
-              width: `${cardW - 8}px`,
-              height: `${cardH - 8}px`,
-              top: `${cardH - 12}px`,
-              left: '4px',
-              zIndex: 0,
-            }}
-          >
-            <img src={backUrl} alt="hidden trump card" className="w-full h-full object-cover" />
-          </div>
-        )}
 
         {deckCount > 0 && (
           <>
@@ -759,11 +742,11 @@ export default function GameTable({
             {didLeave ? 'Вы покинули игру' : isLoser ? 'Вы проиграли!' : isWinner ? `Вы победили! (${myPlayer.winPlace}-е место)` : 'Игра окончена!'}
           </h2>
 
-          {prizeData && prizeData.pool > 0 && (
+          {((gs.prizePool && gs.prizePool > 0) || (prizeData && prizeData.pool > 0)) && (
             <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
-                <span className="text-amber-300 font-bold text-sm sm:text-base">Банк: {formatBalance(prizeData.pool)}</span>
+                <span className="text-amber-300 font-bold text-sm sm:text-base">Банк: {formatBalance(gs.prizePool || prizeData?.pool || 0)}</span>
               </div>
             </div>
           )}
@@ -771,7 +754,7 @@ export default function GameTable({
           <div className="space-y-2">
             <h3 className="text-amber-400 font-semibold text-base sm:text-lg">Результаты:</h3>
             {gs.players.map(p => {
-              const prize = prizeData?.prizes.find(pr => pr.playerId === p.id);
+              const prize = gs.playerPrizes?.find(pr => pr.playerId === p.id) || prizeData?.prizes.find(pr => pr.playerId === p.id);
               return (
                 <div key={p.id} className={`flex items-center justify-between px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base ${
                   p.leftGame ? 'bg-gray-800/40 border border-gray-600/30' :
@@ -941,6 +924,15 @@ export default function GameTable({
                 <LogOut className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
             )}
+            {gs.players[myIdx]?.isOut && gs.players[myIdx]?.winPlace && onReturnToLobby && (
+              <button
+                className="text-green-400 hover:text-green-300 transition-colors p-1 sm:p-1.5 rounded"
+                onClick={onReturnToLobby}
+                title="Выйти в лобби"
+              >
+                <Home className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -996,9 +988,20 @@ export default function GameTable({
                         <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-gray-400 font-semibold`}>Ушёл</span>
                       </div>
                     ) : p.isOut ? (
-                      <div className={`flex items-center gap-0.5 bg-green-900/40 border border-green-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
-                        <Trophy className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-amber-400`} />
-                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-green-300 font-semibold`}>{p.winPlace}м</span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <div className={`flex items-center gap-0.5 bg-green-900/40 border border-green-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
+                          <Trophy className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-amber-400`} />
+                          <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-green-300 font-semibold`}>{p.winPlace}м</span>
+                        </div>
+                        {(() => {
+                          const oppPrize = gs.playerPrizes?.find(pr => pr.playerId === p.id);
+                          return oppPrize && oppPrize.amount > 0 ? (
+                            <div className={`flex items-center gap-0.5 ${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-amber-300 font-medium`}>
+                              <span>+{formatBalance(oppPrize.amount)}</span>
+                              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3" />
+                            </div>
+                          ) : null;
+                        })()}
                       </div>
                     ) : (
                       <div className="flex items-center gap-0.5 sm:gap-1.5">
@@ -1142,7 +1145,44 @@ export default function GameTable({
             ) : (
               <div className="flex flex-col gap-3 items-center">
                 {deck1Empty ? (
-                  <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
+                  <>
+                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
+                    {/* Revealed hidden trump card — shown face-up when phase 2 starts (deck1 emptied) */}
+                    {gs.trumpInfo.hiddenTrumpCard1 && gs.trumpInfo.hiddenTrumpCard1.suit && (
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="text-green-300/80 text-[9px] sm:text-xs font-medium animate-pulse">Потайной козырь</span>
+                        <div className="rounded-lg overflow-hidden border-2 border-green-500/60 shadow-lg shadow-green-500/20" style={{ width: '88px', height: '128px' }}>
+                          {(() => {
+                            const hc = gs.trumpInfo.hiddenTrumpCard1!;
+                            const isCustom = gs.deckStyle === 'custom';
+                            const imgKey = isCustom ? getCustomCardImageKey(hc.rank, hc.suit) : getCardImageKey(hc.rank, hc.suit);
+                            const imgMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+                            const imgUrl = imgKey ? imgMap[imgKey] : null;
+                            if (imgUrl) {
+                              return <div className="w-full h-full bg-white"><img src={imgUrl} alt={`${hc.rank} ${hc.suit}`} className="w-full h-full object-cover" /></div>;
+                            }
+                            const hSuit = hc.suit || '';
+                            const hSymbol = SUIT_SYMBOLS[hSuit] || hSuit;
+                            const hIsRed = hSuit === 'hearts' || hSuit === 'diamonds';
+                            const hColor = hIsRed ? '#c41e3a' : '#1a1a2e';
+                            return (
+                              <div className="w-full h-full bg-white flex flex-col items-center justify-between p-1.5">
+                                <div className="self-start leading-none" style={{ color: hColor }}>
+                                  <div className="text-xs font-bold">{hc.rank}</div>
+                                  <div className="text-xs -mt-0.5">{hSymbol}</div>
+                                </div>
+                                <div className="text-2xl" style={{ color: hColor }}>{hSymbol}</div>
+                                <div className="self-end leading-none rotate-180" style={{ color: hColor }}>
+                                  <div className="text-xs font-bold">{hc.rank}</div>
+                                  <div className="text-xs -mt-0.5">{hSymbol}</div>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <>
                     <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
@@ -1197,8 +1237,8 @@ export default function GameTable({
                   Вы победили! ({gs.players[myIdx].winPlace}-е место)
                 </span>
               </div>
-              {prizeData && (() => {
-                const myPrize = prizeData.prizes.find(pr => pr.playerId === gs.players[myIdx]?.id);
+              {(() => {
+                const myPrize = gs.playerPrizes?.find(pr => pr.playerId === gs.players[myIdx]?.id);
                 return myPrize && myPrize.amount > 0 ? (
                   <div className="flex items-center gap-1.5 text-amber-300 text-xs sm:text-sm font-medium">
                     <span>+{formatBalance(myPrize.amount)}</span>

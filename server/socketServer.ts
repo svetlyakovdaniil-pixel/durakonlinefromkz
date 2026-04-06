@@ -412,12 +412,11 @@ export function initSocketServer(httpServer: HttpServer) {
           return;
         }
 
-        // Store prize pool in room for later distribution
         const totalPool = betAmount * room.players.length; // bots also contribute to pool
-        (room as any).prizePool = totalPool;
-        (room as any).betAmount = betAmount;
 
         const gameState = createGame(roomId, playerInfos, room.settings);
+        // Store prize pool directly on game state
+        gameState.prizePool = totalPool;
         games.set(roomId, gameState);
         room.gameState = gameState;
 
@@ -1584,6 +1583,26 @@ function broadcastGameState(roomId: string, gameState: GameState) {
   lastTrumpPhase.set(roomId, currentPhase);
   lastTrumpSuit.set(roomId, currentSuit);
 
+  // Credit prizes immediately when a player wins (before broadcasting state)
+  // Track which prizes have been credited to avoid double-crediting
+  const creditedKey = `credited_${roomId}`;
+  const creditedSet = (broadcastGameState as any)[creditedKey] as Set<string> || new Set<string>();
+  (broadcastGameState as any)[creditedKey] = creditedSet;
+  
+  for (const prize of gameState.playerPrizes) {
+    const prizeKey = `${prize.playerId}_${prize.place}`;
+    if (!creditedSet.has(prizeKey) && prize.amount > 0) {
+      creditedSet.add(prizeKey);
+      const player = gameState.players.find(p => p.id === prize.playerId);
+      if (player && !player.isBot) {
+        creditShanyrakPrize(prize.playerId, prize.amount, roomId, prize.place).catch(err =>
+          console.error(`[Prize] Failed to credit ${prize.amount} to ${prize.playerId}:`, err)
+        );
+        console.log(`[Prize] Credited ${prize.amount} shanyraks to ${prize.playerId} (place ${prize.place}) in room ${roomId}`);
+      }
+    }
+  }
+
   for (const p of gameState.players) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
@@ -1608,67 +1627,19 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       loserId: gameState.loserId || '',
     });
 
-    // --- Prize pool distribution ---
-    const room = rooms.get(roomId);
-    const prizePool = (room as any)?.prizePool as number | undefined;
-    if (prizePool && prizePool > 0) {
-      const totalPlayers = gameState.players.length;
-      // winnersOrder contains odIds in order of finish (1st, 2nd, 3rd...)
-      // loserId is the last player (durak) — gets nothing
-      // Distribution percentages based on player count:
-      // 2 players: 1st=100%
-      // 3 players: 1st=60%, 2nd=40%
-      // 4 players: 1st=50%, 2nd=30%, 3rd=20%
-      // 5 players: 1st=40%, 2nd=25%, 3rd=20%, 4th=15%
-      // 6 players: 1st=35%, 2nd=25%, 3rd=20%, 4th=12%, 5th=8%
-      // 7 players: 1st=30%, 2nd=22%, 3rd=18%, 4th=14%, 5th=10%, 6th=6%
-      // 8 players: 1st=28%, 2nd=20%, 3rd=16%, 4th=13%, 5th=10%, 6th=7%, 7th=6%
-      const distributions: Record<number, number[]> = {
-        2: [100],
-        3: [60, 40],
-        4: [50, 30, 20],
-        5: [40, 25, 20, 15],
-        6: [35, 25, 20, 12, 8],
-        7: [30, 22, 18, 14, 10, 6],
-        8: [28, 20, 16, 13, 10, 7, 6],
-      };
-      const dist = distributions[totalPlayers] || distributions[8]!;
-      
-      // All winners except loser get a share
-      const allFinished = [...gameState.winnersOrder];
-      // The loser is NOT in winnersOrder, so allFinished = all non-loser players in order
-      
-      const prizePromises: Promise<any>[] = [];
-      for (let i = 0; i < allFinished.length && i < dist.length; i++) {
-        const playerId = allFinished[i];
-        const player = gameState.players.find(p => p.id === playerId);
-        if (!player || player.isBot) continue; // bots don't get prizes
-        
-        const share = Math.floor(prizePool * dist[i] / 100);
-        if (share > 0) {
-          prizePromises.push(
-            creditShanyrakPrize(playerId, share, roomId, i + 1).catch(err =>
-              console.error(`[Prize] Failed to credit ${share} to ${playerId}:`, err)
-            )
-          );
-        }
-      }
-      
-      Promise.all(prizePromises).then(() => {
-        console.log(`[Prize] Distributed pool of ${prizePool} in room ${roomId}`);
-        // Emit prize info to players
-        const prizeInfo = allFinished.slice(0, dist.length).map((id, i) => ({
-          playerId: id,
-          place: i + 1,
-          amount: Math.floor(prizePool * dist[i] / 100),
-        }));
-        io.to(roomId).emit('prizeDistributed', { pool: prizePool, prizes: prizeInfo });
-      }).catch(err => console.error('[Prize] Distribution error:', err));
-      
-      // Clean up
-      delete (room as any).prizePool;
-      delete (room as any).betAmount;
+    // --- Prize pool distribution (prizes already credited during game via broadcastGameState) ---
+    // Emit final prizeDistributed event with all prizes for the game-over screen
+    if (gameState.prizePool > 0 && gameState.playerPrizes.length > 0) {
+      io.to(roomId).emit('prizeDistributed', {
+        pool: gameState.prizePool,
+        prizes: gameState.playerPrizes,
+      });
+      console.log(`[Prize] Final distribution emitted for room ${roomId}: pool=${gameState.prizePool}, winners=${gameState.playerPrizes.length}`);
     }
+    
+    // Clean up credited prizes tracking
+    const creditedKey = `credited_${roomId}`;
+    delete (broadcastGameState as any)[creditedKey];
 
     // Record game result in database (async, non-blocking)
     const humanPlayers = gameState.players.filter(p => !p.isBot);

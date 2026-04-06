@@ -198,6 +198,8 @@ export function createGame(
     revealedPassThroughs: [],
     consecutiveTimeouts: {},
     deckStyle: settings?.deckStyle ?? 'classic',
+    prizePool: 0,
+    playerPrizes: [],
   };
 }
 
@@ -833,6 +835,25 @@ export function resetTurnTimer(state: GameState): void {
 
 // ---- Player out check ----
 
+// Prize distribution percentages by total player count
+const PRIZE_DISTRIBUTIONS: Record<number, number[]> = {
+  2: [100],
+  3: [60, 40],
+  4: [50, 30, 20],
+  5: [40, 25, 20, 15],
+  6: [35, 25, 20, 12, 8],
+  7: [30, 22, 18, 14, 10, 6],
+  8: [28, 20, 16, 13, 10, 7, 6],
+};
+
+/** Calculate the prize amount for a given place (1-indexed) */
+export function getPrizeForPlace(prizePool: number, totalPlayers: number, place: number): number {
+  const dist = PRIZE_DISTRIBUTIONS[totalPlayers] || PRIZE_DISTRIBUTIONS[8]!;
+  const idx = place - 1; // 0-indexed
+  if (idx < 0 || idx >= dist.length) return 0;
+  return Math.floor(prizePool * dist[idx] / 100);
+}
+
 export function checkPlayerOut(state: GameState, playerIdx: number): boolean {
   const player = state.players[playerIdx];
   if (player.hand.length === 0 && state.deck1.length === 0 && state.deck2.length === 0) {
@@ -842,6 +863,15 @@ export function checkPlayerOut(state: GameState, playerIdx: number): boolean {
       state.nextWinPlace++;
       if (!state.winnersOrder.includes(player.id)) {
         state.winnersOrder.push(player.id);
+      }
+      // Calculate and record prize immediately
+      if (state.prizePool > 0) {
+        const prizeAmount = getPrizeForPlace(state.prizePool, state.players.length, player.winPlace);
+        state.playerPrizes.push({
+          playerId: player.id,
+          place: player.winPlace,
+          amount: prizeAmount,
+        });
       }
       return true; // player just went out
     }
@@ -1133,11 +1163,14 @@ export function toClientState(
       ...state.trumpInfo,
       // Always send the trump card (visible to all)
       trumpCard: state.trumpInfo.trumpCard,
-      // Hidden trump card under deck1: face down during phase 1, not sent after phase 2 (drawn into deck)
+      // Hidden trump card under deck1:
+      // Phase 1: invisible (not sent) — players don't know it exists
+      // Phase 2: revealed face-up (actual suit/rank) — players see the new trump
+      // Phase 3+: not sent (no longer relevant)
       hiddenTrumpCard1: state.trumpInfo.hiddenTrumpCard1
-        ? (state.trumpInfo.phase === 1
-          ? { id: 'hidden1', suit: null, rank: '777' as const, copy: 0 } // face down
-          : undefined) // once phase 2+, it's been drawn
+        ? (state.trumpInfo.phase === 2
+          ? { ...state.trumpInfo.hiddenTrumpCard1 } // face up — revealed!
+          : undefined) // phase 1: invisible, phase 3+: no longer relevant
         : undefined,
       // Hidden trump card under deck2: face down during phase 1, not sent after phase 2 (drawn into deck)
       hiddenTrumpCard: state.trumpInfo.hiddenTrumpCard
@@ -1172,6 +1205,8 @@ export function toClientState(
     })),
     deckStyle: state.deckStyle,
     availableActions: myIndex >= 0 ? getAvailableActions(state, myIndex) : [],
+    playerPrizes: state.playerPrizes,
+    prizePool: state.prizePool,
   };
 }
 
