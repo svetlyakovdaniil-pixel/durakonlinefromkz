@@ -232,6 +232,14 @@ export function useSocket(userId: string | null, userName: string | null) {
       }
     });
 
+    // New notification received in real-time
+    socket.on('newNotification', () => {
+      if (trpcUtilsRef.current) {
+        trpcUtilsRef.current.notifications.unreadCount.invalidate();
+        trpcUtilsRef.current.notifications.list.invalidate();
+      }
+    });
+
     // Room invitation from a friend
     socket.on('roomInvite', (data) => {
       setPendingInvite(data);

@@ -79,16 +79,28 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     }
   };
 
-  const handleAcceptFriend = async (friendshipId: number) => {
-    await acceptFriend.mutateAsync({ friendshipId });
-    refetchNotifs();
-    utils.notifications.unreadCount.invalidate();
+   const handleAcceptFriend = async (friendshipId: number, notificationId: number) => {
+    try {
+      await acceptFriend.mutateAsync({ friendshipId });
+      // Delete the notification after accepting
+      await deleteNotif.mutateAsync({ notificationId });
+      refetchNotifs();
+      utils.notifications.unreadCount.invalidate();
+      utils.friends.list.invalidate();
+    } catch (err) {
+      console.error('[Friend] Accept failed:', err);
+    }
   };
-
-  const handleRejectFriend = async (friendshipId: number) => {
-    await rejectFriend.mutateAsync({ friendshipId });
-    refetchNotifs();
-    utils.notifications.unreadCount.invalidate();
+  const handleRejectFriend = async (friendshipId: number, notificationId: number) => {
+    try {
+      await rejectFriend.mutateAsync({ friendshipId });
+      // Delete the notification after rejecting
+      await deleteNotif.mutateAsync({ notificationId });
+      refetchNotifs();
+      utils.notifications.unreadCount.invalidate();
+    } catch (err) {
+      console.error('[Friend] Reject failed:', err);
+    }
   };
 
   const handleDeleteNotif = async (id: number) => {
@@ -597,13 +609,13 @@ onClick={() => setShowTengeTopUp(true)}
                           <div className="flex gap-2">
                             <button
                               className="flex items-center gap-1 bg-green-700/60 hover:bg-green-600/60 text-green-200 text-xs px-3 py-1 rounded-md transition-colors"
-                              onClick={() => n.data?.friendshipId && handleAcceptFriend(n.data.friendshipId)}
+                              onClick={() => n.data?.friendshipId && handleAcceptFriend(n.data.friendshipId, n.id)}
                             >
                               <Check className="w-3 h-3" /> Принять
                             </button>
                             <button
                               className="flex items-center gap-1 bg-red-900/40 hover:bg-red-800/40 text-red-300 text-xs px-3 py-1 rounded-md transition-colors"
-                              onClick={() => n.data?.friendshipId && handleRejectFriend(n.data.friendshipId)}
+                              onClick={() => n.data?.friendshipId && handleRejectFriend(n.data.friendshipId, n.id)}
                             >
                               <X className="w-3 h-3" /> Отклонить
                             </button>

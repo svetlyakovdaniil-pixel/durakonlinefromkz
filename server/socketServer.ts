@@ -70,6 +70,43 @@ async function emitBalanceUpdated(odId: string) {
   }
 }
 
+/**
+ * Emit a newNotification event to a specific player by their profileId.
+ * Called from routers.ts when a notification is created.
+ */
+export async function emitNotificationToProfile(profileId: number, type: string) {
+  if (!io) return;
+  try {
+    const db = (await import('./db')).getDb;
+    // We need to find the user's openId from profileId
+    // Use a direct query approach
+    const { getDb } = await import('./db');
+    const database = await getDb();
+    if (!database) return;
+    const { playerProfiles } = await import('../drizzle/schema');
+    const { users } = await import('../drizzle/schema');
+    const { eq } = await import('drizzle-orm');
+    const profile = await database.select({ userId: playerProfiles.userId })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.id, profileId))
+      .limit(1);
+    if (!profile[0]) return;
+    const user = await database.select({ openId: users.openId })
+      .from(users)
+      .where(eq(users.id, profile[0].userId))
+      .limit(1);
+    if (!user[0]) return;
+    const sid = playerSockets.get(user[0].openId);
+    if (!sid) return;
+    // Get updated unread count
+    const { getUnreadNotificationCount } = await import('./db');
+    const count = await getUnreadNotificationCount(profileId);
+    io.to(sid).emit('newNotification', { type, count });
+  } catch (err) {
+    console.error('[Socket] Failed to emit newNotification:', err);
+  }
+}
+
 export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },

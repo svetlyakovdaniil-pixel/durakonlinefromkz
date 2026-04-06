@@ -32,6 +32,7 @@ import {
   testAddShanyrak,
   testAddTenge,
 } from "./db";
+import { emitNotificationToProfile } from "./socketServer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -138,6 +139,8 @@ export const appRouter = router({
             senderAvatarId: myProfile.avatarId ?? 'wolf',
             friendshipId,
           });
+          // Emit real-time notification
+          emitNotificationToProfile(targetProfile.id, 'friend_request');
         }
 
         return { result };
@@ -160,6 +163,8 @@ export const appRouter = router({
             accepterGameId: myProfile.gameId,
             accepterAvatarId: myProfile.avatarId ?? 'wolf',
           });
+          // Emit real-time notification
+          emitNotificationToProfile(friendship.senderId, 'friend_accepted');
         }
 
         return { success: ok };

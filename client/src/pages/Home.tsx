@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,10 @@ export default function Home() {
     if (!connected) registeredRef.current = false;
   }, [connected]);
 
+  // Keep a ref to joinRoom so the toast callback always uses the latest version
+  const joinRoomRef = useRef(joinRoom);
+  joinRoomRef.current = joinRoom;
+
   // Handle pending invites — only show if player is in lobby (not in a game or room)
   useEffect(() => {
     if (!pendingInvite) return;
@@ -54,6 +58,10 @@ export default function Home() {
       return;
     }
     const invite = pendingInvite;
+    const toastId = `invite-${invite.roomId}`;
+    
+    // Dismiss any previous invite toast
+    toast.dismiss(toastId);
     
     toast(
       <div className="flex flex-col gap-2">
@@ -73,8 +81,8 @@ export default function Home() {
             size="sm"
             className="flex-1 bg-amber-600 hover:bg-amber-500 text-white h-7 text-xs"
             onClick={() => {
-              joinRoom(invite.roomId);
-              toast.dismiss();
+              joinRoomRef.current(invite.roomId);
+              toast.dismiss(toastId);
             }}
           >
             Принять
@@ -83,13 +91,14 @@ export default function Home() {
             size="sm"
             variant="outline"
             className="flex-1 h-7 text-xs"
-            onClick={() => toast.dismiss()}
+            onClick={() => toast.dismiss(toastId)}
           >
             Отклонить
           </Button>
         </div>
       </div>,
       {
+        id: toastId,
         duration: 30000,
         style: {
           background: '#1a2d45',
