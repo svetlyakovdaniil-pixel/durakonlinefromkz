@@ -462,6 +462,17 @@ export default function GameTable({
   const prevDiscardCount = useRef(gs.discardCount);
   const isFirstRender = useRef(true);
 
+  // Sound effect tracking refs
+  const prevBattleFieldForSound = useRef(gs.battleField);
+  const prevDefenderTaking = useRef(gs.defenderTaking);
+  const prevRevealedPassThroughs = useRef(gs.revealedPassThroughs);
+  const prevDirection = useRef(gs.direction);
+  const prevDefenderIdx = useRef(gs.currentDefenderIdx);
+
+  // Sound effects
+  const { play: playSound, enabled: soundEnabled } = useSound();
+  const { settings: gameSettings } = useSettings();
+
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
 
@@ -485,11 +496,101 @@ export default function GameTable({
       const cardsCleared = prevBattleFieldLen.current * 2; // attack + defense pairs
       setBitoCardCount(cardsCleared);
       setShowBitoAnim(true);
+      // Play bito sound
+      playSound('bito', 0.6);
     }
 
     prevBattleFieldLen.current = gs.battleField.length;
     prevDiscardCount.current = gs.discardCount;
-  }, [gs.battleField.length, gs.discardCount]);
+  }, [gs.battleField.length, gs.discardCount, playSound]);
+
+  // Sound effects for game actions (card play, trump, multi-card, transfer, take, direction change)
+  useEffect(() => {
+    if (isFirstRender.current) return;
+
+    const prevBF = prevBattleFieldForSound.current;
+    const currBF = gs.battleField;
+
+    // Count total cards on battlefield (attack + defense)
+    const prevTotalCards = prevBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
+    const currTotalCards = currBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
+    const newCardsCount = currTotalCards - prevTotalCards;
+
+    if (newCardsCount > 0) {
+      // Cards were added to the battlefield
+      // Determine if any new card is a trump
+      const trumpSuit = gs.trumpInfo.currentTrump;
+      let hasTrump = false;
+
+      // Check new attack cards
+      if (currBF.length > prevBF.length) {
+        for (let i = prevBF.length; i < currBF.length; i++) {
+          const card = currBF[i].attack;
+          if (card.suit === trumpSuit) hasTrump = true;
+        }
+      }
+      // Check new defense cards
+      for (let i = 0; i < Math.min(prevBF.length, currBF.length); i++) {
+        if (!prevBF[i].defense && currBF[i].defense) {
+          const card = currBF[i].defense!;
+          if (card.suit === trumpSuit) hasTrump = true;
+        }
+      }
+
+      if (newCardsCount > 1) {
+        // Multiple cards played at once
+        playSound('multiCard', 0.6);
+      } else if (hasTrump) {
+        // Single trump card played
+        playSound('trumpPlay', 0.6);
+      } else {
+        // Single non-trump card played
+        playSound('cardPlay', 0.6);
+      }
+    }
+
+    // Detect transfer: defender changed while battlefield has cards (card was transferred)
+    if (gs.currentDefenderIdx !== prevDefenderIdx.current && currBF.length > 0) {
+      playSound('transfer', 0.7);
+    }
+    // Detect pass-through shown
+    if (gs.revealedPassThroughs.length > prevRevealedPassThroughs.current.length) {
+      playSound('transfer', 0.7);
+    }
+
+    // Detect defender taking cards (defenderTaking transitions from false to true)
+    if (gs.defenderTaking && !prevDefenderTaking.current && currBF.length > 0) {
+      // Defender announced they're taking — actual take sound plays when battlefield clears without discard growing
+    }
+
+    // Update refs
+    prevBattleFieldForSound.current = currBF;
+    prevDefenderTaking.current = gs.defenderTaking;
+    prevRevealedPassThroughs.current = gs.revealedPassThroughs;
+    prevDefenderIdx.current = gs.currentDefenderIdx;
+  }, [gs.battleField, gs.defenderTaking, gs.revealedPassThroughs, gs.trumpInfo.currentTrump, gs.currentDefenderIdx, playSound]);
+
+  // Sound for defender taking cards (battlefield clears but discard doesn't grow = cards taken)
+  useEffect(() => {
+    if (isFirstRender.current) return;
+
+    const battleCleared = prevBattleFieldLen.current > 0 && gs.battleField.length === 0;
+    const discardGrew = gs.discardCount > prevDiscardCount.current;
+
+    // If battlefield cleared but discard did NOT grow, defender took the cards
+    if (battleCleared && !discardGrew) {
+      playSound('cardTake', 0.7);
+    }
+  }, [gs.battleField.length, gs.discardCount, playSound]);
+
+  // Sound for direction change (10 was played)
+  useEffect(() => {
+    if (isFirstRender.current) return;
+    if (gs.direction !== prevDirection.current) {
+      // Direction reversed — a 10 was played (handled by transfer sound or card play sound already)
+    }
+    prevDirection.current = gs.direction;
+  }, [gs.direction]);
 
   // Detect trump change
   useEffect(() => {
@@ -546,10 +647,6 @@ export default function GameTable({
     prevTrickCount.current = gs.trickCount;
   }, [availableActions, gs.trickCount]);
 
-  // Sound effects for alert
-  const { play: playSound, enabled: soundEnabled } = useSound();
-  const { settings: gameSettings } = useSettings();
-
   // Urgent turn alert when timer reaches 15 seconds
   useEffect(() => {
     const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
@@ -562,7 +659,7 @@ export default function GameTable({
       urgentTurnTimers.current = [];
 
       // Play alert sound (only if sound is enabled)
-      playSound('timerWarning', 0.8);
+      playSound('yourTurn', 0.8);
 
       // Vibrate on mobile (works even if sound is muted, but respects vibration setting)
       try {

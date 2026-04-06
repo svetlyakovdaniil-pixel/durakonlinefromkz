@@ -2,14 +2,20 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // CDN URLs for sound effects
 const SOUND_URLS = {
-  cardPlay: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/card_play_da558a42.wav',
+  // Original sounds
   cardDeal: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/card_deal_faaefea0.wav',
-  cardTake: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/card_take_df5eef77.wav',
   roundWin: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/round_win_72f79f57.wav',
   gameWin: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_win_1b8d5eaa.wav',
   gameLose: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_lose_d0b3c1f1.wav',
-  yourTurn: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/your_turn_5509c6b9.wav',
-  timerWarning: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/timer_warning_cc1cb949.wav',
+
+  // New custom sounds
+  cardPlay: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%BE%D0%BB%D0%BE%D0%B6%D0%B8%D0%BB%D0%B8%D0%BA%D0%B0%D1%80%D1%82%D1%83%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB_2d5c774f.mp3',
+  trumpPlay: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%BE%D0%BB%D0%BE%D0%B6%D0%B8%D0%BB%D0%B8%D0%BA%D0%BE%D0%B7%D1%8B%D1%80%D1%8C%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB_a1725e72.mp3',
+  cardTake: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B1%D0%B5%D1%80%D0%B5%D1%82%D0%B2%D1%80%D1%83%D0%BA%D0%B8_8e6bac85.mp3',
+  transfer: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4_685db838.mp3',
+  multiCard: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B8%D0%B3%D1%80%D0%BE%D0%BA%D0%BA%D0%B8%D0%B4%D0%B0%D0%B5%D1%82%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%81%D1%80%D0%B0%D0%B7%D1%83%D0%BD%D0%B5%D1%81%D0%BA%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%D0%BA%D0%B0%D1%80%D1%82%D0%B7%D0%B0%D1%80%D0%B0%D0%B7_db22f391.mp3',
+  yourTurn: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%92%D0%90%D0%A8%D0%A5%D0%9E%D0%94_41ad06aa.mp3',
+  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B1%D0%B8%D1%82%D0%BE1_fd285f9b.mp3',
 } as const;
 
 export type SoundName = keyof typeof SOUND_URLS;

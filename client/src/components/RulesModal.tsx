@@ -203,19 +203,11 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                       <Coins className="w-4 h-4 text-amber-400" /> {t('rules.tengeTitle')}
                     </h4>
                     <p>{t('rules.tengeText')}</p>
-                    <p className="mt-1.5"><strong className="text-amber-100">{t('rules.tengeEarn')}</strong></p>
+                    <p className="mt-1.5"><strong className="text-amber-100">{t('rules.tengeHow')}</strong></p>
                     <ul className="space-y-1 ml-4 mt-1">
                       <li className="flex items-start gap-2">
                         <span className="text-amber-400">•</span>
-                        <span>{t('rules.tengeWin')}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-amber-400">•</span>
-                        <span>{t('rules.tengeDaily')}</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <span className="text-amber-400">•</span>
-                        <span>{t('rules.tengeStart')}</span>
+                        <span>{t('rules.tengeBuy')}</span>
                       </li>
                     </ul>
                   </div>
