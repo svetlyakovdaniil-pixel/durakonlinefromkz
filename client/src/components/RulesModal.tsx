@@ -1,5 +1,4 @@
 import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight, Timer, Coins, Wifi, Users } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useTranslation } from '@/i18n';
 
@@ -35,7 +34,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
         </div>
 
         {/* Content */}
-        <ScrollArea className="flex-1 px-5 py-4">
+        <div className="flex-1 overflow-y-auto px-5 py-4">
           <Accordion type="multiple" defaultValue={["kazakh-rules", "standard-rules"]} className="space-y-3">
             {/* Chapter 1: Kazakh Durak Rules */}
             <AccordionItem value="kazakh-rules" className="border border-amber-700/30 rounded-xl overflow-hidden bg-black/20">
@@ -293,7 +292,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
           <div className="mt-4 mb-2 text-center">
             <p className="text-amber-200/40 text-xs">{t('rules.footer')}</p>
           </div>
-        </ScrollArea>
+        </div>
       </div>
     </div>
   );
