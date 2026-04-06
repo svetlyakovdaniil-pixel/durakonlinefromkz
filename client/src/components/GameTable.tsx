@@ -621,10 +621,23 @@ export default function GameTable({
         if (undefended.length === 1) {
           onPlayCard(card.id, undefended[0].idx);
         } else {
-          if (selectedCardId === card.id) {
-            setSelectedCardId(null);
+          // Only show target selection for special cards (trump, king of spades, 777)
+          // Normal cards auto-find the first valid target
+          const isTrump = card.suit === gs.trumpInfo.currentTrump;
+          const isKingSpades = card.rank === 'K' && card.suit === 'spades';
+          const is777Card = card.rank === '777';
+          const isSpecialCard = isTrump || isKingSpades || is777Card;
+
+          if (isSpecialCard) {
+            // Show highlight on battlefield pairs so player can choose which to beat
+            if (selectedCardId === card.id) {
+              setSelectedCardId(null);
+            } else {
+              setSelectedCardId(card.id);
+            }
           } else {
-            setSelectedCardId(card.id);
+            // Auto-play on first valid undefended pair
+            onPlayCard(card.id);
           }
         }
         return;
@@ -661,7 +674,7 @@ export default function GameTable({
       }
     }
 
-    // Defender: auto-target if only one undefended pair
+    // Defender: auto-target if only one undefended pair, or auto-play non-special cards
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
       if (playableIds.has(card.id)) {
         const undefended = gs.battleField
@@ -672,14 +685,24 @@ export default function GameTable({
           setSelectedCardId(null);
           return true;
         }
-        // Multiple targets — select the card instead
-        setSelectedCardId(card.id);
-        return false; // Return to hand, let player click target
+        // Check if special card (trump, king of spades, 777) — needs target selection
+        const isTrump = card.suit === gs.trumpInfo.currentTrump;
+        const isKingSpades = card.rank === 'K' && card.suit === 'spades';
+        const is777Card = card.rank === '777';
+        if (isTrump || isKingSpades || is777Card) {
+          // Special card — select and let player click target
+          setSelectedCardId(card.id);
+          return false;
+        }
+        // Normal card — auto-play on first valid target
+        onPlayCard(card.id);
+        setSelectedCardId(null);
+        return true;
       }
     }
 
     return false; // Invalid drop — card returns to hand
-  }, [isDefender, gs.defenderTaking, gs.turnPhase, gs.battleField, playableIds, transferIds, onPlayCard, onTransferCard]);
+  }, [isDefender, gs.defenderTaking, gs.turnPhase, gs.battleField, gs.trumpInfo.currentTrump, playableIds, transferIds, onPlayCard, onTransferCard]);
 
   const trumpSymbol = SUIT_SYMBOLS[gs.trumpInfo.currentTrump] || gs.trumpInfo.currentTrump;
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
@@ -1141,7 +1164,7 @@ export default function GameTable({
         {/* Role indicator + Action buttons — DESKTOP: centered fixed overlay */}
         {/* Desktop version */}
         {hasAnyAction && (
-          <div className="hidden sm:flex fixed inset-0 z-40 items-center justify-center pointer-events-none">
+          <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
             <div className="flex flex-col items-center gap-2 pointer-events-auto">
               {/* Role badges */}
               <div className="flex items-center gap-2">
@@ -1181,7 +1204,7 @@ export default function GameTable({
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                   <Button
-                    className="bg-purple-700/80 hover:bg-purple-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/30"
+                    className="bg-purple-700/60 hover:bg-purple-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
                     onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                   >
                     Перевести
@@ -1189,7 +1212,7 @@ export default function GameTable({
                 )}
                 {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                   <Button
-                    className="bg-yellow-700/80 hover:bg-yellow-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/30"
+                    className="bg-yellow-700/60 hover:bg-yellow-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
                     onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                   >
                     <Eye className="w-5 h-5 mr-1.5" />
@@ -1197,17 +1220,17 @@ export default function GameTable({
                   </Button>
                 )}
                 {canTake && (
-                  <Button variant="destructive" className="text-lg h-14 px-6 font-semibold bg-red-700/80 hover:bg-red-600 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
+                  <Button variant="destructive" className="text-lg h-14 px-6 font-semibold bg-red-700/60 hover:bg-red-600/80 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
                     Забрать
                   </Button>
                 )}
                 {canEndAttack && (
-                  <Button className="bg-green-700/80 hover:bg-green-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/30" onClick={onEndAttack}>
+                  <Button className="bg-green-700/60 hover:bg-green-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/20" onClick={onEndAttack}>
                     {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                   </Button>
                 )}
                 {canSkip && (
-                  <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/50 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
+                  <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
                     Пропустить
                   </Button>
                 )}
@@ -1257,7 +1280,7 @@ export default function GameTable({
             <div className="flex items-center gap-2 pointer-events-auto">
               {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                 <Button
-                  className="bg-purple-700/75 hover:bg-purple-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/30"
+                  className="bg-purple-700/55 hover:bg-purple-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
                   onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                 >
                   Перевести
@@ -1265,7 +1288,7 @@ export default function GameTable({
               )}
               {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                 <Button
-                  className="bg-yellow-700/75 hover:bg-yellow-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/30"
+                  className="bg-yellow-700/55 hover:bg-yellow-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
                   onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -1273,17 +1296,17 @@ export default function GameTable({
                 </Button>
               )}
               {canTake && (
-                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/75 hover:bg-red-600" onClick={onTakeCards}>
+                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/55 hover:bg-red-600/75" onClick={onTakeCards}>
                   Забрать
                 </Button>
               )}
               {canEndAttack && (
-                <Button className="bg-green-700/75 hover:bg-green-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/30" onClick={onEndAttack}>
+                <Button className="bg-green-700/55 hover:bg-green-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
                   {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                 </Button>
               )}
               {canSkip && (
-                <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/40 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
+                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/25 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
                   Пропустить
                 </Button>
               )}

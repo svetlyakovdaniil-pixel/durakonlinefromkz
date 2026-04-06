@@ -1884,3 +1884,104 @@ describe('Consecutive timeouts tracking', () => {
     expect(game.consecutiveTimeouts).toEqual({});
   });
 });
+
+// ============================================================
+// FIRST TRICK 13-CARD LIMIT ON TRANSFER
+// ============================================================
+describe('First trick 13-card limit on transfer', () => {
+  it('blocks transfer when it would exceed 13 cards on first trick', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = true;
+    // 13 sevens already on the table (all undefended)
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.leadCardRank = '7';
+    // Defender has a 7 to transfer
+    state.players[1].hand = [card('hearts', '7', 50), ...Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100))];
+    // Next defender has plenty of cards
+    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
+
+    const err = transferAttack(state, 1, 'hearts-7-50');
+    expect(err).toBeTruthy();
+    expect(err).toContain('первой бите');
+  });
+
+  it('allows transfer when under 13 cards on first trick', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = true;
+    // 12 sevens on the table (all undefended) — transfer would make 13, which is OK
+    state.battleField = Array.from({ length: 12 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.leadCardRank = '7';
+    state.players[1].hand = [card('hearts', '7', 50)];
+    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
+
+    const err = transferAttack(state, 1, 'hearts-7-50');
+    expect(err).toBeNull();
+  });
+
+  it('getAvailableActions hides transfer when it would exceed 13 on first trick', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = true;
+    // 13 sevens on the table
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.leadCardRank = '7';
+    state.players[1].hand = [card('hearts', '7', 50), ...Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100))];
+    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
+
+    const actions = getAvailableActions(state, 1);
+    const transferAction = actions.find(a => a.type === 'transferCard');
+    expect(transferAction).toBeUndefined();
+  });
+
+  it('no 13-card transfer limit after first trick', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.firstTrick = false; // NOT first trick
+    // 13 sevens on the table
+    state.battleField = Array.from({ length: 13 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.leadCardRank = '7';
+    state.players[1].hand = [card('hearts', '7', 50)];
+    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
+
+    // After first trick, transfer is only limited by next defender's hand size
+    const err = transferAttack(state, 1, 'hearts-7-50');
+    expect(err).toBeNull();
+  });
+
+  it('first trick limit caps at defender hand size (min of 13 and defender cards)', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = true;
+    // Defender only has 5 cards
+    state.players[1].hand = Array.from({ length: 5 }, (_, i) => card('hearts', 'A', i));
+    state.players[0].hand = Array.from({ length: 20 }, (_, i) => card('spades', '7', i));
+    state.battleField = [];
+
+    const maxCards = getMaxAttackCards(state);
+    expect(maxCards).toBe(5); // min(13, 5) = 5
+  });
+});

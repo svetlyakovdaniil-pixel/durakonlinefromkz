@@ -518,6 +518,12 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
   // Check if the next defender has enough cards to handle all attack cards
   // Total attack cards after transfer = current battlefield cards + 1 (the transfer card)
   const totalAttackCards = state.battleField.length + 1;
+
+  // First trick limit: cannot transfer if it would exceed 13 cards on the table
+  if (state.firstTrick && totalAttackCards > FIRST_TRICK_LIMIT) {
+    return `Нельзя перевести — на первой бите не может быть больше ${FIRST_TRICK_LIMIT} карт`;
+  }
+
   const potentialDir = (card.rank === '10' && state.leadCardRank === '10')
     ? (state.direction === 'cw' ? 'ccw' : 'cw')
     : state.direction;
@@ -967,15 +973,20 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
 
       // Transfer option — show all matching cards for choice
       // Only show if next defender has enough cards to handle the transfer
+      // Also respect first trick 13-card limit
       if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
-        const attackRank = state.battleField[0].attack.rank;
-        const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
-        if (transferCards.length > 0) {
-          // Check next defender has enough cards (battlefield + 1 transfer card)
-          const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
-          const nextDef = state.players[nextDefIdx];
-          if (nextDef.hand.length >= state.battleField.length + 1) {
-            actions.push({ type: 'transferCard', cardIds: transferCards });
+        const totalAfterTransfer = state.battleField.length + 1;
+        const withinFirstTrickLimit = !state.firstTrick || totalAfterTransfer <= FIRST_TRICK_LIMIT;
+        if (withinFirstTrickLimit) {
+          const attackRank = state.battleField[0].attack.rank;
+          const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
+          if (transferCards.length > 0) {
+            // Check next defender has enough cards (battlefield + 1 transfer card)
+            const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+            const nextDef = state.players[nextDefIdx];
+            if (nextDef.hand.length >= totalAfterTransfer) {
+              actions.push({ type: 'transferCard', cardIds: transferCards });
+            }
           }
         }
       }
