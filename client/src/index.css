@@ -329,3 +329,9 @@
 .urgent-blink {
   animation: urgent-blink 0.33s step-end infinite;
 }
+
+/* Attack indicator blink - toggles opacity at 0.33s */
+@keyframes attackBlink {
+  0% { opacity: 1; }
+  100% { opacity: 0.2; }
+}

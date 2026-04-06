@@ -484,18 +484,29 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
     state.turnPhase = 'attack';
     state.attackerHasPriority = true;
     state.passedAttackers = [];
+    
+    // Auto-pass attackers who have no matching cards to add
+    autoPassAttackersWithNoCards(state);
+    
+    // If all attackers auto-passed (nobody can add cards), auto-complete defense
+    // BUT only if defender still has cards (otherwise checkPlayerOut handles it)
+    if (player.hand.length > 0 && checkAllAttackersPassed(state)) {
+      // Don't auto-complete immediately — will be handled below or by the caller
+      // Set a flag so the server knows to auto-complete
+      state._autoCompleteDefense = true;
+    }
   }
 
   const wentOut = checkPlayerOut(state, playerIdx);
 
   // If defender went out (defended with last card) and all cards are defended,
-  // auto-complete the trick IMMEDIATELY — no point waiting for attackers
-  // since defender has no cards left to defend with anyway
+  // add a 3-second delay so all players can see the final cards
   if (wentOut && allDefended) {
-    successfulDefense(state);
+    state._lastCardDefenseDelay = true;
+    // Don't call successfulDefense immediately — server will handle the 3s delay
   } else if (allDefended && player.hand.length === 0) {
-    // Defender used last card to defend — same logic
-    successfulDefense(state);
+    // Defender used last card to defend — same logic, add delay
+    state._lastCardDefenseDelay = true;
   } else if (wentOut) {
     checkGameOver(state);
   }
@@ -587,7 +598,11 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
 
   // Check if the next defender has enough cards to handle all attack cards
   const totalAttackCards = state.battleField.length; // pass-through doesn't add to battlefield
-  const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  // For 10-card pass-through, direction will reverse, so check with the reversed direction
+  const checkDir = (card.rank === '10' && state.leadCardRank === '10')
+    ? (state.direction === 'cw' ? 'ccw' : 'cw')
+    : state.direction;
+  const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, checkDir);
   const nextDefender = state.players[newDefenderIdxCheck];
   if (nextDefender.hand.length < totalAttackCards) {
     return `Нельзя проехать — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе ${totalAttackCards}`;
@@ -605,6 +620,11 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
   }
 
   // The card stays in the player's hand — NOT removed
+  // Special 10-card pass-through: reverse direction (same as transfer with 10)
+  if (card.rank === '10' && state.leadCardRank === '10') {
+    state.direction = state.direction === 'cw' ? 'ccw' : 'cw';
+  }
+
   // Transfer the attack: defender becomes attacker, next player becomes defender
   const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
   state.currentAttackerIdx = state.currentDefenderIdx;

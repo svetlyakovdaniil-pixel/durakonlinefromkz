@@ -136,6 +136,10 @@ export interface GameState {
   prizePool: number;
   /** Prizes already awarded to winners (accumulated as players finish) */
   playerPrizes: { playerId: string; place: number; amount: number }[];
+  /** Internal flag: auto-complete defense when all attackers have no matching cards */
+  _autoCompleteDefense?: boolean;
+  /** Internal flag: delay before completing defense (defender played last card) */
+  _lastCardDefenseDelay?: boolean;
 }
 
 // --- Room ---

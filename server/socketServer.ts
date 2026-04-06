@@ -527,6 +527,35 @@ export function initSocketServer(httpServer: HttpServer) {
       }
 
       markProgress(data.roomId);
+
+      // Handle special flags set by the engine
+      if (gameState._lastCardDefenseDelay) {
+        // Defender played last card — broadcast current state, then auto-complete after 3s
+        gameState._lastCardDefenseDelay = false;
+        broadcastGameState(data.roomId, gameState);
+        // Pause the turn timer during the 3s reveal
+        stopTurnTimer(data.roomId);
+        setTimeout(() => {
+          const gs = games.get(data.roomId);
+          if (!gs || gs.gamePhase === 'finished') return;
+          successfulDefense(gs);
+          broadcastGameState(data.roomId, gs);
+          restartTurnTimer(data.roomId);
+          scheduleBotAction(data.roomId);
+        }, 3000);
+        return;
+      }
+
+      if (gameState._autoCompleteDefense) {
+        // All attackers have no matching cards — auto-complete defense
+        gameState._autoCompleteDefense = false;
+        successfulDefense(gameState);
+        broadcastGameState(data.roomId, gameState);
+        restartTurnTimer(data.roomId);
+        scheduleBotAction(data.roomId);
+        return;
+      }
+
       resetTurnTimer(gameState);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);

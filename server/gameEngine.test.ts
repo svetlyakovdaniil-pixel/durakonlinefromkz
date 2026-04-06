@@ -1708,8 +1708,10 @@ describe('Auto-complete trick when defender has no cards', () => {
     const err2 = playDefenseCard(state, 1, 'hearts-10-0');
     expect(err2).toBeNull();
 
-    // Trick should auto-complete — battlefield should be cleared
-    expect(state.battleField.length).toBe(0);
+    // Engine sets _lastCardDefenseDelay flag — server handles 3s delay then calls successfulDefense
+    expect(state._lastCardDefenseDelay).toBe(true);
+    // Battlefield is NOT cleared yet (server handles it after delay)
+    expect(state.battleField.length).toBe(1);
   });
 
   it('should NOT auto-complete if defender still has cards', () => {
@@ -2035,5 +2037,115 @@ describe('First bito 13-card limit (discardPile-based)', () => {
 
     const maxCards = getMaxAttackCards(state);
     expect(maxCards).toBe(5); // min(13, 5) = 5
+  });
+});
+
+// ============================================================
+// TEN-CARD PASS-THROUGH DIRECTION CHANGE
+// ============================================================
+describe('Ten-card pass-through changes direction', () => {
+  it('should reverse direction when pass-through card is a 10', () => {
+    const state = createTestState(4);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.direction = 'cw';
+    state.trumpInfo.currentTrump = 'hearts';
+    state.firstTrick = false;
+    // Attack with a 10
+    state.battleField = [{ attack: card('spades', '10', 0), defense: null }];
+    state.leadCardRank = '10';
+    // Defender has a trump 10 plus extra cards
+    state.players[1].hand = [card('hearts', '10', 1), card('diamonds', 'A', 5)];
+    // In ccw (reversed) direction from player 1, next is player 0
+    // Player 0 needs enough cards to handle pass-through
+    state.players[0].hand = [card('clubs', 'A', 0), card('clubs', 'K', 0), card('clubs', 'Q', 0)];
+    state.players[2].hand = [card('clubs', '9', 0)];
+    state.players[3].hand = [card('clubs', '8', 0), card('clubs', '7', 0), card('clubs', '6', 0)];
+
+    const error = showPassThrough(state, 1, 'hearts-10-1');
+    expect(error).toBeNull();
+
+    // Direction should be reversed
+    expect(state.direction).toBe('ccw');
+  });
+
+  it('should NOT reverse direction when pass-through card is NOT a 10', () => {
+    const state = createTestState(4);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.direction = 'cw';
+    state.trumpInfo.currentTrump = 'hearts';
+    state.firstTrick = false;
+    // Attack with a 7
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.leadCardRank = '7';
+    // Defender has a trump 7 plus extra cards
+    state.players[1].hand = [card('hearts', '7', 1), card('diamonds', 'A', 5)];
+    // Next defender (player 2 in cw direction) needs enough cards
+    state.players[2].hand = [card('clubs', 'A', 0), card('clubs', 'K', 0), card('clubs', 'Q', 0)];
+    state.players[3].hand = [card('clubs', '8', 0)];
+
+    const error = showPassThrough(state, 1, 'hearts-7-1');
+    expect(error).toBeNull();
+
+    // Direction should remain the same
+    expect(state.direction).toBe('cw');
+  });
+});
+
+// ============================================================
+// AUTO-COMPLETE DEFENSE (all attackers have no matching cards)
+// ============================================================
+describe('Auto-complete defense when attackers have no matching cards', () => {
+  it('should set _autoCompleteDefense when all attackers lack matching cards after defense', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.trumpInfo.currentTrump = 'hearts';
+    state.firstTrick = false;
+    // Attacker has only a 6 of spades — no 8s or 6s after playing
+    state.players[0].hand = [card('spades', '6', 0)];
+    // Defender has a trump 8 to beat the 6
+    state.players[1].hand = [card('hearts', '8', 0), card('clubs', 'A', 0)];
+    // Player 2 has no 6s or 8s
+    state.players[2].hand = [card('clubs', 'K', 0), card('clubs', 'Q', 0)];
+
+    // Attacker plays 6 of spades
+    const err1 = playAttackCard(state, 0, 'spades-6-0');
+    expect(err1).toBeNull();
+
+    // Defender beats with hearts 8
+    const err2 = playDefenseCard(state, 1, 'hearts-8-0');
+    expect(err2).toBeNull();
+
+    // Auto-complete should be flagged since no attacker has 6s or 8s
+    expect(state._autoCompleteDefense).toBe(true);
+  });
+
+  it('should NOT set _autoCompleteDefense when an attacker has matching cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.trumpInfo.currentTrump = 'hearts';
+    state.firstTrick = false;
+    // Attacker has a 6 of spades AND another 6
+    state.players[0].hand = [card('spades', '6', 0), card('clubs', '6', 1)];
+    // Defender has a trump 8
+    state.players[1].hand = [card('hearts', '8', 0), card('clubs', 'A', 0)];
+    // Player 2 has no matching cards
+    state.players[2].hand = [card('clubs', 'K', 0)];
+
+    const err1 = playAttackCard(state, 0, 'spades-6-0');
+    expect(err1).toBeNull();
+
+    const err2 = playDefenseCard(state, 1, 'hearts-8-0');
+    expect(err2).toBeNull();
+
+    // Should NOT auto-complete — attacker still has a 6
+    expect(state._autoCompleteDefense).toBeFalsy();
   });
 });

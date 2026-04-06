@@ -971,7 +971,7 @@ export default function GameTable({
                       <img
                         src={getAvatarUrl(p.avatarId)}
                         alt={p.name}
-                        className={`${manyOpponents ? 'w-5 h-5' : 'w-7 h-7'} sm:w-9 sm:h-9 rounded-full border ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
+                        className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
                       />
                     </button>
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
@@ -1041,12 +1041,10 @@ export default function GameTable({
 
         {/* First attacker indicator — persistent text above hand when table is empty and player is attacker */}
         {isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
-          <div className="flex justify-center pointer-events-none mb-1">
-            <div className="bg-amber-600/20 border border-amber-500/40 rounded-lg px-4 py-1.5 backdrop-blur-sm animate-pulse">
-              <span className="text-amber-300 text-sm sm:text-base font-bold tracking-wide">
-                ВАШ ХОД, АТАКУЙТЕ
-              </span>
-            </div>
+          <div className="flex justify-center pointer-events-none mb-2">
+            <span className="text-red-500 text-base sm:text-lg md:text-xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
+              ВАШ ХОД, АТАКУЙТЕ
+            </span>
           </div>
         )}
 

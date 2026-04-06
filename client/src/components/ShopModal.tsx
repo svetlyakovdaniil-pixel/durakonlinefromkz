@@ -3,9 +3,10 @@ import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { X, Lock, ShoppingCart, Check } from 'lucide-react';
+import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM } from '@shared/cardAssets';
 
-const CUSTOM_DECK_BACK = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/custom-deck-back_9781453a.jpg';
-const KING_SPADES = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/king-spades_95049331.jpg';
+const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
+const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
 const CUSTOM_DECK_PRICE = 60;
