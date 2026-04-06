@@ -882,12 +882,12 @@ describe('Attacker priority mechanic', () => {
     expect(state.attackerHasPriority).toBe(true);
   });
 
-  it('defender can transfer even when attacker has priority', () => {
+  it('defender cannot transfer when attacker has priority and matching rank cards', () => {
     const state = createTestState(3);
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.attackerHasPriority = true;
-    state.players[0].hand = [card('hearts', 'A')];
+    state.players[0].hand = [card('hearts', '7', 2)]; // attacker has a 7 matching the attack rank
     state.players[1].hand = [card('spades', '7', 1)]; // matching rank for transfer
     state.players[2].hand = [card('hearts', '8'), card('hearts', '9'), card('hearts', '10')];
     state.battleField = [
@@ -895,12 +895,40 @@ describe('Attacker priority mechanic', () => {
     ];
     state.turnPhase = 'defend';
 
-    // Defender should be able to transfer even with attackerHasPriority=true
+    // Attacker has a 7 in hand (matching the attack rank on table), so defender CANNOT transfer
+    const actions = getAvailableActions(state, 1);
+    const transferAction = actions.find(a => a.type === 'transferCard');
+    expect(transferAction).toBeFalsy();
+
+    // After attacker presses bito (releases priority), defender CAN transfer
+    state.attackerHasPriority = false;
+    const actionsAfterBito = getAvailableActions(state, 1);
+    const transferAfterBito = actionsAfterBito.find(a => a.type === 'transferCard');
+    expect(transferAfterBito).toBeTruthy();
+
+    // Actually perform the transfer
+    const error = transferAttack(state, 1, state.players[1].hand[0].id);
+    expect(error).toBeNull();
+  });
+
+  it('defender CAN transfer when attacker has priority but NO matching rank cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = true;
+    state.players[0].hand = [card('hearts', 'A')]; // attacker has Ace, NOT matching 7 on table
+    state.players[1].hand = [card('spades', '7', 1)]; // matching rank for transfer
+    state.players[2].hand = [card('hearts', '8'), card('hearts', '9'), card('hearts', '10')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+    state.turnPhase = 'defend';
+
+    // Attacker has priority but no matching rank cards, so defender CAN transfer
     const actions = getAvailableActions(state, 1);
     const transferAction = actions.find(a => a.type === 'transferCard');
     expect(transferAction).toBeTruthy();
 
-    // Actually perform the transfer
     const error = transferAttack(state, 1, state.players[1].hand[0].id);
     expect(error).toBeNull();
   });
@@ -919,10 +947,23 @@ describe('Attacker priority mechanic', () => {
     ];
     state.turnPhase = 'defend';
 
-    // Defender should be able to show passthrough even with attackerHasPriority=true
+    // Attacker has an A in hand — but it doesn't match the attack rank (7), so no block
+    // Wait, attacker hand has spades A — rank A doesn't match 7 on table, so defender CAN pass-through
     const actions = getAvailableActions(state, 1);
     const ptAction = actions.find(a => a.type === 'showPassThrough');
     expect(ptAction).toBeTruthy();
+
+    // Now give attacker a matching rank card (7) — should block pass-through
+    state.players[0].hand = [card('spades', '7', 2)];
+    const actionsBlocked = getAvailableActions(state, 1);
+    const ptBlocked = actionsBlocked.find(a => a.type === 'showPassThrough');
+    expect(ptBlocked).toBeFalsy();
+
+    // After attacker releases priority, defender CAN use pass-through
+    state.attackerHasPriority = false;
+    const actionsUnblocked = getAvailableActions(state, 1);
+    const ptUnblocked = actionsUnblocked.find(a => a.type === 'showPassThrough');
+    expect(ptUnblocked).toBeTruthy();
 
     // Actually perform the passthrough
     const error = showPassThrough(state, 1, state.players[1].hand[0].id);

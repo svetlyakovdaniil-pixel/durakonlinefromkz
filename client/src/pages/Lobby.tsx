@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Room, RoomSettings, DeckStyle } from '../../../shared/gameTypes';
+import type { TableStyle } from '../../../shared/cardAssets';
 import { BET_AMOUNTS } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +53,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [botCount, setBotCount] = useState(3);
   const [turnTimer, setTurnTimer] = useState(30);
   const [deckStyle, setDeckStyle] = useState<DeckStyle>('classic');
+  const [tableStyle, setTableStyle] = useState<TableStyle>('classic');
   const [betAmountIdx, setBetAmountIdx] = useState(0); // index into BET_AMOUNTS
   const [isPrivate, setIsPrivate] = useState(false);
   const [roomPassword, setRoomPassword] = useState('');
@@ -70,9 +72,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const deleteNotif = trpc.notifications.delete.useMutation();
   const deleteAllNotifs = trpc.notifications.deleteAll.useMutation();
 
-  // Shop / Owned decks
+  // Shop / Owned decks & tables
   const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
   const isCustomDeckOwned = ownedDecks.includes('custom');
+  const { data: ownedTables = [] } = trpc.shop.ownedTables.useQuery();
+  const isDarkTableOwned = ownedTables.includes('dark_kazakh');
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
   const utils = trpc.useUtils();
@@ -123,6 +127,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       withBots,
       botCount: withBots ? botCount : 0,
       deckStyle,
+      tableStyle,
       betAmount: BET_AMOUNTS[betAmountIdx],
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
     };
@@ -198,7 +203,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <div className="flex items-center gap-0.5">
                     <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                     <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] rounded-full object-cover" />
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
@@ -266,7 +271,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                   <div className="w-[51px] h-[51px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] object-contain" />
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] rounded-full object-cover" />
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
@@ -406,30 +411,55 @@ onClick={() => setShowTengeTopUp(true)}
                   <Label className="text-amber-200/70 text-sm">Добавить ботов</Label>
                   <Switch checked={withBots} onCheckedChange={setWithBots} />
                 </div>
-                <div>
-                  <Label className="text-amber-200/70 text-sm">Колода карт</Label>
-                  <Select value={deckStyle} onValueChange={(v) => {
-                    if (v === 'custom' && !isCustomDeckOwned) return;
-                    setDeckStyle(v as DeckStyle);
-                  }}>
-                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="classic" className="text-amber-100">Колода №1 (классическая)</SelectItem>
-                      <SelectItem
-                        value="custom"
-                        className={isCustomDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
-                        disabled={!isCustomDeckOwned}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          {!isCustomDeckOwned && <Lock className="w-3 h-3" />}
-                          Колода №2 (кастомная)
-                          {!isCustomDeckOwned && <span className="text-[10px] text-gray-400 ml-1">— купите в магазине</span>}
-                        </span>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-amber-200/70 text-sm">Колода карт</Label>
+                    <Select value={deckStyle} onValueChange={(v) => {
+                      if (v === 'custom' && !isCustomDeckOwned) return;
+                      setDeckStyle(v as DeckStyle);
+                    }}>
+                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                        <SelectItem value="classic" className="text-amber-100">Колода №1</SelectItem>
+                        <SelectItem
+                          value="custom"
+                          className={isCustomDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isCustomDeckOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isCustomDeckOwned && <Lock className="w-3 h-3" />}
+                            Колода №2
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-amber-200/70 text-sm">Игровой стол</Label>
+                    <Select value={tableStyle} onValueChange={(v) => {
+                      if (v === 'dark_kazakh' && !isDarkTableOwned) return;
+                      setTableStyle(v as TableStyle);
+                    }}>
+                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                        <SelectItem value="classic" className="text-amber-100">Классический</SelectItem>
+                        <SelectItem
+                          value="dark_kazakh"
+                          className={isDarkTableOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isDarkTableOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isDarkTableOwned && <Lock className="w-3 h-3" />}
+                            Тёмный Казахский
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 {withBots && (
                   <div>

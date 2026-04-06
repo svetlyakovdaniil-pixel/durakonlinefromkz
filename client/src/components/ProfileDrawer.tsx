@@ -50,16 +50,16 @@ export default function ProfileDrawer({
         </SheetHeader>
         <Tabs defaultValue={inRoom ? 'friends' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
           <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
-            <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+            <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Профиль</span>
             </TabsTrigger>
-            <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+            <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Друзья</span>
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+            <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <Trophy className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">Рейтинг</span>
             </TabsTrigger>
-            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-xs px-2 sm:px-3">
+            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">История</span>
             </TabsTrigger>
           </TabsList>

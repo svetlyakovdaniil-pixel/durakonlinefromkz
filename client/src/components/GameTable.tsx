@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
 import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../../shared/gameTypes';
 import { RANK_ORDER } from '../../../shared/gameTypes';
-import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
+import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, TABLE_STYLES, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
 import PlayingCard from './PlayingCard';
 import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
@@ -388,7 +388,7 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
       <div className="bg-black/60 border border-amber-700/30 rounded-lg px-4 py-1.5">
         <span className="text-amber-300 text-3xl sm:text-4xl font-black">{count}</span>
       </div>
-      <span className="text-amber-200/50 text-xs font-medium">Бито</span>
+      <span className="text-amber-300 text-xs sm:text-2xl font-bold">Бито</span>
     </div>
   );
 }
@@ -801,7 +801,7 @@ export default function GameTable({
   return (
     <div
       className="min-h-[100dvh] bg-cover bg-center bg-no-repeat relative flex flex-col"
-      style={{ backgroundImage: `url(${GAME_TABLE_URL})` }}
+      style={{ backgroundImage: `url(${TABLE_STYLES[gs.tableStyle ?? 'classic']?.url ?? GAME_TABLE_URL})` }}
     >
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
@@ -1071,7 +1071,7 @@ export default function GameTable({
         {/* Main game area */}
         <div className="flex-1 flex relative">
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
-          <div className="hidden sm:flex flex-col justify-between items-center w-36 md:w-44 py-4 px-2">
+          <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
             <div className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
               turnTimer <= 5
                 ? 'bg-red-900/60 border-red-500/50 animate-pulse'

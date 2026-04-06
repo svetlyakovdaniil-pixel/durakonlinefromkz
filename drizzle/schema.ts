@@ -50,6 +50,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   lastFreeTopup: timestamp("lastFreeTopup"),
   /** JSON array of owned deck IDs, e.g. ["custom"] */
   ownedDecks: text("ownedDecks"),
+  /** JSON array of owned table style IDs, e.g. ["dark_kazakh"] */
+  ownedTables: text("ownedTables"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

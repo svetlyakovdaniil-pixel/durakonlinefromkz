@@ -79,6 +79,8 @@ export interface RoomSettings {
   withBots: boolean;
   botCount: number;
   deckStyle: DeckStyle;
+  /** Table background style */
+  tableStyle?: import('@shared/cardAssets').TableStyle;
   /** Shanyrak bet amount required to enter the game */
   betAmount: number;
   /** If set, room requires password to join */
@@ -132,6 +134,8 @@ export interface GameState {
   revealedPassThroughs: { playerId: string; cards: Card[] }[]; // currently revealed pass-through cards this trick
   consecutiveTimeouts: Record<string, number>; // player id -> consecutive timeout count (2 = forfeit)
   deckStyle: DeckStyle;
+  /** Table background style */
+  tableStyle: import('@shared/cardAssets').TableStyle;
   /** Prize pool for this game (total shanyraks collected from all players) */
   prizePool: number;
   /** Prizes already awarded to winners (accumulated as players finish) */
@@ -235,6 +239,7 @@ export interface ClientGameState {
   roomId: string;
   players: ClientPlayer[];
   deckStyle: DeckStyle;
+  tableStyle: import('@shared/cardAssets').TableStyle;
   deck1Count: number;
   deck2Count: number;
   trumpInfo: TrumpInfo;

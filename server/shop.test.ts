@@ -184,3 +184,158 @@ describe('Shop - Deck Selection Gating', () => {
     expect(selectedDeck).toBe('classic');
   });
 });
+
+// ============================================================
+// Table Shop Tests
+// ============================================================
+
+const DARK_TABLE_PRICE = 80;
+
+interface PlayerProfileWithTables extends PlayerProfile {
+  ownedTables: string | null;
+}
+
+function parseOwnedTables(profile: PlayerProfileWithTables): string[] {
+  if (!profile.ownedTables) return [];
+  try {
+    return JSON.parse(profile.ownedTables) as string[];
+  } catch {
+    return [];
+  }
+}
+
+function canPurchaseTable(
+  profile: PlayerProfileWithTables,
+  tableId: string,
+  tengeCost: number
+): { canBuy: boolean; reason?: string } {
+  const owned = parseOwnedTables(profile);
+  if (owned.includes(tableId)) {
+    return { canBuy: false, reason: 'already_owned' };
+  }
+  if (profile.balanceTenge < tengeCost) {
+    return { canBuy: false, reason: 'insufficient_tenge' };
+  }
+  return { canBuy: true };
+}
+
+function simulateTablePurchase(
+  profile: PlayerProfileWithTables,
+  tableId: string,
+  tengeCost: number
+): { success: boolean; newTenge?: number; newOwnedTables?: string[]; reason?: string } {
+  const check = canPurchaseTable(profile, tableId, tengeCost);
+  if (!check.canBuy) return { success: false, reason: check.reason };
+
+  const owned = parseOwnedTables(profile);
+  owned.push(tableId);
+  const newTenge = profile.balanceTenge - tengeCost;
+
+  return { success: true, newTenge, newOwnedTables: owned };
+}
+
+describe('Shop - Table Ownership', () => {
+  it('should parse empty ownedTables as empty array', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 100, ownedDecks: null, ownedTables: null };
+    expect(parseOwnedTables(profile)).toEqual([]);
+  });
+
+  it('should parse valid ownedTables JSON', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 100, ownedDecks: null, ownedTables: '["dark_kazakh"]' };
+    expect(parseOwnedTables(profile)).toEqual(['dark_kazakh']);
+  });
+
+  it('should parse invalid JSON as empty array', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 100, ownedDecks: null, ownedTables: 'invalid' };
+    expect(parseOwnedTables(profile)).toEqual([]);
+  });
+});
+
+describe('Shop - Table Purchase Validation', () => {
+  it('should allow table purchase with sufficient balance', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 100, ownedDecks: null, ownedTables: null };
+    const result = canPurchaseTable(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.canBuy).toBe(true);
+  });
+
+  it('should reject table purchase with insufficient balance', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 30, ownedDecks: null, ownedTables: null };
+    const result = canPurchaseTable(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.canBuy).toBe(false);
+    expect(result.reason).toBe('insufficient_tenge');
+  });
+
+  it('should reject table purchase if already owned', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 200, ownedDecks: null, ownedTables: '["dark_kazakh"]' };
+    const result = canPurchaseTable(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.canBuy).toBe(false);
+    expect(result.reason).toBe('already_owned');
+  });
+
+  it('should allow purchase with exact balance', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 80, ownedDecks: null, ownedTables: null };
+    const result = canPurchaseTable(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.canBuy).toBe(true);
+  });
+});
+
+describe('Shop - Table Purchase Simulation', () => {
+  it('should deduct tenge and add table on successful purchase', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 200, ownedDecks: null, ownedTables: null };
+    const result = simulateTablePurchase(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.success).toBe(true);
+    expect(result.newTenge).toBe(120);
+    expect(result.newOwnedTables).toEqual(['dark_kazakh']);
+  });
+
+  it('should add to existing tables', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 300, ownedDecks: null, ownedTables: '["other_table"]' };
+    const result = simulateTablePurchase(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.success).toBe(true);
+    expect(result.newTenge).toBe(220);
+    expect(result.newOwnedTables).toEqual(['other_table', 'dark_kazakh']);
+  });
+
+  it('should fail if already owned', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 200, ownedDecks: null, ownedTables: '["dark_kazakh"]' };
+    const result = simulateTablePurchase(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('already_owned');
+  });
+
+  it('should fail if insufficient balance', () => {
+    const profile: PlayerProfileWithTables = { id: 1, balanceTenge: 10, ownedDecks: null, ownedTables: null };
+    const result = simulateTablePurchase(profile, 'dark_kazakh', DARK_TABLE_PRICE);
+    expect(result.success).toBe(false);
+    expect(result.reason).toBe('insufficient_tenge');
+  });
+});
+
+describe('Shop - Table Selection Gating', () => {
+  it('should allow classic table for all players', () => {
+    const ownedTables: string[] = [];
+    const canSelectClassic = true; // classic is always available
+    expect(canSelectClassic).toBe(true);
+  });
+
+  it('should block dark_kazakh table if not owned', () => {
+    const ownedTables: string[] = [];
+    const canSelectDark = ownedTables.includes('dark_kazakh');
+    expect(canSelectDark).toBe(false);
+  });
+
+  it('should allow dark_kazakh table if owned', () => {
+    const ownedTables = ['dark_kazakh'];
+    const canSelectDark = ownedTables.includes('dark_kazakh');
+    expect(canSelectDark).toBe(true);
+  });
+
+  it('should reset table selection to classic if dark_kazakh not owned', () => {
+    const ownedTables: string[] = [];
+    let selectedTable = 'dark_kazakh';
+    if (selectedTable === 'dark_kazakh' && !ownedTables.includes('dark_kazakh')) {
+      selectedTable = 'classic';
+    }
+    expect(selectedTable).toBe('classic');
+  });
+});

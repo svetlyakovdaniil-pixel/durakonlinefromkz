@@ -71,6 +71,13 @@
       "when": 1775486359130,
       "tag": "0009_faulty_scorpion",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1775501314865,
+      "tag": "0010_lowly_tarantula",
+      "breakpoints": true
     }
   ]
 }

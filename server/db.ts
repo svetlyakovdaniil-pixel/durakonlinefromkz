@@ -330,9 +330,11 @@ export async function recordGameResult(data: {
   });
 
   // Update stats for all participants
-  for (const profileId of data.allPlayerProfileIds) {
-    const isWinner = profileId === data.winnerProfileId;
-    const isLoser = profileId === data.loserProfileId;
+  // NOTE: allPlayerProfileIds actually contains gameId values (not profileId/id)
+  // because playerGameIds map stores odId -> gameId
+  for (const gameId of data.allPlayerProfileIds) {
+    const isWinner = gameId === data.winnerProfileId;
+    const isLoser = gameId === data.loserProfileId;
 
     // Rating change: +15 for win, -10 for loss
     let ratingChange = 0;
@@ -345,7 +347,7 @@ export async function recordGameResult(data: {
       wins: isWinner ? sql`${playerProfiles.wins} + 1` : sql`${playerProfiles.wins}`,
       losses: isLoser ? sql`${playerProfiles.losses} + 1` : sql`${playerProfiles.losses}`,
       rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
-    }).where(eq(playerProfiles.id, profileId));
+    }).where(eq(playerProfiles.gameId, gameId));
   }
 }
 
@@ -682,6 +684,66 @@ export async function purchaseDeck(
     amount: -tengeCost,
     currency: 'tenge',
     description: `Покупка колоды: ${deckId}`,
+    balanceAfter: newTenge,
+  });
+
+  return { success: true, newTenge };
+}
+
+/**
+ * Get owned table style IDs for a player profile.
+ */
+export async function getOwnedTables(profileId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const [profile] = await db.select({ ownedTables: playerProfiles.ownedTables })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile || !profile.ownedTables) return [];
+  try {
+    return JSON.parse(profile.ownedTables) as string[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Purchase a table style for a player. Deducts tenge and adds table to ownedTables.
+ */
+export async function purchaseTable(
+  userId: number,
+  tableId: string,
+  tengeCost: number
+): Promise<{ success: boolean; newTenge?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  const owned: string[] = profile.ownedTables ? JSON.parse(profile.ownedTables) : [];
+  if (owned.includes(tableId)) {
+    return { success: false, reason: 'already_owned' };
+  }
+
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+
+  const newTenge = profile.balanceTenge - tengeCost;
+  owned.push(tableId);
+
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    ownedTables: JSON.stringify(owned),
+  }).where(eq(playerProfiles.id, profile.id));
+
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'shop_purchase',
+    amount: -tengeCost,
+    currency: 'tenge',
+    description: `Покупка стола: ${tableId}`,
     balanceAfter: newTenge,
   });
 

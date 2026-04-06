@@ -34,6 +34,8 @@ import {
   testAddTenge,
   getOwnedDecks,
   purchaseDeck,
+  getOwnedTables,
+  purchaseTable,
 } from "./db";
 import { emitNotificationToProfile } from "./socketServer";
 
@@ -369,6 +371,21 @@ export const appRouter = router({
       .input(z.object({ deckId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseDeck(ctx.user.id, input.deckId, input.tengeCost);
+        return result;
+      }),
+
+    /** Get owned table style IDs for the current user */
+    ownedTables: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return [];
+      return getOwnedTables(profile.id);
+    }),
+
+    /** Purchase a table style */
+    purchaseTable: protectedProcedure
+      .input(z.object({ tableId: z.string(), tengeCost: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await purchaseTable(ctx.user.id, input.tableId, input.tengeCost);
         return result;
       }),
   }),

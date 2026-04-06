@@ -63,6 +63,14 @@ export const CARD_IMAGES_CUSTOM: Record<string, string> = {
 export const CARD_BACK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/card_back-kqTDCf9Jwvt75TYv8Mh5D3.webp';
 export const CARD_BACK_CUSTOM_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/custom-card-back_30cd578f.jpg';
 export const GAME_TABLE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/game_table-9KeBRLr2mzuAL8uVYsQsVq.webp';
+export const GAME_TABLE_DARK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_table_dark_kazakh-j8oZ9SwQFNWR5GMMMPnrT3.webp';
+
+export type TableStyle = 'classic' | 'dark_kazakh';
+
+export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; price: number }> = {
+  classic: { url: GAME_TABLE_URL, name: 'Классический', price: 0 },
+  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Тёмный Казахский', price: 500 },
+};
 
 export const SUIT_SYMBOLS: Record<string, string> = {
   spades: '♠',
