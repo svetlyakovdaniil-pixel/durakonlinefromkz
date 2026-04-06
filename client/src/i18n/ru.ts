@@ -242,6 +242,11 @@ export const ru = {
     requestSent: 'Запрос отправлен',
     pendingResponse: 'Ожидает вашего ответа',
     alreadyFriends: 'Друзья',
+    youTake: 'Вы берёте',
+    defenderTakesAdd: 'Защитник берёт — докиньте!',
+    cancel: 'Отмена',
+    soundOn: 'Выключить звуки',
+    soundOff: 'Включить звуки',
   },
 
   // Profile

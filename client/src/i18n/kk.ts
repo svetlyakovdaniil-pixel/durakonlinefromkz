@@ -242,6 +242,11 @@ export const kk = {
     requestSent: 'Сұраныс жіберілді',
     pendingResponse: 'Сіздің жауабыңызды күтуде',
     alreadyFriends: 'Достар',
+    youTake: 'Сіз аласыз',
+    defenderTakesAdd: 'Қорғаушы алады — тастаңыз!',
+    cancel: 'Болдырмау',
+    soundOn: 'Дыбыстарды өшіру',
+    soundOff: 'Дыбыстарды қосу',
   },
 
   // Profile

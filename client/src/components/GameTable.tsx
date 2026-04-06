@@ -7,7 +7,7 @@ import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music, VolumeX, X, UserPlus, Clock, Check } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music2, Volume2, VolumeX, X, UserPlus, Clock, Check } from 'lucide-react';
 import { useSound } from '@/hooks/useSound';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
@@ -470,7 +470,7 @@ export default function GameTable({
   const prevDefenderIdx = useRef(gs.currentDefenderIdx);
 
   // Sound effects
-  const { play: playSound, enabled: soundEnabled } = useSound();
+  const { play: playSound, enabled: soundEnabled, toggle: toggleSound } = useSound();
   const { settings: gameSettings } = useSettings();
 
   // Drop zone highlight
@@ -504,63 +504,59 @@ export default function GameTable({
     prevDiscardCount.current = gs.discardCount;
   }, [gs.battleField.length, gs.discardCount, playSound]);
 
-  // Sound effects for game actions (card play, trump, multi-card, transfer, take, direction change)
+  // Sound effects for game actions — priority-based: only ONE sound per state update
+  // Priority order: transfer/passThrough > multiCard > trumpPlay > cardPlay
   useEffect(() => {
     if (isFirstRender.current) return;
 
     const prevBF = prevBattleFieldForSound.current;
     const currBF = gs.battleField;
 
-    // Count total cards on battlefield (attack + defense)
-    const prevTotalCards = prevBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
-    const currTotalCards = currBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
-    const newCardsCount = currTotalCards - prevTotalCards;
-
-    if (newCardsCount > 0) {
-      // Cards were added to the battlefield
-      // Determine if any new card is a trump
-      const trumpSuit = gs.trumpInfo.currentTrump;
-      let hasTrump = false;
-
-      // Check new attack cards
-      if (currBF.length > prevBF.length) {
-        for (let i = prevBF.length; i < currBF.length; i++) {
-          const card = currBF[i].attack;
-          if (card.suit === trumpSuit) hasTrump = true;
-        }
-      }
-      // Check new defense cards
-      for (let i = 0; i < Math.min(prevBF.length, currBF.length); i++) {
-        if (!prevBF[i].defense && currBF[i].defense) {
-          const card = currBF[i].defense!;
-          if (card.suit === trumpSuit) hasTrump = true;
-        }
-      }
-
-      if (newCardsCount > 1) {
-        // Multiple cards played at once
-        playSound('multiCard', 0.6);
-      } else if (hasTrump) {
-        // Single trump card played
-        playSound('trumpPlay', 0.6);
-      } else {
-        // Single non-trump card played
-        playSound('cardPlay', 0.6);
-      }
-    }
-
-    // Detect transfer: defender changed while battlefield has cards (card was transferred)
-    if (gs.currentDefenderIdx !== prevDefenderIdx.current && currBF.length > 0) {
-      playSound('transfer', 0.7);
-    }
+    // Detect transfer: defender changed while battlefield has cards
+    const isTransfer = gs.currentDefenderIdx !== prevDefenderIdx.current && currBF.length > 0;
     // Detect pass-through shown
-    if (gs.revealedPassThroughs.length > prevRevealedPassThroughs.current.length) {
-      playSound('transfer', 0.7);
-    }
+    const isPassThrough = gs.revealedPassThroughs.length > prevRevealedPassThroughs.current.length;
 
-    // Detect defender taking cards (defenderTaking transitions from false to true)
-    if (gs.defenderTaking && !prevDefenderTaking.current && currBF.length > 0) {
-      // Defender announced they're taking — actual take sound plays when battlefield clears without discard growing
+    if (isTransfer || isPassThrough) {
+      // Transfer/pass-through has highest priority — play only this sound
+      playSound('transfer', 0.7);
+    } else {
+      // Count total cards on battlefield (attack + defense)
+      const prevTotalCards = prevBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
+      const currTotalCards = currBF.reduce((sum, p) => sum + 1 + (p.defense ? 1 : 0), 0);
+      const newCardsCount = currTotalCards - prevTotalCards;
+
+      if (newCardsCount > 0) {
+        if (newCardsCount > 1) {
+          // Multiple cards played at once
+          playSound('multiCard', 0.6);
+        } else {
+          // Single card — check if trump
+          const trumpSuit = gs.trumpInfo.currentTrump;
+          let hasTrump = false;
+
+          // Check new attack cards
+          if (currBF.length > prevBF.length) {
+            for (let i = prevBF.length; i < currBF.length; i++) {
+              const card = currBF[i].attack;
+              if (card.suit === trumpSuit) hasTrump = true;
+            }
+          }
+          // Check new defense cards
+          for (let i = 0; i < Math.min(prevBF.length, currBF.length); i++) {
+            if (!prevBF[i].defense && currBF[i].defense) {
+              const card = currBF[i].defense!;
+              if (card.suit === trumpSuit) hasTrump = true;
+            }
+          }
+
+          if (hasTrump) {
+            playSound('trumpPlay', 0.6);
+          } else {
+            playSound('cardPlay', 0.6);
+          }
+        }
+      }
     }
 
     // Update refs
@@ -1145,9 +1141,16 @@ export default function GameTable({
                 onClick={onToggleMusic}
                 title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
               >
-                {musicEnabled ? <Music className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
+                {musicEnabled ? <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6 opacity-40" />}
               </button>
             )}
+            <button
+              className={`transition-colors p-1 sm:p-1.5 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+              onClick={toggleSound}
+              title={soundEnabled ? t('game.soundOn') : t('game.soundOff')}
+            >
+              {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
+            </button>
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
               <button
                 className="text-gray-400 hover:text-red-400 transition-colors p-1 sm:p-1.5 rounded"
@@ -1256,7 +1259,7 @@ export default function GameTable({
         {/* YOUR TURN overlay */}
         {showYourTurn && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className={`text-6xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
+            <div className={`text-4xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               {t('game.yourTurnCaps')}
             </div>
           </div>
@@ -1267,7 +1270,7 @@ export default function GameTable({
         {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && (
           <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
-            <div className={`text-5xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
+            <div className={`text-4xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
               <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
             </div>
           </div>

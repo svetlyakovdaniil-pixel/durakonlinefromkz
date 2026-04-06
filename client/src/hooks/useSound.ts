@@ -15,7 +15,7 @@ const SOUND_URLS = {
   transfer: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4_685db838.mp3',
   multiCard: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B8%D0%B3%D1%80%D0%BE%D0%BA%D0%BA%D0%B8%D0%B4%D0%B0%D0%B5%D1%82%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%81%D1%80%D0%B0%D0%B7%D1%83%D0%BD%D0%B5%D1%81%D0%BA%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%D0%BA%D0%B0%D1%80%D1%82%D0%B7%D0%B0%D1%80%D0%B0%D0%B7_db22f391.mp3',
   yourTurn: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%92%D0%90%D0%A8%D0%A5%D0%9E%D0%94_41ad06aa.mp3',
-  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B1%D0%B8%D1%82%D0%BE1_fd285f9b.mp3',
+  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bito1_short_e1150b0d.mp3',
 } as const;
 
 export type SoundName = keyof typeof SOUND_URLS;
