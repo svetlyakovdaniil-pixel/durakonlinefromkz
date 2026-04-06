@@ -535,9 +535,13 @@ export function initSocketServer(httpServer: HttpServer) {
         broadcastGameState(data.roomId, gameState);
         // Pause the turn timer during the 3s reveal
         stopTurnTimer(data.roomId);
+        // Capture current trick count to guard against stale timeouts
+        const savedTrickCount = gameState.trickCount;
         setTimeout(() => {
           const gs = games.get(data.roomId);
           if (!gs || gs.gamePhase === 'finished') return;
+          // Guard: if a new trick already started, don't call successfulDefense
+          if (gs.trickCount !== savedTrickCount) return;
           successfulDefense(gs);
           broadcastGameState(data.roomId, gs);
           restartTurnTimer(data.roomId);
@@ -1545,6 +1549,34 @@ function scheduleBotAction(roomId: string) {
     // Success — reset fail counter
     botFailCounts.delete(roomId);
     markProgress(roomId);
+
+    // Handle special flags set by the engine (same as human playCard handler)
+    if (gs._lastCardDefenseDelay) {
+      gs._lastCardDefenseDelay = false;
+      broadcastGameState(roomId, gs);
+      stopTurnTimer(roomId);
+      const savedTrickCount = gs.trickCount;
+      setTimeout(() => {
+        const gs2 = games.get(roomId);
+        if (!gs2 || gs2.gamePhase === 'finished') return;
+        if (gs2.trickCount !== savedTrickCount) return;
+        successfulDefense(gs2);
+        broadcastGameState(roomId, gs2);
+        restartTurnTimer(roomId);
+        scheduleBotAction(roomId);
+      }, 3000);
+      return;
+    }
+
+    if (gs._autoCompleteDefense) {
+      gs._autoCompleteDefense = false;
+      successfulDefense(gs);
+      broadcastGameState(roomId, gs);
+      restartTurnTimer(roomId);
+      scheduleBotAction(roomId);
+      return;
+    }
+
     resetTurnTimer(gs);
     restartTurnTimer(roomId);
     broadcastGameState(roomId, gs);

@@ -335,3 +335,12 @@
   0% { opacity: 1; }
   100% { opacity: 0.2; }
 }
+
+/* Action button blink - pulses opacity once per second */
+@keyframes buttonBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.action-btn-blink {
+  animation: buttonBlink 1s ease-in-out infinite;
+}
