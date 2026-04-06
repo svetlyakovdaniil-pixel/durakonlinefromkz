@@ -30,7 +30,8 @@ export default function WaitingRoom({
 }: WaitingRoomProps) {
   const isHost = room.hostId === userId;
   const myPlayer = room.players.find(p => p.id === userId);
-  const allReady = room.players.length >= 2 && room.players.every(p => p.isBot || p.ready);
+  // Host clicking "Start" implies they are ready — only check non-host players
+  const allReady = room.players.length >= 2 && room.players.every(p => p.isBot || p.id === room.hostId || p.ready);
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center p-3 sm:p-4">

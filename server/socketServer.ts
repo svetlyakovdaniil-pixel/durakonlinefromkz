@@ -378,7 +378,8 @@ export function initSocketServer(httpServer: HttpServer) {
       if (room.hostId !== odId) return;
       if (room.players.length < 2) return;
 
-      const allReady = room.players.every(p => p.isBot || p.ready);
+      // Host clicking "Start" implies they are ready — only check non-host players
+      const allReady = room.players.every(p => p.isBot || p.id === room.hostId || p.ready);
       if (!allReady) {
         socket.emit('error', 'Не все игроки готовы');
         return;
@@ -391,16 +392,34 @@ export function initSocketServer(httpServer: HttpServer) {
         isBot: p.isBot,
       }));
 
-      // Deduct bet from all human players
       const betAmount = room.settings.betAmount || 100;
+      const totalPool = betAmount * room.players.length; // bots also contribute to pool
+
+      // Create game FIRST (deal cards), then deduct shanyraks
+      const gameState = createGame(roomId, playerInfos, room.settings);
+      gameState.prizePool = totalPool;
+      games.set(roomId, gameState);
+      room.gameState = gameState;
+
+      // Initialize trump tracking for change detection
+      lastTrumpPhase.set(roomId, gameState.trumpInfo.phase);
+      lastTrumpSuit.set(roomId, gameState.trumpInfo.currentTrump);
+
+      // Broadcast game state immediately so players see cards dealt
+      broadcastGameState(roomId, gameState);
+      startTurnTimer(roomId);
+      startWatchdog(roomId);
+      broadcastRoomList();
+      scheduleBotAction(roomId);
+
+      // Deduct bets AFTER cards are dealt and game is visible
       const humanPlayers = room.players.filter(p => !p.isBot);
       const deductPromises = humanPlayers.map(p => deductShanyrakBet(p.id, betAmount, roomId));
       Promise.all(deductPromises).then(results => {
-        // Check if any deduction failed
         const failedIdx = results.findIndex(r => r === null);
         if (failedIdx !== -1) {
           const failedPlayer = humanPlayers[failedIdx];
-          socket.emit('error', `Не удалось списать ставку у игрока ${failedPlayer.name}. Недостаточно шаныраков.`);
+          console.error(`[Socket] Failed to deduct bet from ${failedPlayer.name} in room ${roomId}`);
           // Refund already deducted players
           for (let i = 0; i < failedIdx; i++) {
             if (results[i] !== null) {
@@ -409,30 +428,9 @@ export function initSocketServer(httpServer: HttpServer) {
               );
             }
           }
-          return;
         }
-
-        const totalPool = betAmount * room.players.length; // bots also contribute to pool
-
-        const gameState = createGame(roomId, playerInfos, room.settings);
-        // Store prize pool directly on game state
-        gameState.prizePool = totalPool;
-        games.set(roomId, gameState);
-        room.gameState = gameState;
-
-        // Initialize trump tracking for change detection
-        lastTrumpPhase.set(roomId, gameState.trumpInfo.phase);
-        lastTrumpSuit.set(roomId, gameState.trumpInfo.currentTrump);
-
-        broadcastGameState(roomId, gameState);
-        startTurnTimer(roomId);
-        startWatchdog(roomId);
-        broadcastRoomList();
-
-        scheduleBotAction(roomId);
       }).catch(err => {
         console.error('[Socket] Bet deduction error:', err);
-        socket.emit('error', 'Ошибка при списании ставок');
       });
     });
 

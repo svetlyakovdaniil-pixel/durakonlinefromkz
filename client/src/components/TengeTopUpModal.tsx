@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { X, ShoppingCart, AlertTriangle } from "lucide-react";
 import { formatBalance } from "@shared/formatBalance";
+import { trpc } from "@/lib/trpc";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
 
@@ -127,6 +128,9 @@ function formatLocalPrice(usd: number, currencyCode: string, locale: string): st
 
 export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModalProps) {
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const utils = trpc.useUtils();
+  const testTengeMutation = trpc.balance.testAddTenge.useMutation();
 
   const { code: currencyCode, locale } = useMemo(() => detectCurrency(), []);
 
@@ -164,6 +168,35 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
           <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
           <span className="text-amber-300/60 font-bold text-sm">Текущий баланс:</span>
           <span className="text-amber-300 font-bold text-sm">{formatBalance(currentTenge)}</span>
+        </div>
+
+        {/* Success message */}
+        {successMessage && (
+          <div className="mb-4 bg-green-900/40 border border-green-600/40 rounded-xl p-3 text-center text-green-300 font-semibold text-sm animate-pulse">
+            {successMessage}
+          </div>
+        )}
+
+        {/* [TEST] Get 10K tenge */}
+        <div className="mb-3">
+          <button
+            className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
+            onClick={() => {
+              testTengeMutation.mutate(undefined, {
+                onSuccess: (data) => {
+                  if (data.success) {
+                    setSuccessMessage('+10 000 тенге!');
+                    utils.profile.me.invalidate();
+                    setTimeout(() => setSuccessMessage(null), 3000);
+                  }
+                },
+              });
+            }}
+            disabled={testTengeMutation.isPending}
+          >
+            {testTengeMutation.isPending ? 'Начисляем...' : '🧪 Получить 10K тенге'}
+          </button>
+          <p className="text-[10px] text-purple-400/60 text-center mt-1">Тестовая кнопка — будет удалена</p>
         </div>
 
         {/* Tiers */}

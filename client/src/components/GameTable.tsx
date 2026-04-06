@@ -818,18 +818,28 @@ export default function GameTable({
       {/* Leave game confirmation dialog */}
       {showLeaveConfirm && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#1a2d45] border border-amber-700/40 rounded-2xl p-4 sm:p-6 max-w-sm w-full mx-4 text-center space-y-3 sm:space-y-4">
+          <div className="bg-[#1a2d45] border border-red-700/40 rounded-2xl p-4 sm:p-6 max-w-sm w-full mx-4 text-center space-y-3 sm:space-y-4">
             <DoorOpen className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 mx-auto" />
             <h3 className="text-lg sm:text-xl font-bold text-amber-100">Покинуть игру?</h3>
-            <p className="text-amber-200/60 text-xs sm:text-sm">
-              Вы автоматически проиграете. Ваши карты уйдут в бито.
-            </p>
+            <div className="space-y-2">
+              <p className="text-amber-200/80 text-xs sm:text-sm">
+                Покидание игры гарантирует поражение.
+              </p>
+              {gs.prizePool > 0 && (
+                <div className="flex items-center justify-center gap-1.5 bg-red-900/30 border border-red-700/30 rounded-lg px-3 py-2">
+                  <span className="text-red-300 text-xs sm:text-sm font-medium">
+                    С вашего баланса будет списано: {formatBalance(Math.floor(gs.prizePool / gs.players.length))}
+                  </span>
+                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                </div>
+              )}
+            </div>
             <div className="flex gap-2 sm:gap-3">
               <Button
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm"
                 onClick={() => setShowLeaveConfirm(false)}
               >
-                Остаться
+                Нет, остаться
               </Button>
               <Button
                 className="flex-1 bg-red-700 hover:bg-red-600 text-white text-sm"
@@ -839,7 +849,7 @@ export default function GameTable({
                 }}
               >
                 <LogOut className="w-4 h-4 mr-1" />
-                Покинуть
+                Да, покинуть
               </Button>
             </div>
           </div>

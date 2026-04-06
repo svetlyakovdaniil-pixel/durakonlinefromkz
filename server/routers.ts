@@ -29,6 +29,8 @@ import {
   getFreeTopupStatus,
   recordTransaction,
   getMyTransactions,
+  testAddShanyrak,
+  testAddTenge,
 } from "./db";
 
 export const appRouter = router({
@@ -313,6 +315,18 @@ export const appRouter = router({
         }
         return result;
       }),
+    /** [TEST] Add 10K shanyraks */
+    testAddShanyrak: protectedProcedure.mutation(async ({ ctx }) => {
+      const result = await testAddShanyrak(ctx.user.id);
+      return result;
+    }),
+
+    /** [TEST] Add 10K tenge */
+    testAddTenge: protectedProcedure.mutation(async ({ ctx }) => {
+      const result = await testAddTenge(ctx.user.id);
+      return result;
+    }),
+
     /** Get my transaction history (private, only own) */
     myTransactions: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
