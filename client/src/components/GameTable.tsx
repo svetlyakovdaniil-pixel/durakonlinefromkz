@@ -176,12 +176,14 @@ function PlayerHand({
 function DeckVisual({
   deckCount,
   trumpCard,
+  hiddenTrumpCard1,
   showOpenTrump,
   deckStyle,
   label,
 }: {
   deckCount: number;
   trumpCard?: { suit: string | null; rank: string; copy: number; id: string } | null;
+  hiddenTrumpCard1?: { suit: string | null; rank: string; copy: number; id: string } | null;
   showOpenTrump: boolean;
   deckStyle: 'classic' | 'custom';
   label: string;
@@ -194,7 +196,9 @@ function DeckVisual({
   const cardH = 128;
   const trumpPeekAmount = Math.round(cardW * 0.5);
   const containerW = trumpPeekAmount + cardW;
-  const containerH = cardH + 8;
+  // Add extra height when hidden trump card is shown under the trump card
+  const extraHeight = (showOpenTrump && hiddenTrumpCard1) ? 20 : 0;
+  const containerH = cardH + 8 + extraHeight;
 
   const isCustom = deckStyle === 'custom';
   const trumpImageKey = trumpCard && showOpenTrump
@@ -249,6 +253,22 @@ function DeckVisual({
             ) : (
               <img src={backUrl} alt="hidden trump" className="w-full h-full object-cover" />
             )}
+          </div>
+        )}
+
+        {/* Hidden trump card under deck1 trump (face down) */}
+        {showOpenTrump && hiddenTrumpCard1 && (
+          <div
+            className="absolute rounded-lg overflow-hidden border border-amber-900/30 shadow-sm"
+            style={{
+              width: `${cardW - 8}px`,
+              height: `${cardH - 8}px`,
+              top: `${cardH - 12}px`,
+              left: '4px',
+              zIndex: 0,
+            }}
+          >
+            <img src={backUrl} alt="hidden trump card" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -742,7 +762,7 @@ export default function GameTable({
           {prizeData && prizeData.pool > 0 && (
             <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-5 h-5" />
+                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
                 <span className="text-amber-300 font-bold text-sm sm:text-base">Банк: {formatBalance(prizeData.pool)}</span>
               </div>
             </div>
@@ -768,7 +788,7 @@ export default function GameTable({
                     {prize && prize.amount > 0 && (
                       <span className="flex items-center gap-0.5 text-xs sm:text-sm text-amber-300">
                         +{formatBalance(prize.amount)}
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3.5 h-3.5" />
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3.5 h-3.5" />
                       </span>
                     )}
                     <span className={`text-xs sm:text-sm ${p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
@@ -1129,6 +1149,7 @@ export default function GameTable({
                     <DeckVisual
                       deckCount={gs.deck1Count}
                       trumpCard={gs.trumpInfo.trumpCard || null}
+                      hiddenTrumpCard1={gs.trumpInfo.hiddenTrumpCard1 || null}
                       showOpenTrump={true}
                       deckStyle={gs.deckStyle}
                       label="Колода 1"
@@ -1169,11 +1190,33 @@ export default function GameTable({
         {/* Winner/spectator banner */}
         {gs.players[myIdx]?.isOut && gs.players[myIdx]?.winPlace && (
           <div className="flex items-center justify-center px-2 sm:px-3 py-1 sm:py-2">
-            <div className="bg-green-900/60 border border-green-600/40 rounded-lg px-3 sm:px-6 py-1.5 sm:py-2 flex items-center gap-2 sm:gap-3">
-              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
-              <span className="text-green-300 font-semibold text-xs sm:text-base">
-                Вы победили! ({gs.players[myIdx].winPlace}-е место)
-              </span>
+            <div className="bg-green-900/60 border border-green-600/40 rounded-lg px-3 sm:px-6 py-1.5 sm:py-2 flex flex-col items-center gap-1.5 sm:gap-2">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
+                <span className="text-green-300 font-semibold text-xs sm:text-base">
+                  Вы победили! ({gs.players[myIdx].winPlace}-е место)
+                </span>
+              </div>
+              {prizeData && (() => {
+                const myPrize = prizeData.prizes.find(pr => pr.playerId === gs.players[myIdx]?.id);
+                return myPrize && myPrize.amount > 0 ? (
+                  <div className="flex items-center gap-1.5 text-amber-300 text-xs sm:text-sm font-medium">
+                    <span>+{formatBalance(myPrize.amount)}</span>
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                  </div>
+                ) : null;
+              })()}
+              {onReturnToLobby && (
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="mt-1"
+                  onClick={onReturnToLobby}
+                >
+                  <Home className="w-3.5 h-3.5 mr-1" />
+                  Выйти в лобби
+                </Button>
+              )}
             </div>
           </div>
         )}

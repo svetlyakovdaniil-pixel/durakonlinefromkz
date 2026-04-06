@@ -143,20 +143,25 @@ export function createGame(
   const trumps = pickTrumps();
 
   // The bottom card of deck1 is the visible trump card (determines mainTrump suit)
+  // The second card from bottom of deck1 is the hidden trump card under deck1 (determines phase 2 trump)
   // The bottom card of deck2 is the hidden trump card (face down, revealed when deck2 starts)
   const trumpCard = deck1.length > 0 ? deck1[0] : undefined;
+  const hiddenTrumpCard1 = deck1.length > 1 ? deck1[1] : undefined;
   const hiddenTrumpCard = deck2.length > 0 ? deck2[0] : undefined;
 
   // Override mainTrump with the actual trump card's suit
   const actualMainTrump = trumpCard?.suit ?? trumps.mainTrump;
+  // Phase 2 trump will be determined by hiddenTrumpCard1's suit
+  const phase2Trump = hiddenTrumpCard1?.suit ?? trumps.hiddenTrump1;
 
   const trumpInfo: TrumpInfo = {
     mainTrump: actualMainTrump,
-    hiddenTrump1: trumps.hiddenTrump1,
+    hiddenTrump1: phase2Trump,
     hiddenTrump2: trumps.hiddenTrump2,
     currentTrump: actualMainTrump,
     phase: 1,
     trumpCard,
+    hiddenTrumpCard1,
     hiddenTrumpCard,
   };
 
@@ -243,31 +248,25 @@ export function drawCards(state: GameState): void {
     idx = state.direction === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
   }
 
-  let lastCardBeforePhaseChange: Card | null = null;
-
   for (const pIdx of order) {
     const player = state.players[pIdx];
     while (player.hand.length < HAND_SIZE) {
       if (state.deck1.length > 0) {
         const card = state.deck1.pop()!;
         player.hand.push(card);
-        // Track the last card drawn from deck1 — when deck1 empties,
-        // this card's suit becomes the new trump for phase 2
+        // When deck1 empties, transition to phase 2
+        // Phase 2 trump is determined by hiddenTrumpCard1 (card under the trump card of deck1)
         if (state.deck1.length === 0 && state.trumpInfo.phase === 1) {
-          lastCardBeforePhaseChange = card;
+          state.trumpInfo.phase = 2;
+          state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrumpCard1?.suit
+            ?? state.trumpInfo.hiddenTrump1;
         }
       } else if (state.deck2.length > 0) {
-        if (state.trumpInfo.phase === 1 && lastCardBeforePhaseChange) {
-          state.trumpInfo.phase = 2;
-          state.trumpInfo.currentTrump = lastCardBeforePhaseChange.suit ?? state.trumpInfo.currentTrump;
-        } else if (state.trumpInfo.phase === 1) {
+        if (state.trumpInfo.phase === 1) {
           // Edge case: deck1 was already empty at start of drawCards
           state.trumpInfo.phase = 2;
-          // Use suit of first card from deck2 as fallback
-          const card = state.deck2.pop()!;
-          state.trumpInfo.currentTrump = card.suit ?? state.trumpInfo.currentTrump;
-          player.hand.push(card);
-          continue;
+          state.trumpInfo.currentTrump = state.trumpInfo.hiddenTrumpCard1?.suit
+            ?? state.trumpInfo.hiddenTrump1;
         }
         const card = state.deck2.pop()!;
         player.hand.push(card);
@@ -506,7 +505,6 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
 export function transferAttack(state: GameState, playerIdx: number, cardId: string): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
   if (state.defenderTaking) return 'Cannot transfer while taking';
-  if (state.attackerHasPriority) return 'Дождитесь пока атакующий закончит ход';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
@@ -563,7 +561,6 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
 export function showPassThrough(state: GameState, playerIdx: number, cardId: string): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Не ваш ход';
   if (state.defenderTaking) return 'Вы уже берёте карты';
-  if (state.attackerHasPriority) return 'Дождитесь пока атакующий закончит ход';
   if (state.battleField.length === 0) return 'Нет карт на столе';
 
   // Pass-through is only allowed BEFORE the defender starts defending
@@ -976,8 +973,8 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Transfer option — show all matching cards for choice
       // Only show if next defender has enough cards to handle the transfer
       // Transfer is NOT limited by the 13-card first bito rule
-      // BLOCKED while attacker has priority (attacker must press пас/бито first)
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !state.attackerHasPriority) {
+      // Defender can always transfer regardless of attacker priority
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
         const totalAfterTransfer = state.battleField.length + 1;
         const attackRank = state.battleField[0].attack.rank;
         const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
@@ -994,8 +991,8 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Pass-through (проездной) — show trump cards matching attack rank that haven't been used yet
       // Only available BEFORE defender starts defending (no cards defended yet)
       // Only show if next defender has enough cards
-      // BLOCKED while attacker has priority
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !state.attackerHasPriority) {
+      // Defender can always use pass-through regardless of attacker priority
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
         const attackRank = state.battleField[0].attack.rank;
         const passThroughCards = player.hand.filter(c =>
           c.rank === attackRank &&
@@ -1136,7 +1133,13 @@ export function toClientState(
       ...state.trumpInfo,
       // Always send the trump card (visible to all)
       trumpCard: state.trumpInfo.trumpCard,
-      // Hidden trump card: only send as face-down (no suit/rank) while deck2 hasn't started
+      // Hidden trump card under deck1: face down during phase 1, not sent after phase 2 (drawn into deck)
+      hiddenTrumpCard1: state.trumpInfo.hiddenTrumpCard1
+        ? (state.trumpInfo.phase === 1
+          ? { id: 'hidden1', suit: null, rank: '777' as const, copy: 0 } // face down
+          : undefined) // once phase 2+, it's been drawn
+        : undefined,
+      // Hidden trump card under deck2: face down during phase 1, not sent after phase 2 (drawn into deck)
       hiddenTrumpCard: state.trumpInfo.hiddenTrumpCard
         ? (state.trumpInfo.phase === 1
           ? { id: 'hidden', suit: null, rank: '777' as const, copy: 0 } // face down

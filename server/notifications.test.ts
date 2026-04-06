@@ -194,7 +194,7 @@ describe('Currency Icons', () => {
   });
 
   it('should have valid CDN URLs for shanyrak icon', () => {
-    const shanyrakUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png';
+    const shanyrakUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
     expect(shanyrakUrl).toMatch(/^https:\/\//);
     expect(shanyrakUrl).toContain('shanyrak');
   });

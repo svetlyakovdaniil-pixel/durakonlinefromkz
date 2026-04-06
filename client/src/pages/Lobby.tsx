@@ -199,7 +199,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <div className="flex items-center gap-0.5">
                     <div className="flex flex-col items-center">
                       <div className="h-7 flex items-center justify-center">
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-7 object-contain" style={{marginTop: '15px'}} />
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-7 object-contain" style={{marginTop: '15px'}} />
                       </div>
                       <span className="text-[10px] text-green-400 font-semibold" style={{marginTop: '6px'}}>{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                     </div>
@@ -253,7 +253,7 @@ onClick={() => setShowTengeTopUp(true)}
                 <div className="flex items-center gap-1">
                   <div className="flex flex-col items-center">
                     <div className="h-[42px] flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png" alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
                     </div>
                     <span className="text-xs text-green-400 font-semibold -mt-1">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   </div>
@@ -328,7 +328,7 @@ onClick={() => setShowTengeTopUp(true)}
                 </div>
                 <div>
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-4 h-4" />
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                     Ставка: {formatBalance(BET_AMOUNTS[betAmountIdx])}
                   </Label>
                   <Slider
@@ -493,7 +493,7 @@ onClick={() => setShowTengeTopUp(true)}
                       <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? '№2' : '№1'}
                     </Badge>
                     <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
                       {formatBalance(room.settings.betAmount || 100)}
                     </Badge>
                   </div>

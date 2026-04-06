@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
-const SHANYRAK_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_f75026a5.png";
+const SHANYRAK_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png";
 
 interface ShanyrakTopUpModalProps {
   open: boolean;

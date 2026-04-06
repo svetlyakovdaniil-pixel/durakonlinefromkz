@@ -879,6 +879,53 @@ describe('Attacker priority mechanic', () => {
     // Attacker should regain priority
     expect(state.attackerHasPriority).toBe(true);
   });
+
+  it('defender can transfer even when attacker has priority', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = true;
+    state.players[0].hand = [card('hearts', 'A')];
+    state.players[1].hand = [card('spades', '7', 1)]; // matching rank for transfer
+    state.players[2].hand = [card('hearts', '8'), card('hearts', '9'), card('hearts', '10')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+    state.turnPhase = 'defend';
+
+    // Defender should be able to transfer even with attackerHasPriority=true
+    const actions = getAvailableActions(state, 1);
+    const transferAction = actions.find(a => a.type === 'transferCard');
+    expect(transferAction).toBeTruthy();
+
+    // Actually perform the transfer
+    const error = transferAttack(state, 1, state.players[1].hand[0].id);
+    expect(error).toBeNull();
+  });
+
+  it('defender can show passthrough even when attacker has priority', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.attackerHasPriority = true;
+    state.trumpInfo.currentTrump = 'hearts';
+    state.players[0].hand = [card('spades', 'A')];
+    state.players[1].hand = [card('hearts', '7', 1)]; // trump card matching attack rank
+    state.players[2].hand = [card('clubs', '8'), card('clubs', '9'), card('clubs', '10')];
+    state.battleField = [
+      { attack: card('spades', '7'), defense: null },
+    ];
+    state.turnPhase = 'defend';
+
+    // Defender should be able to show passthrough even with attackerHasPriority=true
+    const actions = getAvailableActions(state, 1);
+    const ptAction = actions.find(a => a.type === 'showPassThrough');
+    expect(ptAction).toBeTruthy();
+
+    // Actually perform the passthrough
+    const error = showPassThrough(state, 1, state.players[1].hand[0].id);
+    expect(error).toBeNull();
+  });
 });
 
 describe('Pickup mechanic (defender takes)', () => {
@@ -1688,28 +1735,28 @@ describe('Auto-complete trick when defender has no cards', () => {
 });
 
 describe('Trump determined by last drawn card on phase change', () => {
-  it('should set trump to suit of last card from deck1 when deck1 empties', () => {
+  it('should set trump to suit of hiddenTrumpCard1 when deck1 empties', () => {
     const state = createTestState(2);
     state.trumpInfo.currentTrump = 'spades';
     state.trumpInfo.phase = 1;
+    // Set the hidden trump card under deck1 — its suit determines phase 2 trump
+    state.trumpInfo.hiddenTrumpCard1 = card('hearts', 'A', 98);
     // Give players 13 cards each so they only need 1 more (HAND_SIZE=14)
     const makeHand = (prefix: string) => Array.from({ length: 13 }, (_, i) =>
       card('spades', '6', i + 100 * (prefix === 'a' ? 1 : 2))
     );
     state.players[0].hand = makeHand('a');
     state.players[1].hand = makeHand('b');
-    // Set up deck1 with exactly 1 card left — this card's suit becomes new trump
-    state.deck1 = [card('hearts', 'A', 99)];
+    // Set up deck1 with exactly 1 card left
+    state.deck1 = [card('clubs', '7', 99)];
     // deck2 has enough cards so it doesn't empty (player 1 needs 1 card from deck2)
     state.deck2 = [
       card('diamonds', 'J', 99), card('clubs', 'Q', 99),
       card('hearts', 'K', 99), card('spades', 'A', 99),
     ];
     state.currentAttackerIdx = 0;
-
     drawCards(state);
-
-    // Phase should change to 2, trump should be hearts (suit of last card from deck1)
+    // Phase should change to 2, trump should be hearts (suit of hiddenTrumpCard1)
     expect(state.trumpInfo.phase).toBe(2);
     expect(state.trumpInfo.currentTrump).toBe('hearts');
   });

@@ -54,7 +54,7 @@ export default function WaitingRoom({
               <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
             </Badge>
             <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs">
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
               {formatBalance(room.settings.betAmount || 100)}
             </Badge>
             {room.hasPassword && (
