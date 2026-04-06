@@ -1039,14 +1039,7 @@ export default function GameTable({
           </div>
         )}
 
-        {/* First attacker indicator — persistent text above hand when table is empty and player is attacker */}
-        {isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
-          <div className="flex justify-center pointer-events-none mb-2">
-            <span className="text-red-500 text-base sm:text-lg md:text-xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
-              ВАШ ХОД, АТАКУЙТЕ
-            </span>
-          </div>
-        )}
+
 
         {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && (
@@ -1281,6 +1274,22 @@ export default function GameTable({
         )}
 
         {/* Role indicator + Action buttons — DESKTOP: centered fixed overlay */}
+        {/* Desktop: First attacker indicator — shown in action buttons area when table is empty */}
+        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
+          <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
+            <span className="text-red-500 text-xl md:text-2xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
+              ВАШ ХОД, АТАКУЙТЕ
+            </span>
+          </div>
+        )}
+        {/* Mobile: First attacker indicator — shown in action buttons area when table is empty */}
+        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
+          <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex justify-center pointer-events-none">
+            <span className="text-red-500 text-base font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
+              ВАШ ХОД, АТАКУЙТЕ
+            </span>
+          </div>
+        )}
         {/* Desktop version */}
         {hasAnyAction && (
           <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
