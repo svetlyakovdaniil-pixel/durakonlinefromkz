@@ -20,6 +20,7 @@ export function useSocket(userId: string | null, userName: string | null) {
   const [chatMessages, setChatMessages] = useState<{ from: string; text: string; ts: number }[]>([]);
   const [turnTimer, setTurnTimer] = useState(0);
   const [gameOverData, setGameOverData] = useState<{ winnersOrder: string[]; loserId: string | null } | null>(null);
+  const [prizeData, setPrizeData] = useState<{ pool: number; prizes: { playerId: string; place: number; amount: number }[] } | null>(null);
   const [onlineFriendIds, setOnlineFriendIds] = useState<number[]>([]);
   const [pendingInvite, setPendingInvite] = useState<{
     roomId: string; roomName: string; fromName: string; fromGameId: number;
@@ -124,6 +125,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setAvailableActions([]);
       setChatMessages([]);
       setGameOverData(null);
+      setPrizeData(null);
     });
     socket.on('gameStarted', (s) => {
       if (leavingRef.current) return;
@@ -135,6 +137,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setAvailableActions(s.availableActions || []);
       setTurnTimer(s.turnTimerMax);
       setGameOverData(null);
+      setPrizeData(null);
     });
     socket.on('gameStateUpdate', (s) => {
       if (leavingRef.current) return;
@@ -195,6 +198,9 @@ export function useSocket(userId: string | null, userName: string | null) {
       if (!currentRoomIdRef.current) return;
       setGameOverData(data);
     });
+    socket.on('prizeDistributed', (data) => {
+      setPrizeData(data);
+    });
     socket.on('transferChoice', () => {
       // Transfer choice is handled via gameStateUpdate
     });
@@ -208,6 +214,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setAvailableActions([]);
       setChatMessages([]);
       setGameOverData(null);
+      setPrizeData(null);
       if (data.reason === 'disconnect_timeout') {
         toast.error('Вы были удалены из игры из-за долгого отсутствия соединения', { duration: 6000 });
       }
@@ -286,6 +293,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
+    setPrizeData(null);
   }, []);
 
   const leaveGame = useCallback((roomId: string) => {
@@ -299,6 +307,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setAvailableActions([]);
       setChatMessages([]);
       setGameOverData(null);
+      setPrizeData(null);
       setTimeout(() => { leavingRef.current = false; }, 10000);
     };
 
@@ -321,6 +330,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
+    setPrizeData(null);
   }, []);
 
   const toggleReady = useCallback((roomId: string) => {
@@ -375,6 +385,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
+    setPrizeData(null);
   }, []);
 
   return {
@@ -387,6 +398,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     chatMessages,
     turnTimer,
     gameOverData,
+    prizeData,
     onlineFriendIds,
     pendingInvite,
     setPendingInvite,

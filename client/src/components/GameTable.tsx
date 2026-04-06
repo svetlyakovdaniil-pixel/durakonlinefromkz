@@ -12,6 +12,7 @@ import { useSound } from '@/hooks/useSound';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
 import { trpc } from '@/lib/trpc';
+import { formatBalance } from '../../../shared/formatBalance';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -395,6 +396,7 @@ export interface GameTableProps {
   availableActions: AvailableAction[];
   turnTimer: number;
   gameOverData?: { winnersOrder: string[]; loserId: string | null } | null;
+  prizeData?: { pool: number; prizes: { playerId: string; place: number; amount: number }[] } | null;
   onPlayCard: (cardId: string, targetPairIdx?: number) => void;
   onTransferCard: (cardId: string) => void;
   onTakeCards: () => void;
@@ -410,7 +412,7 @@ export interface GameTableProps {
 }
 
 export default function GameTable({
-  gameState, availableActions, turnTimer, gameOverData,
+  gameState, availableActions, turnTimer, gameOverData, prizeData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby,
   musicEnabled = false, onToggleMusic, frozenInfo,
@@ -737,25 +739,45 @@ export default function GameTable({
             {didLeave ? 'Вы покинули игру' : isLoser ? 'Вы проиграли!' : isWinner ? `Вы победили! (${myPlayer.winPlace}-е место)` : 'Игра окончена!'}
           </h2>
 
+          {prizeData && prizeData.pool > 0 && (
+            <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-5 h-5" />
+                <span className="text-amber-300 font-bold text-sm sm:text-base">Банк: {formatBalance(prizeData.pool)}</span>
+              </div>
+            </div>
+          )}
+
           <div className="space-y-2">
             <h3 className="text-amber-400 font-semibold text-base sm:text-lg">Результаты:</h3>
-            {gs.players.map(p => (
-              <div key={p.id} className={`flex items-center justify-between px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base ${
-                p.leftGame ? 'bg-gray-800/40 border border-gray-600/30' :
-                p.id === gs.loserId ? 'bg-red-900/30 border border-red-700/30' :
-                p.winPlace ? 'bg-green-900/20 border border-green-700/20' : 'bg-[#0f2035]/50'
-              }`}>
-                <span className="text-amber-100 flex items-center gap-1.5 sm:gap-2 truncate">
-                  {p.leftGame && <DoorOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />}
-                  {!p.leftGame && p.winPlace && <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />}
-                  {!p.leftGame && p.id === gs.loserId && <Frown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" />}
-                  <span className="truncate">{p.name}</span>
-                </span>
-                <span className={`shrink-0 ml-2 text-xs sm:text-sm ${p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
-                  {p.leftGame ? 'Покинул' : p.id === gs.loserId ? 'Дурак' : p.winPlace ? `${p.winPlace}-е место` : ''}
-                </span>
-              </div>
-            ))}
+            {gs.players.map(p => {
+              const prize = prizeData?.prizes.find(pr => pr.playerId === p.id);
+              return (
+                <div key={p.id} className={`flex items-center justify-between px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base ${
+                  p.leftGame ? 'bg-gray-800/40 border border-gray-600/30' :
+                  p.id === gs.loserId ? 'bg-red-900/30 border border-red-700/30' :
+                  p.winPlace ? 'bg-green-900/20 border border-green-700/20' : 'bg-[#0f2035]/50'
+                }`}>
+                  <span className="text-amber-100 flex items-center gap-1.5 sm:gap-2 truncate">
+                    {p.leftGame && <DoorOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />}
+                    {!p.leftGame && p.winPlace && <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />}
+                    {!p.leftGame && p.id === gs.loserId && <Frown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" />}
+                    <span className="truncate">{p.name}</span>
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0 ml-2">
+                    {prize && prize.amount > 0 && (
+                      <span className="flex items-center gap-0.5 text-xs sm:text-sm text-amber-300">
+                        +{formatBalance(prize.amount)}
+                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3.5 h-3.5" />
+                      </span>
+                    )}
+                    <span className={`text-xs sm:text-sm ${p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
+                      {p.leftGame ? 'Покинул' : p.id === gs.loserId ? 'Дурак' : p.winPlace ? `${p.winPlace}-е место` : ''}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {onReturnToLobby && (

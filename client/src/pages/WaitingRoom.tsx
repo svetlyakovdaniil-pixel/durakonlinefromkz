@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus } from 'lucide-react';
 import ProfileDrawer from '@/components/ProfileDrawer';
+import { formatBalance } from '../../../shared/formatBalance';
 
 interface WaitingRoomProps {
   room: Room;
@@ -51,6 +52,10 @@ export default function WaitingRoom({
             )}
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-[10px] sm:text-xs">
               <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? 'Колода №2' : 'Колода №1'}
+            </Badge>
+            <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs">
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+              {formatBalance(room.settings.betAmount || 100)}
             </Badge>
             {room.hasPassword && (
               <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-[10px] sm:text-xs">

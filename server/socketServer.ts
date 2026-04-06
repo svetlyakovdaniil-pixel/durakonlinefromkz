@@ -21,7 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer,
 } from './gameEngine';
-import { recordGameResult } from './db';
+import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize } from './db';
 
 // In-memory store
 const rooms = new Map<string, Room>();
@@ -207,11 +207,15 @@ export function initSocketServer(httpServer: HttpServer) {
 
     socket.on('createRoom', (data, cb) => {
       const roomId = nanoid(8);
+      const rawBet = data.settings?.betAmount || 100;
+      const validBets = [100, 200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000];
+      const betAmount = validBets.includes(rawBet) ? rawBet : 100;
       const settings: RoomSettings = {
         turnTimer: Math.min(Math.max(data.settings?.turnTimer || 30, 15), 60),
         withBots: data.settings?.withBots || false,
         botCount: data.settings?.botCount || 0,
         deckStyle: data.settings?.deckStyle === 'custom' ? 'custom' : 'classic',
+        betAmount,
         password: data.settings?.password || undefined,
         isPrivate: data.settings?.isPrivate || false,
       };
@@ -219,7 +223,7 @@ export function initSocketServer(httpServer: HttpServer) {
         id: roomId,
         name: data.name || `Комната ${roomId}`,
         hostId: odId,
-        maxPlayers: Math.min(Math.max(data.maxPlayers || 2, 2), 6),
+        maxPlayers: Math.min(Math.max(data.maxPlayers || 2, 2), 8),
         players: [{ id: odId, name, ready: false, isBot: false }],
         gameState: null,
         settings,
@@ -313,13 +317,36 @@ export function initSocketServer(httpServer: HttpServer) {
         }
       }
 
-      room.players.push({ id: odId, name, ready: false, isBot: false });
-      socket.join(roomId);
-      trackPlayerRoom(odId, roomId);
-      io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
-      io.to(roomId).emit('playerJoined', { id: odId, name });
-      broadcastRoomList();
-      cb(true, sanitizeRoom(room));
+      // Balance check: player must have enough shanyraks for the bet
+      const betAmount = room.settings.betAmount || 100;
+      checkShanyrakBalance(odId).then(info => {
+        if (!info || !info.canAfford(betAmount)) {
+          const needed = betAmount;
+          const has = info?.balance ?? 0;
+          socket.emit('error', `Недостаточно шаныраков. Нужно: ${needed}, у вас: ${has}`);
+          cb(false);
+          return;
+        }
+
+        room.players.push({ id: odId, name, ready: false, isBot: false });
+        socket.join(roomId);
+        trackPlayerRoom(odId, roomId);
+        io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+        io.to(roomId).emit('playerJoined', { id: odId, name });
+        broadcastRoomList();
+        cb(true, sanitizeRoom(room));
+      }).catch(err => {
+        console.error('[Socket] Balance check error:', err);
+        // Allow join on DB error (graceful degradation)
+        room.players.push({ id: odId, name, ready: false, isBot: false });
+        socket.join(roomId);
+        trackPlayerRoom(odId, roomId);
+        io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+        io.to(roomId).emit('playerJoined', { id: odId, name });
+        broadcastRoomList();
+        cb(true, sanitizeRoom(room));
+      });
+      return; // async flow above handles the rest
     });
 
     socket.on('leaveRoom', (roomId) => {
@@ -364,20 +391,50 @@ export function initSocketServer(httpServer: HttpServer) {
         isBot: p.isBot,
       }));
 
-      const gameState = createGame(roomId, playerInfos, room.settings);
-      games.set(roomId, gameState);
-      room.gameState = gameState;
+      // Deduct bet from all human players
+      const betAmount = room.settings.betAmount || 100;
+      const humanPlayers = room.players.filter(p => !p.isBot);
+      const deductPromises = humanPlayers.map(p => deductShanyrakBet(p.id, betAmount, roomId));
+      Promise.all(deductPromises).then(results => {
+        // Check if any deduction failed
+        const failedIdx = results.findIndex(r => r === null);
+        if (failedIdx !== -1) {
+          const failedPlayer = humanPlayers[failedIdx];
+          socket.emit('error', `Не удалось списать ставку у игрока ${failedPlayer.name}. Недостаточно шаныраков.`);
+          // Refund already deducted players
+          for (let i = 0; i < failedIdx; i++) {
+            if (results[i] !== null) {
+              creditShanyrakPrize(humanPlayers[i].id, betAmount, roomId, 0).catch(e =>
+                console.error('[Socket] Failed to refund bet:', e)
+              );
+            }
+          }
+          return;
+        }
 
-      // Initialize trump tracking for change detection
-      lastTrumpPhase.set(roomId, gameState.trumpInfo.phase);
-      lastTrumpSuit.set(roomId, gameState.trumpInfo.currentTrump);
+        // Store prize pool in room for later distribution
+        const totalPool = betAmount * room.players.length; // bots also contribute to pool
+        (room as any).prizePool = totalPool;
+        (room as any).betAmount = betAmount;
 
-      broadcastGameState(roomId, gameState);
-      startTurnTimer(roomId);
-      startWatchdog(roomId);
-      broadcastRoomList();
+        const gameState = createGame(roomId, playerInfos, room.settings);
+        games.set(roomId, gameState);
+        room.gameState = gameState;
 
-      scheduleBotAction(roomId);
+        // Initialize trump tracking for change detection
+        lastTrumpPhase.set(roomId, gameState.trumpInfo.phase);
+        lastTrumpSuit.set(roomId, gameState.trumpInfo.currentTrump);
+
+        broadcastGameState(roomId, gameState);
+        startTurnTimer(roomId);
+        startWatchdog(roomId);
+        broadcastRoomList();
+
+        scheduleBotAction(roomId);
+      }).catch(err => {
+        console.error('[Socket] Bet deduction error:', err);
+        socket.emit('error', 'Ошибка при списании ставок');
+      });
     });
 
     // --- Game Actions ---
@@ -1550,6 +1607,68 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       winnersOrder: gameState.winnersOrder,
       loserId: gameState.loserId || '',
     });
+
+    // --- Prize pool distribution ---
+    const room = rooms.get(roomId);
+    const prizePool = (room as any)?.prizePool as number | undefined;
+    if (prizePool && prizePool > 0) {
+      const totalPlayers = gameState.players.length;
+      // winnersOrder contains odIds in order of finish (1st, 2nd, 3rd...)
+      // loserId is the last player (durak) — gets nothing
+      // Distribution percentages based on player count:
+      // 2 players: 1st=100%
+      // 3 players: 1st=60%, 2nd=40%
+      // 4 players: 1st=50%, 2nd=30%, 3rd=20%
+      // 5 players: 1st=40%, 2nd=25%, 3rd=20%, 4th=15%
+      // 6 players: 1st=35%, 2nd=25%, 3rd=20%, 4th=12%, 5th=8%
+      // 7 players: 1st=30%, 2nd=22%, 3rd=18%, 4th=14%, 5th=10%, 6th=6%
+      // 8 players: 1st=28%, 2nd=20%, 3rd=16%, 4th=13%, 5th=10%, 6th=7%, 7th=6%
+      const distributions: Record<number, number[]> = {
+        2: [100],
+        3: [60, 40],
+        4: [50, 30, 20],
+        5: [40, 25, 20, 15],
+        6: [35, 25, 20, 12, 8],
+        7: [30, 22, 18, 14, 10, 6],
+        8: [28, 20, 16, 13, 10, 7, 6],
+      };
+      const dist = distributions[totalPlayers] || distributions[8]!;
+      
+      // All winners except loser get a share
+      const allFinished = [...gameState.winnersOrder];
+      // The loser is NOT in winnersOrder, so allFinished = all non-loser players in order
+      
+      const prizePromises: Promise<any>[] = [];
+      for (let i = 0; i < allFinished.length && i < dist.length; i++) {
+        const playerId = allFinished[i];
+        const player = gameState.players.find(p => p.id === playerId);
+        if (!player || player.isBot) continue; // bots don't get prizes
+        
+        const share = Math.floor(prizePool * dist[i] / 100);
+        if (share > 0) {
+          prizePromises.push(
+            creditShanyrakPrize(playerId, share, roomId, i + 1).catch(err =>
+              console.error(`[Prize] Failed to credit ${share} to ${playerId}:`, err)
+            )
+          );
+        }
+      }
+      
+      Promise.all(prizePromises).then(() => {
+        console.log(`[Prize] Distributed pool of ${prizePool} in room ${roomId}`);
+        // Emit prize info to players
+        const prizeInfo = allFinished.slice(0, dist.length).map((id, i) => ({
+          playerId: id,
+          place: i + 1,
+          amount: Math.floor(prizePool * dist[i] / 100),
+        }));
+        io.to(roomId).emit('prizeDistributed', { pool: prizePool, prizes: prizeInfo });
+      }).catch(err => console.error('[Prize] Distribution error:', err));
+      
+      // Clean up
+      delete (room as any).prizePool;
+      delete (room as any).betAmount;
+    }
 
     // Record game result in database (async, non-blocking)
     const humanPlayers = gameState.players.filter(p => !p.isBot);

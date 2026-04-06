@@ -573,7 +573,7 @@ export async function getFreeTopupStatus(userId: number): Promise<{
  */
 export async function recordTransaction(data: {
   profileId: number;
-  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward';
+  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward' | 'game_entry';
   amount: number;
   currency: 'tenge' | 'shanyrak';
   description: string;
@@ -652,4 +652,95 @@ export async function getPlayerProfileWithFriendStatus(targetGameId: number, myP
     friendStatus,
     friendshipId,
   };
+}
+
+// ============================================================
+// GAME ECONOMY helpers
+// ============================================================
+
+/**
+ * Check if a player (by openId) has enough shanyraks for a bet.
+ * Returns { canAfford, balance, profileId, userId } or null if not found.
+ */
+export async function checkShanyrakBalance(openId: string): Promise<{
+  canAfford: (amount: number) => boolean;
+  balance: number;
+  profileId: number;
+  userId: number;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return null;
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (!profile) return null;
+
+  return {
+    canAfford: (amount: number) => profile.balanceShanyrak >= amount,
+    balance: profile.balanceShanyrak,
+    profileId: profile.id,
+    userId: user.id,
+  };
+}
+
+/**
+ * Deduct shanyraks from a player's balance for game entry.
+ * Returns new balance or null on failure.
+ */
+export async function deductShanyrakBet(openId: string, amount: number, roomId: string): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return null;
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (!profile || profile.balanceShanyrak < amount) return null;
+
+  const newBalance = profile.balanceShanyrak - amount;
+  await db.update(playerProfiles).set({ balanceShanyrak: newBalance }).where(eq(playerProfiles.id, profile.id));
+
+  // Record transaction
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'game_entry',
+    amount: -amount,
+    currency: 'shanyrak',
+    description: `Ставка на игру (комната ${roomId})`,
+    balanceAfter: newBalance,
+  });
+
+  return newBalance;
+}
+
+/**
+ * Credit shanyraks to a player's balance as game reward.
+ * Returns new balance or null on failure.
+ */
+export async function creditShanyrakPrize(openId: string, amount: number, roomId: string, place: number): Promise<number | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return null;
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (!profile) return null;
+
+  const newBalance = profile.balanceShanyrak + amount;
+  await db.update(playerProfiles).set({ balanceShanyrak: newBalance }).where(eq(playerProfiles.id, profile.id));
+
+  // Record transaction
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'game_reward',
+    amount,
+    currency: 'shanyrak',
+    description: `Награда за ${place}-е место (комната ${roomId})`,
+    balanceAfter: newBalance,
+  });
+
+  return newBalance;
 }

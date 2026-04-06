@@ -77,11 +77,28 @@ export interface RoomSettings {
   withBots: boolean;
   botCount: number;
   deckStyle: DeckStyle;
+  /** Shanyrak bet amount required to enter the game */
+  betAmount: number;
   /** If set, room requires password to join */
   password?: string;
   /** If true, room is private (only visible to invited players) */
   isPrivate?: boolean;
 }
+
+/** Valid bet amounts for room creation */
+export const BET_AMOUNTS = [100, 200, 500, 1_000, 3_000, 5_000, 10_000, 25_000, 50_000, 100_000, 250_000, 500_000, 1_000_000, 2_000_000, 5_000_000, 10_000_000] as const;
+export type BetAmount = typeof BET_AMOUNTS[number];
+
+/** Prize distribution percentages by player count (index = place-1, last place gets 0%) */
+export const PRIZE_DISTRIBUTION: Record<number, number[]> = {
+  2: [100],
+  3: [60, 40],
+  4: [50, 30, 20],
+  5: [40, 25, 20, 15],
+  6: [35, 25, 20, 12, 8],
+  7: [30, 22, 18, 14, 10, 6],
+  8: [28, 20, 16, 13, 10, 8, 5],
+};
 
 // --- Game State ---
 export interface GameState {
@@ -166,6 +183,8 @@ export interface ServerToClientEvents {
   roomUnfrozen: (data: { roomId: string; reconnectedPlayerName: string }) => void;
   /** Frozen timer tick */
   frozenTimerTick: (data: { roomId: string; secondsLeft: number }) => void;
+  /** Prize pool distribution after game ends */
+  prizeDistributed: (data: { pool: number; prizes: { playerId: string; place: number; amount: number }[] }) => void;
 }
 
 export interface ClientToServerEvents {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Room, RoomSettings, DeckStyle } from '../../../shared/gameTypes';
+import { BET_AMOUNTS } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -46,10 +47,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
-  const [withBots, setWithBots] = useState(true);
+  const [withBots, setWithBots] = useState(false);
   const [botCount, setBotCount] = useState(3);
   const [turnTimer, setTurnTimer] = useState(30);
   const [deckStyle, setDeckStyle] = useState<DeckStyle>('classic');
+  const [betAmountIdx, setBetAmountIdx] = useState(0); // index into BET_AMOUNTS
   const [isPrivate, setIsPrivate] = useState(false);
   const [roomPassword, setRoomPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -102,6 +104,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       withBots,
       botCount: withBots ? botCount : 0,
       deckStyle,
+      betAmount: BET_AMOUNTS[betAmountIdx],
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
     };
     await onCreateRoom(roomName || `Комната ${userName}`, parseInt(maxPlayers), settings);
@@ -324,13 +327,31 @@ onClick={() => setShowTengeTopUp(true)}
                   />
                 </div>
                 <div>
+                  <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-4 h-4" />
+                    Ставка: {formatBalance(BET_AMOUNTS[betAmountIdx])}
+                  </Label>
+                  <Slider
+                    value={[betAmountIdx]}
+                    onValueChange={v => setBetAmountIdx(v[0])}
+                    min={0}
+                    max={BET_AMOUNTS.length - 1}
+                    step={1}
+                    className="mt-2"
+                  />
+                  <div className="flex justify-between text-[10px] text-amber-200/40 mt-1">
+                    <span>100</span>
+                    <span>10КК</span>
+                  </div>
+                </div>
+                <div>
                   <Label className="text-amber-200/70 text-sm">Макс. игроков</Label>
                   <Select value={maxPlayers} onValueChange={setMaxPlayers}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      {[2, 3, 4, 5, 6].map(n => (
+                      {[2, 3, 4, 5, 6, 7, 8].map(n => (
                         <SelectItem key={n} value={String(n)} className="text-amber-100">{n} игроков</SelectItem>
                       ))}
                     </SelectContent>
@@ -470,6 +491,10 @@ onClick={() => setShowTengeTopUp(true)}
                     )}
                     <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
                       <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? '№2' : '№1'}
+                    </Badge>
+                    <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs px-1.5 sm:px-2">
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_icon_9c1e8a3f.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+                      {formatBalance(room.settings.betAmount || 100)}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1 mb-2 sm:mb-3 flex-wrap">
