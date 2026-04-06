@@ -882,7 +882,7 @@ describe('Attacker priority mechanic', () => {
     expect(state.attackerHasPriority).toBe(true);
   });
 
-  it('defender cannot transfer when attacker has priority and matching rank cards', () => {
+  it('defender can transfer even when attacker has priority and matching rank cards', () => {
     const state = createTestState(3);
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
@@ -895,16 +895,10 @@ describe('Attacker priority mechanic', () => {
     ];
     state.turnPhase = 'defend';
 
-    // Attacker has a 7 in hand (matching the attack rank on table), so defender CANNOT transfer
+    // Defender CAN transfer even when attacker has matching rank cards (no blocking)
     const actions = getAvailableActions(state, 1);
     const transferAction = actions.find(a => a.type === 'transferCard');
-    expect(transferAction).toBeFalsy();
-
-    // After attacker presses bito (releases priority), defender CAN transfer
-    state.attackerHasPriority = false;
-    const actionsAfterBito = getAvailableActions(state, 1);
-    const transferAfterBito = actionsAfterBito.find(a => a.type === 'transferCard');
-    expect(transferAfterBito).toBeTruthy();
+    expect(transferAction).toBeTruthy();
 
     // Actually perform the transfer
     const error = transferAttack(state, 1, state.players[1].hand[0].id);
@@ -953,17 +947,11 @@ describe('Attacker priority mechanic', () => {
     const ptAction = actions.find(a => a.type === 'showPassThrough');
     expect(ptAction).toBeTruthy();
 
-    // Now give attacker a matching rank card (7) — should block pass-through
+    // Even when attacker has a matching rank card, defender can still use pass-through
     state.players[0].hand = [card('spades', '7', 2)];
-    const actionsBlocked = getAvailableActions(state, 1);
-    const ptBlocked = actionsBlocked.find(a => a.type === 'showPassThrough');
-    expect(ptBlocked).toBeFalsy();
-
-    // After attacker releases priority, defender CAN use pass-through
-    state.attackerHasPriority = false;
-    const actionsUnblocked = getAvailableActions(state, 1);
-    const ptUnblocked = actionsUnblocked.find(a => a.type === 'showPassThrough');
-    expect(ptUnblocked).toBeTruthy();
+    const actionsWithMatch = getAvailableActions(state, 1);
+    const ptWithMatch = actionsWithMatch.find(a => a.type === 'showPassThrough');
+    expect(ptWithMatch).toBeTruthy();
 
     // Actually perform the passthrough
     const error = showPassThrough(state, 1, state.players[1].hand[0].id);

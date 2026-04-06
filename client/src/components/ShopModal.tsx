@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, Lock, ShoppingCart, Check } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle } from 'lucide-react';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
@@ -20,9 +20,17 @@ interface ShopModalProps {
 
 type ShopTab = 'decks' | 'tables';
 
+interface ConfirmPurchase {
+  type: 'deck' | 'table';
+  id: string;
+  name: string;
+  price: number;
+}
+
 export default function ShopModal({ open, onClose, currentTenge, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
   const [activeTab, setActiveTab] = useState<ShopTab>('decks');
+  const [confirmPurchase, setConfirmPurchase] = useState<ConfirmPurchase | null>(null);
   const { data: ownedDecks = [], refetch: refetchOwned } = trpc.shop.ownedDecks.useQuery(undefined, { enabled: open });
   const { data: ownedTables = [], refetch: refetchOwnedTables } = trpc.shop.ownedTables.useQuery(undefined, { enabled: open });
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
@@ -31,54 +39,38 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
   const isCustomOwned = ownedDecks.includes('custom');
   const canAfford = currentTenge >= CUSTOM_DECK_PRICE;
 
-  const handlePurchase = async () => {
-    if (isCustomOwned) return;
-    if (!canAfford) {
-      toast.error('Недостаточно тенге!');
-      return;
-    }
+  const executePurchase = async (item: ConfirmPurchase) => {
     setPurchasing(true);
+    setConfirmPurchase(null);
     try {
-      const result = await purchaseMutation.mutateAsync({ deckId: 'custom', tengeCost: CUSTOM_DECK_PRICE });
-      if (result.success) {
-        toast.success('Колода куплена!');
-        refetchOwned();
-        onPurchased?.();
-      } else if (result.reason === 'already_owned') {
-        toast.info('Эта колода уже куплена');
-        refetchOwned();
-      } else if (result.reason === 'insufficient_tenge') {
-        toast.error('Недостаточно тенге!');
+      if (item.type === 'deck') {
+        const result = await purchaseMutation.mutateAsync({ deckId: item.id, tengeCost: item.price });
+        if (result.success) {
+          toast.success('Колода куплена!');
+          refetchOwned();
+          onPurchased?.();
+        } else if (result.reason === 'already_owned') {
+          toast.info('Эта колода уже куплена');
+          refetchOwned();
+        } else if (result.reason === 'insufficient_tenge') {
+          toast.error('Недостаточно тенге!');
+        } else {
+          toast.error('Ошибка покупки');
+        }
       } else {
-        toast.error('Ошибка покупки');
-      }
-    } catch {
-      toast.error('Ошибка покупки');
-    } finally {
-      setPurchasing(false);
-    }
-  };
-
-  const handlePurchaseTable = async (tableId: string, price: number) => {
-    if (ownedTables.includes(tableId)) return;
-    if (currentTenge < price) {
-      toast.error('Недостаточно тенге!');
-      return;
-    }
-    setPurchasing(true);
-    try {
-      const result = await purchaseTableMutation.mutateAsync({ tableId, tengeCost: price });
-      if (result.success) {
-        toast.success('Стол куплен!');
-        refetchOwnedTables();
-        onPurchased?.();
-      } else if (result.reason === 'already_owned') {
-        toast.info('Этот стол уже куплен');
-        refetchOwnedTables();
-      } else if (result.reason === 'insufficient_tenge') {
-        toast.error('Недостаточно тенге!');
-      } else {
-        toast.error('Ошибка покупки');
+        const result = await purchaseTableMutation.mutateAsync({ tableId: item.id, tengeCost: item.price });
+        if (result.success) {
+          toast.success('Стол куплен!');
+          refetchOwnedTables();
+          onPurchased?.();
+        } else if (result.reason === 'already_owned') {
+          toast.info('Этот стол уже куплен');
+          refetchOwnedTables();
+        } else if (result.reason === 'insufficient_tenge') {
+          toast.error('Недостаточно тенге!');
+        } else {
+          toast.error('Ошибка покупки');
+        }
       }
     } catch {
       toast.error('Ошибка покупки');
@@ -181,7 +173,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                     <div className="flex items-center gap-3">
                       <Button
                         className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                        onClick={handlePurchase}
+                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: 'Кастомная колода', price: CUSTOM_DECK_PRICE })}
                         disabled={purchasing || !canAfford}
                       >
                         {purchasing ? 'Покупка...' : 'Купить'}
@@ -234,7 +226,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                           <div className="flex items-center gap-3">
                             <Button
                               className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => handlePurchaseTable(tableId, table.price)}
+                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: table.name, price: table.price })}
                               disabled={purchasing || !canAffordTable}
                             >
                               {purchasing ? '...' : 'Купить'}
@@ -262,6 +254,43 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
         <div className="px-5 pb-4 text-center">
           <p className="text-amber-200/30 text-xs">Больше предметов скоро появится в магазине</p>
         </div>
+
+        {/* Purchase confirmation overlay */}
+        {confirmPurchase && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl">
+            <div className="bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-xl shadow-2xl p-6 mx-6 max-w-sm w-full">
+              <div className="flex items-center gap-2 mb-4">
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
+                <h3 className="text-amber-100 font-bold text-base">Подтверждение покупки</h3>
+              </div>
+              <p className="text-amber-200/70 text-sm mb-2">
+                Вы уверены, что хотите купить <span className="text-amber-100 font-semibold">{confirmPurchase.name}</span>?
+              </p>
+              <div className="flex items-center gap-1.5 mb-5">
+                <span className="text-amber-200/60 text-sm">Стоимость:</span>
+                <span className="text-amber-100 font-bold text-lg">{confirmPurchase.price}</span>
+                <img src={TENGE_ICON} alt="₸" className="w-5 h-5 rounded-full object-cover aspect-square" />
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-sm h-10 font-semibold"
+                  onClick={() => executePurchase(confirmPurchase)}
+                  disabled={purchasing}
+                >
+                  {purchasing ? 'Покупка...' : 'Подтвердить'}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1 border-amber-700/40 text-amber-200 bg-transparent hover:bg-amber-900/20 text-sm h-10 font-semibold"
+                  onClick={() => setConfirmPurchase(null)}
+                  disabled={purchasing}
+                >
+                  Отмена
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

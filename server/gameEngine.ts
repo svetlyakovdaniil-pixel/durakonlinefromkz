@@ -301,25 +301,6 @@ export function shouldSkipTurn(state: GameState, playerIdx: number): boolean {
 
 // ---- Attack validation ----
 
-/**
- * Returns true if the current attacker has priority AND has cards matching
- * any rank on the battlefield. In this case, the defender cannot transfer
- * or use pass-through until the attacker presses Бито.
- */
-function attackerBlocksTransfer(state: GameState): boolean {
-  if (!state.attackerHasPriority) return false;
-  const attacker = state.players[state.currentAttackerIdx];
-  if (!attacker || attacker.isOut || attacker.hand.length === 0) return false;
-  // Collect all ranks currently on the battlefield
-  const ranksOnTable = new Set<string>();
-  for (const pair of state.battleField) {
-    ranksOnTable.add(pair.attack.rank);
-    if (pair.defense) ranksOnTable.add(pair.defense.rank);
-  }
-  // Check if attacker has any card matching those ranks
-  return attacker.hand.some(c => ranksOnTable.has(c.rank));
-}
-
 export function canPlayAsAttack(state: GameState, card: Card): boolean {
   if (is777(card)) return false;
   if (state.battleField.length === 0) return true;
@@ -1043,8 +1024,7 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Transfer option — show all matching cards for choice
       // Only show if next defender has enough cards to handle the transfer
       // Transfer is NOT limited by the 13-card first bito rule
-      // Defender CANNOT transfer if attacker has priority AND has matching rank cards in hand
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !attackerBlocksTransfer(state)) {
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
         const totalAfterTransfer = state.battleField.length + 1;
         const attackRank = state.battleField[0].attack.rank;
         const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
@@ -1061,8 +1041,7 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Pass-through (проездной) — show trump cards matching attack rank that haven't been used yet
       // Only available BEFORE defender starts defending (no cards defended yet)
       // Only show if next defender has enough cards
-      // Defender CANNOT use pass-through if attacker has priority AND has matching rank cards
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !attackerBlocksTransfer(state)) {
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
         const attackRank = state.battleField[0].attack.rank;
         const passThroughCards = player.hand.filter(c =>
           c.rank === attackRank &&

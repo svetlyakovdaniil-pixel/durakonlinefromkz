@@ -272,6 +272,7 @@ export function initSocketServer(httpServer: HttpServer) {
         withBots: data.settings?.withBots || false,
         botCount: data.settings?.botCount || 0,
         deckStyle: data.settings?.deckStyle === 'custom' ? 'custom' : 'classic',
+        tableStyle: data.settings?.tableStyle === 'dark_kazakh' ? 'dark_kazakh' : 'classic',
         betAmount,
         password: data.settings?.password || undefined,
         isPrivate: data.settings?.isPrivate || false,

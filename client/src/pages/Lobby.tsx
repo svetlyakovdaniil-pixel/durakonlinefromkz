@@ -203,7 +203,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <div className="flex items-center gap-0.5">
                     <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                     <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] rounded-full object-cover" />
+                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
@@ -271,7 +271,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                   <div className="w-[51px] h-[51px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] rounded-full object-cover" />
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] object-contain" />
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"

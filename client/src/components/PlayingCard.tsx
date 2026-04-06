@@ -11,6 +11,7 @@ interface PlayingCardProps {
   faceDown?: boolean;
   selected?: boolean;
   playable?: boolean;
+  highlighted?: boolean;
   small?: boolean;
   medium?: boolean;
   revealed?: boolean;
@@ -48,7 +49,7 @@ function NumberCard({ card }: { card: Card }) {
   );
 }
 
-export default function PlayingCard({ card, faceDown, selected, playable, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
+export default function PlayingCard({ card, faceDown, selected, playable, highlighted, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
   // Responsive card sizes (20% smaller than previous):
   // small = opponent mini cards
   // medium = battlefield cards
@@ -86,6 +87,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, small,
       className={`${sizeClasses} rounded-lg overflow-hidden shadow-md border-2 transition-all duration-150
         ${selected ? 'border-amber-400 ring-2 ring-amber-400/50 -translate-y-2' : 'border-amber-900/30'}
         ${playable ? 'hover:-translate-y-2 hover:shadow-lg hover:border-amber-500/60 cursor-pointer' : ''}
+        ${highlighted ? 'border-emerald-400 ring-2 ring-emerald-400/60 shadow-emerald-400/30 shadow-lg animate-pulse' : ''}
         ${revealed ? 'border-cyan-400 ring-2 ring-cyan-400/50 shadow-cyan-400/30 shadow-lg' : ''}
         ${className || ''}`}
       onClick={playable || onClick ? onClick : undefined}
