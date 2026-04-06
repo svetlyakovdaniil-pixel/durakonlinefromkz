@@ -191,6 +191,8 @@ export interface ServerToClientEvents {
   frozenTimerTick: (data: { roomId: string; secondsLeft: number }) => void;
   /** New notification received */
   newNotification: (data: { type: string; count: number }) => void;
+  /** Invite was declined by the target player */
+  inviteDeclined: (data: { roomId: string; declinedByName: string; declinedByGameId: number }) => void;
   /** Balance updated (shanyrak/tenge changed) */
   balanceUpdated: (data: { shanyrak: number; tenge: number }) => void;
   /** Prize pool distribution after game ends */
@@ -218,6 +220,8 @@ export interface ClientToServerEvents {
   rejoinGame: (roomId: string, cb: (ok: boolean) => void) => void;
   /** Invite a friend to the current room */
   inviteFriend: (data: { roomId: string; targetGameId: number }) => void;
+  /** Decline a room invitation */
+  declineInvite: (data: { roomId: string; fromGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
   registerProfile: (data: { gameId: number; displayName: string; avatarId?: string }, cb?: (ok: boolean) => void) => void;
 }

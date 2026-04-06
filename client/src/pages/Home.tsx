@@ -23,7 +23,7 @@ export default function Home() {
     gameOverData, prizeData, onlineFriendIds, pendingInvite, setPendingInvite, frozenInfo,
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
-    returnToLobby, clearError, inviteFriend, registerProfile, sendChat,
+    returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
     isAuthenticated ? user?.name || 'Гость' : null
@@ -48,6 +48,10 @@ export default function Home() {
   // Keep a ref to joinRoom so the toast callback always uses the latest version
   const joinRoomRef = useRef(joinRoom);
   joinRoomRef.current = joinRoom;
+
+  // Keep a ref to declineInvite so the toast callback always uses the latest version
+  const declineInviteRef = useRef(declineInvite);
+  declineInviteRef.current = declineInvite;
 
   // Handle pending invites — only show if player is in lobby (not in a game or room)
   useEffect(() => {
@@ -91,7 +95,10 @@ export default function Home() {
             size="sm"
             variant="outline"
             className="flex-1 h-7 text-xs"
-            onClick={() => toast.dismiss(toastId)}
+            onClick={() => {
+              declineInviteRef.current(invite.roomId, invite.fromGameId);
+              toast.dismiss(toastId);
+            }}
           >
             Отклонить
           </Button>

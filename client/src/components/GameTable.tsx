@@ -1039,6 +1039,17 @@ export default function GameTable({
           </div>
         )}
 
+        {/* First attacker indicator — persistent text above hand when table is empty and player is attacker */}
+        {isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
+          <div className="flex justify-center pointer-events-none mb-1">
+            <div className="bg-amber-600/20 border border-amber-500/40 rounded-lg px-4 py-1.5 backdrop-blur-sm animate-pulse">
+              <span className="text-amber-300 text-sm sm:text-base font-bold tracking-wide">
+                ВАШ ХОД, АТАКУЙТЕ
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && (
           <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
@@ -1314,7 +1325,7 @@ export default function GameTable({
               <div className="flex items-center gap-2 flex-wrap justify-center">
                 {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                   <Button
-                    className="bg-purple-700/60 hover:bg-purple-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
+                    className="bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
                     onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                   >
                     Перевести
@@ -1322,7 +1333,7 @@ export default function GameTable({
                 )}
                 {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                   <Button
-                    className="bg-yellow-700/60 hover:bg-yellow-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
+                    className="bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
                     onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                   >
                     <Eye className="w-5 h-5 mr-1.5" />
@@ -1330,17 +1341,17 @@ export default function GameTable({
                   </Button>
                 )}
                 {canTake && (
-                  <Button variant="destructive" className="text-lg h-14 px-6 font-semibold bg-red-700/60 hover:bg-red-600/80 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
+                  <Button variant="destructive" className="text-lg h-14 px-6 font-semibold bg-red-700/35 hover:bg-red-600/55 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
                     Забрать
                   </Button>
                 )}
                 {canEndAttack && (
-                  <Button className="bg-green-700/60 hover:bg-green-600/80 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/20" onClick={onEndAttack}>
+                  <Button className="bg-green-700/35 hover:bg-green-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/20" onClick={onEndAttack}>
                     {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                   </Button>
                 )}
                 {canSkip && (
-                  <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
+                  <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
                     Пропустить
                   </Button>
                 )}
@@ -1390,7 +1401,7 @@ export default function GameTable({
             <div className="flex items-center gap-2 pointer-events-auto">
               {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                 <Button
-                  className="bg-purple-700/55 hover:bg-purple-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
+                  className="bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
                   onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                 >
                   Перевести
@@ -1398,7 +1409,7 @@ export default function GameTable({
               )}
               {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                 <Button
-                  className="bg-yellow-700/55 hover:bg-yellow-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
+                  className="bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
                   onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -1406,17 +1417,17 @@ export default function GameTable({
                 </Button>
               )}
               {canTake && (
-                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/55 hover:bg-red-600/75" onClick={onTakeCards}>
+                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55" onClick={onTakeCards}>
                   Забрать
                 </Button>
               )}
               {canEndAttack && (
-                <Button className="bg-green-700/55 hover:bg-green-600/75 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
+                <Button className="bg-green-700/35 hover:bg-green-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
                   {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                 </Button>
               )}
               {canSkip && (
-                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/25 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
+                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/15 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
                   Пропустить
                 </Button>
               )}

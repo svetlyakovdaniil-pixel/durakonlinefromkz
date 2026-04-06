@@ -44,6 +44,7 @@ const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump 
 const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
 const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
 const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-game display)
+const playerDisplayNames = new Map<string, string>(); // odId -> custom display name from settings
 // Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
 const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
 const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; disconnectedName: string; timer: NodeJS.Timeout; tickInterval: NodeJS.Timeout; secondsLeft: number }>(); // roomId -> freeze info
@@ -123,7 +124,8 @@ export function initSocketServer(httpServer: HttpServer) {
     console.log(`[Socket] Connected: ${socket.id}`);
 
     const odId = socket.handshake.auth?.odId as string || socket.id;
-    const name = socket.handshake.auth?.name as string || 'Гость';
+    // Use stored display name from registerProfile if available, fallback to auth name
+    let name = playerDisplayNames.get(odId) || socket.handshake.auth?.name as string || 'Гость';
     socketPlayers.set(socket.id, { odId, name });
     playerSockets.set(odId, socket.id);
 
@@ -722,10 +724,17 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // --- Invite friend to room ---
     socket.on('inviteFriend', (data) => {
+      console.log(`[Socket] inviteFriend called by ${odId} for room ${data.roomId}, targetGameId: ${data.targetGameId}`);
       const room = rooms.get(data.roomId);
-      if (!room) return;
+      if (!room) {
+        console.log(`[Socket] inviteFriend: room ${data.roomId} not found`);
+        return;
+      }
       // Only room host or players in the room can invite
-      if (!room.players.some(p => p.id === odId)) return;
+      if (!room.players.some(p => p.id === odId)) {
+        console.log(`[Socket] inviteFriend: player ${odId} not in room`);
+        return;
+      }
 
       // Find the target player's socket by their gameId
       const targetGameId = data.targetGameId;
@@ -742,9 +751,11 @@ export function initSocketServer(httpServer: HttpServer) {
       }
 
       if (!targetOdId || !targetSid) {
+        console.log(`[Socket] inviteFriend: target gameId ${targetGameId} not found. socketPlayers size: ${socketPlayers.size}, playerGameIds:`, Array.from(playerGameIds.entries()));
         socket.emit('error', 'Игрок не найден или не в сети');
         return;
       }
+      console.log(`[Socket] inviteFriend: found target ${targetOdId} with sid ${targetSid}`);
 
       // Check if target is in lobby (not in any active game)
       const targetRoomSet = playerRooms.get(targetOdId);
@@ -786,12 +797,60 @@ export function initSocketServer(httpServer: HttpServer) {
       console.log(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
     });
 
+    // --- Decline room invitation ---
+    socket.on('declineInvite', (data) => {
+      // Find the inviter's socket by their gameId
+      const inviterGameId = data.fromGameId;
+      let inviterSid: string | null = null;
+      for (const [sid, info] of Array.from(socketPlayers.entries())) {
+        const gid = playerGameIds.get(info.odId);
+        if (gid === inviterGameId) {
+          inviterSid = sid;
+          break;
+        }
+      }
+      if (inviterSid) {
+        const myGameId = playerGameIds.get(odId) || 0;
+        io.to(inviterSid).emit('inviteDeclined', {
+          roomId: data.roomId,
+          declinedByName: name,
+          declinedByGameId: myGameId,
+        });
+        console.log(`[Socket] ${name} declined invite to room ${data.roomId} from gameId ${inviterGameId}`);
+      }
+    });
+
     // --- Register player profile (store gameId mapping) ---
     socket.on('registerProfile', (data, cb) => {
       if (data.gameId && data.gameId > 0) {
         playerGameIds.set(odId, data.gameId);
         if (data.avatarId) {
           playerAvatarIds.set(odId, data.avatarId);
+        }
+        // Store custom display name for reconnect scenarios
+        if (data.displayName) {
+          playerDisplayNames.set(odId, data.displayName);
+          // Update name in all rooms this player is in
+          const roomSet = playerRooms.get(odId);
+          if (roomSet) {
+            for (const rid of Array.from(roomSet)) {
+              const room = rooms.get(rid);
+              if (room) {
+                const player = room.players.find(p => p.id === odId);
+                if (player) {
+                  player.name = data.displayName;
+                }
+              }
+              // Also update name in active game state
+              const gameState = games.get(rid);
+              if (gameState) {
+                const gamePlayer = gameState.players.find(p => p.id === odId);
+                if (gamePlayer) {
+                  gamePlayer.name = data.displayName;
+                }
+              }
+            }
+          }
         }
         console.log(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
         // Broadcast online status to friends

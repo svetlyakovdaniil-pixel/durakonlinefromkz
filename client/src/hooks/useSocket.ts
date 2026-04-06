@@ -245,6 +245,11 @@ export function useSocket(userId: string | null, userName: string | null) {
       setPendingInvite(data);
     });
 
+    // Invite was declined by the target player
+    socket.on('inviteDeclined', (data) => {
+      toast.error(`${data.declinedByName} (# ${data.declinedByGameId}) отклонил приглашение в комнату`, { duration: 5000 });
+    });
+
     // Online friends update
     socket.on('onlineFriendsUpdate', (data) => {
       setOnlineFriendIds(data.onlineGameIds);
@@ -398,6 +403,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     toast.success('Приглашение отправлено!', { duration: 3000 });
   }, []);
 
+  const declineInvite = useCallback((roomId: string, fromGameId: number) => {
+    socketRef.current?.emit('declineInvite', { roomId, fromGameId });
+  }, []);
+
   const returnToLobby = useCallback(() => {
     currentRoomIdRef.current = null;
     setCurrentRoom(null);
@@ -439,6 +448,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     skipTurn,
     sendChat,
     inviteFriend,
+    declineInvite,
     registerProfile,
     returnToLobby,
     clearError: () => setError(null),
