@@ -502,12 +502,15 @@ export default function GameTable({
     prevTrumpPhaseNum.current = currentPhase;
   }, [gs.trumpInfo.currentTrump, gs.trumpInfo.phase]);
 
-  // Show "YOUR TURN" overlay
+  // Show "YOUR TURN" overlay — triggers on every turn start (including when it's already your turn but a new trick begins)
+  const prevTrickCount = useRef(gs.trickCount);
   useEffect(() => {
     const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
-      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
+      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough' || a.type === 'endAttack'
     );
-    if (isMyTurn && !prevIsMyTurn.current) {
+    const trickChanged = gs.trickCount !== prevTrickCount.current;
+    // Show overlay when: transitioning to my turn, OR trick changed and it's still my turn
+    if (isMyTurn && (!prevIsMyTurn.current || trickChanged)) {
       yourTurnTimers.current.forEach(t => clearTimeout(t));
       yourTurnTimers.current = [];
       
@@ -524,7 +527,8 @@ export default function GameTable({
       yourTurnTimers.current = [exitTimer, hideTimer];
     }
     prevIsMyTurn.current = isMyTurn;
-  }, [availableActions]);
+    prevTrickCount.current = gs.trickCount;
+  }, [availableActions, gs.trickCount]);
 
   // Sound effects for alert
   const { play: playSound, enabled: soundEnabled } = useSound();
@@ -974,7 +978,7 @@ export default function GameTable({
         {/* YOUR TURN overlay */}
         {showYourTurn && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className={`text-3xl sm:text-5xl md:text-7xl font-black text-amber-400 drop-shadow-[0_0_30px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
+            <div className={`text-6xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               ВАШ ХОД
             </div>
           </div>
@@ -1084,9 +1088,7 @@ export default function GameTable({
                     )}
                   </div>
                 ))}
-                {gs.battleField.length === 0 && (
-                  <div className="text-amber-200/30 text-xs sm:text-sm italic">Стол пуст</div>
-                )}
+
               </div>
             </div>
           </div>
@@ -1139,14 +1141,7 @@ export default function GameTable({
 
           </div>
 
-          {/* MOBILE: Discard count */}
-          {gs.discardCount > 0 && (
-            <div className="sm:hidden absolute top-2 left-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-amber-700/30">
-              <Trash2 className="w-3 h-3 text-amber-200/40" />
-              <span className="text-amber-300 text-sm font-bold">{gs.discardCount}</span>
-              <span className="text-amber-200/40 text-[7px]">Бито</span>
-            </div>
-          )}
+
         </div>
 
         {/* Winner/spectator banner */}

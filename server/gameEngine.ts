@@ -226,7 +226,9 @@ export function getMaxAttackCards(state: GameState): number {
   // = current hand + defense cards already played on the table
   const defenseCardsOnTable = state.battleField.filter(p => p.defense !== null).length;
   const defenderOriginalCards = defender.hand.length + defenseCardsOnTable;
-  if (state.firstTrick) return Math.min(FIRST_TRICK_LIMIT, defenderOriginalCards);
+  // Rule: while discard pile is empty (no successful defense yet = "первая бито"),
+  // max attack cards on table is capped at FIRST_TRICK_LIMIT (13)
+  if (state.discardPile.length === 0) return Math.min(FIRST_TRICK_LIMIT, defenderOriginalCards);
   return defenderOriginalCards;
 }
 
@@ -504,6 +506,7 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
 export function transferAttack(state: GameState, playerIdx: number, cardId: string): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
   if (state.defenderTaking) return 'Cannot transfer while taking';
+  if (state.attackerHasPriority) return 'Дождитесь пока атакующий закончит ход';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
@@ -519,10 +522,8 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
   // Total attack cards after transfer = current battlefield cards + 1 (the transfer card)
   const totalAttackCards = state.battleField.length + 1;
 
-  // First trick limit: cannot transfer if it would exceed 13 cards on the table
-  if (state.firstTrick && totalAttackCards > FIRST_TRICK_LIMIT) {
-    return `Нельзя перевести — на первой бите не может быть больше ${FIRST_TRICK_LIMIT} карт`;
-  }
+  // Transfer is NOT limited by the 13-card first bito rule.
+  // Transfer only checks if the next defender has enough cards in hand.
 
   const potentialDir = (card.rank === '10' && state.leadCardRank === '10')
     ? (state.direction === 'cw' ? 'ccw' : 'cw')
@@ -562,6 +563,7 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
 export function showPassThrough(state: GameState, playerIdx: number, cardId: string): string | null {
   if (playerIdx !== state.currentDefenderIdx) return 'Не ваш ход';
   if (state.defenderTaking) return 'Вы уже берёте карты';
+  if (state.attackerHasPriority) return 'Дождитесь пока атакующий закончит ход';
   if (state.battleField.length === 0) return 'Нет карт на столе';
 
   // Pass-through is only allowed BEFORE the defender starts defending
@@ -973,20 +975,18 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
 
       // Transfer option — show all matching cards for choice
       // Only show if next defender has enough cards to handle the transfer
-      // Also respect first trick 13-card limit
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
+      // Transfer is NOT limited by the 13-card first bito rule
+      // BLOCKED while attacker has priority (attacker must press пас/бито first)
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !state.attackerHasPriority) {
         const totalAfterTransfer = state.battleField.length + 1;
-        const withinFirstTrickLimit = !state.firstTrick || totalAfterTransfer <= FIRST_TRICK_LIMIT;
-        if (withinFirstTrickLimit) {
-          const attackRank = state.battleField[0].attack.rank;
-          const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
-          if (transferCards.length > 0) {
-            // Check next defender has enough cards (battlefield + 1 transfer card)
-            const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
-            const nextDef = state.players[nextDefIdx];
-            if (nextDef.hand.length >= totalAfterTransfer) {
-              actions.push({ type: 'transferCard', cardIds: transferCards });
-            }
+        const attackRank = state.battleField[0].attack.rank;
+        const transferCards = player.hand.filter(c => c.rank === attackRank).map(c => c.id);
+        if (transferCards.length > 0) {
+          // Check next defender has enough cards (battlefield + 1 transfer card)
+          const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+          const nextDef = state.players[nextDefIdx];
+          if (nextDef.hand.length >= totalAfterTransfer) {
+            actions.push({ type: 'transferCard', cardIds: transferCards });
           }
         }
       }
@@ -994,7 +994,8 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Pass-through (проездной) — show trump cards matching attack rank that haven't been used yet
       // Only available BEFORE defender starts defending (no cards defended yet)
       // Only show if next defender has enough cards
-      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense)) {
+      // BLOCKED while attacker has priority
+      if (state.battleField.length > 0 && state.battleField.every(p => !p.defense) && !state.attackerHasPriority) {
         const attackRank = state.battleField[0].attack.rank;
         const passThroughCards = player.hand.filter(c =>
           c.rank === attackRank &&

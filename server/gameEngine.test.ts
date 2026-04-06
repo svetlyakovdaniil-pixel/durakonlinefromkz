@@ -322,6 +322,7 @@ describe('FIX #2: Transfer attack (perevod)', () => {
     state.turnPhase = 'defend';
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
+    state.attackerHasPriority = false; // attacker already pressed pass
 
     const result = transferAttack(state, 1, state.players[1].hand[0].id);
     expect(result).toBeNull(); // success
@@ -363,6 +364,7 @@ describe('FIX #2: Transfer attack (perevod)', () => {
     state.turnPhase = 'defend';
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
+    state.attackerHasPriority = false; // attacker already pressed pass
 
     const actions = getAvailableActions(state, 1);
     const transferAction = actions.find(a => a.type === 'transferCard');
@@ -1019,6 +1021,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false; // attacker already pressed pass
     // Attack with 7 of spades, defender has 7 of hearts (trump)
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
@@ -1050,6 +1053,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7')];
     state.passThroughUsedIds = ['hearts-7-0']; // already used
@@ -1064,6 +1068,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     // clubs-7 is NOT a trump (trump is hearts)
     state.players[1].hand = [card('clubs', '7')];
@@ -1078,6 +1083,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     // hearts-8 is trump but wrong rank
     state.players[1].hand = [card('hearts', '8')];
@@ -1092,6 +1098,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     // Defender has TWO trump 7s
     state.players[1].hand = [card('hearts', '7', 0), card('hearts', '7', 1), card('clubs', 'A')];
@@ -1107,6 +1114,7 @@ describe('Pass-through (проездной) mechanic', () => {
     // Simulate new attack on new defender who also has trump 7
     state.currentDefenderIdx = 2;
     state.currentAttackerIdx = 1;
+    state.attackerHasPriority = false; // attacker pressed pass again
     state.battleField = [{ attack: card('spades', '7', 1), defense: null }];
     state.players[2].hand = [card('hearts', '7', 2)];
     // Next defender (player 3) needs enough cards
@@ -1123,6 +1131,7 @@ describe('Pass-through (проездной) mechanic', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
     // Next defender (player 2) needs enough cards
@@ -1318,6 +1327,7 @@ describe('Transfer blocked when next defender has insufficient cards', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.players[1].hand = [card('hearts', '7'), card('clubs', '8')];
     // Player 2 has only 1 card but after transfer there will be 2 attack cards
     state.players[2].hand = [card('diamonds', '9')];
@@ -1333,6 +1343,7 @@ describe('Transfer blocked when next defender has insufficient cards', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.players[1].hand = [card('hearts', '7'), card('clubs', '8')];
     state.players[2].hand = [card('diamonds', '9'), card('diamonds', '10')];
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
@@ -1346,6 +1357,7 @@ describe('Transfer blocked when next defender has insufficient cards', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.players[1].hand = [card('hearts', '7'), card('clubs', '9')];
     state.players[2].hand = [card('diamonds', '9')]; // only 1 card, need 2
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
@@ -1360,6 +1372,7 @@ describe('Transfer blocked when next defender has insufficient cards', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.battleField = [{ attack: card('spades', '7'), defense: null }];
     state.players[1].hand = [card('hearts', '7'), card('clubs', 'A')];
     state.players[2].hand = []; // 0 cards, need 1
@@ -1496,6 +1509,7 @@ describe('Pass-through blocked after defense started', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.firstTrick = false;
     state.trumpInfo = { trumpCard: card('hearts', '6'), currentTrump: 'hearts' };
     // Defender has a trump card matching attack rank
@@ -1516,6 +1530,7 @@ describe('Pass-through blocked after defense started', () => {
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
     state.firstTrick = false;
     state.trumpInfo = { trumpCard: card('hearts', '6'), currentTrump: 'hearts' };
     state.players[1].hand = [card('hearts', '9'), card('hearts', 'K')];
@@ -1886,97 +1901,85 @@ describe('Consecutive timeouts tracking', () => {
 });
 
 // ============================================================
-// FIRST TRICK 13-CARD LIMIT ON TRANSFER
+// FIRST BITO 13-CARD LIMIT (discardPile-based)
 // ============================================================
-describe('First trick 13-card limit on transfer', () => {
-  it('blocks transfer when it would exceed 13 cards on first trick', () => {
+describe('First bito 13-card limit (discardPile-based)', () => {
+  it('transfer is ALWAYS allowed regardless of 13-card limit (only checks next defender hand)', () => {
     const state = createTestState(3);
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'defend';
-    state.firstTrick = true;
+    state.attackerHasPriority = false;
+    state.discardPile = []; // bito empty
     // 13 sevens already on the table (all undefended)
     state.battleField = Array.from({ length: 13 }, (_, i) => ({
       attack: card('spades', '7', i),
       defense: null,
     }));
     state.leadCardRank = '7';
-    // Defender has a 7 to transfer
     state.players[1].hand = [card('hearts', '7', 50), ...Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100))];
-    // Next defender has plenty of cards
+    // Next defender has plenty of cards (20 > 14)
     state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
+
+    // Transfer should succeed — not limited by 13-card rule
+    const err = transferAttack(state, 1, 'hearts-7-50');
+    expect(err).toBeNull();
+  });
+
+  it('transfer blocked only when next defender has too few cards', () => {
+    const state = createTestState(3);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
+    state.discardPile = [];
+    state.battleField = Array.from({ length: 5 }, (_, i) => ({
+      attack: card('spades', '7', i),
+      defense: null,
+    }));
+    state.leadCardRank = '7';
+    state.players[1].hand = [card('hearts', '7', 50)];
+    // Next defender has only 3 cards (less than 6 = battlefield + 1)
+    state.players[2].hand = Array.from({ length: 3 }, (_, i) => card('clubs', 'A', i + 200));
 
     const err = transferAttack(state, 1, 'hearts-7-50');
     expect(err).toBeTruthy();
-    expect(err).toContain('первой бите');
   });
 
-  it('allows transfer when under 13 cards on first trick', () => {
-    const state = createTestState(3);
-    state.currentAttackerIdx = 0;
-    state.currentDefenderIdx = 1;
-    state.turnPhase = 'defend';
-    state.firstTrick = true;
-    // 12 sevens on the table (all undefended) — transfer would make 13, which is OK
-    state.battleField = Array.from({ length: 12 }, (_, i) => ({
-      attack: card('spades', '7', i),
-      defense: null,
-    }));
-    state.leadCardRank = '7';
-    state.players[1].hand = [card('hearts', '7', 50)];
-    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
-
-    const err = transferAttack(state, 1, 'hearts-7-50');
-    expect(err).toBeNull();
-  });
-
-  it('getAvailableActions hides transfer when it would exceed 13 on first trick', () => {
-    const state = createTestState(3);
-    state.currentAttackerIdx = 0;
-    state.currentDefenderIdx = 1;
-    state.turnPhase = 'defend';
-    state.firstTrick = true;
-    // 13 sevens on the table
-    state.battleField = Array.from({ length: 13 }, (_, i) => ({
-      attack: card('spades', '7', i),
-      defense: null,
-    }));
-    state.leadCardRank = '7';
-    state.players[1].hand = [card('hearts', '7', 50), ...Array.from({ length: 14 }, (_, i) => card('hearts', 'A', i + 100))];
-    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
-
-    const actions = getAvailableActions(state, 1);
-    const transferAction = actions.find(a => a.type === 'transferCard');
-    expect(transferAction).toBeUndefined();
-  });
-
-  it('no 13-card transfer limit after first trick', () => {
-    const state = createTestState(3);
-    state.currentAttackerIdx = 0;
-    state.currentDefenderIdx = 1;
-    state.turnPhase = 'defend';
-    state.firstTrick = false; // NOT first trick
-    // 13 sevens on the table
-    state.battleField = Array.from({ length: 13 }, (_, i) => ({
-      attack: card('spades', '7', i),
-      defense: null,
-    }));
-    state.leadCardRank = '7';
-    state.players[1].hand = [card('hearts', '7', 50)];
-    state.players[2].hand = Array.from({ length: 20 }, (_, i) => card('clubs', 'A', i + 200));
-
-    // After first trick, transfer is only limited by next defender's hand size
-    const err = transferAttack(state, 1, 'hearts-7-50');
-    expect(err).toBeNull();
-  });
-
-  it('first trick limit caps at defender hand size (min of 13 and defender cards)', () => {
+  it('attack cards limited to 13 when discardPile is empty', () => {
     const state = createTestState(2);
     state.currentAttackerIdx = 0;
     state.currentDefenderIdx = 1;
     state.turnPhase = 'attack';
-    state.firstTrick = true;
-    // Defender only has 5 cards
+    state.discardPile = []; // bito empty
+    state.players[1].hand = Array.from({ length: 20 }, (_, i) => card('hearts', 'A', i));
+    state.players[0].hand = Array.from({ length: 20 }, (_, i) => card('spades', '7', i));
+    state.battleField = [];
+
+    const maxCards = getMaxAttackCards(state);
+    expect(maxCards).toBe(13); // min(13, 20) = 13
+  });
+
+  it('attack cards NOT limited to 13 when discardPile has cards', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.discardPile = [card('clubs', '6', 99)]; // bito has at least 1 card
+    state.players[1].hand = Array.from({ length: 20 }, (_, i) => card('hearts', 'A', i));
+    state.players[0].hand = Array.from({ length: 20 }, (_, i) => card('spades', '7', i));
+    state.battleField = [];
+
+    const maxCards = getMaxAttackCards(state);
+    expect(maxCards).toBe(20); // no 13-card limit
+  });
+
+  it('attack limit caps at defender hand size when discardPile empty', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.discardPile = [];
     state.players[1].hand = Array.from({ length: 5 }, (_, i) => card('hearts', 'A', i));
     state.players[0].hand = Array.from({ length: 20 }, (_, i) => card('spades', '7', i));
     state.battleField = [];
