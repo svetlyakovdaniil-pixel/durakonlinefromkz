@@ -221,12 +221,13 @@ export function isEdgePlayer(players: Player[], playerIdx: number, defenderIdx: 
 // ---- Trick limits ----
 
 export function getMaxAttackCards(state: GameState): number {
-  if (state.firstTrick) return FIRST_TRICK_LIMIT;
   const defender = state.players[state.currentDefenderIdx];
   // Limit = defender's ORIGINAL hand size at start of trick
   // = current hand + defense cards already played on the table
   const defenseCardsOnTable = state.battleField.filter(p => p.defense !== null).length;
-  return defender.hand.length + defenseCardsOnTable;
+  const defenderOriginalCards = defender.hand.length + defenseCardsOnTable;
+  if (state.firstTrick) return Math.min(FIRST_TRICK_LIMIT, defenderOriginalCards);
+  return defenderOriginalCards;
 }
 
 // ---- Draw cards ----

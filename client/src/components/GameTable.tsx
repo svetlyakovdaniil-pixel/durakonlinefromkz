@@ -1138,81 +1138,83 @@ export default function GameTable({
           </div>
         )}
 
-        {/* Role indicator + Action buttons — DESKTOP: inline, MOBILE: floating overlay */}
+        {/* Role indicator + Action buttons — DESKTOP: centered fixed overlay */}
         {/* Desktop version */}
-        <div className="hidden sm:flex items-end justify-end gap-3 pr-52 md:pr-56 py-2">
-          <div className="flex flex-col items-end gap-2">
-            {/* Role badges */}
-            <div className="flex items-center gap-2">
-              {isAttacker && !gs.defenderTaking && (
-                <Badge className="bg-red-900/60 text-red-300 border-red-700/40 text-xl px-5 py-2">
-                  <Swords className="w-6 h-6 mr-2" /> Атакуете
-                </Badge>
-              )}
-              {isAttacker && gs.defenderTaking && (
-                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-xl px-5 py-2">
-                  <Swords className="w-6 h-6 mr-2" /> Докиньте
-                </Badge>
-              )}
-              {isDefender && !gs.defenderTaking && (
-                <Badge className="bg-blue-900/60 text-blue-300 border-blue-700/40 text-xl px-5 py-2">
-                  <Shield className="w-6 h-6 mr-2" /> Защита
-                </Badge>
-              )}
-              {isDefender && gs.defenderTaking && (
-                <Badge className="bg-orange-900/60 text-orange-300 border-orange-700/40 text-xl px-5 py-2">
-                  <HandMetal className="w-6 h-6 mr-2" /> Берёте
-                </Badge>
-              )}
-              {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
-                <Badge className="bg-amber-900/60 text-amber-300 border-amber-700/40 text-lg px-4 py-1.5">
-                  Подкинуть
-                </Badge>
-              )}
-              {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
-                <Badge className="bg-gray-800/60 text-gray-400 border-gray-700/40 text-lg px-4 py-1.5">
-                  Ожидание...
-                </Badge>
-              )}
-            </div>
+        {hasAnyAction && (
+          <div className="hidden sm:flex fixed inset-0 z-40 items-center justify-center pointer-events-none">
+            <div className="flex flex-col items-center gap-2 pointer-events-auto">
+              {/* Role badges */}
+              <div className="flex items-center gap-2">
+                {isAttacker && !gs.defenderTaking && (
+                  <Badge className="bg-red-900/70 text-red-300 border-red-700/40 text-xl px-5 py-2 backdrop-blur-sm">
+                    <Swords className="w-6 h-6 mr-2" /> Атакуете
+                  </Badge>
+                )}
+                {isAttacker && gs.defenderTaking && (
+                  <Badge className="bg-orange-900/70 text-orange-300 border-orange-700/40 text-xl px-5 py-2 backdrop-blur-sm">
+                    <Swords className="w-6 h-6 mr-2" /> Докиньте
+                  </Badge>
+                )}
+                {isDefender && !gs.defenderTaking && (
+                  <Badge className="bg-blue-900/70 text-blue-300 border-blue-700/40 text-xl px-5 py-2 backdrop-blur-sm">
+                    <Shield className="w-6 h-6 mr-2" /> Защита
+                  </Badge>
+                )}
+                {isDefender && gs.defenderTaking && (
+                  <Badge className="bg-orange-900/70 text-orange-300 border-orange-700/40 text-xl px-5 py-2 backdrop-blur-sm">
+                    <HandMetal className="w-6 h-6 mr-2" /> Берёте
+                  </Badge>
+                )}
+                {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
+                  <Badge className="bg-amber-900/70 text-amber-300 border-amber-700/40 text-lg px-4 py-1.5 backdrop-blur-sm">
+                    Подкинуть
+                  </Badge>
+                )}
+                {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
+                  <Badge className="bg-gray-800/70 text-gray-400 border-gray-700/40 text-lg px-4 py-1.5 backdrop-blur-sm">
+                    Ожидание...
+                  </Badge>
+                )}
+              </div>
 
-            {/* Action buttons */}
-            <div className="flex items-center gap-2 flex-wrap justify-end">
-              {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
-                <Button
-                  className="bg-purple-700 hover:bg-purple-600 text-white text-lg h-14 px-6 font-semibold"
-                  onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
-                >
-                  Перевести
-                </Button>
-              )}
-              {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
-                <Button
-                  className="bg-yellow-700 hover:bg-yellow-600 text-white text-lg h-14 px-6 font-semibold"
-                  onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
-                >
-                  <Eye className="w-5 h-5 mr-1.5" />
-                  Проездной
-                </Button>
-              )}
-              {canTake && (
-                <Button variant="destructive" className="text-lg h-14 px-6 font-semibold" onClick={onTakeCards}>
-                  Забрать
-                </Button>
-              )}
-              {canEndAttack && (
-                <Button className="bg-green-700 hover:bg-green-600 text-white text-lg h-14 px-6 font-semibold" onClick={onEndAttack}>
-                  {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
-                </Button>
-              )}
-              {canSkip && (
-                <Button variant="outline" className="border-amber-700/40 text-amber-200 bg-amber-900/30 text-lg h-14 px-6 font-semibold" onClick={onSkipTurn}>
-                  Пропустить
-                </Button>
-              )}
+              {/* Action buttons — semi-transparent so cards underneath are visible */}
+              <div className="flex items-center gap-2 flex-wrap justify-center">
+                {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
+                  <Button
+                    className="bg-purple-700/80 hover:bg-purple-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/30"
+                    onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
+                  >
+                    Перевести
+                  </Button>
+                )}
+                {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+                  <Button
+                    className="bg-yellow-700/80 hover:bg-yellow-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/30"
+                    onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+                  >
+                    <Eye className="w-5 h-5 mr-1.5" />
+                    Проездной
+                  </Button>
+                )}
+                {canTake && (
+                  <Button variant="destructive" className="text-lg h-14 px-6 font-semibold bg-red-700/80 hover:bg-red-600 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
+                    Забрать
+                  </Button>
+                )}
+                {canEndAttack && (
+                  <Button className="bg-green-700/80 hover:bg-green-600 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/30" onClick={onEndAttack}>
+                    {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
+                  </Button>
+                )}
+                {canSkip && (
+                  <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/50 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
+                    Пропустить
+                  </Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* MOBILE: Floating action buttons — always visible over battlefield */}
         {hasAnyAction && (
@@ -1255,7 +1257,7 @@ export default function GameTable({
             <div className="flex items-center gap-2 pointer-events-auto">
               {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
                 <Button
-                  className="bg-purple-700/90 hover:bg-purple-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/30"
+                  className="bg-purple-700/75 hover:bg-purple-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/30"
                   onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                 >
                   Перевести
@@ -1263,7 +1265,7 @@ export default function GameTable({
               )}
               {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
                 <Button
-                  className="bg-yellow-700/90 hover:bg-yellow-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/30"
+                  className="bg-yellow-700/75 hover:bg-yellow-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/30"
                   onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
@@ -1271,17 +1273,17 @@ export default function GameTable({
                 </Button>
               )}
               {canTake && (
-                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onTakeCards}>
+                <Button variant="destructive" className="text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/75 hover:bg-red-600" onClick={onTakeCards}>
                   Забрать
                 </Button>
               )}
               {canEndAttack && (
-                <Button className="bg-green-700/90 hover:bg-green-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/30" onClick={onEndAttack}>
+                <Button className="bg-green-700/75 hover:bg-green-600 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/30" onClick={onEndAttack}>
                   {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
                 </Button>
               )}
               {canSkip && (
-                <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/50 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
+                <Button variant="outline" className="border-amber-700/50 text-amber-200 bg-amber-900/40 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
                   Пропустить
                 </Button>
               )}
@@ -1314,7 +1316,7 @@ export default function GameTable({
             passThroughIds={passThroughIds}
             selectedCardId={selectedCardId}
             onCardClick={handleCardClick}
-            onCardDrop={handleCardDrop}
+            onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
             deckStyle={gs.deckStyle}
           />
         </div>

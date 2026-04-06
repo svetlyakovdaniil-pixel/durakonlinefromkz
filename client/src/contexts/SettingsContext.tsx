@@ -2,11 +2,14 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 const STORAGE_KEY = 'kazakh-durak-settings';
 
+export type CardControlMode = 'click' | 'drag';
+
 export interface GameSettings {
   soundEnabled: boolean;
   musicEnabled: boolean;
   vibrationEnabled: boolean;
   language: string;
+  cardControlMode: CardControlMode;
 }
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -14,6 +17,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   musicEnabled: false,
   vibrationEnabled: true,
   language: 'ru',
+  cardControlMode: 'click',
 };
 
 interface SettingsContextType {
@@ -23,6 +27,7 @@ interface SettingsContextType {
   setMusicEnabled: (v: boolean) => void;
   setVibrationEnabled: (v: boolean) => void;
   setLanguage: (v: string) => void;
+  setCardControlMode: (v: CardControlMode) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -66,9 +71,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setMusicEnabled = useCallback((v: boolean) => updateSetting('musicEnabled', v), [updateSetting]);
   const setVibrationEnabled = useCallback((v: boolean) => updateSetting('vibrationEnabled', v), [updateSetting]);
   const setLanguage = useCallback((v: string) => updateSetting('language', v), [updateSetting]);
+  const setCardControlMode = useCallback((v: CardControlMode) => updateSetting('cardControlMode', v), [updateSetting]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setLanguage }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setLanguage, setCardControlMode }}>
       {children}
     </SettingsContext.Provider>
   );

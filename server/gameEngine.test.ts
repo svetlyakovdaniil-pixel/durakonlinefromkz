@@ -423,6 +423,7 @@ describe('FIX #5: Attack priority and endAttack', () => {
     state.currentDefenderIdx = 1;
     state.attackerHasPriority = true;
     state.players[0].hand = [card('spades', '7')];
+    state.players[1].hand = [card('hearts', 'A')]; // defender needs cards for limit check
 
     const result = playAttackCard(state, 0, state.players[0].hand[0].id);
     expect(result).toBeNull(); // success
@@ -465,6 +466,7 @@ describe('FIX #6: 10-card direction change', () => {
     state.currentDefenderIdx = 1;
     state.direction = 'cw';
     state.players[0].hand = [card('spades', '10')];
+    state.players[1].hand = [card('hearts', 'A')]; // defender needs cards for limit check
 
     playAttackCard(state, 0, state.players[0].hand[0]?.id || 'spades-10-0');
     // After playing 10 as lead, direction should reverse
