@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
+import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
 
@@ -20,6 +21,7 @@ interface SettingsSheetProps {
 
 export default function SettingsSheet({ onLogout, currentName, onNameChanged, children }: SettingsSheetProps) {
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
+  const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
   const utils = trpc.useUtils();
 
@@ -30,24 +32,24 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   const updateNameMutation = trpc.profile.updateName.useMutation({
     onSuccess: () => {
-      toast.success('Имя изменено');
+      toast.success(t('settings.nameChanged'));
       utils.profile.me.invalidate();
       setEditingName(false);
       onNameChanged?.();
     },
     onError: (err) => {
-      toast.error(err.message || 'Ошибка при смене имени');
+      toast.error(err.message || t('settings.nameError'));
     },
   });
 
   const handleSaveName = () => {
     const trimmed = newName.trim();
     if (!trimmed || trimmed.length < 1) {
-      toast.error('Имя не может быть пустым');
+      toast.error(t('settings.nameEmpty'));
       return;
     }
     if (trimmed.length > 50) {
-      toast.error('Имя слишком длинное (макс. 50 символов)');
+      toast.error(t('settings.nameTooLong'));
       return;
     }
     updateNameMutation.mutate({ displayName: trimmed });
@@ -83,7 +85,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         <SheetHeader>
           <SheetTitle className="text-amber-100 text-xl flex items-center gap-2">
             <Settings className="w-5 h-5 text-amber-400" />
-            Настройки
+            {t('settings.title')}
           </SheetTitle>
         </SheetHeader>
 
@@ -93,14 +95,14 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <div className="flex items-center justify-between mb-2">
               <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
                 <Pencil className="w-4 h-4 text-amber-400" />
-                Имя игрока
+                {t('settings.playerName')}
               </span>
               {!editingName && (
                 <button
                   className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
                   onClick={() => { setNewName(currentName); setEditingName(true); }}
                 >
-                  Изменить
+                  {t('settings.changeName')}
                 </button>
               )}
             </div>
@@ -110,7 +112,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   value={newName}
                   onChange={e => setNewName(e.target.value)}
                   className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm flex-1"
-                  placeholder="Введите новое имя"
+                  placeholder={t('settings.enterName')}
                   maxLength={50}
                   autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
@@ -138,7 +140,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
               <Volume2 className="w-4 h-4 text-amber-400" />
-              Звуки
+              {t('settings.sounds')}
             </span>
             <Checkbox
               checked={settings.soundEnabled}
@@ -151,7 +153,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
               <Music className="w-4 h-4 text-amber-400" />
-              Фоновая музыка
+              {t('settings.music')}
             </span>
             <Checkbox
               checked={settings.musicEnabled}
@@ -164,7 +166,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
               <Smartphone className="w-4 h-4 text-amber-400" />
-              Вибрация
+              {t('settings.vibration')}
             </span>
             <Checkbox
               checked={settings.vibrationEnabled}
@@ -177,7 +179,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2 mb-3">
               <MousePointerClick className="w-4 h-4 text-amber-400" />
-              Управление картами
+              {t('settings.cardControl')}
             </span>
             <div className="flex gap-2">
               <button
@@ -189,7 +191,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                 onClick={() => setCardControlMode('click')}
               >
                 <MousePointerClick className="w-4 h-4" />
-                Нажатие
+                {t('settings.clickMode')}
               </button>
               <button
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
@@ -200,13 +202,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                 onClick={() => setCardControlMode('drag')}
               >
                 <GripHorizontal className="w-4 h-4" />
-                Зажим
+                {t('settings.dragMode')}
               </button>
             </div>
             <p className="text-[11px] text-amber-200/40 mt-2">
               {settings.cardControlMode === 'click'
-                ? 'Нажмите на карту, чтобы сыграть'
-                : 'Зажмите и перетащите карту на стол'}
+                ? t('settings.clickDesc')
+                : t('settings.dragDesc')}
             </p>
           </div>
 
@@ -214,46 +216,54 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           <div className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
               <Globe className="w-4 h-4 text-amber-400" />
-              Язык
+              {t('settings.language')}
             </span>
             <Popover open={langOpen} onOpenChange={setLangOpen}>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-2 text-sm text-amber-100 hover:text-amber-300 transition-colors bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
-                  <span className="text-base">🇷🇺</span>
-                  Русский
+                  <span className="text-base">{locale === 'kk' ? '🇰🇿' : '🇷🇺'}</span>
+                  {locale === 'kk' ? 'Қазақша' : 'Русский'}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="bg-[#1a2d45] border-amber-700/30 w-48 p-2" align="end">
                 <button
                   className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => setLangOpen(false)}
+                  onClick={() => { setLocale('ru'); setLangOpen(false); }}
                 >
                   <span className="text-base">🇷🇺</span>
                   Русский
-                  <Check className="w-4 h-4 text-green-400 ml-auto" />
+                  {locale === 'ru' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+                </button>
+                <button
+                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
+                  onClick={() => { setLocale('kk'); setLangOpen(false); }}
+                >
+                  <span className="text-base">🇰🇿</span>
+                  Қазақша
+                  {locale === 'kk' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
               </PopoverContent>
             </Popover>
           </div>
 
-          {/* 6. Logout */}
+          {/* 7. Logout */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">
                 <LogOut className="w-4 h-4" />
-                Выйти из аккаунта
+                {t('settings.logout')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-amber-100">Выход из аккаунта</AlertDialogTitle>
+                <AlertDialogTitle className="text-amber-100">{t('settings.logoutConfirm')}</AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  Вы точно хотите выйти из аккаунта?
+                  {t('settings.logoutDesc')}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="bg-[#0a1628] border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100">
-                  Нет
+                  {t('common.no')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-red-700 hover:bg-red-600 text-white"
@@ -262,7 +272,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                     onLogout();
                   }}
                 >
-                  Да
+                  {t('common.yes')}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

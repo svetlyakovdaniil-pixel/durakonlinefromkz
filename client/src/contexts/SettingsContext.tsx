@@ -10,6 +10,7 @@ export interface GameSettings {
   vibrationEnabled: boolean;
   language: string;
   cardControlMode: CardControlMode;
+  hasChosenLanguage: boolean;
 }
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -18,6 +19,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   vibrationEnabled: true,
   language: 'ru',
   cardControlMode: 'click',
+  hasChosenLanguage: false,
 };
 
 interface SettingsContextType {
@@ -28,6 +30,7 @@ interface SettingsContextType {
   setVibrationEnabled: (v: boolean) => void;
   setLanguage: (v: string) => void;
   setCardControlMode: (v: CardControlMode) => void;
+  setHasChosenLanguage: (v: boolean) => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -72,9 +75,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setVibrationEnabled = useCallback((v: boolean) => updateSetting('vibrationEnabled', v), [updateSetting]);
   const setLanguage = useCallback((v: string) => updateSetting('language', v), [updateSetting]);
   const setCardControlMode = useCallback((v: CardControlMode) => updateSetting('cardControlMode', v), [updateSetting]);
+  const setHasChosenLanguage = useCallback((v: boolean) => updateSetting('hasChosenLanguage', v), [updateSetting]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setLanguage, setCardControlMode }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setLanguage, setCardControlMode, setHasChosenLanguage }}>
       {children}
     </SettingsContext.Provider>
   );

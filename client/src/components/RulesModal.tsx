@@ -1,5 +1,4 @@
-import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight, Timer, Coins, Wifi, Users } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
@@ -51,10 +50,38 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                       <Layers className="w-4 h-4 text-amber-400" /> Колода и раздача
                     </h4>
                     <p>
-                      Используется <strong className="text-amber-100">двойная колода из 145 карт</strong>: 
-                      36 стандартных карт (от 6 до туза) × 4 копии каждой + 1 специальная карта <strong className="text-amber-100">«777»</strong>.
+                      Используется <strong className="text-amber-100">4 стандартные колоды по 36 карт</strong> (от 6 до туза, четыре масти).
+                      Итого <strong className="text-amber-100">144 карты + 1 специальная карта «777» = 145 карт</strong>.
+                      Каждой карты в игре по <strong className="text-amber-100">4 копии</strong>.
                       Каждому игроку раздаётся по <strong className="text-amber-100">14 карт</strong>.
                       В игре может участвовать от 2 до 8 игроков.
+                    </p>
+                  </div>
+
+                  {/* Copy cards beat themselves */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-amber-400" /> Копии карт
+                    </h4>
+                    <p>
+                      Так как каждой карты по 4 копии, <strong className="text-amber-100">копии бьют сами себя</strong>.
+                    </p>
+                    <ul className="space-y-1 ml-4 mt-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>7♣ бьёт 7♣</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Дама♥ бьёт Даму♥</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Туз♦ бьёт Туза♦</span>
+                      </li>
+                    </ul>
+                    <p className="mt-1.5">
+                      <strong className="text-red-400">Исключение:</strong> Король пик ♠К <strong className="text-amber-100">не бьёт сам себя</strong>.
                     </p>
                   </div>
 
@@ -89,15 +116,55 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </h4>
                     <ul className="space-y-2 ml-4">
                       <li>
-                        <strong className="text-amber-100">Карта «777»</strong> — бьёт любую карту. Её нельзя использовать для атаки, только для защиты. Единственная в колоде.
+                        <strong className="text-amber-100">Карта «777»</strong> — бьёт абсолютно любую карту в игре. Её нельзя использовать для атаки, только для защиты. Единственная в колоде.
                       </li>
                       <li>
-                        <strong className="text-amber-100">Король пик ♠K</strong> — бьёт любую карту, кроме туза пик ♠A и карты «777». Можно использовать и для атаки, и для защиты.
+                        <strong className="text-amber-100">Король пик ♠К</strong> — бьёт любую карту в игре, <strong className="text-red-400">кроме самого себя</strong>. Можно использовать и для атаки, и для защиты. Короля пик могут побить только <strong className="text-amber-100">Туз пик ♠Т</strong> и <strong className="text-amber-100">карта «777»</strong>.
                       </li>
                       <li>
-                        <strong className="text-amber-100">Туз пик ♠A</strong> — бьёт короля пик. В остальном действует как обычный туз.
+                        <strong className="text-amber-100">Туз пик ♠Т</strong> — бьёт Короля пик. В остальном действует как обычный туз.
                       </li>
                     </ul>
+                  </div>
+
+                  {/* First bita rule */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Layers className="w-4 h-4 text-amber-400" /> Первая бита
+                    </h4>
+                    <p>
+                      <strong className="text-amber-100">Первая бита — 13 карт.</strong> В самом начале игры, когда в бито ещё нет ни одной карты, 
+                      защитник обязан отбить максимум 13 атакующих карт. 
+                      Как только в бито появляется хотя бы одна карта, правило меняется: 
+                      <strong className="text-amber-100">игрок обязан бить столько карт, сколько у него в руке</strong>.
+                    </p>
+                  </div>
+
+                  {/* Throwing cards */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-amber-400" /> Подкидывание карт
+                    </h4>
+                    <p>
+                      Подкидывать карты защитнику могут <strong className="text-amber-100">только крайние игроки</strong> (сидящие слева и справа от защитника).
+                    </p>
+                    <p className="mt-1.5">
+                      <strong className="text-amber-100">Исключение — шестёрка:</strong> если атакующий начал ход с шестёрки, 
+                      <strong className="text-amber-100">все игроки за столом</strong> могут подкинуть шестёрку. 
+                      Это правило работает только если ход был начат именно с шестёрки.
+                    </p>
+                  </div>
+
+                  {/* Ten reverses */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <ArrowRight className="w-4 h-4 text-amber-400" /> Десятка — разворот
+                    </h4>
+                    <p>
+                      Если игрок походил с <strong className="text-amber-100">десятки</strong>, направление хода игры <strong className="text-amber-100">переворачивается</strong> — 
+                      по аналогии с картой разворота в игре UNO. Если игра шла по часовой стрелке, 
+                      она начинает идти против часовой, и наоборот.
+                    </p>
                   </div>
 
                   {/* Transfer */}
@@ -106,7 +173,8 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                       <ArrowRight className="w-4 h-4 text-amber-400" /> Перевод
                     </h4>
                     <p>
-                      Защитник может <strong className="text-amber-100">перевести</strong> атаку на следующего игрока, 
+                      Игра всегда по системе <strong className="text-amber-100">«переводной»</strong>. 
+                      Защитник может перевести атаку на следующего игрока, 
                       положив карту того же номинала, что и атакующая. Перевод возможен, только если 
                       ни одна карта ещё не отбита. Можно перевести сразу несколько карт одного номинала.
                     </p>
@@ -119,7 +187,9 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </h4>
                     <p>
                       Если у защитника есть <strong className="text-amber-100">козырная карта того же номинала</strong>, что и атакующая, 
-                      он может показать её как «проездной». Карта остаётся в руке, но атака переводится на следующего игрока. 
+                      он может показать её как «проездной». При этом карта <strong className="text-amber-100">остаётся в руке</strong> защитника, 
+                      но атака переводится на следующего игрока. 
+                      Проездной — это способ перенаправить атаку, не тратя карту и не отбиваясь.
                       Каждая карта может быть использована как проездной только <strong className="text-amber-100">один раз за игру</strong>.
                     </p>
                   </div>
@@ -127,13 +197,106 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                   {/* Multi-card attack */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Swords className="w-4 h-4 text-amber-400" /> Множественная атака
+                      <Swords className="w-4 h-4 text-amber-400" /> Множественная атака и перевод
                     </h4>
                     <p>
                       При начале хода, если у атакующего есть несколько карт одного номинала, 
                       он может <strong className="text-amber-100">выбрать сколько из них положить на стол за раз</strong>. 
                       Нажмите на карту — она вытянется из руки, а карты того же номинала подсветятся. 
                       Выберите нужные и нажмите «Походить».
+                    </p>
+                    <p className="mt-1.5">
+                      Аналогично работает и <strong className="text-amber-100">множественный перевод</strong>: 
+                      если у защитника есть несколько карт одного номинала для перевода, 
+                      он может выбрать сколько из них перевести за раз.
+                    </p>
+                  </div>
+
+                  {/* Timer */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Timer className="w-4 h-4 text-amber-400" /> Таймер хода
+                    </h4>
+                    <p>
+                      На каждый ход отводится ограниченное время (настраивается при создании комнаты: 30, 60 или 90 секунд). 
+                      Если время истекло — ход пропускается автоматически: 
+                      для атакующего это означает «бито», для защитника — «забрать карты».
+                    </p>
+                    <p className="mt-1.5">
+                      <strong className="text-red-400">Два пропуска подряд = автоматический проигрыш.</strong> Игрок считается проигравшим и выбывает из игры.
+                    </p>
+                  </div>
+
+                  {/* Shanyrak currency */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Crown className="w-4 h-4 text-amber-400" /> Шаныраки (игровая валюта)
+                    </h4>
+                    <p>
+                      <strong className="text-amber-100">Шаныраки</strong> — основная игровая валюта, на которую игроки играют. 
+                      При создании комнаты устанавливается ставка в шаныраках. 
+                      Все игроки вносят ставку, и призовой фонд распределяется между победителями по местам.
+                    </p>
+                    <p className="mt-1.5">
+                      <strong className="text-amber-100">Как заработать шаныраки:</strong>
+                    </p>
+                    <ul className="space-y-1 ml-4 mt-1">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Выигрывать игры — чем выше место, тем больше награда</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Ежедневный бонус при входе в игру</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Начальный баланс при регистрации</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Tenge currency */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Coins className="w-4 h-4 text-amber-400" /> Тенге (валюта магазина)
+                    </h4>
+                    <p>
+                      <strong className="text-amber-100">Тенге</strong> — валюта магазина, используется для покупки косметических предметов: 
+                      колод карт и игровых столов.
+                    </p>
+                    <p className="mt-1.5">
+                      <strong className="text-amber-100">Как заработать тенге:</strong>
+                    </p>
+                    <ul className="space-y-1 ml-4 mt-1">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Выигрывать игры — победители получают тенге</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Ежедневный бонус при входе</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>Начальный баланс при регистрации</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Disconnect */}
+                  <div>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Wifi className="w-4 h-4 text-amber-400" /> Выход из игры / потеря связи
+                    </h4>
+                    <p>
+                      Если игрок <strong className="text-amber-100">выходит из начатой игры</strong> или <strong className="text-amber-100">полностью теряет связь с сервером</strong>, 
+                      он автоматически считается <strong className="text-red-400">проигравшим</strong>. 
+                      Его ставка в шаныраках не возвращается и распределяется между оставшимися игроками.
+                    </p>
+                    <p className="mt-1.5">
+                      При кратковременной потере связи игрок может переподключиться и продолжить игру, 
+                      если таймер хода ещё не истёк дважды подряд.
                     </p>
                   </div>
 
@@ -146,18 +309,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                       Цель — избавиться от всех карт. Игроки выбывают по мере опустошения руки. 
                       Последний игрок с картами — <strong className="text-amber-100">проигравший (дурак)</strong>. 
                       Призовой фонд (шаныраки) распределяется между победителями по местам.
-                    </p>
-                  </div>
-
-                  {/* Timer */}
-                  <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
-                      <Swords className="w-4 h-4 text-amber-400" /> Таймер хода
-                    </h4>
-                    <p>
-                      На каждый ход отводится ограниченное время (настраивается при создании комнаты). 
-                      Если время истекло — ход пропускается автоматически. 
-                      <strong className="text-amber-100"> Два пропуска подряд = автоматический проигрыш.</strong>
                     </p>
                   </div>
                 </div>
@@ -174,7 +325,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4 text-amber-200/80 text-sm leading-relaxed">
-                  {/* Overview */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Общие сведения</h4>
                     <p>
@@ -183,7 +333,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Standard deck */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Колода</h4>
                     <p>
@@ -192,7 +341,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Dealing */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Раздача</h4>
                     <p>
@@ -201,7 +349,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Attack and defense */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Атака и защита</h4>
                     <p>
@@ -214,7 +361,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Taking cards */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Забрать карты</h4>
                     <p>
@@ -223,7 +369,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Bito */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Бито</h4>
                     <p>
@@ -232,7 +377,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* Drawing cards */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Добор карт</h4>
                     <p>
@@ -241,7 +385,6 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
                     </p>
                   </div>
 
-                  {/* End game */}
                   <div>
                     <h4 className="text-amber-100 font-semibold mb-1.5">Окончание игры</h4>
                     <p>

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { MusicProvider } from "./contexts/MusicContext";
 import { SettingsProvider } from "./contexts/SettingsContext";
+import { I18nProvider } from "./i18n";
 import Home from "./pages/Home";
 
 function Router() {
@@ -23,12 +24,14 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
         <SettingsProvider>
+          <I18nProvider>
           <MusicProvider>
             <TooltipProvider>
             <Toaster position="top-center" />
             <Router />
             </TooltipProvider>
           </MusicProvider>
+          </I18nProvider>
         </SettingsProvider>
       </ThemeProvider>
     </ErrorBoundary>

@@ -13,6 +13,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
+import { useTranslation } from '@/i18n';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -292,7 +293,7 @@ function DeckVisual({
 }
 
 // ---- Trump icon ----
-function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 'large' }) {
+function TrumpIcon({ suit, size = 'normal', label = 'Козырь' }: { suit: string; size?: 'normal' | 'large'; label?: string }) {
   const symbol = SUIT_SYMBOLS[suit] || suit;
   const isRed = suit === 'hearts' || suit === 'diamonds';
   const color = isRed ? '#ef4444' : '#e5e7eb';
@@ -314,7 +315,7 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
           {symbol}
         </span>
         <span className="text-white text-lg font-bold tracking-wide not-italic" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
-          Козырь
+          {label}
         </span>
       </div>
     );
@@ -336,14 +337,14 @@ function TrumpIcon({ suit, size = 'normal' }: { suit: string; size?: 'normal' | 
         {symbol}
       </span>
       <span className="text-white text-xs font-bold tracking-wide not-italic" style={{ textShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
-        Козырь
+        {label}
       </span>
     </div>
   );
 }
 
 // ---- Discard pile visual ----
-function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic' | 'custom' }) {
+function DiscardPile({ count, deckStyle, bitoLabel = 'Бито' }: { count: number; deckStyle: 'classic' | 'custom'; bitoLabel?: string }) {
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
 
   const cardPositions = useMemo(() => {
@@ -394,7 +395,7 @@ function DiscardPile({ count, deckStyle }: { count: number; deckStyle: 'classic'
       <div className="bg-black/60 border border-amber-700/30 rounded-lg px-4 py-1.5">
         <span className="text-amber-300 text-3xl sm:text-4xl font-black">{count}</span>
       </div>
-      <span className="text-amber-300 text-xs sm:text-2xl font-bold">Бито</span>
+      <span className="text-amber-300 text-xs sm:text-2xl font-bold">{bitoLabel}</span>
     </div>
   );
 }
@@ -428,6 +429,7 @@ export default function GameTable({
 }: GameTableProps) {
   const gs = gameState;
   const myIdx = gs.myIndex;
+  const { t } = useTranslation();
 
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -863,20 +865,20 @@ export default function GameTable({
             {isLoser ? '😢' : didLeave ? '🚶' : '🎉'}
           </div>
           <h2 className="text-xl sm:text-3xl font-bold text-amber-100">
-            {didLeave ? 'Вы покинули игру' : isLoser ? 'Вы проиграли!' : isWinner ? `Вы победили! (${myPlayer.winPlace}-е место)` : 'Игра окончена!'}
+            {didLeave ? t('game.youLeftGame') : isLoser ? t('game.youLostExcl') : isWinner ? t('game.youWonPlace', { n: String(myPlayer.winPlace) }) : t('game.gameOverExcl')}
           </h2>
 
           {((gs.prizePool && gs.prizePool > 0) || (prizeData && prizeData.pool > 0)) && (
             <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
-                <span className="text-amber-300 font-bold text-sm sm:text-base">Банк: {formatBalance(gs.prizePool || prizeData?.pool || 0)}</span>
+                <span className="text-amber-300 font-bold text-sm sm:text-base">{t('game.bank')}: {formatBalance(gs.prizePool || prizeData?.pool || 0)}</span>
               </div>
             </div>
           )}
 
           <div className="space-y-2">
-            <h3 className="text-amber-400 font-semibold text-base sm:text-lg">Результаты:</h3>
+            <h3 className="text-amber-400 font-semibold text-base sm:text-lg">{t('game.resultsTitle')}</h3>
             {gs.players.map(p => {
               const prize = gs.playerPrizes?.find(pr => pr.playerId === p.id) || prizeData?.prizes.find(pr => pr.playerId === p.id);
               return (
@@ -899,7 +901,7 @@ export default function GameTable({
                       </span>
                     )}
                     <span className={`text-xs sm:text-sm ${p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
-                      {p.leftGame ? 'Покинул' : p.id === gs.loserId ? 'Дурак' : p.winPlace ? `${p.winPlace}-е место` : ''}
+                      {p.leftGame ? t('game.left') : p.id === gs.loserId ? t('game.fool') : p.winPlace ? t('game.placeN', { n: String(p.winPlace) }) : ''}
                     </span>
                   </div>
                 </div>
@@ -914,7 +916,7 @@ export default function GameTable({
               onClick={onReturnToLobby}
             >
               <Home className="w-4 h-4 mr-2" />
-              Вернуться в лобби
+              {t('game.backToLobbyBtn')}
             </Button>
           )}
         </div>
@@ -944,15 +946,15 @@ export default function GameTable({
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[#1a2d45] border border-red-700/40 rounded-2xl p-4 sm:p-6 max-w-sm w-full mx-4 text-center space-y-3 sm:space-y-4">
             <DoorOpen className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 mx-auto" />
-            <h3 className="text-lg sm:text-xl font-bold text-amber-100">Покинуть игру?</h3>
+            <h3 className="text-lg sm:text-xl font-bold text-amber-100">{t('game.leaveGameTitle')}</h3>
             <div className="space-y-2">
               <p className="text-amber-200/80 text-xs sm:text-sm">
-                Покидание игры гарантирует поражение.
+                {t('game.leaveGameWarning')}
               </p>
               {gs.prizePool > 0 && (
                 <div className="flex items-center justify-center gap-1.5 bg-red-900/30 border border-red-700/30 rounded-lg px-3 py-2">
                   <span className="text-red-300 text-xs sm:text-sm font-medium">
-                    С вашего баланса будет списано: {formatBalance(Math.floor(gs.prizePool / gs.players.length))}
+                    {t('game.leaveGameDeduction', { amount: formatBalance(Math.floor(gs.prizePool / gs.players.length)) })}
                   </span>
                   <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                 </div>
@@ -963,7 +965,7 @@ export default function GameTable({
                 className="flex-1 bg-gray-700 hover:bg-gray-600 text-white text-sm"
                 onClick={() => setShowLeaveConfirm(false)}
               >
-                Нет, остаться
+                {t('game.stayBtn')}
               </Button>
               <Button
                 className="flex-1 bg-red-700 hover:bg-red-600 text-white text-sm"
@@ -973,7 +975,7 @@ export default function GameTable({
                 }}
               >
                 <LogOut className="w-4 h-4 mr-1" />
-                Да, покинуть
+                {t('game.leaveBtn')}
               </Button>
             </div>
           </div>
@@ -990,11 +992,11 @@ export default function GameTable({
               </svg>
             </div>
             <h3 className="text-lg sm:text-xl font-bold text-amber-100">
-              Игра приостановлена
+              {t('game.gamePaused')}
             </h3>
             <p className="text-amber-200/80 text-sm sm:text-base">
               <span className="font-semibold text-amber-300">{frozenInfo.disconnectedPlayerName}</span>{' '}
-              потерял соединение и пытается войти обратно...
+              {t('game.playerReconnecting')}
             </p>
             <div className="relative w-24 h-24 sm:w-28 sm:h-28 mx-auto">
               <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
@@ -1014,7 +1016,7 @@ export default function GameTable({
               </div>
             </div>
             <p className="text-amber-200/50 text-xs">
-              Если игрок не вернётся, он автоматически выбывает из игры
+              {t('game.autoKickWarning')}
             </p>
           </div>
         </div>
@@ -1029,7 +1031,7 @@ export default function GameTable({
               <span className="text-amber-300 mx-1">|</span>
               К2:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span>
               <span className="text-amber-300 mx-1">|</span>
-              Бито:<span className="font-bold">{gs.discardCount}</span>
+              {t('game.bitoCount')}<span className="font-bold">{gs.discardCount}</span>
             </Badge>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1044,7 +1046,7 @@ export default function GameTable({
               <button
                 className={`transition-colors p-1 sm:p-1.5 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
                 onClick={onToggleMusic}
-                title={musicEnabled ? 'Выключить музыку' : 'Включить музыку'}
+                title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
               >
                 {musicEnabled ? <Music className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
               </button>
@@ -1053,7 +1055,7 @@ export default function GameTable({
               <button
                 className="text-gray-400 hover:text-red-400 transition-colors p-1 sm:p-1.5 rounded"
                 onClick={() => setShowLeaveConfirm(true)}
-                title="Покинуть игру"
+                title={t('game.leaveGame')}
               >
                 <LogOut className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
@@ -1062,7 +1064,7 @@ export default function GameTable({
               <button
                 className="text-green-400 hover:text-green-300 transition-colors p-1 sm:p-1.5 rounded"
                 onClick={onReturnToLobby}
-                title="Выйти в лобби"
+                title={t('game.exitToLobby')}
               >
                 <Home className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
@@ -1106,7 +1108,7 @@ export default function GameTable({
                       <span className={`${manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
                     </div>
                     {isOppDefender && gs.defenderTaking && (
-                      <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>Берёт</span>
+                      <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>{t('game.taking')}</span>
                     )}
                     {oppRevealed && oppRevealed.cards.length > 0 && (
                       <div className={`flex items-center gap-0.5 mb-0.5 sm:mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded ${manyOpponents ? 'px-0.5' : 'px-1'} sm:px-2 py-0.5`}>
@@ -1119,7 +1121,7 @@ export default function GameTable({
                     {p.leftGame ? (
                       <div className={`flex items-center gap-0.5 bg-gray-800/50 border border-gray-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
                         <DoorOpen className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-gray-400`} />
-                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-gray-400 font-semibold`}>Ушёл</span>
+                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-xs text-gray-400 font-semibold`}>{t('game.playerGone')}</span>
                       </div>
                     ) : p.isOut ? (
                       <div className="flex flex-col items-center gap-0.5">
@@ -1158,7 +1160,7 @@ export default function GameTable({
         {showYourTurn && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className={`text-6xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
-              ВАШ ХОД
+              {t('game.yourTurnCaps')}
             </div>
           </div>
         )}
@@ -1169,24 +1171,24 @@ export default function GameTable({
         {showUrgentTurn && (
           <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
             <div className={`text-5xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
-              <span className="urgent-blink">ВАШ ХОД</span>
+              <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
             </div>
           </div>
         )}
 
         {/* TRUMP CHANGE overlay */}
         {showTrumpChange && trumpChangeInfo && (() => {
-          const SUIT_NAMES: Record<string, string> = { spades: 'Пики', hearts: 'Черви', diamonds: 'Бубны', clubs: 'Трефы' };
+          const SUIT_NAMES: Record<string, string> = { spades: t('game.suitSpades'), hearts: t('game.suitHearts'), diamonds: t('game.suitDiamonds'), clubs: t('game.suitClubs') };
           const sym = SUIT_SYMBOLS[trumpChangeInfo.suit] || trumpChangeInfo.suit;
           const suitName = SUIT_NAMES[trumpChangeInfo.suit] || trumpChangeInfo.suit;
           const color = trumpChangeInfo.suit === 'hearts' || trumpChangeInfo.suit === 'diamonds' ? 'text-red-500' : 'text-gray-100';
           return (
             <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
               <div className={`flex flex-col items-center gap-1.5 sm:gap-2 bg-black/70 backdrop-blur-md rounded-2xl px-5 sm:px-8 py-4 sm:py-6 border-2 border-amber-500/60 ${trumpChangePhase === 'enter' ? 'trump-change-enter' : trumpChangePhase === 'exit' ? 'trump-change-exit' : ''}`}>
-                <span className="text-amber-300 text-sm sm:text-lg font-semibold tracking-wider uppercase">Козырь изменился!</span>
+                <span className="text-amber-300 text-sm sm:text-lg font-semibold tracking-wider uppercase">{t('game.trumpChanged')}</span>
                 <span className={`${color} text-6xl sm:text-8xl md:text-9xl leading-none drop-shadow-[0_0_20px_rgba(217,119,6,0.5)]`}>{sym}</span>
                 <span className="text-amber-100 text-xl sm:text-2xl font-bold">{suitName}</span>
-                <span className="text-amber-200/60 text-xs sm:text-sm">Фаза {trumpChangeInfo.phase}/3</span>
+                <span className="text-amber-200/60 text-xs sm:text-sm">{t('game.phaseOf', { n: String(trumpChangeInfo.phase) })}</span>
               </div>
             </div>
           );
@@ -1207,11 +1209,11 @@ export default function GameTable({
               }`}>
                 {turnTimer}
               </span>
-              <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>сек</span>
+              <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>{t('game.sec')}</span>
             </div>
 
             {gs.discardCount > 0 && (
-              <DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} />
+              <DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} bitoLabel={t('game.bito')} />
             )}
           </div>
 
@@ -1227,10 +1229,10 @@ export default function GameTable({
               {gs.defenderTaking && (
                 <div className="bg-orange-900/60 border border-orange-600/40 rounded-lg px-2 sm:px-4 py-1 sm:py-1.5 mb-1 sm:mb-2">
                   <span className="text-orange-300 text-[10px] sm:text-sm font-medium">
-                    {isDefender ? '🫳 Вы берёте' :
-                     isAttacker ? '🔥 Защитник берёт — докиньте!' :
-                     gs.attackerHasPriority ? '⏳ Ожидание' :
-                     '🔥 Защитник берёт — докиньте!'}
+{isDefender ? `🫳 ${t('game.youTake')}` :
+                     isAttacker ? `🔥 ${t('game.defenderTakesAdd')}` :
+                      gs.attackerHasPriority ? `⏳ ${t('game.roleWaiting')}` :
+                      `🔥 ${t('game.defenderTakesAdd')}`}
                   </span>
                 </div>
               )}
@@ -1240,7 +1242,7 @@ export default function GameTable({
                 <div className="bg-yellow-900/50 border border-yellow-600/40 rounded-lg px-2 sm:px-4 py-1 sm:py-1.5 mb-1 sm:mb-2">
                   <span className="text-yellow-300 text-[10px] sm:text-sm font-medium flex items-center gap-1 sm:gap-2">
                     <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Проездной ({gs.revealedPassThroughs.find(r => r.playerId === gs.players[myIdx]?.id)!.cards.length})
+                    {t('game.passThrough')} ({gs.revealedPassThroughs.find(r => r.playerId === gs.players[myIdx]?.id)!.cards.length})
                   </span>
                 </div>
               )}
@@ -1277,16 +1279,16 @@ export default function GameTable({
           {/* RIGHT PANEL — Decks — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
             {bothDecksEmpty ? (
-              <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" />
+              <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" label={t('game.trumpSuit')} />
             ) : (
               <div className="flex flex-col gap-3 items-center">
                 {deck1Empty ? (
                   <>
-                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
+                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" label={t('game.trumpSuit')} />
                     {/* Revealed hidden trump card — shown face-up when phase 2 starts (deck1 emptied) */}
                     {gs.trumpInfo.hiddenTrumpCard1 && gs.trumpInfo.hiddenTrumpCard1.suit && (
                       <div className="flex flex-col items-center gap-1">
-                        <span className="text-green-300/80 text-[9px] sm:text-xs font-medium animate-pulse">Потайной козырь</span>
+                        <span className="text-green-300/80 text-[9px] sm:text-xs font-medium animate-pulse">{t('game.hiddenTrump')}</span>
                         <div className="rounded-lg overflow-hidden border-2 border-green-500/60 shadow-lg shadow-green-500/20" style={{ width: '88px', height: '128px' }}>
                           {(() => {
                             const hc = gs.trumpInfo.hiddenTrumpCard1!;
@@ -1321,14 +1323,14 @@ export default function GameTable({
                   </>
                 ) : (
                   <>
-                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" />
+                    <TrumpIcon suit={gs.trumpInfo.currentTrump} size="normal" label={t('game.trumpSuit')} />
                     <DeckVisual
                       deckCount={gs.deck1Count}
                       trumpCard={gs.trumpInfo.trumpCard || null}
                       hiddenTrumpCard1={gs.trumpInfo.hiddenTrumpCard1 || null}
                       showOpenTrump={true}
                       deckStyle={gs.deckStyle}
-                      label="Колода 1"
+                      label={t('game.deck1')}
                     />
                   </>
                 )}
@@ -1336,8 +1338,8 @@ export default function GameTable({
                 {deck2Empty ? (
                   deck1Empty ? null : (
                     <div className="flex flex-col items-center gap-1">
-                      <span className="text-amber-200/60 text-[9px] sm:text-xs font-medium">Колода 2</span>
-                      <div className="text-amber-200/20 text-xs italic">Пусто</div>
+                      <span className="text-amber-200/60 text-[9px] sm:text-xs font-medium">{t('game.deck2')}</span>
+                      <div className="text-amber-200/20 text-xs italic">{t('game.empty')}</div>
                     </div>
                   )
                 ) : (
@@ -1346,7 +1348,7 @@ export default function GameTable({
                     trumpCard={gs.trumpInfo.hiddenTrumpCard || null}
                     showOpenTrump={false}
                     deckStyle={gs.deckStyle}
-                    label="Колода 2"
+                    label={t('game.deck2')}
                   />
                 )}
               </div>
@@ -1356,7 +1358,7 @@ export default function GameTable({
           {/* MOBILE: Trump icon */}
           <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-2 border border-amber-700/40">
             <span className={`${mobileTrumpColor} text-3xl leading-none`}>{trumpSymbol}</span>
-            <span className="text-amber-200/60 text-[8px] font-semibold">Козырь</span>
+            <span className="text-amber-200/60 text-[8px] font-semibold">{t('game.trumpSuit')}</span>
 
           </div>
 
@@ -1370,7 +1372,7 @@ export default function GameTable({
               <div className="flex items-center gap-2 sm:gap-3">
                 <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
                 <span className="text-green-300 font-semibold text-xs sm:text-base">
-                  Вы победили! ({gs.players[myIdx].winPlace}-е место)
+                  {t('game.youWon', { place: String(gs.players[myIdx].winPlace) })}
                 </span>
               </div>
               {(() => {
@@ -1390,7 +1392,7 @@ export default function GameTable({
                   onClick={onReturnToLobby}
                 >
                   <Home className="w-3.5 h-3.5 mr-1" />
-                  Выйти в лобби
+                  {t('game.exitToLobby')}
                 </Button>
               )}
             </div>
@@ -1402,7 +1404,7 @@ export default function GameTable({
         {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
           <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
             <span className="text-red-500 text-xl md:text-2xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
-              ВАШ ХОД, АТАКУЙТЕ
+              {t('game.yourTurnAttack')}
             </span>
           </div>
         )}
@@ -1410,7 +1412,7 @@ export default function GameTable({
         {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
           <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex justify-center pointer-events-none">
             <span className="text-red-500 text-base font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
-              ВАШ ХОД, АТАКУЙТЕ
+              {t('game.yourTurnAttack')}
             </span>
           </div>
         )}
@@ -1422,32 +1424,32 @@ export default function GameTable({
               <div className="flex items-center gap-2">
                 {isAttacker && !gs.defenderTaking && (
                   <Badge className="bg-red-900/70 text-red-300 border-red-700/40 text-xl px-5 py-2 backdrop-blur-sm">
-                    <Swords className="w-6 h-6 mr-2" /> Атакуете
+                    <Swords className="w-6 h-6 mr-2" /> {t('game.roleAttacking')}
                   </Badge>
                 )}
                 {isAttacker && gs.defenderTaking && (
                   <Badge className="bg-orange-900/70 text-orange-300 border-orange-700/40 text-xl px-5 py-2 backdrop-blur-sm">
-                    <Swords className="w-6 h-6 mr-2" /> Докиньте
+                    <Swords className="w-6 h-6 mr-2" /> {t('game.roleAddCards')}
                   </Badge>
                 )}
                 {isDefender && !gs.defenderTaking && (
                   <Badge className="bg-blue-900/70 text-blue-300 border-blue-700/40 text-xl px-5 py-2 backdrop-blur-sm">
-                    <Shield className="w-6 h-6 mr-2" /> Защита
+                    <Shield className="w-6 h-6 mr-2" /> {t('game.roleDefending')}
                   </Badge>
                 )}
                 {isDefender && gs.defenderTaking && (
                   <Badge className="bg-orange-900/70 text-orange-300 border-orange-700/40 text-xl px-5 py-2 backdrop-blur-sm">
-                    <HandMetal className="w-6 h-6 mr-2" /> Берёте
+                    <HandMetal className="w-6 h-6 mr-2" /> {t('game.roleTaking')}
                   </Badge>
                 )}
                 {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
                   <Badge className="bg-amber-900/70 text-amber-300 border-amber-700/40 text-lg px-4 py-1.5 backdrop-blur-sm">
-                    Подкинуть
+                    {t('game.roleCanAdd')}
                   </Badge>
                 )}
                 {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
                   <Badge className="bg-gray-800/70 text-gray-400 border-gray-700/40 text-lg px-4 py-1.5 backdrop-blur-sm">
-                    Ожидание...
+                    {t('game.roleWaiting')}
                   </Badge>
                 )}
               </div>
@@ -1457,8 +1459,8 @@ export default function GameTable({
                 <div className="text-center mb-1">
                   <span className="text-amber-200 text-sm sm:text-base bg-black/50 px-3 py-1 rounded-lg backdrop-blur-sm">
                     {multiSelectMode === 'transfer'
-                      ? `Выберите сколько карт перевести (${multiSelectIds.size} выбрано)`
-                      : `Выберите сколько карт положить на стол (${multiSelectIds.size} выбрано)`}
+                      ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
+                      : t('game.multiSelectAttackN', { n: String(multiSelectIds.size) })}
                   </span>
                 </div>
               )}
@@ -1471,14 +1473,14 @@ export default function GameTable({
                       className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-emerald-500/20"
                       onClick={handleMultiAttack}
                     >
-                      Походить ({multiSelectIds.size})
+                      {t('game.playN', { n: String(multiSelectIds.size) })}
                     </Button>
                     <Button
                       variant="outline"
                       className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
                       onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
-                      Отмена
+                      {t('game.cancel')}
                     </Button>
                   </>
                 )}
@@ -1488,14 +1490,14 @@ export default function GameTable({
                       className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
                       onClick={handleMultiTransfer}
                     >
-                      Перевести ({multiSelectIds.size})
+                      {t('game.transferN', { n: String(multiSelectIds.size) })}
                     </Button>
                     <Button
                       variant="outline"
                       className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
                       onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
-                      Отмена
+                      {t('game.cancel')}
                     </Button>
                   </>
                 )}
@@ -1504,7 +1506,7 @@ export default function GameTable({
                     className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
                     onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                   >
-                    Перевести
+                    {t('game.transfer')}
                   </Button>
                 )}
                 {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
@@ -1513,22 +1515,22 @@ export default function GameTable({
                     onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                   >
                     <Eye className="w-5 h-5 mr-1.5" />
-                    Проездной
+                    {t('game.passThrough')}
                   </Button>
                 )}
                 {canTake && (
                   <Button variant="destructive" className="action-btn-blink text-lg h-14 px-6 font-semibold bg-red-700/35 hover:bg-red-600/55 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
-                    Забрать
+                    {t('game.take')}
                   </Button>
                 )}
                 {canEndAttack && (
                   <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/20" onClick={onEndAttack}>
-                    {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
+                    {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                   </Button>
                 )}
                 {canSkip && (
                   <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
-                    Пропустить
+                    {t('game.skip')}
                   </Button>
                 )}
               </div>
@@ -1543,32 +1545,32 @@ export default function GameTable({
             <div className="pointer-events-auto">
               {isAttacker && !gs.defenderTaking && (
                 <Badge className="bg-red-900/80 text-red-300 border-red-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Swords className="w-3.5 h-3.5 mr-1" /> Атакуете
+                  <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAttacking')}
                 </Badge>
               )}
               {isAttacker && gs.defenderTaking && (
                 <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Swords className="w-3.5 h-3.5 mr-1" /> Докиньте
+                  <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAddCards')}
                 </Badge>
               )}
               {isDefender && !gs.defenderTaking && (
                 <Badge className="bg-blue-900/80 text-blue-300 border-blue-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Shield className="w-3.5 h-3.5 mr-1" /> Защита
+                  <Shield className="w-3.5 h-3.5 mr-1" /> {t('game.roleDefending')}
                 </Badge>
               )}
               {isDefender && gs.defenderTaking && (
                 <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <HandMetal className="w-3.5 h-3.5 mr-1" /> Берёте
+                  <HandMetal className="w-3.5 h-3.5 mr-1" /> {t('game.roleTaking')}
                 </Badge>
               )}
               {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
                 <Badge className="bg-amber-900/80 text-amber-300 border-amber-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  Подкинуть
+                  {t('game.roleCanAdd')}
                 </Badge>
               )}
               {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
                 <Badge className="bg-gray-800/80 text-gray-400 border-gray-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  Ожидание...
+                  {t('game.roleWaiting')}
                 </Badge>
               )}
             </div>
@@ -1578,8 +1580,8 @@ export default function GameTable({
               <div className="pointer-events-auto text-center mb-0.5">
                 <span className="text-amber-200 text-xs bg-black/60 px-2.5 py-0.5 rounded-lg backdrop-blur-sm">
                   {multiSelectMode === 'transfer'
-                    ? `Выберите карты для перевода (${multiSelectIds.size} выбрано)`
-                    : `Выберите карты (${multiSelectIds.size} выбрано)`}
+                    ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
+                    : t('game.multiSelectAttackN', { n: String(multiSelectIds.size) })}
                 </span>
               </div>
             )}
@@ -1592,14 +1594,14 @@ export default function GameTable({
                     className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-emerald-500/20"
                     onClick={handleMultiAttack}
                   >
-                    Походить ({multiSelectIds.size})
-                  </Button>
+                    {t('game.playN', { n: String(multiSelectIds.size) })}
+                    </Button>
                   <Button
                     variant="outline"
                     className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
                     onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                   >
-                    Отмена
+                    {t('game.cancel')}
                   </Button>
                 </>
               )}
@@ -1609,14 +1611,14 @@ export default function GameTable({
                     className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
                     onClick={handleMultiTransfer}
                   >
-                    Перевести ({multiSelectIds.size})
-                  </Button>
+                    {t('game.transferN', { n: String(multiSelectIds.size) })}
+                    </Button>
                   <Button
                     variant="outline"
                     className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
                     onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                   >
-                    Отмена
+                    {t('game.cancel')}
                   </Button>
                 </>
               )}
@@ -1625,7 +1627,7 @@ export default function GameTable({
                   className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
                   onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
                 >
-                  Перевести
+                  {t('game.transfer')}
                 </Button>
               )}
               {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
@@ -1634,22 +1636,22 @@ export default function GameTable({
                   onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
-                  Проездной
+                  {t('game.passThrough')}
                 </Button>
               )}
               {canTake && (
                 <Button variant="destructive" className="action-btn-blink text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55" onClick={onTakeCards}>
-                  Забрать
+                  {t('game.take')}
                 </Button>
               )}
               {canEndAttack && (
                 <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
-                  {gs.defenderTaking ? 'Бито (хватит)' : 'Бито'}
+                  {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                 </Button>
               )}
               {canSkip && (
                 <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
-                  Пропустить
+                  {t('game.skip')}
                 </Button>
               )}
             </div>
@@ -1660,18 +1662,18 @@ export default function GameTable({
         {gs.players[myIdx]?.isOut ? (
           <div className="px-2 pb-2 sm:pb-3 pt-1">
             <div className="text-center text-amber-200/40 text-xs sm:text-sm py-2 sm:py-4">
-              Вы вышли — наблюдайте
+              {t('game.youExited')}
             </div>
           </div>
         ) : (
         <div className="px-1 sm:px-2 pb-2 sm:pb-3 pt-0.5 sm:pt-1">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
-            <span className="text-xs sm:text-base text-white font-medium">{gs.myHand.length} карт</span>
+            <span className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
               className="text-xs sm:text-base text-white hover:text-amber-300 transition-colors font-medium"
               onClick={() => setSortMode(m => m === 'suit-rank' ? 'rank-only' : 'suit-rank')}
             >
-              {sortMode === 'suit-rank' ? 'По масти' : 'По рангу'}
+              {sortMode === 'suit-rank' ? t('game.sortBySuit') : t('game.sortByRank')}
             </button>
           </div>
           <PlayerHand
@@ -1703,6 +1705,7 @@ export default function GameTable({
 
 // ---- Player Profile Popup ----
 function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () => void }) {
+  const { t } = useTranslation();
   const { data: profile, isLoading } = trpc.profile.withFriendStatus.useQuery({ targetGameId: gameId });
   const sendRequest = trpc.friends.sendRequest.useMutation();
   const utils = trpc.useUtils();
@@ -1746,22 +1749,22 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
               className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60 object-cover"
             />
             <div className="text-center">
-              <h3 className="text-amber-100 font-bold text-base sm:text-lg">{profile.displayName || 'Игрок'}</h3>
+              <h3 className="text-amber-100 font-bold text-base sm:text-lg">{profile.displayName || t('game.player')}</h3>
               <span className="text-amber-200/50 text-xs">ID {profile.gameId}</span>
             </div>
 
             {/* Stats */}
             <div className="w-full grid grid-cols-2 gap-2 text-center">
               <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
-                <div className="text-amber-200/50 text-[10px] sm:text-xs">Игры</div>
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">{t('game.gamesPlayed')}</div>
                 <div className="text-amber-100 font-bold text-sm sm:text-base">{profile.gamesPlayed}</div>
               </div>
               <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
-                <div className="text-amber-200/50 text-[10px] sm:text-xs">Рейтинг</div>
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">{t('game.rating')}</div>
                 <div className="text-amber-100 font-bold text-sm sm:text-base">{profile.rating}</div>
               </div>
               <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
-                <div className="text-amber-200/50 text-[10px] sm:text-xs">Победы / Поражения</div>
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">{t('game.winsLosses')}</div>
                 <div className="text-amber-100 font-bold text-sm sm:text-base">
                   <span className="text-green-400">{profile.wins}</span>
                   <span className="text-amber-200/40 mx-0.5">/</span>
@@ -1769,7 +1772,7 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
                 </div>
               </div>
               <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
-                <div className="text-amber-200/50 text-[10px] sm:text-xs">Винрейт</div>
+                <div className="text-amber-200/50 text-[10px] sm:text-xs">{t('game.winRate')}</div>
                 <div className="text-amber-100 font-bold text-sm sm:text-base">{winRate}%</div>
               </div>
             </div>
@@ -1782,30 +1785,30 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
                 disabled={sendRequest.isPending}
               >
                 <UserPlus className="w-4 h-4" />
-                {sendRequest.isPending ? 'Отправка...' : 'Добавить в друзья'}
+                {sendRequest.isPending ? t('game.sendingRequest') : t('game.addFriend')}
               </button>
             )}
             {profile.friendStatus === 'pending_sent' && (
               <div className="w-full flex items-center justify-center gap-2 bg-amber-900/40 text-amber-300 rounded-lg px-4 py-2 text-sm border border-amber-700/30">
                 <Clock className="w-4 h-4" />
-                Запрос отправлен
+                {t('game.requestSent')}
               </div>
             )}
             {profile.friendStatus === 'pending_received' && (
               <div className="w-full flex items-center justify-center gap-2 bg-blue-900/40 text-blue-300 rounded-lg px-4 py-2 text-sm border border-blue-700/30">
                 <UserPlus className="w-4 h-4" />
-                Ожидает вашего ответа
+                {t('game.pendingResponse')}
               </div>
             )}
             {profile.friendStatus === 'friends' && (
               <div className="w-full flex items-center justify-center gap-2 bg-green-900/40 text-green-300 rounded-lg px-4 py-2 text-sm border border-green-700/30">
                 <Check className="w-4 h-4" />
-                Друзья
-              </div>
+                 {t('game.alreadyFriends')}
+               </div>
             )}
           </div>
         ) : (
-          <div className="text-center py-6 text-amber-200/50 text-sm">Профиль не найден</div>
+          <div className="text-center py-6 text-amber-200/50 text-sm">{t('game.profileNotFound')}</div>
         )}
       </div>
     </div>

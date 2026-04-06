@@ -21,6 +21,7 @@ import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 import ShopModal from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
+import { useTranslation } from '@/i18n';
 
 interface LobbyProps {
   rooms: Room[];
@@ -47,6 +48,7 @@ interface LobbyProps {
 }
 
 export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile }: LobbyProps) {
+  const { t, locale } = useTranslation();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
@@ -173,9 +175,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="relative flex items-start justify-between">
               {/* Left: Title + Online */}
               <div className="flex flex-col">
-                <h1 className="text-xl font-bold text-amber-100 leading-tight text-center">Казахский<br/>Дурак</h1>
+                <h1 className="text-xl font-bold text-amber-100 leading-tight text-center">{locale === 'kk' ? <>Қазақ<br/>Дурагі</> : <>Казахский<br/>Дурак</>}</h1>
                 <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 w-fit ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
+                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />{t('common.online')}</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />{t('common.offline')}</>}
                 </Badge>
               </div>
               {/* Center: Avatar + Name/ID — absolutely centered on screen */}
@@ -272,14 +274,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Gamepad2 className="w-7 h-7 text-amber-400" />
-                <h1 className="text-xl font-bold text-amber-100">Казахский Дурак</h1>
+                <h1 className="text-xl font-bold text-amber-100">{t('lobby.title')}</h1>
               </div>
               <div className="flex items-center gap-3">
                 {/* Rules button */}
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowRules(true)}
-                  title="Правила игры"
+                  title={t('lobby.rules')}
                 >
                   <HelpCircle className="w-5 h-5" />
                 </button>
@@ -292,7 +294,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
 onClick={() => setShowTengeTopUp(true)}
-                     title="Пополнить тенге"
+                     title={t('lobby.topUpTenge')}
                   >
                     +
                   </button>
@@ -308,13 +310,13 @@ onClick={() => setShowTengeTopUp(true)}
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-lg font-bold transition-colors leading-none"
                     onClick={() => setShowShanyrakTopUp(true)}
-                    title="Пополнить шаныраки"
+                    title={t('lobby.topUpShanyrak')}
                   >
                     +
                   </button>
                 </div>
                 <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />Онлайн</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />Оффлайн</>}
+                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />{t('common.online')}</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />{t('common.offline')}</>}
                 </Badge>
                 {profile && (
                   <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-sm px-2.5 py-0.5">
@@ -360,31 +362,31 @@ onClick={() => setShowTengeTopUp(true)}
             </div>
             {/* Bottom row: Комнаты + Создать */}
             <div className="flex items-center justify-between mt-4 pt-3 border-t border-amber-700/15">
-              <h2 className="text-2xl font-bold text-amber-100">Комнаты</h2>
+              <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
               <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-amber-600 hover:bg-amber-500 text-white text-base h-10 px-4">
-                    <Plus className="w-4 h-4 mr-2" /> Создать комнату
+                    <Plus className="w-4 h-4 mr-2" /> {t('lobby.createRoom')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto">
               <DialogHeader>
-                <DialogTitle className="text-amber-100">Новая комната</DialogTitle>
+                <DialogTitle className="text-amber-100">{t('lobby.newRoom')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <Label className="text-amber-200/70 text-sm">Название</Label>
+                  <Label className="text-amber-200/70 text-sm">{t('lobby.roomName')}</Label>
                   <Input
                     value={roomName}
                     onChange={e => setRoomName(e.target.value)}
-                    placeholder={`Комната ${userName}`}
+                    placeholder={t('lobby.roomPlaceholder', { name: userName })}
                     className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10"
                   />
                 </div>
                 <div>
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
                     <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
-                    Ставка: {formatBalance(BET_AMOUNTS[betAmountIdx])}
+                    {t('lobby.bet')}: {formatBalance(BET_AMOUNTS[betAmountIdx])}
                   </Label>
                   <Slider
                     value={[betAmountIdx]}
@@ -400,20 +402,20 @@ onClick={() => setShowTengeTopUp(true)}
                   </div>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70 text-sm">Макс. игроков</Label>
+                  <Label className="text-amber-200/70 text-sm">{t('lobby.maxPlayers')}</Label>
                   <Select value={maxPlayers} onValueChange={setMaxPlayers}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                       {[2, 3, 4, 5, 6, 7, 8].map(n => (
-                        <SelectItem key={n} value={String(n)} className="text-amber-100">{n} игроков</SelectItem>
+                        <SelectItem key={n} value={String(n)} className="text-amber-100">{t('lobby.nPlayers', { n })}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70 text-sm">Таймер хода: {turnTimer}с</Label>
+                  <Label className="text-amber-200/70 text-sm">{t('lobby.turnTimer')}: {turnTimer}{t('roomCreate.seconds')}</Label>
                   <Slider
                     value={[turnTimer]}
                     onValueChange={v => setTurnTimer(v[0])}
@@ -424,12 +426,12 @@ onClick={() => setShowTengeTopUp(true)}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <Label className="text-amber-200/70 text-sm">Добавить ботов</Label>
+                  <Label className="text-amber-200/70 text-sm">{t('lobby.addBots')}</Label>
                   <Switch checked={withBots} onCheckedChange={setWithBots} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-amber-200/70 text-sm">Колода карт</Label>
+                    <Label className="text-amber-200/70 text-sm">{t('lobby.deckStyle')}</Label>
                     <Select value={deckStyle} onValueChange={(v) => {
                       if (v === 'custom' && !isCustomDeckOwned) return;
                       setDeckStyle(v as DeckStyle);
@@ -438,7 +440,7 @@ onClick={() => setShowTengeTopUp(true)}
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                        <SelectItem value="classic" className="text-amber-100">Колода №1</SelectItem>
+                        <SelectItem value="classic" className="text-amber-100">{t('lobby.deckClassic')}</SelectItem>
                         <SelectItem
                           value="custom"
                           className={isCustomDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
@@ -446,14 +448,14 @@ onClick={() => setShowTengeTopUp(true)}
                         >
                           <span className="flex items-center gap-1.5">
                             {!isCustomDeckOwned && <Lock className="w-3 h-3" />}
-                            Колода №2
+                            {t('lobby.deckCustom')}
                           </span>
                         </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-amber-200/70 text-sm">Игровой стол</Label>
+                    <Label className="text-amber-200/70 text-sm">{t('lobby.tableStyle')}</Label>
                     <Select value={tableStyle} onValueChange={(v) => {
                       if (v === 'dark_kazakh' && !isDarkTableOwned) return;
                       setTableStyle(v as TableStyle);
@@ -462,7 +464,7 @@ onClick={() => setShowTengeTopUp(true)}
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                        <SelectItem value="classic" className="text-amber-100">Классический</SelectItem>
+                        <SelectItem value="classic" className="text-amber-100">{t('lobby.tableClassic')}</SelectItem>
                         <SelectItem
                           value="dark_kazakh"
                           className={isDarkTableOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
@@ -470,7 +472,7 @@ onClick={() => setShowTengeTopUp(true)}
                         >
                           <span className="flex items-center gap-1.5">
                             {!isDarkTableOwned && <Lock className="w-3 h-3" />}
-                            Тёмный Казахский
+                            {t('lobby.tableDarkKazakh')}
                           </span>
                         </SelectItem>
                       </SelectContent>
@@ -479,7 +481,7 @@ onClick={() => setShowTengeTopUp(true)}
                 </div>
                 {withBots && (
                   <div>
-                    <Label className="text-amber-200/70 text-sm">Количество ботов: {botCount}</Label>
+                    <Label className="text-amber-200/70 text-sm">{t('lobby.botCount', { n: botCount })}</Label>
                     <Slider
                       value={[botCount]}
                       onValueChange={v => setBotCount(v[0])}
@@ -493,18 +495,18 @@ onClick={() => setShowTengeTopUp(true)}
                 {/* Private room toggle */}
                 <div className="flex items-center justify-between">
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
-                    <Lock className="w-3.5 h-3.5" /> Закрытая комната
+                    <Lock className="w-3.5 h-3.5" /> {t('lobby.privateRoom')}
                   </Label>
                   <Switch checked={isPrivate} onCheckedChange={setIsPrivate} />
                 </div>
                 {isPrivate && (
                   <div>
-                    <Label className="text-amber-200/70 text-sm">Пароль комнаты</Label>
+                    <Label className="text-amber-200/70 text-sm">{t('lobby.roomPassword')}</Label>
                     <Input
                       type="password"
                       value={roomPassword}
                       onChange={e => setRoomPassword(e.target.value)}
-                      placeholder="Введите пароль"
+                      placeholder={t('lobby.enterPassword')}
                       className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10"
                     />
                   </div>
@@ -514,7 +516,7 @@ onClick={() => setShowTengeTopUp(true)}
                   onClick={handleCreate}
                   disabled={loading || (isPrivate && !roomPassword.trim())}
                 >
-                  {loading ? 'Создание...' : 'Создать'}
+                  {loading ? t('lobby.creating') : t('roomCreate.create')}
                 </Button>
               </div>
                 </DialogContent>
@@ -528,9 +530,9 @@ onClick={() => setShowTengeTopUp(true)}
       <div className="sm:hidden border-t border-amber-700/20 bg-black/20">
         <div className="container py-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-amber-100">Комнаты</h2>
+            <h2 className="text-xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4" onClick={() => setDialogOpen(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Создать
+              <Plus className="w-4 h-4 mr-1" /> {t('lobby.createRoomShort')}
             </Button>
           </div>
         </div>
@@ -541,8 +543,8 @@ onClick={() => setShowTengeTopUp(true)}
         {rooms.length === 0 ? (
           <div className="text-center py-12 sm:py-20">
             <Gamepad2 className="w-12 h-12 sm:w-16 sm:h-16 text-amber-700/30 mx-auto mb-3 sm:mb-4" />
-            <p className="text-amber-200/40 text-base sm:text-lg">Пока нет комнат</p>
-            <p className="text-amber-200/30 text-xs sm:text-sm mt-1">Создайте первую комнату, чтобы начать игру</p>
+            <p className="text-amber-200/40 text-base sm:text-lg">{t('lobby.noRooms')}</p>
+            <p className="text-amber-200/30 text-xs sm:text-sm mt-1">{t('lobby.noRoomsHint')}</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -564,7 +566,7 @@ onClick={() => setShowTengeTopUp(true)}
                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-2">
                       {room.hasActiveGame && (
                         <Badge className="bg-green-900/50 text-green-300 border-green-700/30 text-[10px] sm:text-xs animate-pulse px-1.5 sm:px-2">
-                          В игре
+                          {t('lobby.inGame')}
                         </Badge>
                       )}
                       <Badge variant="outline" className="border-amber-700/30 text-amber-200/60 text-[10px] sm:text-xs px-1.5 sm:px-2">
@@ -575,15 +577,15 @@ onClick={() => setShowTengeTopUp(true)}
                   </div>
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
                     <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                      <Timer className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.turnTimer}с
+                      <Timer className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.turnTimer}{t('roomCreate.seconds')}
                     </Badge>
                     {room.settings.withBots && (
                       <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                        <Bot className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.botCount} бот
+                        <Bot className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.botCount} {t('lobby.nBot', { n: room.settings.botCount })}
                       </Badge>
                     )}
                     <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                      <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? '№2' : '№1'}
+                      <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? t('waitingRoom.deckN2') : t('waitingRoom.deckN1')}
                     </Badge>
                     <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs px-1.5 sm:px-2">
                       <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
@@ -605,7 +607,7 @@ onClick={() => setShowTengeTopUp(true)}
                       disabled={rejoining === room.id}
                     >
                       <RotateCcw className={`w-4 h-4 mr-1 sm:mr-2 ${rejoining === room.id ? 'animate-spin' : ''}`} />
-                      {rejoining === room.id ? 'Возвращение...' : 'Вернуться в игру'}
+                      {rejoining === room.id ? t('lobby.rejoining') : t('lobby.rejoin')}
                     </Button>
                   ) : (
                     <Button
@@ -613,10 +615,10 @@ onClick={() => setShowTengeTopUp(true)}
                       disabled={room.players.length >= room.maxPlayers || !!room.hasActiveGame}
                       onClick={() => handleJoinRoom(room)}
                     >
-                      {room.hasActiveGame ? 'Идёт игра' : room.players.length >= room.maxPlayers ? 'Полная' : (
+                      {room.hasActiveGame ? t('lobby.gameInProgress') : room.players.length >= room.maxPlayers ? t('lobby.full') : (
                         <span className="flex items-center gap-1">
                           {room.hasPassword && <Lock className="w-3.5 h-3.5" />}
-                          Войти
+                          {t('lobby.joinRoom')}
                         </span>
                       )}
                     </Button>
@@ -679,12 +681,12 @@ onClick={() => setShowTengeTopUp(true)}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20">
-              <h3 className="text-amber-100 font-bold text-sm">Уведомления</h3>
+              <h3 className="text-amber-100 font-bold text-sm">{t('lobby.notifications')}</h3>
               <div className="flex items-center gap-1">
                 {notifList.length > 0 && (
                   <button
                     className="text-amber-200/40 hover:text-red-400 transition-colors p-1"
-                    title="Удалить все уведомления"
+                    title={t('lobby.deleteAll')}
                     onClick={async () => {
                       await deleteAllNotifs.mutateAsync();
                       refetchNotifs();
@@ -704,7 +706,7 @@ onClick={() => setShowTengeTopUp(true)}
               {notifList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-amber-200/40">
                   <Bell className="w-8 h-8 mb-2 opacity-40" />
-                  <span className="text-sm">Нет уведомлений</span>
+                  <span className="text-sm">{t('lobby.noNotifications')}</span>
                 </div>
               ) : (
                 notifList.map(n => (
@@ -714,23 +716,23 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <UserPlus className="w-4 h-4 text-amber-400 shrink-0" />
-                            <span className="text-amber-100 text-sm font-medium">Запрос в друзья</span>
+                            <span className="text-amber-100 text-sm font-medium">{t('lobby.friendRequest')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs mb-2">
-                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) хочет добавить вас в друзья
+                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) {t('lobby.friendRequestText', { name: '', id: '' }).split('(ID )')[0] ? '' : ''}{locale === 'kk' ? 'сізді достарға қосқысы келеді' : 'хочет добавить вас в друзья'}
                           </p>
                           <div className="flex gap-2">
                             <button
                               className="flex items-center gap-1 bg-green-700/60 hover:bg-green-600/60 text-green-200 text-xs px-3 py-1 rounded-md transition-colors"
                               onClick={() => n.data?.friendshipId && handleAcceptFriend(n.data.friendshipId, n.id)}
                             >
-                              <Check className="w-3 h-3" /> Принять
+                              <Check className="w-3 h-3" /> {t('lobby.accept')}
                             </button>
                             <button
                               className="flex items-center gap-1 bg-red-900/40 hover:bg-red-800/40 text-red-300 text-xs px-3 py-1 rounded-md transition-colors"
                               onClick={() => n.data?.friendshipId && handleRejectFriend(n.data.friendshipId, n.id)}
                             >
-                              <X className="w-3 h-3" /> Отклонить
+                              <X className="w-3 h-3" /> {t('lobby.decline')}
                             </button>
                           </div>
                         </>
@@ -739,10 +741,10 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <Check className="w-4 h-4 text-green-400 shrink-0" />
-                            <span className="text-amber-100 text-sm font-medium">Дружба принята</span>
+                            <span className="text-amber-100 text-sm font-medium">{t('lobby.friendAccepted')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> принял(а) ваш запрос в друзья
+                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> {locale === 'kk' ? 'достық сұрауыңызды қабылдады' : 'принял(а) ваш запрос в друзья'}
                           </p>
                         </>
                       )}
@@ -750,10 +752,10 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-amber-400 text-sm">₸</span>
-                            <span className="text-amber-100 text-sm font-medium">Пополнение баланса</span>
+                            <span className="text-amber-100 text-sm font-medium">{t('lobby.balanceTopUp')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            Баланс пополнен на {n.data?.amount} {n.data?.currency}
+                            {t('lobby.balanceTopUpText', { amount: n.data?.amount || '', currency: n.data?.currency || '' })}
                           </p>
                         </>
                       )}
@@ -761,15 +763,15 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <Timer className="w-4 h-4 text-green-400 shrink-0" />
-                            <span className="text-amber-100 text-sm font-medium">Ограничение снято</span>
+                            <span className="text-amber-100 text-sm font-medium">{t('lobby.cooldownExpired')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            {n.data?.message || 'Вы снова можете добить баланс шаныраков до 2000!'}
+                            {n.data?.message || t('lobby.cooldownExpiredDefault')}
                           </p>
                         </>
                       )}
                       <span className="text-amber-200/30 text-[10px] mt-1 block">
-                        {new Date(n.createdAt).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     <button
