@@ -171,19 +171,26 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
         <div className="container py-3 sm:py-5" style={{paddingBottom: '5px'}}>
           {/* === MOBILE LAYOUT (< sm) === */}
-          <div className="sm:hidden pb-8" style={{paddingBottom: '0px'}}>
-            {/* Row 1: Title left + Right icons top */}
-            <div className="relative flex items-start justify-between">
-              {/* Left: Title with connection indicator */}
-              <div className="flex flex-col relative z-10">
+          <div className="sm:hidden">
+            {/* Row 1: Title left + Avatar center + Right icons */}
+            <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
+              {/* Left: Title with connection indicator — 3 rows */}
+              <div className="flex flex-col relative z-20">
                 <h1 className="text-base font-bold text-amber-100 leading-tight">
-                  Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
+                  Дурак
                   <br/>
-                  <span className="block text-center">from KZ</span>
+                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
+                  <br/>
+                  <span>from KZ</span>
                 </h1>
               </div>
-              {/* Center: Avatar + Name/ID — pushed down so name/ID aligns with shop icon */}
-              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{top: '24px'}}>
+              {/* Center: Avatar + Name/ID */}
+              <div
+                className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-10"
+                style={{
+                  top: (profile as any)?.equippedFrame ? '-12px' : '8px',
+                }}
+              >
                 <ProfileDrawer
                   profile={profile}
                   onlineFriendIds={onlineFriendIds}
@@ -205,7 +212,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
               </div>
               {/* Right: Settings gear + Tenge, Bell + Shanyrak */}
-              <div className="flex flex-col items-end gap-1 relative z-10">
+              <div className="flex flex-col items-end gap-1 relative z-20">
                 {/* Settings + Tenge row */}
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-0.5">
@@ -255,7 +262,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       )}
                     </button>
                     <button
-                      className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                      className="relative z-20 text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                       onClick={() => setShowShop(true)}
                     >
                       <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
@@ -265,7 +272,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
             </div>
             {/* Row 2: Rules icon at bottom-left, aligned with shop icon level */}
-            <div className="flex justify-start relative z-10" style={{marginTop: '-28px'}}>
+            <div className="flex justify-start relative z-20" style={{marginTop: '-28px'}}>
               <button
                 className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                 onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px'}}

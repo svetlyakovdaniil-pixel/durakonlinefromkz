@@ -1,0 +1,6 @@
+Mobile layout inspection results:
+- Title HTML shows 3 rows correctly: "Дурак" / "онлайн" (green) / "from KZ"
+- Mobile section is display:none on desktop (all buttons have rect 0,0,0,0)
+- Button 5 (shop) has z-index:20 correctly applied
+- The sm:hidden section is hidden in desktop viewport, need to test on actual mobile viewport
+- Desktop view shows the desktop layout correctly with all icons visible and clickable

@@ -1,0 +1,5 @@
+Desktop preview:
+- Title "Дурак онлайн from KZ" shows correctly in desktop (single line)
+- Shop icon (index 8) is visible and clickable in desktop
+- All icons visible in desktop header row
+- Need to check mobile layout - this is desktop view
