@@ -48,7 +48,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
       toast.error(t('settings.nameEmpty'));
       return;
     }
-    if (trimmed.length > 50) {
+    if (trimmed.length > 12) {
       toast.error(t('settings.nameTooLong'));
       return;
     }
@@ -113,7 +113,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   onChange={e => setNewName(e.target.value)}
                   className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm flex-1"
                   placeholder={t('settings.enterName')}
-                  maxLength={50}
+                  maxLength={12}
                   autoFocus
                   onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
                 />

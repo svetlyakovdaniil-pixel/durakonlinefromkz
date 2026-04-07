@@ -333,14 +333,14 @@ export async function recordGameResult(data: {
   // NOTE: allPlayerProfileIds actually contains gameId values (not profileId/id)
   // because playerGameIds map stores odId -> gameId
   for (const gameId of data.allPlayerProfileIds) {
-    const isWinner = gameId === data.winnerProfileId;
     const isLoser = gameId === data.loserProfileId;
+    // "Win" = any place except last (loser). Only the last-place player gets a loss.
+    const isWinner = !isLoser;
 
     // Rating change: +15 for win, -10 for loss
     let ratingChange = 0;
     if (isWinner) ratingChange = 15;
     else if (isLoser) ratingChange = -10;
-    else ratingChange = 0; // middle finishers get no change
 
     await db.update(playerProfiles).set({
       gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,

@@ -931,7 +931,8 @@ export default function GameTable({
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [showVolumePanel, setShowVolumePanel] = useState(false);
+  const [longPressTarget, setLongPressTarget] = useState<'music' | 'sound' | null>(null);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
 
   const opponents = gs.players.filter((_, i) => i !== myIdx);
@@ -1113,7 +1114,7 @@ export default function GameTable({
 
       <div className="relative z-10 flex flex-col h-[100dvh]">
         {/* Top HUD — compact panel */}
-        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20">
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
               К1:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
@@ -1123,7 +1124,7 @@ export default function GameTable({
               {t('game.bitoCount')}<span className="font-bold">{gs.discardCount}</span>
             </Badge>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-sm px-2 sm:px-3 py-1">
               {gs.direction === 'cw' ? <ArrowRight className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <ArrowLeft className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
             </Badge>
@@ -1131,80 +1132,106 @@ export default function GameTable({
               <Timer className="w-4 h-4 mr-0.5" />
               {turnTimer}с
             </Badge>
-            {/* Volume controls group */}
+            {/* Volume controls — tap to toggle, long-press to show slider */}
             <div className="relative">
               <div className="flex items-center gap-0.5">
                 {onToggleMusic && (
                   <button
-                    className={`transition-colors p-1 sm:p-1.5 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-                    onClick={onToggleMusic}
+                    className={`transition-colors p-1 sm:p-1.5 rounded select-none ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
                     title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
+                    onPointerDown={() => {
+                      longPressTimerRef.current = setTimeout(() => {
+                        longPressTimerRef.current = null;
+                        setLongPressTarget(prev => prev === 'music' ? null : 'music');
+                      }, 400);
+                    }}
+                    onPointerUp={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current);
+                        longPressTimerRef.current = null;
+                        onToggleMusic();
+                      }
+                    }}
+                    onPointerLeave={() => {
+                      if (longPressTimerRef.current) {
+                        clearTimeout(longPressTimerRef.current);
+                        longPressTimerRef.current = null;
+                      }
+                    }}
+                    onContextMenu={(e) => e.preventDefault()}
                   >
                     {musicEnabled ? <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6 opacity-40" />}
                   </button>
                 )}
                 <button
-                  className={`transition-colors p-1 sm:p-1.5 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-                  onClick={toggleSound}
+                  className={`transition-colors p-1 sm:p-1.5 rounded select-none ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
                   title={soundEnabled ? t('game.soundOn') : t('game.soundOff')}
+                  onPointerDown={() => {
+                    longPressTimerRef.current = setTimeout(() => {
+                      longPressTimerRef.current = null;
+                      setLongPressTarget(prev => prev === 'sound' ? null : 'sound');
+                    }, 400);
+                  }}
+                  onPointerUp={() => {
+                    if (longPressTimerRef.current) {
+                      clearTimeout(longPressTimerRef.current);
+                      longPressTimerRef.current = null;
+                      toggleSound();
+                    }
+                  }}
+                  onPointerLeave={() => {
+                    if (longPressTimerRef.current) {
+                      clearTimeout(longPressTimerRef.current);
+                      longPressTimerRef.current = null;
+                    }
+                  }}
+                  onContextMenu={(e) => e.preventDefault()}
                 >
                   {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
                 </button>
-                <button
-                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-0.5 rounded"
-                  onClick={() => setShowVolumePanel(p => !p)}
-                  title={t('game.soundVolume')}
-                >
-                  <ChevronLeft className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${showVolumePanel ? 'rotate-90' : '-rotate-90'}`} />
-                </button>
               </div>
-              {/* Volume sliders dropdown */}
-              {showVolumePanel && (
+              {/* Volume slider popup — shows for the long-pressed control */}
+              {longPressTarget && (
                 <div
-                  className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[220px] shadow-xl backdrop-blur-sm"
+                  className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[200px] shadow-xl backdrop-blur-sm"
                   onClick={(e) => e.stopPropagation()}
                   onTouchStart={(e) => e.stopPropagation()}
                 >
-                  {/* Music volume */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-amber-200/70">
-                        <Music2 className="w-3 h-3 inline mr-1" />{t('game.musicVolume')}
-                      </span>
-                      <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="1"
-                      value={Math.round(musicVolume * 100)}
-                      onChange={(e) => onMusicVolumeChange?.(Number(e.target.value) / 100)}
-                      onInput={(e) => onMusicVolumeChange?.(Number((e.target as HTMLInputElement).value) / 100)}
-                      className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
-                      style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
-                    />
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs text-amber-200/70">
+                      {longPressTarget === 'music'
+                        ? <><Music2 className="w-3 h-3 inline mr-1" />{t('game.musicVolume')}</>
+                        : <><Volume2 className="w-3 h-3 inline mr-1" />{t('game.soundVolume')}</>}
+                    </span>
+                    <span className="text-xs text-amber-300/60">
+                      {Math.round((longPressTarget === 'music' ? musicVolume : soundVolume) * 100)}%
+                    </span>
                   </div>
-                  {/* Sound effects volume */}
-                  <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs text-amber-200/70">
-                        <Volume2 className="w-3 h-3 inline mr-1" />{t('game.soundVolume')}
-                      </span>
-                      <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      step="1"
-                      value={Math.round(soundVolume * 100)}
-                      onChange={(e) => setSoundVolume(Number(e.target.value) / 100)}
-                      onInput={(e) => setSoundVolume(Number((e.target as HTMLInputElement).value) / 100)}
-                      className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
-                      style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
-                    />
-                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={Math.round((longPressTarget === 'music' ? musicVolume : soundVolume) * 100)}
+                    onChange={(e) => {
+                      const v = Number(e.target.value) / 100;
+                      if (longPressTarget === 'music') onMusicVolumeChange?.(v);
+                      else setSoundVolume(v);
+                    }}
+                    onInput={(e) => {
+                      const v = Number((e.target as HTMLInputElement).value) / 100;
+                      if (longPressTarget === 'music') onMusicVolumeChange?.(v);
+                      else setSoundVolume(v);
+                    }}
+                    className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                    style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
+                  />
+                  <button
+                    className="mt-2 text-xs text-amber-400/60 hover:text-amber-300 w-full text-center"
+                    onClick={() => setLongPressTarget(null)}
+                  >
+                    {t('game.close') || '✕'}
+                  </button>
                 </div>
               )}
             </div>

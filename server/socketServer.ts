@@ -180,7 +180,7 @@ export function initSocketServer(httpServer: HttpServer) {
         if (isInRoom || isInGame) {
           // If player is in game but not in room.players, re-add them
           if (!isInRoom && isInGame && room) {
-            room.players.push({ id: odId, name, ready: true, isBot: false });
+            room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
             console.log(`[Socket] Re-added ${odId} to room.players during auto-rejoin`);
           }
           if (room) {
@@ -227,7 +227,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // If player is in game but not in room.players, re-add them
       if (!isInRoom && isInGame) {
-        room.players.push({ id: odId, name, ready: true, isBot: false });
+        room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
         console.log(`[Socket] Re-added ${odId} to room.players during rejoin`);
       }
 
@@ -283,7 +283,7 @@ export function initSocketServer(httpServer: HttpServer) {
         name: data.name || `Комната ${roomId}`,
         hostId: odId,
         maxPlayers: Math.min(Math.max(data.maxPlayers || 2, 2), 8),
-        players: [{ id: odId, name, ready: false, isBot: false }],
+        players: [{ id: odId, name: playerDisplayNames.get(odId) || name, ready: false, isBot: false }],
         gameState: null,
         settings,
         createdAt: Date.now(),
@@ -337,7 +337,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
         // Re-add to room.players if not there
         if (!room.players.some(p => p.id === odId)) {
-          room.players.push({ id: odId, name, ready: true, isBot: false });
+          room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
         }
 
         playerSockets.set(odId, socket.id);
@@ -392,7 +392,7 @@ export function initSocketServer(httpServer: HttpServer) {
           return;
         }
 
-        room.players.push({ id: odId, name, ready: false, isBot: false });
+        room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: false, isBot: false });
         socket.join(roomId);
         trackPlayerRoom(odId, roomId);
         io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
@@ -402,7 +402,7 @@ export function initSocketServer(httpServer: HttpServer) {
       }).catch(err => {
         console.error('[Socket] Balance check error:', err);
         // Allow join on DB error (graceful degradation)
-        room.players.push({ id: odId, name, ready: false, isBot: false });
+        room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: false, isBot: false });
         socket.join(roomId);
         trackPlayerRoom(odId, roomId);
         io.to(roomId).emit('roomUpdated', sanitizeRoom(room));

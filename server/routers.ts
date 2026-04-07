@@ -95,7 +95,7 @@ export const appRouter = router({
 
     /** Update display name */
     updateName: protectedProcedure
-      .input(z.object({ displayName: z.string().min(1).max(50) }))
+      .input(z.object({ displayName: z.string().min(1).max(12) }))
       .mutation(async ({ ctx, input }) => {
         await updateProfileDisplayName(ctx.user.id, input.displayName);
         return { success: true };

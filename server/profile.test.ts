@@ -109,14 +109,14 @@ describe('ELO Rating System', () => {
     expect(currentRating + ratingChange).toBe(990);
   });
 
-  it('should not change rating for middle finishers', () => {
+  it('middle finishers get +15 rating (counted as win)', () => {
     const currentRating = 1000;
-    const isWinner = false;
     const isLoser = false;
+    const isWinner = !isLoser; // any non-last place is a win
     let ratingChange = 0;
     if (isWinner) ratingChange = 15;
     else if (isLoser) ratingChange = -10;
-    expect(currentRating + ratingChange).toBe(1000);
+    expect(currentRating + ratingChange).toBe(1015);
   });
 
   it('should not go below 0', () => {
@@ -308,8 +308,8 @@ describe('Game Stats Recording', () => {
     const loserProfileId = 4;
 
     const statsUpdates = allPlayerProfileIds.map(id => {
-      const isWinner = id === winnerProfileId;
       const isLoser = id === loserProfileId;
+      const isWinner = !isLoser; // any place except last counts as a win
       let ratingChange = 0;
       if (isWinner) ratingChange = 15;
       else if (isLoser) ratingChange = -10;
@@ -323,10 +323,14 @@ describe('Game Stats Recording', () => {
       };
     });
 
-    expect(statsUpdates[0].ratingChange).toBe(15);  // winner
-    expect(statsUpdates[1].ratingChange).toBe(0);    // middle
-    expect(statsUpdates[2].ratingChange).toBe(0);    // middle
-    expect(statsUpdates[3].ratingChange).toBe(-10);  // loser
+    expect(statsUpdates[0].ratingChange).toBe(15);  // 1st place (winner)
+    expect(statsUpdates[0].winsDelta).toBe(1);
+    expect(statsUpdates[1].ratingChange).toBe(15);   // 2nd place (also a win)
+    expect(statsUpdates[1].winsDelta).toBe(1);
+    expect(statsUpdates[2].ratingChange).toBe(15);   // 3rd place (also a win)
+    expect(statsUpdates[2].winsDelta).toBe(1);
+    expect(statsUpdates[3].ratingChange).toBe(-10);  // last place (loser)
+    expect(statsUpdates[3].lossesDelta).toBe(1);
     expect(statsUpdates.every(s => s.gamesPlayedDelta === 1)).toBe(true);
   });
 });
