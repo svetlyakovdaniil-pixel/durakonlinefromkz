@@ -243,7 +243,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-4px'}}>
                 {/* Row 1: Tenge + button (aligned with Settings) */}
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
+                  <span className="text-sm text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                   <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center">
                     <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[28px] h-[28px] object-contain" />
                   </div>
@@ -256,9 +256,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
                 {/* Row 2: Shanyrak + button (aligned with Bell) */}
                 <div className="flex items-center gap-0.5">
-                  <span className="text-[10px] text-green-400 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
+                  <span className="text-sm text-green-400 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   <div className="w-[28px] h-[28px] flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-6 object-contain" />
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-[20px] object-contain" />
                   </div>
                   <button
                     className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
