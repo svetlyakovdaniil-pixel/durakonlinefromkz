@@ -174,18 +174,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left column: Settings + Bell (notifications) */}
-              <div className="flex flex-col items-start gap-1 relative z-20">
-                {/* Settings row */}
+              {/* Left column: Settings / Bell / Rules — equal spacing, vertically centered */}
+              <div className="flex flex-col items-center relative z-20" style={{gap: '6px', marginLeft: '-4px'}}>
+                {/* Row 1: Settings */}
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
-                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded" style={{marginLeft: '-8px'}}>
+                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded">
                     <Settings className="w-5 h-5" />
                   </button>
                 </SettingsSheet>
-                {/* Bell (notifications) row */}
+                {/* Row 2: Bell (notifications) */}
                 <button
-                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                  onClick={handleOpenNotifications} style={{marginLeft: '-8px'}}
+                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
+                  onClick={handleOpenNotifications}
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
@@ -193,6 +193,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
+                </button>
+                {/* Row 3: Rules */}
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
+                  onClick={() => setShowRules(true)}
+                >
+                  <HelpCircle className="w-5 h-5" />
                 </button>
               </div>
               {/* Title — shifted right toward avatar */}
@@ -232,13 +239,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: Tenge + Shanyrak currencies with counters, Shop */}
-              <div className="flex flex-col items-end gap-1 relative z-20">
-                {/* Tenge row */}
+              {/* Right column: +Tenge / +Shanyrak / Shop — aligned with left column rows */}
+              <div className="flex flex-col items-end relative z-20" style={{gap: '6px', marginRight: '-4px'}}>
+                {/* Row 1: Tenge + button (aligned with Settings) */}
                 <div className="flex items-center gap-0.5">
                   <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
-                  <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
+                  <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[28px] h-[28px] object-contain" />
                   </div>
                   <button
                     className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
@@ -247,40 +254,29 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     +
                   </button>
                 </div>
-                {/* Shanyrak + Shop row */}
-                <div className="flex items-start gap-1">
-                  <div className="flex items-center gap-0.5">
-                    <div className="flex flex-col items-center">
-                      <div className="h-7 flex items-center justify-center">
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-7 object-contain" style={{marginTop: '15px'}} />
-                      </div>
-                      <span className="text-[10px] text-green-400 font-semibold" style={{marginTop: '6px'}}>{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
-                    </div>
-                    <button
-                      className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => setShowShanyrakTopUp(true)} style={{marginTop: '-6px', marginRight: '-36px'}}
-                    >
-                      +
-                    </button>
+                {/* Row 2: Shanyrak + button (aligned with Bell) */}
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[10px] text-green-400 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
+                  <div className="w-[28px] h-[28px] flex items-center justify-center">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-6 object-contain" />
                   </div>
                   <button
-                    className="relative z-20 text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                    onClick={() => setShowShop(true)} style={{marginTop: '44px'}}
+                    className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                    onClick={() => setShowShanyrakTopUp(true)}
                   >
-                    <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
+                    +
                   </button>
                 </div>
+                {/* Row 3: Shop (aligned with Rules) */}
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded self-end"
+                  onClick={() => setShowShop(true)}
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                </button>
               </div>
             </div>
-            {/* Row 2: Rules icon at bottom-left, aligned with shop icon level */}
-            <div className="flex justify-start relative z-20" style={{marginTop: '-28px'}}>
-              <button
-                className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px', marginTop: '-19px', marginLeft: '-2px'}}
-              >
-                <HelpCircle className="w-5 h-5" />
-              </button>
-            </div>
+
           </div>
 
           {/* === DESKTOP LAYOUT (≥ sm) === */}
