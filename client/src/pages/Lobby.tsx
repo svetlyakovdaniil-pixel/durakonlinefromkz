@@ -174,9 +174,30 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left: Title with connection indicator — 3 rows, centered text, shifted right toward avatar */}
-              <div className="flex flex-col relative z-20" style={{marginLeft: '8px'}}>
-                <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginLeft: '35px'}}>
+              {/* Left column: Settings + Bell (notifications) */}
+              <div className="flex flex-col items-start gap-1 relative z-20">
+                {/* Settings row */}
+                <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
+                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
+                    <Settings className="w-5 h-5" />
+                  </button>
+                </SettingsSheet>
+                {/* Bell (notifications) row */}
+                <button
+                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                  onClick={handleOpenNotifications}
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+              {/* Title — shifted right toward avatar */}
+              <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
+                <h1 className="text-base font-bold text-amber-100 leading-tight text-center">
                   Дурак
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
@@ -211,29 +232,22 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right: Settings gear + Tenge, Bell + Shanyrak */}
+              {/* Right column: Tenge + Shanyrak currencies with counters, Shop */}
               <div className="flex flex-col items-end gap-1 relative z-20">
-                {/* Settings + Tenge row */}
-                <div className="flex items-center gap-1">
-                  <div className="flex items-center gap-0.5">
-                    <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
-                    <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
-                    </div>
-                    <button
-                      className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => setShowTengeTopUp(true)}
-                    >
-                      +
-                    </button>
+                {/* Tenge row */}
+                <div className="flex items-center gap-0.5">
+                  <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
+                  <div className="w-[36px] h-[36px] rounded-full overflow-hidden flex items-center justify-center">
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[36px] h-[36px] object-contain" />
                   </div>
-                  <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
-                    <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
-                      <Settings className="w-5 h-5" />
-                    </button>
-                  </SettingsSheet>
+                  <button
+                    className="w-5 h-5 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-sm font-bold transition-colors leading-none"
+                    onClick={() => setShowTengeTopUp(true)}
+                  >
+                    +
+                  </button>
                 </div>
-                {/* Bell + Shanyrak row */}
+                {/* Shanyrak + Shop row */}
                 <div className="flex items-start gap-1">
                   <div className="flex items-center gap-0.5">
                     <div className="flex flex-col items-center">
@@ -249,25 +263,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                       +
                     </button>
                   </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <button
-                      className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                      onClick={handleOpenNotifications}
-                    >
-                      <Bell className="w-5 h-5" style={{marginTop: '5px'}} />
-                      {unreadCount > 0 && (
-                        <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                          {unreadCount > 9 ? '9+' : unreadCount}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      className="relative z-20 text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                      onClick={() => setShowShop(true)}
-                    >
-                      <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
-                    </button>
-                  </div>
+                  <button
+                    className="relative z-20 text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                    onClick={() => setShowShop(true)}
+                  >
+                    <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
+                  </button>
                 </div>
               </div>
             </div>
