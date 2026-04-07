@@ -168,9 +168,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
       {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
-        <div className="container py-3 sm:py-5">
+        <div className="container py-3 sm:py-5" style={{paddingBottom: '5px'}}>
           {/* === MOBILE LAYOUT (< sm) === */}
-          <div className="sm:hidden pb-8">
+          <div className="sm:hidden pb-8" style={{paddingBottom: '0px'}}>
             {/* Row 1: Title left + Right icons top */}
             <div className="relative flex items-start justify-between">
               {/* Left: Title with connection indicator */}
@@ -265,7 +265,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex justify-start" style={{marginTop: '-28px'}}>
               <button
                 className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                onClick={() => setShowRules(true)}
+                onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px'}}
               >
                 <HelpCircle className="w-5 h-5" />
               </button>
