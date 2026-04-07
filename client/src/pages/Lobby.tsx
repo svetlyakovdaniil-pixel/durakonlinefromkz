@@ -204,7 +204,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Title — shifted right toward avatar */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
-                <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginRight: '124px'}}>
+                <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginRight: '134px'}}>
                   Дурак
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
@@ -270,7 +270,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Row 3: Shop (aligned with Rules) */}
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded self-end"
-                  onClick={() => setShowShop(true)}
+                  onClick={() => setShowShop(true)} style={{marginRight: '-3px'}}
                 >
                   <ShoppingCart className="w-5 h-5" />
                 </button>
