@@ -173,13 +173,19 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden pb-8">
             {/* Row 1: Title left + Avatar center + Logout right */}
             <div className="relative flex items-start justify-between">
-              {/* Left: Title with connection indicator */}
+              {/* Left: Title with connection indicator + Rules */}
               <div className="flex flex-col">
                 <h1 className="text-base font-bold text-amber-100 leading-tight">
                   Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
                   <br/>
                   <span className="block text-center">from KZ</span>
                 </h1>
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded mt-1 w-fit"
+                  onClick={() => setShowRules(true)}
+                >
+                  <HelpCircle className="w-5 h-5" />
+                </button>
               </div>
               {/* Center: Avatar + Name/ID — absolutely centered on screen */}
               <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
@@ -251,20 +257,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                         </span>
                       )}
                     </button>
-                    <div className="flex items-center gap-0.5">
-                      <button
-                        className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                        onClick={() => setShowRules(true)}
-                      >
-                        <HelpCircle className="w-5 h-5" style={{marginTop: '4px'}} />
-                      </button>
-                      <button
-                        className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                        onClick={() => setShowShop(true)}
-                      >
-                        <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
-                      </button>
-                    </div>
+                    <button
+                      className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                      onClick={() => setShowShop(true)}
+                    >
+                      <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
+                    </button>
                   </div>
                 </div>
               </div>
@@ -532,8 +530,8 @@ onClick={() => setShowTengeTopUp(true)}
         <div className="container py-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
-            <Button className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold h-8 px-3 touch-manipulation" onClick={() => setDialogOpen(true)}>
-              <Plus className="w-3.5 h-3.5 mr-1" /> {t('lobby.createRoomShort')}
+            <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold h-8 px-3 touch-manipulation" onClick={() => setDialogOpen(true)}>
+              <Plus className="w-3.5 h-3.5 mr-0.5" />{t('lobby.createRoomShort')}
             </Button>
           </div>
         </div>

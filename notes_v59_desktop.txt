@@ -1,0 +1,1 @@
+Desktop preview V59: Title shows "Дурак онлайн from KZ" with green "онлайн". Header area includes "Комнаты" and "+ Создать комнату" inside the dark area. Desktop create button still has "mr-2" spacing. Need to check mobile view to verify icons reverted and button changes applied.
