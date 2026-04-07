@@ -1,0 +1,6 @@
+Desktop preview V58:
+- Title "Дурак онлайн from KZ" with green "онлайн" - OK
+- "Комнаты" and "+ Создать комнату" are now inside the dark header area - GOOD
+- The header area is expanded properly with the bottom row visible
+- No negative margin overlap issues
+- Need to check mobile view next
