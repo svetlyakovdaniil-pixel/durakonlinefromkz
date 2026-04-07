@@ -44,6 +44,7 @@ const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump 
 const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
 const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
 const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-game display)
+const playerEquippedFrames = new Map<string, string>(); // odId -> equippedFrame (for in-game frame display)
 const playerDisplayNames = new Map<string, string>(); // odId -> custom display name from settings
 // Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
 const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
@@ -188,7 +189,7 @@ export function initSocketServer(httpServer: HttpServer) {
             socket.emit('roomUpdated', sanitizeRoom(room));
             // If game is in progress, send game state
             if (gameState && gameState.gamePhase === 'playing') {
-              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds);
+              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames);
               socket.emit('gameStateUpdate', clientState);
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
               // Always send actions — even empty to clear stale client state
@@ -249,7 +250,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // If game is in progress, send full game state (reuse gameState from above)
       if (gameState && gameState.gamePhase === 'playing') {
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         // Always send actions — even empty to clear stale client state
@@ -347,7 +348,7 @@ export function initSocketServer(httpServer: HttpServer) {
         socket.emit('roomUpdated', sanitizeRoom(room));
 
         // Send game state
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
@@ -865,6 +866,11 @@ export function initSocketServer(httpServer: HttpServer) {
         playerGameIds.set(odId, data.gameId);
         if (data.avatarId) {
           playerAvatarIds.set(odId, data.avatarId);
+        }
+        if (data.equippedFrame) {
+          playerEquippedFrames.set(odId, data.equippedFrame);
+        } else {
+          playerEquippedFrames.delete(odId);
         }
         // Store custom display name for reconnect scenarios
         if (data.displayName) {
@@ -1793,7 +1799,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
-      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds);
+      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames);
       io.to(sid).emit('gameStateUpdate', clientState);
 
       // Always send actions — even empty array to clear stale client state

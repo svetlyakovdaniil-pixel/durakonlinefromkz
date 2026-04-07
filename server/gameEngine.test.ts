@@ -308,6 +308,44 @@ describe('Client state conversion', () => {
     const clientState = toClientState(game, 'p1');
     expect(clientState.players[1].isBot).toBe(true);
   });
+
+  it('includes equippedFrame from playerEquippedFramesMap', () => {
+    const players = [
+      { id: 'p1', odId: 'p1', name: 'Player 1', isBot: false },
+      { id: 'p2', odId: 'p2', name: 'Player 2', isBot: false },
+    ];
+    const game = createGame('room1', players);
+    const framesMap = new Map<string, string>();
+    framesMap.set('p1', 'fire');
+    framesMap.set('p2', 'neon');
+    const clientState = toClientState(game, 'p1', undefined, undefined, framesMap);
+    expect(clientState.players[0].equippedFrame).toBe('fire');
+    expect(clientState.players[1].equippedFrame).toBe('neon');
+  });
+
+  it('returns null equippedFrame when no map provided', () => {
+    const players = [
+      { id: 'p1', odId: 'p1', name: 'Player 1', isBot: false },
+      { id: 'p2', odId: 'p2', name: 'Player 2', isBot: false },
+    ];
+    const game = createGame('room1', players);
+    const clientState = toClientState(game, 'p1');
+    expect(clientState.players[0].equippedFrame).toBeNull();
+    expect(clientState.players[1].equippedFrame).toBeNull();
+  });
+
+  it('returns null equippedFrame for players not in frames map', () => {
+    const players = [
+      { id: 'p1', odId: 'p1', name: 'Player 1', isBot: false },
+      { id: 'p2', odId: 'p2', name: 'Player 2', isBot: false },
+    ];
+    const game = createGame('room1', players);
+    const framesMap = new Map<string, string>();
+    framesMap.set('p1', 'lightning');
+    const clientState = toClientState(game, 'p1', undefined, undefined, framesMap);
+    expect(clientState.players[0].equippedFrame).toBe('lightning');
+    expect(clientState.players[1].equippedFrame).toBeNull();
+  });
 });
 
 // ============================================================

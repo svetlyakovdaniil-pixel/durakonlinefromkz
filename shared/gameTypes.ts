@@ -231,7 +231,7 @@ export interface ClientToServerEvents {
   /** Decline a room invitation */
   declineInvite: (data: { roomId: string; fromGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
-  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string }, cb?: (ok: boolean) => void) => void;
+  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null }, cb?: (ok: boolean) => void) => void;
 }
 
 // --- Client-side game state ---
@@ -285,6 +285,8 @@ export interface ClientPlayer {
   gameId?: number;
   /** Player's avatar preset ID */
   avatarId?: string;
+  /** Player's equipped frame ID */
+  equippedFrame?: string | null;
 }
 
 // --- Available actions ---

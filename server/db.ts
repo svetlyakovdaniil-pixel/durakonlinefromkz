@@ -787,6 +787,7 @@ export async function getPlayerProfileWithFriendStatus(targetGameId: number, myP
     gameId: target.gameId,
     displayName: target.displayName,
     avatarId: target.avatarId,
+    equippedFrame: target.equippedFrame,
     rating: target.rating,
     gamesPlayed: target.gamesPlayed,
     wins: target.wins,

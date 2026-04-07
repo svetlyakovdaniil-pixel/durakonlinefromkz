@@ -22,7 +22,7 @@ import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 import ShopModal from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
 import { useTranslation } from '@/i18n';
-import { FireFrame } from '@/components/FireFrame';
+import { FrameWrapper } from '@/components/AvatarWithFrame';
 
 interface LobbyProps {
   rooms: Room[];
@@ -225,11 +225,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   inRoom={false}
                 >
                   <button className="hover:opacity-80 transition-opacity">
-                    <FireFrame size={72} active={!!(profile as any)?.equippedFrame}>
+                    <FrameWrapper frameId={(profile as any)?.equippedFrame} size={72}>
                       <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
                         <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
                       </div>
-                    </FireFrame>
+                    </FrameWrapper>
                   </button>
                 </ProfileDrawer>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -257,11 +257,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Row 2: Shanyrak + button (aligned with Bell) */}
                 <div className="flex items-center gap-0.5">
                   <span className="text-sm text-green-400 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
-                  <div className="w-[28px] h-[28px] flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-[20px] object-contain" />
+                  <div className="flex items-center justify-center" style={{width: '28px', height: '28px'}}>
+                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" style={{width: '28px', height: '28px'}} className="object-contain" />
                   </div>
                   <button
-                    className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                    className="flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
+                    style={{width: '20px', height: '20px'}}
                     onClick={() => setShowShanyrakTopUp(true)}
                   >
                     +
@@ -338,11 +339,11 @@ onClick={() => setShowTengeTopUp(true)}
                   inRoom={false}
                 >
                   <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                    <FireFrame size={40} active={!!(profile as any)?.equippedFrame}>
+                    <FrameWrapper frameId={(profile as any)?.equippedFrame} size={40}>
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
                         <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
                       </div>
-                    </FireFrame>
+                    </FrameWrapper>
                   </button>
                 </ProfileDrawer>
                 <span className="text-base text-amber-200/70 font-medium">{userName}</span>

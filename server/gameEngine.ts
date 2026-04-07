@@ -1155,6 +1155,7 @@ export function toClientState(
   playerId: string,
   playerGameIdsMap?: Map<string, number>,
   playerAvatarIdsMap?: Map<string, string>,
+  playerEquippedFramesMap?: Map<string, string>,
 ): ClientGameState {
   const myIndex = state.players.findIndex(p => p.id === playerId);
 
@@ -1169,6 +1170,7 @@ export function toClientState(
     leftGame: p.leftGame,
     gameId: playerGameIdsMap?.get(p.id),
     avatarId: playerAvatarIdsMap?.get(p.id) ?? (p.isBot ? 'bot' : undefined),
+    equippedFrame: playerEquippedFramesMap?.get(p.id) ?? null,
   }));
 
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;

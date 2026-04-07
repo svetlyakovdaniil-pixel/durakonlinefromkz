@@ -14,6 +14,7 @@ import { getAvatarUrl } from '../../../shared/avatars';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
+import { FrameWrapper } from './AvatarWithFrame';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -1250,11 +1251,13 @@ export default function GameTable({
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                       disabled={p.isBot || !p.gameId}
                     >
-                      <img
-                        src={getAvatarUrl(p.avatarId)}
-                        alt={p.name}
-                        className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
-                      />
+                      <FrameWrapper frameId={p.equippedFrame} size={manyOpponents ? 32 : 40}>
+                        <img
+                          src={getAvatarUrl(p.avatarId)}
+                          alt={p.name}
+                          className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
+                        />
+                      </FrameWrapper>
                     </button>
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
                       {isOppAttacker && <Swords className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-red-400`} />}
@@ -1899,11 +1902,13 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
         ) : profile ? (
           <div className="flex flex-col items-center gap-3">
             {/* Avatar & Name */}
-            <img
-              src={getAvatarUrl(profile.avatarId)}
-              alt={profile.displayName || 'Player'}
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60 object-cover"
-            />
+            <FrameWrapper frameId={profile.equippedFrame} size={64}>
+              <img
+                src={getAvatarUrl(profile.avatarId)}
+                alt={profile.displayName || 'Player'}
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60 object-cover"
+              />
+            </FrameWrapper>
             <div className="text-center">
               <h3 className="text-amber-100 font-bold text-base sm:text-lg">{profile.displayName || t('game.player')}</h3>
               <span className="text-amber-200/50 text-xs">ID {profile.gameId}</span>

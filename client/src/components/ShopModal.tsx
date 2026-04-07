@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Flame } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 import { FireFrame } from './FireFrame';
+import { NeonFrame } from './NeonFrame';
+import { LightningFrame } from './LightningFrame';
+import { IceFrame } from './IceFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -22,9 +25,65 @@ export const AVATAR_FRAMES = [
     description: 'Реалистичная анимация огня вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы нақты от анимациясы',
     price: 500,
-    component: 'fire' as const,
+    icon: Flame,
+    iconColor: 'text-orange-400',
+    bgGradient: 'from-amber-800 to-amber-950',
+  },
+  {
+    id: 'neon',
+    name: 'Неоновая рамка',
+    nameKk: 'Неон жақтау',
+    description: 'Яркое неоновое свечение с переливами цветов',
+    descriptionKk: 'Түстердің ауысуымен жарқын неон жарқылы',
+    price: 800,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
+        <circle cx="12" cy="12" r="8" />
+        <circle cx="12" cy="12" r="4" />
+      </svg>
+    ),
+    iconColor: 'text-cyan-400',
+    bgGradient: 'from-cyan-900 to-purple-950',
+  },
+  {
+    id: 'lightning',
+    name: 'Молния рамка',
+    nameKk: 'Найзағай жақтау',
+    description: 'Электрические молнии и искры вокруг аватарки',
+    descriptionKk: 'Аватар айналасындағы электр найзағайлары мен ұшқындар',
+    price: 1200,
+    icon: Zap,
+    iconColor: 'text-blue-300',
+    bgGradient: 'from-blue-900 to-indigo-950',
+  },
+  {
+    id: 'ice',
+    name: 'Ледяная рамка',
+    nameKk: 'Мұз жақтау',
+    description: 'Ледяные кристаллы и снежинки вокруг аватарки',
+    descriptionKk: 'Аватар айналасындағы мұз кристалдары мен қар ұшқындары',
+    price: 1000,
+    icon: Snowflake,
+    iconColor: 'text-sky-300',
+    bgGradient: 'from-sky-900 to-blue-950',
   },
 ] as const;
+
+/** Renders the correct frame component for a given frame id */
+function FramePreview({ frameId, size, children }: { frameId: string; size: number; children: React.ReactNode }) {
+  switch (frameId) {
+    case 'fire':
+      return <FireFrame size={size} active={true}>{children}</FireFrame>;
+    case 'neon':
+      return <NeonFrame size={size} active={true}>{children}</NeonFrame>;
+    case 'lightning':
+      return <LightningFrame size={size} active={true}>{children}</LightningFrame>;
+    case 'ice':
+      return <IceFrame size={size} active={true}>{children}</IceFrame>;
+    default:
+      return <>{children}</>;
+  }
+}
 
 interface ShopModalProps {
   open: boolean;
@@ -242,17 +301,18 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
               {AVATAR_FRAMES.map(frame => {
                 const isOwned = ownedFrames.includes(frame.id);
                 const canAffordFrame = currentTenge >= frame.price;
+                const IconComp = frame.icon;
                 return (
                   <div key={frame.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-4">
                       <div className="shrink-0">
-                        <FireFrame size={64} active={true}>
+                        <FramePreview frameId={frame.id} size={64}>
                           <div className="w-[64px] h-[64px] rounded-full overflow-hidden border-2 border-amber-500/60">
-                            <div className="w-full h-full bg-gradient-to-br from-amber-800 to-amber-950 flex items-center justify-center">
-                              <Flame className="w-8 h-8 text-orange-400" />
+                            <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                              <IconComp className={`w-8 h-8 ${frame.iconColor}`} />
                             </div>
                           </div>
-                        </FireFrame>
+                        </FramePreview>
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-amber-100 font-bold text-sm mb-1">

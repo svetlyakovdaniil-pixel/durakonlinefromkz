@@ -163,4 +163,75 @@ describe('Avatar Frames', () => {
       expect(second.reason).toBe('already_owned');
     });
   });
+
+  describe('New frame types (neon, lightning, ice)', () => {
+    it('should support purchasing neon frame', async () => {
+      mockedPurchaseFrame.mockResolvedValue({ success: true, newTenge: 200 });
+      const result = await purchaseFrame(1, 'neon', 800);
+      expect(result.success).toBe(true);
+    });
+
+    it('should support purchasing lightning frame', async () => {
+      mockedPurchaseFrame.mockResolvedValue({ success: true, newTenge: 100 });
+      const result = await purchaseFrame(1, 'lightning', 1200);
+      expect(result.success).toBe(true);
+    });
+
+    it('should support purchasing ice frame', async () => {
+      mockedPurchaseFrame.mockResolvedValue({ success: true, newTenge: 0 });
+      const result = await purchaseFrame(1, 'ice', 1000);
+      expect(result.success).toBe(true);
+    });
+
+    it('should support equipping neon frame', async () => {
+      mockedEquipFrame.mockResolvedValue({ success: true });
+      const result = await equipFrame(1, 'neon');
+      expect(result.success).toBe(true);
+    });
+
+    it('should support equipping lightning frame', async () => {
+      mockedEquipFrame.mockResolvedValue({ success: true });
+      const result = await equipFrame(1, 'lightning');
+      expect(result.success).toBe(true);
+    });
+
+    it('should support equipping ice frame', async () => {
+      mockedEquipFrame.mockResolvedValue({ success: true });
+      const result = await equipFrame(1, 'ice');
+      expect(result.success).toBe(true);
+    });
+
+    it('should return all owned frames including new types', async () => {
+      mockedGetOwnedFrames.mockResolvedValue(['fire', 'neon', 'lightning', 'ice']);
+      const result = await getOwnedFrames(1);
+      expect(result).toEqual(['fire', 'neon', 'lightning', 'ice']);
+      expect(result).toHaveLength(4);
+    });
+
+    it('should handle full flow with new frame types', async () => {
+      // Purchase neon
+      mockedPurchaseFrame.mockResolvedValueOnce({ success: true, newTenge: 200 });
+      const purchase = await purchaseFrame(1, 'neon', 800);
+      expect(purchase.success).toBe(true);
+
+      // Equip neon
+      mockedEquipFrame.mockResolvedValueOnce({ success: true });
+      const equip = await equipFrame(1, 'neon');
+      expect(equip.success).toBe(true);
+
+      // Verify equipped
+      mockedGetEquippedFrame.mockResolvedValueOnce('neon');
+      const equipped = await getEquippedFrame(1);
+      expect(equipped).toBe('neon');
+
+      // Switch to ice
+      mockedEquipFrame.mockResolvedValueOnce({ success: true });
+      const switchResult = await equipFrame(1, 'ice');
+      expect(switchResult.success).toBe(true);
+
+      mockedGetEquippedFrame.mockResolvedValueOnce('ice');
+      const newEquipped = await getEquippedFrame(1);
+      expect(newEquipped).toBe('ice');
+    });
+  });
 });

@@ -10,12 +10,12 @@ import {
   User, Users, Trophy, UserPlus, UserCheck, UserX, Crown,
   Swords, Shield, TrendingUp, Hash, Clock, Check, X, Loader2,
   Eye, ArrowLeft, Send, Camera, History, ArrowUpCircle, ArrowDownCircle,
-  Coins, Banknote, Flame,
+  Coins, Banknote,
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
-import { FireFrame } from './FireFrame';
+import { FrameWrapper, FrameIcon } from './AvatarWithFrame';
 import { AVATAR_FRAMES } from './ShopModal';
 
 interface ProfileDrawerProps {
@@ -197,11 +197,11 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <FireFrame size={48} active={!!equippedFrame}>
+            <FrameWrapper frameId={equippedFrame} size={48}>
               <div className="w-[48px] h-[48px] rounded-full overflow-hidden border-2 border-amber-500/60">
                 <img src={getAvatarUrl(profile.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
               </div>
-            </FireFrame>
+            </FrameWrapper>
             <div className="text-amber-100 text-sm">
               {equippedFrame
                 ? (locale === 'kk' ? AVATAR_FRAMES.find(f => f.id === equippedFrame)?.nameKk : AVATAR_FRAMES.find(f => f.id === equippedFrame)?.name) || equippedFrame
@@ -234,13 +234,13 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     equippedFrame === frame.id ? 'bg-amber-700/30 border border-amber-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-transparent'
                   }`}
                 >
-                  <FireFrame size={40} active={true}>
+                  <FrameWrapper frameId={frame.id} size={40}>
                     <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-amber-500/60">
-                      <div className="w-full h-full bg-gradient-to-br from-amber-800 to-amber-950 flex items-center justify-center">
-                        <Flame className="w-5 h-5 text-orange-400" />
+                      <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                        <FrameIcon frameId={frame.id} />
                       </div>
                     </div>
-                  </FireFrame>
+                  </FrameWrapper>
                   <span className="text-amber-100 text-sm">{locale === 'kk' ? frame.nameKk : frame.name}</span>
                   {equippedFrame === frame.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
