@@ -1,0 +1,6 @@
+Desktop preview observations:
+- Title shows "Дурак онлайн from KZ" with "онлайн" in green color - CORRECT
+- No separate online/offline Badge visible - CORRECT
+- Gamepad2 icon still visible next to title - OK
+- The word "онлайн" is green and same font/size as rest of title - CORRECT
+- Layout looks clean, no issues

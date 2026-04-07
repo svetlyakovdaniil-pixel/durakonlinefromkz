@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Wifi, WifiOff, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -173,12 +173,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden pb-8">
             {/* Row 1: Title left + Avatar center + Logout right */}
             <div className="relative flex items-start justify-between">
-              {/* Left: Title + Online + Rules */}
+              {/* Left: Title with connection indicator + Rules */}
               <div className="flex flex-col">
-                <h1 className="text-xl font-bold text-amber-100 leading-tight text-center">{locale === 'kk' ? <>Дурак онлайн<br/>from KZ</> : <>Дурак онлайн<br/>from KZ</>}</h1>
-                <Badge variant="outline" className={`mt-1 text-xs px-2 py-0.5 w-fit ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />{t('common.online')}</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />{t('common.offline')}</>}
-                </Badge>
+                <h1 className="text-xl font-bold text-amber-100 leading-tight">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span><br/>from KZ</h1>
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded mt-1 w-fit"
                   onClick={() => setShowRules(true)}
@@ -274,7 +271,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Gamepad2 className="w-7 h-7 text-amber-400" />
-                <h1 className="text-xl font-bold text-amber-100">{t('lobby.title')}</h1>
+                <h1 className="text-xl font-bold text-amber-100">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
                 {/* Rules button */}
@@ -315,9 +312,7 @@ onClick={() => setShowTengeTopUp(true)}
                     +
                   </button>
                 </div>
-                <Badge variant="outline" className={`text-sm px-2.5 py-0.5 ${connected ? 'border-green-600/40 text-green-400' : 'border-red-600/40 text-red-400'}`}>
-                  {connected ? <><Wifi className="w-3.5 h-3.5 mr-1" />{t('common.online')}</> : <><WifiOff className="w-3.5 h-3.5 mr-1" />{t('common.offline')}</>}
-                </Badge>
+
                 {profile && (
                   <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-sm px-2.5 py-0.5">
                     ID {profile.gameId}
