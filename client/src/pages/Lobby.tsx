@@ -171,24 +171,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
         <div className="container py-3 sm:py-5">
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden pb-8">
-            {/* Row 1: Title left + Avatar center + Logout right */}
+            {/* Row 1: Title left + Right icons top */}
             <div className="relative flex items-start justify-between">
-              {/* Left: Title with connection indicator + Rules */}
+              {/* Left: Title with connection indicator */}
               <div className="flex flex-col">
                 <h1 className="text-base font-bold text-amber-100 leading-tight">
                   Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
                   <br/>
                   <span className="block text-center">from KZ</span>
                 </h1>
-                <button
-                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded mt-1 w-fit"
-                  onClick={() => setShowRules(true)}
-                >
-                  <HelpCircle className="w-5 h-5" />
-                </button>
               </div>
-              {/* Center: Avatar + Name/ID — absolutely centered on screen */}
-              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center">
+              {/* Center: Avatar + Name/ID — pushed down so name/ID aligns with shop icon */}
+              <div className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center" style={{top: '24px'}}>
                 <ProfileDrawer
                   profile={profile}
                   onlineFriendIds={onlineFriendIds}
@@ -266,6 +260,15 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </div>
                 </div>
               </div>
+            </div>
+            {/* Row 2: Rules icon at bottom-left, aligned with shop icon level */}
+            <div className="flex justify-start" style={{marginTop: '-28px'}}>
+              <button
+                className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
+                onClick={() => setShowRules(true)}
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
             </div>
           </div>
 

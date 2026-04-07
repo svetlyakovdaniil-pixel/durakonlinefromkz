@@ -1,0 +1,1 @@
+Desktop view V60: looks the same as before, no issues. Need to check mobile view by resizing or using device emulation to verify rules icon and avatar positioning.
