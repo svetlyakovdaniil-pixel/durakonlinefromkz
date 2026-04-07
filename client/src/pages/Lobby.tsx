@@ -262,7 +262,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
             </div>
             {/* Row 2: Rules icon at bottom-left, aligned with shop icon level */}
-            <div className="flex justify-start" style={{marginTop: '-28px'}}>
+            <div className="flex justify-start relative z-10" style={{marginTop: '-28px'}}>
               <button
                 className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
                 onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px'}}
