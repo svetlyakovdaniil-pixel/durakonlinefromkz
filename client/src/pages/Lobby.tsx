@@ -169,7 +169,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
       {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
-        <div className="container py-3 sm:py-5" style={{paddingBottom: '5px'}}>
+        <div className="container py-3 sm:py-5" style={{paddingBottom: '5px', marginBottom: '12px'}}>
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
@@ -178,14 +178,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div className="flex flex-col items-start gap-1 relative z-20">
                 {/* Settings row */}
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
-                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
+                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded" style={{marginLeft: '-8px'}}>
                     <Settings className="w-5 h-5" />
                   </button>
                 </SettingsSheet>
                 {/* Bell (notifications) row */}
                 <button
                   className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                  onClick={handleOpenNotifications}
+                  onClick={handleOpenNotifications} style={{marginLeft: '-8px'}}
                 >
                   <Bell className="w-5 h-5" />
                   {unreadCount > 0 && (
@@ -197,7 +197,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Title — shifted right toward avatar */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
-                <h1 className="text-base font-bold text-amber-100 leading-tight text-center">
+                <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginRight: '124px'}}>
                   Дурак
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
@@ -258,14 +258,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </div>
                     <button
                       className="w-5 h-5 flex items-center justify-center rounded bg-green-700/40 hover:bg-green-600/50 text-green-200 text-sm font-bold transition-colors leading-none"
-                      onClick={() => setShowShanyrakTopUp(true)} style={{marginTop: '-6px'}}
+                      onClick={() => setShowShanyrakTopUp(true)} style={{marginTop: '-6px', marginRight: '-36px'}}
                     >
                       +
                     </button>
                   </div>
                   <button
                     className="relative z-20 text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                    onClick={() => setShowShop(true)}
+                    onClick={() => setShowShop(true)} style={{marginTop: '44px'}}
                   >
                     <ShoppingCart className="w-5 h-5" style={{marginTop: '4px'}} />
                   </button>
@@ -276,7 +276,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex justify-start relative z-20" style={{marginTop: '-28px'}}>
               <button
                 className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded"
-                onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px'}}
+                onClick={() => setShowRules(true)} style={{paddingRight: '0px', paddingLeft: '0px', marginTop: '-19px', marginLeft: '-2px'}}
               >
                 <HelpCircle className="w-5 h-5" />
               </button>
