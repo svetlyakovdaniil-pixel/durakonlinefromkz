@@ -174,8 +174,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left column: Settings / Bell / Rules — equal spacing, vertically centered */}
-              <div className="flex flex-col items-center relative z-20" style={{gap: '6px', marginLeft: '-4px'}}>
+              {/* Left column: Settings / Bell / Rules — spread top/center/bottom */}
+              <div className="flex flex-col items-center justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
                 {/* Row 1: Settings */}
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded">
@@ -239,8 +239,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: +Tenge / +Shanyrak / Shop — aligned with left column rows */}
-              <div className="flex flex-col items-end relative z-20" style={{gap: '6px', marginRight: '-4px'}}>
+              {/* Right column: +Tenge / +Shanyrak / Shop — spread top/center/bottom */}
+              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-4px'}}>
                 {/* Row 1: Tenge + button (aligned with Settings) */}
                 <div className="flex items-center gap-0.5">
                   <span className="text-[10px] text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
