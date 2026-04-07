@@ -643,7 +643,7 @@ function LeaderboardTab({ myGameId }: { myGameId?: number }) {
                 <span className="text-amber-200/30 text-[10px]">#{player.gameId}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-amber-200/50 text-[10px]">{player.wins}W/{player.losses}L</span>
+                <span className="text-amber-200/50 text-[10px]">{player.wins}{t('profile.wins').charAt(0)}/{player.losses}{t('profile.losses').charAt(0)}</span>
                 <Badge variant="outline" className="border-amber-700/20 text-amber-300 text-xs px-1.5">
                   {player.rating}
                 </Badge>

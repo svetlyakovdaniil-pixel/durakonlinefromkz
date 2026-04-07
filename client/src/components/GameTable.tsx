@@ -1159,10 +1159,14 @@ export default function GameTable({
               </div>
               {/* Volume sliders dropdown */}
               {showVolumePanel && (
-                <div className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[200px] shadow-xl backdrop-blur-sm">
+                <div
+                  className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[220px] shadow-xl backdrop-blur-sm"
+                  onClick={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                >
                   {/* Music volume */}
-                  <div className="mb-3">
-                    <div className="flex items-center justify-between mb-1">
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-amber-200/70">
                         <Music2 className="w-3 h-3 inline mr-1" />{t('game.musicVolume')}
                       </span>
@@ -1172,14 +1176,17 @@ export default function GameTable({
                       type="range"
                       min="0"
                       max="100"
+                      step="1"
                       value={Math.round(musicVolume * 100)}
                       onChange={(e) => onMusicVolumeChange?.(Number(e.target.value) / 100)}
-                      className="w-full h-1.5 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                      onInput={(e) => onMusicVolumeChange?.(Number((e.target as HTMLInputElement).value) / 100)}
+                      className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                      style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
                     />
                   </div>
                   {/* Sound effects volume */}
                   <div>
-                    <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center justify-between mb-2">
                       <span className="text-xs text-amber-200/70">
                         <Volume2 className="w-3 h-3 inline mr-1" />{t('game.soundVolume')}
                       </span>
@@ -1189,9 +1196,12 @@ export default function GameTable({
                       type="range"
                       min="0"
                       max="100"
+                      step="1"
                       value={Math.round(soundVolume * 100)}
                       onChange={(e) => setSoundVolume(Number(e.target.value) / 100)}
-                      className="w-full h-1.5 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                      onInput={(e) => setSoundVolume(Number((e.target as HTMLInputElement).value) / 100)}
+                      className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                      style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
                     />
                   </div>
                 </div>

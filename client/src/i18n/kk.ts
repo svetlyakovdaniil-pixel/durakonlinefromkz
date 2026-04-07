@@ -27,8 +27,8 @@ export const kk = {
 
   // Lobby
   lobby: {
-    title: 'Қазақ Дурагі',
-    subtitle: 'Онлайн',
+    title: 'Дурак онлайн from KZ',
+    subtitle: '',
     createRoom: 'Бөлме құру',
     createRoomShort: 'Құру',
     joinRoom: 'Кіру',
@@ -242,6 +242,11 @@ export const kk = {
     requestSent: 'Сұраныс жіберілді',
     pendingResponse: 'Сіздің жауабыңызды күтуде',
     alreadyFriends: 'Достар',
+    gamesPlayed: 'Ойындар',
+    rating: 'Рейтинг',
+    winsLosses: 'Ж / Ж',
+    winRate: 'Жеңіс %',
+    player: 'Ойыншы',
     youTake: 'Сіз аласыз',
     defenderTakesAdd: 'Қорғаушы алады — тастаңыз!',
     cancel: 'Болдырмау',
@@ -369,9 +374,9 @@ export const kk = {
   // Rules
   rules: {
     title: 'Ойын ережелері',
-    chapter1: '1-тарау: Қазақ Дурагі',
+    chapter1: '1-тарау: Дурак онлайн from KZ',
     chapter2: '2-тарау: Стандартты «Дурак» ережелері',
-    footer: 'Қазақ Дурагі Онлайн — бірегей ережелері бар карта ойыны',
+    footer: 'Дурак онлайн from KZ — бірегей ережелері бар карта ойыны',
     deckTitle: 'Колода және тарату',
     deckText: '4 стандартты колода, әрқайсысында 36 карта (6-дан тузға дейін, төрт масть). Барлығы 144 карта + 1 арнайы «777» картасы = 145 карта. Әр картаның 4 көшірмесі бар. Әр ойыншыға 14 карта таратылады. Ойынға 2-ден 8 ойыншы қатыса алады.',
     copiesTitle: 'Карта көшірмелері',
@@ -445,7 +450,7 @@ export const kk = {
     title: 'Достарды шақыру',
     copyLink: 'Сілтемені көшіру',
     copied: 'Сілтеме көшірілді!',
-    shareText: 'Қазақ Дурагі ойынына қосылыңыз!',
+    shareText: 'Дурак онлайн from KZ ойынына қосылыңыз!',
     inviteTitle: 'Бөлмеге шақыру',
     inviteText: '{name} сізді «{room}» бөлмесіне шақырады',
     accept: 'Қабылдау',
@@ -500,7 +505,7 @@ export const kk = {
 
   // Landing page
   landing: {
-    title: 'Қазақ Дурагі',
+    title: 'Дурак онлайн from KZ',
     subtitle: 'Қазақ ережелерімен бірегей карта ойыны',
     login: 'Кіру және ойнау',
     feature1Title: 'Арнайы карталар',

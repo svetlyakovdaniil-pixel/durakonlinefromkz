@@ -27,8 +27,8 @@ export const ru = {
 
   // Lobby
   lobby: {
-    title: 'Казахский Дурак',
-    subtitle: 'Онлайн',
+    title: 'Дурак онлайн from KZ',
+    subtitle: '',
     createRoom: 'Создать комнату',
     createRoomShort: 'Создать',
     joinRoom: 'Войти',
@@ -242,6 +242,11 @@ export const ru = {
     requestSent: 'Запрос отправлен',
     pendingResponse: 'Ожидает вашего ответа',
     alreadyFriends: 'Друзья',
+    gamesPlayed: 'Игры',
+    rating: 'Рейтинг',
+    winsLosses: 'П / П',
+    winRate: 'Винрейт',
+    player: 'Игрок',
     youTake: 'Вы берёте',
     defenderTakesAdd: 'Защитник берёт — докиньте!',
     cancel: 'Отмена',
@@ -369,9 +374,9 @@ export const ru = {
   // Rules
   rules: {
     title: 'Правила игры',
-    chapter1: 'Глава 1: Казахский Дурак',
+    chapter1: 'Глава 1: Дурак онлайн from KZ',
     chapter2: 'Глава 2: Стандартные правила «Дурака»',
-    footer: 'Казахский Дурак Онлайн — карточная игра с уникальными правилами',
+    footer: 'Дурак онлайн from KZ — карточная игра с уникальными правилами',
     // Chapter 1 sections
     deckTitle: 'Колода и раздача',
     deckText: 'Используется 4 стандартные колоды по 36 карт (от 6 до туза, четыре масти). Итого 144 карты + 1 специальная карта «777» = 145 карт. Каждой карты в игре по 4 копии. Каждому игроку раздаётся по 14 карт. В игре может участвовать от 2 до 8 игроков.',
@@ -447,7 +452,7 @@ export const ru = {
     title: 'Пригласить друзей',
     copyLink: 'Скопировать ссылку',
     copied: 'Ссылка скопирована!',
-    shareText: 'Присоединяйся к игре в Казахский Дурак!',
+    shareText: 'Присоединяйся к игре в Дурак онлайн from KZ!',
     inviteTitle: 'Приглашение в комнату',
     inviteText: '{name} приглашает вас в комнату «{room}»',
     accept: 'Принять',
@@ -502,7 +507,7 @@ export const ru = {
 
   // Landing page
   landing: {
-    title: 'Казахский Дурак',
+    title: 'Дурак онлайн from KZ',
     subtitle: 'Уникальная карточная игра с казахскими правилами',
     login: 'Войти и играть',
     feature1Title: 'Специальные карты',

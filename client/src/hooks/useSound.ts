@@ -83,6 +83,12 @@ function preloadAll() {
   }
 }
 
+// Per-sound volume multipliers (relative to master volume)
+const SOUND_VOLUME_MULTIPLIERS: Partial<Record<SoundName, number>> = {
+  bito: 0.7,      // 30% quieter
+  cardTake: 0.7,  // 30% quieter
+};
+
 function playBuffer(name: SoundName, volume: number) {
   const buffer = bufferCache.get(name);
   if (!buffer) return;
@@ -91,8 +97,9 @@ function playBuffer(name: SoundName, volume: number) {
   const source = ctx.createBufferSource();
   source.buffer = buffer;
 
+  const multiplier = SOUND_VOLUME_MULTIPLIERS[name] ?? 1;
   const gainNode = ctx.createGain();
-  gainNode.gain.value = volume;
+  gainNode.gain.value = volume * multiplier;
 
   source.connect(gainNode);
   gainNode.connect(ctx.destination);
