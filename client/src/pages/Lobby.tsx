@@ -174,9 +174,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left: Title with connection indicator — 3 rows */}
-              <div className="flex flex-col relative z-20">
-                <h1 className="text-base font-bold text-amber-100 leading-tight">
+              {/* Left: Title with connection indicator — 3 rows, centered text, shifted right toward avatar */}
+              <div className="flex flex-col relative z-20" style={{marginLeft: '8px'}}>
+                <h1 className="text-base font-bold text-amber-100 leading-tight text-center">
                   Дурак
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
