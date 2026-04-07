@@ -418,6 +418,8 @@ export interface GameTableProps {
   onReturnToLobby?: () => void;
   musicEnabled?: boolean;
   onToggleMusic?: () => void;
+  musicVolume?: number;
+  onMusicVolumeChange?: (v: number) => void;
   frozenInfo?: { disconnectedPlayerName: string; secondsLeft: number } | null;
 }
 
@@ -425,7 +427,7 @@ export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby,
-  musicEnabled = false, onToggleMusic, frozenInfo,
+  musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
 }: GameTableProps) {
   const gs = gameState;
   const myIdx = gs.myIndex;
@@ -470,7 +472,7 @@ export default function GameTable({
   const prevDefenderIdx = useRef(gs.currentDefenderIdx);
 
   // Sound effects
-  const { play: playSound, enabled: soundEnabled, toggle: toggleSound } = useSound();
+  const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSound();
   const { settings: gameSettings } = useSettings();
 
   // Drop zone highlight
@@ -493,11 +495,14 @@ export default function GameTable({
     const discardGrew = gs.discardCount > prevDiscardCount.current;
 
     if (battleCleared && discardGrew) {
+      // Cards went to discard = bito
       const cardsCleared = prevBattleFieldLen.current * 2; // attack + defense pairs
       setBitoCardCount(cardsCleared);
       setShowBitoAnim(true);
-      // Play bito sound
       playSound('bito', 0.6);
+    } else if (battleCleared && !discardGrew) {
+      // Battlefield cleared but discard didn't grow = defender took the cards
+      playSound('cardTake', 0.7);
     }
 
     prevBattleFieldLen.current = gs.battleField.length;
@@ -566,18 +571,7 @@ export default function GameTable({
     prevDefenderIdx.current = gs.currentDefenderIdx;
   }, [gs.battleField, gs.defenderTaking, gs.revealedPassThroughs, gs.trumpInfo.currentTrump, gs.currentDefenderIdx, playSound]);
 
-  // Sound for defender taking cards (battlefield clears but discard doesn't grow = cards taken)
-  useEffect(() => {
-    if (isFirstRender.current) return;
-
-    const battleCleared = prevBattleFieldLen.current > 0 && gs.battleField.length === 0;
-    const discardGrew = gs.discardCount > prevDiscardCount.current;
-
-    // If battlefield cleared but discard did NOT grow, defender took the cards
-    if (battleCleared && !discardGrew) {
-      playSound('cardTake', 0.7);
-    }
-  }, [gs.battleField.length, gs.discardCount, playSound]);
+  // cardTake sound is now handled in the bito useEffect above (merged to avoid ref race condition)
 
   // Sound for direction change (10 was played)
   useEffect(() => {
@@ -936,6 +930,7 @@ export default function GameTable({
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
+  const [showVolumePanel, setShowVolumePanel] = useState(false);
   const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
 
   const opponents = gs.players.filter((_, i) => i !== myIdx);
@@ -1135,22 +1130,73 @@ export default function GameTable({
               <Timer className="w-4 h-4 mr-0.5" />
               {turnTimer}с
             </Badge>
-            {onToggleMusic && (
-              <button
-                className={`transition-colors p-1 sm:p-1.5 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-                onClick={onToggleMusic}
-                title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
-              >
-                {musicEnabled ? <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6 opacity-40" />}
-              </button>
-            )}
-            <button
-              className={`transition-colors p-1 sm:p-1.5 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-              onClick={toggleSound}
-              title={soundEnabled ? t('game.soundOn') : t('game.soundOff')}
-            >
-              {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
-            </button>
+            {/* Volume controls group */}
+            <div className="relative">
+              <div className="flex items-center gap-0.5">
+                {onToggleMusic && (
+                  <button
+                    className={`transition-colors p-1 sm:p-1.5 rounded ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+                    onClick={onToggleMusic}
+                    title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
+                  >
+                    {musicEnabled ? <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6 opacity-40" />}
+                  </button>
+                )}
+                <button
+                  className={`transition-colors p-1 sm:p-1.5 rounded ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
+                  onClick={toggleSound}
+                  title={soundEnabled ? t('game.soundOn') : t('game.soundOff')}
+                >
+                  {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
+                </button>
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-0.5 rounded"
+                  onClick={() => setShowVolumePanel(p => !p)}
+                  title={t('game.soundVolume')}
+                >
+                  <ChevronLeft className={`w-3 h-3 sm:w-4 sm:h-4 transition-transform ${showVolumePanel ? 'rotate-90' : '-rotate-90'}`} />
+                </button>
+              </div>
+              {/* Volume sliders dropdown */}
+              {showVolumePanel && (
+                <div className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[200px] shadow-xl backdrop-blur-sm">
+                  {/* Music volume */}
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-amber-200/70">
+                        <Music2 className="w-3 h-3 inline mr-1" />{t('game.musicVolume')}
+                      </span>
+                      <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round(musicVolume * 100)}
+                      onChange={(e) => onMusicVolumeChange?.(Number(e.target.value) / 100)}
+                      className="w-full h-1.5 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                    />
+                  </div>
+                  {/* Sound effects volume */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-amber-200/70">
+                        <Volume2 className="w-3 h-3 inline mr-1" />{t('game.soundVolume')}
+                      </span>
+                      <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={Math.round(soundVolume * 100)}
+                      onChange={(e) => setSoundVolume(Number(e.target.value) / 100)}
+                      className="w-full h-1.5 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
             {onLeaveGame && !gs.players[myIdx]?.isOut && (
               <button
                 className="text-gray-400 hover:text-red-400 transition-colors p-1 sm:p-1.5 rounded"

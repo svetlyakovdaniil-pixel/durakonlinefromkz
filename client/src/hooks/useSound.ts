@@ -15,68 +15,121 @@ const SOUND_URLS = {
   transfer: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4_685db838.mp3',
   multiCard: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B8%D0%B3%D1%80%D0%BE%D0%BA%D0%BA%D0%B8%D0%B4%D0%B0%D0%B5%D1%82%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%81%D1%80%D0%B0%D0%B7%D1%83%D0%BD%D0%B5%D1%81%D0%BA%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%D0%BA%D0%B0%D1%80%D1%82%D0%B7%D0%B0%D1%80%D0%B0%D0%B7_db22f391.mp3',
   yourTurn: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%92%D0%90%D0%A8%D0%A5%D0%9E%D0%94_41ad06aa.mp3',
-  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bito1_short_e1150b0d.mp3',
+  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bito1_120_6a477906.mp3',
 } as const;
 
 export type SoundName = keyof typeof SOUND_URLS;
 
-const STORAGE_KEY = 'kazakh-durak-sound-enabled';
 const SETTINGS_KEY = 'kazakh-durak-settings';
 
-function readSoundEnabled(): boolean {
+function readSoundSettings(): { enabled: boolean; volume: number } {
   try {
-    // First try the settings context key (primary source)
     const settingsRaw = localStorage.getItem(SETTINGS_KEY);
     if (settingsRaw) {
       const parsed = JSON.parse(settingsRaw);
-      if (typeof parsed.soundEnabled === 'boolean') return parsed.soundEnabled;
+      return {
+        enabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
+        volume: typeof parsed.soundVolume === 'number' ? parsed.soundVolume : 0.5,
+      };
     }
-    // Fallback to legacy key
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored !== 'false';
-  } catch {
-    return true;
+  } catch {}
+  return { enabled: true, volume: 0.5 };
+}
+
+function writeSoundSettings(enabled: boolean, volume: number) {
+  try {
+    const settingsRaw = localStorage.getItem(SETTINGS_KEY);
+    const parsed = settingsRaw ? JSON.parse(settingsRaw) : {};
+    parsed.soundEnabled = enabled;
+    parsed.soundVolume = volume;
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
+  } catch {}
+}
+
+// ── Singleton Web Audio engine (shared across all hook instances) ──
+
+let audioCtx: AudioContext | null = null;
+const bufferCache = new Map<SoundName, AudioBuffer>();
+let preloaded = false;
+
+function getAudioContext(): AudioContext {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  // Resume if suspended (browser autoplay policy)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+async function fetchAndDecode(name: SoundName, url: string): Promise<void> {
+  try {
+    const ctx = getAudioContext();
+    const resp = await fetch(url);
+    const arrayBuf = await resp.arrayBuffer();
+    const audioBuf = await ctx.decodeAudioData(arrayBuf);
+    bufferCache.set(name, audioBuf);
+  } catch (e) {
+    console.warn(`[useSound] Failed to preload ${name}:`, e);
   }
 }
 
+function preloadAll() {
+  if (preloaded) return;
+  preloaded = true;
+  for (const [name, url] of Object.entries(SOUND_URLS)) {
+    fetchAndDecode(name as SoundName, url);
+  }
+}
+
+function playBuffer(name: SoundName, volume: number) {
+  const buffer = bufferCache.get(name);
+  if (!buffer) return;
+
+  const ctx = getAudioContext();
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+
+  const gainNode = ctx.createGain();
+  gainNode.gain.value = volume;
+
+  source.connect(gainNode);
+  gainNode.connect(ctx.destination);
+  source.start(0);
+}
+
 /**
- * Sound manager hook for the card game.
- * Preloads all sounds on first user interaction and provides play functions.
- * Reads sound enabled state from SettingsContext localStorage.
+ * Sound manager hook using Web Audio API for zero-latency playback.
+ * Decodes audio files into AudioBuffers on first user interaction.
+ * Each play() creates a new BufferSource — unlimited concurrent sounds, no clipping.
  */
 export function useSound() {
-  const [enabled, setEnabled] = useState(readSoundEnabled);
+  const initial = readSoundSettings();
+  const [enabled, setEnabled] = useState(initial.enabled);
+  const [volume, setVolume] = useState(initial.volume);
+  const enabledRef = useRef(initial.enabled);
+  const volumeRef = useRef(initial.volume);
 
-  const audioCache = useRef<Map<SoundName, HTMLAudioElement>>(new Map());
-  const preloaded = useRef(false);
+  // Keep refs in sync
+  useEffect(() => { enabledRef.current = enabled; }, [enabled]);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
 
-  // Listen for storage changes (from SettingsContext updates)
+  // Listen for external settings changes (from SettingsContext)
   useEffect(() => {
     const interval = setInterval(() => {
-      const current = readSoundEnabled();
-      setEnabled(prev => prev !== current ? current : prev);
+      const s = readSoundSettings();
+      setEnabled(prev => prev !== s.enabled ? s.enabled : prev);
+      setVolume(prev => prev !== s.volume ? s.volume : prev);
     }, 500);
     return () => clearInterval(interval);
-  }, []);
-
-  // Preload all sounds
-  const preload = useCallback(() => {
-    if (preloaded.current) return;
-    preloaded.current = true;
-
-    for (const [name, url] of Object.entries(SOUND_URLS)) {
-      const audio = new Audio();
-      audio.preload = 'auto';
-      audio.volume = 0.5;
-      audio.src = url;
-      audioCache.current.set(name as SoundName, audio);
-    }
   }, []);
 
   // Preload on first user interaction
   useEffect(() => {
     const handler = () => {
-      preload();
+      getAudioContext(); // ensure context is created on user gesture
+      preloadAll();
       document.removeEventListener('click', handler);
       document.removeEventListener('keydown', handler);
       document.removeEventListener('touchstart', handler);
@@ -91,41 +144,32 @@ export function useSound() {
       document.removeEventListener('keydown', handler);
       document.removeEventListener('touchstart', handler);
     };
-  }, [preload]);
+  }, []);
 
-  // Play a sound effect
-  const play = useCallback((name: SoundName, volume?: number) => {
-    if (!enabled) return;
+  // Play a sound effect — uses refs for instant access without stale closures
+  const play = useCallback((name: SoundName, volumeOverride?: number) => {
+    if (!enabledRef.current) return;
+    const vol = volumeOverride ?? volumeRef.current;
+    playBuffer(name, vol);
+  }, []);
 
-    const cached = audioCache.current.get(name);
-    if (cached) {
-      const clone = cached.cloneNode() as HTMLAudioElement;
-      clone.volume = volume ?? 0.5;
-      clone.play().catch(() => {});
-    } else {
-      const audio = new Audio(SOUND_URLS[name]);
-      audio.volume = volume ?? 0.5;
-      audio.play().catch(() => {});
-    }
-  }, [enabled]);
-
-  // Toggle sound on/off (updates both keys for sync)
+  // Toggle sound on/off
   const toggle = useCallback(() => {
     setEnabled(prev => {
       const next = !prev;
-      try {
-        localStorage.setItem(STORAGE_KEY, String(next));
-        // Also update settings context key
-        const settingsRaw = localStorage.getItem(SETTINGS_KEY);
-        if (settingsRaw) {
-          const parsed = JSON.parse(settingsRaw);
-          parsed.soundEnabled = next;
-          localStorage.setItem(SETTINGS_KEY, JSON.stringify(parsed));
-        }
-      } catch {}
+      enabledRef.current = next;
+      writeSoundSettings(next, volumeRef.current);
       return next;
     });
   }, []);
 
-  return { play, enabled, toggle, preload };
+  // Set volume (0..1)
+  const setVol = useCallback((v: number) => {
+    const clamped = Math.max(0, Math.min(1, v));
+    setVolume(clamped);
+    volumeRef.current = clamped;
+    writeSoundSettings(enabledRef.current, clamped);
+  }, []);
+
+  return { play, enabled, toggle, preload: preloadAll, volume, setVolume: setVol };
 }

@@ -247,6 +247,8 @@ export const ru = {
     cancel: 'Отмена',
     soundOn: 'Выключить звуки',
     soundOff: 'Включить звуки',
+    musicVolume: 'Громкость музыки',
+    soundVolume: 'Громкость звуков',
   },
 
   // Profile

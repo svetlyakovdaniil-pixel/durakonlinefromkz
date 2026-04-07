@@ -247,6 +247,8 @@ export const kk = {
     cancel: 'Болдырмау',
     soundOn: 'Дыбыстарды өшіру',
     soundOff: 'Дыбыстарды қосу',
+    musicVolume: 'Музыка дыбысы',
+    soundVolume: 'Дыбыс деңгейі',
   },
 
   // Profile

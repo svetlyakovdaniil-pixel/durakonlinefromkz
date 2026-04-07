@@ -126,6 +126,8 @@ export default function Home() {
         onReturnToLobby={returnToLobby}
         musicEnabled={music.enabled}
         onToggleMusic={music.toggle}
+        musicVolume={music.volume}
+        onMusicVolumeChange={music.setVolume}
         frozenInfo={frozenInfo}
       />
     );
