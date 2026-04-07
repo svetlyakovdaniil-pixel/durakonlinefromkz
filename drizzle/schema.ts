@@ -52,6 +52,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   ownedDecks: text("ownedDecks"),
   /** JSON array of owned table style IDs, e.g. ["dark_kazakh"] */
   ownedTables: text("ownedTables"),
+  /** JSON array of owned avatar frame IDs, e.g. ["fire"] */
+  ownedFrames: text("ownedFrames"),
+  /** Currently equipped avatar frame ID (null = no frame) */
+  equippedFrame: varchar("equippedFrame", { length: 32 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

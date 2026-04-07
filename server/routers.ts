@@ -36,6 +36,9 @@ import {
   purchaseDeck,
   getOwnedTables,
   purchaseTable,
+  getOwnedFrames,
+  purchaseFrame,
+  equipFrame,
 } from "./db";
 import { emitNotificationToProfile } from "./socketServer";
 
@@ -72,6 +75,7 @@ export const appRouter = router({
           gameId: profile.gameId,
           displayName: profile.displayName,
           avatarId: profile.avatarId,
+          equippedFrame: profile.equippedFrame,
           rating: profile.rating,
           gamesPlayed: profile.gamesPlayed,
           wins: profile.wins,
@@ -386,6 +390,29 @@ export const appRouter = router({
       .input(z.object({ tableId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseTable(ctx.user.id, input.tableId, input.tengeCost);
+        return result;
+      }),
+
+    /** Get owned frame IDs for the current user */
+    ownedFrames: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return [];
+      return getOwnedFrames(profile.id);
+    }),
+
+    /** Purchase a frame */
+    purchaseFrame: protectedProcedure
+      .input(z.object({ frameId: z.string(), tengeCost: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await purchaseFrame(ctx.user.id, input.frameId, input.tengeCost);
+        return result;
+      }),
+
+    /** Equip or unequip a frame */
+    equipFrame: protectedProcedure
+      .input(z.object({ frameId: z.string().nullable() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await equipFrame(ctx.user.id, input.frameId);
         return result;
       }),
   }),

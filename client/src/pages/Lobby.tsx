@@ -22,6 +22,7 @@ import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 import ShopModal from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
 import { useTranslation } from '@/i18n';
+import { FireFrame } from '@/components/FireFrame';
 
 interface LobbyProps {
   rooms: Room[];
@@ -174,7 +175,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             {/* Row 1: Title left + Right icons top */}
             <div className="relative flex items-start justify-between">
               {/* Left: Title with connection indicator */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative z-10">
                 <h1 className="text-base font-bold text-amber-100 leading-tight">
                   Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
                   <br/>
@@ -189,9 +190,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   inRoom={false}
                 >
                   <button className="hover:opacity-80 transition-opacity">
-                    <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
-                      <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
-                    </div>
+                    <FireFrame size={72} active={!!(profile as any)?.equippedFrame}>
+                      <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
+                        <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                    </FireFrame>
                   </button>
                 </ProfileDrawer>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -202,7 +205,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </div>
               </div>
               {/* Right: Settings gear + Tenge, Bell + Shanyrak */}
-              <div className="flex flex-col items-end gap-1">
+              <div className="flex flex-col items-end gap-1 relative z-10">
                 {/* Settings + Tenge row */}
                 <div className="flex items-center gap-1">
                   <div className="flex items-center gap-0.5">
@@ -331,9 +334,11 @@ onClick={() => setShowTengeTopUp(true)}
                   inRoom={false}
                 >
                   <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
-                      <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
-                    </div>
+                    <FireFrame size={40} active={!!(profile as any)?.equippedFrame}>
+                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
+                        <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                      </div>
+                    </FireFrame>
                   </button>
                 </ProfileDrawer>
                 <span className="text-base text-amber-200/70 font-medium">{userName}</span>

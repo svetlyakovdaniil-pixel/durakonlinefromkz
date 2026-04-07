@@ -936,3 +936,108 @@ export async function testAddTenge(userId: number): Promise<{ success: boolean; 
 
   return { success: true, newBalance };
 }
+
+// ============================================================
+// AVATAR FRAMES helpers
+// ============================================================
+
+/**
+ * Get owned frame IDs for a player profile.
+ */
+export async function getOwnedFrames(profileId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const [profile] = await db.select({ ownedFrames: playerProfiles.ownedFrames })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile || !profile.ownedFrames) return [];
+  try {
+    return JSON.parse(profile.ownedFrames) as string[];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get currently equipped frame ID for a player profile.
+ */
+export async function getEquippedFrame(profileId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [profile] = await db.select({ equippedFrame: playerProfiles.equippedFrame })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  return profile?.equippedFrame ?? null;
+}
+
+/**
+ * Purchase a frame for a player. Deducts tenge and adds frame to ownedFrames.
+ */
+export async function purchaseFrame(
+  userId: number,
+  frameId: string,
+  tengeCost: number
+): Promise<{ success: boolean; newTenge?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+  if (owned.includes(frameId)) {
+    return { success: false, reason: 'already_owned' };
+  }
+
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+
+  const newTenge = profile.balanceTenge - tengeCost;
+  owned.push(frameId);
+
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    ownedFrames: JSON.stringify(owned),
+  }).where(eq(playerProfiles.id, profile.id));
+
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'shop_purchase',
+    amount: -tengeCost,
+    currency: 'tenge',
+    description: `Покупка рамки: ${frameId}`,
+    balanceAfter: newTenge,
+  });
+
+  return { success: true, newTenge };
+}
+
+/**
+ * Equip or unequip a frame for a player.
+ * frameId = null means unequip.
+ */
+export async function equipFrame(
+  userId: number,
+  frameId: string | null
+): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  // If equipping, check ownership
+  if (frameId) {
+    const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+    if (!owned.includes(frameId)) {
+      return { success: false, reason: 'not_owned' };
+    }
+  }
+
+  await db.update(playerProfiles).set({
+    equippedFrame: frameId,
+  }).where(eq(playerProfiles.id, profile.id));
+
+  return { success: true };
+}

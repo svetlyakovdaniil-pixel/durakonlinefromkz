@@ -10,11 +10,13 @@ import {
   User, Users, Trophy, UserPlus, UserCheck, UserX, Crown,
   Swords, Shield, TrendingUp, Hash, Clock, Check, X, Loader2,
   Eye, ArrowLeft, Send, Camera, History, ArrowUpCircle, ArrowDownCircle,
-  Coins, Banknote,
+  Coins, Banknote, Flame,
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
+import { FireFrame } from './FireFrame';
+import { AVATAR_FRAMES } from './ShopModal';
 
 interface ProfileDrawerProps {
   /** Current user's profile data */
@@ -93,8 +95,21 @@ export default function ProfileDrawer({
 // ============================================================
 function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showFramePicker, setShowFramePicker] = useState(false);
   const utils = trpc.useUtils();
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const { data: ownedFrames = [] } = trpc.shop.ownedFrames.useQuery();
+  const { data: myProfile } = trpc.profile.me.useQuery();
+  const equippedFrame = (myProfile as any)?.equippedFrame ?? null;
+
+  const equipFrameMutation = trpc.shop.equipFrame.useMutation({
+    onSuccess: () => {
+      toast.success(locale === 'kk' ? 'Жақтау жаңартылды!' : 'Рамка обновлена!');
+      utils.profile.me.invalidate();
+      setShowFramePicker(false);
+    },
+    onError: () => toast.error(t('common.error')),
+  });
 
   const updateAvatar = trpc.profile.updateAvatar.useMutation({
     onSuccess: () => {
@@ -168,6 +183,72 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         <div className="text-amber-200/60 text-xs mb-1">{t('profile.winRate')}</div>
         <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
       </div>
+
+      {/* Frame Selection */}
+      {ownedFrames.length > 0 && (
+        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-amber-200/60 text-xs">{locale === 'kk' ? 'Аватар жақтауы' : 'Рамка аватарки'}</div>
+            <button
+              onClick={() => setShowFramePicker(!showFramePicker)}
+              className="text-amber-400 text-xs hover:text-amber-300 transition-colors"
+            >
+              {locale === 'kk' ? 'Өзгерту' : 'Изменить'}
+            </button>
+          </div>
+          <div className="flex items-center gap-3">
+            <FireFrame size={48} active={!!equippedFrame}>
+              <div className="w-[48px] h-[48px] rounded-full overflow-hidden border-2 border-amber-500/60">
+                <img src={getAvatarUrl(profile.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+              </div>
+            </FireFrame>
+            <div className="text-amber-100 text-sm">
+              {equippedFrame
+                ? (locale === 'kk' ? AVATAR_FRAMES.find(f => f.id === equippedFrame)?.nameKk : AVATAR_FRAMES.find(f => f.id === equippedFrame)?.name) || equippedFrame
+                : (locale === 'kk' ? 'Жақтау жоқ' : 'Без рамки')}
+            </div>
+          </div>
+
+          {showFramePicker && (
+            <div className="mt-3 space-y-2 border-t border-amber-700/20 pt-3">
+              {/* No frame option */}
+              <button
+                onClick={() => equipFrameMutation.mutate({ frameId: null })}
+                className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                  !equippedFrame ? 'bg-amber-700/30 border border-amber-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-transparent'
+                }`}
+              >
+                <div className="w-10 h-10 rounded-full bg-[#1a2d45] border-2 border-amber-700/30 flex items-center justify-center">
+                  <X className="w-5 h-5 text-amber-200/40" />
+                </div>
+                <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : 'Без рамки'}</span>
+                {!equippedFrame && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+              </button>
+
+              {/* Owned frames */}
+              {AVATAR_FRAMES.filter(f => ownedFrames.includes(f.id)).map(frame => (
+                <button
+                  key={frame.id}
+                  onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
+                  className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                    equippedFrame === frame.id ? 'bg-amber-700/30 border border-amber-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-transparent'
+                  }`}
+                >
+                  <FireFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-amber-500/60">
+                      <div className="w-full h-full bg-gradient-to-br from-amber-800 to-amber-950 flex items-center justify-center">
+                        <Flame className="w-5 h-5 text-orange-400" />
+                      </div>
+                    </div>
+                  </FireFrame>
+                  <span className="text-amber-100 text-sm">{locale === 'kk' ? frame.nameKk : frame.name}</span>
+                  {equippedFrame === frame.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Avatar Picker Modal */}
       {showAvatarPicker && (
