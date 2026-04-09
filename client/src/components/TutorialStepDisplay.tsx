@@ -113,9 +113,10 @@ export default function TutorialStepDisplay({
   // 'idle' → player hasn't clicked card yet
   // 'card-selected' → player clicked the transfer card, show "Перевести" button
   // 'transferring' → card flying to table animation
-  // 'transferred' → show "You transferred" message, Next button active
-  type TransferPhase = 'idle' | 'card-selected' | 'transferring' | 'transferred';
-  const [transferPhase, setTransferPhase] = useState<'idle' | 'card-selected' | 'transferring' | 'transferred'>('idle');
+  // 'card-on-table' → card appeared on table, show message overlay (2s)
+  // 'transferred' → message gone, Next button active
+  type TransferPhase = 'idle' | 'card-selected' | 'transferring' | 'card-on-table' | 'transferred';
+  const [transferPhase, setTransferPhase] = useState<TransferPhase>('idle');
 
   // Reset ALL state when step changes (including when going back from step 10 to step 9)
   useEffect(() => {
@@ -598,7 +599,7 @@ export default function TutorialStepDisplay({
       return seqPhase !== 'done';
     }
     if (scenario.transferMechanic) {
-      return transferPhase !== 'transferred';
+      return transferPhase !== 'transferred' && transferPhase !== 'card-on-table';
     }
     if (scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) return true;
     if (scenario.requiredAction === 'click-sort' && !sortClicked) return true;
@@ -780,17 +781,20 @@ export default function TutorialStepDisplay({
       {scenario.customArrows && scenario.customArrows.length > 0 && (() => {
         // Resolve elements: support "opponent-info:N" syntax for nth opponent
         const resolveElement = (selector: string): Element | null => {
-          // Match pattern like '[data-tutorial="opponent-info"]:nth-of-type(N)'
           const nthMatch = selector.match(/\[data-tutorial="opponent-info"\]:nth-of-type\((\d+)\)/);
           if (nthMatch) {
-            const idx = parseInt(nthMatch[1]) - 1; // 0-based
+            const idx = parseInt(nthMatch[1]) - 1;
             const allOpponents = document.querySelectorAll('[data-tutorial="opponent-info"]');
             return allOpponents[idx] || null;
           }
           return document.querySelector(selector);
         };
 
-        const arrows: { x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
+        // Get text box rect for avoidance
+        const textBoxRect = textBoxRef.current?.getBoundingClientRect();
+
+        // Build curved path data for each arrow
+        const pathData: { d: string; color: string }[] = [];
         scenario.customArrows!.forEach((arrow) => {
           const fromEl = resolveElement(arrow.from);
           const toEl = resolveElement(arrow.to);
@@ -801,24 +805,86 @@ export default function TutorialStepDisplay({
           const fromCY = fromRect.top + fromRect.height / 2;
           const toCX = toRect.left + toRect.width / 2;
           const toCY = toRect.top + toRect.height / 2;
-          const dx = toCX - fromCX;
-          const dy = toCY - fromCY;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 10) return;
-          const nx = dx / dist;
-          const ny = dy / dist;
-          // Start from edge of source, end at edge of target
-          const fromHalfW = fromRect.width / 2;
-          const fromHalfH = fromRect.height / 2;
-          const toHalfW = toRect.width / 2;
-          const toHalfH = toRect.height / 2;
-          const startX = fromCX + nx * (fromHalfW + 8);
-          const startY = fromCY + ny * (fromHalfH + 8);
-          const endX = toCX - nx * (toHalfW + 8);
-          const endY = toCY - ny * (toHalfH + 8);
-          arrows.push({ x1: startX, y1: startY, x2: endX, y2: endY, color: arrow.color || '#facc15' });
+
+          // Start from bottom edge of source, end at top edge of target (for top-row opponents)
+          // For arrows going to/from player hand (bottom), adjust accordingly
+          const fromIsBottom = fromCY > vh * 0.6;
+          const toIsBottom = toCY > vh * 0.6;
+          const fromIsTop = fromCY < vh * 0.4;
+          const toIsTop = toCY < vh * 0.4;
+
+          let startX: number, startY: number, endX: number, endY: number;
+
+          if (fromIsTop && toIsTop) {
+            // Both in top row (opponent to opponent) — arrow goes under their icons
+            startX = fromCX;
+            startY = fromRect.bottom + 6;
+            endX = toCX;
+            endY = toRect.bottom + 6;
+          } else if (fromIsTop && toIsBottom) {
+            // Top opponent to bottom player hand
+            startX = fromRect.right;
+            startY = fromCY;
+            endX = toRect.right;
+            endY = toCY;
+          } else if (fromIsBottom && toIsTop) {
+            // Bottom player hand to top opponent
+            startX = fromRect.left;
+            startY = fromCY;
+            endX = toRect.left;
+            endY = toCY;
+          } else {
+            startX = fromCX;
+            startY = fromRect.bottom + 6;
+            endX = toCX;
+            endY = toRect.top - 6;
+          }
+
+          // Check if the straight line would cross the text box
+          const needsAvoidance = textBoxRect && (
+            (fromIsTop && toIsBottom) || (fromIsBottom && toIsTop)
+          );
+
+          if (needsAvoidance && textBoxRect) {
+            // Route around the text box
+            const tbLeft = textBoxRect.left - 20;
+            const tbRight = textBoxRect.right + 20;
+            const tbTop = textBoxRect.top - 10;
+            const tbBottom = textBoxRect.bottom + 10;
+
+            if (fromIsBottom && toIsTop) {
+              // Player hand → top-left opponent: go left around text box
+              const wayX = tbLeft - 15;
+              const wayY1 = tbBottom;
+              const wayY2 = tbTop;
+              const d = `M ${startX} ${startY} C ${startX - 40} ${startY - 30}, ${wayX} ${wayY1 + 20}, ${wayX} ${wayY1} L ${wayX} ${wayY2} C ${wayX} ${wayY2 - 20}, ${endX - 30} ${endY + 30}, ${endX} ${endY}`;
+              pathData.push({ d, color: arrow.color || '#facc15' });
+            } else if (fromIsTop && toIsBottom) {
+              // Top-right opponent → player hand: go right around text box
+              const wayX = tbRight + 15;
+              const wayY1 = tbTop;
+              const wayY2 = tbBottom;
+              const d = `M ${startX} ${startY} C ${startX + 40} ${startY + 30}, ${wayX} ${wayY1 - 20}, ${wayX} ${wayY1} L ${wayX} ${wayY2} C ${wayX} ${wayY2 + 20}, ${endX + 30} ${endY - 30}, ${endX} ${endY}`;
+              pathData.push({ d, color: arrow.color || '#facc15' });
+            }
+          } else {
+            // Simple curved arrow (quadratic bezier)
+            const midX = (startX + endX) / 2;
+            const midY = (startY + endY) / 2;
+            // Curve offset perpendicular to the line
+            const dx = endX - startX;
+            const dy = endY - startY;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const curveAmount = Math.min(dist * 0.25, 30);
+            // Perpendicular direction (clockwise feel)
+            const cpX = midX + (dy / dist) * curveAmount;
+            const cpY = midY - (dx / dist) * curveAmount;
+            const d = `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`;
+            pathData.push({ d, color: arrow.color || '#facc15' });
+          }
         });
-        if (arrows.length === 0) return null;
+
+        if (pathData.length === 0) return null;
         return (
           <svg
             className="fixed inset-0 z-[55] pointer-events-none"
@@ -837,16 +903,14 @@ export default function TutorialStepDisplay({
                 <polygon points="0 0, 12 4, 0 8" fill="#facc15" />
               </marker>
             </defs>
-            {arrows.map((a, i) => (
-              <line
+            {pathData.map((p, i) => (
+              <path
                 key={i}
-                x1={a.x1}
-                y1={a.y1}
-                x2={a.x2}
-                y2={a.y2}
-                stroke={a.color}
+                d={p.d}
+                stroke={p.color}
                 strokeWidth="3"
                 strokeDasharray="8,5"
+                fill="none"
                 markerEnd="url(#arrowhead-custom)"
                 opacity="0.9"
               />
@@ -929,7 +993,7 @@ export default function TutorialStepDisplay({
           left: textPos.left,
           maxWidth: textPos.maxWidth,
           width: textPos.maxWidth,
-          opacity: (autoDefendActive || seqPhase === 'bito-text' || seqPhase === 'bito-fly' || transferPhase === 'transferred') ? 0.3 : 1,
+          opacity: (autoDefendActive || seqPhase === 'bito-text' || seqPhase === 'bito-fly' || transferPhase === 'card-on-table') ? 0.3 : 1,
           transition: 'opacity 0.3s',
         }}
       >
@@ -1007,34 +1071,27 @@ export default function TutorialStepDisplay({
             <Button
               onClick={() => {
                 setTransferPhase('transferring');
-                // Animate the transfer card flying to the table
+                // Hide the transfer card from hand
                 if (tutorialHighlightIds) {
-                  const tableArea = document.querySelector('[data-tutorial="table-area"]');
-                  const tableRect = tableArea?.getBoundingClientRect();
                   tutorialHighlightIds.forEach(cardId => {
                     const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
-                    if (el && tableRect) {
-                      const cardRect = el.getBoundingClientRect();
-                      const dx = tableRect.left + tableRect.width / 2 - cardRect.left;
-                      const dy = tableRect.top + tableRect.height / 2 - cardRect.top;
-                      el.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                      el.style.transform = `translate(${dx}px, ${dy}px) scale(0.7)`;
-                      el.style.opacity = '0.3';
-                      el.style.pointerEvents = 'none';
-                      hiddenCardElementsRef.current.push(el);
-                    } else if (el) {
+                    if (el) {
+                      el.style.transition = 'all 0.3s ease-out';
                       el.style.opacity = '0';
-                      el.style.transform = 'translateY(-40px) scale(0.5)';
-                      el.style.transition = 'all 0.4s ease-out';
+                      el.style.transform = 'scale(0.5)';
                       el.style.pointerEvents = 'none';
                       hiddenCardElementsRef.current.push(el);
                     }
                   });
                 }
-                // After card flies to table, show transferred message
+                // After card disappears from hand, show it on table + message
                 setTimeout(() => {
-                  setTransferPhase('transferred');
-                }, 800);
+                  setTransferPhase('card-on-table');
+                  // After 2 seconds, hide message and enable Next
+                  setTimeout(() => {
+                    setTransferPhase('transferred');
+                  }, 2000);
+                }, 400);
               }}
               variant="default"
               size="sm"
@@ -1046,13 +1103,35 @@ export default function TutorialStepDisplay({
         );
       })()}
 
-      {/* Transfer success message overlay */}
-      {scenario.transferMechanic && transferPhase === 'transferred' && (
+      {/* Transferred card rendered on table */}
+      {scenario.transferMechanic && (transferPhase === 'card-on-table' || transferPhase === 'transferred') && (() => {
+        const tableArea = document.querySelector('[data-tutorial="table-area"]');
+        if (!tableArea) return null;
+        const tableRect = tableArea.getBoundingClientRect();
+        // Render the transferred card at the right side of the existing table cards
+        const cardNotation = scenario.transferMechanic!.transferCard;
+        return (
+          <div
+            className="fixed z-[52] animate-bounce-in"
+            style={{
+              left: tableRect.right - 10,
+              top: tableRect.top + tableRect.height / 2 - 42,
+              width: 56,
+              height: 84,
+            }}
+          >
+            <MiniCardFace cardNotation={cardNotation} />
+          </div>
+        );
+      })()}
+
+      {/* Transfer success message overlay (disappears after 2s) */}
+      {scenario.transferMechanic && transferPhase === 'card-on-table' && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
             <div className="text-4xl mb-2">↩️</div>
             <p className="text-emerald-300 font-bold text-lg">Перевод!</p>
-            <p className="text-emerald-200/70 text-sm mt-1">Вы перевели ход на игрока {scenario.transferMechanic.targetBotName}</p>
+            <p className="text-emerald-200/70 text-sm mt-1">Вы перевели ход на игрока "{scenario.transferMechanic.targetBotName}",<br/>теперь бьется этот игрок</p>
           </div>
         </div>
       )}

@@ -113,9 +113,10 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
     if (scenario.extraBots && scenario.extraBots > 0) {
       const existingPlayers = tutorialState.players ? [...tutorialState.players] : [];
       for (let i = 0; i < scenario.extraBots; i++) {
+        const botName = scenario.extraBotNames?.[i] || `Бот ${i + 2}`;
         existingPlayers.push({
           id: `tutorial-extra-bot-${i + 2}`,
-          name: `Бот ${i + 2}`,
+          name: botName,
           isBot: true,
           cardCount: 14,
           isReady: true,

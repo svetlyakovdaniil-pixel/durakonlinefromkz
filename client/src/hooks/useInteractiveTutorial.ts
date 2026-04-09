@@ -56,6 +56,8 @@ export interface TutorialScenario {
   };
   /** Number of extra bots to show (besides the main opponent) */
   extraBots?: number;
+  /** Custom names for extra bots (if not set, defaults to 'Бот 2', 'Бот 3', etc.) */
+  extraBotNames?: string[];
   /** Custom arrows between game elements (e.g. clockwise direction arrows) */
   customArrows?: {
     /** CSS selector for start element */
@@ -312,16 +314,17 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     textPosition: 'top',
     extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
     transferMechanic: {
       transferCard: '7s',
-      targetBotName: 'Бот 2',
+      targetBotName: 'Мадина',
     },
   },
   {
     id: 14,
     title: 'Ход по часовой стрелке',
     description: 'Направление игры',
-    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="opponent-info"]:nth-of-type(1)', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="opponent-info"]:nth-of-type(3)'],
+    highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(1)', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="opponent-info"]:nth-of-type(3)'],
     text: 'Игроки ходят друг на друга по часовой стрелке, но есть исключение:\nЕсли какой-то игрок начинает свой ход с 10-ки, выкинув ее на стол, <red>направление игры меняется</red> на против часовой стрелки',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
@@ -333,15 +336,15 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textPosition: 'center',
     showArrows: false,
     extraBots: 2,
-    highlightCards: STANDARD_PLAYER_HAND,
+    extraBotNames: ['Мадина', 'Бот 3'],
     customArrows: [
-      // Дана → Бот 2
+      // Мадина → Бот 2 (под иконкой)
       { from: '[data-tutorial="opponent-info"]:nth-of-type(1)', to: '[data-tutorial="opponent-info"]:nth-of-type(2)', color: '#facc15' },
-      // Бот 2 → Бот 3
+      // Бот 2 → Бот 3 (под иконкой)
       { from: '[data-tutorial="opponent-info"]:nth-of-type(2)', to: '[data-tutorial="opponent-info"]:nth-of-type(3)', color: '#facc15' },
-      // Бот 3 → Player hand
+      // Бот 3 → Player hand (обходя текст)
       { from: '[data-tutorial="opponent-info"]:nth-of-type(3)', to: '[data-tutorial="player-hand"]', color: '#facc15' },
-      // Player hand → Дана
+      // Player hand → Мадина (обходя текст)
       { from: '[data-tutorial="player-hand"]', to: '[data-tutorial="opponent-info"]:nth-of-type(1)', color: '#facc15' },
     ],
   },
