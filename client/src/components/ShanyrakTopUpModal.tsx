@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { X, Clock, Play, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
@@ -37,6 +37,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
   const [showInsufficientTenge, setShowInsufficientTenge] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'buy' | 'history'>('buy');
 
   const utils = trpc.useUtils();
 
@@ -44,6 +45,8 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     enabled: open,
     refetchInterval: open ? 10000 : false,
   });
+
+  const transactionsQuery = trpc.balance.myTransactions.useQuery({ currency: 'shanyrak', limit: 50 });
 
   const freeTopupMutation = trpc.balance.freeShanyrakTopup.useMutation({
     onSuccess: (data) => {
@@ -129,140 +132,197 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
           <X className="w-5 h-5" />
         </button>
 
-        {/* Title */}
-        <div className="flex items-center gap-2 mb-4">
-          <img src={SHANYRAK_ICON} alt="" className="h-8 object-contain" />
-          <h2 className="text-lg font-bold text-amber-100">{t('topUp.shanyrakTitle')}</h2>
-        </div>
-
-        {/* Current balance */}
-        <div className="flex items-center gap-3 mb-5 bg-slate-700/40 rounded-xl p-3">
-          <div className="flex items-center gap-1.5">
-            <img src={SHANYRAK_ICON} alt="" className="h-5 object-contain" />
-            <span className="text-green-400 font-bold text-sm">{formatBalance(currentShanyrak)}</span>
-          </div>
-          <div className="w-px h-5 bg-slate-600" />
-          <div className="flex items-center gap-1.5">
-            <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
-            <span className="text-amber-300/60 font-bold text-sm">{formatBalance(currentTenge)}</span>
-          </div>
-        </div>
-
-        {/* Success message */}
-        {successMessage && (
-          <div className="mb-4 bg-green-900/40 border border-green-600/40 rounded-xl p-3 text-center text-green-300 font-semibold text-sm animate-pulse">
-            {successMessage}
-          </div>
-        )}
-
-        {/* [TEST] Get 10K shanyraks */}
-        <div className="mb-3">
-          <button
-            className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
-            onClick={() => {
-              testShanyrakMutation.mutate(undefined, {
-                onSuccess: (data) => {
-                  if (data.success) {
-                    setSuccessMessage(`+10 000 ${t('topUp.shanyrakUnit')}!`);
-                    onBalanceUpdated();
-                    utils.profile.me.invalidate();
-                    setTimeout(() => setSuccessMessage(null), 3000);
-                  }
-                },
-              });
-            }}
-            disabled={testShanyrakMutation.isPending}
-          >
-            {testShanyrakMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10k')}`}
-          </button>
-          <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
-        </div>
-
-        {/* Option 1: Free top-up to 2000 */}
-        <div className="mb-3">
-          <button
-            className={`w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm transition-all ${
-              isFreeAvailable && !isAlreadyMax
-                ? 'bg-green-700/50 hover:bg-green-600/60 text-green-100 border border-green-500/30'
-                : 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
-            }`}
-            onClick={handleFreeTopup}
-            disabled={!isFreeAvailable || isAlreadyMax || freeTopupMutation.isPending}
-          >
-            {freeTopupMutation.isPending ? (
-              <span>{t('topUp.crediting')}</span>
-            ) : isCooldown ? (
-              <>
-                <Clock className="w-4 h-4" />
-                <span>{formatTime(cooldownRemaining)}</span>
-              </>
-            ) : isAlreadyMax ? (
-              <span>{t('topUp.alreadyMax')}</span>
-            ) : (
-              <>
-                <span>{t('topUp.freeTopup')}</span>
-                <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain" />
-              </>
-            )}
-          </button>
-          <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.freeNote')}</p>
-        </div>
-
-        {/* Option 2: Watch ad */}
+        {/* Title and tabs */}
         <div className="mb-4">
-          <button
-            className="w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed"
-            disabled
-          >
-            <div className="flex items-center gap-2">
-              <Play className="w-4 h-4" />
-              <span>{t('topUp.watchAd')}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="text-green-400/50">+1000</span>
-              <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain opacity-50" />
-            </div>
-          </button>
-          <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.comingSoon')}</p>
-        </div>
-
-        {/* Divider */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="flex-1 h-px bg-slate-600/50" />
-          <div className="flex items-center gap-1 text-xs text-gray-400">
-            <ArrowRightLeft className="w-3 h-3" />
-            <span>{t('topUp.exchangeTitle')}</span>
+          <div className="flex items-center gap-2 mb-3">
+            <img src={SHANYRAK_ICON} alt="" className="h-8 object-contain" />
+            <h2 className="text-lg font-bold text-amber-100">{t('topUp.shanyrakTitle')}</h2>
           </div>
-          <div className="flex-1 h-px bg-slate-600/50" />
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('buy')}
+              className={`flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+                activeTab === 'buy'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-slate-700/50 text-green-200 hover:bg-slate-600/50'
+              }`}
+            >
+              {t('topUp.buyBtn') || 'Купить'}
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+                activeTab === 'history'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-slate-700/50 text-green-200 hover:bg-slate-600/50'
+              }`}
+            >
+              История
+            </button>
+          </div>
         </div>
 
-        {/* Options 3-6: Buy with tenge */}
-        <div className="space-y-2 mb-2">
-          {TIERS.map((tier) => {
-            const canAfford = currentTenge >= tier.tenge;
-            return (
+        {activeTab === 'buy' && (
+          <>
+            {/* Current balance */}
+            <div className="flex items-center gap-3 mb-5 bg-slate-700/40 rounded-xl p-3">
+              <div className="flex items-center gap-1.5">
+                <img src={SHANYRAK_ICON} alt="" className="h-5 object-contain" />
+                <span className="text-green-400 font-bold text-sm">{formatBalance(currentShanyrak)}</span>
+              </div>
+              <div className="w-px h-5 bg-slate-600" />
+              <div className="flex items-center gap-1.5">
+                <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
+                <span className="text-amber-300/60 font-bold text-sm">{formatBalance(currentTenge)}</span>
+              </div>
+            </div>
+
+            {/* Success message */}
+            {successMessage && (
+              <div className="mb-4 bg-green-900/40 border border-green-600/40 rounded-xl p-3 text-center text-green-300 font-semibold text-sm animate-pulse">
+                {successMessage}
+              </div>
+            )}
+
+            {/* [TEST] Get 10K shanyraks */}
+            <div className="mb-3">
               <button
-                key={tier.id}
-                className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
-                  canAfford
-                    ? 'bg-amber-900/30 hover:bg-amber-800/40 text-amber-100 border border-amber-600/30'
-                    : 'bg-slate-700/30 hover:bg-slate-700/40 text-gray-400 border border-slate-600/20'
-                }`}
-                onClick={() => handleBuyClick(tier.id, tier.tenge)}
+                className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
+                onClick={() => {
+                  testShanyrakMutation.mutate(undefined, {
+                    onSuccess: (data) => {
+                      if (data.success) {
+                        setSuccessMessage(`+10 000 ${t('topUp.shanyrakUnit')}!`);
+                        onBalanceUpdated();
+                        utils.profile.me.invalidate();
+                        setTimeout(() => setSuccessMessage(null), 3000);
+                      }
+                    },
+                  });
+                }}
+                disabled={testShanyrakMutation.isPending}
               >
-                <div className="flex-1 flex items-center gap-1.5 justify-start">
-                  <span>{formatBalance(tier.shanyrak)}</span>
-                  <img src={SHANYRAK_ICON} alt="" className="h-6 object-contain" />
+                {testShanyrakMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10k')}`}
+              </button>
+              <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
+            </div>
+
+            {/* Option 1: Free top-up to 2000 */}
+            <div className="mb-3">
+              <button
+                className={`w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm transition-all ${
+                  isFreeAvailable && !isAlreadyMax
+                    ? 'bg-green-700/50 hover:bg-green-600/60 text-green-100 border border-green-500/30'
+                    : 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
+                }`}
+                onClick={handleFreeTopup}
+                disabled={!isFreeAvailable || isAlreadyMax || freeTopupMutation.isPending}
+              >
+                {freeTopupMutation.isPending ? (
+                  <span>{t('topUp.crediting')}</span>
+                ) : isCooldown ? (
+                  <>
+                    <Clock className="w-4 h-4" />
+                    <span>{formatTime(cooldownRemaining)}</span>
+                  </>
+                ) : isAlreadyMax ? (
+                  <span>{t('topUp.alreadyMax')}</span>
+                ) : (
+                  <>
+                    <span>{t('topUp.freeTopup')}</span>
+                    <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain" />
+                  </>
+                )}
+              </button>
+              <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.freeNote')}</p>
+            </div>
+
+            {/* Option 2: Watch ad */}
+            <div className="mb-4">
+              <button
+                className="w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed"
+                disabled
+              >
+                <div className="flex items-center gap-2">
+                  <Play className="w-4 h-4" />
+                  <span>{t('topUp.watchAd')}</span>
                 </div>
-                <span className="text-gray-400 text-xs shrink-0">{t('topUp.for')}</span>
-                <div className="flex-1 flex items-center gap-1 justify-end">
-                  <span>{formatBalance(tier.tenge)}</span>
-                  <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
+                <div className="flex items-center gap-1">
+                  <span className="text-green-400/50">+1000</span>
+                  <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain opacity-50" />
                 </div>
               </button>
-            );
-          })}
-        </div>
+              <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.comingSoon')}</p>
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-2 mb-3">
+              <div className="flex-1 h-px bg-slate-600/50" />
+              <div className="flex items-center gap-1 text-xs text-gray-400">
+                <ArrowRightLeft className="w-3 h-3" />
+                <span>{t('topUp.exchangeTitle')}</span>
+              </div>
+              <div className="flex-1 h-px bg-slate-600/50" />
+            </div>
+
+            {/* Options 3-6: Buy with tenge */}
+            <div className="space-y-2 mb-2">
+              {TIERS.map((tier) => {
+                const canAfford = currentTenge >= tier.tenge;
+                return (
+                  <button
+                    key={tier.id}
+                    className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
+                      canAfford
+                        ? 'bg-amber-900/30 hover:bg-amber-800/40 text-amber-100 border border-amber-600/30'
+                        : 'bg-slate-700/30 hover:bg-slate-700/40 text-gray-400 border border-slate-600/20'
+                    }`}
+                    onClick={() => handleBuyClick(tier.id, tier.tenge)}
+                  >
+                    <div className="flex-1 flex items-center gap-1.5 justify-start">
+                      <span>{formatBalance(tier.shanyrak)}</span>
+                      <img src={SHANYRAK_ICON} alt="" className="h-6 object-contain" />
+                    </div>
+                    <span className="text-gray-400 text-xs shrink-0">{t('topUp.for')}</span>
+                    <div className="flex-1 flex items-center gap-1 justify-end">
+                      <span>{formatBalance(tier.tenge)}</span>
+                      <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'history' && (
+          <div className="space-y-2">
+            {transactionsQuery.isLoading && (
+              <div className="text-center text-green-300/60 py-4">Загрузка...</div>
+            )}
+            {transactionsQuery.data && transactionsQuery.data.length === 0 && (
+              <div className="text-center text-green-300/60 py-4">История пуста</div>
+            )}
+            {transactionsQuery.data && transactionsQuery.data.map((tx: any) => (
+              <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-green-200 font-semibold text-sm">{tx.description}</span>
+                  <span className={`font-bold text-sm ${
+                    tx.amount > 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {tx.amount > 0 ? '+' : ''}{formatBalance(tx.amount)}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-green-300/60 text-xs">
+                    {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString()}
+                  </span>
+                  <span className="text-green-300/60 text-xs">Баланс: {formatBalance(tx.balanceAfter || 0)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Confirm purchase dialog */}
         {confirmTier && (
