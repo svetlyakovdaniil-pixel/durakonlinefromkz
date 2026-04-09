@@ -42,6 +42,10 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
 
   const handleSoundToggle = (checked: boolean) => {
     setSoundEnabled(checked);
+    // Also update the sound context to sync the enabledRef
+    if (checked !== sound.enabled) {
+      sound.toggle();
+    }
   };
 
   const handleVibrationToggle = (checked: boolean) => {

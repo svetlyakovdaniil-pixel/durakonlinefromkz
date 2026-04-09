@@ -7,6 +7,11 @@ export interface AvatarOption {
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
   {
+    id: 'bot',
+    name: 'Робот (Бот)',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bot_avatar-bkCC7RwD3DYoJiFYZiby6m.webp',
+  },
+  {
     id: 'wolf',
     name: 'Волк',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-wolf-fJ9SNhipdz6heHu7Au5XVp.webp',
@@ -34,6 +39,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
+
+// Bot-only avatar ID (players cannot select this)
+export const BOT_AVATAR_ID = 'bot';
 
 export function getAvatarUrl(avatarId: string | null | undefined): string {
   const found = AVATAR_OPTIONS.find(a => a.id === avatarId);

@@ -299,6 +299,7 @@ export function initSocketServer(httpServer: HttpServer) {
             name: `🤖 ${shuffledNames[i % shuffledNames.length]}`,
             ready: true,
             isBot: true,
+            avatarId: 'bot', // Bots always use the bot avatar
           });
         }
       }

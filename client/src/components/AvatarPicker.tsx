@@ -38,7 +38,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
 
         {/* Avatar grid */}
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
-          {AVATAR_OPTIONS.map((avatar) => (
+          {AVATAR_OPTIONS.filter(avatar => avatar.id !== 'bot').map((avatar) => (
             <button
               key={avatar.id}
               onClick={() => setSelected(avatar.id)}

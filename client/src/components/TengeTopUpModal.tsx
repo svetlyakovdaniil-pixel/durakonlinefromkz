@@ -15,7 +15,7 @@ interface TengeTopUpModalProps {
 /** USD base prices for each tier */
 const TIERS = [
   { id: 1, tenge: 50, usd: 1 },
-  { id: 2, tenge: 150, usd: 2.75 },
+  { id: 2, tenge: 150, usd: 2.99 },
   { id: 3, tenge: 500, usd: 9 },
   { id: 4, tenge: 1000, usd: 16 },
   { id: 5, tenge: 1500, usd: 23 },
