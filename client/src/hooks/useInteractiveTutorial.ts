@@ -393,6 +393,27 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 2, cards: ['10d'] }],
   },
+  {
+    id: 17,
+    title: 'Перевод карты возвращает предыдущее направление игры',
+    description: 'Перевод 10-кой возвращает направление',
+    highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="opponent-info"]:nth-of-type(3)', '[data-tutorial="table-area"]'],
+    text: 'Игрок Мадина перевела 10-кой пики ход на игрока Бот 3. Теперь игра снова идет по часовой стрелке.',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'bottom',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+    attackerPlayerIdx: 2,
+    defenderPlayerIdx: 3,
+    tableCards: [{ playerId: 2, cards: ['10d', '10s'] }],
+  },
 ];
 
 export function useInteractiveTutorial() {
