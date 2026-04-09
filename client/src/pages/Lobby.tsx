@@ -338,7 +338,7 @@ onClick={() => setShowTengeTopUp(true)}
                   onlineFriendIds={onlineFriendIds}
                   inRoom={false}
                 >
-                  <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity">
+                  <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2">
                     <FrameWrapper frameId={(profile as any)?.equippedFrame} size={40}>
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
                         <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />

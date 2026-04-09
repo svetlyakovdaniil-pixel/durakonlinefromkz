@@ -351,11 +351,15 @@ export const appRouter = router({
 
     /** Get my transaction history (private, only own) */
     myTransactions: protectedProcedure
-      .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
+      .input(z.object({ limit: z.number().min(1).max(100).optional(), currency: z.enum(['tenge', 'shanyrak']).optional() }).optional())
       .query(async ({ ctx, input }) => {
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) return [];
-        return getMyTransactions(profile.id, input?.limit ?? 50);
+        const transactions = await getMyTransactions(profile.id, input?.limit ?? 50);
+        if (input?.currency) {
+          return transactions.filter(t => t.currency === input.currency);
+        }
+        return transactions;
       }),
   }),
 

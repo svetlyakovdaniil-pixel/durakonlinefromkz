@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { X, ShoppingCart, AlertTriangle } from "lucide-react";
 import { formatBalance } from "@shared/formatBalance";
 import { trpc } from "@/lib/trpc";
@@ -48,6 +48,7 @@ const USD_RATES: Record<string, number> = {
 
 function formatLocalPrice(usd: number, currencyCode: string, locale: string): string {
   const rate = USD_RATES[currencyCode] ?? 1;
+
   let localAmount = usd * rate;
 
   if (localAmount >= 100) {
@@ -74,8 +75,10 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
   const { t } = useTranslation();
   const [selectedTier, setSelectedTier] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'buy' | 'history'>('buy');
   const utils = trpc.useUtils();
   const testTengeMutation = trpc.balance.testAddTenge.useMutation();
+  const transactionsQuery = trpc.balance.myTransactions.useQuery({ currency: 'tenge', limit: 50 });
 
   const { code: currencyCode, locale } = useMemo(() => detectCurrency(), []);
 
@@ -101,74 +104,131 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
           <X className="w-5 h-5" />
         </button>
 
-        {/* Title */}
-        <div className="flex items-center gap-2 mb-4">
-          <img src={TENGE_ICON} alt="" className="h-8 w-8 rounded-full object-contain" />
-          <h2 className="text-lg font-bold text-amber-100">{t('topUp.tengeTitle')}</h2>
-        </div>
-
-        {/* Current balance */}
-        <div className="flex items-center gap-2 mb-5 bg-slate-700/40 rounded-xl p-3">
-          <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
-          <span className="text-amber-300/60 font-bold text-sm">{t('topUp.currentBalance')}:</span>
-          <span className="text-amber-300 font-bold text-sm">{formatBalance(currentTenge)}</span>
-        </div>
-
-        {/* Success message */}
-        {successMessage && (
-          <div className="mb-4 bg-green-900/40 border border-green-600/40 rounded-xl p-3 text-center text-green-300 font-semibold text-sm animate-pulse">
-            {successMessage}
+        {/* Title and tabs */}
+        <div className="mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <img src={TENGE_ICON} alt="" className="h-8 w-8 rounded-full object-contain" />
+            <h2 className="text-lg font-bold text-amber-100">{t('topUp.tengeTitle')}</h2>
           </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveTab('buy')}
+              className={`flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+                activeTab === 'buy'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-slate-700/50 text-amber-200 hover:bg-slate-600/50'
+              }`}
+            >
+              {t('topUp.buyBtn') || 'Купить'}
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-colors ${
+                activeTab === 'history'
+                  ? 'bg-amber-600 text-white'
+                  : 'bg-slate-700/50 text-amber-200 hover:bg-slate-600/50'
+              }`}
+            >
+              История
+            </button>
+          </div>
+        </div>
+
+        {activeTab === 'buy' && (
+          <>
+            {/* Current balance */}
+            <div className="flex items-center gap-2 mb-5 bg-slate-700/40 rounded-xl p-3">
+              <img src={TENGE_ICON} alt="" className="h-5 w-5 rounded-full object-contain" />
+              <span className="text-amber-300/60 font-bold text-sm">{t('topUp.currentBalance')}:</span>
+              <span className="text-amber-300 font-bold text-sm">{formatBalance(currentTenge)}</span>
+            </div>
+
+            {/* Success message */}
+            {successMessage && (
+              <div className="mb-4 bg-green-900/40 border border-green-600/40 rounded-xl p-3 text-center text-green-300 font-semibold text-sm animate-pulse">
+                {successMessage}
+              </div>
+            )}
+
+            {/* [TEST] Get 10K tenge */}
+            <div className="mb-3">
+              <button
+                className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
+                onClick={() => {
+                  testTengeMutation.mutate(undefined, {
+                    onSuccess: (data) => {
+                      if (data.success) {
+                        setSuccessMessage(`+10 000 ${t('topUp.tengeUnit')}!`);
+                        utils.profile.me.invalidate();
+                        setTimeout(() => setSuccessMessage(null), 3000);
+                      }
+                    },
+                  });
+                }}
+                disabled={testTengeMutation.isPending}
+              >
+                {testTengeMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10kTenge')}`}
+              </button>
+              <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
+            </div>
+
+            {/* Tiers */}
+            <div className="space-y-2 mb-3">
+              {TIERS.map((tier) => {
+                const localPrice = formatLocalPrice(tier.usd, currencyCode, locale);
+                return (
+                  <button
+                    key={tier.id}
+                    className="w-full rounded-xl p-3.5 flex items-center justify-between font-semibold text-sm transition-all bg-amber-900/30 hover:bg-amber-800/40 text-amber-100 border border-amber-600/30 active:scale-[0.98]"
+                    onClick={() => setSelectedTier(tier.id)}
+                  >
+                    <div className="flex items-center gap-2">
+                      <img src={TENGE_ICON} alt="" className="h-[30px] w-[30px] rounded-full object-contain" />
+                      <span className="text-amber-200 font-bold text-[17px] leading-tight">{formatBalance(tier.tenge)}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <ShoppingCart className="w-3.5 h-3.5 text-amber-400/60" />
+                      <span className="text-amber-400">{localPrice}</span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-[10px] text-gray-500 text-center">
+              {t('topUp.priceDisclaimer').replace('{currency}', currencyCode)}
+            </p>
+          </>
         )}
 
-        {/* [TEST] Get 10K tenge */}
-        <div className="mb-3">
-          <button
-            className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
-            onClick={() => {
-              testTengeMutation.mutate(undefined, {
-                onSuccess: (data) => {
-                  if (data.success) {
-                    setSuccessMessage(`+10 000 ${t('topUp.tengeUnit')}!`);
-                    utils.profile.me.invalidate();
-                    setTimeout(() => setSuccessMessage(null), 3000);
-                  }
-                },
-              });
-            }}
-            disabled={testTengeMutation.isPending}
-          >
-            {testTengeMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10kTenge')}`}
-          </button>
-          <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
-        </div>
-
-        {/* Tiers */}
-        <div className="space-y-2 mb-3">
-          {TIERS.map((tier) => {
-            const localPrice = formatLocalPrice(tier.usd, currencyCode, locale);
-            return (
-              <button
-                key={tier.id}
-                className="w-full rounded-xl p-3.5 flex items-center justify-between font-semibold text-sm transition-all bg-amber-900/30 hover:bg-amber-800/40 text-amber-100 border border-amber-600/30 active:scale-[0.98]"
-                onClick={() => setSelectedTier(tier.id)}
-              >
-                <div className="flex items-center gap-2">
-                  <img src={TENGE_ICON} alt="" className="h-[30px] w-[30px] rounded-full object-contain" />
-                  <span className="text-amber-200 font-bold text-[17px] leading-tight">{formatBalance(tier.tenge)}</span>
+        {activeTab === 'history' && (
+          <div className="space-y-2">
+            {transactionsQuery.isLoading && (
+              <div className="text-center text-amber-300/60 py-4">Загрузка...</div>
+            )}
+            {transactionsQuery.data && transactionsQuery.data.length === 0 && (
+              <div className="text-center text-amber-300/60 py-4">История пуста</div>
+            )}
+            {transactionsQuery.data && transactionsQuery.data.map((tx: any) => (
+              <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-amber-200 font-semibold text-sm">{tx.description}</span>
+                  <span className={`font-bold text-sm ${
+                    tx.amount > 0 ? 'text-green-400' : 'text-red-400'
+                  }`}>
+                    {tx.amount > 0 ? '+' : ''}{formatBalance(tx.amount)}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <ShoppingCart className="w-3.5 h-3.5 text-amber-400/60" />
-                  <span className="text-amber-400">{localPrice}</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-amber-300/60 text-xs">
+                    {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString()}
+                  </span>
+                  <span className="text-amber-300/60 text-xs">Баланс: {formatBalance(tx.balanceAfter || 0)}</span>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-
-        <p className="text-[10px] text-gray-500 text-center">
-          {t('topUp.priceDisclaimer').replace('{currency}', currencyCode)}
-        </p>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* Confirm purchase dialog */}
         {selectedTier !== null && (

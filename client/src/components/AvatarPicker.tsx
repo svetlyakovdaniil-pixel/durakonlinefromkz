@@ -61,9 +61,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                   </div>
                 </div>
               )}
-              <div className="absolute bottom-0 inset-x-0 bg-black/60 py-0.5 text-center">
-                <span className="text-[9px] sm:text-[10px] text-amber-200/80 font-medium">{avatar.name}</span>
-              </div>
+
             </button>
           ))}
         </div>
