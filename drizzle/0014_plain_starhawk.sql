@@ -1,0 +1,1 @@
+ALTER TABLE `player_profiles` ADD `tutorialCompleted` boolean DEFAULT false NOT NULL;

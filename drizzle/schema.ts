@@ -56,6 +56,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   ownedFrames: text("ownedFrames"),
   /** Currently equipped avatar frame ID (null = no frame) */
   equippedFrame: varchar("equippedFrame", { length: 32 }),
+  /** Whether the player has completed the tutorial */
+  tutorialCompleted: boolean("tutorialCompleted").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -21,6 +21,7 @@ import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 import { TengeTopUpModal } from '@/components/TengeTopUpModal';
 import ShopModal from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
+import { TutorialModal } from '@/components/TutorialModal';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from '@/components/AvatarWithFrame';
 
@@ -69,6 +70,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showTengeTopUp, setShowTengeTopUp] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [tutorialLoading, setTutorialLoading] = useState(false);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -95,7 +98,34 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     }
   };
 
-   const handleAcceptFriend = async (friendshipId: number, notificationId: number) => {
+   const handleStartTutorial = async () => {
+    setTutorialLoading(true);
+    try {
+      // Create a tutorial room with specific name
+      const tutorialRoom = await onCreateRoom(
+        '🎓 Обучение',
+        2,
+        {
+          withBots: true,
+          botCount: 1,
+          turnTimer: 60,
+          deckStyle: 'classic',
+          tableStyle: 'classic',
+          betAmountIdx: 0,
+          isTutorial: true, // Mark as tutorial room
+        } as any
+      );
+      // Join the tutorial room
+      await onJoinRoom(tutorialRoom.id);
+      setShowTutorial(false);
+    } catch (error) {
+      console.error('Failed to start tutorial:', error);
+    } finally {
+      setTutorialLoading(false);
+    }
+  };
+
+  const handleAcceptFriend = async (friendshipId: number, notificationId: number) => {
     try {
       await acceptFriend.mutateAsync({ friendshipId });
       // Delete the notification after accepting
@@ -211,6 +241,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <br/>
                   <span>from KZ</span>
                 </h1>
+                {/* Tutorial button below title */}
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded mt-1"
+                  onClick={() => setShowTutorial(true)}
+                  title="Обучение"
+                >
+                  <BookOpen className="w-4 h-4" />
+                </button>
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
@@ -289,6 +327,14 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <h1 className="text-xl font-bold text-amber-100">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
+                {/* Tutorial button */}
+                <button
+                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowTutorial(true)}
+                  title="Обучение"
+                >
+                  <BookOpen className="w-5 h-5" />
+                </button>
                 {/* Rules button */}
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
@@ -675,6 +721,14 @@ onClick={() => setShowTengeTopUp(true)}
           refetchProfile?.();
           utils.shop.ownedDecks.invalidate();
         }}
+      />
+
+      {/* Tutorial Modal */}
+      <TutorialModal
+        open={showTutorial}
+        onClose={() => setShowTutorial(false)}
+        onStartTutorial={handleStartTutorial}
+        isLoading={tutorialLoading}
       />
 
       {/* Rules Modal */}

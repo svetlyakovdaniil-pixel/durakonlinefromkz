@@ -16,6 +16,9 @@ import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import GameSettingsSheet from './GameSettingsSheet';
+import { TutorialOverlay } from './TutorialOverlay';
+import { TutorialTooltip } from './TutorialTooltip';
+import { useTutorial } from '@/hooks/useTutorial';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -424,6 +427,8 @@ export interface GameTableProps {
   musicVolume?: number;
   onMusicVolumeChange?: (v: number) => void;
   frozenInfo?: { disconnectedPlayerName: string; secondsLeft: number } | null;
+  isTutorial?: boolean;
+  onTutorialComplete?: () => void;
 }
 
 export default function GameTable({
@@ -431,6 +436,7 @@ export default function GameTable({
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
+  isTutorial = false, onTutorialComplete,
 }: GameTableProps) {
   const gs = gameState;
   const myIdx = gs.myIndex;
@@ -480,6 +486,14 @@ export default function GameTable({
 
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
+
+  // Tutorial state
+  const tutorial = useTutorial();
+  useEffect(() => {
+    if (isTutorial) {
+      tutorial.startTutorial();
+    }
+  }, [isTutorial]);
 
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
@@ -1781,6 +1795,37 @@ export default function GameTable({
           gameId={profilePopupGameId}
           onClose={() => setProfilePopupGameId(null)}
         />
+      )}
+
+      {/* Tutorial Overlay and Tooltip */}
+      {isTutorial && (
+        <>
+          <TutorialOverlay
+            targetElement={tutorial.targetElement}
+            isActive={tutorial.isActive}
+            padding={12}
+          />
+          {tutorial.currentStep && (
+            <TutorialTooltip
+              targetElement={tutorial.targetElement}
+              title={tutorial.currentStep.title}
+              description={tutorial.currentStep.description}
+              currentStep={tutorial.currentStepIndex + 1}
+              totalSteps={tutorial.totalSteps}
+              onNext={() => {
+                const isComplete = tutorial.goToNextStep();
+                if (isComplete) {
+                  onTutorialComplete?.();
+                }
+              }}
+              onSkip={() => {
+                tutorial.skipTutorial();
+                onTutorialComplete?.();
+              }}
+              isActive={tutorial.isActive}
+            />
+          )}
+        </>
       )}
     </div>
   );
