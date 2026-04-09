@@ -3,7 +3,7 @@ import { TutorialScenario } from '@/hooks/useInteractiveTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ClientGameState } from '../../../shared/gameTypes';
-import { CARD_IMAGES_CUSTOM, getCustomCardImageKey, SUIT_SYMBOLS, SUIT_COLORS } from '../../../shared/cardAssets';
+import { CARD_IMAGES_CUSTOM, CARD_BACK_CUSTOM_URL, getCustomCardImageKey, SUIT_SYMBOLS, SUIT_COLORS } from '../../../shared/cardAssets';
 
 interface TutorialStepDisplayProps {
   scenario: TutorialScenario | null;
@@ -24,8 +24,9 @@ interface SpotlightRect {
   height: number;
 }
 
-// Sequential defend phases
-type SeqDefendPhase = 'waiting' | 'defend1' | 'defend2' | 'bito-pause' | 'bito-anim' | 'done';
+// Sequential defend phases:
+// waiting → defend1 → defend2 → bito-text → bito-fly → done
+type SeqDefendPhase = 'waiting' | 'defend1' | 'defend2' | 'bito-text' | 'bito-fly' | 'done';
 
 // Helper: get card image URL for a card notation like '6h'
 function getCardImageUrl(cardNotation: string): string | null {
@@ -90,6 +91,10 @@ export default function TutorialStepDisplay({
   const seqClickCountRef = useRef(0);
   // Track hidden card elements so we can restore them on step change
   const hiddenCardElementsRef = useRef<HTMLElement[]>([]);
+  // Track table card positions for bito-fly animation
+  const tableCardRectsRef = useRef<{ left: number; top: number; width: number; height: number }[]>([]);
+  // Track bito-fly card animation phase
+  const [bitoFlyPhase, setBitoFlyPhase] = useState<'start' | 'flying' | 'done'>('start');
 
   // Reset ALL state when step changes (including when going back from step 10 to step 9)
   useEffect(() => {
@@ -98,6 +103,8 @@ export default function TutorialStepDisplay({
     seqClickCountRef.current = 0;
     cardClickHandledRef.current = false;
     setAutoDefendActive(false);
+    setBitoFlyPhase('start');
+    tableCardRectsRef.current = [];
 
     // Restore any previously hidden card elements
     hiddenCardElementsRef.current.forEach(el => {
@@ -107,6 +114,17 @@ export default function TutorialStepDisplay({
       el.style.pointerEvents = '';
     });
     hiddenCardElementsRef.current = [];
+
+    // Also restore any hidden table card elements
+    const tableArea = document.querySelector('[data-tutorial="table-area"]');
+    if (tableArea) {
+      const pairElements = tableArea.querySelectorAll(':scope > div') as NodeListOf<HTMLElement>;
+      pairElements.forEach(el => {
+        el.style.opacity = '';
+        el.style.transform = '';
+        el.style.transition = '';
+      });
+    }
   }, [currentStep]);
 
   // Calculate spotlight positions and text position
@@ -287,15 +305,50 @@ export default function TutorialStepDisplay({
                 cardClickHandledRef.current = true;
                 setSeqPhase('defend2');
 
-                // After exactly 2 seconds, show bito animation
+                // Capture table card positions before they get animated
+                const tableArea = document.querySelector('[data-tutorial="table-area"]');
+                if (tableArea) {
+                  const pairEls = tableArea.querySelectorAll(':scope > div');
+                  tableCardRectsRef.current = Array.from(pairEls).map(el => {
+                    const r = el.getBoundingClientRect();
+                    return { left: r.left, top: r.top, width: r.width, height: r.height };
+                  });
+                }
+
+                // After exactly 2 seconds, show БИТО text
                 setTimeout(() => {
-                  setSeqPhase('bito-anim');
+                  setSeqPhase('bito-text');
                 }, 2000);
 
-                // After 3.5 seconds total, mark as done (next button enabled)
+                // After 3 seconds, start flying cards to bito
+                setTimeout(() => {
+                  // Hide actual table cards
+                  const tableArea = document.querySelector('[data-tutorial="table-area"]');
+                  if (tableArea) {
+                    const pairEls = tableArea.querySelectorAll(':scope > div') as NodeListOf<HTMLElement>;
+                    pairEls.forEach(el => {
+                      el.style.opacity = '0';
+                      el.style.transition = 'opacity 0.3s';
+                    });
+                  }
+                  setSeqPhase('bito-fly');
+                  setBitoFlyPhase('start');
+                }, 3000);
+
+                // After 3.1s, start flying animation
+                setTimeout(() => {
+                  setBitoFlyPhase('flying');
+                }, 3100);
+
+                // After 3.8s, cards done flying
+                setTimeout(() => {
+                  setBitoFlyPhase('done');
+                }, 3800);
+
+                // After 4s, mark as done (next button enabled)
                 setTimeout(() => {
                   setSeqPhase('done');
-                }, 3500);
+                }, 4000);
               }
             }
             return;
@@ -497,7 +550,9 @@ export default function TutorialStepDisplay({
 
   // Render real defense card overlays on table attack cards
   const renderDefenseOverlay = () => {
-    if (!isSeqDefend || defendedPairs === 0 || seqPhase === 'bito-anim' || seqPhase === 'done') return null;
+    // Show defense overlays during defend1, defend2, and bito-text phases
+    if (!isSeqDefend || defendedPairs === 0) return null;
+    if (seqPhase === 'bito-fly' || seqPhase === 'done') return null;
 
     const tableArea = document.querySelector('[data-tutorial="table-area"]');
     if (!tableArea) return null;
@@ -533,17 +588,79 @@ export default function TutorialStepDisplay({
     );
   };
 
-  // Render bito animation overlay
-  const renderBitoAnimation = () => {
-    if (seqPhase !== 'bito-anim') return null;
+  // Render БИТО text overlay
+  const renderBitoText = () => {
+    if (seqPhase !== 'bito-text' && seqPhase !== 'bito-fly') return null;
 
     return (
       <div className="fixed inset-0 z-[70] pointer-events-none">
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-3xl sm:text-5xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)] tracking-wider animate-bounce-in">
+          <div
+            className="text-3xl sm:text-5xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)] tracking-wider animate-bounce-in"
+            style={{
+              opacity: seqPhase === 'bito-fly' ? 0 : 1,
+              transition: 'opacity 0.5s',
+            }}
+          >
             БИТО!
           </div>
         </div>
+      </div>
+    );
+  };
+
+  // Render bito-fly animation: card backs flying from table positions to discard area
+  const renderBitoFlyAnimation = () => {
+    if (seqPhase !== 'bito-fly') return null;
+
+    const rects = tableCardRectsRef.current;
+    if (rects.length === 0) return null;
+
+    // Each table pair has 2 cards (attack + defense), so total flying cards = pairs * 2
+    const flyingCards: { id: number; startLeft: number; startTop: number; w: number; h: number }[] = [];
+    rects.forEach((r, i) => {
+      // Attack card position
+      flyingCards.push({ id: i * 2, startLeft: r.left, startTop: r.top, w: r.width, h: r.height });
+      // Defense card position (offset)
+      flyingCards.push({ id: i * 2 + 1, startLeft: r.left + 12, startTop: r.top + 12, w: r.width, h: r.height });
+    });
+
+    // Bito counter position (left side of screen for desktop, top-left for mobile)
+    const isMobile = vw < 640;
+    const bitoTargetLeft = isMobile ? 10 : 60;
+    const bitoTargetTop = isMobile ? 10 : vh * 0.6;
+
+    return (
+      <div className="fixed inset-0 z-[100] pointer-events-none">
+        {flyingCards.map(card => {
+          const isFlying = bitoFlyPhase === 'flying';
+          const isDone = bitoFlyPhase === 'done';
+
+          if (isDone) return null;
+
+          return (
+            <div
+              key={card.id}
+              className="absolute"
+              style={{
+                left: isFlying ? bitoTargetLeft : card.startLeft,
+                top: isFlying ? bitoTargetTop : card.startTop,
+                width: isFlying ? 40 : card.w,
+                height: isFlying ? 60 : card.h,
+                transition: 'all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53)',
+                opacity: isFlying ? 0.2 : 0.9,
+                transform: isFlying
+                  ? `rotate(${(card.id - 1) * 15}deg) scale(0.4)`
+                  : 'rotate(0deg) scale(1)',
+                zIndex: 100 + card.id,
+              }}
+            >
+              <div className="w-full h-full rounded-lg overflow-hidden shadow-lg border border-amber-700/30">
+                <img src={CARD_BACK_CUSTOM_URL} alt="" className="w-full h-full object-cover" />
+              </div>
+            </div>
+          );
+        })}
       </div>
     );
   };
@@ -574,8 +691,11 @@ export default function TutorialStepDisplay({
       {/* Defense overlay on table cards — real card images */}
       {renderDefenseOverlay()}
 
-      {/* Bito animation */}
-      {renderBitoAnimation()}
+      {/* БИТО text overlay */}
+      {renderBitoText()}
+
+      {/* Bito fly animation — cards flying to discard */}
+      {renderBitoFlyAnimation()}
 
       {/* Auto-defend success overlay (legacy) */}
       {autoDefendActive && (
@@ -597,7 +717,7 @@ export default function TutorialStepDisplay({
           left: textPos.left,
           maxWidth: textPos.maxWidth,
           width: textPos.maxWidth,
-          opacity: (autoDefendActive || seqPhase === 'bito-anim') ? 0.3 : 1,
+          opacity: (autoDefendActive || seqPhase === 'bito-text' || seqPhase === 'bito-fly') ? 0.3 : 1,
           transition: 'opacity 0.3s',
         }}
       >
