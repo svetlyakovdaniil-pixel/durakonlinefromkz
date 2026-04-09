@@ -87,6 +87,8 @@ export interface RoomSettings {
   password?: string;
   /** If true, room is private (only visible to invited players) */
   isPrivate?: boolean;
+  /** Music playlist ID for the game room */
+  playlistId?: number;
 }
 
 /** Valid bet amounts for room creation */
