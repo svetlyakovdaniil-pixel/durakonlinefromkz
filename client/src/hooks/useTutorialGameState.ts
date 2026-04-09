@@ -106,6 +106,9 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       tutorialState.battleField = battleField;
     }
 
+    // Force deck style to 'custom' (deck #2) during tutorial
+    tutorialState.deckStyle = 'custom';
+
     return tutorialState;
   }, [scenario, baseGameState]);
 }

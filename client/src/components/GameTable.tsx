@@ -146,6 +146,7 @@ function PlayerHand({
             return (
               <div
                 key={card.id}
+                data-card-id={card.id}
                 className={`relative flex-shrink-0 ${isTutorialHighlighted ? 'z-[60]' : ''}`}
                 style={{
                   marginLeft: getCardMargin(i),
@@ -1864,6 +1865,8 @@ export default function GameTable({
           onNext={tutorialNextStep}
           onPrevious={tutorialPreviousStep}
           onSkip={skipTutorial}
+          tutorialHighlightIds={tutorialHighlightIds}
+          gameState={gs}
         />
       )}
     </div>

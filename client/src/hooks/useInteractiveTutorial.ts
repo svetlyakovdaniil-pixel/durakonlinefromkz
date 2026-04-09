@@ -32,6 +32,8 @@ export interface TutorialScenario {
   highlightCards?: string[];
   /** Whether to show arrows from text to highlighted elements (default: true) */
   showArrows?: boolean;
+  /** When true, clicking a target card auto-defends all matching table cards with matching hand cards */
+  autoDefend?: boolean;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -165,19 +167,23 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
   },
   {
     id: 9,
-    title: 'Карта 666 - проездная',
-    description: 'Специальные карты',
-    highlightElements: ['[data-card-id*="6s"]'],
-    text: 'Карта 666 (шестерка) - это проездная карта. Она позволяет вам пройти мимо карты противника и положить новую карту.',
-    instruction: 'Нажмите на 666 чтобы пройти мимо карты противника',
+    title: 'Как это работает?',
+    description: 'Практика одинаковых карт',
+    highlightElements: ['[data-tutorial="player-hand"]'],
+    text: 'Нажмите на 6 черви чтобы отбиться. Карты с одинаковым номиналом и мастью бьют сами себя',
+    instruction: 'Нажмите на 6 черви в вашей руке',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
-    tableCards: [{ playerId: 1, cards: ['5d'] }],
+    tableCards: [{ playerId: 1, cards: ['6h', '6h'] }],
     requiredAction: 'click-card',
-    targetCard: '6s',
+    targetCard: '6h',
     trumpCard: 'Qh',
     discardCount: 10,
+    highlightCards: ['6h', '6h'],
+    showArrows: false,
+    textPosition: 'center',
+    autoDefend: true,
   },
   {
     id: 10,

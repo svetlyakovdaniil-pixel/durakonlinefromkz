@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { TutorialScenario } from '@/hooks/useInteractiveTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
+import type { ClientGameState } from '../../../shared/gameTypes';
 
 interface TutorialStepDisplayProps {
   scenario: TutorialScenario | null;
@@ -11,6 +12,8 @@ interface TutorialStepDisplayProps {
   onPrevious: () => void;
   onSkip: () => void;
   onCardClick?: (cardId: string) => void;
+  tutorialHighlightIds?: Set<string>;
+  gameState?: ClientGameState;
 }
 
 interface SpotlightRect {
@@ -28,6 +31,8 @@ export default function TutorialStepDisplay({
   onPrevious,
   onSkip,
   onCardClick,
+  tutorialHighlightIds,
+  gameState,
 }: TutorialStepDisplayProps) {
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
   const [textPos, setTextPos] = useState<{ top: number; left: number; maxWidth: number }>({
@@ -135,6 +140,33 @@ export default function TutorialStepDisplay({
     };
   }, [updatePositions, currentStep]);
 
+  // Make tutorial-highlighted cards clickable through overlay
+  useEffect(() => {
+    if (!scenario || !tutorialHighlightIds || tutorialHighlightIds.size === 0) return;
+
+    const highlightedElements: HTMLElement[] = [];
+    tutorialHighlightIds.forEach(cardId => {
+      const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+      if (el) {
+        el.style.position = 'relative';
+        el.style.zIndex = '60';
+        el.style.pointerEvents = 'auto';
+        highlightedElements.push(el);
+      }
+    });
+
+    return () => {
+      highlightedElements.forEach(el => {
+        el.style.position = '';
+        el.style.zIndex = '';
+        el.style.pointerEvents = '';
+      });
+    };
+  }, [scenario, tutorialHighlightIds]);
+
+  // State for auto-defend animation
+  const [autoDefendActive, setAutoDefendActive] = useState(false);
+
   // Handle card clicks for interactive scenarios
   useEffect(() => {
     if (!scenario || scenario.requiredAction !== 'click-card' || !scenario.targetCard) {
@@ -142,6 +174,7 @@ export default function TutorialStepDisplay({
     }
 
     cardClickHandledRef.current = false;
+    setAutoDefendActive(false);
 
     const handleCardClick = (e: Event) => {
       if (cardClickHandledRef.current) return;
@@ -156,9 +189,17 @@ export default function TutorialStepDisplay({
           cardClickHandledRef.current = true;
           onCardClick?.(cardId);
 
-          setTimeout(() => {
-            onNext();
-          }, 500);
+          if (scenario.autoDefend) {
+            // Trigger auto-defend animation: hide highlighted cards, show defense on table
+            setAutoDefendActive(true);
+            setTimeout(() => {
+              onNext();
+            }, 1200);
+          } else {
+            setTimeout(() => {
+              onNext();
+            }, 500);
+          }
         }
       }
     };
@@ -354,6 +395,17 @@ export default function TutorialStepDisplay({
       {/* Arrows from text to spotlights */}
       {scenario.showArrows !== false && renderArrows()}
 
+      {/* Auto-defend success overlay */}
+      {autoDefendActive && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
+          <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
+            <div className="text-4xl mb-2">✅</div>
+            <p className="text-emerald-300 font-bold text-lg">Отбито!</p>
+            <p className="text-emerald-200/70 text-sm mt-1">Карты побили сами себя</p>
+          </div>
+        </div>
+      )}
+
       {/* Text panel */}
       <div
         ref={textBoxRef}
@@ -363,6 +415,8 @@ export default function TutorialStepDisplay({
           left: textPos.left,
           maxWidth: textPos.maxWidth,
           width: textPos.maxWidth,
+          opacity: autoDefendActive ? 0.3 : 1,
+          transition: 'opacity 0.3s',
         }}
       >
         <div className="flex justify-between items-start mb-3">
