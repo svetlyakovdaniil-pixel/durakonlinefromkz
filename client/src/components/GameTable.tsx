@@ -1139,15 +1139,18 @@ export default function GameTable({
                   <button
                     className={`transition-colors p-1 sm:p-1.5 rounded select-none ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
                     title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
-                    onPointerDown={() => {
-                      longPressTimerRef.current = setTimeout(() => {
-                        longPressTimerRef.current = null;
-                        onToggleMusic();
-                        setTimeout(() => {
+                  onPointerDown={() => {
+                    longPressTimerRef.current = setTimeout(() => {
+                      longPressTimerRef.current = null;
+                      onToggleMusic();
+                      setTimeout(() => {
+                        // Show slider only if music is now enabled
+                        if (!musicEnabled) {
                           setLongPressTarget('music');
-                        }, 50);
-                      }, 400);
-                    }}
+                        }
+                      }, 50);
+                    }, 400);
+                  }}
                     onPointerUp={() => {
                       if (longPressTimerRef.current) {
                         clearTimeout(longPressTimerRef.current);
@@ -1174,7 +1177,10 @@ export default function GameTable({
                       longPressTimerRef.current = null;
                       toggleSound();
                       setTimeout(() => {
-                        setLongPressTarget('sound');
+                        // Show slider only if sound is now enabled
+                        if (!soundEnabled) {
+                          setLongPressTarget('sound');
+                        }
                       }, 50);
                     }, 400);
                   }}
