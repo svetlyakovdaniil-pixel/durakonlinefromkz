@@ -36,7 +36,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     id: 1,
     title: 'Количество карт в руке',
     description: 'Понимание базовых правил',
-    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="bot-card-count"]'],
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="opponent-info"]'],
     text: 'Вначале игры всем игрокам раздается по 14 карт.\nВ руке игрока всегда должно быть минимум 14 карт, пока в колодах есть карты.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,

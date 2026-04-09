@@ -1203,7 +1203,7 @@ export default function GameTable({
                 const isOppDefender = pIdx === gs.currentDefenderIdx;
                 const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
                 return (
-                  <div key={p.id} className={`flex flex-col items-center ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
+                  <div key={p.id} data-tutorial="opponent-info" className={`flex flex-col items-center ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
                     isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
                     isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
                     'bg-black/30 border-amber-700/20'
