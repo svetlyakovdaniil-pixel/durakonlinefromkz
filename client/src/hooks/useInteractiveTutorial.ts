@@ -40,6 +40,10 @@ export interface TutorialScenario {
     defenseCards: string[];
     /** Whether to highlight attack cards on the table */
     highlightTableCards?: boolean;
+    /** Skip bito animation after all defenses — just enable Next button */
+    noBitoAnimation?: boolean;
+    /** Show arrow from table area to the Next button after all defenses */
+    showArrowToNextButton?: boolean;
   };
 }
 
@@ -239,6 +243,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     sequentialDefend: {
       defenseCards: ['777'],
       highlightTableCards: true,
+      noBitoAnimation: true,
+      showArrowToNextButton: true,
     },
   },
   {

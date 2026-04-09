@@ -314,8 +314,17 @@ export default function TutorialStepDisplay({
               }
 
               if (clickNum >= totalDefenses) {
-                // All cards defended — start bito sequence
+                // All cards defended
                 cardClickHandledRef.current = true;
+
+                // Check if we should skip bito animation
+                if (scenario.sequentialDefend!.noBitoAnimation) {
+                  // No bito — just mark as done immediately (enable Next button)
+                  setSeqPhase('done');
+                  return;
+                }
+
+                // Start bito sequence
                 setSeqPhase('defend2');
 
                 // Capture table card positions before they get animated
@@ -563,9 +572,11 @@ export default function TutorialStepDisplay({
 
   // Render real defense card overlays on table attack cards
   const renderDefenseOverlay = () => {
-    // Show defense overlays during defend1, defend2, and bito-text phases
+    // Show defense overlays during defend1, defend2, bito-text phases
+    // Also keep visible in 'done' phase if noBitoAnimation (cards stay on table)
     if (!isSeqDefend || defendedPairs === 0) return null;
-    if (seqPhase === 'bito-fly' || seqPhase === 'done') return null;
+    const keepVisible = scenario.sequentialDefend?.noBitoAnimation && seqPhase === 'done';
+    if ((seqPhase === 'bito-fly' || seqPhase === 'done') && !keepVisible) return null;
 
     const tableArea = document.querySelector('[data-tutorial="table-area"]');
     if (!tableArea) return null;
@@ -700,6 +711,50 @@ export default function TutorialStepDisplay({
 
       {/* Arrows from text to spotlights */}
       {scenario.showArrows !== false && renderArrows()}
+
+      {/* Arrow from table area to Next button after noBito sequential defend */}
+      {isSeqDefend && seqPhase === 'done' && scenario.sequentialDefend?.showArrowToNextButton && (() => {
+        const tableArea = document.querySelector('[data-tutorial="table-area"]');
+        const nextBtn = textBoxRef.current?.querySelector('button:last-child');
+        if (!tableArea || !nextBtn) return null;
+        const tableRect = tableArea.getBoundingClientRect();
+        const btnRect = nextBtn.getBoundingClientRect();
+        const startX = tableRect.left + tableRect.width / 2;
+        const startY = tableRect.bottom + 8;
+        const endX = btnRect.left + btnRect.width / 2;
+        const endY = btnRect.top - 4;
+        return (
+          <svg
+            className="fixed inset-0 z-[55] pointer-events-none"
+            width={vw}
+            height={vh}
+          >
+            <defs>
+              <marker
+                id="arrowhead-next-btn"
+                markerWidth="10"
+                markerHeight="7"
+                refX="10"
+                refY="3.5"
+                orient="auto"
+              >
+                <polygon points="0 0, 10 3.5, 0 7" fill="#22c55e" />
+              </marker>
+            </defs>
+            <line
+              x1={startX}
+              y1={startY}
+              x2={endX}
+              y2={endY}
+              stroke="#22c55e"
+              strokeWidth="2.5"
+              strokeDasharray="6,4"
+              markerEnd="url(#arrowhead-next-btn)"
+              opacity="0.9"
+            />
+          </svg>
+        );
+      })()}
 
       {/* Defense overlay on table cards — real card images */}
       {renderDefenseOverlay()}
