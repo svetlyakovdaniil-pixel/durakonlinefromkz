@@ -734,7 +734,9 @@ export default function TutorialStepDisplay({
           </button>
         </div>
 
-        <p className={`text-white leading-relaxed whitespace-pre-line ${isCompact ? 'mb-1.5 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}>{scenario.text}</p>
+        <p className={`text-white leading-relaxed whitespace-pre-line ${isCompact ? 'mb-1.5 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+          dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
+        />
 
         {scenario.instruction && (
           <p className={`text-yellow-300 italic ${isCompact ? 'text-[9px] sm:text-[10px] mb-1.5' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>
