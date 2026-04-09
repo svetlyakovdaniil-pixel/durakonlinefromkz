@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -7,22 +7,29 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Settings, Volume2, Music, Smartphone, Globe, LogOut, MousePointerClick, GripHorizontal, Check } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
+import { useSound } from '@/hooks/useSound';
 import { useTranslation } from '@/i18n';
 
 interface GameSettingsSheetProps {
   onLeaveGame: () => void;
   children?: React.ReactNode;
+  roomPenalty?: number;
 }
 
-export default function GameSettingsSheet({ onLeaveGame, children }: GameSettingsSheetProps) {
+export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty = 0 }: GameSettingsSheetProps) {
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
+  const sound = useSound();
 
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(0.5);
-  const [soundVolume, setSoundVolume] = useState(0.5);
+
+  // Initialize volumes from hooks on mount
+  useEffect(() => {
+    // Music volume is already managed by music.volume
+    // Sound volume is already managed by sound.volume
+  }, []);
 
   const handleMusicToggle = (checked: boolean) => {
     setMusicEnabled(checked);
@@ -42,12 +49,17 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
   };
 
   const handleMusicVolumeChange = (volume: number) => {
-    setMusicVolume(volume);
     music.setVolume(volume);
+    if (volume === 0) {
+      setMusicEnabled(false);
+    }
   };
 
   const handleSoundVolumeChange = (volume: number) => {
-    setSoundVolume(volume);
+    sound.setVolume(volume);
+    if (volume === 0) {
+      setSoundEnabled(false);
+    }
   };
 
   return (
@@ -85,14 +97,14 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-amber-200/70">Громкость звуков</span>
-                  <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(sound.volume * 100)}%</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="100"
                   step="1"
-                  value={Math.round(soundVolume * 100)}
+                  value={Math.round(sound.volume * 100)}
                   onChange={(e) => handleSoundVolumeChange(Number(e.target.value) / 100)}
                   className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
                   style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
@@ -118,14 +130,14 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-amber-200/70">Громкость фоновой музыки</span>
-                  <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(music.volume * 100)}%</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="100"
                   step="1"
-                  value={Math.round(musicVolume * 100)}
+                  value={Math.round(music.volume * 100)}
                   onChange={(e) => handleMusicVolumeChange(Number(e.target.value) / 100)}
                   className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
                   style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
@@ -229,10 +241,10 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
             <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-amber-100">
-                  {t('game.leaveGameConfirm') || 'Leave Game?'}
+                  Вы действительно хотите выйти?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  Вы действительно хотите покинуть комнату? Если вы нажмете "Да", то выйдете в лобби и потеряете шаныраки.
+                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <span className="inline-block">🏠</span> шаныраков.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

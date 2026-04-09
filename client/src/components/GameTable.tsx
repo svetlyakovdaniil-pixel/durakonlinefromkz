@@ -418,6 +418,7 @@ export interface GameTableProps {
   onShowPassThrough: (cardId: string) => void;
   onLeaveGame?: () => void;
   onReturnToLobby?: () => void;
+  roomPenalty?: number;
   musicEnabled?: boolean;
   onToggleMusic?: () => void;
   musicVolume?: number;
@@ -428,7 +429,7 @@ export interface GameTableProps {
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
   onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
-  onLeaveGame, onReturnToLobby,
+  onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
 }: GameTableProps) {
   const gs = gameState;
@@ -1134,7 +1135,7 @@ export default function GameTable({
               {turnTimer}с
             </Badge>
             {/* Settings button */}
-            <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()}>
+            <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty}>
               <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 sm:p-1.5 rounded">
                 <Settings className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
