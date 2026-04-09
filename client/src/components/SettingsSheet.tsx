@@ -86,8 +86,11 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   };
 
   const handleSoundVolumeChange = (volume: number) => {
+    console.log('[SettingsSheet] handleSoundVolumeChange called with:', volume);
     sound.setVolume(volume);
+    console.log('[SettingsSheet] sound.setVolume called, sound.volume is now:', sound.volume);
     if (volume === 0) {
+      console.log('[SettingsSheet] Sound volume is 0, disabling sound');
       setSoundEnabled(false);
     }
   };

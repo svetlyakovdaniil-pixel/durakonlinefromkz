@@ -136,11 +136,16 @@ export function useMusic() {
   // Set volume (0..1)
   const setVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v));
+
     setVolumeState(clamped);
     volumeRef.current = clamped;
     writeMusicVolume(clamped);
     if (audioRef.current) {
+
       audioRef.current.volume = clamped;
+
+    } else {
+
     }
   }, []);
 
