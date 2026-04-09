@@ -51,6 +51,7 @@ function PlayerHand({
   selectedCardId,
   multiSelectIds,
   highlightedIds,
+  tutorialHighlightIds,
   onCardClick,
   onCardDrop,
   deckStyle,
@@ -62,6 +63,7 @@ function PlayerHand({
   selectedCardId: string | null;
   multiSelectIds: Set<string>;
   highlightedIds: Set<string>;
+  tutorialHighlightIds?: Set<string>;
   onCardClick: (card: Card) => void;
   onCardDrop?: (card: Card) => boolean;
   deckStyle?: 'classic' | 'custom';
@@ -138,15 +140,16 @@ function PlayerHand({
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
             const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id);
+            const isTutorialHighlighted = tutorialHighlightIds?.has(card.id) ?? false;
             const isPassThroughCard = passThroughIds.has(card.id);
             const canDrag = playableIds.has(card.id) || transferIds.has(card.id);
             return (
               <div
                 key={card.id}
-                className="relative flex-shrink-0"
+                className={`relative flex-shrink-0 ${isTutorialHighlighted ? 'z-[60]' : ''}`}
                 style={{
                   marginLeft: getCardMargin(i),
-                  zIndex: isSelected ? 50 : i,
+                  zIndex: isTutorialHighlighted ? 60 : isSelected ? 50 : i,
                 }}
               >
                 {canDrag && onCardDrop ? (
@@ -162,7 +165,7 @@ function PlayerHand({
                 ) : (
                   <div
                     style={{
-                      transform: isSelected ? 'translateY(-8px)' : undefined,
+                      transform: isTutorialHighlighted ? 'translateY(-16px)' : isSelected ? 'translateY(-8px)' : undefined,
                       transition: 'transform 0.15s',
                     }}
                   >
@@ -170,7 +173,7 @@ function PlayerHand({
                       card={card}
                       playable={isPlayable}
                       selected={isSelected}
-                      highlighted={isHighlighted}
+                      highlighted={isHighlighted || isTutorialHighlighted}
                       deckStyle={deckStyle}
                       onClick={() => onCardClick(card)}
                     />
@@ -752,6 +755,32 @@ export default function GameTable({
   const hasAnyAction = canTake || canEndAttack || canSkip || isMultiSelecting || (canTransfer && selectedCardId && transferIds.has(selectedCardId)) || (canPassThrough && selectedCardId && passThroughIds.has(selectedCardId));
 
   const sortedHand = sortHand(gs.myHand, sortMode);
+
+  // Compute tutorial-highlighted card IDs from scenario.highlightCards
+  const tutorialHighlightIds = useMemo(() => {
+    if (!isTutorial || !currentTutorialScenario?.highlightCards || currentTutorialScenario.highlightCards.length === 0) {
+      return new Set<string>();
+    }
+    // Build a frequency map of requested highlight cards (e.g. ['6h','6h','Jc','Jc'])
+    const requestedCounts = new Map<string, number>();
+    for (const notation of currentTutorialScenario.highlightCards) {
+      requestedCounts.set(notation, (requestedCounts.get(notation) || 0) + 1);
+    }
+    // Match against actual hand cards by rank+suit notation
+    const matchedCounts = new Map<string, number>();
+    const ids = new Set<string>();
+    for (const card of gs.myHand) {
+      const suitChar = card.suit === 'spades' ? 's' : card.suit === 'hearts' ? 'h' : card.suit === 'diamonds' ? 'd' : card.suit === 'clubs' ? 'c' : '';
+      const notation = card.rank === '777' ? '777' : `${card.rank}${suitChar}`;
+      const needed = requestedCounts.get(notation) || 0;
+      const matched = matchedCounts.get(notation) || 0;
+      if (matched < needed) {
+        ids.add(card.id);
+        matchedCounts.set(notation, matched + 1);
+      }
+    }
+    return ids;
+  }, [isTutorial, currentTutorialScenario?.highlightCards, gs.myHand]);
 
   // Compute highlighted card IDs: cards of the same rank as selected multi-attack/transfer cards
   const highlightedIds = useMemo(() => {
@@ -1808,6 +1837,7 @@ export default function GameTable({
               selectedCardId={selectedCardId}
               multiSelectIds={multiSelectIds}
               highlightedIds={highlightedIds}
+              tutorialHighlightIds={tutorialHighlightIds}
               onCardClick={handleCardClick}
               onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
               deckStyle={gs.deckStyle}

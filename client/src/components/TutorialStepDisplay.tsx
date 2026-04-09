@@ -352,7 +352,7 @@ export default function TutorialStepDisplay({
       ))}
 
       {/* Arrows from text to spotlights */}
-      {renderArrows()}
+      {scenario.showArrows !== false && renderArrows()}
 
       {/* Text panel */}
       <div

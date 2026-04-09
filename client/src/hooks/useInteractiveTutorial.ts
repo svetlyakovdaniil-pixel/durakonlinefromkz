@@ -28,6 +28,10 @@ export interface TutorialScenario {
   discardCount?: number;
   /** Trump card shown under deck (e.g. 'Qh' = Queen of hearts) */
   trumpCard?: string;
+  /** Card notations to visually highlight (raise + glow) in player hand */
+  highlightCards?: string[];
+  /** Whether to show arrows from text to highlighted elements (default: true) */
+  showArrows?: boolean;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -101,7 +105,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: 'Сортировка и счетчик карт',
     description: 'Интерфейс игры',
     highlightElements: ['[data-tutorial="player-card-count"]', '[data-tutorial="sort-button"]'],
-    text: 'Счетчик карт показывает количество карт в вашей руке в реальном времени.\nПопробуйте воспользоваться кнопкой сортировки (правый нижний угол).',
+    text: 'Счетчик карт показывает количество карт в вашей руке в реальном времени.\nКнопкой сортировки вы меняете расположение карт в руке',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -143,19 +147,21 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
   },
   {
     id: 8,
-    title: 'Карта 777 - переводная',
-    description: 'Специальные карты',
-    highlightElements: ['[data-card-id*="7s"]'],
-    text: 'Карта 777 (семерка) - это переводная карта. Она может перевести карту противника на другую карту.',
-    instruction: 'Нажмите на 777 чтобы перевести карту противника',
+    title: 'Одинаковые карты',
+    description: 'Правила одинаковых карт',
+    highlightElements: ['[data-tutorial="player-hand"]'],
+    text: 'Так как в игре смешаны 4 стандартные колоды по 36 карт воедино, встречаются одинаковые по масти и номиналу карты. Такие карты бьют сами себя. Исключение - Король пики. Король пики сам себя побить не может',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
-    tableCards: [{ playerId: 1, cards: ['5d'] }],
-    requiredAction: 'click-card',
-    targetCard: '7s',
+    requiredAction: 'click-button',
     trumpCard: 'Qh',
     discardCount: 10,
+    textPosition: 'center',
+    /** Cards to visually highlight (raise + glow) in player hand */
+    highlightCards: ['6h', '6h', 'Jc', 'Jc'],
+    showArrows: false,
   },
   {
     id: 9,
