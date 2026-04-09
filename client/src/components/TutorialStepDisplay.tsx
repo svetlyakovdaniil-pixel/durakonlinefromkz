@@ -201,9 +201,9 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'bottom') {
-      // Position text box at the bottom of the screen, over the player hand area
-      const textBoxWidth = Math.min(336, window.innerWidth - 32);
-      const textBoxHeight = 200;
+      // Position text box at the bottom of the screen, over the player hand area (20% smaller)
+      const textBoxWidth = Math.min(269, window.innerWidth - 32);
+      const textBoxHeight = 180;
       setTextPos({
         top: window.innerHeight - textBoxHeight - 16,
         left: window.innerWidth / 2 - textBoxWidth / 2,

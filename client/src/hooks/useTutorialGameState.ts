@@ -106,6 +106,14 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       tutorialState.battleField = battleField;
     }
 
+    // Override attacker/defender indices if specified
+    if (scenario.attackerPlayerIdx !== undefined) {
+      tutorialState.currentAttackerIdx = scenario.attackerPlayerIdx;
+    }
+    if (scenario.defenderPlayerIdx !== undefined) {
+      tutorialState.currentDefenderIdx = scenario.defenderPlayerIdx;
+    }
+
     // Force deck style to 'custom' (deck #2) during tutorial
     tutorialState.deckStyle = 'custom';
 

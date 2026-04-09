@@ -58,6 +58,10 @@ export interface TutorialScenario {
   extraBots?: number;
   /** Custom names for extra bots (if not set, defaults to 'Бот 2', 'Бот 3', etc.) */
   extraBotNames?: string[];
+  /** Override which player index is the attacker (0=player, 1=first bot, 2=second extra bot, etc.) */
+  attackerPlayerIdx?: number;
+  /** Override which player index is the defender */
+  defenderPlayerIdx?: number;
   /** Custom arrows between game elements (e.g. clockwise direction arrows) */
   customArrows?: {
     /** CSS selector for start element */
@@ -337,6 +341,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    attackerPlayerIdx: 3,
     customArrows: [
       // Мадина → Бот 2 (под иконкой)
       { from: '[data-tutorial="opponent-info"]:nth-of-type(1)', to: '[data-tutorial="opponent-info"]:nth-of-type(2)', color: '#facc15' },
@@ -365,13 +370,14 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    attackerPlayerIdx: 3,
   },
   {
     id: 16,
-    title: 'Игрок Бот 3 начал свой ход с 10-ки, поменяв направление игры. Теперь он ходит не на вас, а на игрока Мадина',
+    title: 'Игрок Бот 3 начал свой ход с 10-ки, поменяв направление игры.',
     description: 'Смена направления — 10-ка на столе',
     highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(3)', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="table-area"]'],
-    text: '',
+    text: 'Теперь Бот 3 ходит не на вас, а на игрока Мадина',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -383,6 +389,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    attackerPlayerIdx: 3,
+    defenderPlayerIdx: 2,
     tableCards: [{ playerId: 2, cards: ['10d'] }],
   },
 ];
