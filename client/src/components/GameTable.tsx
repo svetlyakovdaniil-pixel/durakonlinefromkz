@@ -22,6 +22,8 @@ import TutorialArrow from './TutorialArrow';
 import TutorialHint from './TutorialHint';
 import { useTutorial } from '@/hooks/useTutorial';
 import { useTutorialScenarios } from '@/hooks/useTutorialScenarios';
+import { useInteractiveTutorial } from '@/hooks/useInteractiveTutorial';
+import TutorialStepDisplay from './TutorialStepDisplay';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -469,12 +471,17 @@ export default function GameTable({
   const urgentTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const urgentAlertShownForTrick = useRef(-1);
 
-  // Tutorial scenario state
-  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
-  const [tutorialFrozen, setTutorialFrozen] = useState(false);
-  const { getScenario, getAllScenarios } = useTutorialScenarios();
-  const allScenarios = getAllScenarios();
-  const currentScenario = allScenarios[currentTutorialStep];
+  // Interactive tutorial state
+  const {
+    currentStep: tutorialStep,
+    isCompleted: tutorialCompleted,
+    totalSteps: tutorialTotalSteps,
+    getCurrentScenario,
+    nextStep: tutorialNextStep,
+    previousStep: tutorialPreviousStep,
+    skipTutorial,
+  } = useInteractiveTutorial();
+  const currentTutorialScenario = getCurrentScenario();
 
   // Animation states
   const [showBitoAnim, setShowBitoAnim] = useState(false);
@@ -1810,35 +1817,16 @@ export default function GameTable({
         />
       )}
 
-      {/* Tutorial Overlay and Tooltip */}
-      {isTutorial && (
-        <>
-          <TutorialOverlay
-            targetElement={tutorial.targetElement}
-            isActive={tutorial.isActive}
-            padding={12}
-          />
-          {tutorial.currentStep && (
-            <TutorialTooltip
-              targetElement={tutorial.targetElement}
-              title={tutorial.currentStep.title}
-              description={tutorial.currentStep.description}
-              currentStep={tutorial.currentStepIndex + 1}
-              totalSteps={tutorial.totalSteps}
-              onNext={() => {
-                const isComplete = tutorial.goToNextStep();
-                if (isComplete) {
-                  onTutorialComplete?.();
-                }
-              }}
-              onSkip={() => {
-                tutorial.skipTutorial();
-                onTutorialComplete?.();
-              }}
-              isActive={tutorial.isActive}
-            />
-          )}
-        </>
+      {/* Tutorial Step Display */}
+      {isTutorial && currentTutorialScenario && (
+        <TutorialStepDisplay
+          scenario={currentTutorialScenario}
+          currentStep={tutorialStep}
+          totalSteps={tutorialTotalSteps}
+          onNext={tutorialNextStep}
+          onPrevious={tutorialPreviousStep}
+          onSkip={skipTutorial}
+        />
       )}
     </div>
   );
