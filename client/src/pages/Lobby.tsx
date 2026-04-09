@@ -495,14 +495,14 @@ onClick={() => setShowTengeTopUp(true)}
                   </div>
                   <div>
                     <Label className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Музыка' : 'Music'}</Label>
-                    <Select value={selectedPlaylistId?.toString() || ''} onValueChange={(v) => {
-                      setSelectedPlaylistId(v ? parseInt(v) : undefined);
+                    <Select value={selectedPlaylistId?.toString() || 'default'} onValueChange={(v) => {
+                      setSelectedPlaylistId(v !== 'default' ? parseInt(v) : undefined);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                         <SelectValue placeholder={locale === 'kk' ? 'Таңдау' : 'Select'} />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                        <SelectItem value="" className="text-amber-200/50">{locale === 'kk' ? 'Дефолт' : 'Default'}</SelectItem>
+                        <SelectItem value="default" className="text-amber-200/50">{locale === 'kk' ? 'Дефолт' : 'Default'}</SelectItem>
                         {ownedPlaylists.map(playlist => (
                           <SelectItem key={playlist.id} value={playlist.id.toString()} className="text-amber-100">
                             {playlist.name}
