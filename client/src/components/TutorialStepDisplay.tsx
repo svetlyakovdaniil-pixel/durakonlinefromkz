@@ -787,6 +787,34 @@ export default function TutorialStepDisplay({
         />
       ))}
 
+      {/* Pass-through (проездной) badge under specific bot */}
+      {scenario.passThroughBotIdx !== undefined && (() => {
+        // Find the bot's opponent-info element by player index
+        // passThroughBotIdx: 1=first bot, 2=Мадина, 3=Бот 3
+        // opponents are rendered without the player (index 0), so bot at playerIdx N is opponent N-1
+        const oppIndex = scenario.passThroughBotIdx - 1; // 0-based among opponents
+        const allOpponents = document.querySelectorAll('[data-tutorial="opponent-info"]');
+        const targetEl = allOpponents[oppIndex];
+        if (!targetEl) return null;
+        const rect = targetEl.getBoundingClientRect();
+        return (
+          <div
+            className="fixed z-[52] flex items-center gap-0.5 bg-yellow-900/60 border border-yellow-500/60 rounded px-1.5 sm:px-2 py-0.5 pointer-events-none"
+            style={{
+              left: rect.left + rect.width / 2,
+              top: rect.bottom + 4,
+              transform: 'translateX(-50%)',
+            }}
+          >
+            <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="text-[9px] sm:text-[11px] text-yellow-300 font-medium whitespace-nowrap">Проездной</span>
+          </div>
+        );
+      })()}
+
       {/* Arrows from text to spotlights */}
       {scenario.showArrows !== false && renderArrows()}
 

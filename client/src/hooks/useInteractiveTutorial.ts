@@ -71,6 +71,8 @@ export interface TutorialScenario {
     /** Arrow color (default: yellow) */
     color?: string;
   }[];
+  /** Show pass-through (проездной) icon under a specific bot by player index */
+  passThroughBotIdx?: number;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -342,6 +344,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
     attackerPlayerIdx: 3,
+    defenderPlayerIdx: 0,
     customArrows: [
       // Мадина → Бот 2 (под иконкой)
       { from: '[data-tutorial="opponent-info"]:nth-of-type(1)', to: '[data-tutorial="opponent-info"]:nth-of-type(2)', color: '#facc15' },
@@ -371,6 +374,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
     attackerPlayerIdx: 3,
+    defenderPlayerIdx: 0,
   },
   {
     id: 16,
@@ -413,6 +417,28 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     attackerPlayerIdx: 2,
     defenderPlayerIdx: 3,
     tableCards: [{ playerId: 2, cards: ['10d', '10s'] }],
+  },
+  {
+    id: 18,
+    title: 'На 10-ку распространяется проездной',
+    description: 'Проездной с козырной 10-кой',
+    highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(3)', '[data-tutorial="table-area"]'],
+    text: 'У игрока Бот 3 в руке была козырная 10-ка, он воспользовался проездным, и перевел ход снова на игрока Мадина. Сменив направление игры.',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'bottom',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+    attackerPlayerIdx: 3,
+    defenderPlayerIdx: 2,
+    tableCards: [{ playerId: 2, cards: ['10d', '10s', '10h'] }],
+    passThroughBotIdx: 3,
   },
 ];
 
