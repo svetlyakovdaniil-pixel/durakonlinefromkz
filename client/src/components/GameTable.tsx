@@ -7,7 +7,7 @@ import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Music2, Volume2, VolumeX, X, UserPlus, Clock, Check } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Settings, X, UserPlus, Clock, Check } from 'lucide-react';
 import { useSound } from '@/hooks/useSound';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
@@ -15,6 +15,7 @@ import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
+import GameSettingsSheet from './GameSettingsSheet';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -931,7 +932,7 @@ export default function GameTable({
   const mobileTrumpColor = gs.trumpInfo.currentTrump === 'hearts' || gs.trumpInfo.currentTrump === 'diamonds' ? 'text-red-500' : 'text-white';
 
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
-  const [longPressTarget, setLongPressTarget] = useState<'music' | 'sound' | null>(null);
+
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
 
@@ -1132,130 +1133,13 @@ export default function GameTable({
               <Timer className="w-4 h-4 mr-0.5" />
               {turnTimer}с
             </Badge>
-            {/* Volume controls — tap to toggle, long-press to show slider */}
-            <div className="relative">
-              <div className="flex items-center gap-0.5">
-                {onToggleMusic && (
-                  <button
-                    className={`transition-colors p-1 sm:p-1.5 rounded select-none ${musicEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-                    title={musicEnabled ? t('game.musicOn') : t('game.musicOff')}
-                  onPointerDown={() => {
-                    longPressTimerRef.current = setTimeout(() => {
-                      longPressTimerRef.current = null;
-                      onToggleMusic();
-                      setTimeout(() => {
-                        // Show slider only if music is now enabled
-                        if (!musicEnabled) {
-                          setLongPressTarget('music');
-                        }
-                      }, 50);
-                    }, 400);
-                  }}
-                    onPointerUp={() => {
-                      if (longPressTimerRef.current) {
-                        clearTimeout(longPressTimerRef.current);
-                        longPressTimerRef.current = null;
-                        onToggleMusic();
-                      }
-                    }}
-                    onPointerLeave={() => {
-                      if (longPressTimerRef.current) {
-                        clearTimeout(longPressTimerRef.current);
-                        longPressTimerRef.current = null;
-                      }
-                    }}
-                    onContextMenu={(e) => e.preventDefault()}
-                  >
-                    {musicEnabled ? <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <Music2 className="w-[18px] h-[18px] sm:w-6 sm:h-6 opacity-40" />}
-                  </button>
-                )}
-                <button
-                  className={`transition-colors p-1 sm:p-1.5 rounded select-none ${soundEnabled ? 'text-amber-400 hover:text-amber-300' : 'text-gray-500 hover:text-gray-400'}`}
-                  title={soundEnabled ? t('game.soundOn') : t('game.soundOff')}
-                  onPointerDown={() => {
-                    longPressTimerRef.current = setTimeout(() => {
-                      longPressTimerRef.current = null;
-                      toggleSound();
-                      setTimeout(() => {
-                        // Show slider only if sound is now enabled
-                        if (!soundEnabled) {
-                          setLongPressTarget('sound');
-                        }
-                      }, 50);
-                    }, 400);
-                  }}
-                  onPointerUp={() => {
-                    if (longPressTimerRef.current) {
-                      clearTimeout(longPressTimerRef.current);
-                      longPressTimerRef.current = null;
-                      toggleSound();
-                    }
-                  }}
-                  onPointerLeave={() => {
-                    if (longPressTimerRef.current) {
-                      clearTimeout(longPressTimerRef.current);
-                      longPressTimerRef.current = null;
-                    }
-                  }}
-                  onContextMenu={(e) => e.preventDefault()}
-                >
-                  {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
-                </button>
-              </div>
-              {/* Volume slider popup — shows only if enabled */}
-              {longPressTarget && ((longPressTarget === 'music' && musicEnabled) || (longPressTarget === 'sound' && soundEnabled)) && (
-                <div
-                  className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[200px] shadow-xl backdrop-blur-sm"
-                  onClick={(e) => e.stopPropagation()}
-                  onTouchStart={(e) => e.stopPropagation()}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs text-amber-200/70">
-                      {longPressTarget === 'music'
-                        ? <><Music2 className="w-3 h-3 inline mr-1" />{t('game.musicVolume')}</>
-                        : <><Volume2 className="w-3 h-3 inline mr-1" />{t('game.soundVolume')}</>}
-                    </span>
-                    <span className="text-xs text-amber-300/60">
-                      {Math.round((longPressTarget === 'music' ? musicVolume : soundVolume) * 100)}%
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    step="1"
-                    value={Math.round((longPressTarget === 'music' ? musicVolume : soundVolume) * 100)}
-                    onChange={(e) => {
-                      const v = Number(e.target.value) / 100;
-                      if (longPressTarget === 'music') onMusicVolumeChange?.(v);
-                      else setSoundVolume(v);
-                    }}
-                    onInput={(e) => {
-                      const v = Number((e.target as HTMLInputElement).value) / 100;
-                      if (longPressTarget === 'music') onMusicVolumeChange?.(v);
-                      else setSoundVolume(v);
-                    }}
-                    className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
-                    style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '32px', padding: '12px 0' }}
-                  />
-                  <button
-                    className="mt-2 text-xs text-amber-400/60 hover:text-amber-300 w-full text-center"
-                    onClick={() => setLongPressTarget(null)}
-                  >
-                    {t('game.close') || '✕'}
-                  </button>
-                </div>
-              )}
-            </div>
-            {onLeaveGame && !gs.players[myIdx]?.isOut && (
-              <button
-                className="text-gray-400 hover:text-red-400 transition-colors p-1 sm:p-1.5 rounded"
-                onClick={() => setShowLeaveConfirm(true)}
-                title={t('game.leaveGame')}
-              >
-                <LogOut className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
+            {/* Settings button */}
+            <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()}>
+              <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 sm:p-1.5 rounded">
+                <Settings className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
-            )}
+            </GameSettingsSheet>
+
             {gs.players[myIdx]?.isOut && gs.players[myIdx]?.winPlace && onReturnToLobby && (
               <button
                 className="text-green-400 hover:text-green-300 transition-colors p-1 sm:p-1.5 rounded"
