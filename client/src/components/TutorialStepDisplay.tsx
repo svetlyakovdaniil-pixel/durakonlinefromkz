@@ -164,8 +164,19 @@ export default function TutorialStepDisplay({
     const rects: SpotlightRect[] = [];
     const padding = 8;
 
+    // Helper to resolve selectors including nth-of-type for opponent-info
+    const resolveSelector = (selector: string): Element | null => {
+      const nthMatch = selector.match(/\[data-tutorial="opponent-info"\]:nth-of-type\((\d+)\)/);
+      if (nthMatch) {
+        const idx = parseInt(nthMatch[1]) - 1;
+        const allOpponents = document.querySelectorAll('[data-tutorial="opponent-info"]');
+        return allOpponents[idx] || null;
+      }
+      return document.querySelector(selector);
+    };
+
     for (const selector of scenario.highlightElements) {
-      const element = document.querySelector(selector);
+      const element = resolveSelector(selector);
       if (element) {
         const rect = element.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) continue;
@@ -189,7 +200,7 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'center' || rects.length === 0) {
-      const textBoxWidth = Math.min(420, window.innerWidth - 32);
+      const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({
         top: window.innerHeight / 2 - 140,
         left: window.innerWidth / 2 - textBoxWidth / 2,
@@ -603,7 +614,9 @@ export default function TutorialStepDisplay({
     if (totalVisible === 0) return null;
 
     const hasPreDefended = preDefended.length > 0;
-    const keepVisible = (scenario.sequentialDefend?.noBitoAnimation || hasPreDefended) && seqPhase === 'done';
+    // Keep overlays visible in 'done' phase only if noBitoAnimation (step 11 style)
+    // For steps with bito animation (like step 12), overlays should disappear with the bito fly
+    const keepVisible = scenario.sequentialDefend?.noBitoAnimation && seqPhase === 'done';
     if ((seqPhase === 'bito-fly' || seqPhase === 'done') && !keepVisible) return null;
 
     const tableArea = document.querySelector('[data-tutorial="table-area"]');
@@ -763,19 +776,97 @@ export default function TutorialStepDisplay({
       {/* Arrows from text to spotlights */}
       {scenario.showArrows !== false && renderArrows()}
 
+      {/* Custom arrows between game elements (e.g. clockwise direction) */}
+      {scenario.customArrows && scenario.customArrows.length > 0 && (() => {
+        // Resolve elements: support "opponent-info:N" syntax for nth opponent
+        const resolveElement = (selector: string): Element | null => {
+          // Match pattern like '[data-tutorial="opponent-info"]:nth-of-type(N)'
+          const nthMatch = selector.match(/\[data-tutorial="opponent-info"\]:nth-of-type\((\d+)\)/);
+          if (nthMatch) {
+            const idx = parseInt(nthMatch[1]) - 1; // 0-based
+            const allOpponents = document.querySelectorAll('[data-tutorial="opponent-info"]');
+            return allOpponents[idx] || null;
+          }
+          return document.querySelector(selector);
+        };
+
+        const arrows: { x1: number; y1: number; x2: number; y2: number; color: string }[] = [];
+        scenario.customArrows!.forEach((arrow) => {
+          const fromEl = resolveElement(arrow.from);
+          const toEl = resolveElement(arrow.to);
+          if (!fromEl || !toEl) return;
+          const fromRect = fromEl.getBoundingClientRect();
+          const toRect = toEl.getBoundingClientRect();
+          const fromCX = fromRect.left + fromRect.width / 2;
+          const fromCY = fromRect.top + fromRect.height / 2;
+          const toCX = toRect.left + toRect.width / 2;
+          const toCY = toRect.top + toRect.height / 2;
+          const dx = toCX - fromCX;
+          const dy = toCY - fromCY;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 10) return;
+          const nx = dx / dist;
+          const ny = dy / dist;
+          // Start from edge of source, end at edge of target
+          const fromHalfW = fromRect.width / 2;
+          const fromHalfH = fromRect.height / 2;
+          const toHalfW = toRect.width / 2;
+          const toHalfH = toRect.height / 2;
+          const startX = fromCX + nx * (fromHalfW + 8);
+          const startY = fromCY + ny * (fromHalfH + 8);
+          const endX = toCX - nx * (toHalfW + 8);
+          const endY = toCY - ny * (toHalfH + 8);
+          arrows.push({ x1: startX, y1: startY, x2: endX, y2: endY, color: arrow.color || '#facc15' });
+        });
+        if (arrows.length === 0) return null;
+        return (
+          <svg
+            className="fixed inset-0 z-[55] pointer-events-none"
+            width={vw}
+            height={vh}
+          >
+            <defs>
+              <marker
+                id="arrowhead-custom"
+                markerWidth="12"
+                markerHeight="8"
+                refX="12"
+                refY="4"
+                orient="auto"
+              >
+                <polygon points="0 0, 12 4, 0 8" fill="#facc15" />
+              </marker>
+            </defs>
+            {arrows.map((a, i) => (
+              <line
+                key={i}
+                x1={a.x1}
+                y1={a.y1}
+                x2={a.x2}
+                y2={a.y2}
+                stroke={a.color}
+                strokeWidth="3"
+                strokeDasharray="8,5"
+                markerEnd="url(#arrowhead-custom)"
+                opacity="0.9"
+              />
+            ))}
+          </svg>
+        );
+      })()}
+
       {/* Arrow from table area to Next button after noBito sequential defend */}
       {isSeqDefend && seqPhase === 'done' && scenario.sequentialDefend?.showArrowToNextButton && (() => {
         const tableArea = document.querySelector('[data-tutorial="table-area"]');
         const nextBtn = textBoxRef.current?.querySelector('button:last-child');
         if (!tableArea || !nextBtn) return null;
         const tableRect = tableArea.getBoundingClientRect();
-        const btnRect = nextBtn.getBoundingClientRect();
         const textBoxRect = textBoxRef.current?.getBoundingClientRect();
         const startX = tableRect.right;
         const startY = tableRect.top;
-        // End at the right side of the text box, vertically aligned with the Next button
-        const endX = (textBoxRect ? textBoxRect.right + 4 : btnRect.right + 4);
-        const endY = btnRect.top + btnRect.height / 2;
+        // End at the bottom-right corner of the text box area (near the Next button)
+        const endX = (textBoxRect ? textBoxRect.right + 4 : 200);
+        const endY = (textBoxRect ? textBoxRect.bottom - 8 : 200);
         return (
           <svg
             className="fixed inset-0 z-[55] pointer-events-none"
@@ -871,38 +962,7 @@ export default function TutorialStepDisplay({
           />
         </div>
 
-        {/* Transfer button — appears after player clicks the transfer card */}
-        {scenario.transferMechanic && transferPhase === 'card-selected' && (
-          <div className={`${isCompact ? 'mb-1.5' : 'mb-3'}`}>
-            <Button
-              onClick={() => {
-                setTransferPhase('transferring');
-                // Hide the transfer card from hand
-                if (tutorialHighlightIds) {
-                  tutorialHighlightIds.forEach(cardId => {
-                    const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
-                    if (el) {
-                      el.style.opacity = '0';
-                      el.style.transform = 'translateY(-40px) scale(0.5)';
-                      el.style.transition = 'all 0.4s ease-out';
-                      el.style.pointerEvents = 'none';
-                      hiddenCardElementsRef.current.push(el);
-                    }
-                  });
-                }
-                // After short animation, show transferred message
-                setTimeout(() => {
-                  setTransferPhase('transferred');
-                }, 800);
-              }}
-              variant="default"
-              size={isCompact ? 'xs' as any : 'sm'}
-              className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold ${isCompact ? 'text-[10px] h-6' : 'text-xs'}`}
-            >
-              Перевести
-            </Button>
-          </div>
-        )}
+
 
         {/* Navigation buttons */}
         <div className="flex gap-2 justify-between">
@@ -929,6 +989,62 @@ export default function TutorialStepDisplay({
           </Button>
         </div>
       </div>
+
+      {/* Floating transfer button above player hand */}
+      {scenario.transferMechanic && transferPhase === 'card-selected' && (() => {
+        const playerHand = document.querySelector('[data-tutorial="player-hand"]');
+        if (!playerHand) return null;
+        const handRect = playerHand.getBoundingClientRect();
+        return (
+          <div
+            className="fixed z-[65] flex justify-center animate-bounce-in"
+            style={{
+              left: handRect.left,
+              top: handRect.top - 48,
+              width: handRect.width,
+            }}
+          >
+            <Button
+              onClick={() => {
+                setTransferPhase('transferring');
+                // Animate the transfer card flying to the table
+                if (tutorialHighlightIds) {
+                  const tableArea = document.querySelector('[data-tutorial="table-area"]');
+                  const tableRect = tableArea?.getBoundingClientRect();
+                  tutorialHighlightIds.forEach(cardId => {
+                    const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+                    if (el && tableRect) {
+                      const cardRect = el.getBoundingClientRect();
+                      const dx = tableRect.left + tableRect.width / 2 - cardRect.left;
+                      const dy = tableRect.top + tableRect.height / 2 - cardRect.top;
+                      el.style.transition = 'all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+                      el.style.transform = `translate(${dx}px, ${dy}px) scale(0.7)`;
+                      el.style.opacity = '0.3';
+                      el.style.pointerEvents = 'none';
+                      hiddenCardElementsRef.current.push(el);
+                    } else if (el) {
+                      el.style.opacity = '0';
+                      el.style.transform = 'translateY(-40px) scale(0.5)';
+                      el.style.transition = 'all 0.4s ease-out';
+                      el.style.pointerEvents = 'none';
+                      hiddenCardElementsRef.current.push(el);
+                    }
+                  });
+                }
+                // After card flies to table, show transferred message
+                setTimeout(() => {
+                  setTransferPhase('transferred');
+                }, 800);
+              }}
+              variant="default"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2 shadow-lg shadow-emerald-500/30"
+            >
+              Перевести
+            </Button>
+          </div>
+        );
+      })()}
 
       {/* Transfer success message overlay */}
       {scenario.transferMechanic && transferPhase === 'transferred' && (

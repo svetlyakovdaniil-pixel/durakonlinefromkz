@@ -56,6 +56,15 @@ export interface TutorialScenario {
   };
   /** Number of extra bots to show (besides the main opponent) */
   extraBots?: number;
+  /** Custom arrows between game elements (e.g. clockwise direction arrows) */
+  customArrows?: {
+    /** CSS selector for start element */
+    from: string;
+    /** CSS selector for end element */
+    to: string;
+    /** Arrow color (default: yellow) */
+    color?: string;
+  }[];
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -307,6 +316,34 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       transferCard: '7s',
       targetBotName: 'Бот 2',
     },
+  },
+  {
+    id: 14,
+    title: 'Ход по часовой стрелке',
+    description: 'Направление игры',
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="opponent-info"]:nth-of-type(1)', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="opponent-info"]:nth-of-type(3)'],
+    text: 'Игроки ходят друг на друга по часовой стрелке, но есть исключение:\nЕсли какой-то игрок начинает свой ход с 10-ки, выкинув ее на стол, <red>направление игры меняется</red> на против часовой стрелки',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'center',
+    showArrows: false,
+    extraBots: 2,
+    highlightCards: STANDARD_PLAYER_HAND,
+    customArrows: [
+      // Дана → Бот 2
+      { from: '[data-tutorial="opponent-info"]:nth-of-type(1)', to: '[data-tutorial="opponent-info"]:nth-of-type(2)', color: '#facc15' },
+      // Бот 2 → Бот 3
+      { from: '[data-tutorial="opponent-info"]:nth-of-type(2)', to: '[data-tutorial="opponent-info"]:nth-of-type(3)', color: '#facc15' },
+      // Бот 3 → Player hand
+      { from: '[data-tutorial="opponent-info"]:nth-of-type(3)', to: '[data-tutorial="player-hand"]', color: '#facc15' },
+      // Player hand → Дана
+      { from: '[data-tutorial="player-hand"]', to: '[data-tutorial="opponent-info"]:nth-of-type(1)', color: '#facc15' },
+    ],
   },
 ];
 
