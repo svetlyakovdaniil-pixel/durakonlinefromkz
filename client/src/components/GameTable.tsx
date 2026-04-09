@@ -16,8 +16,10 @@ import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import GameSettingsSheet from './GameSettingsSheet';
-import { TutorialOverlay } from './TutorialOverlay';
-import { TutorialTooltip } from './TutorialTooltip';
+import TutorialOverlay from './TutorialOverlay';
+import TutorialTooltip from './TutorialTooltip';
+import TutorialArrow from './TutorialArrow';
+import TutorialHint from './TutorialHint';
 import { useTutorial } from '@/hooks/useTutorial';
 
 

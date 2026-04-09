@@ -12,7 +12,7 @@ interface TutorialTooltipProps {
   isActive: boolean;
 }
 
-export function TutorialTooltip({
+function TutorialTooltip({
   targetElement,
   title,
   description,
@@ -98,3 +98,5 @@ export function TutorialTooltip({
     </div>
   );
 }
+
+export default TutorialTooltip;

@@ -61,3 +61,5 @@ export function TutorialOverlay({ targetElement, isActive, padding = 8 }: Tutori
     />
   );
 }
+
+export default TutorialOverlay;
