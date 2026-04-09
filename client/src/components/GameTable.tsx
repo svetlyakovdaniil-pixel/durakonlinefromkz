@@ -1790,8 +1790,9 @@ export default function GameTable({
         ) : (
         <div className="px-1 sm:px-2 pb-2 sm:pb-3 pt-0.5 sm:pt-1">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
-            <span className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
+            <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
+              data-tutorial="sort-button"
               className="text-xs sm:text-base text-white hover:text-amber-300 transition-colors font-medium"
               onClick={() => setSortMode(m => m === 'suit-rank' ? 'rank-only' : 'suit-rank')}
             >
