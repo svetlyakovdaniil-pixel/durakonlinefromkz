@@ -34,7 +34,6 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
   const handleMusicToggle = (checked: boolean) => {
     setMusicEnabled(checked);
     if (checked) {
-      music.setVolume(1.0); // Set to 100% when enabling
       music.startMusic();
     } else {
       music.stopMusic();
@@ -43,28 +42,13 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
 
   const handleSoundToggle = (checked: boolean) => {
     setSoundEnabled(checked);
-    if (checked) {
-      sound.setVolume(1.0); // Set to 100% when enabling
-    }
   };
 
   const handleVibrationToggle = (checked: boolean) => {
     setVibrationEnabled(checked);
   };
 
-  const handleMusicVolumeChange = (volume: number) => {
-    music.setVolume(volume);
-    if (volume === 0) {
-      setMusicEnabled(false);
-    }
-  };
 
-  const handleSoundVolumeChange = (volume: number) => {
-    sound.setVolume(volume);
-    if (volume === 0) {
-      setSoundEnabled(false);
-    }
-  };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -97,24 +81,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                 className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
               />
             </label>
-            {settings.soundEnabled && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-amber-200/70">Громкость звуков</span>
-                  <span className="text-xs text-amber-300/60">{Math.round(sound.volume * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={Math.round(sound.volume * 100)}
-                  onChange={(e) => handleSoundVolumeChange(Number(e.target.value) / 100)}
-                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
-                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
-                />
-              </div>
-            )}
+
           </div>
 
           {/* 2. Background music */}
@@ -130,24 +97,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                 className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
               />
             </label>
-            {settings.musicEnabled && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-amber-200/70">Громкость фоновой музыки</span>
-                  <span className="text-xs text-amber-300/60">{Math.round(music.volume * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={Math.round(music.volume * 100)}
-                  onChange={(e) => handleMusicVolumeChange(Number(e.target.value) / 100)}
-                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
-                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
-                />
-              </div>
-            )}
+
           </div>
 
           {/* 3. Vibration */}
