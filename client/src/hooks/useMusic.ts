@@ -8,7 +8,7 @@ const MUSIC_TRACKS = [
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
-  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+  'https://files.manuscdn.com/user_upload_by_module/session_file/310519663508367403/JjIAoPpnRIxeEDFN.mp3', // Trimmed to 3:02
 ];
 
 const SETTINGS_KEY = 'kazakh-durak-settings';
