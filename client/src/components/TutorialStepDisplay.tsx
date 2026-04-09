@@ -76,7 +76,15 @@ export default function TutorialStepDisplay({
     setSpotlightRects(rects);
 
     // Text position
-    if (scenario.textPosition === 'center' || rects.length === 0) {
+    if (scenario.textPosition === 'top') {
+      // Position at top of screen, 20% smaller
+      const textBoxWidth = Math.min(336, window.innerWidth - 32);
+      setTextPos({
+        top: 12,
+        left: window.innerWidth / 2 - textBoxWidth / 2,
+        maxWidth: textBoxWidth,
+      });
+    } else if (scenario.textPosition === 'center' || rects.length === 0) {
       // Center the text box on screen
       const textBoxWidth = Math.min(420, window.innerWidth - 32);
       setTextPos({
@@ -372,6 +380,8 @@ export default function TutorialStepDisplay({
     );
   };
 
+  const isCompact = scenario.textPosition === 'top';
+
   return (
     <>
       {/* Overlay with spotlight cutouts */}
@@ -409,7 +419,7 @@ export default function TutorialStepDisplay({
       {/* Text panel */}
       <div
         ref={textBoxRef}
-        className="fixed z-50 bg-slate-900/95 border-2 border-yellow-400/80 rounded-xl p-4 sm:p-5 shadow-2xl backdrop-blur-sm"
+        className={`fixed z-50 bg-slate-900/95 border-2 border-yellow-400/80 rounded-xl shadow-2xl backdrop-blur-sm ${isCompact ? 'p-2.5 sm:p-3' : 'p-4 sm:p-5'}`}
         style={{
           top: textPos.top,
           left: textPos.left,
@@ -419,29 +429,29 @@ export default function TutorialStepDisplay({
           transition: 'opacity 0.3s',
         }}
       >
-        <div className="flex justify-between items-start mb-3">
+        <div className={`flex justify-between items-start ${isCompact ? 'mb-1.5' : 'mb-3'}`}>
           <div>
-            <h3 className="text-base sm:text-lg font-bold text-yellow-400 mb-0.5">{scenario.title}</h3>
-            <p className="text-[10px] sm:text-xs text-gray-400">Шаг {currentStep + 1} из {totalSteps}</p>
+            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{scenario.title}</h3>
+            <p className={`text-gray-400 ${isCompact ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>Шаг {currentStep + 1} из {totalSteps}</p>
           </div>
           <button
             onClick={onSkip}
             className="text-gray-400 hover:text-white transition ml-2 shrink-0"
           >
-            <X size={18} />
+            <X size={isCompact ? 14 : 18} />
           </button>
         </div>
 
-        <p className="text-white mb-3 text-xs sm:text-sm leading-relaxed whitespace-pre-line">{scenario.text}</p>
+        <p className={`text-white leading-relaxed whitespace-pre-line ${isCompact ? 'mb-1.5 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}>{scenario.text}</p>
 
         {scenario.instruction && (
-          <p className="text-yellow-300 text-[10px] sm:text-xs mb-3 italic">{scenario.instruction}</p>
+          <p className={`text-yellow-300 italic ${isCompact ? 'text-[9px] sm:text-[10px] mb-1.5' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>
         )}
 
         {/* Progress bar */}
-        <div className="w-full bg-gray-700 rounded-full h-1.5 mb-3">
+        <div className={`w-full bg-gray-700 rounded-full ${isCompact ? 'h-1 mb-1.5' : 'h-1.5 mb-3'}`}>
           <div
-            className="bg-yellow-400 h-1.5 rounded-full transition-all duration-300"
+            className={`bg-yellow-400 rounded-full transition-all duration-300 ${isCompact ? 'h-1' : 'h-1.5'}`}
             style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
           />
         </div>
@@ -452,18 +462,18 @@ export default function TutorialStepDisplay({
             onClick={onPrevious}
             disabled={currentStep === 0}
             variant="outline"
-            size="sm"
-            className="flex items-center gap-1 text-xs"
+            size={isCompact ? 'xs' as any : 'sm'}
+            className={`flex items-center gap-1 ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
           >
-            <ChevronLeft size={14} />
+            <ChevronLeft size={isCompact ? 10 : 14} />
             Назад
           </Button>
 
           <Button
             onClick={onNext}
             variant="default"
-            size="sm"
-            className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs"
+            size={isCompact ? 'xs' as any : 'sm'}
+            className={`flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
             disabled={(scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) || (scenario.requiredAction === 'click-sort' && !sortClicked)}
           >
             {currentStep === totalSteps - 1 ? 'Завершить' : 'Далее'}

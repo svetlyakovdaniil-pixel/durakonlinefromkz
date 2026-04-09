@@ -22,8 +22,8 @@ export interface TutorialScenario {
   targetCard?: string;
   /** What bot does after player action */
   botAction?: string;
-  /** Force text position: 'center' puts text in center of screen */
-  textPosition?: 'auto' | 'center';
+  /** Force text position: 'center' puts text in center of screen, 'top' puts it at top */
+  textPosition?: 'auto' | 'center' | 'top';
   /** Number of cards in discard pile */
   discardCount?: number;
   /** Trump card shown under deck (e.g. 'Qh' = Queen of hearts) */
@@ -182,7 +182,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     discardCount: 10,
     highlightCards: ['6h', '6h'],
     showArrows: false,
-    textPosition: 'center',
+    textPosition: 'top',
     autoDefend: true,
   },
   {
