@@ -455,6 +455,7 @@ export function initSocketServer(httpServer: HttpServer) {
         odId: p.id,
         name: p.name,
         isBot: p.isBot,
+        avatarId: p.avatarId,
       }));
 
       const betAmount = room.settings.betAmount || 100;

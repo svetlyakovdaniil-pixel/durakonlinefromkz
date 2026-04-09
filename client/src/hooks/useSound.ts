@@ -118,9 +118,15 @@ export function useSound() {
   const enabledRef = useRef(initial.enabled);
   const volumeRef = useRef(initial.volume);
 
-  // Keep refs in sync
-  useEffect(() => { enabledRef.current = enabled; }, [enabled]);
-  useEffect(() => { volumeRef.current = volume; }, [volume]);
+  // Keep refs in sync with state
+  useEffect(() => { 
+    enabledRef.current = enabled;
+    writeSoundSettings(enabled, volumeRef.current);
+  }, [enabled]);
+  useEffect(() => { 
+    volumeRef.current = volume;
+    writeSoundSettings(enabledRef.current, volume);
+  }, [volume]);
 
   // Settings are managed through setVol and toggle functions
   // No need to poll localStorage as changes are applied immediately
@@ -155,12 +161,7 @@ export function useSound() {
 
   // Toggle sound on/off
   const toggle = useCallback(() => {
-    setEnabled(prev => {
-      const next = !prev;
-      enabledRef.current = next;
-      writeSoundSettings(next, volumeRef.current);
-      return next;
-    });
+    setEnabled(prev => !prev);
   }, []);
 
   // Set volume (0..1)

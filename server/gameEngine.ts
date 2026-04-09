@@ -118,7 +118,7 @@ export function findFirstPlayer(players: Player[], trumpSuit: Suit): number {
 
 export function createGame(
   roomId: string,
-  playerInfos: { id: string; odId: string; name: string; isBot: boolean }[],
+  playerInfos: { id: string; odId: string; name: string; isBot: boolean; avatarId?: string }[],
   settings?: RoomSettings
 ): GameState {
   const allCards = shuffleArray(createFullDeck());
@@ -136,6 +136,7 @@ export function createGame(
     isBot: p.isBot,
     winPlace: null,
     leftGame: false,
+    avatarId: p.avatarId,
   }));
 
   const remaining = allCards.slice(totalDeal);
@@ -1170,7 +1171,7 @@ export function toClientState(
     winPlace: p.winPlace,
     leftGame: p.leftGame,
     gameId: playerGameIdsMap?.get(p.id),
-    avatarId: playerAvatarIdsMap?.get(p.id) ?? (p.isBot ? 'bot' : undefined),
+    avatarId: playerAvatarIdsMap?.get(p.id) ?? p.avatarId ?? (p.isBot ? 'bot' : undefined),
     equippedFrame: playerEquippedFramesMap?.get(p.id) ?? null,
   }));
 

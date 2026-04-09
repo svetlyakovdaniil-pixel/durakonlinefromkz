@@ -54,6 +54,7 @@ export interface Player {
   isBot: boolean;
   winPlace: number | null;
   leftGame: boolean; // true if player voluntarily left the game (auto-lose)
+  avatarId?: string; // avatar ID for display (bots always use 'bot')
 }
 
 // --- Battle pair ---
