@@ -24,6 +24,8 @@ export interface TutorialScenario {
   botAction?: string;
   /** Force text position: 'center' puts text in center of screen */
   textPosition?: 'auto' | 'center';
+  /** Number of cards in discard pile */
+  discardCount?: number;
 }
 
 // Standard player hand for all tutorial scenarios
@@ -44,18 +46,20 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
     textPosition: 'center',
+    discardCount: 10,
   },
   {
     id: 2,
     title: 'Таймер хода',
     description: 'Интерфейс игры',
-    highlightElements: ['[data-tutorial="timer"]', '[data-tutorial="timer-desktop"]'],
-    text: 'Это таймер хода. У каждого игрока есть 30 секунд на ход. Когда время истекает, ход переходит к следующему игроку.',
+    highlightElements: ['[data-tutorial="timer"]'],
+    text: 'Это таймер хода. У каждого игрока есть определенное количество секунд на ход, которое устанавливается в настройках каждой комнаты. Когда время истекает, ход переходит к следующему игроку.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
   {
     id: 3,
@@ -68,6 +72,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
   {
     id: 4,
@@ -80,6 +85,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
   {
     id: 5,
@@ -92,6 +98,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
   {
     id: 6,
@@ -104,6 +111,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
   {
     id: 7,
@@ -118,6 +126,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['2d'] }],
     requiredAction: 'click-card',
     targetCard: 'Ks',
+    discardCount: 10,
   },
   {
     id: 8,
@@ -132,6 +141,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['5d'] }],
     requiredAction: 'click-card',
     targetCard: '7s',
+    discardCount: 10,
   },
   {
     id: 9,
@@ -146,6 +156,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['5d'] }],
     requiredAction: 'click-card',
     targetCard: '6s',
+    discardCount: 10,
   },
   {
     id: 10,
@@ -160,6 +171,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['6d'] }],
     requiredAction: 'click-card',
     targetCard: '6h',
+    discardCount: 10,
   },
   {
     id: 11,
@@ -174,6 +186,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['2d', '3d', '4d'] }],
     requiredAction: 'click-card',
     targetCard: '10s',
+    discardCount: 10,
   },
   {
     id: 12,
@@ -186,6 +199,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
+    discardCount: 10,
   },
 ];
 

@@ -51,6 +51,11 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       });
     }
 
+    // Set discard count if specified
+    if (scenario.discardCount !== undefined) {
+      tutorialState.discardCount = scenario.discardCount;
+    }
+
     // Prepare table cards if specified
     if (scenario.tableCards) {
       const battleField: any[] = [];

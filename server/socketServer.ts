@@ -1210,6 +1210,10 @@ function startTurnTimer(roomId: string) {
 
 // Watchdog: independent timer that detects stuck games
 function startWatchdog(roomId: string) {
+  // Skip watchdog for tutorial rooms
+  const watchdogRoom = rooms.get(roomId);
+  if (watchdogRoom?.settings.isTutorial) return;
+
   stopWatchdog(roomId);
   lastProgressTimestamps.set(roomId, Date.now());
   const WATCHDOG_INTERVAL = 10_000; // Check every 10 seconds
@@ -1500,6 +1504,10 @@ function scheduleBotAction(roomId: string) {
 
   const gameState = games.get(roomId);
   if (!gameState || gameState.gamePhase !== 'playing') return;
+
+  // Stop all bot actions during tutorial
+  const room = rooms.get(roomId);
+  if (room?.settings.isTutorial) return;
 
   // Determine active player based on phase
   let activeIdx: number;
