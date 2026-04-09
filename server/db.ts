@@ -1098,7 +1098,7 @@ export async function getAllMusicPlaylists() {
   if (!db) return [];
 
   const { musicPlaylists } = await import("../drizzle/schema");
-  return db.select().from(musicPlaylists).orderBy(musicPlaylists.isDefault ? sql`DESC` : sql`ASC`, musicPlaylists.id);
+  return db.select().from(musicPlaylists).orderBy(desc(musicPlaylists.isDefault), asc(musicPlaylists.id));
 }
 
 /**
@@ -1120,7 +1120,7 @@ export async function getOwnedMusicPlaylists(profileId: number) {
     .from(ownedMusicPlaylists)
     .innerJoin(musicPlaylists, eq(ownedMusicPlaylists.playlistId, musicPlaylists.id))
     .where(eq(ownedMusicPlaylists.profileId, profileId))
-    .orderBy(musicPlaylists.isDefault ? sql`DESC` : sql`ASC`);
+    .orderBy(desc(musicPlaylists.isDefault), asc(musicPlaylists.id));
 }
 
 /**
