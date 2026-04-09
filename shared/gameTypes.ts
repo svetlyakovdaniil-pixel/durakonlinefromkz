@@ -240,6 +240,7 @@ export interface ClientGameState {
   players: ClientPlayer[];
   deckStyle: DeckStyle;
   tableStyle: import('@shared/cardAssets').TableStyle;
+  betAmount: number;
   deck1Count: number;
   deck2Count: number;
   trumpInfo: TrumpInfo;

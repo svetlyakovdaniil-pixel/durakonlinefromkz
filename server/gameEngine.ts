@@ -1156,6 +1156,7 @@ export function toClientState(
   playerGameIdsMap?: Map<string, number>,
   playerAvatarIdsMap?: Map<string, string>,
   playerEquippedFramesMap?: Map<string, string>,
+  betAmount: number = 0,
 ): ClientGameState {
   const myIndex = state.players.findIndex(p => p.id === playerId);
 
@@ -1180,6 +1181,7 @@ export function toClientState(
     players: clientPlayers,
     deck1Count: state.deck1.length,
     deck2Count: state.deck2.length,
+    betAmount,
     trumpInfo: {
       ...state.trumpInfo,
       // Always send the trump card (visible to all)

@@ -124,6 +124,7 @@ export default function Home() {
         onShowPassThrough={(cardId) => showPassThrough(gameState.roomId, cardId)}
         onLeaveGame={() => leaveGame(gameState.roomId)}
         onReturnToLobby={returnToLobby}
+        roomPenalty={gameState.betAmount || 0}
         musicEnabled={music.enabled}
         onToggleMusic={music.toggle}
         musicVolume={music.volume}

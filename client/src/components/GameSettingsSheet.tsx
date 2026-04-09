@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, MousePointerClick, GripHorizontal, Check } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, MousePointerClick, GripHorizontal, Check, Home } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useSound } from '@/hooks/useSound';
@@ -244,7 +244,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                   Вы действительно хотите выйти?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <span className="inline-block">🏠</span> шаныраков.
+                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <Home className="inline-block w-4 h-4" /> шаныраков.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
