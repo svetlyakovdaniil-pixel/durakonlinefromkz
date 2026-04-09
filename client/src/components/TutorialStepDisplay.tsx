@@ -200,6 +200,15 @@ export default function TutorialStepDisplay({
         left: window.innerWidth / 2 - textBoxWidth / 2,
         maxWidth: textBoxWidth,
       });
+    } else if (scenario.textPosition === 'bottom') {
+      // Position text box at the bottom of the screen, over the player hand area
+      const textBoxWidth = Math.min(336, window.innerWidth - 32);
+      const textBoxHeight = 200;
+      setTextPos({
+        top: window.innerHeight - textBoxHeight - 16,
+        left: window.innerWidth / 2 - textBoxWidth / 2,
+        maxWidth: textBoxWidth,
+      });
     } else if (scenario.textPosition === 'center' || rects.length === 0) {
       const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({

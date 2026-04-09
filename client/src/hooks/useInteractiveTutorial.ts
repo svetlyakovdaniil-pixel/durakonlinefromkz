@@ -23,7 +23,7 @@ export interface TutorialScenario {
   /** What bot does after player action */
   botAction?: string;
   /** Force text position: 'center' puts text in center of screen, 'top' puts it at top */
-  textPosition?: 'auto' | 'center' | 'top';
+  textPosition?: 'auto' | 'center' | 'top' | 'bottom';
   /** Number of cards in discard pile */
   discardCount?: number;
   /** Trump card shown under deck (e.g. 'Qh' = Queen of hearts) */
@@ -347,6 +347,43 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       // Player hand → Мадина (обходя текст)
       { from: '[data-tutorial="player-hand"]', to: '[data-tutorial="opponent-info"]:nth-of-type(1)', color: '#facc15' },
     ],
+  },
+  {
+    id: 15,
+    title: 'Ход с 10-ки',
+    description: 'Смена направления',
+    highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(3)', '[data-tutorial="player-hand"]'],
+    text: 'Если игрок начинает свой ход с карты 10, то меняется направление игры. Сейчас ход Бота 3, он должен походить на вас',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'center',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+  },
+  {
+    id: 16,
+    title: 'Игрок Бот 3 начал свой ход с 10-ки, поменяв направление игры. Теперь он ходит не на вас, а на игрока Мадина',
+    description: 'Смена направления — 10-ка на столе',
+    highlightElements: ['[data-tutorial="opponent-info"]:nth-of-type(3)', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="table-area"]'],
+    text: '',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'bottom',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+    tableCards: [{ playerId: 2, cards: ['10d'] }],
   },
 ];
 
