@@ -109,6 +109,14 @@ export default function TutorialStepDisplay({
   // Track bito-fly card animation phase
   const [bitoFlyPhase, setBitoFlyPhase] = useState<'start' | 'flying' | 'done'>('start');
 
+  // Transfer mechanic state
+  // 'idle' → player hasn't clicked card yet
+  // 'card-selected' → player clicked the transfer card, show "Перевести" button
+  // 'transferring' → card flying to table animation
+  // 'transferred' → show "You transferred" message, Next button active
+  type TransferPhase = 'idle' | 'card-selected' | 'transferring' | 'transferred';
+  const [transferPhase, setTransferPhase] = useState<'idle' | 'card-selected' | 'transferring' | 'transferred'>('idle');
+
   // Reset ALL state when step changes (including when going back from step 10 to step 9)
   useEffect(() => {
     setSeqPhase('waiting');
@@ -118,6 +126,7 @@ export default function TutorialStepDisplay({
     setAutoDefendActive(false);
     setBitoFlyPhase('start');
     tableCardRectsRef.current = [];
+    setTransferPhase('idle');
 
     // Restore any previously hidden card elements
     hiddenCardElementsRef.current.forEach(el => {
@@ -279,6 +288,11 @@ export default function TutorialStepDisplay({
       return;
     }
 
+    // For transfer mechanic, only register when idle
+    if (scenario.transferMechanic && transferPhase !== 'idle') {
+      return;
+    }
+
     const handleCardClick = (e: Event) => {
       const target = e.target as HTMLElement;
       const cardElement = target.closest('[data-card-id]');
@@ -376,6 +390,13 @@ export default function TutorialStepDisplay({
             return;
           }
 
+          // Transfer mechanic mode
+          if (scenario.transferMechanic) {
+            if (transferPhase !== 'idle') return;
+            setTransferPhase('card-selected');
+            return;
+          }
+
           // Legacy autoDefend mode
           if (cardClickHandledRef.current) return;
           cardClickHandledRef.current = true;
@@ -397,7 +418,7 @@ export default function TutorialStepDisplay({
 
     document.addEventListener('click', handleCardClick, true);
     return () => document.removeEventListener('click', handleCardClick, true);
-  }, [scenario, onNext, onCardClick, currentStep, seqPhase]);
+  }, [scenario, onNext, onCardClick, currentStep, seqPhase, transferPhase]);
 
   // Handle sort button click for step 6
   const [sortClicked, setSortClicked] = useState(false);
@@ -564,6 +585,9 @@ export default function TutorialStepDisplay({
   const isNextDisabled = (() => {
     if (isSeqDefend) {
       return seqPhase !== 'done';
+    }
+    if (scenario.transferMechanic) {
+      return transferPhase !== 'transferred';
     }
     if (scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) return true;
     if (scenario.requiredAction === 'click-sort' && !sortClicked) return true;
@@ -746,10 +770,12 @@ export default function TutorialStepDisplay({
         if (!tableArea || !nextBtn) return null;
         const tableRect = tableArea.getBoundingClientRect();
         const btnRect = nextBtn.getBoundingClientRect();
+        const textBoxRect = textBoxRef.current?.getBoundingClientRect();
         const startX = tableRect.right;
         const startY = tableRect.top;
-        const endX = btnRect.left + btnRect.width / 2;
-        const endY = btnRect.top - 4;
+        // End at the right side of the text box, vertically aligned with the Next button
+        const endX = (textBoxRect ? textBoxRect.right + 4 : btnRect.right + 4);
+        const endY = btnRect.top + btnRect.height / 2;
         return (
           <svg
             className="fixed inset-0 z-[55] pointer-events-none"
@@ -812,7 +838,7 @@ export default function TutorialStepDisplay({
           left: textPos.left,
           maxWidth: textPos.maxWidth,
           width: textPos.maxWidth,
-          opacity: (autoDefendActive || seqPhase === 'bito-text' || seqPhase === 'bito-fly') ? 0.3 : 1,
+          opacity: (autoDefendActive || seqPhase === 'bito-text' || seqPhase === 'bito-fly' || transferPhase === 'transferred') ? 0.3 : 1,
           transition: 'opacity 0.3s',
         }}
       >
@@ -845,6 +871,39 @@ export default function TutorialStepDisplay({
           />
         </div>
 
+        {/* Transfer button — appears after player clicks the transfer card */}
+        {scenario.transferMechanic && transferPhase === 'card-selected' && (
+          <div className={`${isCompact ? 'mb-1.5' : 'mb-3'}`}>
+            <Button
+              onClick={() => {
+                setTransferPhase('transferring');
+                // Hide the transfer card from hand
+                if (tutorialHighlightIds) {
+                  tutorialHighlightIds.forEach(cardId => {
+                    const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+                    if (el) {
+                      el.style.opacity = '0';
+                      el.style.transform = 'translateY(-40px) scale(0.5)';
+                      el.style.transition = 'all 0.4s ease-out';
+                      el.style.pointerEvents = 'none';
+                      hiddenCardElementsRef.current.push(el);
+                    }
+                  });
+                }
+                // After short animation, show transferred message
+                setTimeout(() => {
+                  setTransferPhase('transferred');
+                }, 800);
+              }}
+              variant="default"
+              size={isCompact ? 'xs' as any : 'sm'}
+              className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold ${isCompact ? 'text-[10px] h-6' : 'text-xs'}`}
+            >
+              Перевести
+            </Button>
+          </div>
+        )}
+
         {/* Navigation buttons */}
         <div className="flex gap-2 justify-between">
           <Button
@@ -870,6 +929,17 @@ export default function TutorialStepDisplay({
           </Button>
         </div>
       </div>
+
+      {/* Transfer success message overlay */}
+      {scenario.transferMechanic && transferPhase === 'transferred' && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
+          <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
+            <div className="text-4xl mb-2">↩️</div>
+            <p className="text-emerald-300 font-bold text-lg">Перевод!</p>
+            <p className="text-emerald-200/70 text-sm mt-1">Вы перевели ход на игрока {scenario.transferMechanic.targetBotName}</p>
+          </div>
+        </div>
+      )}
     </>
   );
 }

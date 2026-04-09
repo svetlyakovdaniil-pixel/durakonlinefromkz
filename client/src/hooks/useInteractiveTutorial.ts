@@ -47,6 +47,15 @@ export interface TutorialScenario {
     /** Cards already defended from a previous step (shown as overlays from the start) */
     preDefendedCards?: string[];
   };
+  /** Transfer mechanic: player clicks card, then clicks "Перевести" button */
+  transferMechanic?: {
+    /** Card to transfer with */
+    transferCard: string;
+    /** Name of the bot the turn is transferred to */
+    targetBotName: string;
+  };
+  /** Number of extra bots to show (besides the main opponent) */
+  extraBots?: number;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -273,6 +282,30 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       highlightTableCards: true,
       noBitoAnimation: false,
       preDefendedCards: ['777'],
+    },
+  },
+  {
+    id: 13,
+    title: 'Переводной',
+    description: 'Механика перевода',
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="table-area"]'],
+    text: 'Игра всегда с механикой переводного. Если на вас походили картой, и у вас в руке есть карта с таким же номиналом (индексом), вы можете перевести ход на следующего игрока, выкинув эту карту на стол',
+    instruction: 'Нажмите на 7 пики в вашей руке',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    tableCards: [{ playerId: 1, cards: ['7d', '7c', '7d'] }],
+    requiredAction: 'click-card',
+    targetCard: '7s',
+    discardCount: 10,
+    highlightCards: ['7s'],
+    showArrows: false,
+    textPosition: 'top',
+    extraBots: 2,
+    transferMechanic: {
+      transferCard: '7s',
+      targetBotName: 'Бот 2',
     },
   },
 ];

@@ -109,6 +109,25 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
     // Force deck style to 'custom' (deck #2) during tutorial
     tutorialState.deckStyle = 'custom';
 
+    // Add extra bots if specified
+    if (scenario.extraBots && scenario.extraBots > 0) {
+      const existingPlayers = tutorialState.players ? [...tutorialState.players] : [];
+      for (let i = 0; i < scenario.extraBots; i++) {
+        existingPlayers.push({
+          id: `tutorial-extra-bot-${i + 2}`,
+          name: `Бот ${i + 2}`,
+          isBot: true,
+          cardCount: 14,
+          isReady: true,
+          isAdmin: false,
+          avatarUrl: null,
+          frameId: null,
+          role: 'user',
+        } as any);
+      }
+      tutorialState.players = existingPlayers;
+    }
+
     return tutorialState;
   }, [scenario, baseGameState]);
 }
