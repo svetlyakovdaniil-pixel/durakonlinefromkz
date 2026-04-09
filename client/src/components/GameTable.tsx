@@ -488,16 +488,7 @@ export default function GameTable({
   const urgentTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const urgentAlertShownForTrick = useRef(-1);
 
-  // Interactive tutorial state
-  const {
-    currentStep: tutorialStep,
-    isCompleted: tutorialCompleted,
-    totalSteps: tutorialTotalSteps,
-    getCurrentScenario,
-    nextStep: tutorialNextStep,
-    previousStep: tutorialPreviousStep,
-    skipTutorial,
-  } = useInteractiveTutorial();
+
 
   // Animation states
   const [showBitoAnim, setShowBitoAnim] = useState(false);
