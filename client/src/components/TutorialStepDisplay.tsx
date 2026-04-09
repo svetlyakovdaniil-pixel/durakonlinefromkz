@@ -201,12 +201,15 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'bottom') {
-      // Position text box at the bottom of the screen, over the player hand area (20% smaller)
-      const textBoxWidth = Math.min(269, window.innerWidth - 32);
-      const textBoxHeight = 180;
+      // Position text box at the bottom, full width, not overlapping table cards
+      // Find the table area to position below it
+      const tableArea = document.querySelector('[data-tutorial="table-area"]');
+      const tableBottom = tableArea ? tableArea.getBoundingClientRect().bottom + 8 : window.innerHeight * 0.55;
+      const textBoxWidth = window.innerWidth - 16; // full width with 8px margin each side
+      const availableHeight = window.innerHeight - tableBottom - 8;
       setTextPos({
-        top: window.innerHeight - textBoxHeight - 16,
-        left: window.innerWidth / 2 - textBoxWidth / 2,
+        top: tableBottom,
+        left: 8,
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'center' || rects.length === 0) {
@@ -600,6 +603,7 @@ export default function TutorialStepDisplay({
   };
 
   const isCompact = scenario.textPosition === 'top';
+  const isBottom = scenario.textPosition === 'bottom';
   const isSeqDefend = !!scenario.sequentialDefend;
 
   // Determine if "Next" button should be disabled
@@ -987,7 +991,7 @@ export default function TutorialStepDisplay({
       {/* Text panel */}
       <div
         ref={textBoxRef}
-        className={`fixed z-50 bg-slate-900/95 border-2 border-yellow-400/80 rounded-xl shadow-2xl backdrop-blur-sm ${isCompact ? 'p-2.5 sm:p-3' : 'p-4 sm:p-5'}`}
+        className={`fixed z-50 bg-slate-900/95 border-2 border-yellow-400/80 rounded-xl shadow-2xl backdrop-blur-sm ${(isCompact || isBottom) ? 'p-2.5 sm:p-3' : 'p-4 sm:p-5'}`}
         style={{
           top: textPos.top,
           left: textPos.left,
@@ -997,10 +1001,10 @@ export default function TutorialStepDisplay({
           transition: 'opacity 0.3s',
         }}
       >
-        <div className={`flex justify-between items-start ${isCompact ? 'mb-1.5' : 'mb-3'}`}>
+        <div className={`flex justify-between items-start ${(isCompact || isBottom) ? 'mb-1' : 'mb-3'}`}>
           <div>
-            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{scenario.title}</h3>
-            <p className={`text-gray-400 ${isCompact ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>Шаг {currentStep + 1} из {totalSteps}</p>
+            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{scenario.title}</h3>
+            <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>Шаг {currentStep + 1} из {totalSteps}</p>
           </div>
           <button
             onClick={onSkip}
@@ -1010,18 +1014,18 @@ export default function TutorialStepDisplay({
           </button>
         </div>
 
-        <p className={`text-white leading-relaxed whitespace-pre-line ${isCompact ? 'mb-1.5 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+        <p className={`text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
           dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
         />
 
         {scenario.instruction && (
-          <p className={`text-yellow-300 italic ${isCompact ? 'text-[9px] sm:text-[10px] mb-1.5' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>
+          <p className={`text-yellow-300 italic ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px] mb-1' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>
         )}
 
         {/* Progress bar */}
-        <div className={`w-full bg-gray-700 rounded-full ${isCompact ? 'h-1 mb-1.5' : 'h-1.5 mb-3'}`}>
+        <div className={`w-full bg-gray-700 rounded-full ${(isCompact || isBottom) ? 'h-1 mb-1' : 'h-1.5 mb-3'}`}>
           <div
-            className={`bg-yellow-400 rounded-full transition-all duration-300 ${isCompact ? 'h-1' : 'h-1.5'}`}
+            className={`bg-yellow-400 rounded-full transition-all duration-300 ${(isCompact || isBottom) ? 'h-1' : 'h-1.5'}`}
             style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
           />
         </div>
