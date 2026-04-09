@@ -24,6 +24,7 @@ import { useTutorial } from '@/hooks/useTutorial';
 import { useTutorialScenarios } from '@/hooks/useTutorialScenarios';
 import { useInteractiveTutorial } from '@/hooks/useInteractiveTutorial';
 import TutorialStepDisplay from './TutorialStepDisplay';
+import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -443,7 +444,23 @@ export default function GameTable({
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
 }: GameTableProps) {
-  const gs = gameState;
+  // Interactive tutorial state
+  const {
+    currentStep: tutorialStep,
+    isCompleted: tutorialCompleted,
+    totalSteps: tutorialTotalSteps,
+    getCurrentScenario,
+    nextStep: tutorialNextStep,
+    previousStep: tutorialPreviousStep,
+    skipTutorial,
+  } = useInteractiveTutorial();
+  const currentTutorialScenario = getCurrentScenario();
+  
+  // Apply tutorial game state modifications if in tutorial
+  const tutorialModifiedGameState = useTutorialGameState(currentTutorialScenario, gameState);
+  
+  // Use tutorial game state if in tutorial, otherwise use actual game state
+  const gs = isTutorial && currentTutorialScenario ? tutorialModifiedGameState : gameState;
   const myIdx = gs.myIndex;
   const { t } = useTranslation();
 
@@ -481,7 +498,6 @@ export default function GameTable({
     previousStep: tutorialPreviousStep,
     skipTutorial,
   } = useInteractiveTutorial();
-  const currentTutorialScenario = getCurrentScenario();
 
   // Animation states
   const [showBitoAnim, setShowBitoAnim] = useState(false);

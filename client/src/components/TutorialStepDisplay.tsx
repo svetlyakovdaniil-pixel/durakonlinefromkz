@@ -23,6 +23,7 @@ export default function TutorialStepDisplay({
   onCardClick,
 }: TutorialStepDisplayProps) {
   const highlightRef = useRef<HTMLDivElement>(null);
+  const cardClickHandledRef = useRef(false);
 
   useEffect(() => {
     if (scenario?.highlightElement) {
@@ -36,6 +37,41 @@ export default function TutorialStepDisplay({
       }
     }
   }, [scenario?.highlightElement]);
+
+  // Handle card clicks for interactive scenarios
+  useEffect(() => {
+    if (!scenario || scenario.requiredAction !== 'click-card' || !scenario.targetCard) {
+      return;
+    }
+
+    // Reset the flag when scenario changes
+    cardClickHandledRef.current = false;
+
+    const handleCardClick = (e: Event) => {
+      if (cardClickHandledRef.current) return;
+
+      const target = e.target as HTMLElement;
+      const cardElement = target.closest('[data-card-id]');
+
+      if (cardElement) {
+        const cardId = cardElement.getAttribute('data-card-id');
+
+        // Check if this is the target card
+        if (cardId && scenario.targetCard && cardId.includes(scenario.targetCard)) {
+          cardClickHandledRef.current = true;
+          onCardClick?.(cardId);
+
+          // Auto-advance after a short delay
+          setTimeout(() => {
+            onNext();
+          }, 500);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleCardClick, true);
+    return () => document.removeEventListener('click', handleCardClick, true);
+  }, [scenario, onNext, onCardClick]);
 
   if (!scenario) return null;
 
@@ -102,6 +138,7 @@ export default function TutorialStepDisplay({
             variant="default"
             size="sm"
             className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold"
+            disabled={scenario.requiredAction === 'click-card' && !cardClickHandledRef.current}
           >
             {currentStep === totalSteps - 1 ? 'Завершить' : 'Далее'}
             <ChevronRight size={16} />
