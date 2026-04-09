@@ -1032,6 +1032,7 @@ export default function GameTable({
 
   return (
     <div
+      data-tutorial="game-table"
       className="min-h-[100dvh] bg-cover bg-center bg-no-repeat relative flex flex-col"
       style={{ backgroundImage: `url(${TABLE_STYLES[gs.tableStyle ?? 'classic']?.url ?? GAME_TABLE_URL})` }}
     >
@@ -1132,7 +1133,7 @@ export default function GameTable({
         {/* Top HUD — compact panel */}
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Badge variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
+            <Badge data-tutorial="deck-info" variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
               К1:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
               <span className="text-amber-300 mx-1">|</span>
               К2:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span>
@@ -1344,7 +1345,7 @@ export default function GameTable({
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-2 sm:gap-4 justify-center max-w-xs sm:max-w-3xl">
+              <div data-tutorial="table-area" className="flex flex-wrap gap-2 sm:gap-4 justify-center max-w-xs sm:max-w-3xl">
                 {gs.battleField.map((pair: BattlePair, i: number) => (
                   <div
                     key={i}
@@ -1453,7 +1454,7 @@ export default function GameTable({
           </div>
 
           {/* MOBILE: Trump icon */}
-          <div className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-2 border border-amber-700/40">
+          <div data-tutorial="trump-indicator" className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-2 border border-amber-700/40">
             <span className={`${mobileTrumpColor} text-3xl leading-none`}>{trumpSymbol}</span>
             <span className="text-amber-200/60 text-[8px] font-semibold">{t('game.trumpSuit')}</span>
 
@@ -1773,18 +1774,20 @@ export default function GameTable({
               {sortMode === 'suit-rank' ? t('game.sortBySuit') : t('game.sortByRank')}
             </button>
           </div>
-          <PlayerHand
-            sortedHand={sortedHand}
-            playableIds={playableIds}
-            transferIds={transferIds}
-            passThroughIds={passThroughIds}
-            selectedCardId={selectedCardId}
-            multiSelectIds={multiSelectIds}
-            highlightedIds={highlightedIds}
-            onCardClick={handleCardClick}
-            onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
-            deckStyle={gs.deckStyle}
-          />
+          <div data-tutorial="player-hand">
+            <PlayerHand
+              sortedHand={sortedHand}
+              playableIds={playableIds}
+              transferIds={transferIds}
+              passThroughIds={passThroughIds}
+              selectedCardId={selectedCardId}
+              multiSelectIds={multiSelectIds}
+              highlightedIds={highlightedIds}
+              onCardClick={handleCardClick}
+              onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
+              deckStyle={gs.deckStyle}
+            />
+          </div>
         </div>
         )}
       </div>
