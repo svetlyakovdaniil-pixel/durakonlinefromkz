@@ -8,7 +8,7 @@ import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Settings, X, UserPlus, Clock, Check } from 'lucide-react';
-import { useSound } from '@/hooks/useSound';
+import { useSoundContext } from '@/contexts/SoundContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
 import { trpc } from '@/lib/trpc';
@@ -475,7 +475,7 @@ export default function GameTable({
   const prevDefenderIdx = useRef(gs.currentDefenderIdx);
 
   // Sound effects
-  const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSound();
+  const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
   const { settings: gameSettings } = useSettings();
 
   // Drop zone highlight

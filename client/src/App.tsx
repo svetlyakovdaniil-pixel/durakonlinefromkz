@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { MusicProvider } from "./contexts/MusicContext";
+import { SoundProvider } from "./contexts/SoundContext";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
 import Home from "./pages/Home";
@@ -39,10 +40,12 @@ function App() {
           <I18nProvider>
           <LanguageGate>
           <MusicProvider>
-            <TooltipProvider>
-            <Toaster position="top-center" />
-            <Router />
-            </TooltipProvider>
+            <SoundProvider>
+              <TooltipProvider>
+              <Toaster position="top-center" />
+              <Router />
+              </TooltipProvider>
+            </SoundProvider>
           </MusicProvider>
           </LanguageGate>
           </I18nProvider>

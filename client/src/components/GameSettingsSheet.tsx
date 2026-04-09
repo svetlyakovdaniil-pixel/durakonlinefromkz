@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, MousePointerClick, GripHorizontal, Check, Home } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, MousePointerClick, GripHorizontal, Check, Banknote } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
-import { useSound } from '@/hooks/useSound';
+import { useSoundContext } from '@/contexts/SoundContext';
 import { useTranslation } from '@/i18n';
 
 interface GameSettingsSheetProps {
@@ -20,7 +20,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
-  const sound = useSound();
+  const sound = useSoundContext();
 
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
@@ -244,7 +244,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                   Вы действительно хотите выйти?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <Home className="inline-block w-4 h-4" /> шаныраков.
+                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <Banknote className="inline-block w-4 h-4 text-green-400" /> шаныраков.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

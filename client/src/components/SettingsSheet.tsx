@@ -8,7 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
-import { useSound } from '@/hooks/useSound';
+import { useSoundContext } from '@/contexts/SoundContext';
 import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
@@ -24,7 +24,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
-  const sound = useSound();
+  const sound = useSoundContext();
   const utils = trpc.useUtils();
 
   const [open, setOpen] = useState(false);
