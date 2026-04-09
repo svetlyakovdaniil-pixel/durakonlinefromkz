@@ -122,15 +122,8 @@ export function useSound() {
   useEffect(() => { enabledRef.current = enabled; }, [enabled]);
   useEffect(() => { volumeRef.current = volume; }, [volume]);
 
-  // Listen for external settings changes (from SettingsContext)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const s = readSoundSettings();
-      setEnabled(prev => prev !== s.enabled ? s.enabled : prev);
-      setVolume(prev => prev !== s.volume ? s.volume : prev);
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
+  // Settings are managed through setVol and toggle functions
+  // No need to poll localStorage as changes are applied immediately
 
   // Preload on first user interaction
   useEffect(() => {

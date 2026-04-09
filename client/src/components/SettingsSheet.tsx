@@ -60,6 +60,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const handleMusicToggle = (checked: boolean) => {
     setMusicEnabled(checked);
     if (checked) {
+      music.setVolume(1.0); // Set to 100% when enabling
       music.startMusic();
     } else {
       music.stopMusic();
@@ -68,6 +69,9 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   const handleSoundToggle = (checked: boolean) => {
     setSoundEnabled(checked);
+    if (checked) {
+      sound.setVolume(1.0); // Set to 100% when enabling
+    }
   };
 
   const handleVibrationToggle = (checked: boolean) => {
