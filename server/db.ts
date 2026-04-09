@@ -329,18 +329,33 @@ export async function recordGameResult(data: {
     durationSeconds: data.durationSeconds,
   });
 
+  // Progressive rating table based on player count
+  // Last place (дурак) always gets -25
+  const ratingByPlace: Record<number, number[]> = {
+    2: [25, -25],
+    3: [25, 15, -25],
+    4: [25, 20, 15, -25],
+    5: [25, 20, 15, 10, -25],
+    6: [25, 20, 15, 10, 5, -25],
+    7: [25, 20, 15, 10, 5, 5, -25],
+    8: [25, 20, 15, 10, 5, 5, 5, -25],
+  };
+
+  // Get rating table for this player count (default to 2 if not found)
+  const ratingTable = ratingByPlace[data.playerCount] || ratingByPlace[2];
+
   // Update stats for all participants
   // NOTE: allPlayerProfileIds actually contains gameId values (not profileId/id)
   // because playerGameIds map stores odId -> gameId
-  for (const gameId of data.allPlayerProfileIds) {
+  for (let idx = 0; idx < data.allPlayerProfileIds.length; idx++) {
+    const gameId = data.allPlayerProfileIds[idx];
     const isLoser = gameId === data.loserProfileId;
     // "Win" = any place except last (loser). Only the last-place player gets a loss.
     const isWinner = !isLoser;
 
-    // Rating change: +15 for win, -10 for loss
-    let ratingChange = 0;
-    if (isWinner) ratingChange = 15;
-    else if (isLoser) ratingChange = -10;
+    // Get rating change from table (place = idx, 0-indexed)
+    // If place is beyond table length, use last entry (shouldn't happen)
+    const ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
 
     await db.update(playerProfiles).set({
       gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
@@ -369,15 +384,43 @@ export async function getLeaderboard(limit = 50) {
 }
 
 /**
- * Get recent game history for a player.
+ * Get recent game history for a player with place and rating delta.
  */
 export async function getPlayerGameHistory(profileId: number, limit = 20) {
   const db = await getDb();
   if (!db) return [];
 
-  return db.select().from(gameHistory).where(
+  const records = await db.select().from(gameHistory).where(
     sql`JSON_CONTAINS(${gameHistory.playersJson}, CAST(${profileId} AS JSON))`
   ).orderBy(desc(gameHistory.createdAt)).limit(limit);
+
+  // Enrich each record with place and rating delta
+  return records.map(record => {
+    const playerIds = JSON.parse(record.playersJson || '[]') as number[];
+    const place = playerIds.indexOf(profileId) + 1;
+    const isLoser = profileId === record.loserId;
+
+    // Progressive rating table based on player count
+    const ratingByPlace: Record<number, number[]> = {
+      2: [25, -25],
+      3: [25, 15, -25],
+      4: [25, 20, 15, -25],
+      5: [25, 20, 15, 10, -25],
+      6: [25, 20, 15, 10, 5, -25],
+      7: [25, 20, 15, 10, 5, 5, -25],
+      8: [25, 20, 15, 10, 5, 5, 5, -25],
+    };
+
+    const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
+    const ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+
+    return {
+      ...record,
+      place,
+      ratingDelta,
+      isLoser,
+    };
+  });
 }
 
 // ============================================================

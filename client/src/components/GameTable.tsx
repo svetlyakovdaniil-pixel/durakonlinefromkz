@@ -1142,7 +1142,10 @@ export default function GameTable({
                     onPointerDown={() => {
                       longPressTimerRef.current = setTimeout(() => {
                         longPressTimerRef.current = null;
-                        setLongPressTarget(prev => prev === 'music' ? null : 'music');
+                        onToggleMusic();
+                        setTimeout(() => {
+                          setLongPressTarget('music');
+                        }, 50);
                       }, 400);
                     }}
                     onPointerUp={() => {
@@ -1169,7 +1172,10 @@ export default function GameTable({
                   onPointerDown={() => {
                     longPressTimerRef.current = setTimeout(() => {
                       longPressTimerRef.current = null;
-                      setLongPressTarget(prev => prev === 'sound' ? null : 'sound');
+                      toggleSound();
+                      setTimeout(() => {
+                        setLongPressTarget('sound');
+                      }, 50);
                     }, 400);
                   }}
                   onPointerUp={() => {
@@ -1190,8 +1196,8 @@ export default function GameTable({
                   {soundEnabled ? <Volume2 className="w-[18px] h-[18px] sm:w-6 sm:h-6" /> : <VolumeX className="w-[18px] h-[18px] sm:w-6 sm:h-6" />}
                 </button>
               </div>
-              {/* Volume slider popup — shows for the long-pressed control */}
-              {longPressTarget && (
+              {/* Volume slider popup — shows only if enabled */}
+              {longPressTarget && ((longPressTarget === 'music' && musicEnabled) || (longPressTarget === 'sound' && soundEnabled)) && (
                 <div
                   className="absolute right-0 top-full mt-1 bg-black/90 border border-amber-700/30 rounded-lg p-3 z-50 min-w-[200px] shadow-xl backdrop-blur-sm"
                   onClick={(e) => e.stopPropagation()}

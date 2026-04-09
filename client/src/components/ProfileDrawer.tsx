@@ -82,7 +82,7 @@ export default function ProfileDrawer({
             <LeaderboardTab myGameId={profile?.gameId} />
           </TabsContent>
           <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4">
-            <TransactionHistoryTab />
+            <MatchHistoryTab />
           </TabsContent>
         </Tabs>
       </SheetContent>
@@ -674,6 +674,80 @@ function TransactionHistoryTab() {
                   {t('profile.balanceAfter')}: {tx.balanceAfter.toLocaleString()} {currencyLabel}
                 </span>
               )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// Match History Tab (private - only own match history)
+// ============================================================
+function MatchHistoryTab() {
+  const historyQuery = trpc.gameHistory.myHistory.useQuery(undefined, {
+    staleTime: 10_000,
+  });
+  const { t } = useTranslation();
+
+  const data = historyQuery.data ?? [];
+
+  if (historyQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="mt-3 text-center py-8 text-amber-200/30 text-sm">
+        {t('profile.noMatches') || 'No matches yet'}
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 space-y-1.5">
+      {data.map((game: any) => {
+        const date = new Date(game.createdAt);
+        const timeStr = date.toLocaleString(undefined, {
+          day: '2-digit', month: '2-digit', year: '2-digit',
+          hour: '2-digit', minute: '2-digit',
+        });
+
+        const ratingColor = game.ratingDelta > 0 ? 'text-green-400' : game.ratingDelta < 0 ? 'text-red-400' : 'text-amber-300';
+        const ratingPrefix = game.ratingDelta > 0 ? '+' : '';
+        const placeLabel = game.place === 1 ? '1st' : game.place === 2 ? '2nd' : game.place === 3 ? '3rd' : `${game.place}th`;
+        const isDurak = game.isLoser;
+
+        return (
+          <div key={game.id} className={`bg-[#1a2d45]/60 border rounded-lg p-2.5 ${
+            isDurak ? 'border-red-700/30' : game.place === 1 ? 'border-yellow-600/30' : 'border-amber-700/20'
+          }`}>
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-center gap-1.5">
+                {isDurak ? (
+                  <Shield className="w-3.5 h-3.5 text-red-400" />
+                ) : game.place === 1 ? (
+                  <Crown className="w-3.5 h-3.5 text-yellow-400" />
+                ) : (
+                  <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                )}
+                <span className="text-amber-100 text-xs font-medium">
+                  {placeLabel} place • {game.playerCount} players
+                </span>
+              </div>
+              <span className={`text-xs font-bold ${ratingColor}`}>
+                {ratingPrefix}{game.ratingDelta}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-amber-200/30 text-[10px]">{timeStr}</span>
+              <span className="text-amber-200/40 text-[10px]">
+                {Math.floor(game.durationSeconds / 60)}m {game.durationSeconds % 60}s
+              </span>
             </div>
           </div>
         );

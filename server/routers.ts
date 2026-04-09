@@ -428,6 +428,9 @@ export const appRouter = router({
         return getLeaderboard(input?.limit ?? 50);
       }),
 
+  }),
+
+  gameHistory: router({
     /** Get game history for current user */
     myHistory: protectedProcedure
       .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
