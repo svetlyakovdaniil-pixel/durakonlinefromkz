@@ -466,6 +466,13 @@ export default function GameTable({
   const urgentTurnTimers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const urgentAlertShownForTrick = useRef(-1);
 
+  // Tutorial scenario state
+  const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
+  const [tutorialFrozen, setTutorialFrozen] = useState(false);
+  const { getScenario, getAllScenarios } = require('@/hooks/useTutorialScenarios').useTutorialScenarios();
+  const allScenarios = getAllScenarios();
+  const currentScenario = allScenarios[currentTutorialStep];
+
   // Animation states
   const [showBitoAnim, setShowBitoAnim] = useState(false);
   const [bitoCardCount, setBitoCardCount] = useState(0);
