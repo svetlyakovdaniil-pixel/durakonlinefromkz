@@ -1169,7 +1169,7 @@ export default function GameTable({
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-sm px-2 sm:px-3 py-1">
               {gs.direction === 'cw' ? <ArrowRight className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <ArrowLeft className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
             </Badge>
-            <Badge className={`sm:hidden text-sm px-2 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
+            <Badge data-tutorial="timer" className={`sm:hidden text-sm px-2 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
               <Timer className="w-4 h-4 mr-0.5" />
               {turnTimer}с
             </Badge>
@@ -1320,7 +1320,7 @@ export default function GameTable({
         <div className="flex-1 flex relative">
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
-            <div className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
+            <div data-tutorial="timer-desktop" className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
               turnTimer <= 5
                 ? 'bg-red-900/60 border-red-500/50 animate-pulse'
                 : 'bg-black/50 border-amber-700/30'
@@ -1335,7 +1335,7 @@ export default function GameTable({
             </div>
 
             {gs.discardCount > 0 && (
-              <DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} bitoLabel={t('game.bito')} />
+              <div data-tutorial="bito-counter"><DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} bitoLabel={t('game.bito')} /></div>
             )}
           </div>
 

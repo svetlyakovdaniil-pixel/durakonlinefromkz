@@ -1179,6 +1179,11 @@ function closeRoom(roomId: string) {
 function startTurnTimer(roomId: string) {
   stopTurnTimer(roomId);
   lastProgressTimestamps.set(roomId, Date.now()); // Track progress
+
+  // Don't run turn timer for tutorial rooms
+  const room = rooms.get(roomId);
+  if (room?.settings.isTutorial) return;
+
   const interval = setInterval(() => {
     const gameState = games.get(roomId);
     if (!gameState || gameState.gamePhase !== 'playing') {
