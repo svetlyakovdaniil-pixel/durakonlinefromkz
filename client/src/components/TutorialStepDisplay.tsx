@@ -57,6 +57,8 @@ export default function TutorialStepDisplay({
       const element = document.querySelector(selector);
       if (element) {
         const rect = element.getBoundingClientRect();
+        // Skip elements that are hidden (zero size) - e.g. sm:hidden on desktop
+        if (rect.width === 0 && rect.height === 0) continue;
         rects.push({
           left: rect.left - padding,
           top: rect.top - padding,

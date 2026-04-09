@@ -1399,7 +1399,7 @@ export default function GameTable({
           </div>
 
           {/* RIGHT PANEL — Decks — DESKTOP ONLY */}
-          <div className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
+          <div data-tutorial="deck-area" className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
             {bothDecksEmpty ? (
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" label={t('game.trumpSuit')} />
             ) : (
