@@ -14,9 +14,10 @@ interface GameSettingsSheetProps {
   onLeaveGame: () => void;
   children?: React.ReactNode;
   roomPenalty?: number;
+  isTutorial?: boolean;
 }
 
-export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty = 0 }: GameSettingsSheetProps) {
+export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty = 0, isTutorial = false }: GameSettingsSheetProps) {
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
@@ -193,7 +194,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
             <AlertDialogTrigger asChild>
               <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">
                 <LogOut className="w-4 h-4" />
-                {t('game.leaveGame') || 'Leave Game'}
+                {isTutorial ? 'Покинуть обучение' : (t('game.leaveGame') || 'Leave Game')}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
@@ -202,7 +203,9 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                   Вы действительно хотите выйти?
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  Если вы выберите "Да", то выйдите в лобби и потеряете {roomPenalty} <Banknote className="inline-block w-4 h-4 text-green-400" /> шаныраков.
+                  {isTutorial ? 'Вы завершите обучение и вернётесь в лобби.' : `Если вы выберите "Да", то выйдите в лобби и потеряете ${roomPenalty} `}
+                  {!isTutorial && <Banknote className="inline-block w-4 h-4 text-green-400" />}
+                  {!isTutorial && ' шаныраков.'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

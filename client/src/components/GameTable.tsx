@@ -1150,7 +1150,7 @@ export default function GameTable({
               {turnTimer}с
             </Badge>
             {/* Settings button */}
-            <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty}>
+            <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty} isTutorial={isTutorial}>
               <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 sm:p-1.5 rounded">
                 <Settings className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
               </button>
