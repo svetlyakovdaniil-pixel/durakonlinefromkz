@@ -84,7 +84,7 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
             {settings.soundEnabled && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-amber-200/70">{t('settings.volume') || 'Volume'}</span>
+                  <span className="text-xs text-amber-200/70">Громкость звуков</span>
                   <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
                 </div>
                 <input
@@ -117,7 +117,7 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
             {settings.musicEnabled && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-amber-200/70">{t('settings.volume') || 'Volume'}</span>
+                  <span className="text-xs text-amber-200/70">Громкость фоновой музыки</span>
                   <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
                 </div>
                 <input
@@ -232,7 +232,7 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
                   {t('game.leaveGameConfirm') || 'Leave Game?'}
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  {t('game.leaveGameDesc') || 'You will lose points and be marked as fool in the current game.'}
+                  Вы действительно хотите покинуть комнату? Если вы нажмете "Да", то выйдете в лобби и потеряете шаныраки.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

@@ -29,6 +29,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.5);
+  const [soundVolume, setSoundVolume] = useState(0.5);
 
   const updateNameMutation = trpc.profile.updateName.useMutation({
     onSuccess: () => {
@@ -72,6 +74,15 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     setVibrationEnabled(checked);
   };
 
+  const handleMusicVolumeChange = (volume: number) => {
+    setMusicVolume(volume);
+    music.setVolume(volume);
+  };
+
+  const handleSoundVolumeChange = (volume: number) => {
+    setSoundVolume(volume);
+  };
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
@@ -99,23 +110,21 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
               </span>
               {!editingName && (
                 <button
-                  className="text-xs text-amber-400 hover:text-amber-300 transition-colors"
-                  onClick={() => { setNewName(currentName); setEditingName(true); }}
+                  className="text-amber-400 hover:text-amber-300 p-1"
+                  onClick={() => setEditingName(true)}
                 >
-                  {t('settings.changeName')}
+                  <Pencil className="w-4 h-4" />
                 </button>
               )}
             </div>
             {editingName ? (
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2">
                 <Input
                   value={newName}
-                  onChange={e => setNewName(e.target.value)}
-                  className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm flex-1"
-                  placeholder={t('settings.enterName')}
+                  onChange={(e) => setNewName(e.target.value)}
                   maxLength={12}
-                  autoFocus
-                  onKeyDown={e => { if (e.key === 'Enter') handleSaveName(); if (e.key === 'Escape') setEditingName(false); }}
+                  className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30"
+                  placeholder={t('settings.enterName')}
                 />
                 <button
                   className="text-green-400 hover:text-green-300 p-1"
@@ -137,30 +146,70 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </div>
 
           {/* 2. Sound effects */}
-          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-amber-400" />
-              {t('settings.sounds')}
-            </span>
-            <Checkbox
-              checked={settings.soundEnabled}
-              onCheckedChange={(checked) => handleSoundToggle(checked === true)}
-              className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
-            />
-          </label>
+          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+            <label className="flex items-center justify-between cursor-pointer mb-3">
+              <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-amber-400" />
+                {t('settings.sounds')}
+              </span>
+              <Checkbox
+                checked={settings.soundEnabled}
+                onCheckedChange={(checked) => handleSoundToggle(checked === true)}
+                className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+              />
+            </label>
+            {settings.soundEnabled && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-amber-200/70">Громкость звуков</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(soundVolume * 100)}
+                  onChange={(e) => handleSoundVolumeChange(Number(e.target.value) / 100)}
+                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 3. Background music */}
-          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
-              <Music className="w-4 h-4 text-amber-400" />
-              {t('settings.music')}
-            </span>
-            <Checkbox
-              checked={settings.musicEnabled}
-              onCheckedChange={(checked) => handleMusicToggle(checked === true)}
-              className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
-            />
-          </label>
+          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+            <label className="flex items-center justify-between cursor-pointer mb-3">
+              <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+                <Music className="w-4 h-4 text-amber-400" />
+                {t('settings.music')}
+              </span>
+              <Checkbox
+                checked={settings.musicEnabled}
+                onCheckedChange={(checked) => handleMusicToggle(checked === true)}
+                className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+              />
+            </label>
+            {settings.musicEnabled && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-amber-200/70">Громкость фоновой музыки</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(musicVolume * 100)}
+                  onChange={(e) => handleMusicVolumeChange(Number(e.target.value) / 100)}
+                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 4. Vibration */}
           <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
@@ -263,14 +312,11 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="bg-[#0a1628] border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100">
-                  {t('common.no')}
+                  {t('common.cancel')}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-red-700 hover:bg-red-600 text-white"
-                  onClick={() => {
-                    setOpen(false);
-                    onLogout();
-                  }}
+                  onClick={onLogout}
                 >
                   {t('common.yes')}
                 </AlertDialogAction>
