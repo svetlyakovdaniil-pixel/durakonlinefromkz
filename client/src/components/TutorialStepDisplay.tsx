@@ -28,8 +28,14 @@ interface SpotlightRect {
 // waiting → defend1 → defend2 → bito-text → bito-fly → done
 type SeqDefendPhase = 'waiting' | 'defend1' | 'defend2' | 'bito-text' | 'bito-fly' | 'done';
 
-// Helper: get card image URL for a card notation like '6h'
+// Helper: get card image URL for a card notation like '6h' or '777'
 function getCardImageUrl(cardNotation: string): string | null {
+  // Special case: 777 has no suit
+  if (cardNotation === '777') {
+    const key = getCustomCardImageKey('777', 'spades'); // suit is ignored for 777
+    if (!key) return null;
+    return CARD_IMAGES_CUSTOM[key] || null;
+  }
   const suitMap: Record<string, string> = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
   const suitChar = cardNotation.slice(-1);
   const rank = cardNotation.slice(0, -1);
@@ -50,7 +56,14 @@ function MiniCardFace({ cardNotation, className }: { cardNotation: string; class
       </div>
     );
   }
-  // Fallback: render text-based card
+  // Fallback: render text-based card (for cards with suit)
+  if (cardNotation === '777') {
+    return (
+      <div className={`w-full h-full bg-gradient-to-br from-amber-500 to-amber-700 rounded-lg flex items-center justify-center ${className || ''}`}>
+        <div className="font-bold text-white text-sm">777</div>
+      </div>
+    );
+  }
   const suitMap: Record<string, string> = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
   const suitChar = cardNotation.slice(-1);
   const rank = cardNotation.slice(0, -1);
