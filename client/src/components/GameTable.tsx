@@ -1162,7 +1162,7 @@ export default function GameTable({
               <span className="text-amber-300 mx-1">|</span>
               К2:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span>
               <span className="text-amber-300 mx-1">|</span>
-              {t('game.bitoCount')}<span className="font-bold">{gs.discardCount}</span>
+              <span data-tutorial="mobile-bito">{t('game.bitoCount')}<span className="font-bold">{gs.discardCount}</span></span>
             </Badge>
           </div>
           <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
