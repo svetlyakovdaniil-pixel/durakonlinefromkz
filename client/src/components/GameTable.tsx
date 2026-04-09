@@ -21,6 +21,7 @@ import TutorialTooltip from './TutorialTooltip';
 import TutorialArrow from './TutorialArrow';
 import TutorialHint from './TutorialHint';
 import { useTutorial } from '@/hooks/useTutorial';
+import { useTutorialScenarios } from '@/hooks/useTutorialScenarios';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -471,7 +472,7 @@ export default function GameTable({
   // Tutorial scenario state
   const [currentTutorialStep, setCurrentTutorialStep] = useState(0);
   const [tutorialFrozen, setTutorialFrozen] = useState(false);
-  const { getScenario, getAllScenarios } = require('@/hooks/useTutorialScenarios').useTutorialScenarios();
+  const { getScenario, getAllScenarios } = useTutorialScenarios();
   const allScenarios = getAllScenarios();
   const currentScenario = allScenarios[currentTutorialStep];
 
