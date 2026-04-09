@@ -6,6 +6,15 @@ const suitMap: Record<string, Suit> = { 's': 'spades', 'h': 'hearts', 'd': 'diam
 
 function parseCards(cardStrings: string[]): Card[] {
   return cardStrings.map((cardStr, idx) => {
+    // Handle special 777 card (no suit)
+    if (cardStr === '777') {
+      return {
+        id: `tutorial-card-${idx}-777`,
+        rank: '777' as any,
+        suit: null,
+        copy: 1,
+      };
+    }
     const suitChar = cardStr.slice(-1);
     return {
       id: `tutorial-card-${idx}-${cardStr}`,

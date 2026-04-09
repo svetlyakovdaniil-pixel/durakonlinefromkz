@@ -167,6 +167,47 @@ export default function TutorialStepDisplay({
     return () => document.removeEventListener('click', handleCardClick, true);
   }, [scenario, onNext, onCardClick]);
 
+  // Handle sort button click for step 6
+  const [sortClicked, setSortClicked] = useState(false);
+  useEffect(() => {
+    if (!scenario || scenario.requiredAction !== 'click-sort') {
+      setSortClicked(false);
+      return;
+    }
+
+    setSortClicked(false);
+
+    const handleSortClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const sortBtn = target.closest('[data-tutorial="sort-button"]');
+      if (sortBtn) {
+        setSortClicked(true);
+        // After sort is clicked, highlight the player hand area
+        setTimeout(() => {
+          onNext();
+        }, 800);
+      }
+    };
+
+    // Make sort button clickable through overlay
+    const sortButton = document.querySelector('[data-tutorial="sort-button"]') as HTMLElement;
+    if (sortButton) {
+      sortButton.style.position = 'relative';
+      sortButton.style.zIndex = '51';
+      sortButton.style.pointerEvents = 'auto';
+    }
+
+    document.addEventListener('click', handleSortClick, true);
+    return () => {
+      document.removeEventListener('click', handleSortClick, true);
+      if (sortButton) {
+        sortButton.style.position = '';
+        sortButton.style.zIndex = '';
+        sortButton.style.pointerEvents = '';
+      }
+    };
+  }, [scenario, onNext, currentStep]);
+
   if (!scenario) return null;
 
   const vw = window.innerWidth;
@@ -369,7 +410,7 @@ export default function TutorialStepDisplay({
             variant="default"
             size="sm"
             className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold text-xs"
-            disabled={scenario.requiredAction === 'click-card' && !cardClickHandledRef.current}
+            disabled={(scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) || (scenario.requiredAction === 'click-sort' && !sortClicked)}
           >
             {currentStep === totalSteps - 1 ? 'Завершить' : 'Далее'}
             <ChevronRight size={14} />

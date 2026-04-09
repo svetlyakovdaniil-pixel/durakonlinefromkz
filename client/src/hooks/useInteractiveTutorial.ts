@@ -17,7 +17,7 @@ export interface TutorialScenario {
   /** Cards on table */
   tableCards?: { playerId: number; cards: string[] }[];
   /** What player must do */
-  requiredAction?: 'click-card' | 'click-button' | 'none';
+  requiredAction?: 'click-card' | 'click-button' | 'click-sort' | 'none';
   /** Card to click if requiredAction is 'click-card' */
   targetCard?: string;
   /** What bot does after player action */
@@ -28,10 +28,10 @@ export interface TutorialScenario {
   discardCount?: number;
 }
 
-// Standard player hand for all tutorial scenarios
-const STANDARD_PLAYER_HAND = ['Ks', 'As', '7s', '6h', '6h', '6d', '6c', 'Jc', 'Jc', '10h', '10c', '10d', '10s'];
-// Standard bot hand for all tutorial scenarios
-const STANDARD_BOT_HAND = ['Ks', 'As', 'Ks', '6h', '6h', '6d', '6c', 'Jc', 'Jc', '10h', '10c', '10d', '10s'];
+// Standard player hand for all tutorial scenarios (14 cards, includes 777)
+const STANDARD_PLAYER_HAND = ['Ks', 'As', '777', '6h', '6h', '6d', '6c', 'Jc', 'Jc', '10h', '10c', '10d', '10s', '7s'];
+// Standard bot hand for all tutorial scenarios (14 cards)
+const STANDARD_BOT_HAND = ['Ks', 'As', 'Ks', '6h', '6h', '6d', '6c', 'Jc', 'Jc', '10h', '10c', '10d', '10s', '7s'];
 
 const TUTORIAL_SCENARIOS: TutorialScenario[] = [
   {
@@ -66,7 +66,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     id: 3,
     title: 'Счетчик бито',
     description: 'Интерфейс игры',
-    highlightElements: ['[data-tutorial="bito-counter"]'],
+    highlightElements: ['[data-tutorial="bito-counter"]', '[data-tutorial="deck-info"]'],
     text: 'Это счетчик карт в бито (побитых карт). Показывает сколько карт уже выбыло из игры.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
@@ -74,6 +74,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     trumpSuit: 'hearts',
     requiredAction: 'click-button',
     discardCount: 10,
+    textPosition: 'center',
   },
   {
     id: 4,
@@ -105,16 +106,17 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
   },
   {
     id: 6,
-    title: 'Карты с одинаковым номиналом',
-    description: 'Правило номиналов',
-    highlightElements: ['[data-tutorial="table-area"]'],
-    text: 'Карты с одинаковым номиналом (например, две пятерки) бьют друг друга. Если на столе лежит пятерка пик, то пятерка червей может побить пятерку пик.',
-    instruction: 'Нажмите "Далее" чтобы продолжить',
+    title: 'Попробуйте воспользоваться сортировкой',
+    description: 'Интерактивная сортировка',
+    highlightElements: ['[data-tutorial="sort-button"]'],
+    text: 'Нажмите на "По масти", чтобы сортировать карты в руке по рангу.',
+    instruction: 'Нажмите на кнопку сортировки',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
-    requiredAction: 'click-button',
+    requiredAction: 'click-sort',
     discardCount: 10,
+    textPosition: 'center',
   },
   {
     id: 7,
