@@ -806,77 +806,77 @@ export default function TutorialStepDisplay({
           const toCX = toRect.left + toRect.width / 2;
           const toCY = toRect.top + toRect.height / 2;
 
-          // Start from bottom edge of source, end at top edge of target (for top-row opponents)
-          // For arrows going to/from player hand (bottom), adjust accordingly
           const fromIsBottom = fromCY > vh * 0.6;
           const toIsBottom = toCY > vh * 0.6;
           const fromIsTop = fromCY < vh * 0.4;
           const toIsTop = toCY < vh * 0.4;
 
-          let startX: number, startY: number, endX: number, endY: number;
-
           if (fromIsTop && toIsTop) {
-            // Both in top row (opponent to opponent) — arrow goes under their icons
-            startX = fromCX;
-            startY = fromRect.bottom + 6;
-            endX = toCX;
-            endY = toRect.bottom + 6;
+            // Both in top row (opponent to opponent) — short curved arrow under their icons
+            const startX = fromRect.right - 4;
+            const startY = fromRect.bottom + 8;
+            const endX = toRect.left + 4;
+            const endY = toRect.bottom + 8;
+            // Curve downward for clockwise feel
+            const midX = (startX + endX) / 2;
+            const cpY = Math.max(startY, endY) + 25;
+            const d = `M ${startX} ${startY} Q ${midX} ${cpY} ${endX} ${endY}`;
+            pathData.push({ d, color: arrow.color || '#facc15' });
           } else if (fromIsTop && toIsBottom) {
-            // Top opponent to bottom player hand
-            startX = fromRect.right;
-            startY = fromCY;
-            endX = toRect.right;
-            endY = toCY;
-          } else if (fromIsBottom && toIsTop) {
-            // Bottom player hand to top opponent
-            startX = fromRect.left;
-            startY = fromCY;
-            endX = toRect.left;
-            endY = toCY;
-          } else {
-            startX = fromCX;
-            startY = fromRect.bottom + 6;
-            endX = toCX;
-            endY = toRect.top - 6;
-          }
+            // Top-right opponent → player hand: go down on the RIGHT side, around text box
+            const startX = fromRect.right + 4;
+            const startY = fromCY + 10;
+            const endX = toRect.right - 20;
+            const endY = toRect.top - 6;
 
-          // Check if the straight line would cross the text box
-          const needsAvoidance = textBoxRect && (
-            (fromIsTop && toIsBottom) || (fromIsBottom && toIsTop)
-          );
-
-          if (needsAvoidance && textBoxRect) {
-            // Route around the text box
-            const tbLeft = textBoxRect.left - 20;
-            const tbRight = textBoxRect.right + 20;
-            const tbTop = textBoxRect.top - 10;
-            const tbBottom = textBoxRect.bottom + 10;
-
-            if (fromIsBottom && toIsTop) {
-              // Player hand → top-left opponent: go left around text box
-              const wayX = tbLeft - 15;
-              const wayY1 = tbBottom;
-              const wayY2 = tbTop;
-              const d = `M ${startX} ${startY} C ${startX - 40} ${startY - 30}, ${wayX} ${wayY1 + 20}, ${wayX} ${wayY1} L ${wayX} ${wayY2} C ${wayX} ${wayY2 - 20}, ${endX - 30} ${endY + 30}, ${endX} ${endY}`;
+            if (textBoxRect) {
+              // Route around the right edge of the text box
+              const tbRight = textBoxRect.right + 30;
+              const tbTop = textBoxRect.top;
+              const tbBottom = textBoxRect.bottom;
+              // Go from start → right of text box top → right of text box bottom → end
+              const d = `M ${startX} ${startY} C ${tbRight + 20} ${startY + 40}, ${tbRight + 20} ${tbBottom - 40}, ${endX} ${endY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
-            } else if (fromIsTop && toIsBottom) {
-              // Top-right opponent → player hand: go right around text box
-              const wayX = tbRight + 15;
-              const wayY1 = tbTop;
-              const wayY2 = tbBottom;
-              const d = `M ${startX} ${startY} C ${startX + 40} ${startY + 30}, ${wayX} ${wayY1 - 20}, ${wayX} ${wayY1} L ${wayX} ${wayY2} C ${wayX} ${wayY2 + 20}, ${endX + 30} ${endY - 30}, ${endX} ${endY}`;
+            } else {
+              const d = `M ${startX} ${startY} C ${startX + 60} ${(startY + endY) / 2}, ${endX + 60} ${(startY + endY) / 2}, ${endX} ${endY}`;
+              pathData.push({ d, color: arrow.color || '#facc15' });
+            }
+          } else if (fromIsBottom && toIsTop) {
+            // Player hand → top-left opponent: go up on the LEFT side, around text box
+            const startX = toRect.left + 20;
+            const startY = toRect.top - 6;
+            const endX = toRect.left - 4;
+            const endY = toCY + 10;
+            // Actually: from = player hand (bottom), to = top-left opponent
+            const sX = fromRect.left + 20;
+            const sY = fromRect.top - 6;
+            const eX = toRect.left - 4;
+            const eY = toCY + 10;
+
+            if (textBoxRect) {
+              // Route around the left edge of the text box
+              const tbLeft = textBoxRect.left - 30;
+              const tbTop = textBoxRect.top;
+              const tbBottom = textBoxRect.bottom;
+              // Go from start → left of text box bottom → left of text box top → end
+              const d = `M ${sX} ${sY} C ${tbLeft - 20} ${sY - 40}, ${tbLeft - 20} ${eY + 40}, ${eX} ${eY}`;
+              pathData.push({ d, color: arrow.color || '#facc15' });
+            } else {
+              const d = `M ${sX} ${sY} C ${sX - 60} ${(sY + eY) / 2}, ${eX - 60} ${(sY + eY) / 2}, ${eX} ${eY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
             }
           } else {
-            // Simple curved arrow (quadratic bezier)
+            // Fallback: simple curved arrow
+            const startX = fromCX;
+            const startY = fromRect.bottom + 6;
+            const endX = toCX;
+            const endY = toRect.top - 6;
             const midX = (startX + endX) / 2;
             const midY = (startY + endY) / 2;
-            // Curve offset perpendicular to the line
             const dx = endX - startX;
             const dy = endY - startY;
             const dist = Math.sqrt(dx * dx + dy * dy);
             const curveAmount = Math.min(dist * 0.25, 30);
-            // Perpendicular direction (clockwise feel)
             const cpX = midX + (dy / dist) * curveAmount;
             const cpY = midY - (dx / dist) * curveAmount;
             const d = `M ${startX} ${startY} Q ${cpX} ${cpY} ${endX} ${endY}`;
@@ -1108,16 +1108,27 @@ export default function TutorialStepDisplay({
         const tableArea = document.querySelector('[data-tutorial="table-area"]');
         if (!tableArea) return null;
         const tableRect = tableArea.getBoundingClientRect();
-        // Render the transferred card at the right side of the existing table cards
+        // Find an existing card on the table to match its size
+        const existingTableCard = tableArea.querySelector('.relative > div, .relative > img') as HTMLElement;
+        const existingCardParent = tableArea.querySelector('.relative') as HTMLElement;
+        let cardW = 56;
+        let cardH = 84;
+        let gap = 8;
+        if (existingCardParent) {
+          const r = existingCardParent.getBoundingClientRect();
+          cardW = r.width;
+          cardH = r.height;
+        }
+        // Position: right after the last card with a small gap
         const cardNotation = scenario.transferMechanic!.transferCard;
         return (
           <div
             className="fixed z-[52] animate-bounce-in"
             style={{
-              left: tableRect.right - 10,
-              top: tableRect.top + tableRect.height / 2 - 42,
-              width: 56,
-              height: 84,
+              left: tableRect.right + gap,
+              top: tableRect.top + (tableRect.height - cardH) / 2,
+              width: cardW,
+              height: cardH,
             }}
           >
             <MiniCardFace cardNotation={cardNotation} />
