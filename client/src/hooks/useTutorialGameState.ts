@@ -41,13 +41,30 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       tutorialState.myHand = parseCards(scenario.playerHand);
     }
 
-    // Set trump suit if specified
-    if (scenario.trumpSuit) {
+    // Set trump suit and trump card if specified
+    if (scenario.trumpSuit || scenario.trumpCard) {
+      const trumpSuit = scenario.trumpSuit || 'hearts';
       tutorialState.trumpInfo = {
         ...tutorialState.trumpInfo,
-        mainTrump: scenario.trumpSuit,
-        currentTrump: scenario.trumpSuit,
+        mainTrump: trumpSuit,
+        currentTrump: trumpSuit,
       };
+      // Set trump card under deck (e.g. 'Qh' = Queen of Hearts)
+      if (scenario.trumpCard) {
+        const trumpCardStr = scenario.trumpCard;
+        const trumpSuitChar = trumpCardStr.slice(-1);
+        const trumpRank = trumpCardStr.slice(0, -1);
+        const trumpCardObj: Card = {
+          id: 'tutorial-trump-card',
+          rank: trumpRank as any,
+          suit: suitMap[trumpSuitChar] || 'hearts',
+          copy: 1,
+        };
+        tutorialState.trumpInfo = {
+          ...tutorialState.trumpInfo,
+          trumpCard: trumpCardObj,
+        };
+      }
     }
 
     // Update bot card count if botHand specified

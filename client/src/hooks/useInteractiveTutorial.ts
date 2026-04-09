@@ -26,6 +26,8 @@ export interface TutorialScenario {
   textPosition?: 'auto' | 'center';
   /** Number of cards in discard pile */
   discardCount?: number;
+  /** Trump card shown under deck (e.g. 'Qh' = Queen of hearts) */
+  trumpCard?: string;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -44,6 +46,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     textPosition: 'center',
     discardCount: 10,
@@ -58,6 +61,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
@@ -66,12 +70,13 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     id: 3,
     title: 'Счетчик бито',
     description: 'Интерфейс игры',
-    highlightElements: ['[data-tutorial="bito-counter"]', '[data-tutorial="deck-info"]'],
+    highlightElements: ['[data-tutorial="bito-counter"]', '[data-tutorial="mobile-bito"]'],
     text: 'Это счетчик карт в бито (побитых карт). Показывает сколько карт уже выбыло из игры.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
@@ -80,12 +85,13 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     id: 4,
     title: 'Две колоды в игре',
     description: 'Структура игры',
-    highlightElements: ['[data-tutorial="bito-counter"]', '[data-tutorial="mobile-bito"]', '[data-tutorial="deck-area"]'],
+    highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
     text: 'В игре используются 2 колоды карт. Сначала разыгрывается колода №1 между всеми игроками. Когда она заканчивается, начинается колода №2.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
@@ -100,6 +106,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
@@ -109,11 +116,12 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: 'Попробуйте воспользоваться сортировкой',
     description: 'Интерактивная сортировка',
     highlightElements: ['[data-tutorial="sort-button"]'],
-    text: 'Нажмите на "По масти"/"По рангу", чтобы сортировать карты в руке по масти или по номиналу.',
+    text: 'Нажмите на "По масти", чтобы сортировать карты в руке по номиналу.',
     instruction: 'Нажмите на кнопку сортировки',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-sort',
     discardCount: 10,
     textPosition: 'center',
@@ -128,6 +136,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
@@ -145,6 +154,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['5d'] }],
     requiredAction: 'click-card',
     targetCard: '7s',
+    trumpCard: 'Qh',
     discardCount: 10,
   },
   {
@@ -160,6 +170,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['5d'] }],
     requiredAction: 'click-card',
     targetCard: '6s',
+    trumpCard: 'Qh',
     discardCount: 10,
   },
   {
@@ -175,6 +186,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['6d'] }],
     requiredAction: 'click-card',
     targetCard: '6h',
+    trumpCard: 'Qh',
     discardCount: 10,
   },
   {
@@ -190,6 +202,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     tableCards: [{ playerId: 1, cards: ['2d', '3d', '4d'] }],
     requiredAction: 'click-card',
     targetCard: '10s',
+    trumpCard: 'Qh',
     discardCount: 10,
   },
   {
@@ -202,6 +215,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
+    trumpCard: 'Qh',
     requiredAction: 'click-button',
     discardCount: 10,
   },
