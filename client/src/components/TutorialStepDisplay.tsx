@@ -3,6 +3,7 @@ import { TutorialScenario } from '@/hooks/useInteractiveTutorial';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ClientGameState } from '../../../shared/gameTypes';
+import { CARD_IMAGES_CUSTOM, getCustomCardImageKey, SUIT_SYMBOLS, SUIT_COLORS } from '../../../shared/cardAssets';
 
 interface TutorialStepDisplayProps {
   scenario: TutorialScenario | null;
@@ -26,6 +27,43 @@ interface SpotlightRect {
 // Sequential defend phases
 type SeqDefendPhase = 'waiting' | 'defend1' | 'defend2' | 'bito-pause' | 'bito-anim' | 'done';
 
+// Helper: get card image URL for a card notation like '6h'
+function getCardImageUrl(cardNotation: string): string | null {
+  const suitMap: Record<string, string> = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+  const suitChar = cardNotation.slice(-1);
+  const rank = cardNotation.slice(0, -1);
+  const suit = suitMap[suitChar];
+  if (!suit) return null;
+  const key = getCustomCardImageKey(rank, suit);
+  if (!key) return null;
+  return CARD_IMAGES_CUSTOM[key] || null;
+}
+
+// Helper: render a mini card face for overlay
+function MiniCardFace({ cardNotation, className }: { cardNotation: string; className?: string }) {
+  const imgUrl = getCardImageUrl(cardNotation);
+  if (imgUrl) {
+    return (
+      <div className={`w-full h-full bg-white rounded-lg overflow-hidden ${className || ''}`}>
+        <img src={imgUrl} alt={cardNotation} className="w-full h-full object-cover" loading="lazy" />
+      </div>
+    );
+  }
+  // Fallback: render text-based card
+  const suitMap: Record<string, string> = { s: 'spades', h: 'hearts', d: 'diamonds', c: 'clubs' };
+  const suitChar = cardNotation.slice(-1);
+  const rank = cardNotation.slice(0, -1);
+  const suit = suitMap[suitChar] || 'spades';
+  const symbol = SUIT_SYMBOLS[suit] || '';
+  const color = SUIT_COLORS[suit] || '#1a1a2e';
+  return (
+    <div className={`w-full h-full bg-white rounded-lg flex flex-col items-center justify-center p-1 ${className || ''}`}>
+      <div className="font-bold text-xs" style={{ color }}>{rank}</div>
+      <div className="text-sm" style={{ color }}>{symbol}</div>
+    </div>
+  );
+}
+
 export default function TutorialStepDisplay({
   scenario,
   currentStep,
@@ -48,14 +86,27 @@ export default function TutorialStepDisplay({
 
   // Sequential defend state
   const [seqPhase, setSeqPhase] = useState<SeqDefendPhase>('waiting');
-  const [defendedPairs, setDefendedPairs] = useState<number>(0); // how many pairs have been defended
+  const [defendedPairs, setDefendedPairs] = useState<number>(0);
   const seqClickCountRef = useRef(0);
+  // Track hidden card elements so we can restore them on step change
+  const hiddenCardElementsRef = useRef<HTMLElement[]>([]);
 
-  // Reset sequential defend state when step changes
+  // Reset ALL state when step changes (including when going back from step 10 to step 9)
   useEffect(() => {
     setSeqPhase('waiting');
     setDefendedPairs(0);
     seqClickCountRef.current = 0;
+    cardClickHandledRef.current = false;
+    setAutoDefendActive(false);
+
+    // Restore any previously hidden card elements
+    hiddenCardElementsRef.current.forEach(el => {
+      el.style.opacity = '';
+      el.style.transform = '';
+      el.style.transition = '';
+      el.style.pointerEvents = '';
+    });
+    hiddenCardElementsRef.current = [];
   }, [currentStep]);
 
   // Calculate spotlight positions and text position
@@ -77,7 +128,6 @@ export default function TutorialStepDisplay({
       const element = document.querySelector(selector);
       if (element) {
         const rect = element.getBoundingClientRect();
-        // Skip elements that are hidden (zero size) - e.g. sm:hidden on desktop
         if (rect.width === 0 && rect.height === 0) continue;
         rects.push({
           left: rect.left - padding,
@@ -92,7 +142,6 @@ export default function TutorialStepDisplay({
 
     // Text position
     if (scenario.textPosition === 'top') {
-      // Position at top of screen, 20% smaller
       const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({
         top: 12,
@@ -100,7 +149,6 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'center' || rects.length === 0) {
-      // Center the text box on screen
       const textBoxWidth = Math.min(420, window.innerWidth - 32);
       setTextPos({
         top: window.innerHeight / 2 - 140,
@@ -108,7 +156,6 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (rects.length === 1) {
-      // Auto-position near the single spotlight
       const sr = rects[0];
       const textBoxWidth = Math.min(380, window.innerWidth - 32);
       const textBoxHeight = 260;
@@ -141,7 +188,6 @@ export default function TutorialStepDisplay({
 
       setTextPos({ top: textTop, left: textLeft, maxWidth: textBoxWidth });
     } else {
-      // Multiple spotlights: center the text between them
       const textBoxWidth = Math.min(420, window.innerWidth - 32);
       setTextPos({
         top: window.innerHeight / 2 - 140,
@@ -196,8 +242,11 @@ export default function TutorialStepDisplay({
       return;
     }
 
-    cardClickHandledRef.current = false;
-    setAutoDefendActive(false);
+    // Don't re-register handler if already completed (prevents issues on re-render)
+    // But DO allow re-registration when seqPhase is 'waiting' (fresh start / step back)
+    if (scenario.sequentialDefend && seqPhase !== 'waiting' && seqPhase !== 'defend1') {
+      return;
+    }
 
     const handleCardClick = (e: Event) => {
       const target = e.target as HTMLElement;
@@ -210,6 +259,10 @@ export default function TutorialStepDisplay({
           // Sequential defend mode
           if (scenario.sequentialDefend) {
             const totalDefenses = scenario.sequentialDefend.defenseCards.length;
+            
+            // Prevent extra clicks
+            if (seqClickCountRef.current >= totalDefenses) return;
+            
             seqClickCountRef.current += 1;
             const clickNum = seqClickCountRef.current;
 
@@ -217,12 +270,13 @@ export default function TutorialStepDisplay({
               // Update defended pairs count
               setDefendedPairs(clickNum);
 
-              // Hide the clicked card from hand visually
+              // Hide the clicked card from hand visually and track it
               const clickedEl = cardElement as HTMLElement;
               clickedEl.style.opacity = '0';
               clickedEl.style.transform = 'translateY(-40px) scale(0.5)';
               clickedEl.style.transition = 'all 0.4s ease-out';
               clickedEl.style.pointerEvents = 'none';
+              hiddenCardElementsRef.current.push(clickedEl);
 
               if (clickNum === 1) {
                 setSeqPhase('defend1');
@@ -233,12 +287,12 @@ export default function TutorialStepDisplay({
                 cardClickHandledRef.current = true;
                 setSeqPhase('defend2');
 
-                // After 2 seconds, show bito animation
+                // After exactly 2 seconds, show bito animation
                 setTimeout(() => {
                   setSeqPhase('bito-anim');
                 }, 2000);
 
-                // After 3.5 seconds total, mark as done
+                // After 3.5 seconds total, mark as done (next button enabled)
                 setTimeout(() => {
                   setSeqPhase('done');
                 }, 3500);
@@ -268,7 +322,7 @@ export default function TutorialStepDisplay({
 
     document.addEventListener('click', handleCardClick, true);
     return () => document.removeEventListener('click', handleCardClick, true);
-  }, [scenario, onNext, onCardClick, currentStep]);
+  }, [scenario, onNext, onCardClick, currentStep, seqPhase]);
 
   // Handle sort button click for step 6
   const [sortClicked, setSortClicked] = useState(false);
@@ -387,27 +441,22 @@ export default function TutorialStepDisplay({
           let startX: number, startY: number;
           let endX: number, endY: number;
 
-          // Determine arrow direction based on relative position
           if (textRect.bottom < sr.top) {
-            // Text is above spotlight → arrow goes down
             startX = textCenterX;
             startY = textRect.bottom + 4;
             endX = spotCenterX;
             endY = sr.top;
           } else if (textRect.top > sr.top + sr.height) {
-            // Text is below spotlight → arrow goes up
             startX = textCenterX;
             startY = textRect.top - 4;
             endX = spotCenterX;
             endY = sr.top + sr.height;
           } else if (textRect.left > sr.left + sr.width) {
-            // Text is to the right → arrow goes left
             startX = textRect.left - 4;
             startY = textRect.top + textRect.height / 2;
             endX = sr.left + sr.width;
             endY = spotCenterY;
           } else {
-            // Text is to the left → arrow goes right
             startX = textRect.right + 4;
             startY = textRect.top + textRect.height / 2;
             endX = sr.left;
@@ -439,7 +488,6 @@ export default function TutorialStepDisplay({
   // Determine if "Next" button should be disabled
   const isNextDisabled = (() => {
     if (isSeqDefend) {
-      // For sequential defend, button is disabled until bito animation completes
       return seqPhase !== 'done';
     }
     if (scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) return true;
@@ -447,22 +495,23 @@ export default function TutorialStepDisplay({
     return false;
   })();
 
-  // Render defense overlay on table cards for sequential defend
+  // Render real defense card overlays on table attack cards
   const renderDefenseOverlay = () => {
-    if (!isSeqDefend || defendedPairs === 0) return null;
+    if (!isSeqDefend || defendedPairs === 0 || seqPhase === 'bito-anim' || seqPhase === 'done') return null;
 
-    // Find table-area element to position defense cards
     const tableArea = document.querySelector('[data-tutorial="table-area"]');
     if (!tableArea) return null;
 
-    const tableRect = tableArea.getBoundingClientRect();
     // Find individual battle pair containers inside table area
     const pairElements = tableArea.querySelectorAll(':scope > div');
+    const defenseCards = scenario.sequentialDefend!.defenseCards;
 
     return (
       <>
         {Array.from(pairElements).slice(0, defendedPairs).map((pairEl, i) => {
           const pairRect = pairEl.getBoundingClientRect();
+          const cardNotation = defenseCards[i] || defenseCards[0];
+
           return (
             <div
               key={`defense-${i}`}
@@ -474,8 +523,8 @@ export default function TutorialStepDisplay({
                 height: pairRect.height - 4,
               }}
             >
-              <div className="w-full h-full rounded-lg border-2 border-emerald-400 bg-emerald-900/40 flex items-center justify-center">
-                <span className="text-emerald-300 font-bold text-xs">✓</span>
+              <div className="w-full h-full rounded-lg overflow-hidden border-2 border-emerald-400 shadow-lg shadow-emerald-400/30">
+                <MiniCardFace cardNotation={cardNotation} />
               </div>
             </div>
           );
@@ -490,7 +539,6 @@ export default function TutorialStepDisplay({
 
     return (
       <div className="fixed inset-0 z-[70] pointer-events-none">
-        {/* Cards flying to discard */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-3xl sm:text-5xl font-black text-green-400 drop-shadow-[0_0_20px_rgba(34,197,94,0.5)] tracking-wider animate-bounce-in">
             БИТО!
@@ -523,7 +571,7 @@ export default function TutorialStepDisplay({
       {/* Arrows from text to spotlights */}
       {scenario.showArrows !== false && renderArrows()}
 
-      {/* Defense overlay on table cards */}
+      {/* Defense overlay on table cards — real card images */}
       {renderDefenseOverlay()}
 
       {/* Bito animation */}
