@@ -130,6 +130,7 @@ export default function Home() {
         musicVolume={music.volume}
         onMusicVolumeChange={music.setVolume}
         frozenInfo={frozenInfo}
+        isTutorial={gameState.isTutorial}
       />
     );
   }

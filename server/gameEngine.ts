@@ -1158,6 +1158,7 @@ export function toClientState(
   playerAvatarIdsMap?: Map<string, string>,
   playerEquippedFramesMap?: Map<string, string>,
   betAmount: number = 0,
+  isTutorial: boolean = false,
 ): ClientGameState {
   const myIndex = state.players.findIndex(p => p.id === playerId);
 
@@ -1232,6 +1233,7 @@ export function toClientState(
     availableActions: myIndex >= 0 ? getAvailableActions(state, myIndex) : [],
     playerPrizes: state.playerPrizes,
     prizePool: state.prizePool,
+    isTutorial,
   };
 }
 

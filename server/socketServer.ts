@@ -189,7 +189,7 @@ export function initSocketServer(httpServer: HttpServer) {
             socket.emit('roomUpdated', sanitizeRoom(room));
             // If game is in progress, send game state
             if (gameState && gameState.gamePhase === 'playing') {
-              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0);
+              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
               socket.emit('gameStateUpdate', clientState);
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
               // Always send actions — even empty to clear stale client state
@@ -250,7 +250,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // If game is in progress, send full game state (reuse gameState from above)
       if (gameState && gameState.gamePhase === 'playing') {
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         // Always send actions — even empty to clear stale client state
@@ -277,6 +277,7 @@ export function initSocketServer(httpServer: HttpServer) {
         betAmount,
         password: data.settings?.password || undefined,
         isPrivate: data.settings?.isPrivate || false,
+        isTutorial: data.settings?.isTutorial || false,
       };
       const room: Room = {
         id: roomId,
@@ -349,7 +350,7 @@ export function initSocketServer(httpServer: HttpServer) {
         socket.emit('roomUpdated', sanitizeRoom(room));
 
         // Send game state
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
@@ -1802,7 +1803,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
-      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0);
+      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
       io.to(sid).emit('gameStateUpdate', clientState);
 
       // Always send actions — even empty array to clear stale client state

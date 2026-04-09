@@ -88,6 +88,8 @@ export interface RoomSettings {
   password?: string;
   /** If true, room is private (only visible to invited players) */
   isPrivate?: boolean;
+  /** If true, this is a tutorial room */
+  isTutorial?: boolean;
 }
 
 /** Valid bet amounts for room creation */
@@ -272,6 +274,8 @@ export interface ClientGameState {
   playerPrizes: { playerId: string; place: number; amount: number }[];
   /** Total prize pool for this game */
   prizePool: number;
+  /** If true, this is a tutorial game */
+  isTutorial?: boolean;
 }
 
 export interface ClientPlayer {
