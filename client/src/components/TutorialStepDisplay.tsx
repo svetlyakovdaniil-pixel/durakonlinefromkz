@@ -812,11 +812,11 @@ export default function TutorialStepDisplay({
           const toIsTop = toCY < vh * 0.4;
 
           if (fromIsTop && toIsTop) {
-            // Both in top row (opponent to opponent) — short curved arrow under their icons
-            const startX = fromRect.right - 4;
-            const startY = fromRect.bottom + 8;
-            const endX = toRect.left + 4;
-            const endY = toRect.bottom + 8;
+            // Both in top row (opponent to opponent) — from bottom-center to bottom-center
+            const startX = fromCX;
+            const startY = fromRect.bottom + 4;
+            const endX = toCX;
+            const endY = toRect.bottom + 4;
             // Curve downward for clockwise feel
             const midX = (startX + endX) / 2;
             const cpY = Math.max(startY, endY) + 25;
@@ -824,45 +824,36 @@ export default function TutorialStepDisplay({
             pathData.push({ d, color: arrow.color || '#facc15' });
           } else if (fromIsTop && toIsBottom) {
             // Top-right opponent → player hand: go down on the RIGHT side, around text box
-            const startX = fromRect.right + 4;
-            const startY = fromCY + 10;
-            const endX = toRect.right - 20;
+            // Start from bottom-center of the bot, end at top-center of player hand
+            const startX = fromCX;
+            const startY = fromRect.bottom + 4;
+            const endX = toCX;
             const endY = toRect.top - 6;
 
             if (textBoxRect) {
               // Route around the right edge of the text box
               const tbRight = textBoxRect.right + 30;
-              const tbTop = textBoxRect.top;
-              const tbBottom = textBoxRect.bottom;
-              // Go from start → right of text box top → right of text box bottom → end
-              const d = `M ${startX} ${startY} C ${tbRight + 20} ${startY + 40}, ${tbRight + 20} ${tbBottom - 40}, ${endX} ${endY}`;
+              const d = `M ${startX} ${startY} C ${tbRight + 20} ${startY + 40}, ${tbRight + 20} ${endY - 40}, ${endX} ${endY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
             } else {
-              const d = `M ${startX} ${startY} C ${startX + 60} ${(startY + endY) / 2}, ${endX + 60} ${(startY + endY) / 2}, ${endX} ${endY}`;
+              const d = `M ${startX} ${startY} C ${startX + 80} ${(startY + endY) / 2}, ${endX + 80} ${(startY + endY) / 2}, ${endX} ${endY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
             }
           } else if (fromIsBottom && toIsTop) {
             // Player hand → top-left opponent: go up on the LEFT side, around text box
-            const startX = toRect.left + 20;
-            const startY = toRect.top - 6;
-            const endX = toRect.left - 4;
-            const endY = toCY + 10;
-            // Actually: from = player hand (bottom), to = top-left opponent
-            const sX = fromRect.left + 20;
+            // Start from top-center of player hand, end at bottom-center of the bot
+            const sX = fromCX;
             const sY = fromRect.top - 6;
-            const eX = toRect.left - 4;
-            const eY = toCY + 10;
+            const eX = toCX;
+            const eY = toRect.bottom + 4;
 
             if (textBoxRect) {
               // Route around the left edge of the text box
               const tbLeft = textBoxRect.left - 30;
-              const tbTop = textBoxRect.top;
-              const tbBottom = textBoxRect.bottom;
-              // Go from start → left of text box bottom → left of text box top → end
               const d = `M ${sX} ${sY} C ${tbLeft - 20} ${sY - 40}, ${tbLeft - 20} ${eY + 40}, ${eX} ${eY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
             } else {
-              const d = `M ${sX} ${sY} C ${sX - 60} ${(sY + eY) / 2}, ${eX - 60} ${(sY + eY) / 2}, ${eX} ${eY}`;
+              const d = `M ${sX} ${sY} C ${sX - 80} ${(sY + eY) / 2}, ${eX - 80} ${(sY + eY) / 2}, ${eX} ${eY}`;
               pathData.push({ d, color: arrow.color || '#facc15' });
             }
           } else {
