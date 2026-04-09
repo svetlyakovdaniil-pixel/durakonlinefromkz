@@ -21,6 +21,8 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
 
   const [open, setOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.5);
+  const [soundVolume, setSoundVolume] = useState(0.5);
 
   const handleMusicToggle = (checked: boolean) => {
     setMusicEnabled(checked);
@@ -37,6 +39,15 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
 
   const handleVibrationToggle = (checked: boolean) => {
     setVibrationEnabled(checked);
+  };
+
+  const handleMusicVolumeChange = (volume: number) => {
+    setMusicVolume(volume);
+    music.setVolume(volume);
+  };
+
+  const handleSoundVolumeChange = (volume: number) => {
+    setSoundVolume(volume);
   };
 
   return (
@@ -58,30 +69,70 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
 
         <div className="mt-6 space-y-5">
           {/* 1. Sound effects */}
-          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
-              <Volume2 className="w-4 h-4 text-amber-400" />
-              {t('settings.sounds')}
-            </span>
-            <Checkbox
-              checked={settings.soundEnabled}
-              onCheckedChange={(checked) => handleSoundToggle(checked === true)}
-              className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
-            />
-          </label>
+          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+            <label className="flex items-center justify-between cursor-pointer mb-3">
+              <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-amber-400" />
+                {t('settings.sounds')}
+              </span>
+              <Checkbox
+                checked={settings.soundEnabled}
+                onCheckedChange={(checked) => handleSoundToggle(checked === true)}
+                className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+              />
+            </label>
+            {settings.soundEnabled && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-amber-200/70">{t('settings.volume') || 'Volume'}</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(soundVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(soundVolume * 100)}
+                  onChange={(e) => handleSoundVolumeChange(Number(e.target.value) / 100)}
+                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 2. Background music */}
-          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
-              <Music className="w-4 h-4 text-amber-400" />
-              {t('settings.music')}
-            </span>
-            <Checkbox
-              checked={settings.musicEnabled}
-              onCheckedChange={(checked) => handleMusicToggle(checked === true)}
-              className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
-            />
-          </label>
+          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+            <label className="flex items-center justify-between cursor-pointer mb-3">
+              <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+                <Music className="w-4 h-4 text-amber-400" />
+                {t('settings.music')}
+              </span>
+              <Checkbox
+                checked={settings.musicEnabled}
+                onCheckedChange={(checked) => handleMusicToggle(checked === true)}
+                className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+              />
+            </label>
+            {settings.musicEnabled && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-amber-200/70">{t('settings.volume') || 'Volume'}</span>
+                  <span className="text-xs text-amber-300/60">{Math.round(musicVolume * 100)}%</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(musicVolume * 100)}
+                  onChange={(e) => handleMusicVolumeChange(Number(e.target.value) / 100)}
+                  className="w-full h-2 bg-amber-900/40 rounded-full appearance-none cursor-pointer accent-amber-500"
+                  style={{ touchAction: 'none', WebkitAppearance: 'none', minHeight: '24px', padding: '8px 0' }}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 3. Vibration */}
           <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
@@ -172,19 +223,21 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
             <AlertDialogTrigger asChild>
               <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">
                 <LogOut className="w-4 h-4" />
-                {t('game.leaveGame')}
+                {t('game.leaveGame') || 'Leave Game'}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-amber-100">{t('game.leaveConfirm')}</AlertDialogTitle>
+                <AlertDialogTitle className="text-amber-100">
+                  {t('game.leaveGameConfirm') || 'Leave Game?'}
+                </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60">
-                  {t('game.leaveDesc')}
+                  {t('game.leaveGameDesc') || 'You will lose points and be marked as fool in the current game.'}
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="bg-[#0a1628] border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100">
-                  {t('common.no')}
+                  {t('common.no') || 'No'}
                 </AlertDialogCancel>
                 <AlertDialogAction
                   className="bg-red-700 hover:bg-red-600 text-white"
@@ -193,7 +246,7 @@ export default function GameSettingsSheet({ onLeaveGame, children }: GameSetting
                     onLeaveGame();
                   }}
                 >
-                  {t('common.yes')}
+                  {t('common.yes') || 'Yes'}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
