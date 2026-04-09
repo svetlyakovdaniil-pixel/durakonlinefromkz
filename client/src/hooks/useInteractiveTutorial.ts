@@ -34,6 +34,13 @@ export interface TutorialScenario {
   showArrows?: boolean;
   /** When true, clicking a target card auto-defends all matching table cards with matching hand cards */
   autoDefend?: boolean;
+  /** Sequential defense: player clicks cards one by one to defend, then bito animation plays */
+  sequentialDefend?: {
+    /** Card notation for each defense step (e.g. ['6h', '6h']) */
+    defenseCards: string[];
+    /** Whether to highlight attack cards on the table */
+    highlightTableCards?: boolean;
+  };
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -169,7 +176,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     id: 9,
     title: 'Как это работает?',
     description: 'Практика одинаковых карт',
-    highlightElements: ['[data-tutorial="player-hand"]'],
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="table-area"]'],
     text: 'Нажмите на 6 черви чтобы отбиться. Карты с одинаковым номиналом и мастью бьют сами себя',
     instruction: 'Нажмите на 6 черви в вашей руке',
     playerHand: STANDARD_PLAYER_HAND,
@@ -183,7 +190,10 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     highlightCards: ['6h', '6h'],
     showArrows: false,
     textPosition: 'top',
-    autoDefend: true,
+    sequentialDefend: {
+      defenseCards: ['6h', '6h'],
+      highlightTableCards: true,
+    },
   },
   {
     id: 10,
