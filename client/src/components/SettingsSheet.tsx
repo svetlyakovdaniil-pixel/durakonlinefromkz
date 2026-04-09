@@ -174,6 +174,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   <span className="text-xs text-amber-300/60">{Math.round(sound.volume * 100)}%</span>
                 </div>
                 <input
+                  key={`sound-volume-${Math.round(sound.volume * 100)}`}
                   type="range"
                   min="0"
                   max="100"
@@ -207,6 +208,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   <span className="text-xs text-amber-300/60">{Math.round(music.volume * 100)}%</span>
                 </div>
                 <input
+                  key={`music-volume-${Math.round(music.volume * 100)}`}
                   type="range"
                   min="0"
                   max="100"

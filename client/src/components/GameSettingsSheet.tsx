@@ -104,6 +104,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                   <span className="text-xs text-amber-300/60">{Math.round(sound.volume * 100)}%</span>
                 </div>
                 <input
+                  key={`game-sound-volume-${Math.round(sound.volume * 100)}`}
                   type="range"
                   min="0"
                   max="100"
@@ -137,6 +138,7 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
                   <span className="text-xs text-amber-300/60">{Math.round(music.volume * 100)}%</span>
                 </div>
                 <input
+                  key={`game-music-volume-${Math.round(music.volume * 100)}`}
                   type="range"
                   min="0"
                   max="100"
