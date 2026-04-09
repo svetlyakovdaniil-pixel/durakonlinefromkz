@@ -39,9 +39,6 @@ import {
   getOwnedFrames,
   purchaseFrame,
   equipFrame,
-  getAllMusicPlaylists,
-  getOwnedMusicPlaylists,
-  purchaseMusicPlaylist,
 } from "./db";
 import { emitNotificationToProfile } from "./socketServer";
 
@@ -441,31 +438,6 @@ export const appRouter = router({
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) return [];
         return getPlayerGameHistory(profile.id, input?.limit ?? 20);
-      }),
-  }),
-
-  music: router({
-    allPlaylists: publicProcedure.query(async () => {
-      return getAllMusicPlaylists();
-    }),
-
-    myPlaylists: protectedProcedure.query(async ({ ctx }) => {
-      const profile = await getProfileByUserId(ctx.user.id);
-      if (!profile) return [];
-      return getOwnedMusicPlaylists(profile.id);
-    }),
-
-    purchase: protectedProcedure
-      .input(z.object({ playlistId: z.number(), price: z.number() }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await purchaseMusicPlaylist(ctx.user.id, input.playlistId, input.price);
-        if (result.success) {
-          const profile = await getProfileByUserId(ctx.user.id);
-          if (profile) {
-            await emitNotificationToProfile(profile.id, 'balance_topup');
-          }
-        }
-        return result;
       }),
   }),
 });

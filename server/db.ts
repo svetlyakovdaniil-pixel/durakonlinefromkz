@@ -1,6 +1,6 @@
 import { eq, and, or, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, musicPlaylists, ownedMusicPlaylists } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1084,100 +1084,4 @@ export async function equipFrame(
   }).where(eq(playerProfiles.id, profile.id));
 
   return { success: true };
-}
-
-// ============================================================
-// MUSIC PLAYLIST helpers
-// ============================================================
-
-/**
- * Get all available music playlists.
- */
-export async function getAllMusicPlaylists() {
-  const db = await getDb();
-  if (!db) return [];
-
-  const { musicPlaylists } = await import("../drizzle/schema");
-  return db.select().from(musicPlaylists).orderBy(desc(musicPlaylists.isDefault), asc(musicPlaylists.id));
-}
-
-/**
- * Get owned music playlists for a player.
- */
-export async function getOwnedMusicPlaylists(profileId: number) {
-  const db = await getDb();
-  if (!db) return [];
-
-  const { musicPlaylists, ownedMusicPlaylists } = await import("../drizzle/schema");
-  return db.select({
-    id: musicPlaylists.id,
-    name: musicPlaylists.name,
-    price: musicPlaylists.price,
-    isDefault: musicPlaylists.isDefault,
-    tracksJson: musicPlaylists.tracksJson,
-    previewTrackUrl: musicPlaylists.previewTrackUrl,
-  })
-    .from(ownedMusicPlaylists)
-    .innerJoin(musicPlaylists, eq(ownedMusicPlaylists.playlistId, musicPlaylists.id))
-    .where(eq(ownedMusicPlaylists.profileId, profileId))
-    .orderBy(desc(musicPlaylists.isDefault), asc(musicPlaylists.id));
-}
-
-/**
- * Purchase a music playlist for a player. Deducts shanyrak and adds playlist to ownedMusicPlaylists.
- * Returns { success, newShanyrak } or { success: false, reason }.
- */
-export async function purchaseMusicPlaylist(
-  userId: number,
-  playlistId: number,
-  shanyrakCost: number
-): Promise<{ success: boolean; newShanyrak?: number; reason?: string }> {
-  const db = await getDb();
-  if (!db) return { success: false, reason: 'db_unavailable' };
-
-  const { musicPlaylists, ownedMusicPlaylists } = await import("../drizzle/schema");
-
-  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  if (!profile) return { success: false, reason: 'not_found' };
-
-  // Check if already owns this playlist
-  const [existing] = await db.select().from(ownedMusicPlaylists)
-    .where(and(eq(ownedMusicPlaylists.profileId, profile.id), eq(ownedMusicPlaylists.playlistId, playlistId)))
-    .limit(1);
-  if (existing) return { success: false, reason: 'already_owned' };
-
-  // Check if playlist exists and get price
-  const [playlist] = await db.select().from(musicPlaylists).where(eq(musicPlaylists.id, playlistId)).limit(1);
-  if (!playlist) return { success: false, reason: 'playlist_not_found' };
-
-  // Free playlists can't be purchased
-  if (playlist.price === 0) return { success: false, reason: 'free_playlist' };
-
-  if (profile.balanceShanyrak < shanyrakCost) {
-    return { success: false, reason: 'insufficient_shanyrak' };
-  }
-
-  const newShanyrak = profile.balanceShanyrak - shanyrakCost;
-
-  // Update balance and add playlist
-  await db.update(playerProfiles).set({
-    balanceShanyrak: newShanyrak,
-  }).where(eq(playerProfiles.userId, userId));
-
-  await db.insert(ownedMusicPlaylists).values({
-    profileId: profile.id,
-    playlistId,
-  });
-
-  // Record transaction
-  await recordTransaction({
-    profileId: profile.id,
-    type: 'shop_purchase',
-    amount: -shanyrakCost,
-    currency: 'shanyrak',
-    description: `Purchased playlist: ${playlist.name}`,
-    balanceAfter: newShanyrak,
-  });
-
-  return { success: true, newShanyrak };
 }

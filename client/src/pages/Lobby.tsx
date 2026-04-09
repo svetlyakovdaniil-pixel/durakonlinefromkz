@@ -69,7 +69,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showTengeTopUp, setShowTengeTopUp] = useState(false);
   const [showShop, setShowShop] = useState(false);
   const [showRules, setShowRules] = useState(false);
-  const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | undefined>(undefined);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -82,7 +81,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
   const isCustomDeckOwned = ownedDecks.includes('custom');
   const { data: ownedTables = [] } = trpc.shop.ownedTables.useQuery();
-  const { data: ownedPlaylists = [] } = trpc.music.myPlaylists.useQuery();
   const isDarkTableOwned = ownedTables.includes('dark_kazakh');
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
@@ -137,7 +135,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       tableStyle,
       betAmount: BET_AMOUNTS[betAmountIdx],
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
-      ...(selectedPlaylistId ? { playlistId: selectedPlaylistId } : {}),
     };
     await onCreateRoom(roomName || `Комната ${userName}`, parseInt(maxPlayers), settings);
     setLoading(false);
@@ -490,24 +487,6 @@ onClick={() => setShowTengeTopUp(true)}
                             {t('lobby.tableDarkKazakh')}
                           </span>
                         </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Музыка' : 'Music'}</Label>
-                    <Select value={selectedPlaylistId?.toString() || 'default'} onValueChange={(v) => {
-                      setSelectedPlaylistId(v !== 'default' ? parseInt(v) : undefined);
-                    }}>
-                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
-                        <SelectValue placeholder={locale === 'kk' ? 'Таңдау' : 'Select'} />
-                      </SelectTrigger>
-                      <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                        <SelectItem value="default" className="text-amber-200/50">{locale === 'kk' ? 'Дефолт' : 'Default'}</SelectItem>
-                        {ownedPlaylists.map(playlist => (
-                          <SelectItem key={playlist.id} value={playlist.id.toString()} className="text-amber-100">
-                            {playlist.name}
-                          </SelectItem>
-                        ))}
                       </SelectContent>
                     </Select>
                   </div>

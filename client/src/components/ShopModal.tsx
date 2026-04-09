@@ -92,11 +92,11 @@ interface ShopModalProps {
   onPurchased?: () => void;
 }
 
-type ShopTab = 'decks' | 'tables' | 'frames' | 'music';
+type ShopTab = 'decks' | 'tables' | 'frames';
 
 interface ConfirmPurchase {
-  type: 'deck' | 'table' | 'frame' | 'music';
-  id: string | number;
+  type: 'deck' | 'table' | 'frame';
+  id: string;
   name: string;
   price: number;
 }
@@ -109,12 +109,9 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
   const { data: ownedDecks = [], refetch: refetchOwned } = trpc.shop.ownedDecks.useQuery(undefined, { enabled: open });
   const { data: ownedTables = [], refetch: refetchOwnedTables } = trpc.shop.ownedTables.useQuery(undefined, { enabled: open });
   const { data: ownedFrames = [], refetch: refetchOwnedFrames } = trpc.shop.ownedFrames.useQuery(undefined, { enabled: open });
-  const { data: allPlaylists = [], refetch: refetchAllPlaylists } = trpc.music.allPlaylists.useQuery(undefined, { enabled: open });
-  const { data: ownedPlaylists = [], refetch: refetchOwnedMusic } = trpc.music.myPlaylists.useQuery(undefined, { enabled: open });
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
-  const purchaseMusicMutation = trpc.music.purchase.useMutation();
 
   const isCustomOwned = ownedDecks.includes('custom');
   const canAfford = currentTenge >= CUSTOM_DECK_PRICE;
@@ -124,7 +121,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
     setConfirmPurchase(null);
     try {
       if (item.type === 'deck') {
-        const result = await purchaseMutation.mutateAsync({ deckId: item.id as string, tengeCost: item.price });
+        const result = await purchaseMutation.mutateAsync({ deckId: item.id, tengeCost: item.price });
         if (result.success) {
           toast.success(t('toast.purchaseSuccess'));
           refetchOwned();
@@ -138,7 +135,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
           toast.error(t('common.error'));
         }
       } else if (item.type === 'table') {
-        const result = await purchaseTableMutation.mutateAsync({ tableId: item.id as string, tengeCost: item.price });
+        const result = await purchaseTableMutation.mutateAsync({ tableId: item.id, tengeCost: item.price });
         if (result.success) {
           toast.success(t('toast.purchaseSuccess'));
           refetchOwnedTables();
@@ -152,7 +149,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
           toast.error(t('common.error'));
         }
       } else if (item.type === 'frame') {
-        const result = await purchaseFrameMutation.mutateAsync({ frameId: item.id as string, tengeCost: item.price });
+        const result = await purchaseFrameMutation.mutateAsync({ frameId: item.id, tengeCost: item.price });
         if (result.success) {
           toast.success(t('toast.purchaseSuccess'));
           refetchOwnedFrames();
@@ -160,20 +157,6 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
         } else if (result.reason === 'already_owned') {
           toast.info(t('shop.owned'));
           refetchOwnedFrames();
-        } else if (result.reason === 'insufficient_tenge') {
-          toast.error(t('shop.notEnough'));
-        } else {
-          toast.error(t('common.error'));
-        }
-      } else if (item.type === 'music') {
-        const result = await purchaseMusicMutation.mutateAsync({ playlistId: item.id as number, price: item.price });
-        if (result.success) {
-          toast.success(t('toast.purchaseSuccess'));
-          refetchOwnedMusic();
-          onPurchased?.();
-        } else if (result.reason === 'already_owned') {
-          toast.info(t('shop.owned'));
-          refetchOwnedMusic();
         } else if (result.reason === 'insufficient_tenge') {
           toast.error(t('shop.notEnough'));
         } else {
@@ -221,7 +204,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
         {/* Tabs */}
         <div className="flex border-b border-amber-700/20">
-          {(['decks', 'tables', 'frames', 'music'] as const).map(tab => (
+          {(['decks', 'tables', 'frames'] as const).map(tab => (
             <button
               key={tab}
               className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
@@ -231,7 +214,7 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? (locale === 'kk' ? 'Жақтаулар' : 'Рамки') : (locale === 'kk' ? 'Музыка' : 'Музыка')}
+              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : (locale === 'kk' ? 'Жақтаулар' : 'Рамки')}
             </button>
           ))}
         </div>
@@ -359,53 +342,6 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                         )}
                         {!isOwned && !canAffordFrame && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          {activeTab === 'music' && (
-            <div className="space-y-4">
-              {allPlaylists.map((playlist) => {
-                const isOwned = ownedPlaylists.some(p => p.id === playlist.id);
-                const canAffordMusic = currentTenge >= playlist.price;
-                const [previewPlaying, setPreviewPlaying] = useState(false);
-                return (
-                  <div key={playlist.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-amber-100 font-bold text-sm">{playlist.name}</h3>
-                          <p className="text-amber-200/50 text-xs mt-0.5">{playlist.tracksJson.length} {locale === 'kk' ? 'трек' : 'tracks'}</p>
-                        </div>
-                        {!isOwned && playlist.price === 0 && <span className="text-green-400 text-xs font-bold px-2 py-1 bg-green-900/30 rounded">{locale === 'kk' ? 'Тегін' : 'Free'}</span>}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button className="flex-1 bg-blue-600 hover:bg-blue-500 text-white text-xs h-8 px-3"
-                          onClick={() => setPreviewPlaying(!previewPlaying)}>
-                          {previewPlaying ? '⏸' : '▶'} {locale === 'kk' ? 'Тыңда' : 'Preview'}
-                        </Button>
-                        {isOwned ? (
-                          <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
-                            <Check className="w-4 h-4" /><span className="text-xs">{t('shop.purchased')}</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => setConfirmPurchase({ type: 'music', id: playlist.id, name: playlist.name, price: playlist.price })}
-                              disabled={purchasing || !canAffordMusic}>{purchasing ? '...' : t('shop.buy')}</Button>
-                            {playlist.price > 0 && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-amber-100 font-bold text-base">{playlist.price}</span>
-                                <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                      {!isOwned && !canAffordMusic && playlist.price > 0 && <p className="text-red-400/80 text-xs">{t('shop.notEnough')}</p>}
                     </div>
                   </div>
                 );

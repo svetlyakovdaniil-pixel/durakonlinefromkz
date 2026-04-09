@@ -85,13 +85,6 @@
       "when": 1775570798189,
       "tag": "0011_legal_rockslide",
       "breakpoints": true
-    },
-    {
-      "idx": 12,
-      "version": "5",
-      "when": 1775727573421,
-      "tag": "0012_ambiguous_slapstick",
-      "breakpoints": true
     }
   ]
 }
