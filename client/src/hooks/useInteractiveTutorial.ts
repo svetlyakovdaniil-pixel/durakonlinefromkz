@@ -44,6 +44,8 @@ export interface TutorialScenario {
     noBitoAnimation?: boolean;
     /** Show arrow from table area to the Next button after all defenses */
     showArrowToNextButton?: boolean;
+    /** Cards already defended from a previous step (shown as overlays from the start) */
+    preDefendedCards?: string[];
   };
 }
 
@@ -249,17 +251,29 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
   },
   {
     id: 12,
-    title: 'Потайные козыри',
-    description: 'Продвинутые правила',
-    highlightElements: ['[data-tutorial="trump-indicator"]'],
-    text: 'Потайные козыри - это карты, которые скрыты в колоде и могут быть использованы в критических ситуациях. Козырь показывает нижняя карта в колоде.',
-    instruction: 'Нажмите "Далее" чтобы завершить обучение',
+    title: 'Туз пики - уникальная механика',
+    description: 'Специальные карты',
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="table-area"]'],
+    text: 'Короля пики может побить только Туз пики и 777, больше никакая карта не в силах сделать этого\nНайдите в своей руке Туз пики. Нажмите на него чтобы отбить короля пики на столе',
+    instruction: 'Нажмите на Туз пики в вашей руке',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     trumpCard: 'Qh',
-    requiredAction: 'click-button',
+    // Table: two Ks, first one already beaten by 777 (carried over from step 11)
+    tableCards: [{ playerId: 1, cards: ['Ks', 'Ks'] }],
+    requiredAction: 'click-card',
+    targetCard: 'As',
     discardCount: 10,
+    highlightCards: ['As'],
+    showArrows: false,
+    textPosition: 'top',
+    sequentialDefend: {
+      defenseCards: ['As'],
+      highlightTableCards: true,
+      noBitoAnimation: false,
+      preDefendedCards: ['777'],
+    },
   },
 ];
 

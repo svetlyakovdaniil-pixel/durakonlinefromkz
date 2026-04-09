@@ -572,44 +572,71 @@ export default function TutorialStepDisplay({
 
   // Render real defense card overlays on table attack cards
   const renderDefenseOverlay = () => {
-    // Show defense overlays during defend1, defend2, bito-text phases
-    // Also keep visible in 'done' phase if noBitoAnimation (cards stay on table)
-    if (!isSeqDefend || defendedPairs === 0) return null;
-    const keepVisible = scenario.sequentialDefend?.noBitoAnimation && seqPhase === 'done';
+    if (!isSeqDefend) return null;
+
+    const preDefended = scenario.sequentialDefend?.preDefendedCards || [];
+    const totalVisible = preDefended.length + defendedPairs;
+    if (totalVisible === 0) return null;
+
+    const hasPreDefended = preDefended.length > 0;
+    const keepVisible = (scenario.sequentialDefend?.noBitoAnimation || hasPreDefended) && seqPhase === 'done';
     if ((seqPhase === 'bito-fly' || seqPhase === 'done') && !keepVisible) return null;
 
     const tableArea = document.querySelector('[data-tutorial="table-area"]');
     if (!tableArea) return null;
 
-    // Find individual battle pair containers inside table area
     const pairElements = tableArea.querySelectorAll(':scope > div');
     const defenseCards = scenario.sequentialDefend!.defenseCards;
 
-    return (
-      <>
-        {Array.from(pairElements).slice(0, defendedPairs).map((pairEl, i) => {
-          const pairRect = pairEl.getBoundingClientRect();
-          const cardNotation = defenseCards[i] || defenseCards[0];
+    const overlays: React.ReactNode[] = [];
 
-          return (
-            <div
-              key={`defense-${i}`}
-              className="fixed z-[55] pointer-events-none animate-bounce-in"
-              style={{
-                left: pairRect.left + 12,
-                top: pairRect.top + 12,
-                width: pairRect.width - 4,
-                height: pairRect.height - 4,
-              }}
-            >
-              <div className="w-full h-full rounded-lg overflow-hidden border-2 border-emerald-400 shadow-lg shadow-emerald-400/30">
-                <MiniCardFace cardNotation={cardNotation} />
-              </div>
-            </div>
-          );
-        })}
-      </>
-    );
+    // Pre-defended cards (from previous step, shown from the start)
+    preDefended.forEach((cardNotation, i) => {
+      if (i >= pairElements.length) return;
+      const pairRect = pairElements[i].getBoundingClientRect();
+      overlays.push(
+        <div
+          key={`pre-defense-${i}`}
+          className="fixed z-[55] pointer-events-none"
+          style={{
+            left: pairRect.left + 12,
+            top: pairRect.top + 12,
+            width: pairRect.width - 4,
+            height: pairRect.height - 4,
+          }}
+        >
+          <div className="w-full h-full rounded-lg overflow-hidden border-2 border-emerald-400/60 shadow-lg shadow-emerald-400/20">
+            <MiniCardFace cardNotation={cardNotation} />
+          </div>
+        </div>
+      );
+    });
+
+    // Player-defended cards (animated bounce-in)
+    for (let i = 0; i < defendedPairs; i++) {
+      const pairIdx = preDefended.length + i;
+      if (pairIdx >= pairElements.length) break;
+      const pairRect = pairElements[pairIdx].getBoundingClientRect();
+      const cardNotation = defenseCards[i] || defenseCards[0];
+      overlays.push(
+        <div
+          key={`defense-${i}`}
+          className="fixed z-[55] pointer-events-none animate-bounce-in"
+          style={{
+            left: pairRect.left + 12,
+            top: pairRect.top + 12,
+            width: pairRect.width - 4,
+            height: pairRect.height - 4,
+          }}
+        >
+          <div className="w-full h-full rounded-lg overflow-hidden border-2 border-emerald-400 shadow-lg shadow-emerald-400/30">
+            <MiniCardFace cardNotation={cardNotation} />
+          </div>
+        </div>
+      );
+    }
+
+    return <>{overlays}</>;
   };
 
   // Render БИТО text overlay
@@ -719,8 +746,8 @@ export default function TutorialStepDisplay({
         if (!tableArea || !nextBtn) return null;
         const tableRect = tableArea.getBoundingClientRect();
         const btnRect = nextBtn.getBoundingClientRect();
-        const startX = tableRect.left + tableRect.width / 2;
-        const startY = tableRect.bottom + 8;
+        const startX = tableRect.right;
+        const startY = tableRect.top;
         const endX = btnRect.left + btnRect.width / 2;
         const endY = btnRect.top - 4;
         return (
@@ -838,7 +865,7 @@ export default function TutorialStepDisplay({
             className={`flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
             disabled={isNextDisabled}
           >
-            {currentStep === totalSteps - 1 ? 'Завершить' : 'Далее'}
+            Далее
             <ChevronRight size={isCompact ? 10 : 14} />
           </Button>
         </div>
