@@ -26,7 +26,7 @@ export default function Home() {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
     gameOverData, prizeData, onlineFriendIds, pendingInvite, setPendingInvite, frozenInfo,
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
-    playCard, transferCard, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
+    playCard, transferCard, transferCards, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
@@ -138,6 +138,7 @@ export default function Home() {
         prizeData={prizeData}
         onPlayCard={(cardId, targetPairIdx) => playCard(gameState.roomId, cardId, targetPairIdx)}
         onTransferCard={(cardId) => transferCard(gameState.roomId, cardId)}
+        onTransferCards={(cardIds) => transferCards(gameState.roomId, cardIds)}
         onTakeCards={() => takeCards(gameState.roomId)}
         onPassTurn={() => passTurn(gameState.roomId)}
         onEndAttack={() => endAttack(gameState.roomId)}

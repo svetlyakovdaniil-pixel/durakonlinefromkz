@@ -14,8 +14,6 @@ interface PlayingCardProps {
   highlighted?: boolean;
   small?: boolean;
   medium?: boolean;
-  /** Battlefield size: 'lg' (1-2 pairs), 'md' (3-4), 'sm' (5-6), 'xs' (7+) */
-  battleSize?: 'lg' | 'md' | 'sm' | 'xs';
   revealed?: boolean;
   deckStyle?: DeckStyle;
   onClick?: () => void;
@@ -51,28 +49,17 @@ function NumberCard({ card }: { card: Card }) {
   );
 }
 
-export default function PlayingCard({ card, faceDown, selected, playable, highlighted, small, medium, battleSize, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
-  // Responsive card sizes:
+export default function PlayingCard({ card, faceDown, selected, playable, highlighted, small, medium, revealed, deckStyle = 'classic', onClick, className }: PlayingCardProps) {
+  // Responsive card sizes (20% smaller than previous):
   // small = opponent mini cards
-  // medium = battlefield cards (legacy fixed size)
-  // battleSize = adaptive battlefield cards based on pair count
+  // medium = battlefield cards
   // default = hand cards
-  let sizeClasses: string;
-  if (small) {
-    sizeClasses = 'w-7 h-11 sm:w-11 sm:h-15';
-  } else if (battleSize) {
-    // Adaptive battlefield sizes for mobile, desktop stays consistent
-    switch (battleSize) {
-      case 'lg': sizeClasses = 'w-[60px] h-[88px] sm:w-22 sm:h-32'; break; // 1-2 pairs
-      case 'md': sizeClasses = 'w-14 h-21 sm:w-22 sm:h-32'; break;        // 3-4 pairs (same as old medium)
-      case 'sm': sizeClasses = 'w-11 h-16 sm:w-20 sm:h-28'; break;        // 5-6 pairs
-      case 'xs': sizeClasses = 'w-9 h-[52px] sm:w-18 sm:h-26'; break;     // 7+ pairs
-    }
-  } else if (medium) {
-    sizeClasses = 'w-14 h-21 sm:w-22 sm:h-32';
-  } else {
-    sizeClasses = 'w-[62px] h-[92px] sm:w-24 sm:h-34';
-  }
+  // Mobile sizes increased ~10% (w-13→w-14, h-19→h-21), desktop unchanged
+  const sizeClasses = small
+    ? 'w-7 h-11 sm:w-11 sm:h-15'
+    : medium
+      ? 'w-14 h-21 sm:w-22 sm:h-32'
+      : 'w-[62px] h-[92px] sm:w-24 sm:h-34';
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;

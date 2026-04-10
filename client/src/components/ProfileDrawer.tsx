@@ -128,8 +128,16 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
     );
   }
 
-  const winRate = profile.gamesPlayed > 0
+  const mp = myProfile as any;
+  const botGamesPlayed = mp?.botGamesPlayed ?? 0;
+  const botWins = mp?.botWins ?? 0;
+  const botLosses = mp?.botLosses ?? 0;
+
+  const humanWinRate = profile.gamesPlayed > 0
     ? ((profile.wins / profile.gamesPlayed) * 100).toFixed(1)
+    : '0.0';
+  const botWinRate = botGamesPlayed > 0
+    ? ((botWins / botGamesPlayed) * 100).toFixed(1)
     : '0.0';
 
   return (
@@ -170,18 +178,41 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         <div className="text-amber-100 font-medium">{profile.displayName || t('profile.player')}</div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label={t('profile.rating')} value={String(profile.rating)} />
-        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label={t('profile.gamesPlayed')} value={String(profile.gamesPlayed)} />
-        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label={t('profile.wins')} value={String(profile.wins)} />
-        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label={t('profile.losses')} value={String(profile.losses)} />
+      {/* Rating */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-3">
+        <TrendingUp className="w-5 h-5 text-amber-400" />
+        <div>
+          <div className="text-amber-200/60 text-xs">{t('profile.rating')}</div>
+          <div className="text-xl font-bold text-amber-300">{profile.rating}</div>
+        </div>
       </div>
 
-      {/* Win rate */}
-      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 text-center">
-        <div className="text-amber-200/60 text-xs mb-1">{t('profile.winRate')}</div>
-        <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
+      {/* Human stats section */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-blue-400" />
+          <div className="text-amber-200/80 text-xs font-semibold">{t('profile.vsHumans')}</div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MiniStat label={t('profile.gamesPlayed')} value={profile.gamesPlayed} />
+          <MiniStat label={t('profile.wins')} value={profile.wins} color="text-green-400" />
+          <MiniStat label={t('profile.losses')} value={profile.losses} color="text-red-400" />
+          <MiniStat label={t('profile.winRate')} value={`${humanWinRate}%`} color="text-amber-300" />
+        </div>
+      </div>
+
+      {/* Bot stats section */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Swords className="w-4 h-4 text-purple-400" />
+          <div className="text-amber-200/80 text-xs font-semibold">{t('profile.vsBots')}</div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MiniStat label={t('profile.botGamesPlayed')} value={botGamesPlayed} />
+          <MiniStat label={t('profile.botWins')} value={botWins} color="text-green-400" />
+          <MiniStat label={t('profile.botLosses')} value={botLosses} color="text-red-400" />
+          <MiniStat label={t('profile.botWinRate')} value={`${botWinRate}%`} color="text-amber-300" />
+        </div>
       </div>
 
       {/* Frame Selection */}
@@ -273,6 +304,15 @@ function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string
   );
 }
 
+function MiniStat({ label, value, color }: { label: string; value: string | number; color?: string }) {
+  return (
+    <div className="bg-black/20 rounded-lg px-2 py-1.5 text-center">
+      <div className="text-amber-200/50 text-[10px]">{label}</div>
+      <div className={`font-bold text-sm ${color || 'text-amber-100'}`}>{value}</div>
+    </div>
+  );
+}
+
 // ============================================================
 // Friend Profile View (inline, replaces friends list)
 // ============================================================
@@ -314,8 +354,15 @@ function FriendProfileView({
     );
   }
 
-  const winRate = profile.gamesPlayed > 0
+  const friendBotGamesPlayed = (profile as any).botGamesPlayed ?? 0;
+  const friendBotWins = (profile as any).botWins ?? 0;
+  const friendBotLosses = (profile as any).botLosses ?? 0;
+
+  const friendHumanWinRate = profile.gamesPlayed > 0
     ? ((profile.wins / profile.gamesPlayed) * 100).toFixed(1)
+    : '0.0';
+  const friendBotWinRate = friendBotGamesPlayed > 0
+    ? ((friendBotWins / friendBotGamesPlayed) * 100).toFixed(1)
     : '0.0';
 
   return (
@@ -347,18 +394,41 @@ function FriendProfileView({
         </div>
       </div>
 
-      {/* Stats grid */}
-      <div className="grid grid-cols-2 gap-2">
-        <StatCard icon={<TrendingUp className="w-4 h-4 text-amber-400" />} label={t('profile.rating')} value={String(profile.rating)} />
-        <StatCard icon={<Swords className="w-4 h-4 text-blue-400" />} label={t('profile.gamesPlayed')} value={String(profile.gamesPlayed)} />
-        <StatCard icon={<Crown className="w-4 h-4 text-green-400" />} label={t('profile.wins')} value={String(profile.wins)} />
-        <StatCard icon={<Shield className="w-4 h-4 text-red-400" />} label={t('profile.losses')} value={String(profile.losses)} />
+      {/* Rating */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-3">
+        <TrendingUp className="w-5 h-5 text-amber-400" />
+        <div>
+          <div className="text-amber-200/60 text-xs">{t('profile.rating')}</div>
+          <div className="text-xl font-bold text-amber-300">{profile.rating}</div>
+        </div>
       </div>
 
-      {/* Win rate */}
-      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 text-center">
-        <div className="text-amber-200/60 text-xs mb-1">{t('profile.winRate')}</div>
-        <div className="text-2xl font-bold text-amber-300">{winRate}%</div>
+      {/* Human stats */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Users className="w-4 h-4 text-blue-400" />
+          <div className="text-amber-200/80 text-xs font-semibold">{t('profile.vsHumans')}</div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MiniStat label={t('profile.gamesPlayed')} value={profile.gamesPlayed} />
+          <MiniStat label={t('profile.wins')} value={profile.wins} color="text-green-400" />
+          <MiniStat label={t('profile.losses')} value={profile.losses} color="text-red-400" />
+          <MiniStat label={t('profile.winRate')} value={`${friendHumanWinRate}%`} color="text-amber-300" />
+        </div>
+      </div>
+
+      {/* Bot stats */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+        <div className="flex items-center gap-2 mb-2">
+          <Swords className="w-4 h-4 text-purple-400" />
+          <div className="text-amber-200/80 text-xs font-semibold">{t('profile.vsBots')}</div>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <MiniStat label={t('profile.botGamesPlayed')} value={friendBotGamesPlayed} />
+          <MiniStat label={t('profile.botWins')} value={friendBotWins} color="text-green-400" />
+          <MiniStat label={t('profile.botLosses')} value={friendBotLosses} color="text-red-400" />
+          <MiniStat label={t('profile.botWinRate')} value={`${friendBotWinRate}%`} color="text-amber-300" />
+        </div>
       </div>
 
       {/* Invite button */}

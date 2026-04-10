@@ -315,9 +315,12 @@ export async function recordGameResult(data: {
   loserProfileId: number | null;
   allPlayerProfileIds: number[];
   durationSeconds: number;
+  hasBots?: boolean;
 }) {
   const db = await getDb();
   if (!db) return;
+
+  const hasBots = data.hasBots ?? false;
 
   // Insert game history
   await db.insert(gameHistory).values({
@@ -327,6 +330,7 @@ export async function recordGameResult(data: {
     loserId: data.loserProfileId,
     playersJson: JSON.stringify(data.allPlayerProfileIds),
     durationSeconds: data.durationSeconds,
+    hasBots,
   });
 
   // Progressive rating table based on player count
@@ -357,12 +361,22 @@ export async function recordGameResult(data: {
     // If place is beyond table length, use last entry (shouldn't happen)
     const ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
 
-    await db.update(playerProfiles).set({
-      gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
-      wins: isWinner ? sql`${playerProfiles.wins} + 1` : sql`${playerProfiles.wins}`,
-      losses: isLoser ? sql`${playerProfiles.losses} + 1` : sql`${playerProfiles.losses}`,
-      rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
-    }).where(eq(playerProfiles.gameId, gameId));
+    if (hasBots) {
+      // Bot games: update bot stats, NO rating change
+      await db.update(playerProfiles).set({
+        botGamesPlayed: sql`${playerProfiles.botGamesPlayed} + 1`,
+        botWins: isWinner ? sql`${playerProfiles.botWins} + 1` : sql`${playerProfiles.botWins}`,
+        botLosses: isLoser ? sql`${playerProfiles.botLosses} + 1` : sql`${playerProfiles.botLosses}`,
+      }).where(eq(playerProfiles.gameId, gameId));
+    } else {
+      // Human-only games: update human stats + rating
+      await db.update(playerProfiles).set({
+        gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
+        wins: isWinner ? sql`${playerProfiles.wins} + 1` : sql`${playerProfiles.wins}`,
+        losses: isLoser ? sql`${playerProfiles.losses} + 1` : sql`${playerProfiles.losses}`,
+        rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
+      }).where(eq(playerProfiles.gameId, gameId));
+    }
   }
 }
 

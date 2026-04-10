@@ -444,6 +444,7 @@ export interface GameTableProps {
   prizeData?: { pool: number; prizes: { playerId: string; place: number; amount: number }[] } | null;
   onPlayCard: (cardId: string, targetPairIdx?: number) => void;
   onTransferCard: (cardId: string) => void;
+  onTransferCards?: (cardIds: string[]) => void;
   onTakeCards: () => void;
   onPassTurn: () => void;
   onEndAttack: () => void;
@@ -463,7 +464,7 @@ export interface GameTableProps {
 
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
-  onPlayCard, onTransferCard, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
+  onPlayCard, onTransferCard, onTransferCards, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
@@ -906,16 +907,21 @@ export default function GameTable({
     setSelectedCardId(null);
   }, [multiSelectIds, onPlayCard]);
 
-  // Transfer all multi-selected cards sequentially
+  // Transfer all multi-selected cards at once
   const handleMultiTransfer = useCallback(() => {
     const ids = Array.from(multiSelectIds);
-    for (const id of ids) {
-      onTransferCard(id);
+    if (onTransferCards && ids.length > 1) {
+      onTransferCards(ids);
+    } else {
+      // Fallback: single card transfer
+      for (const id of ids) {
+        onTransferCard(id);
+      }
     }
     setMultiSelectIds(new Set());
     setMultiSelectMode(null);
     setSelectedCardId(null);
-  }, [multiSelectIds, onTransferCard]);
+  }, [multiSelectIds, onTransferCard, onTransferCards]);
 
   const handleCardClick = (card: Card) => {
     // If in multi-select mode, handle toggling cards of the same rank
@@ -942,6 +948,15 @@ export default function GameTable({
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
       // Multi-card transfer: if defender clicks a transfer card and has more of the same rank
       if (transferIds.has(card.id)) {
+        // If this card is ALSO a pass-through card, just select it so both buttons appear
+        if (passThroughIds.has(card.id)) {
+          if (selectedCardId === card.id) {
+            setSelectedCardId(null);
+          } else {
+            setSelectedCardId(card.id);
+          }
+          return;
+        }
         const sameRankTransfer = gs.myHand.filter(
           c => c.rank === card.rank && transferIds.has(c.id) && c.id !== card.id
         );
@@ -1447,7 +1462,7 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className="flex-1 flex items-center justify-center px-2 sm:px-4">
+          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden">
             <div
               id="battlefield-drop-zone"
               className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all ${
@@ -1476,37 +1491,33 @@ export default function GameTable({
                 </div>
               )}
 
-              <div data-tutorial="table-area" className="flex flex-wrap gap-1.5 sm:gap-4 justify-center max-w-[95vw] sm:max-w-3xl overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 320px)' }}>
-                {gs.battleField.map((pair: BattlePair, i: number) => {
-                  // Adaptive card size based on pair count
-                  const pairCount = gs.battleField.length;
-                  const bSize: 'lg' | 'md' | 'sm' | 'xs' = pairCount <= 2 ? 'lg' : pairCount <= 4 ? 'md' : pairCount <= 6 ? 'sm' : 'xs';
-                  // Adaptive defense offset
-                  const defenseOffset = bSize === 'lg' ? 'top-4 left-4 sm:top-5 sm:left-5' : bSize === 'md' ? 'top-3 left-3 sm:top-5 sm:left-5' : bSize === 'sm' ? 'top-2 left-2 sm:top-4 sm:left-4' : 'top-1.5 left-1.5 sm:top-3 sm:left-3';
-                  return (
-                    <div
-                      key={i}
-                      className={`relative ${
-                        selectedCardId && isDefender && !pair.defense
-                          ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
-                          : ''
-                      }`}
-                      onClick={() => {
-                        if (selectedCardId && isDefender && !pair.defense && playableIds.has(selectedCardId)) {
-                          onPlayCard(selectedCardId, i);
-                          setSelectedCardId(null);
-                        }
-                      }}
-                    >
-                      <PlayingCard card={pair.attack} battleSize={bSize} deckStyle={gs.deckStyle} />
-                      {pair.defense && (
-                        <div className={`absolute ${defenseOffset} z-10`}>
-                          <PlayingCard card={pair.defense} battleSize={bSize} deckStyle={gs.deckStyle} />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl overflow-y-auto ${
+                gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
+              }`} style={{ maxHeight: '100%' }}>
+                {gs.battleField.map((pair: BattlePair, i: number) => (
+                  <div
+                    key={i}
+                    className={`relative ${
+                      selectedCardId && isDefender && !pair.defense
+                        ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (selectedCardId && isDefender && !pair.defense && playableIds.has(selectedCardId)) {
+                        onPlayCard(selectedCardId, i);
+                        setSelectedCardId(null);
+                      }
+                    }}
+                  >
+                    <PlayingCard card={pair.attack} medium deckStyle={gs.deckStyle} />
+                    {pair.defense && (
+                      <div className="absolute top-3 left-3 sm:top-5 sm:left-5 z-10">
+                        <PlayingCard card={pair.defense} medium deckStyle={gs.deckStyle} />
+                      </div>
+                    )}
+                  </div>
+                ))}
+
               </div>
             </div>
           </div>

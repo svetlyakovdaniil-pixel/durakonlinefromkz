@@ -220,6 +220,7 @@ export interface ClientToServerEvents {
   startGame: (roomId: string) => void;
   playCard: (data: { roomId: string; cardId: string; targetPairIdx?: number }) => void;
   transferCard: (data: { roomId: string; cardId: string }) => void;
+  transferCards: (data: { roomId: string; cardIds: string[] }) => void;
   showPassThrough: (data: { roomId: string; cardId: string }) => void;
   takeCards: (roomId: string) => void;
   passTurn: (roomId: string) => void;

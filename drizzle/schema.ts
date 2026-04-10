@@ -36,12 +36,18 @@ export const playerProfiles = mysqlTable("player_profiles", {
   avatarId: varchar("avatarId", { length: 32 }).default("wolf"),
   /** ELO rating — starts at 1000 */
   rating: int("rating").default(1000).notNull(),
-  /** Total games played */
+  /** Total games played (humans only) */
   gamesPlayed: int("gamesPlayed").default(0).notNull(),
-  /** Total wins (first place) */
+  /** Total wins — humans only (first place) */
   wins: int("wins").default(0).notNull(),
-  /** Total losses (last place / durak) */
+  /** Total losses — humans only (last place / durak) */
   losses: int("losses").default(0).notNull(),
+  /** Total games played with bots */
+  botGamesPlayed: int("botGamesPlayed").default(0).notNull(),
+  /** Total wins with bots */
+  botWins: int("botWins").default(0).notNull(),
+  /** Total losses with bots */
+  botLosses: int("botLosses").default(0).notNull(),
   /** Tenge balance (in-game currency) */
   balanceTenge: int("balanceTenge").default(0).notNull(),
   /** Shanyrak balance (premium currency) */
@@ -111,6 +117,8 @@ export const gameHistory = mysqlTable("game_history", {
   playersJson: text("playersJson"),
   /** Game duration in seconds */
   durationSeconds: int("durationSeconds"),
+  /** Whether the game had any bots */
+  hasBots: boolean("hasBots").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

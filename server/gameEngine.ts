@@ -567,6 +567,72 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
   return null;
 }
 
+// ---- Multi-card Transfer ----
+
+export function transferMultipleCards(state: GameState, playerIdx: number, cardIds: string[]): string | null {
+  if (cardIds.length === 0) return 'No cards to transfer';
+  if (cardIds.length === 1) return transferAttack(state, playerIdx, cardIds[0]);
+
+  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
+  if (state.defenderTaking) return 'Cannot transfer while taking';
+  if (state.battleField.some(p => p.defense)) return 'Cannot transfer after defending';
+
+  const player = state.players[playerIdx];
+  const attackRank = state.battleField[0]?.attack.rank;
+
+  // Validate all cards exist in hand and match attack rank
+  const cards: { card: Card; index: number }[] = [];
+  for (const cardId of cardIds) {
+    const cardIndex = player.hand.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) return `Card ${cardId} not in hand`;
+    const card = player.hand[cardIndex];
+    if (card.rank !== attackRank) return 'All transfer cards must match attack rank';
+    cards.push({ card, index: cardIndex });
+  }
+
+  // Check if the next defender has enough cards for all transferred cards
+  const totalAttackCards = state.battleField.length + cardIds.length;
+
+  // Check direction change (if transferring 10s when lead is 10)
+  const hasDirectionChange = cards.some(c => c.card.rank === '10') && state.leadCardRank === '10';
+  // For multi-card transfer with 10s, direction changes once (odd number of 10s = change, even = no change)
+  const tens = cards.filter(c => c.card.rank === '10').length;
+  const directionChanges = tens % 2 === 1;
+  const potentialDir = (directionChanges && hasDirectionChange)
+    ? (state.direction === 'cw' ? 'ccw' : 'cw')
+    : state.direction;
+
+  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
+  const nextDefender = state.players[newDefenderIdx];
+  if (nextDefender.hand.length < totalAttackCards) {
+    return `\u041d\u0435\u043b\u044c\u0437\u044f \u043f\u0435\u0440\u0435\u0432\u0435\u0441\u0442\u0438 \u2014 \u0443 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0435\u0433\u043e \u0438\u0433\u0440\u043e\u043a\u0430 (${nextDefender.name}) \u0442\u043e\u043b\u044c\u043a\u043e ${nextDefender.hand.length} \u043a\u0430\u0440\u0442(\u044b), \u0430 \u043d\u0430 \u0441\u0442\u043e\u043b\u0435 \u0431\u0443\u0434\u0435\u0442 ${totalAttackCards}`;
+  }
+
+  // Apply direction change if needed
+  if (directionChanges && hasDirectionChange) {
+    state.direction = potentialDir as Direction;
+  }
+
+  // Remove cards from hand (in reverse index order to avoid shifting issues)
+  const sortedCards = [...cards].sort((a, b) => b.index - a.index);
+  for (const { card, index } of sortedCards) {
+    player.hand.splice(index, 1);
+    state.battleField.push({ attack: card, defense: null });
+  }
+
+  // Update attacker/defender
+  state.currentAttackerIdx = state.currentDefenderIdx;
+  state.currentDefenderIdx = newDefenderIdx;
+
+  state.turnPhase = 'defend';
+  state.passedAttackers = [];
+  state.attackerHasPriority = true;
+  state.defenderTaking = false;
+  resetTurnTimer(state);
+  checkPlayerOut(state, playerIdx);
+  return null;
+}
+
 // ---- Pass-through (proezdnoy) ----
 // The defender SHOWS a trump card of the same rank as the attack card.
 // The card stays in hand (not played to the table).
@@ -932,6 +998,10 @@ export function forfeitPlayer(state: GameState, playerIdx: number): void {
   player.leftGame = true;
   player.isOut = true;
 
+  // The player who forfeits is always the loser (durak)
+  // Set loserId immediately so checkGameOver won't override it
+  state.loserId = player.id;
+
   // Move all cards from hand to discard pile
   for (const card of player.hand) {
     state.discardPile.push(card);
@@ -984,7 +1054,31 @@ function checkGameOver(state: GameState): void {
   if (activePlayers.length <= 1) {
     state.gamePhase = 'finished';
     if (activePlayers.length === 1) {
-      state.loserId = activePlayers[0].id;
+      // Only set loserId if not already set (e.g. by forfeit)
+      // If loserId is already set (forfeit case), the remaining player is a winner, not a loser
+      if (!state.loserId) {
+        state.loserId = activePlayers[0].id;
+      } else {
+        // The remaining player is a winner — assign winPlace if not already assigned
+        const remaining = activePlayers[0];
+        if (!remaining.winPlace) {
+          remaining.isOut = true;
+          remaining.winPlace = state.nextWinPlace;
+          state.nextWinPlace++;
+          if (!state.winnersOrder.includes(remaining.id)) {
+            state.winnersOrder.push(remaining.id);
+          }
+          // Calculate prize for the remaining winner
+          if (state.prizePool > 0) {
+            const prizeAmount = getPrizeForPlace(state.prizePool, state.players.length, remaining.winPlace);
+            state.playerPrizes.push({
+              playerId: remaining.id,
+              place: remaining.winPlace,
+              amount: prizeAmount,
+            });
+          }
+        }
+      }
     }
   }
 }

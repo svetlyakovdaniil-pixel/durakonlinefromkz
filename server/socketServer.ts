@@ -19,7 +19,7 @@ import {
   finalizeTake as engineFinalizeTake,
   successfulDefense, shouldSkipTurn, getNextActivePlayer,
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
-  canPlayerAddCards, forfeitPlayer,
+  canPlayerAddCards, forfeitPlayer, transferMultipleCards,
 } from './gameEngine';
 import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
 
@@ -665,6 +665,26 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = transferAttack(gameState, playerIdx, data.cardId);
+      if (error) { socket.emit('error', error); return; }
+
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
+      markProgress(data.roomId);
+      restartTurnTimer(data.roomId);
+      broadcastGameState(data.roomId, gameState);
+      scheduleBotAction(data.roomId);
+    });
+
+    // Multi-card transfer: transfer all selected cards at once
+    socket.on('transferCards', (data: { roomId: string; cardIds: string[] }) => {
+      const gameState = games.get(data.roomId);
+      if (!gameState) return;
+
+      const playerIdx = gameState.players.findIndex(p => p.id === odId);
+      const error = transferMultipleCards(gameState, playerIdx, data.cardIds);
       if (error) { socket.emit('error', error); return; }
 
       // Reset consecutive timeout counter — player took action
@@ -1939,15 +1959,15 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     delete (broadcastGameState as any)[creditedKey];
 
     // Record game result in database (async, non-blocking)
-    // Skip stats for tutorial rooms and games with bots
+    // Skip stats only for tutorial rooms
     const room = rooms.get(roomId);
     const hasBots = gameState.players.some(p => p.isBot);
     const isTutorial = room?.settings.isTutorial || false;
-    if (isTutorial || hasBots) {
-      console.log(`[Stats] Skipping stats for room ${roomId} (tutorial=${isTutorial}, hasBots=${hasBots})`);
+    if (isTutorial) {
+      console.log(`[Stats] Skipping stats for room ${roomId} (tutorial)`);
     }
     const humanPlayers = gameState.players.filter(p => !p.isBot);
-    if (humanPlayers.length > 0 && !isTutorial && !hasBots) {
+    if (humanPlayers.length > 0 && !isTutorial) {
       // Look up profile IDs from playerGameIds map (odId -> gameId)
       const allPlayerProfileIds = humanPlayers
         .map(p => playerGameIds.get(p.id))
@@ -1964,6 +1984,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           loserProfileId,
           allPlayerProfileIds,
           durationSeconds: 0,
+          hasBots,
         }).catch(err => console.error('[DB] Failed to record game result:', err));
       }
     }

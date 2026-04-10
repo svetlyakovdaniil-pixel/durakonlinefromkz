@@ -107,6 +107,9 @@ export const appRouter = router({
           gamesPlayed: profile.gamesPlayed,
           wins: profile.wins,
           losses: profile.losses,
+          botGamesPlayed: profile.botGamesPlayed,
+          botWins: profile.botWins,
+          botLosses: profile.botLosses,
           createdAt: profile.createdAt,
         };
       }),
