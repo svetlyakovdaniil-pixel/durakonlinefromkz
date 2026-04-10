@@ -952,10 +952,36 @@ function MonitoringTab() {
 
       {/* Global economy */}
       {globalStats.data && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <StatCard label="Шаныраков в обороте" value={globalStats.data.totalShanyrak ?? 0} icon={DollarSign} color="text-yellow-400" />
-          <StatCard label="Тенге в обороте" value={globalStats.data.totalTenge ?? 0} icon={DollarSign} color="text-emerald-400" />
-          <StatCard label="Забаненных" value={globalStats.data.bannedCount ?? 0} icon={Ban} color="text-red-400" />
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <StatCard label="Шаныраков в обороте" value={globalStats.data.totalShanyrak ?? 0} icon={DollarSign} color="text-yellow-400" />
+            <StatCard label="Тенге в обороте" value={globalStats.data.totalTenge ?? 0} icon={DollarSign} color="text-emerald-400" />
+            <StatCard label="Забаненных" value={globalStats.data.bannedCount ?? 0} icon={Ban} color="text-red-400" />
+          </div>
+          {/* Admin adjustments breakdown */}
+          {((globalStats.data.adminDeductedShanyrak ?? 0) > 0 || (globalStats.data.adminDeductedTenge ?? 0) > 0 || (globalStats.data.adminAddedShanyrak ?? 0) > 0 || (globalStats.data.adminAddedTenge ?? 0) > 0) && (
+            <div className="border border-gray-800 rounded-lg p-4 bg-gray-900/20">
+              <h4 className="text-sm font-medium text-gray-300 mb-3">Админ. корректировки балансов</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div className="bg-red-900/20 border border-red-900/30 rounded-lg p-3">
+                  <div className="text-red-400 text-xs mb-1">Списано шаныраков</div>
+                  <div className="text-red-300 font-bold">{formatNumber(globalStats.data.adminDeductedShanyrak ?? 0)}</div>
+                </div>
+                <div className="bg-red-900/20 border border-red-900/30 rounded-lg p-3">
+                  <div className="text-red-400 text-xs mb-1">Списано тенге</div>
+                  <div className="text-red-300 font-bold">{formatNumber(globalStats.data.adminDeductedTenge ?? 0)}</div>
+                </div>
+                <div className="bg-green-900/20 border border-green-900/30 rounded-lg p-3">
+                  <div className="text-green-400 text-xs mb-1">Начислено шаныраков</div>
+                  <div className="text-green-300 font-bold">{formatNumber(globalStats.data.adminAddedShanyrak ?? 0)}</div>
+                </div>
+                <div className="bg-green-900/20 border border-green-900/30 rounded-lg p-3">
+                  <div className="text-green-400 text-xs mb-1">Начислено тенге</div>
+                  <div className="text-green-300 font-bold">{formatNumber(globalStats.data.adminAddedTenge ?? 0)}</div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1398,18 +1424,68 @@ function AntifraudTab() {
    SHOP MANAGEMENT TAB
    ================================================================ */
 function ShopManagementTab() {
-  // Shop items are currently hardcoded in the frontend (ShopModal.tsx and cardAssets.ts).
-  // This tab provides a read-only view of the current catalog for admin reference,
-  // with the ability to see what's available and at what prices.
+  const utils = trpc.useUtils();
+  const { data: overrides = [] } = trpc.admin.shopItems.useQuery();
+  const updatePrice = trpc.admin.updateShopPrice.useMutation({
+    onSuccess: () => {
+      utils.admin.shopItems.invalidate();
+      toast.success("Цена обновлена");
+    },
+    onError: () => toast.error("Ошибка обновления"),
+  });
 
-  const SHOP_ITEMS = [
-    { id: "custom_deck", category: "Колоды", name: "Казахская колода", price: 60, currency: "tenge" as const, available: true },
-    { id: "dark_kazakh", category: "Столы", name: "Тёмный Казахский", price: 500, currency: "tenge" as const, available: true },
-    { id: "fire", category: "Рамки", name: "Огненная рамка", price: 500, currency: "tenge" as const, available: true },
-    { id: "neon", category: "Рамки", name: "Неоновая рамка", price: 800, currency: "tenge" as const, available: true },
-    { id: "lightning", category: "Рамки", name: "Молния рамка", price: 1200, currency: "tenge" as const, available: true },
-    { id: "ice", category: "Рамки", name: "Ледяная рамка", price: 1000, currency: "tenge" as const, available: true },
+  // Default catalog items
+  const DEFAULT_ITEMS = [
+    { itemType: "deck" as const, itemId: "custom", name: "Казахская колода", defaultPrice: 60, category: "Колоды" },
+    { itemType: "table" as const, itemId: "dark_kazakh", name: "Тёмный Казахский", defaultPrice: 500, category: "Столы" },
+    { itemType: "frame" as const, itemId: "fire", name: "Огненная рамка", defaultPrice: 500, category: "Рамки" },
+    { itemType: "frame" as const, itemId: "neon", name: "Неоновая рамка", defaultPrice: 800, category: "Рамки" },
+    { itemType: "frame" as const, itemId: "lightning", name: "Молния рамка", defaultPrice: 1200, category: "Рамки" },
+    { itemType: "frame" as const, itemId: "ice", name: "Ледяная рамка", defaultPrice: 1000, category: "Рамки" },
   ];
+
+  // Merge defaults with overrides
+  const items = DEFAULT_ITEMS.map(item => {
+    const override = overrides.find((o: any) => o.itemType === item.itemType && o.itemId === item.itemId);
+    return {
+      ...item,
+      currentPrice: override?.priceTenge ?? item.defaultPrice,
+      isAvailable: override?.isAvailable ?? true,
+      hasOverride: !!override,
+    };
+  });
+
+  const [editItem, setEditItem] = useState<typeof items[0] | null>(null);
+  const [editPrice, setEditPrice] = useState("");
+  const [editAvailable, setEditAvailable] = useState(true);
+
+  const openEdit = (item: typeof items[0]) => {
+    setEditItem(item);
+    setEditPrice(String(item.currentPrice));
+    setEditAvailable(item.isAvailable);
+  };
+
+  const saveEdit = () => {
+    if (!editItem) return;
+    const price = parseInt(editPrice);
+    if (isNaN(price) || price < 0) { toast.error("Некорректная цена"); return; }
+    updatePrice.mutate({
+      itemType: editItem.itemType,
+      itemId: editItem.itemId,
+      priceTenge: price,
+      isAvailable: editAvailable,
+    });
+    setEditItem(null);
+  };
+
+  const resetToDefault = (item: typeof items[0]) => {
+    updatePrice.mutate({
+      itemType: item.itemType,
+      itemId: item.itemId,
+      priceTenge: item.defaultPrice,
+      isAvailable: true,
+    });
+  };
 
   const EXCHANGE_TIERS = [
     { tier: "10k", shanyrak: 10000, tenge: 50 },
@@ -1422,8 +1498,7 @@ function ShopManagementTab() {
     <div className="space-y-6">
       <h3 className="text-lg font-semibold text-amber-100">Управление магазином</h3>
       <p className="text-sm text-gray-400">
-        Текущий каталог товаров. Цены определены в коде (ShopModal.tsx, cardAssets.ts).
-        Для изменения цен обратитесь к разработчику.
+        Изменяйте цены и доступность товаров в реальном времени. Изменения применяются мгновенно.
       </p>
 
       {/* Shop items */}
@@ -1433,17 +1508,17 @@ function ShopManagementTab() {
           <table className="w-full text-sm">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">ID</th>
                 <th className="px-4 py-3 font-medium">Категория</th>
                 <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">Цена</th>
+                <th className="px-4 py-3 font-medium">Цена по умолч.</th>
+                <th className="px-4 py-3 font-medium">Текущая цена</th>
                 <th className="px-4 py-3 font-medium">Статус</th>
+                <th className="px-4 py-3 font-medium">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {SHOP_ITEMS.map(item => (
-                <tr key={item.id} className="hover:bg-gray-900/30 transition-colors">
-                  <td className="px-4 py-3 text-gray-400 font-mono text-xs">{item.id}</td>
+              {items.map(item => (
+                <tr key={`${item.itemType}-${item.itemId}`} className="hover:bg-gray-900/30 transition-colors">
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded ${
                       item.category === "Колоды" ? "bg-blue-900/50 text-blue-300" :
@@ -1454,11 +1529,37 @@ function ShopManagementTab() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-amber-100">{item.name}</td>
-                  <td className="px-4 py-3">{formatNumber(item.price)} ₸</td>
+                  <td className="px-4 py-3 text-gray-400">{formatNumber(item.defaultPrice)} ₸</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs text-green-400 flex items-center gap-1">
-                      <CheckCircle className="w-3 h-3" /> Доступен
+                    <span className={item.currentPrice !== item.defaultPrice ? "text-amber-300 font-bold" : "text-gray-200"}>
+                      {formatNumber(item.currentPrice)} ₸
                     </span>
+                    {item.currentPrice !== item.defaultPrice && (
+                      <span className="text-xs text-amber-500 ml-1">(изменено)</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {item.isAvailable ? (
+                      <span className="text-xs text-green-400 flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Доступен
+                      </span>
+                    ) : (
+                      <span className="text-xs text-red-400 flex items-center gap-1">
+                        <Ban className="w-3 h-3" /> Скрыт
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Button size="sm" variant="outline" className="h-7 text-xs border-amber-700/40 text-amber-200 bg-transparent hover:bg-amber-900/20" onClick={() => openEdit(item)}>
+                        Изменить
+                      </Button>
+                      {item.hasOverride && (
+                        <Button size="sm" variant="outline" className="h-7 text-xs border-gray-700 text-gray-400 bg-transparent hover:bg-gray-900/30" onClick={() => resetToDefault(item)}>
+                          Сброс
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -1466,6 +1567,50 @@ function ShopManagementTab() {
           </table>
         </div>
       </div>
+
+      {/* Edit dialog */}
+      <Dialog open={!!editItem} onOpenChange={o => { if (!o) setEditItem(null); }}>
+        <DialogContent className="bg-[#1a2d45] border-amber-700/40 text-amber-100">
+          <DialogHeader>
+            <DialogTitle>Изменить цену: {editItem?.name}</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Цена по умолчанию: {editItem?.defaultPrice} ₸
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm text-gray-300 mb-1 block">Новая цена (тенге)</label>
+              <Input
+                type="number"
+                min={0}
+                value={editPrice}
+                onChange={e => setEditPrice(e.target.value)}
+                className="bg-gray-900/50 border-gray-700 text-amber-100"
+              />
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-sm text-gray-300">Доступен для покупки:</label>
+              <button
+                className={`w-12 h-6 rounded-full transition-colors relative ${
+                  editAvailable ? "bg-green-600" : "bg-gray-600"
+                }`}
+                onClick={() => setEditAvailable(!editAvailable)}
+              >
+                <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                  editAvailable ? "left-6" : "left-0.5"
+                }`} />
+              </button>
+              <span className="text-sm">{editAvailable ? "Да" : "Нет"}</span>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="border-gray-700 text-gray-300 bg-transparent" onClick={() => setEditItem(null)}>Отмена</Button>
+            <Button className="bg-amber-600 hover:bg-amber-500 text-white" onClick={saveEdit} disabled={updatePrice.isPending}>
+              {updatePrice.isPending ? "..." : "Сохранить"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Exchange rates */}
       <div>

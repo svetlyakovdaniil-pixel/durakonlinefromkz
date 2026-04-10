@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1333,6 +1333,14 @@ export async function adminGetGlobalStats() {
     totalGames: sql<number>`COUNT(*)`,
   }).from(gameHistory);
 
+  // Calculate admin deductions from transactions to subtract from circulation
+  const [adminDeductions] = await db.select({
+    deductedShanyrak: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.currency} = 'shanyrak' AND ${transactions.type} = 'admin_deduct' THEN ABS(${transactions.amount}) ELSE 0 END), 0)`,
+    deductedTenge: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.currency} = 'tenge' AND ${transactions.type} = 'admin_deduct' THEN ABS(${transactions.amount}) ELSE 0 END), 0)`,
+    addedShanyrak: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.currency} = 'shanyrak' AND ${transactions.type} = 'admin_add' THEN ABS(${transactions.amount}) ELSE 0 END), 0)`,
+    addedTenge: sql<number>`COALESCE(SUM(CASE WHEN ${transactions.currency} = 'tenge' AND ${transactions.type} = 'admin_add' THEN ABS(${transactions.amount}) ELSE 0 END), 0)`,
+  }).from(transactions);
+
   return {
     totalPlayers: playerStats?.totalPlayers ?? 0,
     totalShanyrak: playerStats?.totalShanyrak ?? 0,
@@ -1340,6 +1348,10 @@ export async function adminGetGlobalStats() {
     bannedCount: playerStats?.bannedCount ?? 0,
     avgRating: Math.round(playerStats?.avgRating ?? 1000),
     totalGames: gameStats?.totalGames ?? 0,
+    adminDeductedShanyrak: adminDeductions?.deductedShanyrak ?? 0,
+    adminDeductedTenge: adminDeductions?.deductedTenge ?? 0,
+    adminAddedShanyrak: adminDeductions?.addedShanyrak ?? 0,
+    adminAddedTenge: adminDeductions?.addedTenge ?? 0,
   };
 }
 
@@ -1829,4 +1841,80 @@ export async function getMassNotificationHistory(opts: {
     .offset(offset);
 
   return { campaigns, total };
+}
+
+
+// ============================================================
+// SHOP PRICE OVERRIDES
+// ============================================================
+
+/**
+ * Get all shop price overrides.
+ */
+export async function getShopPriceOverrides() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(shopPriceOverrides);
+}
+
+/**
+ * Upsert a shop price override. If an override for this itemType+itemId exists, update it; otherwise insert.
+ */
+export async function upsertShopPriceOverride(data: {
+  itemType: 'deck' | 'table' | 'frame';
+  itemId: string;
+  priceTenge: number | null;
+  isAvailable: boolean;
+  updatedBy: number;
+}) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  // Check if override exists
+  const [existing] = await db.select()
+    .from(shopPriceOverrides)
+    .where(and(
+      eq(shopPriceOverrides.itemType, data.itemType),
+      eq(shopPriceOverrides.itemId, data.itemId),
+    ))
+    .limit(1);
+
+  if (existing) {
+    await db.update(shopPriceOverrides).set({
+      priceTenge: data.priceTenge,
+      isAvailable: data.isAvailable,
+      updatedBy: data.updatedBy,
+    }).where(eq(shopPriceOverrides.id, existing.id));
+  } else {
+    await db.insert(shopPriceOverrides).values({
+      itemType: data.itemType,
+      itemId: data.itemId,
+      priceTenge: data.priceTenge,
+      isAvailable: data.isAvailable,
+      updatedBy: data.updatedBy,
+    });
+  }
+
+  return { success: true };
+}
+
+/**
+ * Get the effective price for a shop item. Returns override price if exists, otherwise null (use default).
+ */
+export async function getShopItemPrice(itemType: 'deck' | 'table' | 'frame', itemId: string): Promise<{ priceTenge: number | null; isAvailable: boolean }> {
+  const db = await getDb();
+  if (!db) return { priceTenge: null, isAvailable: true };
+
+  const [override] = await db.select()
+    .from(shopPriceOverrides)
+    .where(and(
+      eq(shopPriceOverrides.itemType, itemType),
+      eq(shopPriceOverrides.itemId, itemId),
+    ))
+    .limit(1);
+
+  if (override) {
+    return { priceTenge: override.priceTenge, isAvailable: override.isAvailable };
+  }
+  return { priceTenge: null, isAvailable: true };
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Room, RoomSettings, DeckStyle } from '../../../shared/gameTypes';
 import type { TableStyle } from '../../../shared/cardAssets';
 import { BET_AMOUNTS } from '../../../shared/gameTypes';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -77,6 +77,51 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showRules, setShowRules] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialLoading, setTutorialLoading] = useState(false);
+
+  // Room filter & search
+  const [showFilter, setShowFilter] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterPlayers, setFilterPlayers] = useState<string>('any'); // 'any' | '2' | '3' | '4' | '5' | '6' | '7' | '8'
+  const [filterBet, setFilterBet] = useState<string>('any'); // 'any' | bet amount index
+  const [filterBots, setFilterBots] = useState<string>('any'); // 'any' | 'with' | 'without'
+  const [filterPrivate, setFilterPrivate] = useState<string>('any'); // 'any' | 'private' | 'public'
+
+  const hasActiveFilters = filterPlayers !== 'any' || filterBet !== 'any' || filterBots !== 'any' || filterPrivate !== 'any';
+
+  const filteredRooms = useMemo(() => {
+    let result = rooms;
+    // Search by name
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(r => r.name.toLowerCase().includes(q));
+    }
+    // Filter by max players
+    if (filterPlayers !== 'any') {
+      const num = parseInt(filterPlayers);
+      result = result.filter(r => r.maxPlayers === num);
+    }
+    // Filter by bet amount
+    if (filterBet !== 'any') {
+      const betIdx = parseInt(filterBet);
+      const betVal = BET_AMOUNTS[betIdx];
+      if (betVal !== undefined) {
+        result = result.filter(r => (r.settings.betAmount || 100) === betVal);
+      }
+    }
+    // Filter by bots
+    if (filterBots === 'with') {
+      result = result.filter(r => r.settings.withBots);
+    } else if (filterBots === 'without') {
+      result = result.filter(r => !r.settings.withBots);
+    }
+    // Filter by private/public
+    if (filterPrivate === 'private') {
+      result = result.filter(r => r.hasPassword);
+    } else if (filterPrivate === 'public') {
+      result = result.filter(r => !r.hasPassword);
+    }
+    return result;
+  }, [rooms, searchQuery, filterPlayers, filterBet, filterBots, filterPrivate]);
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
@@ -445,10 +490,37 @@ onClick={() => setShowTengeTopUp(true)}
                 </button>
               </div>
             </div>
-            {/* Bottom row: Комнаты + Создать */}
-            <div className="flex items-center justify-between mt-4 pt-3 pb-1 border-t border-amber-700/15">
-              <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
-              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+            {/* Bottom row: Комнаты + Фильтр + Поиск + Создать */}
+            <div className="mt-4 pt-3 pb-1 border-t border-amber-700/15 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
+                <div className="flex items-center gap-2">
+                  {/* Search input */}
+                  <div className="relative">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400/50" />
+                    <Input
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      placeholder="Поиск комнаты..."
+                      className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-10 pl-8 pr-3 w-48 text-sm"
+                    />
+                  </div>
+                  {/* Filter button */}
+                  <Button
+                    variant="outline"
+                    className={`h-10 px-3 border-amber-700/30 text-amber-200 bg-transparent hover:bg-amber-900/20 ${
+                      hasActiveFilters ? 'border-amber-500 bg-amber-900/20' : ''
+                    }`}
+                    onClick={() => setShowFilter(!showFilter)}
+                  >
+                    <Filter className="w-4 h-4 mr-1.5" />
+                    Фильтр
+                    {hasActiveFilters && (
+                      <span className="ml-1.5 w-2 h-2 rounded-full bg-amber-400 inline-block" />
+                    )}
+                  </Button>
+                  {/* Create room */}
+                  <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
                   <Button className="bg-amber-600 hover:bg-amber-500 text-white text-base h-10 px-4">
                     <Plus className="w-4 h-4 mr-2" /> {t('lobby.createRoom')}
@@ -606,34 +678,213 @@ onClick={() => setShowTengeTopUp(true)}
               </div>
                 </DialogContent>
               </Dialog>
+                </div>
+              </div>
+
+              {/* Filter panel (collapsible) */}
+              {showFilter && (
+                <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-lg p-4 animate-in slide-in-from-top-2">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <div>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">Игроков за столом</Label>
+                      <Select value={filterPlayers} onValueChange={setFilterPlayers}>
+                        <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                          <SelectItem value="any">Любое</SelectItem>
+                          {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                            <SelectItem key={n} value={String(n)}>{n} игроков</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">Ставка</Label>
+                      <Select value={filterBet} onValueChange={setFilterBet}>
+                        <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                          <SelectItem value="any">Любая</SelectItem>
+                          {BET_AMOUNTS.map((bet, idx) => (
+                            <SelectItem key={idx} value={String(idx)}>{formatBalance(bet)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">Боты</Label>
+                      <Select value={filterBots} onValueChange={setFilterBots}>
+                        <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                          <SelectItem value="any">Любые</SelectItem>
+                          <SelectItem value="with">С ботами</SelectItem>
+                          <SelectItem value="without">Без ботов</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">Доступ</Label>
+                      <Select value={filterPrivate} onValueChange={setFilterPrivate}>
+                        <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                          <SelectItem value="any">Любой</SelectItem>
+                          <SelectItem value="public">Открытые</SelectItem>
+                          <SelectItem value="private">Закрытые</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  {hasActiveFilters && (
+                    <div className="mt-3 flex justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs border-amber-700/30 text-amber-300 bg-transparent hover:bg-amber-900/20"
+                        onClick={() => { setFilterPlayers('any'); setFilterBet('any'); setFilterBots('any'); setFilterPrivate('any'); }}
+                      >
+                        <X className="w-3 h-3 mr-1" /> Сбросить
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Mobile: Комнаты + Создать (below header, only on mobile) */}
+      {/* Mobile: Комнаты + Фильтр + Поиск + Создать (below header, only on mobile) */}
       <div className="sm:hidden border-t border-amber-700/20 bg-black/20 relative z-10">
-        <div className="container py-3">
+        <div className="container py-3 space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
-            <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold h-8 px-3 touch-manipulation" onClick={() => setDialogOpen(true)}>
-              <Plus className="w-3.5 h-3.5 mr-0.5" />{t('lobby.createRoomShort')}
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className={`h-8 px-2 border-amber-700/30 text-amber-200 bg-transparent ${
+                  hasActiveFilters ? 'border-amber-500 bg-amber-900/20' : ''
+                }`}
+                onClick={() => setShowFilter(!showFilter)}
+              >
+                <Filter className="w-3.5 h-3.5" />
+                {hasActiveFilters && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />}
+              </Button>
+              <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold h-8 px-3 touch-manipulation" onClick={() => setDialogOpen(true)}>
+                <Plus className="w-3.5 h-3.5 mr-0.5" />{t('lobby.createRoomShort')}
+              </Button>
+            </div>
           </div>
+          {/* Mobile search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-amber-400/50" />
+            <Input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Поиск комнаты..."
+              className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 pl-8 pr-3 text-sm"
+            />
+          </div>
+          {/* Mobile filter panel */}
+          {showFilter && (
+            <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-lg p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Игроки</Label>
+                  <Select value={filterPlayers} onValueChange={setFilterPlayers}>
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="any">Любое</SelectItem>
+                      {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                        <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Ставка</Label>
+                  <Select value={filterBet} onValueChange={setFilterBet}>
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="any">Любая</SelectItem>
+                      {BET_AMOUNTS.map((bet, idx) => (
+                        <SelectItem key={idx} value={String(idx)}>{formatBalance(bet)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Боты</Label>
+                  <Select value={filterBots} onValueChange={setFilterBots}>
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="any">Любые</SelectItem>
+                      <SelectItem value="with">С ботами</SelectItem>
+                      <SelectItem value="without">Без ботов</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Доступ</Label>
+                  <Select value={filterPrivate} onValueChange={setFilterPrivate}>
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="any">Любой</SelectItem>
+                      <SelectItem value="public">Открытые</SelectItem>
+                      <SelectItem value="private">Закрытые</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {hasActiveFilters && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-6 text-[10px] w-full border-amber-700/30 text-amber-300 bg-transparent"
+                  onClick={() => { setFilterPlayers('any'); setFilterBet('any'); setFilterBots('any'); setFilterPrivate('any'); }}
+                >
+                  <X className="w-3 h-3 mr-1" /> Сбросить фильтры
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
       <div className="container py-4 sm:py-6">
-        {rooms.length === 0 ? (
+        {filteredRooms.length === 0 ? (
           <div className="text-center py-12 sm:py-20">
             <Gamepad2 className="w-12 h-12 sm:w-16 sm:h-16 text-amber-700/30 mx-auto mb-3 sm:mb-4" />
-            <p className="text-amber-200/40 text-base sm:text-lg">{t('lobby.noRooms')}</p>
-            <p className="text-amber-200/30 text-xs sm:text-sm mt-1">{t('lobby.noRoomsHint')}</p>
+            {rooms.length > 0 && filteredRooms.length === 0 ? (
+              <>
+                <p className="text-amber-200/40 text-base sm:text-lg">Нет комнат по фильтру</p>
+                <p className="text-amber-200/30 text-xs sm:text-sm mt-1">Попробуйте изменить параметры фильтра</p>
+              </>
+            ) : (
+              <>
+                <p className="text-amber-200/40 text-base sm:text-lg">{t('lobby.noRooms')}</p>
+                <p className="text-amber-200/30 text-xs sm:text-sm mt-1">{t('lobby.noRoomsHint')}</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {rooms.map(room => {
+            {filteredRooms.map(room => {
               const canRejoin = room.hasActiveGame && room.activeGamePlayerIds?.includes(userId);
 
               return (

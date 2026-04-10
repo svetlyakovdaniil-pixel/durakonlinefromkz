@@ -60,6 +60,9 @@ import {
   detectRapidBalanceGrowth,
   sendMassNotification,
   getMassNotificationHistory,
+  getShopPriceOverrides,
+  upsertShopPriceOverride,
+  getShopItemPrice,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
@@ -737,6 +740,44 @@ export const appRouter = router({
           offset: input?.offset ?? 0,
         });
       }),
+
+    // ── Shop Management ──
+    shopItems: adminProcedure.query(async () => {
+      return getShopPriceOverrides();
+    }),
+
+    updateShopPrice: adminProcedure
+      .input(z.object({
+        itemType: z.enum(['deck', 'table', 'frame']),
+        itemId: z.string().min(1),
+        priceTenge: z.number().min(0).nullable(),
+        isAvailable: z.boolean(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await upsertShopPriceOverride({
+          itemType: input.itemType,
+          itemId: input.itemId,
+          priceTenge: input.priceTenge,
+          isAvailable: input.isAvailable,
+          updatedBy: ctx.user.id,
+        });
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'update_shop_item',
+            details: { itemType: input.itemType, itemId: input.itemId, priceTenge: input.priceTenge, isAvailable: input.isAvailable },
+          });
+        }
+        return result;
+      }),
+  }),
+
+  // ── Public: Shop prices (for frontend to get overrides) ──
+  shopPrices: router({
+    overrides: publicProcedure.query(async () => {
+      return getShopPriceOverrides();
+    }),
   }),
 });
 

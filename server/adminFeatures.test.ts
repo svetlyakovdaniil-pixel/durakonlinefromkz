@@ -75,6 +75,8 @@ vi.mock("./db", () => ({
   checkShanyrakBalance: vi.fn(),
   deductShanyrakBet: vi.fn(),
   creditShanyrakPrize: vi.fn(),
+  getShopPriceOverrides: vi.fn(),
+  upsertShopPriceOverride: vi.fn(),
 }));
 
 // Mock socketServer
@@ -568,5 +570,112 @@ describe("ban duration business logic", () => {
     const bannedUntil = new Date(Date.now() + 3600000); // 1 hour from now
     const isExpired = new Date() >= bannedUntil;
     expect(isExpired).toBe(false);
+  });
+});
+
+/* ================================================================
+   6. SHOP PRICE MANAGEMENT
+   ================================================================ */
+import {
+  getShopPriceOverrides,
+  upsertShopPriceOverride,
+  adminGetGlobalStats,
+} from "./db";
+
+describe("admin.shopItems", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns shop price overrides for admin", async () => {
+    const mockOverrides = [
+      { id: 1, itemType: "frame", itemId: "fire", priceTenge: 300, isAvailable: true, updatedAt: new Date() },
+    ];
+    vi.mocked(getShopPriceOverrides).mockResolvedValue(mockOverrides);
+
+    const caller = appRouter.createCaller(createAdminContext());
+    const result = await caller.admin.shopItems();
+
+    expect(result).toHaveLength(1);
+    expect(result[0].priceTenge).toBe(300);
+    expect(getShopPriceOverrides).toHaveBeenCalled();
+  });
+
+  it("rejects non-admin access to shopItems", async () => {
+    await expect(
+      appRouter.createCaller(createUserContext()).admin.shopItems()
+    ).rejects.toThrow();
+  });
+});
+
+describe("admin.updateShopPrice", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("updates shop price override and logs audit", async () => {
+    vi.mocked(upsertShopPriceOverride).mockResolvedValue({ success: true });
+
+    const caller = appRouter.createCaller(createAdminContext());
+    const result = await caller.admin.updateShopPrice({
+      itemType: "frame",
+      itemId: "fire",
+      priceTenge: 250,
+      isAvailable: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(upsertShopPriceOverride).toHaveBeenCalledWith({
+      itemType: "frame",
+      itemId: "fire",
+      priceTenge: 250,
+      isAvailable: true,
+      updatedBy: 1,
+    });
+    expect(logAdminAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "update_shop_item",
+        details: expect.objectContaining({ itemType: "frame", itemId: "fire", priceTenge: 250 }),
+      })
+    );
+  });
+
+  it("rejects non-admin access to updateShopPrice", async () => {
+    await expect(
+      appRouter.createCaller(createUserContext()).admin.updateShopPrice({
+        itemType: "deck",
+        itemId: "custom",
+        priceTenge: 100,
+        isAvailable: true,
+      })
+    ).rejects.toThrow();
+  });
+});
+
+/* ================================================================
+   7. MONITORING - ADMIN DEDUCTIONS IN GLOBAL STATS
+   ================================================================ */
+describe("admin.globalStats with admin deductions", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns admin deduction/addition stats", async () => {
+    vi.mocked(adminGetGlobalStats).mockResolvedValue({
+      totalPlayers: 100,
+      totalShanyrak: 500000,
+      totalTenge: 2500,
+      bannedCount: 5,
+      avgRating: 1100,
+      totalGames: 300,
+      adminDeductedShanyrak: 10000,
+      adminDeductedTenge: 50,
+      adminAddedShanyrak: 5000,
+      adminAddedTenge: 25,
+    });
+
+    const caller = appRouter.createCaller(createAdminContext());
+    const result = await caller.admin.globalStats();
+
+    expect(result).toBeDefined();
+    expect(result!.adminDeductedShanyrak).toBe(10000);
+    expect(result!.adminDeductedTenge).toBe(50);
+    expect(result!.adminAddedShanyrak).toBe(5000);
+    expect(result!.adminAddedTenge).toBe(25);
+    expect(result!.totalShanyrak).toBe(500000);
   });
 });
