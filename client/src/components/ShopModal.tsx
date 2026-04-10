@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 import { AVATAR_OPTIONS } from '@shared/avatars';
@@ -93,7 +93,7 @@ interface ShopModalProps {
   onPurchased?: () => void;
 }
 
-type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars';
+type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars' | 'music';
 
 interface ConfirmPurchase {
   type: 'deck' | 'table' | 'frame' | 'avatar';
@@ -237,17 +237,17 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
         {/* Tabs */}
         <div className="flex border-b border-amber-700/20">
-          {(['decks', 'tables', 'frames', 'avatars'] as const).map(tab => (
+          {(['decks', 'tables', 'frames', 'avatars', 'music'] as const).map(tab => (
             <button
               key={tab}
-              className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 text-[10px] sm:text-sm font-medium transition-colors ${
                 activeTab === tab
                   ? 'text-amber-100 border-b-2 border-amber-400 bg-amber-900/10'
                   : 'text-amber-200/50 hover:text-amber-200/70'
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? (locale === 'kk' ? 'Жақтаулар' : 'Рамки') : (locale === 'kk' ? 'Аватарлар' : 'Аватары')}
+              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? (locale === 'kk' ? 'Жақтаулар' : 'Рамки') : tab === 'avatars' ? (locale === 'kk' ? 'Аватарлар' : 'Аватары') : (locale === 'kk' ? 'Музыка' : 'Музыка')}
             </button>
           ))}
         </div>
@@ -430,6 +430,39 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {activeTab === 'music' && (
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-4">
+                <Music className="w-5 h-5 text-amber-400" />
+                <h3 className="text-amber-100 font-bold text-sm">
+                  {locale === 'kk' ? 'Фондық музыка' : 'Фоновая музыка'}
+                </h3>
+              </div>
+              <p className="text-amber-200/50 text-xs mb-4">
+                {locale === 'kk'
+                  ? 'Плейлисттер жақын арада қолжетімді болады'
+                  : 'Плейлисты будут доступны в ближайшее время'}
+              </p>
+              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4 opacity-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shrink-0">
+                    <Music className="w-6 h-6 text-amber-100" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-amber-100 font-bold text-sm">
+                      {locale === 'kk' ? 'Стандартты' : 'Стандартный'}
+                    </h4>
+                    <p className="text-amber-200/50 text-xs">7 {locale === 'kk' ? 'трек' : 'треков'}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                    <Check className="w-4 h-4" />
+                    <span>{t('shop.free')}</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

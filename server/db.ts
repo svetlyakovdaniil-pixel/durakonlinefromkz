@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2213,4 +2213,135 @@ export async function getComplaintStats(): Promise<{ pending: number; reviewed: 
     stats.total += Number(r.count);
   }
   return stats;
+}
+
+// ============================================================
+// MUSIC PLAYLIST helpers
+// ============================================================
+
+/** Get all available playlists */
+export async function getAllPlaylists() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isAvailable, true));
+  return rows.map(r => ({
+    ...r,
+    tracks: JSON.parse(r.tracksJson || '[]') as string[],
+  }));
+}
+
+/** Get a single playlist by ID */
+export async function getPlaylistById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(musicPlaylists).where(eq(musicPlaylists.id, id));
+  if (rows.length === 0) return null;
+  return {
+    ...rows[0],
+    tracks: JSON.parse(rows[0].tracksJson || '[]') as string[],
+  };
+}
+
+/** Get owned playlist IDs for a player */
+export async function getOwnedPlaylistIds(profileId: number): Promise<number[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select({ ownedPlaylists: playerProfiles.ownedPlaylists })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId));
+  if (rows.length === 0) return [];
+  try {
+    return JSON.parse(rows[0].ownedPlaylists || '[]') as number[];
+  } catch {
+    return [];
+  }
+}
+
+/** Purchase a playlist for a player */
+export async function purchasePlaylist(profileId: number, playlistId: number, priceShanyrak: number) {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'no_db' };
+
+  // Get current profile
+  const profiles = await db.select().from(playerProfiles).where(eq(playerProfiles.id, profileId));
+  if (profiles.length === 0) return { success: false, reason: 'not_found' };
+  const profile = profiles[0];
+
+  // Check if already owned
+  const owned: number[] = JSON.parse(profile.ownedPlaylists || '[]');
+  if (owned.includes(playlistId)) return { success: false, reason: 'already_owned' };
+
+  // Check balance
+  if (profile.balanceShanyrak < priceShanyrak) return { success: false, reason: 'insufficient_shanyrak' };
+
+  // Deduct and add
+  const newOwned = [...owned, playlistId];
+  await db.update(playerProfiles)
+    .set({
+      balanceShanyrak: sql`${playerProfiles.balanceShanyrak} - ${priceShanyrak}`,
+      ownedPlaylists: JSON.stringify(newOwned),
+    })
+    .where(eq(playerProfiles.id, profileId));
+
+  // Record transaction
+  await db.insert(transactions).values({
+    profileId,
+    type: 'shop_purchase',
+    amount: -priceShanyrak,
+    currency: 'shanyrak',
+    description: `Purchased playlist #${playlistId}`,
+    balanceAfter: profile.balanceShanyrak - priceShanyrak,
+  });
+
+  return { success: true };
+}
+
+/** Set active playlist for a player */
+export async function setActivePlaylist(profileId: number, playlistId: number | null) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(playerProfiles)
+    .set({ activePlaylistId: playlistId })
+    .where(eq(playerProfiles.id, profileId));
+}
+
+/** Get active playlist for a player (returns tracks or null for default) */
+export async function getActivePlaylistTracks(profileId: number): Promise<string[] | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ activePlaylistId: playerProfiles.activePlaylistId })
+    .from(playerProfiles).where(eq(playerProfiles.id, profileId));
+  if (rows.length === 0 || !rows[0].activePlaylistId) return null;
+  const playlist = await getPlaylistById(rows[0].activePlaylistId);
+  return playlist ? playlist.tracks : null;
+}
+
+/** Seed the default "Standard" playlist if it doesn't exist */
+export async function seedDefaultPlaylist() {
+  const db = await getDb();
+  if (!db) return;
+
+  // Check if default playlist already exists
+  const existing = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isDefault, true));
+  if (existing.length > 0) return;
+
+  const standardTracks = [
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+  ];
+
+  await db.insert(musicPlaylists).values({
+    name: 'Стандартный',
+    nameKk: 'Стандартты',
+    tracksJson: JSON.stringify(standardTracks),
+    priceShanyrak: 0,
+    isDefault: true,
+    isAvailable: true,
+    description: 'Стандартная фоновая музыка — 7 треков',
+    descriptionKk: 'Стандартты фондық музыка — 7 трек',
+  });
 }

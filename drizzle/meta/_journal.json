@@ -190,6 +190,13 @@
       "when": 1775860059888,
       "tag": "0026_condemned_captain_midlands",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1775860950797,
+      "tag": "0027_icy_talos",
+      "breakpoints": true
     }
   ]
 }

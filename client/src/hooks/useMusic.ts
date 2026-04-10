@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-// CDN URLs for background music tracks (played sequentially in order)
-const MUSIC_TRACKS = [
+// Fallback tracks (used when no playlist is loaded from backend)
+const DEFAULT_TRACKS = [
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
   'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
@@ -35,7 +35,8 @@ function writeMusicVolume(vol: number) {
 
 /**
  * Background music manager hook.
- * Plays 7 tracks sequentially in a loop.
+ * Supports dynamic playlists — call setTracks() to switch playlist.
+ * Plays tracks sequentially in a loop.
  * choiceMade is session-only (not persisted) — dialog shows every time user enters lobby.
  * enabled state is NOT persisted either — fresh choice every session.
  * Volume IS persisted in localStorage.
@@ -47,6 +48,9 @@ export function useMusic() {
   // Whether music is enabled
   const [enabled, setEnabled] = useState(false);
 
+  // Current tracks (can be updated dynamically)
+  const [tracks, setTracksState] = useState<string[]>(DEFAULT_TRACKS);
+
   // Volume (persisted)
   const [volume, setVolumeState] = useState(readMusicVolume);
 
@@ -54,6 +58,12 @@ export function useMusic() {
   const trackIndexRef = useRef(0);
   const isPlayingRef = useRef(false);
   const volumeRef = useRef(readMusicVolume());
+  const tracksRef = useRef<string[]>(DEFAULT_TRACKS);
+
+  // Keep tracksRef in sync
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
 
   // Keep volumeRef in sync and update current audio element
   useEffect(() => {
@@ -65,14 +75,16 @@ export function useMusic() {
 
   // When a track ends, play the next one
   const handleTrackEnd = useCallback(() => {
-    const nextIndex = (trackIndexRef.current + 1) % MUSIC_TRACKS.length;
+    const currentTracks = tracksRef.current;
+    if (currentTracks.length === 0) return;
+    const nextIndex = (trackIndexRef.current + 1) % currentTracks.length;
     trackIndexRef.current = nextIndex;
 
     if (audioRef.current) {
       audioRef.current.removeEventListener('ended', handleTrackEnd);
     }
 
-    const audio = new Audio(MUSIC_TRACKS[nextIndex]);
+    const audio = new Audio(currentTracks[nextIndex]);
     audio.volume = volumeRef.current;
     audioRef.current = audio;
     audio.addEventListener('ended', handleTrackEnd);
@@ -82,15 +94,19 @@ export function useMusic() {
 
   // Play the current track
   const playTrack = useCallback((index: number) => {
+    const currentTracks = tracksRef.current;
+    if (currentTracks.length === 0) return;
+
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.removeEventListener('ended', handleTrackEnd);
     }
 
-    const audio = new Audio(MUSIC_TRACKS[index % MUSIC_TRACKS.length]);
+    const safeIndex = index % currentTracks.length;
+    const audio = new Audio(currentTracks[safeIndex]);
     audio.volume = volumeRef.current;
     audioRef.current = audio;
-    trackIndexRef.current = index % MUSIC_TRACKS.length;
+    trackIndexRef.current = safeIndex;
 
     audio.addEventListener('ended', handleTrackEnd);
     audio.play().catch(() => {
@@ -136,18 +152,33 @@ export function useMusic() {
   // Set volume (0..1)
   const setVolume = useCallback((v: number) => {
     const clamped = Math.max(0, Math.min(1, v));
-
     setVolumeState(clamped);
     volumeRef.current = clamped;
     writeMusicVolume(clamped);
     if (audioRef.current) {
-
       audioRef.current.volume = clamped;
-
-    } else {
-
     }
   }, []);
+
+  // Set tracks dynamically (for playlist switching)
+  const setTracks = useCallback((newTracks: string[]) => {
+    if (newTracks.length === 0) return;
+    setTracksState(newTracks);
+    tracksRef.current = newTracks;
+    trackIndexRef.current = 0;
+    // If currently playing, restart with new playlist
+    if (isPlayingRef.current && enabled) {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.removeEventListener('ended', handleTrackEnd);
+      }
+      const audio = new Audio(newTracks[0]);
+      audio.volume = volumeRef.current;
+      audioRef.current = audio;
+      audio.addEventListener('ended', handleTrackEnd);
+      audio.play().catch(() => {});
+    }
+  }, [enabled, handleTrackEnd]);
 
   // Cleanup on full unmount
   useEffect(() => {
@@ -169,5 +200,7 @@ export function useMusic() {
     stopMusic,
     volume,
     setVolume,
+    tracks,
+    setTracks,
   };
 }

@@ -62,6 +62,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   ownedFrames: text("ownedFrames"),
   /** JSON array of owned premium avatar IDs, e.g. ["nexus_bunny"] */
   ownedAvatars: text("ownedAvatars"),
+  /** JSON array of owned playlist IDs, e.g. [1, 2] */
+  ownedPlaylists: text("ownedPlaylists"),
+  /** Currently active playlist ID (music_playlists.id), null = default */
+  activePlaylistId: int("activePlaylistId"),
   /** Currently equipped avatar frame ID (null = no frame) */
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */
@@ -275,3 +279,31 @@ export const playerComplaints = mysqlTable("player_complaints", {
 
 export type PlayerComplaint = typeof playerComplaints.$inferSelect;
 export type InsertPlayerComplaint = typeof playerComplaints.$inferInsert;
+
+/**
+ * Music playlists — background music playlists available in the shop.
+ * Each playlist has a name, a JSON array of track URLs, a price, and flags.
+ */
+export const musicPlaylists = mysqlTable("music_playlists", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Playlist name (displayed in shop and settings) */
+  name: varchar("name", { length: 100 }).notNull(),
+  /** Kazakh name */
+  nameKk: varchar("nameKk", { length: 100 }),
+  /** JSON array of CDN track URLs in play order */
+  tracksJson: text("tracksJson").notNull(),
+  /** Price in shanyrak (0 = free) */
+  priceShanyrak: int("priceShanyrak").default(0).notNull(),
+  /** Whether this is the default playlist given to all players */
+  isDefault: boolean("isDefault").default(false).notNull(),
+  /** Whether this playlist is available for purchase */
+  isAvailable: boolean("isAvailable").default(true).notNull(),
+  /** Short description */
+  description: text("description"),
+  /** Kazakh description */
+  descriptionKk: text("descriptionKk"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MusicPlaylist = typeof musicPlaylists.$inferSelect;
+export type InsertMusicPlaylist = typeof musicPlaylists.$inferInsert;

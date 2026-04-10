@@ -71,6 +71,11 @@ import {
   getComplaintById,
   updateComplaintStatus,
   getComplaintStats,
+  getAllPlaylists,
+  getOwnedPlaylistIds,
+  purchasePlaylist,
+  setActivePlaylist,
+  getPlaylistById,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
@@ -940,6 +945,86 @@ export const appRouter = router({
         });
 
         return { success: true };
+      }),
+  }),
+
+  // ============================================================
+  // MUSIC PLAYLISTS
+  // ============================================================
+  playlists: router({
+    /** Get all available playlists */
+    list: publicProcedure.query(async () => {
+      return getAllPlaylists();
+    }),
+
+    /** Get owned playlist IDs for current player */
+    owned: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return [];
+      // Default playlists are always owned
+      const allPlaylists = await getAllPlaylists();
+      const defaultIds = allPlaylists.filter(p => p.isDefault).map(p => p.id);
+      const ownedIds = await getOwnedPlaylistIds(profile.id);
+      return Array.from(new Set([...defaultIds, ...ownedIds]));
+    }),
+
+    /** Get active playlist ID for current player */
+    active: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return null;
+      return profile.activePlaylistId ?? null;
+    }),
+
+    /** Purchase a playlist */
+    purchase: protectedProcedure
+      .input(z.object({ playlistId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+
+        const playlist = await getPlaylistById(input.playlistId);
+        if (!playlist) throw new TRPCError({ code: 'NOT_FOUND', message: 'Playlist not found' });
+
+        if (playlist.isDefault) return { success: false, reason: 'already_owned' };
+
+        return purchasePlaylist(profile.id, input.playlistId, playlist.priceShanyrak);
+      }),
+
+    /** Set active playlist */
+    setActive: protectedProcedure
+      .input(z.object({ playlistId: z.number().nullable() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+
+        if (input.playlistId !== null) {
+          // Verify the player owns this playlist or it's default
+          const playlist = await getPlaylistById(input.playlistId);
+          if (!playlist) throw new TRPCError({ code: 'NOT_FOUND', message: 'Playlist not found' });
+          if (!playlist.isDefault) {
+            const owned = await getOwnedPlaylistIds(profile.id);
+            if (!owned.includes(input.playlistId)) {
+              throw new TRPCError({ code: 'FORBIDDEN', message: 'Playlist not owned' });
+            }
+          }
+        }
+
+        await setActivePlaylist(profile.id, input.playlistId);
+        return { success: true };
+      }),
+
+    /** Get tracks for a specific playlist (for preview or playback) */
+    tracks: publicProcedure
+      .input(z.object({ playlistId: z.number() }))
+      .query(async ({ input }) => {
+        const playlist = await getPlaylistById(input.playlistId);
+        if (!playlist) return null;
+        return {
+          id: playlist.id,
+          name: playlist.name,
+          nameKk: playlist.nameKk,
+          tracks: playlist.tracks,
+        };
       }),
   }),
 });
