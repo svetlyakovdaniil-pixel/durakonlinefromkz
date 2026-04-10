@@ -85,7 +85,10 @@ export default function AdminPanel() {
     );
   }
 
-  if (!user || user.role !== "admin") {
+  const isAdmin = user?.role === "admin";
+  const isGM = user?.role === "gm";
+
+  if (!user || (!isAdmin && !isGM)) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -100,15 +103,16 @@ export default function AdminPanel() {
     );
   }
 
-  const tabs: { id: Tab; label: string; icon: React.ElementType }[] = [
+  const allTabs: { id: Tab; label: string; icon: React.ElementType; adminOnly?: boolean }[] = [
     { id: "players", label: "Игроки", icon: Users },
-    { id: "monitoring", label: "Мониторинг", icon: Activity },
-    { id: "transactions", label: "Транзакции", icon: ArrowLeftRight },
-    { id: "audit", label: "Аудит", icon: ClipboardList },
+    { id: "monitoring", label: "Мониторинг", icon: Activity, adminOnly: true },
+    { id: "transactions", label: "Транзакции", icon: ArrowLeftRight, adminOnly: true },
+    { id: "audit", label: "Аудит", icon: ClipboardList, adminOnly: true },
     { id: "antifraud", label: "Антифрод", icon: AlertTriangle },
-    { id: "shop", label: "Магазин", icon: ShoppingCart },
-    { id: "notifications", label: "Рассылки", icon: Bell },
+    { id: "shop", label: "Магазин", icon: ShoppingCart, adminOnly: true },
+    { id: "notifications", label: "Рассылки", icon: Bell, adminOnly: true },
   ];
+  const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-gray-100">
@@ -121,7 +125,7 @@ export default function AdminPanel() {
             </Button>
             <div className="h-6 w-px bg-gray-700" />
             <Shield className="w-5 h-5 text-amber-500" />
-            <span className="font-bold text-amber-100">Админ-панель</span>
+            <span className="font-bold text-amber-100">{isGM ? "GM-панель" : "Админ-панель"}</span>
           </div>
           <span className="text-sm text-gray-500">{user.name}</span>
         </div>
@@ -149,13 +153,13 @@ export default function AdminPanel() {
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {tab === "players" && <PlayersTab />}
-        {tab === "monitoring" && <MonitoringTab />}
-        {tab === "transactions" && <TransactionsTab />}
-        {tab === "audit" && <AuditTab />}
+        {tab === "players" && <PlayersTab isGM={isGM} />}
+        {tab === "monitoring" && isAdmin && <MonitoringTab />}
+        {tab === "transactions" && isAdmin && <TransactionsTab />}
+        {tab === "audit" && isAdmin && <AuditTab />}
         {tab === "antifraud" && <AntifraudTab />}
-        {tab === "shop" && <ShopManagementTab />}
-        {tab === "notifications" && <MassNotificationsTab />}
+        {tab === "shop" && isAdmin && <ShopManagementTab />}
+        {tab === "notifications" && isAdmin && <MassNotificationsTab />}
       </div>
     </div>
   );
@@ -164,7 +168,7 @@ export default function AdminPanel() {
 /* ================================================================
    PLAYERS TAB
    ================================================================ */
-function PlayersTab() {
+function PlayersTab({ isGM = false }: { isGM?: boolean }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [profilePlayerId, setProfilePlayerId] = useState<number | null>(null);
@@ -232,6 +236,7 @@ function PlayersTab() {
       <PlayerProfileView
         profileId={profilePlayerId}
         onBack={() => setProfilePlayerId(null)}
+        isGM={isGM}
       />
     );
   }
@@ -310,13 +315,15 @@ function PlayersTab() {
                       >
                         <Eye className="w-3 h-3 mr-1" /> Профиль
                       </Button>
-                      <Button
-                        variant="ghost" size="sm"
-                        className="h-7 px-2 text-xs text-amber-400 hover:text-amber-300"
-                        onClick={() => { setSelectedPlayer(p); setShowBalanceDialog(true); }}
-                      >
-                        <DollarSign className="w-3 h-3 mr-1" /> Баланс
-                      </Button>
+                      {!isGM && (
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-7 px-2 text-xs text-amber-400 hover:text-amber-300"
+                          onClick={() => { setSelectedPlayer(p); setShowBalanceDialog(true); }}
+                        >
+                          <DollarSign className="w-3 h-3 mr-1" /> Баланс
+                        </Button>
+                      )}
                       {p.isBanned ? (
                         <Button
                           variant="ghost" size="sm"
@@ -335,18 +342,20 @@ function PlayersTab() {
                           <Ban className="w-3 h-3 mr-1" /> Бан
                         </Button>
                       )}
-                      <Button
-                        variant="ghost" size="sm"
-                        className="h-7 px-2 text-xs text-gray-400 hover:text-gray-300"
-                        onClick={() => {
-                          if (confirm(`Сбросить статистику ${p.displayName}?`)) {
-                            resetStatsMutation.mutate({ profileId: p.id });
-                          }
-                        }}
-                        disabled={resetStatsMutation.isPending}
-                      >
-                        <Trash2 className="w-3 h-3 mr-1" /> Сброс
-                      </Button>
+                      {!isGM && (
+                        <Button
+                          variant="ghost" size="sm"
+                          className="h-7 px-2 text-xs text-gray-400 hover:text-gray-300"
+                          onClick={() => {
+                            if (confirm(`Сбросить статистику ${p.displayName}?`)) {
+                              resetStatsMutation.mutate({ profileId: p.id });
+                            }
+                          }}
+                          disabled={resetStatsMutation.isPending}
+                        >
+                          <Trash2 className="w-3 h-3 mr-1" /> Сброс
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -501,7 +510,7 @@ function PlayersTab() {
 /* ================================================================
    PLAYER PROFILE VIEW (sub-view inside Players tab)
    ================================================================ */
-function PlayerProfileView({ profileId, onBack }: { profileId: number; onBack: () => void }) {
+function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: number; onBack: () => void; isGM?: boolean }) {
   const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games">("info");
 
   const { data: detail, isLoading, refetch } = trpc.admin.playerDetail.useQuery({ profileId });
@@ -557,6 +566,11 @@ function PlayerProfileView({ profileId, onBack }: { profileId: number; onBack: (
               <Crown className="w-3 h-3" /> Админ
             </span>
           )}
+          {detail.role === "gm" && (
+            <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded flex items-center gap-1">
+              <Crown className="w-3 h-3" /> GM
+            </span>
+          )}
           {detail.isBanned && (
             <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded flex items-center gap-1">
               <Ban className="w-3 h-3" /> Забанен
@@ -595,6 +609,7 @@ function PlayerProfileView({ profileId, onBack }: { profileId: number; onBack: (
           detail={detail}
           onUpdateRole={(role) => updateRoleMutation.mutate({ profileId, role })}
           isUpdatingRole={updateRoleMutation.isPending}
+          isGM={isGM}
         />
       )}
       {profileTab === "transactions" && <ProfileTransactionsSection profileId={profileId} />}
@@ -608,13 +623,15 @@ function ProfileInfoSection({
   detail,
   onUpdateRole,
   isUpdatingRole,
+  isGM = false,
 }: {
   detail: any;
-  onUpdateRole: (role: "admin" | "user") => void;
+  onUpdateRole: (role: "admin" | "user" | "gm") => void;
   isUpdatingRole: boolean;
+  isGM?: boolean;
 }) {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
-  const newRole = detail.role === "admin" ? "user" : "admin";
+  const [selectedRole, setSelectedRole] = useState<"admin" | "user" | "gm">("user");
 
   return (
     <div className="space-y-6">
@@ -630,7 +647,7 @@ function ProfileInfoSection({
         <InfoCard label="Тенге" value={formatNumber(detail.balanceTenge)} icon={DollarSign} color="text-emerald-400" />
         <InfoCard label="Шаныраки" value={formatNumber(detail.balanceShanyrak)} icon={DollarSign} color="text-yellow-400" />
         <InfoCard label="Обучение" value={detail.tutorialCompleted ? "Пройдено" : "Нет"} icon={CheckCircle} color={detail.tutorialCompleted ? "text-green-400" : "text-gray-500"} />
-        <InfoCard label="Роль" value={detail.role === "admin" ? "Админ" : "Игрок"} icon={Crown} color={detail.role === "admin" ? "text-amber-400" : "text-gray-400"} />
+        <InfoCard label="Роль" value={detail.role === "admin" ? "Админ" : detail.role === "gm" ? "GM" : "Игрок"} icon={Crown} color={detail.role === "admin" ? "text-amber-400" : detail.role === "gm" ? "text-purple-400" : "text-gray-400"} />
       </div>
 
       {/* Details table */}
@@ -640,7 +657,7 @@ function ProfileInfoSection({
             <DetailRow label="Profile ID" value={`#${detail.id}`} />
             <DetailRow label="Game ID" value={`#${detail.gameId}`} />
             <DetailRow label="Open ID" value={detail.openId || "—"} mono />
-            <DetailRow label="Email" value={detail.email || "—"} />
+            {!isGM && <DetailRow label="Email" value={detail.email || "—"} />}
             <DetailRow label="Аватар" value={detail.avatarId || "wolf"} />
             <DetailRow label="Рамка" value={detail.equippedFrame || "Нет"} />
             <DetailRow label="Последний вход" value={formatDate(detail.lastSignedIn)} />
@@ -657,18 +674,23 @@ function ProfileInfoSection({
         </table>
       </div>
 
-      {/* Role change button */}
-      <div className="flex gap-3">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowRoleDialog(true)}
-          className="border-gray-700 text-gray-300"
-        >
-          <Crown className="w-4 h-4 mr-2" />
-          Сменить роль на {newRole === "admin" ? "Админ" : "Игрок"}
-        </Button>
-      </div>
+      {/* Role change button (admin only) */}
+      {!isGM && (
+        <div className="flex gap-3">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSelectedRole(detail.role === "admin" ? "user" : detail.role === "gm" ? "user" : "admin");
+              setShowRoleDialog(true);
+            }}
+            className="border-gray-700 text-gray-300"
+          >
+            <Crown className="w-4 h-4 mr-2" />
+            Сменить роль
+          </Button>
+        </div>
+      )}
 
       {/* Role change dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
@@ -676,19 +698,38 @@ function ProfileInfoSection({
           <DialogHeader>
             <DialogTitle>Смена роли</DialogTitle>
             <DialogDescription className="text-gray-400">
-              Вы уверены, что хотите изменить роль игрока <strong className="text-amber-100">{detail.displayName}</strong> с{" "}
-              <strong className="text-amber-100">{detail.role}</strong> на{" "}
-              <strong className="text-amber-100">{newRole}</strong>?
+              Текущая роль: <strong className="text-amber-100">{detail.role === "admin" ? "Админ" : detail.role === "gm" ? "GM" : "Игрок"}</strong>
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2 py-2">
+            <label className="text-xs text-gray-400 block">Новая роль</label>
+            <div className="flex gap-2">
+              {(["admin", "gm", "user"] as const).map(r => (
+                <button
+                  key={r}
+                  onClick={() => setSelectedRole(r)}
+                  disabled={r === detail.role}
+                  className={`px-4 py-2 text-sm rounded border transition-colors ${
+                    selectedRole === r
+                      ? "border-amber-500 bg-amber-900/30 text-amber-100"
+                      : r === detail.role
+                        ? "border-gray-800 text-gray-600 cursor-not-allowed"
+                        : "border-gray-700 text-gray-400 hover:text-gray-200"
+                  }`}
+                >
+                  {r === "admin" ? "Админ" : r === "gm" ? "GM" : "Игрок"}
+                </button>
+              ))}
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRoleDialog(false)} className="border-gray-700 text-gray-300">
               Отмена
             </Button>
             <Button
-              disabled={isUpdatingRole}
+              disabled={isUpdatingRole || selectedRole === detail.role}
               onClick={() => {
-                onUpdateRole(newRole);
+                onUpdateRole(selectedRole);
                 setShowRoleDialog(false);
               }}
               className="bg-amber-600 hover:bg-amber-700"

@@ -1,8 +1,9 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, gmProcedure, router } from "./_core/trpc";
 import { z } from "zod";
+import { TRPCError } from "@trpc/server";
 import {
   getOrCreateProfile,
   getProfileByUserId,
@@ -121,6 +122,19 @@ export const appRouter = router({
     updateName: protectedProcedure
       .input(z.object({ displayName: z.string().min(1).max(12) }))
       .mutation(async ({ ctx, input }) => {
+        // Block forbidden names for non-admin users
+        if (ctx.user.role !== 'admin') {
+          const normalized = input.displayName.toLowerCase().replace(/[\s._\-]/g, '');
+          const forbidden = [
+            'admin', 'administrator', 'администратор', 'админ', 'админка',
+            'gm', 'gamemaster', 'gamemstr', 'геймастер', 'геймастер',
+            'moderator', 'модератор', 'модер', 'moder',
+            'owner', 'system', 'support', 'staff',
+          ];
+          if (forbidden.some(f => normalized.includes(f))) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Это имя зарезервировано' });
+          }
+        }
         await updateProfileDisplayName(ctx.user.id, input.displayName);
         return { success: true };
       }),
@@ -489,7 +503,7 @@ export const appRouter = router({
     }),
 
     /** Get players list with search/pagination */
-    players: adminProcedure
+    players: gmProcedure
       .input(z.object({
         search: z.string().optional(),
         limit: z.number().min(1).max(100).optional(),
@@ -526,7 +540,7 @@ export const appRouter = router({
       }),
 
     /** Ban a player (with optional duration) */
-    banPlayer: adminProcedure
+    banPlayer: gmProcedure
       .input(z.object({
         profileId: z.number(),
         reason: z.string().min(1),
@@ -549,7 +563,7 @@ export const appRouter = router({
       }),
 
     /** Unban a player */
-    unbanPlayer: adminProcedure
+    unbanPlayer: gmProcedure
       .input(z.object({ profileId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await adminUnbanPlayer(input.profileId);
@@ -596,17 +610,22 @@ export const appRouter = router({
       }),
 
     /** Get full player detail */
-    playerDetail: adminProcedure
+    playerDetail: gmProcedure
       .input(z.object({ profileId: z.number() }))
-      .query(async ({ input }) => {
-        return adminGetPlayerDetail(input.profileId);
+      .query(async ({ ctx, input }) => {
+        const detail = await adminGetPlayerDetail(input.profileId);
+        // GM cannot see email
+        if (ctx.user.role === 'gm' && detail) {
+          return { ...detail, email: null };
+        }
+        return detail;
       }),
 
-    /** Update player role */
+    /** Update player role (admin only) */
     updateRole: adminProcedure
       .input(z.object({
         profileId: z.number(),
-        role: z.enum(['admin', 'user']),
+        role: z.enum(['admin', 'user', 'gm']),
       }))
       .mutation(async ({ ctx, input }) => {
         const result = await adminUpdateRole(input.profileId, input.role);
@@ -623,7 +642,7 @@ export const appRouter = router({
       }),
 
     /** Get player transactions with sorting */
-    playerTransactions: adminProcedure
+    playerTransactions: gmProcedure
       .input(z.object({
         profileId: z.number(),
         limit: z.number().min(1).max(100).optional(),
@@ -636,7 +655,7 @@ export const appRouter = router({
       }),
 
     /** Get player game history */
-    playerGameHistory: adminProcedure
+    playerGameHistory: gmProcedure
       .input(z.object({
         profileId: z.number(),
         limit: z.number().min(1).max(100).optional(),
@@ -680,7 +699,7 @@ export const appRouter = router({
       }),
 
     // ── Anti-Fraud ──
-    antifraudWinRate: adminProcedure
+    antifraudWinRate: gmProcedure
       .input(z.object({
         minGames: z.number().optional(),
         minWinRate: z.number().optional(),
@@ -689,7 +708,7 @@ export const appRouter = router({
         return detectAbnormalWinRate(input?.minGames ?? 20, input?.minWinRate ?? 80);
       }),
 
-    antifraudTransactions: adminProcedure
+    antifraudTransactions: gmProcedure
       .input(z.object({
         minAmount: z.number().optional(),
       }).optional())
@@ -697,7 +716,7 @@ export const appRouter = router({
         return detectSuspiciousTransactions(input?.minAmount ?? 10000);
       }),
 
-    antifraudBalanceGrowth: adminProcedure
+    antifraudBalanceGrowth: gmProcedure
       .input(z.object({
         threshold: z.number().optional(),
       }).optional())

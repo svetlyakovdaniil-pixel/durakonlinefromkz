@@ -99,6 +99,24 @@ function createAdminContext(): TrpcContext {
   };
 }
 
+function createGMContext(): TrpcContext {
+  return {
+    user: {
+      id: 3,
+      openId: "gm-user",
+      email: "gm@example.com",
+      name: "GameMaster",
+      loginMethod: "manus",
+      role: "gm",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
+  };
+}
+
 function createUserContext(): TrpcContext {
   return {
     user: {
@@ -158,6 +176,26 @@ describe("admin.playerDetail", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.playerDetail({ profileId: 5 })).rejects.toThrow();
   });
+
+  it("allows GM to view player detail but hides email", async () => {
+    const mockDetail = {
+      id: 5, gameId: 5, displayName: "TestPlayer", rating: 1200,
+      gamesPlayed: 50, wins: 30, losses: 10, balanceTenge: 5000,
+      balanceShanyrak: 3000, isBanned: false, banReason: null,
+      bannedAt: null, tutorialCompleted: true, avatarId: "eagle",
+      equippedFrame: null, openId: "test-open-id",
+      email: "test@example.com", role: "user",
+      lastSignedIn: new Date(), userCreatedAt: new Date(),
+      createdAt: new Date(), updatedAt: new Date(),
+    };
+    vi.mocked(adminGetPlayerDetail).mockResolvedValue(mockDetail);
+
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.playerDetail({ profileId: 5 });
+
+    expect(result?.email).toBeNull();
+    expect(result?.displayName).toBe("TestPlayer");
+  });
 });
 
 describe("admin.updateRole", () => {
@@ -176,6 +214,21 @@ describe("admin.updateRole", () => {
   it("rejects non-admin users", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.updateRole({ profileId: 5, role: "admin" })).rejects.toThrow();
+  });
+
+  it("supports gm role value", async () => {
+    vi.mocked(adminUpdateRole).mockResolvedValue({ success: true });
+
+    const caller = appRouter.createCaller(createAdminContext());
+    const result = await caller.admin.updateRole({ profileId: 5, role: "gm" });
+
+    expect(result).toEqual({ success: true });
+    expect(adminUpdateRole).toHaveBeenCalledWith(5, "gm");
+  });
+
+  it("rejects GM from changing roles", async () => {
+    const caller = appRouter.createCaller(createGMContext());
+    await expect(caller.admin.updateRole({ profileId: 5, role: "user" })).rejects.toThrow();
   });
 });
 
@@ -212,6 +265,15 @@ describe("admin.playerTransactions", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.playerTransactions({ profileId: 5 })).rejects.toThrow();
   });
+
+  it("allows GM to view player transactions", async () => {
+    const mockData = { transactions: [], total: 0 };
+    vi.mocked(adminGetPlayerTransactions).mockResolvedValue(mockData);
+
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.playerTransactions({ profileId: 5 });
+    expect(result.total).toBe(0);
+  });
 });
 
 describe("admin.playerGameHistory", () => {
@@ -245,5 +307,14 @@ describe("admin.playerGameHistory", () => {
   it("rejects non-admin users", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.playerGameHistory({ profileId: 5 })).rejects.toThrow();
+  });
+
+  it("allows GM to view player game history", async () => {
+    const mockData = { games: [], total: 0 };
+    vi.mocked(adminGetPlayerGameHistory).mockResolvedValue(mockData);
+
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.playerGameHistory({ profileId: 5 });
+    expect(result.total).toBe(0);
   });
 });

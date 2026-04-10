@@ -150,27 +150,6 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
               </div>
             )}
 
-            {/* [TEST] Get 10K tenge */}
-            <div className="mb-3">
-              <button
-                className="w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm bg-purple-700/50 hover:bg-purple-600/60 text-purple-100 border border-purple-500/30 transition-all"
-                onClick={() => {
-                  testTengeMutation.mutate(undefined, {
-                    onSuccess: (data) => {
-                      if (data.success) {
-                        setSuccessMessage(`+10 000 ${t('topUp.tengeUnit')}!`);
-                        utils.profile.me.invalidate();
-                        setTimeout(() => setSuccessMessage(null), 3000);
-                      }
-                    },
-                  });
-                }}
-                disabled={testTengeMutation.isPending}
-              >
-                {testTengeMutation.isPending ? t('topUp.crediting') : `🧪 ${t('topUp.testGet10kTenge')}`}
-              </button>
-              <p className="text-[10px] text-purple-400/60 text-center mt-1">{t('topUp.testNote')}</p>
-            </div>
 
             {/* Tiers */}
             <div className="space-y-2 mb-3">

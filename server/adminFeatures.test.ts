@@ -117,6 +117,24 @@ function createAdminContext(): TrpcContext {
   };
 }
 
+function createGMContext(): TrpcContext {
+  return {
+    user: {
+      id: 3,
+      openId: "gm-user",
+      email: "gm@example.com",
+      name: "GameMaster",
+      loginMethod: "manus",
+      role: "gm",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      lastSignedIn: new Date(),
+    },
+    req: { protocol: "https", headers: {} } as TrpcContext["req"],
+    res: { clearCookie: vi.fn() } as unknown as TrpcContext["res"],
+  };
+}
+
 function createUserContext(): TrpcContext {
   return {
     user: {
@@ -251,6 +269,13 @@ describe("admin.banPlayer (with duration)", () => {
     await expect(caller.admin.banPlayer({ profileId: 5, reason: "test" })).rejects.toThrow();
   });
 
+  it("allows GM to ban a player", async () => {
+    vi.mocked(adminBanPlayerWithDuration).mockResolvedValue({ success: true, bannedUntil: null });
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.banPlayer({ profileId: 5, reason: "Spam", durationMs: null });
+    expect(result.success).toBe(true);
+  });
+
   it("rejects empty reason", async () => {
     const caller = appRouter.createCaller(createAdminContext());
     await expect(caller.admin.banPlayer({ profileId: 5, reason: "" })).rejects.toThrow();
@@ -290,6 +315,13 @@ describe("admin.antifraudWinRate", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.antifraudWinRate({})).rejects.toThrow();
   });
+
+  it("allows GM to access antifraud win rate", async () => {
+    vi.mocked(detectAbnormalWinRate).mockResolvedValue([]);
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.antifraudWinRate({});
+    expect(result).toEqual([]);
+  });
 });
 
 describe("admin.antifraudTransactions", () => {
@@ -313,6 +345,13 @@ describe("admin.antifraudTransactions", () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.antifraudTransactions({})).rejects.toThrow();
   });
+
+  it("allows GM to access antifraud transactions", async () => {
+    vi.mocked(detectSuspiciousTransactions).mockResolvedValue([]);
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.antifraudTransactions({});
+    expect(result).toEqual([]);
+  });
 });
 
 describe("admin.antifraudBalanceGrowth", () => {
@@ -335,6 +374,13 @@ describe("admin.antifraudBalanceGrowth", () => {
   it("rejects non-admin users", async () => {
     const caller = appRouter.createCaller(createUserContext());
     await expect(caller.admin.antifraudBalanceGrowth({})).rejects.toThrow();
+  });
+
+  it("allows GM to access antifraud balance growth", async () => {
+    vi.mocked(detectRapidBalanceGrowth).mockResolvedValue([]);
+    const caller = appRouter.createCaller(createGMContext());
+    const result = await caller.admin.antifraudBalanceGrowth({});
+    expect(result).toEqual([]);
   });
 });
 

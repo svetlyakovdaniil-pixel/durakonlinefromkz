@@ -1380,7 +1380,7 @@ export async function adminGetPlayerDetail(profileId: number) {
 /**
  * Admin: Update a player's role (admin/user).
  */
-export async function adminUpdateRole(profileId: number, role: 'admin' | 'user') {
+export async function adminUpdateRole(profileId: number, role: 'admin' | 'user' | 'gm') {
   const db = await getDb();
   if (!db) return { success: false };
 
