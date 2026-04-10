@@ -1869,8 +1869,15 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     delete (broadcastGameState as any)[creditedKey];
 
     // Record game result in database (async, non-blocking)
+    // Skip stats for tutorial rooms and games with bots
+    const room = rooms.get(roomId);
+    const hasBots = gameState.players.some(p => p.isBot);
+    const isTutorial = room?.settings.isTutorial || false;
+    if (isTutorial || hasBots) {
+      console.log(`[Stats] Skipping stats for room ${roomId} (tutorial=${isTutorial}, hasBots=${hasBots})`);
+    }
     const humanPlayers = gameState.players.filter(p => !p.isBot);
-    if (humanPlayers.length > 0) {
+    if (humanPlayers.length > 0 && !isTutorial && !hasBots) {
       // Look up profile IDs from playerGameIds map (odId -> gameId)
       const allPlayerProfileIds = humanPlayers
         .map(p => playerGameIds.get(p.id))

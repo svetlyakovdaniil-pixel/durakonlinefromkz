@@ -254,7 +254,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
-                className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-10"
+                className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
                   top: (profile as any)?.equippedFrame ? '-12px' : '8px',
                 }}
