@@ -629,7 +629,7 @@ export async function getFreeTopupStatus(userId: number): Promise<{
  */
 export async function recordTransaction(data: {
   profileId: number;
-  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward' | 'game_entry' | 'shop_purchase';
+  type: 'free_topup' | 'buy_shanyrak' | 'buy_tenge' | 'game_reward' | 'game_entry' | 'shop_purchase' | 'tutorial_reward';
   amount: number;
   currency: 'tenge' | 'shanyrak';
   description: string;
@@ -1084,4 +1084,39 @@ export async function equipFrame(
   }).where(eq(playerProfiles.id, profile.id));
 
   return { success: true };
+}
+
+/**
+ * Complete tutorial for a player: mark tutorialCompleted=true and credit 2000 shanyraks.
+ * Only awards once — if already completed, returns { success: false, reason: 'already_completed' }.
+ */
+export async function completeTutorial(userId: number): Promise<{ success: boolean; reason?: string; newBalance?: number }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_error' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  if (profile.tutorialCompleted) {
+    return { success: false, reason: 'already_completed' };
+  }
+
+  const reward = 2000;
+  const newBalance = profile.balanceShanyrak + reward;
+
+  await db.update(playerProfiles).set({
+    tutorialCompleted: true,
+    balanceShanyrak: newBalance,
+  }).where(eq(playerProfiles.id, profile.id));
+
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'tutorial_reward',
+    amount: reward,
+    currency: 'shanyrak',
+    description: 'Награда за прохождение обучения (+2000 шаныраков)',
+    balanceAfter: newBalance,
+  });
+
+  return { success: true, newBalance };
 }

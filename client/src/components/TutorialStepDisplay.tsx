@@ -168,6 +168,7 @@ export default function TutorialStepDisplay({
       return;
     }
 
+    const isMobile = window.innerWidth < 640;
     const rects: SpotlightRect[] = [];
     const padding = 8;
 
@@ -182,7 +183,15 @@ export default function TutorialStepDisplay({
       return document.querySelector(selector);
     };
 
-    for (const selector of scenario.highlightElements) {
+    // Combine base highlightElements with mobile-specific ones
+    const selectors = [...scenario.highlightElements];
+    if (isMobile && scenario.mobileHighlightElements) {
+      for (const ms of scenario.mobileHighlightElements) {
+        if (!selectors.includes(ms)) selectors.push(ms);
+      }
+    }
+
+    for (const selector of selectors) {
       const element = resolveSelector(selector);
       if (element) {
         const rect = element.getBoundingClientRect();
@@ -198,15 +207,18 @@ export default function TutorialStepDisplay({
 
     setSpotlightRects(rects);
 
+    // Determine effective text position (mobile override takes precedence)
+    const effectiveTextPosition = (isMobile && scenario.mobileTextPosition) ? scenario.mobileTextPosition : scenario.textPosition;
+
     // Text position
-    if (scenario.textPosition === 'top') {
+    if (effectiveTextPosition === 'top') {
       const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({
         top: 12,
         left: window.innerWidth / 2 - textBoxWidth / 2,
         maxWidth: textBoxWidth,
       });
-    } else if (scenario.textPosition === 'bottom') {
+    } else if (effectiveTextPosition === 'bottom') {
       // Position text box between table cards and player hand, centered, not full-width
       const tableArea = document.querySelector('[data-tutorial="table-area"]');
       const playerHand = document.querySelector('[data-tutorial="player-hand"]');
@@ -216,12 +228,14 @@ export default function TutorialStepDisplay({
       const isDesktop = window.innerWidth >= 768;
       const textBoxWidth = isDesktop ? Math.min(600, window.innerWidth - 32) : window.innerWidth - 16;
       const textLeft = isDesktop ? (window.innerWidth - textBoxWidth) / 2 : 8;
+      // On mobile, position closer to player hand (just above it)
+      const topPos = (!isDesktop && playerHand) ? Math.max(tableBottom, handTop - 180) : tableBottom;
       setTextPos({
-        top: tableBottom,
+        top: topPos,
         left: textLeft,
         maxWidth: textBoxWidth,
       });
-    } else if (scenario.textPosition === 'center' || rects.length === 0) {
+    } else if (effectiveTextPosition === 'center' || rects.length === 0) {
       const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({
         top: window.innerHeight / 2 - 140,
@@ -268,7 +282,7 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     }
-  }, [scenario?.highlightElements, scenario?.textPosition]);
+  }, [scenario?.highlightElements, scenario?.textPosition, scenario?.mobileTextPosition, scenario?.mobileHighlightElements]);
 
   useEffect(() => {
     updatePositions();
@@ -851,7 +865,7 @@ export default function TutorialStepDisplay({
             top: sr.top,
             width: sr.width,
             height: sr.height,
-            boxShadow: '0 0 20px rgba(250, 204, 21, 0.5), inset 0 0 20px rgba(250, 204, 21, 0.1)',
+            boxShadow: '0 0 20px rgba(250, 204, 21, 0.6), 0 0 40px rgba(250, 204, 21, 0.3), inset 0 0 20px rgba(250, 204, 21, 0.15)',
           }}
         />
       ))}
@@ -873,12 +887,55 @@ export default function TutorialStepDisplay({
                 top: rect.top - 6,
                 width: rect.width + 12,
                 height: rect.height + 12,
-                boxShadow: '0 0 16px rgba(250, 204, 21, 0.6), 0 0 32px rgba(250, 204, 21, 0.3), inset 0 0 16px rgba(250, 204, 21, 0.1)',
-                border: '2px solid rgba(250, 204, 21, 0.7)',
+                boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), 0 0 40px rgba(250, 204, 21, 0.5), 0 0 60px rgba(250, 204, 21, 0.3), inset 0 0 20px rgba(250, 204, 21, 0.15)',
+                border: '2px solid rgba(250, 204, 21, 0.8)',
+                background: 'rgba(250, 204, 21, 0.08)',
               }}
             />
           );
         });
+      })()}
+
+      {/* Glow effect around table area */}
+      {scenario.glowTableArea && (() => {
+        const tableArea = document.querySelector('[data-tutorial="table-area"]');
+        if (!tableArea) return null;
+        const rect = tableArea.getBoundingClientRect();
+        return (
+          <div
+            className="fixed z-[52] rounded-xl pointer-events-none animate-pulse"
+            style={{
+              left: rect.left - 6,
+              top: rect.top - 6,
+              width: rect.width + 12,
+              height: rect.height + 12,
+              boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), 0 0 40px rgba(250, 204, 21, 0.5), 0 0 60px rgba(250, 204, 21, 0.3), inset 0 0 20px rgba(250, 204, 21, 0.15)',
+              border: '2px solid rgba(250, 204, 21, 0.8)',
+              background: 'rgba(250, 204, 21, 0.08)',
+            }}
+          />
+        );
+      })()}
+
+      {/* Glow effect around mobile trump indicator */}
+      {scenario.glowMobileTrump && (() => {
+        const trumpEl = document.querySelector('[data-tutorial="trump-indicator"]');
+        if (!trumpEl) return null;
+        const rect = trumpEl.getBoundingClientRect();
+        return (
+          <div
+            className="fixed z-[52] rounded-xl pointer-events-none animate-pulse"
+            style={{
+              left: rect.left - 6,
+              top: rect.top - 6,
+              width: rect.width + 12,
+              height: rect.height + 12,
+              boxShadow: '0 0 20px rgba(250, 204, 21, 0.8), 0 0 40px rgba(250, 204, 21, 0.5), 0 0 60px rgba(250, 204, 21, 0.3), inset 0 0 20px rgba(250, 204, 21, 0.15)',
+              border: '2px solid rgba(250, 204, 21, 0.8)',
+              background: 'rgba(250, 204, 21, 0.08)',
+            }}
+          />
+        );
       })()}
 
       {/* Thrown cards appearing on table (throw-cards mechanic) */}
@@ -1178,9 +1235,22 @@ export default function TutorialStepDisplay({
           </button>
         </div>
 
-        <p className={`text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
-          dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
-        />
+        {/* Desktop text */}
+        {scenario.mobileText ? (
+          <>
+            <p className={`hidden sm:block text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+              dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
+            />
+            {/* Mobile text */}
+            <p className={`sm:hidden text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px]' : 'mb-3 text-xs'}`}
+              dangerouslySetInnerHTML={{ __html: scenario.mobileText.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
+            />
+          </>
+        ) : (
+          <p className={`text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+            dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
+          />
+        )}
 
         {scenario.instruction && (
           <p className={`text-yellow-300 italic ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px] mb-1' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>

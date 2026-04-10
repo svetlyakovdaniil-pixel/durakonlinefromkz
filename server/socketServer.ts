@@ -383,6 +383,18 @@ export function initSocketServer(httpServer: HttpServer) {
         console.log(`[Socket] joinRoom: password correct for room ${roomId}`);
       }
 
+      // Skip balance check for tutorial rooms
+      if (room.settings.isTutorial) {
+        room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: false, isBot: false });
+        socket.join(roomId);
+        trackPlayerRoom(odId, roomId);
+        io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+        io.to(roomId).emit('playerJoined', { id: odId, name });
+        broadcastRoomList();
+        cb(true, sanitizeRoom(room));
+        return;
+      }
+
       // Balance check: player must have enough shanyraks for the bet
       const betAmount = room.settings.betAmount || 100;
       checkShanyrakBalance(odId).then(info => {
@@ -478,6 +490,12 @@ export function initSocketServer(httpServer: HttpServer) {
       startWatchdog(roomId);
       broadcastRoomList();
       scheduleBotAction(roomId);
+
+      // Skip bet deduction for tutorial rooms
+      if (room.settings.isTutorial) {
+        console.log(`[Socket] Tutorial room ${roomId} - skipping bet deduction`);
+        return;
+      }
 
       // Deduct bets AFTER cards are dealt and game is visible
       const humanPlayers = room.players.filter(p => !p.isBot);

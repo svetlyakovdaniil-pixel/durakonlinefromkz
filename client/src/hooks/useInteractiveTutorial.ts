@@ -94,6 +94,16 @@ export interface TutorialScenario {
   deck2Count?: number;
   /** Hidden trump card 1 (revealed when deck1 is empty, e.g. 'Ac' = Ace of clubs) */
   hiddenTrumpCard1?: string;
+  /** Override text for mobile view */
+  mobileText?: string;
+  /** Override text position for mobile view: 'bottom' puts text near player hand */
+  mobileTextPosition?: 'auto' | 'center' | 'top' | 'bottom';
+  /** Additional highlight elements for mobile only */
+  mobileHighlightElements?: string[];
+  /** Add glow effect around the table area */
+  glowTableArea?: boolean;
+  /** Add glow effect around the mobile trump indicator */
+  glowMobileTrump?: boolean;
   /** Whether this is the last step — shows 'Завершить обучение' instead of 'Далее' */
   isLastStep?: boolean;
   /** Custom text for the finish button (default: 'Завершить обучение') */
@@ -471,7 +481,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: '6-ка вне очереди',
     description: 'Подкидывание 6-ки любым игроком',
     text: 'По правилам игры, обороняющемуся игроку могут подкидывать только соседи. Но если кто-то походил с 6-ки, то любой игрок за столом может подкинуть 6-ки, даже если не является соседом',
-    highlightElements: ['[data-tutorial="table-area"]'],
+    highlightElements: ['[data-tutorial="table-area"]', '[data-tutorial="opponent-info"]:nth-of-type(1)', '[data-tutorial="opponent-info"]:nth-of-type(2)'],
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
@@ -497,7 +507,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: '6-ка вне очереди',
     description: 'Подкидывание 6-ок на стол',
     text: 'У Камилы и Бота 3 в руке нет карт, которые они могли бы подкинуть, но так как Камила изначально походила с 6-ки, ход перешел к вам. Вы можете подкинуть 6-ки Мадине, хоть и не являетесь ее соседом. Десятки в данном случае подкидывать нельзя.',
-    highlightElements: ['[data-tutorial="player-hand"]'],
+    highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="table-area"]'],
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
@@ -516,6 +526,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       { attack: '6d', defense: '10d' },
     ] }],
     glowOpponents: [2], // Only Мадина
+    glowTableArea: true,
     highlightCardsGreen: ['6h', '6h', '6d', '6c'],
     highlightCardsRed: ['10h', '10c', '10d', '10s'],
     throwCards: {
@@ -529,7 +540,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: 'Потайной козырь',
     description: 'Потайные козыри под колодами',
     highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
-    text: 'Сейчас в игре 2 колоды. Под колодой №1 лежит дама черви - козырь. \nПод дамой черви спрятана карта - потайной козырь №1. Под колодой №2 лежит потайной козырь №2',
+    text: 'Сейчас в игре 2 колоды. Под колодой №1 лежит дама черви - это карта, назначающая нынешний козырь.\nПод дамой черви спрятана карта - потайной козырь №1.\nПод колодой №2 лежит потайной козырь №2',
+    mobileText: 'В начале партии козырем стала масть черви. Как только карты в колоде №1 (К1) закончатся, козырь поменяется',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -538,6 +550,9 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
+    mobileTextPosition: 'bottom',
+    mobileHighlightElements: ['[data-tutorial="trump-indicator"]'],
+    glowMobileTrump: true,
   },
   // Step 22: Потайной козырь №1 — колода 1 закончилась, козырь сменился на крести
   {
@@ -546,6 +561,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     description: 'Смена козыря при окончании колоды 1',
     highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
     text: 'Когда колода №1 заканчивается, вскрывается потайной козырь №1, и козырь в игре меняется. В данном случае козырь поменялся на крести',
+    mobileText: 'Когда колода №1 заканчивается, вскрывается потайной козырь №1, и козырь в игре меняется. Козырь поменялся на крести',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -554,6 +570,9 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
+    mobileTextPosition: 'bottom',
+    mobileHighlightElements: ['[data-tutorial="trump-indicator"]'],
+    glowMobileTrump: true,
     deck1Count: 0,
     hiddenTrumpCard1: 'Ac',
   },
@@ -563,7 +582,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: 'Потайной козырь №2',
     description: 'Финальная смена козыря',
     highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
-    text: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайной козырь №2, меняя козырь в игре в последний раз',
+    text: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайной козырь №2, меняя козырь в игре в последний раз. Теперь козырь в игре буби',
+    mobileText: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайной козырь №2, меняя козырь в игре в последний раз. Теперь козырь в игре буби',
     instruction: 'Нажмите "Завершить обучение"',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -571,6 +591,9 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
+    mobileTextPosition: 'bottom',
+    mobileHighlightElements: ['[data-tutorial="trump-indicator"]'],
+    glowMobileTrump: true,
     deck1Count: 0,
     deck2Count: 0,
     isLastStep: true,

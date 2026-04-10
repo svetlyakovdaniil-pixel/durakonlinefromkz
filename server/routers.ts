@@ -39,6 +39,7 @@ import {
   getOwnedFrames,
   purchaseFrame,
   equipFrame,
+  completeTutorial,
 } from "./db";
 import { emitNotificationToProfile } from "./socketServer";
 
@@ -337,6 +338,11 @@ export const appRouter = router({
         }
         return result;
       }),
+    /** Complete tutorial and receive 2000 shanyrak reward (one-time) */
+    completeTutorial: protectedProcedure.mutation(async ({ ctx }) => {
+      return completeTutorial(ctx.user.id);
+    }),
+
     /** [TEST] Add 10K shanyraks */
     testAddShanyrak: protectedProcedure.mutation(async ({ ctx }) => {
       const result = await testAddShanyrak(ctx.user.id);

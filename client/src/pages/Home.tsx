@@ -15,6 +15,7 @@ import MusicChoiceDialog from "@/components/MusicChoiceDialog";
 import { toast } from 'sonner';
 import InviteModal from '@/components/InviteModal';
 import { useTranslation } from '@/i18n';
+import { trpc } from '@/lib/trpc';
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
@@ -47,6 +48,10 @@ export default function Home() {
   useEffect(() => {
     if (!connected) registeredRef.current = false;
   }, [connected]);
+
+  // Tutorial congratulations dialog state
+  const [showTutorialCongrats, setShowTutorialCongrats] = useState(false);
+  const completeTutorialMutation = trpc.balance.completeTutorial.useMutation();
 
   // Invite modal state — shown when a friend invites us to a room
   const [activeInvite, setActiveInvite] = useState<{
@@ -109,6 +114,7 @@ export default function Home() {
   // In game
   if (gameState && (gameState.gamePhase === 'playing' || gameState.gamePhase === 'finished')) {
     return (
+      <>
       <GameTable
         gameState={gameState}
         availableActions={availableActions}
@@ -132,11 +138,43 @@ export default function Home() {
         frozenInfo={frozenInfo}
         isTutorial={gameState.isTutorial}
         onTutorialComplete={() => {
-          leaveGame(gameState.roomId);
-          returnToLobby();
+          // Credit tutorial reward (one-time)
+          completeTutorialMutation.mutate();
+          setShowTutorialCongrats(true);
         }}
       />
+      {showTutorialCongrats && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-gradient-to-b from-gray-800 to-gray-900 border border-yellow-500/40 rounded-2xl p-6 sm:p-8 max-w-md mx-4 text-center shadow-2xl shadow-yellow-500/10">
+            <div className="text-5xl mb-4">🎉</div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-3">Поздравляем! Обучение пройдено.</h2>
+            <p className="text-white text-sm sm:text-base mb-4">
+              Если вы захотите пройти обучение повторно, вы можете нажать на кнопку "обучение" в лобби.
+            </p>
+            <p className="text-yellow-300 text-sm sm:text-base mb-1">
+              За успешное прохождение обучения, вам начислено:
+            </p>
+            <div className="flex items-center justify-center gap-2 mb-6">
+              <span className="text-3xl sm:text-4xl font-bold text-yellow-400">+2000</span>
+              <span className="text-lg text-yellow-300">шаныраков</span>
+            </div>
+            <Button
+              onClick={() => {
+                setShowTutorialCongrats(false);
+                leaveGame(gameState.roomId);
+                returnToLobby();
+                refetchProfile();
+              }}
+              className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-3 text-base rounded-xl"
+            >
+              Перейти в лобби
+            </Button>
+          </div>
+        </div>
+      )}
+    </>
     );
+    // eslint-disable-next-line
   }
 
   // In waiting room
