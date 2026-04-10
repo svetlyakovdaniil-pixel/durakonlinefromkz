@@ -139,7 +139,7 @@ export const notifications = mysqlTable("notifications", {
   /** The player who receives this notification (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Notification type */
-  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired", "admin_announcement"]).notNull(),
+  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired", "admin_announcement", "account_banned"]).notNull(),
   /** JSON data with extra info */
   data: text("data"),
   /** Whether the notification has been read */

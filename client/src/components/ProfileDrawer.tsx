@@ -808,6 +808,11 @@ function MatchHistoryTab() {
                 <span className="text-amber-100 text-xs font-medium">
                   {placeLabel} place • {game.playerCount} players
                 </span>
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                  game.isBotGame ? 'bg-orange-900/40 text-orange-300 border border-orange-700/30' : 'bg-blue-900/40 text-blue-300 border border-blue-700/30'
+                }`}>
+                  {game.isBotGame ? '🤖' : '👤'}
+                </span>
               </div>
               <span className={`text-xs font-bold ${ratingColor}`}>
                 {ratingPrefix}{game.ratingDelta}

@@ -510,7 +510,7 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
 /**
  * Create a notification for a player.
  */
-export async function createNotification(profileId: number, type: 'friend_request' | 'friend_accepted' | 'balance_topup' | 'cooldown_expired', data: Record<string, unknown>) {
+export async function createNotification(profileId: number, type: 'friend_request' | 'friend_accepted' | 'balance_topup' | 'cooldown_expired' | 'admin_announcement' | 'account_banned', data: Record<string, unknown>) {
   const db = await getDb();
   if (!db) return null;
 

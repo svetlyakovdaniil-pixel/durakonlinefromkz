@@ -581,6 +581,15 @@ export const appRouter = router({
             targetProfileId: input.profileId,
             details: { reason: input.reason, durationMs, bannedUntil: result.bannedUntil },
           });
+          // Send ban notification to the player
+          const banDurationText = durationMs
+            ? `${Math.round(durationMs / (1000 * 60 * 60))} ч.`
+            : 'навсегда';
+          await createNotification(input.profileId, 'account_banned', {
+            reason: input.reason,
+            duration: banDurationText,
+            bannedUntil: result.bannedUntil ?? null,
+          });
         }
         return result;
       }),
@@ -863,12 +872,12 @@ export const appRouter = router({
   // ---- Admin Moderation (complaints) ----
   moderation: router({
     /** Get complaint stats */
-    stats: adminProcedure.query(async () => {
+    stats: gmProcedure.query(async () => {
       return getComplaintStats();
     }),
 
     /** List complaints with optional status filter */
-    list: adminProcedure
+    list: gmProcedure
       .input(z.object({
         status: z.string().optional(),
         page: z.number().optional(),
@@ -879,7 +888,7 @@ export const appRouter = router({
       }),
 
     /** Get single complaint detail */
-    detail: adminProcedure
+    detail: gmProcedure
       .input(z.object({ id: z.number() }))
       .query(async ({ input }) => {
         const complaint = await getComplaintById(input.id);
@@ -896,7 +905,7 @@ export const appRouter = router({
       }),
 
     /** Update complaint status (resolve/dismiss) */
-    resolve: adminProcedure
+    resolve: gmProcedure
       .input(z.object({
         id: z.number(),
         status: z.enum(['reviewed', 'resolved', 'dismissed']),

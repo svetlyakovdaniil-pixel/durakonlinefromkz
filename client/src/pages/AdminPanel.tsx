@@ -116,7 +116,7 @@ export default function AdminPanel() {
     { id: "antifraud", label: "Антифрод", icon: AlertTriangle },
     { id: "shop", label: "Магазин", icon: ShoppingCart, adminOnly: true },
     { id: "notifications", label: "Рассылки", icon: Bell, adminOnly: true },
-    { id: "moderation", label: "Модерация", icon: Flag, adminOnly: true },
+    { id: "moderation", label: "Модерация", icon: Flag },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -200,7 +200,7 @@ export default function AdminPanel() {
         {tab === "antifraud" && <AntifraudTab />}
         {tab === "shop" && isAdmin && <ShopManagementTab />}
         {tab === "notifications" && isAdmin && <MassNotificationsTab />}
-        {tab === "moderation" && isAdmin && <ModerationTab />}
+        {tab === "moderation" && (isAdmin || isGM) && <ModerationTab />}
       </div>
     </div>
   );

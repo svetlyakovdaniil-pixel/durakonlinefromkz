@@ -1253,6 +1253,11 @@ export default function GameTable({
                   <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                 </div>
               )}
+              <div className="flex items-center justify-center gap-1.5 bg-red-900/30 border border-red-700/30 rounded-lg px-3 py-2">
+                <span className="text-red-300 text-xs sm:text-sm font-medium">
+                  {t('game.leaveRatingPenalty')}
+                </span>
+              </div>
             </div>
             <div className="flex gap-2 sm:gap-3">
               <Button

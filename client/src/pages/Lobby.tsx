@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -1159,6 +1159,31 @@ onClick={() => setShowTengeTopUp(true)}
                           </div>
                           <p className="text-amber-200/60 text-xs">
                             {n.data?.message || t('lobby.cooldownExpiredDefault')}
+                          </p>
+                        </>
+                      )}
+                      {n.type === 'admin_announcement' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Bell className="w-4 h-4 text-blue-400 shrink-0" />
+                            <span className="text-amber-100 text-sm font-medium">{n.data?.title || 'Объявление'}</span>
+                          </div>
+                          <p className="text-amber-200/60 text-xs whitespace-pre-wrap">
+                            {n.data?.content || ''}
+                          </p>
+                        </>
+                      )}
+                      {n.type === 'account_banned' && (
+                        <>
+                          <div className="flex items-center gap-2 mb-1">
+                            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
+                            <span className="text-red-300 text-sm font-medium">Ваш аккаунт заблокирован</span>
+                          </div>
+                          <p className="text-red-200/70 text-xs">
+                            Срок: {n.data?.duration || 'не указан'}
+                          </p>
+                          <p className="text-red-200/70 text-xs">
+                            Причина: {n.data?.reason || 'не указана'}
                           </p>
                         </>
                       )}

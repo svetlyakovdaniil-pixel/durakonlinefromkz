@@ -1,4 +1,4 @@
-import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight, Timer, Coins, Wifi, Users } from 'lucide-react';
+import { X, BookOpen, Swords, Shield, Crown, Layers, ArrowRight, Timer, Coins, Wifi, Users, Trophy, LogOut } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useTranslation } from '@/i18n';
 
@@ -35,7 +35,7 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto px-5 py-4">
-          <Accordion type="multiple" defaultValue={["kazakh-rules", "standard-rules"]} className="space-y-3">
+          <Accordion type="multiple" defaultValue={["kazakh-rules", "rating-rules"]} className="space-y-3">
             {/* Chapter 1: Kazakh Durak Rules */}
             <AccordionItem value="kazakh-rules" className="border border-amber-700/30 rounded-xl overflow-hidden bg-black/20">
               <AccordionTrigger className="px-4 py-3 text-amber-100 hover:text-amber-200 hover:no-underline">
@@ -232,48 +232,261 @@ export default function RulesModal({ open, onClose }: RulesModalProps) {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Chapter 2: Standard Durak Rules */}
-            <AccordionItem value="standard-rules" className="border border-amber-700/30 rounded-xl overflow-hidden bg-black/20">
+            {/* Chapter 2: Rating System */}
+            <AccordionItem value="rating-rules" className="border border-amber-700/30 rounded-xl overflow-hidden bg-black/20">
               <AccordionTrigger className="px-4 py-3 text-amber-100 hover:text-amber-200 hover:no-underline">
                 <div className="flex items-center gap-2">
-                  <Swords className="w-5 h-5 text-amber-400" />
-                  <span className="text-base font-semibold">{t('rules.chapter2')}</span>
+                  <Trophy className="w-5 h-5 text-amber-400" />
+                  <span className="text-base font-semibold">{t('rules.ratingChapter')}</span>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="px-4 pb-4">
                 <div className="space-y-4 text-amber-200/80 text-sm leading-relaxed">
+                  {/* How game type is determined */}
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdGeneralTitle')}</h4>
-                    <p>{t('rules.stdGeneral')}</p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <Users className="w-4 h-4 text-amber-400" /> {t('rules.ratingTypeTitle')}
+                    </h4>
+                    <p>{t('rules.ratingTypeText')}</p>
+                    <ul className="space-y-1 ml-4 mt-1.5">
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>{t('rules.ratingTypeHuman')}</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <span className="text-amber-400">•</span>
+                        <span>{t('rules.ratingTypeBot')}</span>
+                      </li>
+                    </ul>
+                    <p className="mt-1.5">{t('rules.ratingTypeExample')}</p>
                   </div>
+
+                  {/* Human rating table */}
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDeckTitle')}</h4>
-                    <p>{t('rules.stdDeck')}</p>
+                    <h4 className="text-amber-100 font-semibold mb-2 flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4 text-amber-400" /> {t('rules.ratingHumanTitle')}
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-amber-700/30">
+                            <th className="text-left py-1.5 px-2 text-amber-100">{t('rules.ratingPlayers')}</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">1</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">2</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">3</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">4</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">5</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">6</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">7</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100 whitespace-nowrap">{t('rules.ratingLoser')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* 2 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">2</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 3 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">3</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 4 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">4</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+20</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 5 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">5</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+20</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 6 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">6</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+20</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 7 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">7</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+20</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 8 players */}
+                          <tr>
+                            <td className="py-1.5 px-2 text-amber-200">8</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+25</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+20</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+15</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-25</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+
+                  {/* Bot rating table */}
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDealTitle')}</h4>
-                    <p>{t('rules.stdDeal')}</p>
+                    <h4 className="text-amber-100 font-semibold mb-2 flex items-center gap-1.5">
+                      <Trophy className="w-4 h-4 text-amber-400" /> {t('rules.ratingBotTitle')}
+                    </h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs border-collapse">
+                        <thead>
+                          <tr className="border-b border-amber-700/30">
+                            <th className="text-left py-1.5 px-2 text-amber-100">{t('rules.ratingPlayers')}</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">1</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">2</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">3</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">4</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">5</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">6</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100">7</th>
+                            <th className="text-center py-1.5 px-1 text-amber-100 whitespace-nowrap">{t('rules.ratingLoser')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {/* 2 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">2</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 3 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">3</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 4 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">4</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 5 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">5</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-5</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 6 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">6</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-5</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 7 players */}
+                          <tr className="border-b border-amber-700/20">
+                            <td className="py-1.5 px-2 text-amber-200">7</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-5</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/30">—</td>
+                          </tr>
+                          {/* 8 players */}
+                          <tr>
+                            <td className="py-1.5 px-2 text-amber-200">8</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+10</td>
+                            <td className="text-center py-1.5 px-1 text-green-400">+5</td>
+                            <td className="text-center py-1.5 px-1 text-amber-200/50">0</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-5</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                            <td className="text-center py-1.5 px-1 text-red-400">-10</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
+
+                  {/* Forfeit penalty */}
                   <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdAttackTitle')}</h4>
-                    <p>{t('rules.stdAttack')}</p>
-                    <p className="mt-1.5">{t('rules.stdAttackMore')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdTakeTitle')}</h4>
-                    <p>{t('rules.stdTake')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdBitoTitle')}</h4>
-                    <p>{t('rules.stdBito')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdDrawTitle')}</h4>
-                    <p>{t('rules.stdDraw')}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-amber-100 font-semibold mb-1.5">{t('rules.stdEndTitle')}</h4>
-                    <p>{t('rules.stdEnd')}</p>
+                    <h4 className="text-amber-100 font-semibold mb-1.5 flex items-center gap-1.5">
+                      <LogOut className="w-4 h-4 text-red-400" /> {t('rules.ratingForfeitTitle')}
+                    </h4>
+                    <p>{t('rules.ratingForfeitText')}</p>
                   </div>
                 </div>
               </AccordionContent>
