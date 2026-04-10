@@ -379,6 +379,8 @@ export const kk = {
     nameChanged: 'Аты өзгертілді',
     nameError: 'Атын өзгерту кезінде қате',
     enterName: 'Жаңа атыңызды енгізіңіз',
+    playlist: 'Плейлист',
+    selectPlaylist: 'Плейлистті таңдаңыз',
   },
 
   // Rules

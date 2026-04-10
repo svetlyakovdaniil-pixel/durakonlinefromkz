@@ -379,6 +379,8 @@ export const ru = {
     nameChanged: 'Имя изменено',
     nameError: 'Ошибка при смене имени',
     enterName: 'Введите новое имя',
+    playlist: 'Плейлист',
+    selectPlaylist: 'Выберите плейлист',
   },
 
   // Rules

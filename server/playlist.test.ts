@@ -67,3 +67,37 @@ describe('Playlist features (Batch 93)', () => {
     });
   });
 });
+
+describe('Playlist features (Batch 94)', () => {
+  describe('GameSettingsSheet has no playlist selector', () => {
+    it('should not import any playlist-related components', async () => {
+      const fs = await import('fs');
+      const content = fs.readFileSync('client/src/components/GameSettingsSheet.tsx', 'utf-8');
+      expect(content).not.toContain('playlist');
+      expect(content).not.toContain('Playlist');
+      expect(content).not.toContain('SelectItem');
+    });
+  });
+
+  describe('SettingsSheet has playlist selector', () => {
+    it('should import Select components and playlist-related hooks', async () => {
+      const fs = await import('fs');
+      const content = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
+      expect(content).toContain('SelectItem');
+      expect(content).toContain('playlists.list');
+      expect(content).toContain('playlists.owned');
+      expect(content).toContain('personalPlaylistId');
+    });
+  });
+
+  describe('ShopModal stops background music during preview', () => {
+    it('should import useMusicContext and use it in preview', async () => {
+      const fs = await import('fs');
+      const content = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
+      expect(content).toContain('useMusicContext');
+      expect(content).toContain('wasMusicPlayingRef');
+      expect(content).toContain('music.stopMusic()');
+      expect(content).toContain('music.startMusic()');
+    });
+  });
+});

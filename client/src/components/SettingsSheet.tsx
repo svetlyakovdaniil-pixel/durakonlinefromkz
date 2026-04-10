@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal } from 'lucide-react';
@@ -31,6 +32,31 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
+
+  // Playlist data
+  const { data: allPlaylists = [] } = trpc.playlists.list.useQuery(undefined, { enabled: open });
+  const { data: ownedPlaylistIds = [] } = trpc.playlists.owned.useQuery(undefined, { enabled: open });
+
+  // Personal playlist selection (stored in localStorage)
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<string>(() => {
+    try {
+      const raw = localStorage.getItem('kazakh-durak-settings');
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed.personalPlaylistId !== undefined && parsed.personalPlaylistId !== null) {
+          return String(parsed.personalPlaylistId);
+        }
+      }
+    } catch {}
+    return 'default';
+  });
+
+  // Fetch tracks for the selected playlist to switch music
+  const numericPlaylistId = selectedPlaylistId !== 'default' ? parseInt(selectedPlaylistId) : null;
+  const { data: selectedPlaylistData } = trpc.playlists.tracks.useQuery(
+    { playlistId: numericPlaylistId! },
+    { enabled: !!numericPlaylistId }
+  );
 
   const updateNameMutation = trpc.profile.updateName.useMutation({
     onSuccess: () => {
@@ -78,7 +104,42 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     setVibrationEnabled(checked);
   };
 
+  const handlePlaylistChange = (value: string) => {
+    setSelectedPlaylistId(value);
+    // Persist to localStorage
+    try {
+      const raw = localStorage.getItem('kazakh-durak-settings');
+      const parsed = raw ? JSON.parse(raw) : {};
+      parsed.personalPlaylistId = value === 'default' ? null : parseInt(value);
+      localStorage.setItem('kazakh-durak-settings', JSON.stringify(parsed));
+    } catch {}
+  };
 
+  // When playlist data loads or changes, switch the music tracks
+  useEffect(() => {
+    if (selectedPlaylistId === 'default') {
+      // Reset to default tracks (Rules house)
+      // The default tracks are hardcoded in useMusic hook
+      // We need to set them back — import the default list
+      const DEFAULT_TRACKS = [
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
+        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+      ];
+      music.setTracks(DEFAULT_TRACKS);
+    } else if (selectedPlaylistData?.tracks?.length) {
+      // tracks from backend are already string URLs (not objects)
+      const urls = selectedPlaylistData.tracks.map((t: any) => typeof t === 'string' ? t : t.url);
+      music.setTracks(urls);
+    }
+  }, [selectedPlaylistId, selectedPlaylistData]);
+
+  // Filter to only owned playlists
+  const ownedPlaylists = allPlaylists.filter((p: any) => ownedPlaylistIds.includes(p.id));
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -158,7 +219,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           </div>
 
-          {/* 3. Background music */}
+          {/* 3. Background music + Playlist selector */}
           <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <label className="flex items-center justify-between cursor-pointer mb-3">
               <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
@@ -172,6 +233,29 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
               />
             </label>
 
+            {/* Playlist selector — always visible when music section is shown */}
+            {ownedPlaylists.length > 0 && (
+              <div className="mt-2">
+                <span className="text-xs text-amber-200/50 mb-1.5 block">
+                  {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+                </span>
+                <Select value={selectedPlaylistId} onValueChange={handlePlaylistChange}>
+                  <SelectTrigger className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                    <SelectItem value="default" className="text-amber-100 text-sm">
+                      Rules house ({locale === 'kk' ? 'стандартты' : 'стандартный'})
+                    </SelectItem>
+                    {ownedPlaylists.map((p: any) => (
+                      <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">
+                        {locale === 'kk' && p.nameKk ? p.nameKk : p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           {/* 4. Vibration */}

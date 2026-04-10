@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 import { AVATAR_OPTIONS } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
@@ -108,6 +109,8 @@ const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/
 export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
   const { t, locale } = useTranslation();
+  const music = useMusicContext();
+  const wasMusicPlayingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<ShopTab>('decks');
   const [confirmPurchase, setConfirmPurchase] = useState<ConfirmPurchase | null>(null);
   // Preview audio state
@@ -158,10 +161,23 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     }
     setPreviewPlaylistId(null);
     setPreviewTimer(0);
-  }, []);
+    // Resume background music if it was playing before preview
+    if (wasMusicPlayingRef.current) {
+      music.startMusic();
+      wasMusicPlayingRef.current = false;
+    }
+  }, [music]);
 
   const startPreview = useCallback((playlistId: number, firstTrackUrl: string) => {
+    // Remember if background music was playing
+    const wasMusicPlaying = music.enabled;
+    // Stop any existing preview first (this resets wasMusicPlayingRef)
     stopPreview();
+    // Stop background music before playing preview
+    if (wasMusicPlaying) {
+      wasMusicPlayingRef.current = true;
+      music.stopMusic();
+    }
     const audio = new Audio(firstTrackUrl);
     audio.volume = 0.5;
     previewAudioRef.current = audio;
