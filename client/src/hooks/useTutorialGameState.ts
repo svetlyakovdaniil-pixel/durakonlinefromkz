@@ -87,19 +87,35 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       const battleField: any[] = [];
 
       scenario.tableCards.forEach(({ playerId, cards }) => {
-        cards.forEach((cardStr, idx) => {
-          const suitChar = cardStr.slice(-1);
-          const card: Card = {
-            id: `tutorial-table-${playerId}-${idx}`,
-            rank: cardStr.slice(0, -1) as any,
-            suit: suitMap[suitChar] || 'spades',
-            copy: 1,
-          };
-
-          battleField.push({
-            attack: card,
-            defense: null,
-          });
+        cards.forEach((cardEntry, idx) => {
+          if (typeof cardEntry === 'string') {
+            // Simple attack-only card
+            const suitChar = cardEntry.slice(-1);
+            const card: Card = {
+              id: `tutorial-table-${playerId}-${idx}`,
+              rank: cardEntry.slice(0, -1) as any,
+              suit: suitMap[suitChar] || 'spades',
+              copy: 1,
+            };
+            battleField.push({ attack: card, defense: null });
+          } else {
+            // Beaten pair: { attack, defense }
+            const aSuitChar = cardEntry.attack.slice(-1);
+            const attackCard: Card = {
+              id: `tutorial-table-${playerId}-${idx}-atk`,
+              rank: cardEntry.attack.slice(0, -1) as any,
+              suit: suitMap[aSuitChar] || 'spades',
+              copy: 1,
+            };
+            const dSuitChar = cardEntry.defense.slice(-1);
+            const defenseCard: Card = {
+              id: `tutorial-table-${playerId}-${idx}-def`,
+              rank: cardEntry.defense.slice(0, -1) as any,
+              suit: suitMap[dSuitChar] || 'spades',
+              copy: 1,
+            };
+            battleField.push({ attack: attackCard, defense: defenseCard });
+          }
         });
       });
 
@@ -112,6 +128,16 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
     }
     if (scenario.defenderPlayerIdx !== undefined) {
       tutorialState.currentDefenderIdx = scenario.defenderPlayerIdx;
+    }
+
+    // Override main bot name if specified
+    if (scenario.overrideMainBotName && tutorialState.players) {
+      tutorialState.players = tutorialState.players.map(p => {
+        if (p.isBot) {
+          return { ...p, name: scenario.overrideMainBotName! };
+        }
+        return p;
+      });
     }
 
     // Force deck style to 'custom' (deck #2) during tutorial

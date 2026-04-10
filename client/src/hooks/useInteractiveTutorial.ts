@@ -14,8 +14,8 @@ export interface TutorialScenario {
   botHand?: string[];
   /** Trump suit for this scenario */
   trumpSuit?: 'spades' | 'hearts' | 'diamonds' | 'clubs';
-  /** Cards on table */
-  tableCards?: { playerId: number; cards: string[] }[];
+  /** Cards on table. Each entry can be a simple card string (attack only) or a pair {attack, defense} */
+  tableCards?: { playerId: number; cards: (string | { attack: string; defense: string })[] }[];
   /** What player must do */
   requiredAction?: 'click-card' | 'click-button' | 'click-sort' | 'none';
   /** Card to click if requiredAction is 'click-card' */
@@ -73,6 +73,8 @@ export interface TutorialScenario {
   }[];
   /** Show pass-through (проездной) icon under a specific bot by player index */
   passThroughBotIdx?: number;
+  /** Override the main bot's name for this step */
+  overrideMainBotName?: string;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -437,8 +439,31 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBotNames: ['Мадина', 'Бот 3'],
     attackerPlayerIdx: 3,
     defenderPlayerIdx: 2,
-    tableCards: [{ playerId: 2, cards: ['10d', '10s', '10h'] }],
+    tableCards: [{ playerId: 2, cards: ['10d', '10s'] }],
     passThroughBotIdx: 3,
+  },
+  // Step 19: 6-ка вне очереди
+  {
+    id: 19,
+    title: '6-ка вне очереди',
+    description: 'Подкидывание 6-ки любым игроком',
+    text: 'По правилам игры, обороняющемуся игроку могут подкидывать только соседи. Но если кто-то походил с 6-ки, то любой игрок за столом может подкинуть 6-ки, даже если не является соседом',
+    highlightElements: ['[data-tutorial="table-area"]'],
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'none',
+    discardCount: 10,
+    textPosition: 'bottom',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+    overrideMainBotName: 'Камила',
+    attackerPlayerIdx: 1,
+    defenderPlayerIdx: 2,
+    tableCards: [{ playerId: 1, cards: [
+      { attack: '6s', defense: '10s' },
+      { attack: '6d', defense: '10d' },
+    ] }],
   },
 ];
 
