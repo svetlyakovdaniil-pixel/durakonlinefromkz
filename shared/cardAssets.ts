@@ -63,7 +63,7 @@ export const CARD_IMAGES_CUSTOM: Record<string, string> = {
 export const CARD_BACK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/card_back-kqTDCf9Jwvt75TYv8Mh5D3.webp';
 export const CARD_BACK_CUSTOM_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%A2%D0%BE%D0%B2%D0%B0%D1%80%D0%B8%D1%89%D0%9C%D1%8B%D1%80%D0%B7%D0%B0_61b514ca.png';
 export const GAME_TABLE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/game_table-9KeBRLr2mzuAL8uVYsQsVq.webp';
-export const GAME_TABLE_DARK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_table_dark_kazakh-j8oZ9SwQFNWR5GMMMPnrT3.webp';
+export const GAME_TABLE_DARK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/khansky_oktogon_table_523470d5.webp';
 export const GAME_TABLE_NEON_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_table-eY4ptBJDmBaDo69F5sQkTp.webp';
 
 export type TableStyle = 'classic' | 'dark_kazakh' | 'neon';
