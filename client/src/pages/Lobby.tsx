@@ -205,7 +205,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
               {/* Left column: Settings / Bell / Rules — spread top/center/bottom */}
-              <div className="flex flex-col items-center justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
+              <div className="flex flex-col items-start justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
                 {/* Row 1: Settings */}
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded">
