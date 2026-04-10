@@ -21,7 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer, transferMultipleCards,
 } from './gameEngine';
-import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
+import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
 
 // In-memory store
 const rooms = new Map<string, Room>();
@@ -839,6 +839,22 @@ export function initSocketServer(httpServer: HttpServer) {
       markProgress(roomId);
       resetTurnTimer(gameState);
       restartTurnTimer(roomId);
+
+      // Record forfeit as a loss in player stats
+      const forfeitGameId = playerGameIds.get(odId);
+      if (forfeitGameId) {
+        const hasBots = gameState.players.some(p => p.isBot);
+        const botCount = gameState.players.filter(p => p.isBot).length;
+        const totalPlayersInRoom = gameState.players.length;
+        const botRatio = totalPlayersInRoom > 0 ? botCount / totalPlayersInRoom : 0;
+        const isBotGame = botRatio > 0.334;
+        const forfeitRoom = rooms.get(roomId);
+        const isTutorial = forfeitRoom?.settings.isTutorial || false;
+        if (!isTutorial) {
+          recordForfeitLoss(forfeitGameId, isBotGame)
+            .catch((err: Error) => console.error('[DB] Failed to record forfeit loss:', err));
+        }
+      }
 
       // Acknowledge FIRST so client can clean up before receiving further updates
       if (typeof ack === 'function') ack({ ok: true });
@@ -1982,11 +1998,14 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     // Skip stats only for tutorial rooms
     const room = rooms.get(roomId);
     const hasBots = gameState.players.some(p => p.isBot);
+    const botCount = gameState.players.filter(p => p.isBot).length;
+    const totalPlayersInRoom = gameState.players.length; // humans + bots
     const isTutorial = room?.settings.isTutorial || false;
     if (isTutorial) {
       console.log(`[Stats] Skipping stats for room ${roomId} (tutorial)`);
     }
-    const humanPlayers = gameState.players.filter(p => !p.isBot);
+    // Exclude forfeited human players — their stats were already recorded on forfeit
+    const humanPlayers = gameState.players.filter(p => !p.isBot && !p.leftGame);
     if (humanPlayers.length > 0 && !isTutorial) {
       // Look up profile IDs from playerGameIds map (odId -> gameId)
       const allPlayerProfileIds = humanPlayers
@@ -2005,6 +2024,8 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           allPlayerProfileIds,
           durationSeconds: 0,
           hasBots,
+          botCount,
+          totalPlayersInRoom,
         }).catch(err => console.error('[DB] Failed to record game result:', err));
       }
     }

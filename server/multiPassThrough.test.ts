@@ -88,16 +88,20 @@ describe("showMultiplePassThroughs — direction changes", () => {
     expect(state.direction).toBe("ccw");
   });
 
-  it("two 10s do NOT reverse direction (even count)", () => {
+  it("two 10s ALSO reverse direction (multiple tens = one change)", () => {
     const state = createMinimalGameState();
     state.players[1].hand = [
       makeCard("t10a", "10", "♠"),
       makeCard("t10b", "10", "♠"),
     ];
+    // Give Alice enough cards (next defender when direction reverses)
+    state.players[0].hand = [
+      makeCard("a1", "A", "♥"), makeCard("a2", "K", "♥"),
+    ];
 
     const err = showMultiplePassThroughs(state, 1, ["t10a", "t10b"]);
     expect(err).toBeNull();
-    expect(state.direction).toBe("cw"); // no change
+    expect(state.direction).toBe("ccw"); // one direction change regardless of count
   });
 
   it("three 10s reverse direction (odd count)", () => {

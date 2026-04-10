@@ -119,6 +119,10 @@ export const gameHistory = mysqlTable("game_history", {
   durationSeconds: int("durationSeconds"),
   /** Whether the game had any bots */
   hasBots: boolean("hasBots").default(false).notNull(),
+  /** Number of bots in the game */
+  botCount: int("botCount").default(0).notNull(),
+  /** Total players (humans + bots) in the room when game started */
+  totalPlayersInRoom: int("totalPlayersInRoom").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

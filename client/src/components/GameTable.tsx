@@ -111,6 +111,17 @@ function PlayerHand({
 
   const needsScroll = sortedHand.length > 6;
 
+  // Desktop: allow mouse wheel to scroll hand horizontally
+  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // Only intercept if we can scroll horizontally
+    if (el.scrollWidth <= el.clientWidth) return;
+    e.preventDefault();
+    el.scrollLeft += e.deltaY !== 0 ? e.deltaY : e.deltaX;
+    setTimeout(checkScroll, 50);
+  }, [checkScroll]);
+
   return (
     <div className="relative">
       {needsScroll && canScrollLeft && (
@@ -132,14 +143,15 @@ function PlayerHand({
 
       <div
         ref={scrollRef}
-        className="flex justify-center overflow-x-auto pb-1 sm:pb-2 scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent"
+        className="flex overflow-x-auto pb-1 sm:pb-2 scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent"
         onScroll={checkScroll}
+        onWheel={handleWheel}
         style={{
           scrollbarWidth: 'thin',
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <div className="flex items-end px-4 sm:px-6">
+        <div className="flex items-end px-4 sm:px-6" style={{ minWidth: 'min-content' }}>
           {sortedHand.map((card, i) => {
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);

@@ -316,11 +316,20 @@ export async function recordGameResult(data: {
   allPlayerProfileIds: number[];
   durationSeconds: number;
   hasBots?: boolean;
+  botCount?: number;
+  totalPlayersInRoom?: number;
 }) {
   const db = await getDb();
   if (!db) return;
 
   const hasBots = data.hasBots ?? false;
+  const botCount = data.botCount ?? 0;
+  const totalPlayersInRoom = data.totalPlayersInRoom ?? data.playerCount;
+
+  // Determine if this counts as a "bot game" for stats/rating purposes
+  // Rule: if bots make up more than 33.4% of total players, it's a bot game
+  const botRatio = totalPlayersInRoom > 0 ? botCount / totalPlayersInRoom : 0;
+  const isBotGame = botRatio > 0.334;
 
   // Insert game history
   await db.insert(gameHistory).values({
@@ -331,6 +340,8 @@ export async function recordGameResult(data: {
     playersJson: JSON.stringify(data.allPlayerProfileIds),
     durationSeconds: data.durationSeconds,
     hasBots,
+    botCount,
+    totalPlayersInRoom,
   });
 
   // Progressive rating table based on player count
@@ -361,15 +372,15 @@ export async function recordGameResult(data: {
     // If place is beyond table length, use last entry (shouldn't happen)
     const ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
 
-    if (hasBots) {
-      // Bot games: update bot stats, NO rating change
+    if (isBotGame) {
+      // Bot games (>33.4% bots): update bot stats, NO rating change
       await db.update(playerProfiles).set({
         botGamesPlayed: sql`${playerProfiles.botGamesPlayed} + 1`,
         botWins: isWinner ? sql`${playerProfiles.botWins} + 1` : sql`${playerProfiles.botWins}`,
         botLosses: isLoser ? sql`${playerProfiles.botLosses} + 1` : sql`${playerProfiles.botLosses}`,
       }).where(eq(playerProfiles.gameId, gameId));
     } else {
-      // Human-only games: update human stats + rating
+      // Human games (<=33.4% bots): update human stats + rating
       await db.update(playerProfiles).set({
         gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
         wins: isWinner ? sql`${playerProfiles.wins} + 1` : sql`${playerProfiles.wins}`,
@@ -377,6 +388,32 @@ export async function recordGameResult(data: {
         rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
       }).where(eq(playerProfiles.gameId, gameId));
     }
+  }
+}
+
+/**
+ * Record a forfeit (leave game) as a loss for the player.
+ * Called immediately when a player leaves mid-game.
+ * @param gameId - The player's gameId (from playerProfiles)
+ * @param isBotGame - Whether this counts as a bot game (>33.4% bots)
+ */
+export async function recordForfeitLoss(gameId: number, isBotGame: boolean) {
+  const db = await getDb();
+  if (!db) return;
+
+  if (isBotGame) {
+    // Bot game: update bot stats only, no rating change
+    await db.update(playerProfiles).set({
+      botGamesPlayed: sql`${playerProfiles.botGamesPlayed} + 1`,
+      botLosses: sql`${playerProfiles.botLosses} + 1`,
+    }).where(eq(playerProfiles.gameId, gameId));
+  } else {
+    // Human game: update human stats + rating penalty (-25 for loss)
+    await db.update(playerProfiles).set({
+      gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
+      losses: sql`${playerProfiles.losses} + 1`,
+      rating: sql`GREATEST(0, ${playerProfiles.rating} - 25)`,
+    }).where(eq(playerProfiles.gameId, gameId));
   }
 }
 
@@ -426,13 +463,19 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
     };
 
     const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
-    const ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+    const rawDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+
+    // Use 33.4% bot threshold to determine if rating was affected
+    const botRatio = record.totalPlayersInRoom > 0 ? record.botCount / record.totalPlayersInRoom : 0;
+    const isBotGame = botRatio > 0.334;
+    const ratingDelta = isBotGame ? 0 : rawDelta;
 
     return {
       ...record,
       place,
       ratingDelta,
       isLoser,
+      isBotGame,
     };
   });
 }

@@ -594,11 +594,9 @@ export function transferMultipleCards(state: GameState, playerIdx: number, cardI
   const totalAttackCards = state.battleField.length + cardIds.length;
 
   // Check direction change (if transferring 10s when lead is 10)
+  // Multiple tens thrown at once count as ONE direction change (not per-card)
   const hasDirectionChange = cards.some(c => c.card.rank === '10') && state.leadCardRank === '10';
-  // For multi-card transfer with 10s, direction changes once (odd number of 10s = change, even = no change)
-  const tens = cards.filter(c => c.card.rank === '10').length;
-  const directionChanges = tens % 2 === 1;
-  const potentialDir = (directionChanges && hasDirectionChange)
+  const potentialDir = hasDirectionChange
     ? (state.direction === 'cw' ? 'ccw' : 'cw')
     : state.direction;
 
@@ -609,7 +607,7 @@ export function transferMultipleCards(state: GameState, playerIdx: number, cardI
   }
 
   // Apply direction change if needed
-  if (directionChanges && hasDirectionChange) {
+  if (hasDirectionChange) {
     state.direction = potentialDir as Direction;
   }
 
@@ -734,12 +732,11 @@ export function showMultiplePassThroughs(state: GameState, playerIdx: number, ca
     cards.push(card);
   }
 
-  // Calculate direction change for multiple 10s
-  const tens = cards.filter(c => c.rank === '10').length;
-  const directionChanges = tens % 2 === 1;
-  const hasDirectionChange = tens > 0 && state.leadCardRank === '10';
+  // Multiple tens thrown at once count as ONE direction change (not per-card)
+  const hasTens = cards.some(c => c.rank === '10');
+  const hasDirectionChange = hasTens && state.leadCardRank === '10';
 
-  const potentialDir = (directionChanges && hasDirectionChange)
+  const potentialDir = hasDirectionChange
     ? (state.direction === 'cw' ? 'ccw' : 'cw')
     : state.direction;
 
@@ -765,7 +762,7 @@ export function showMultiplePassThroughs(state: GameState, playerIdx: number, ca
   }
 
   // Apply direction change
-  if (directionChanges && hasDirectionChange) {
+  if (hasDirectionChange) {
     state.direction = potentialDir as Direction;
   }
 
@@ -1315,8 +1312,12 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
   // === EDGE PLAYER ACTIONS (non-attacker, non-defender) ===
   if (!isAttacker && !isDefender && canPlayerAddCards(state, playerIdx)) {
     if (state.battleField.length > 0) {
-      // PRIORITY RULE: Edge players can only act when attacker does NOT have priority
-      if (!state.attackerHasPriority) {
+      // Six exception: when lead card is 6, ANY player can throw sixes immediately
+      // regardless of attackerHasPriority (they don't wait for their turn)
+      const isSixException = state.leadCardRank === '6';
+      const canAct = !state.attackerHasPriority || isSixException;
+
+      if (canAct) {
         if (state.defenderTaking) {
           // In pickup mode, edge players can add cards
           if (canAddMoreAttackCards(state)) {
