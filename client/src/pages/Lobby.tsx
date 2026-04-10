@@ -224,13 +224,22 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     </span>
                   )}
                 </button>
-                {/* Row 3: Rules */}
-                <button
-                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
-                  onClick={() => setShowRules(true)}
-                >
-                  <HelpCircle className="w-5 h-5" />
-                </button>
+                {/* Row 3: Rules + Tutorial on same line */}
+                <div className="flex items-center gap-1">
+                  <button
+                    className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
+                    onClick={() => setShowRules(true)}
+                  >
+                    <HelpCircle className="w-5 h-5" />
+                  </button>
+                  <button
+                    className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
+                    onClick={() => setShowTutorial(true)}
+                    title="Обучение"
+                  >
+                    <BookOpen className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               {/* Title — shifted right toward avatar */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
@@ -241,14 +250,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <br/>
                   <span>from KZ</span>
                 </h1>
-                {/* Tutorial button below title */}
-                <button
-                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded mt-1"
-                  onClick={() => setShowTutorial(true)}
-                  title="Обучение"
-                >
-                  <BookOpen className="w-4 h-4" />
-                </button>
+
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
