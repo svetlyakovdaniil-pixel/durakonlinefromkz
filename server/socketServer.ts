@@ -336,6 +336,7 @@ export function initSocketServer(httpServer: HttpServer) {
         password: data.settings?.password || undefined,
         isPrivate: data.settings?.isPrivate || false,
         isTutorial: data.settings?.isTutorial || false,
+        playlistId: typeof data.settings?.playlistId === 'number' ? data.settings.playlistId : null,
       };
       const room: Room = {
         id: roomId,

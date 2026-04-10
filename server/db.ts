@@ -2315,6 +2315,37 @@ export async function getActivePlaylistTracks(profileId: number): Promise<string
   return playlist ? playlist.tracks : null;
 }
 
+/** Seed the "Chinese chill+hiphop motives" playlist if it doesn't exist */
+export async function seedChinesePlaylist() {
+  const db = await getDb();
+  if (!db) return;
+
+  // Check if Chinese playlist already exists by name
+  const existing = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Chinese chill+hiphop motives'));
+  if (existing.length > 0) return;
+
+  const chineseTracks = [
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives1_de29af93.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives2_f4033f03.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives3_a0d85a28.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives4_888af5a4.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives5_dcef8e36.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives6_34e4a5fa.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives7_69ba9d28.mp3',
+  ];
+
+  await db.insert(musicPlaylists).values({
+    name: 'Chinese chill+hiphop motives',
+    nameKk: 'Chinese chill+hiphop motives',
+    tracksJson: JSON.stringify(chineseTracks),
+    priceShanyrak: 100000,
+    isDefault: false,
+    isAvailable: true,
+    description: 'Чилл и хип-хоп мотивы в китайском стиле — 7 треков',
+    descriptionKk: 'Қытай стиліндегі чилл және хип-хоп мотивтері — 7 трек',
+  });
+}
+
 /** Seed the default "Standard" playlist if it doesn't exist */
 export async function seedDefaultPlaylist() {
   const db = await getDb();

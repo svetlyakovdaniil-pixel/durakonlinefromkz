@@ -1,7 +1,7 @@
 import type { Room } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus } from 'lucide-react';
+import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus, Music } from 'lucide-react';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
@@ -29,7 +29,7 @@ export default function WaitingRoom({
   room, userId, onToggleReady, onStartGame, onLeave, onCloseRoom,
   profile, onlineFriendIds = [], onInviteFriend,
 }: WaitingRoomProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const isHost = room.hostId === userId;
   const myPlayer = room.players.find(p => p.id === userId);
   // Host clicking "Start" implies they are ready — only check non-host players
@@ -60,6 +60,11 @@ export default function WaitingRoom({
               <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
               {formatBalance(room.settings.betAmount || 100)}
             </Badge>
+            {room.settings.playlistId && (
+              <Badge variant="outline" className="border-purple-500/30 text-purple-300/70 text-[10px] sm:text-xs">
+                <Music className="w-3 h-3 mr-0.5 sm:mr-1" /> {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+              </Badge>
+            )}
             {room.hasPassword && (
               <Badge variant="outline" className="border-amber-500/30 text-amber-400 text-[10px] sm:text-xs">
                 <Lock className="w-3 h-3 mr-0.5 sm:mr-1" /> {t('waitingRoom.withPassword')}

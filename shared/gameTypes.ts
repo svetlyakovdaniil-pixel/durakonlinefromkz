@@ -90,6 +90,8 @@ export interface RoomSettings {
   isPrivate?: boolean;
   /** If true, this is a tutorial room */
   isTutorial?: boolean;
+  /** Selected playlist ID for room music (all players hear the same music) */
+  playlistId?: number | null;
 }
 
 /** Valid bet amounts for room creation */

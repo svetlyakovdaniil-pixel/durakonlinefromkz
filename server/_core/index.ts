@@ -8,7 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
-import { seedDefaultPlaylist } from "../db";
+import { seedDefaultPlaylist, seedChinesePlaylist } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -48,8 +48,9 @@ async function startServer() {
   // Initialize Socket.IO for real-time multiplayer
   initSocketServer(server);
 
-  // Seed default music playlist
+  // Seed music playlists
   seedDefaultPlaylist().catch(e => console.warn('[Music] Failed to seed default playlist:', e));
+  seedChinesePlaylist().catch(e => console.warn('[Music] Failed to seed Chinese playlist:', e));
 
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {

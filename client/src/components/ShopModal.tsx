@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 import { AVATAR_OPTIONS } from '@shared/avatars';
@@ -90,28 +90,39 @@ interface ShopModalProps {
   open: boolean;
   onClose: () => void;
   currentTenge: number;
+  currentShanyrak?: number;
   onPurchased?: () => void;
 }
 
 type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars' | 'music';
 
 interface ConfirmPurchase {
-  type: 'deck' | 'table' | 'frame' | 'avatar';
+  type: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist';
   id: string;
   name: string;
   price: number;
 }
 
-export default function ShopModal({ open, onClose, currentTenge, onPurchased }: ShopModalProps) {
+const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
+
+export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
   const { t, locale } = useTranslation();
   const [activeTab, setActiveTab] = useState<ShopTab>('decks');
   const [confirmPurchase, setConfirmPurchase] = useState<ConfirmPurchase | null>(null);
+  // Preview audio state
+  const [previewPlaylistId, setPreviewPlaylistId] = useState<number | null>(null);
+  const [previewTimer, setPreviewTimer] = useState(0);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const previewIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const { data: ownedDecks = [], refetch: refetchOwned } = trpc.shop.ownedDecks.useQuery(undefined, { enabled: open });
   const { data: ownedTables = [], refetch: refetchOwnedTables } = trpc.shop.ownedTables.useQuery(undefined, { enabled: open });
   const { data: ownedFrames = [], refetch: refetchOwnedFrames } = trpc.shop.ownedFrames.useQuery(undefined, { enabled: open });
   const { data: ownedAvatars = [], refetch: refetchOwnedAvatars } = trpc.shop.ownedAvatars.useQuery(undefined, { enabled: open });
   const { data: priceOverrides = [] } = trpc.shopPrices.overrides.useQuery(undefined, { enabled: open });
+  const { data: allPlaylists = [], refetch: refetchPlaylists } = trpc.playlists.list.useQuery(undefined, { enabled: open });
+  const { data: ownedPlaylistIds = [], refetch: refetchOwnedPlaylists } = trpc.playlists.owned.useQuery(undefined, { enabled: open });
+  const purchasePlaylistMutation = trpc.playlists.purchase.useMutation();
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
@@ -134,6 +145,47 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
   const customDeckPrice = getPrice('deck', 'custom', CUSTOM_DECK_PRICE);
   const isCustomOwned = ownedDecks.includes('custom');
   const canAfford = currentTenge >= customDeckPrice;
+
+  // Preview audio functions
+  const stopPreview = useCallback(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+    }
+    if (previewIntervalRef.current) {
+      clearInterval(previewIntervalRef.current);
+      previewIntervalRef.current = null;
+    }
+    setPreviewPlaylistId(null);
+    setPreviewTimer(0);
+  }, []);
+
+  const startPreview = useCallback((playlistId: number, firstTrackUrl: string) => {
+    stopPreview();
+    const audio = new Audio(firstTrackUrl);
+    audio.volume = 0.5;
+    previewAudioRef.current = audio;
+    setPreviewPlaylistId(playlistId);
+    setPreviewTimer(30);
+    audio.play().catch(() => {});
+    // Auto-stop after 30 seconds
+    let remaining = 30;
+    previewIntervalRef.current = setInterval(() => {
+      remaining--;
+      setPreviewTimer(remaining);
+      if (remaining <= 0) {
+        stopPreview();
+      }
+    }, 1000);
+    // Also stop when audio ends naturally
+    audio.addEventListener('ended', () => stopPreview());
+  }, [stopPreview]);
+
+  // Cleanup preview on unmount or close
+  useEffect(() => {
+    if (!open) stopPreview();
+    return () => stopPreview();
+  }, [open, stopPreview]);
 
   const executePurchase = async (item: ConfirmPurchase) => {
     setPurchasing(true);
@@ -192,6 +244,21 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
           refetchOwnedAvatars();
         } else if (result.reason === 'insufficient_tenge') {
           toast.error(t('shop.notEnough'));
+        } else {
+          toast.error(t('common.error'));
+        }
+      } else if (item.type === 'playlist') {
+        const result = await purchasePlaylistMutation.mutateAsync({ playlistId: parseInt(item.id) });
+        if (result.success) {
+          toast.success(t('toast.purchaseSuccess'));
+          refetchOwnedPlaylists();
+          refetchPlaylists();
+          onPurchased?.();
+        } else if (result.reason === 'already_owned') {
+          toast.info(t('shop.owned'));
+          refetchOwnedPlaylists();
+        } else if (result.reason === 'insufficient_shanyrak') {
+          toast.error(locale === 'kk' ? 'Шаңырақ жеткіліксіз' : 'Недостаточно шаныраков');
         } else {
           toast.error(t('common.error'));
         }
@@ -441,28 +508,90 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   {locale === 'kk' ? 'Фондық музыка' : 'Фоновая музыка'}
                 </h3>
               </div>
-              <p className="text-amber-200/50 text-xs mb-4">
-                {locale === 'kk'
-                  ? 'Плейлисттер жақын арада қолжетімді болады'
-                  : 'Плейлисты будут доступны в ближайшее время'}
-              </p>
-              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4 opacity-50">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-amber-600 to-amber-800 flex items-center justify-center shrink-0">
-                    <Music className="w-6 h-6 text-amber-100" />
+              {allPlaylists.map((playlist: any) => {
+                const isOwned = ownedPlaylistIds.includes(playlist.id);
+                const isFree = playlist.isDefault || playlist.priceShanyrak === 0;
+                const canAffordPlaylist = currentShanyrak >= playlist.priceShanyrak;
+                const isPreviewPlaying = previewPlaylistId === playlist.id;
+                const trackCount = playlist.tracks?.length || 0;
+                const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : playlist.name;
+                const displayDesc = locale === 'kk' && playlist.descriptionKk ? playlist.descriptionKk : (playlist.description || '');
+                return (
+                  <div key={playlist.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center shrink-0 ${
+                        playlist.isDefault
+                          ? 'bg-gradient-to-br from-amber-600 to-amber-800'
+                          : 'bg-gradient-to-br from-purple-600 to-pink-800'
+                      }`}>
+                        <Music className="w-6 h-6 text-amber-100" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-amber-100 font-bold text-sm">{displayName}</h4>
+                        <p className="text-amber-200/50 text-xs">{trackCount} {locale === 'kk' ? 'трек' : 'треков'}</p>
+                        {displayDesc && <p className="text-amber-200/40 text-[10px] mt-0.5">{displayDesc}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-3">
+                      {/* Preview button */}
+                      {trackCount > 0 && (
+                        <button
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                            isPreviewPlaying
+                              ? 'bg-red-600/80 text-white hover:bg-red-500'
+                              : 'bg-amber-700/30 text-amber-200 hover:bg-amber-700/50'
+                          }`}
+                          onClick={() => {
+                            if (isPreviewPlaying) {
+                              stopPreview();
+                            } else {
+                              startPreview(playlist.id, playlist.tracks[0]);
+                            }
+                          }}
+                        >
+                          {isPreviewPlaying ? (
+                            <><Square className="w-3 h-3" /> {locale === 'kk' ? 'Тоқтату' : 'Стоп'} ({previewTimer}{locale === 'kk' ? 'с' : 'с'})</>
+                          ) : (
+                            <><Play className="w-3 h-3" /> {locale === 'kk' ? 'Тыңдау' : 'Прослушать'}</>
+                          )}
+                        </button>
+                      )}
+                      <div className="flex-1" />
+                      {/* Purchase / Owned status */}
+                      {isFree || isOwned ? (
+                        <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                          <Check className="w-4 h-4" />
+                          <span>{isFree ? t('shop.free') : t('shop.purchased')}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            className="bg-amber-600 hover:bg-amber-500 text-white text-xs h-8 px-3"
+                            onClick={() => setConfirmPurchase({
+                              type: 'playlist',
+                              id: String(playlist.id),
+                              name: displayName,
+                              price: playlist.priceShanyrak,
+                            })}
+                            disabled={purchasing || !canAffordPlaylist}
+                          >
+                            {purchasing ? '...' : (locale === 'kk' ? 'Сатып алу' : 'Купить')}
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            <span className="text-amber-100 font-bold text-sm">{playlist.priceShanyrak.toLocaleString()}</span>
+                            <img src={SHANYRAK_ICON} alt="" className="w-5 h-5" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    {!isFree && !isOwned && !canAffordPlaylist && (
+                      <p className="text-red-400/80 text-xs mt-2">
+                        {locale === 'kk' ? 'Шаңырақ жеткіліксіз' : 'Недостаточно шаныраков'}
+                      </p>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-amber-100 font-bold text-sm">
-                      {locale === 'kk' ? 'Стандартты' : 'Стандартный'}
-                    </h4>
-                    <p className="text-amber-200/50 text-xs">7 {locale === 'kk' ? 'трек' : 'треков'}</p>
-                  </div>
-                  <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
-                    <Check className="w-4 h-4" />
-                    <span>{t('shop.free')}</span>
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -484,8 +613,8 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
               </p>
               <div className="flex items-center gap-1.5 mb-5">
                 <span className="text-amber-200/60 text-sm">{t('shop.price')}:</span>
-                <span className="text-amber-100 font-bold text-lg">{confirmPurchase.price}</span>
-                <img src={TENGE_ICON} alt="T" className="w-5 h-5 rounded-full object-cover aspect-square" />
+                <span className="text-amber-100 font-bold text-lg">{confirmPurchase.type === 'playlist' ? confirmPurchase.price.toLocaleString() : confirmPurchase.price}</span>
+                <img src={confirmPurchase.type === 'playlist' ? SHANYRAK_ICON : TENGE_ICON} alt="" className="w-5 h-5 rounded-full object-cover aspect-square" />
               </div>
               <div className="flex items-center gap-3">
                 <Button className="flex-1 bg-amber-600 hover:bg-amber-500 text-white text-sm h-10 font-semibold"

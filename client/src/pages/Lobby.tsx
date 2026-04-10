@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -71,6 +71,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [betAmountIdx, setBetAmountIdx] = useState(0); // index into BET_AMOUNTS
   const [isPrivate, setIsPrivate] = useState(false);
   const [roomPassword, setRoomPassword] = useState('');
+  const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [rejoining, setRejoining] = useState<string | null>(null);
   const [passwordRoom, setPasswordRoom] = useState<Room | null>(null);
@@ -140,6 +141,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: ownedTables = [] } = trpc.shop.ownedTables.useQuery();
   const isDarkTableOwned = ownedTables.includes('dark_kazakh');
   const isNeonTableOwned = ownedTables.includes('neon');
+  const { data: lobbyPlaylists = [] } = trpc.playlists.list.useQuery();
+  const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
   const utils = trpc.useUtils();
@@ -220,6 +223,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       tableStyle,
       betAmount: BET_AMOUNTS[betAmountIdx],
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
+      playlistId: selectedPlaylistId,
     };
     await onCreateRoom(roomName || `Комната ${userName}`, parseInt(maxPlayers), settings);
     setLoading(false);
@@ -681,6 +685,30 @@ onClick={() => setShowTengeTopUp(true)}
                     />
                   </div>
                 )}
+                {/* Playlist selector */}
+                <div>
+                  <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
+                    <Music className="w-3.5 h-3.5" /> {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+                  </Label>
+                  <Select
+                    value={selectedPlaylistId !== null ? String(selectedPlaylistId) : 'none'}
+                    onValueChange={(v) => setSelectedPlaylistId(v === 'none' ? null : parseInt(v))}
+                  >
+                    <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                      <SelectItem value="none" className="text-amber-100">
+                        {locale === 'kk' ? 'Плейлистсіз' : 'Без плейлиста'}
+                      </SelectItem>
+                      {lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id)).map((p: any) => (
+                        <SelectItem key={p.id} value={String(p.id)} className="text-amber-100">
+                          {locale === 'kk' && p.nameKk ? p.nameKk : p.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 {/* Private room toggle */}
                 <div className="flex items-center justify-between">
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
@@ -1043,6 +1071,7 @@ onClick={() => setShowTengeTopUp(true)}
         open={showShop}
         onClose={() => setShowShop(false)}
         currentTenge={profile?.balanceTenge ?? 0}
+        currentShanyrak={profile?.balanceShanyrak ?? 0}
         onPurchased={() => {
           refetchProfile?.();
           utils.shop.ownedDecks.invalidate();

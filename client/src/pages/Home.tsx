@@ -50,6 +50,27 @@ export default function Home() {
     if (!connected) registeredRef.current = false;
   }, [connected]);
 
+  // --- Playlist switching: when entering a room with a playlistId, fetch tracks and switch music ---
+  const roomPlaylistId = currentRoom?.settings?.playlistId ?? null;
+  const { data: roomPlaylistData } = trpc.playlists.tracks.useQuery(
+    { playlistId: roomPlaylistId! },
+    { enabled: !!roomPlaylistId }
+  );
+  const prevPlaylistIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (roomPlaylistId && roomPlaylistData?.tracks?.length) {
+      if (prevPlaylistIdRef.current !== roomPlaylistId) {
+        const urls = roomPlaylistData.tracks.map((t: any) => t.url);
+        music.setTracks(urls);
+        prevPlaylistIdRef.current = roomPlaylistId;
+      }
+    } else if (!roomPlaylistId && prevPlaylistIdRef.current !== null) {
+      // Reset to default tracks when leaving room or room has no playlist
+      prevPlaylistIdRef.current = null;
+    }
+  }, [roomPlaylistId, roomPlaylistData, music]);
+
   // Tutorial congratulations dialog state
   const [showTutorialCongrats, setShowTutorialCongrats] = useState(false);
   const [tutorialRewardGiven, setTutorialRewardGiven] = useState(false);
