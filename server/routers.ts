@@ -782,7 +782,7 @@ export const appRouter = router({
 
     updateShopPrice: adminProcedure
       .input(z.object({
-        itemType: z.enum(['deck', 'table', 'frame']),
+        itemType: z.enum(['deck', 'table', 'frame', 'avatar']),
         itemId: z.string().min(1),
         priceTenge: z.number().min(0).nullable(),
         isAvailable: z.boolean(),

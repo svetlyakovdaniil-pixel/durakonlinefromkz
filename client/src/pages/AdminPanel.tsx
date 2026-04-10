@@ -16,6 +16,9 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { TABLE_STYLES } from "@shared/cardAssets";
+import { AVATAR_FRAMES } from "@/components/ShopModal";
+import { AVATAR_OPTIONS } from "@shared/avatars";
 
 type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications";
 
@@ -1475,14 +1478,18 @@ function ShopManagementTab() {
     onError: () => toast.error("Ошибка обновления"),
   });
 
-  // Default catalog items
-  const DEFAULT_ITEMS = [
-    { itemType: "deck" as const, itemId: "custom", name: "Казахская колода", defaultPrice: 60, category: "Колоды" },
-    { itemType: "table" as const, itemId: "dark_kazakh", name: "Тёмный Казахский", defaultPrice: 500, category: "Столы" },
-    { itemType: "frame" as const, itemId: "fire", name: "Огненная рамка", defaultPrice: 500, category: "Рамки" },
-    { itemType: "frame" as const, itemId: "neon", name: "Неоновая рамка", defaultPrice: 800, category: "Рамки" },
-    { itemType: "frame" as const, itemId: "lightning", name: "Молния рамка", defaultPrice: 1200, category: "Рамки" },
-    { itemType: "frame" as const, itemId: "ice", name: "Ледяная рамка", defaultPrice: 1000, category: "Рамки" },
+  // Build catalog dynamically from cardAssets + avatars
+  const DEFAULT_ITEMS: { itemType: string; itemId: string; name: string; defaultPrice: number; category: string }[] = [
+    // Decks
+    { itemType: "deck", itemId: "custom", name: "Казахская колода", defaultPrice: 60, category: "Колоды" },
+    // Tables (skip classic - it's free)
+    ...Object.entries(TABLE_STYLES)
+      .filter(([key]) => key !== 'classic')
+      .map(([key, val]) => ({ itemType: "table", itemId: key, name: val.name, defaultPrice: val.price, category: "Столы" })),
+    // Frames
+    ...AVATAR_FRAMES.map(f => ({ itemType: "frame", itemId: f.id, name: f.name, defaultPrice: f.price, category: "Рамки" })),
+    // Premium avatars
+    ...AVATAR_OPTIONS.filter(a => a.premium && a.price).map(a => ({ itemType: "avatar", itemId: a.id, name: a.name, defaultPrice: a.price!, category: "Аватары" })),
   ];
 
   // Merge defaults with overrides
@@ -1511,7 +1518,7 @@ function ShopManagementTab() {
     const price = parseInt(editPrice);
     if (isNaN(price) || price < 0) { toast.error("Некорректная цена"); return; }
     updatePrice.mutate({
-      itemType: editItem.itemType,
+      itemType: editItem.itemType as 'deck' | 'table' | 'frame' | 'avatar',
       itemId: editItem.itemId,
       priceTenge: price,
       isAvailable: editAvailable,
@@ -1521,7 +1528,7 @@ function ShopManagementTab() {
 
   const resetToDefault = (item: typeof items[0]) => {
     updatePrice.mutate({
-      itemType: item.itemType,
+      itemType: item.itemType as 'deck' | 'table' | 'frame' | 'avatar',
       itemId: item.itemId,
       priceTenge: item.defaultPrice,
       isAvailable: true,
@@ -1564,6 +1571,7 @@ function ShopManagementTab() {
                     <span className={`text-xs font-medium px-2 py-0.5 rounded ${
                       item.category === "Колоды" ? "bg-blue-900/50 text-blue-300" :
                       item.category === "Столы" ? "bg-green-900/50 text-green-300" :
+                      item.category === "Аватары" ? "bg-amber-900/50 text-amber-300" :
                       "bg-purple-900/50 text-purple-300"
                     }`}>
                       {item.category}
