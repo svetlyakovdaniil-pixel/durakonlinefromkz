@@ -135,6 +135,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const isCustomDeckOwned = ownedDecks.includes('custom');
   const { data: ownedTables = [] } = trpc.shop.ownedTables.useQuery();
   const isDarkTableOwned = ownedTables.includes('dark_kazakh');
+  const isNeonTableOwned = ownedTables.includes('neon');
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
   const utils = trpc.useUtils();
@@ -615,6 +616,7 @@ onClick={() => setShowTengeTopUp(true)}
                     <Label className="text-amber-200/70 text-sm">{t('lobby.tableStyle')}</Label>
                     <Select value={tableStyle} onValueChange={(v) => {
                       if (v === 'dark_kazakh' && !isDarkTableOwned) return;
+                      if (v === 'neon' && !isNeonTableOwned) return;
                       setTableStyle(v as TableStyle);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
@@ -630,6 +632,16 @@ onClick={() => setShowTengeTopUp(true)}
                           <span className="flex items-center gap-1.5">
                             {!isDarkTableOwned && <Lock className="w-3 h-3" />}
                             {t('lobby.tableDarkKazakh')}
+                          </span>
+                        </SelectItem>
+                        <SelectItem
+                          value="neon"
+                          className={isNeonTableOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isNeonTableOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isNeonTableOwned && <Lock className="w-3 h-3" />}
+                            {t('lobby.tableNeon')}
                           </span>
                         </SelectItem>
                       </SelectContent>

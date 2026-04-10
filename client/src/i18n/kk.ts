@@ -73,6 +73,7 @@ export const kk = {
     tableStyle: 'Ойын үстелі',
     tableClassic: 'Классикалық',
     tableDarkKazakh: 'Қараңғы Қазақ',
+    tableNeon: 'Неон',
     privateRoom: 'Жабық бөлме',
     roomPassword: 'Бөлме құпиясөзі',
     enterPassword: 'Құпиясөзді енгізіңіз',

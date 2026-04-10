@@ -73,6 +73,7 @@ export const ru = {
     tableStyle: 'Игровой стол',
     tableClassic: 'Классический',
     tableDarkKazakh: 'Тёмный Казахский',
+    tableNeon: 'Неон',
     privateRoom: 'Закрытая комната',
     roomPassword: 'Пароль комнаты',
     enterPassword: 'Введите пароль',
