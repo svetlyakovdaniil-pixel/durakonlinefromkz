@@ -26,6 +26,7 @@ import { useTranslation } from '@/i18n';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { FrameWrapper } from '@/components/AvatarWithFrame';
+import TopPlayersMarquee from '@/components/TopPlayersMarquee';
 
 interface LobbyProps {
   rooms: Room[];
@@ -493,6 +494,11 @@ onClick={() => setShowTengeTopUp(true)}
                 </button>
               </div>
             </div>
+            {/* Top players marquee (desktop) */}
+            <div className="mt-4 hidden sm:block">
+              <TopPlayersMarquee />
+            </div>
+
             {/* Bottom row: Комнаты + Фильтр + Поиск + Создать */}
             <div className="mt-4 pt-3 pb-1 border-t border-amber-700/15 space-y-3">
               <div className="flex items-center justify-between">
@@ -771,6 +777,11 @@ onClick={() => setShowTengeTopUp(true)}
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile: Top players marquee */}
+      <div className="sm:hidden">
+        <TopPlayersMarquee />
       </div>
 
       {/* Mobile: Комнаты + Фильтр + Поиск + Создать (below header, only on mobile) */}

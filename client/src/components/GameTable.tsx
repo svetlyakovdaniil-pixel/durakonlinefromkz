@@ -1439,7 +1439,7 @@ export default function GameTable({
         })()}
 
         {/* Main game area */}
-        <div className="flex-1 flex relative">
+        <div className="flex-1 flex relative overflow-hidden">
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
             <div data-tutorial="timer-desktop" className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
@@ -1462,7 +1462,7 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden">
+          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden sm:overflow-visible">
             <div
               id="battlefield-drop-zone"
               className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all ${
@@ -1491,9 +1491,9 @@ export default function GameTable({
                 </div>
               )}
 
-              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl overflow-y-auto ${
+              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl overflow-y-auto sm:overflow-y-visible battlefield-scroll ${
                 gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
-              }`} style={{ maxHeight: '100%' }}>
+              }`} style={{ maxHeight: 'calc(100dvh - 280px)' }}>
                 {gs.battleField.map((pair: BattlePair, i: number) => (
                   <div
                     key={i}

@@ -147,6 +147,8 @@ export interface GameState {
   _autoCompleteDefense?: boolean;
   /** Internal flag: delay before completing defense (defender played last card) */
   _lastCardDefenseDelay?: boolean;
+  /** Order of players who forfeited (first to leave is first in array) */
+  forfeitOrder?: string[];
 }
 
 // --- Room ---

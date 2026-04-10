@@ -998,9 +998,20 @@ export function forfeitPlayer(state: GameState, playerIdx: number): void {
   player.leftGame = true;
   player.isOut = true;
 
-  // The player who forfeits is always the loser (durak)
-  // Set loserId immediately so checkGameOver won't override it
-  state.loserId = player.id;
+  // Count how many active players remain AFTER this forfeit
+  const remainingActive = state.players.filter(p => !p.isOut).length;
+
+  if (remainingActive <= 1) {
+    // Only 0 or 1 players left — this forfeiter is the loser (durak)
+    state.loserId = player.id;
+  } else {
+    // Multiple players still playing — assign last place to the forfeiter
+    // In Durak, the last person standing is the loser.
+    // Forfeited players get the worst remaining places (counting down from total).
+    // Track forfeited players separately — they get places after all active players finish.
+    if (!state.forfeitOrder) state.forfeitOrder = [];
+    state.forfeitOrder.push(player.id);
+  }
 
   // Move all cards from hand to discard pile
   for (const card of player.hand) {
@@ -1054,12 +1065,11 @@ function checkGameOver(state: GameState): void {
   if (activePlayers.length <= 1) {
     state.gamePhase = 'finished';
     if (activePlayers.length === 1) {
-      // Only set loserId if not already set (e.g. by forfeit)
-      // If loserId is already set (forfeit case), the remaining player is a winner, not a loser
       if (!state.loserId) {
+        // Normal game end: last remaining player is the loser (durak)
         state.loserId = activePlayers[0].id;
       } else {
-        // The remaining player is a winner — assign winPlace if not already assigned
+        // Forfeit case: loserId already set, remaining player is a winner
         const remaining = activePlayers[0];
         if (!remaining.winPlace) {
           remaining.isOut = true;
@@ -1068,7 +1078,6 @@ function checkGameOver(state: GameState): void {
           if (!state.winnersOrder.includes(remaining.id)) {
             state.winnersOrder.push(remaining.id);
           }
-          // Calculate prize for the remaining winner
           if (state.prizePool > 0) {
             const prizeAmount = getPrizeForPlace(state.prizePool, state.players.length, remaining.winPlace);
             state.playerPrizes.push({
@@ -1076,6 +1085,31 @@ function checkGameOver(state: GameState): void {
               place: remaining.winPlace,
               amount: prizeAmount,
             });
+          }
+        }
+      }
+    } else if (activePlayers.length === 0) {
+      // All players forfeited — last forfeiter is the loser
+      if (state.forfeitOrder && state.forfeitOrder.length > 0 && !state.loserId) {
+        state.loserId = state.forfeitOrder[state.forfeitOrder.length - 1];
+      }
+    }
+
+    // Assign winPlace to forfeited players in reverse order (first to leave = worst place)
+    if (state.forfeitOrder && state.forfeitOrder.length > 0) {
+      const totalPlayers = state.players.length;
+      // Forfeited players get places from worst to better
+      // Last place = totalPlayers (for 2-player: loser is place 2)
+      // The loser (loserId) gets the absolute last place
+      // Forfeited players who aren't the loserId get places just before the loser
+      for (let i = 0; i < state.forfeitOrder.length; i++) {
+        const fId = state.forfeitOrder[i];
+        const fPlayer = state.players.find(p => p.id === fId);
+        if (fPlayer && !fPlayer.winPlace && fPlayer.id !== state.loserId) {
+          // First forfeiter gets worst non-loser place, etc.
+          const place = totalPlayers - 1 - i;
+          if (place >= 1) {
+            fPlayer.winPlace = place;
           }
         }
       }
