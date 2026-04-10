@@ -207,15 +207,18 @@ export default function TutorialStepDisplay({
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'bottom') {
-      // Position text box at the bottom, full width, not overlapping table cards
-      // Find the table area to position below it
+      // Position text box between table cards and player hand, centered, not full-width
       const tableArea = document.querySelector('[data-tutorial="table-area"]');
+      const playerHand = document.querySelector('[data-tutorial="player-hand"]');
       const tableBottom = tableArea ? tableArea.getBoundingClientRect().bottom + 8 : window.innerHeight * 0.55;
-      const textBoxWidth = window.innerWidth - 16; // full width with 8px margin each side
-      const availableHeight = window.innerHeight - tableBottom - 8;
+      const handTop = playerHand ? playerHand.getBoundingClientRect().top - 8 : window.innerHeight - 120;
+      // On desktop, limit width to ~600px; on mobile, use full width
+      const isDesktop = window.innerWidth >= 768;
+      const textBoxWidth = isDesktop ? Math.min(600, window.innerWidth - 32) : window.innerWidth - 16;
+      const textLeft = isDesktop ? (window.innerWidth - textBoxWidth) / 2 : 8;
       setTextPos({
         top: tableBottom,
-        left: 8,
+        left: textLeft,
         maxWidth: textBoxWidth,
       });
     } else if (scenario.textPosition === 'center' || rects.length === 0) {
