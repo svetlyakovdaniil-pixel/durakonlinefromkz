@@ -6,6 +6,8 @@ import {
   Users, Activity, ArrowLeftRight, Shield, Search,
   ChevronLeft, ChevronRight, Ban, CheckCircle, Trash2,
   DollarSign, ArrowLeft, RefreshCw, LogOut as KickIcon,
+  Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
+  ChevronDown, ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +26,12 @@ function formatDate(d: string | Date | null | undefined) {
 function formatNumber(n: number | null | undefined) {
   if (n == null) return "0";
   return n.toLocaleString("ru-RU");
+}
+function formatDuration(seconds: number | null | undefined) {
+  if (!seconds) return "—";
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }
 
 /* ================================================================
@@ -116,6 +124,7 @@ export default function AdminPanel() {
 function PlayersTab() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
+  const [profilePlayerId, setProfilePlayerId] = useState<number | null>(null);
   const limit = 20;
 
   const stableSearch = useMemo(() => search, [search]);
@@ -171,6 +180,16 @@ function PlayersTab() {
   });
 
   const totalPages = Math.ceil((data?.total ?? 0) / limit);
+
+  // If a profile is selected, show the profile sub-view
+  if (profilePlayerId !== null) {
+    return (
+      <PlayerProfileView
+        profileId={profilePlayerId}
+        onBack={() => setProfilePlayerId(null)}
+      />
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -239,6 +258,13 @@ function PlayersTab() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
+                      <Button
+                        variant="ghost" size="sm"
+                        className="h-7 px-2 text-xs text-blue-400 hover:text-blue-300"
+                        onClick={() => setProfilePlayerId(p.id)}
+                      >
+                        <Eye className="w-3 h-3 mr-1" /> Профиль
+                      </Button>
                       <Button
                         variant="ghost" size="sm"
                         className="h-7 px-2 text-xs text-amber-400 hover:text-amber-300"
@@ -399,6 +425,450 @@ function PlayersTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/* ================================================================
+   PLAYER PROFILE VIEW (sub-view inside Players tab)
+   ================================================================ */
+function PlayerProfileView({ profileId, onBack }: { profileId: number; onBack: () => void }) {
+  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games">("info");
+
+  const { data: detail, isLoading, refetch } = trpc.admin.playerDetail.useQuery({ profileId });
+
+  const utils = trpc.useUtils();
+
+  const updateRoleMutation = trpc.admin.updateRole.useMutation({
+    onSuccess: () => {
+      toast.success("Роль обновлена");
+      refetch();
+      utils.admin.players.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="text-center py-12 text-gray-500 animate-pulse">Загрузка профиля...</div>
+    );
+  }
+
+  if (!detail) {
+    return (
+      <div className="text-center py-12 space-y-4">
+        <p className="text-gray-500">Профиль не найден</p>
+        <Button variant="outline" onClick={onBack} className="border-gray-700 text-gray-300">
+          <ArrowLeft className="w-4 h-4 mr-2" /> Назад
+        </Button>
+      </div>
+    );
+  }
+
+  const profileTabs = [
+    { id: "info" as const, label: "Информация", icon: Users },
+    { id: "transactions" as const, label: "Транзакции", icon: ArrowLeftRight },
+    { id: "games" as const, label: "История игр", icon: Gamepad2 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={onBack} className="text-gray-400 hover:text-amber-100">
+            <ArrowLeft className="w-4 h-4 mr-1" /> Назад к списку
+          </Button>
+          <div className="h-6 w-px bg-gray-700" />
+          <h2 className="text-lg font-bold text-amber-100">
+            {detail.displayName || "Без имени"} <span className="text-gray-500 font-normal text-sm">#{detail.gameId}</span>
+          </h2>
+          {detail.role === "admin" && (
+            <span className="text-xs bg-amber-900/50 text-amber-300 px-2 py-0.5 rounded flex items-center gap-1">
+              <Crown className="w-3 h-3" /> Админ
+            </span>
+          )}
+          {detail.isBanned && (
+            <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded flex items-center gap-1">
+              <Ban className="w-3 h-3" /> Забанен
+            </span>
+          )}
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+          <RefreshCw className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Sub-tabs */}
+      <div className="flex gap-1 border-b border-gray-800">
+        {profileTabs.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setProfileTab(t.id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+              profileTab === t.id
+                ? "border-amber-500 text-amber-100"
+                : "border-transparent text-gray-500 hover:text-gray-300"
+            }`}
+          >
+            <t.icon className="w-4 h-4" />
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Sub-tab content */}
+      {profileTab === "info" && (
+        <ProfileInfoSection
+          detail={detail}
+          onUpdateRole={(role) => updateRoleMutation.mutate({ profileId, role })}
+          isUpdatingRole={updateRoleMutation.isPending}
+        />
+      )}
+      {profileTab === "transactions" && <ProfileTransactionsSection profileId={profileId} />}
+      {profileTab === "games" && <ProfileGamesSection profileId={profileId} />}
+    </div>
+  );
+}
+
+/* ─── Profile Info Section ─── */
+function ProfileInfoSection({
+  detail,
+  onUpdateRole,
+  isUpdatingRole,
+}: {
+  detail: any;
+  onUpdateRole: (role: "admin" | "user") => void;
+  isUpdatingRole: boolean;
+}) {
+  const [showRoleDialog, setShowRoleDialog] = useState(false);
+  const newRole = detail.role === "admin" ? "user" : "admin";
+
+  return (
+    <div className="space-y-6">
+      {/* Info cards grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <InfoCard label="Рейтинг" value={formatNumber(detail.rating)} icon={Trophy} color="text-amber-400" />
+        <InfoCard label="Игры" value={formatNumber(detail.gamesPlayed)} icon={Gamepad2} color="text-blue-400" />
+        <InfoCard label="Победы" value={formatNumber(detail.wins)} icon={Trophy} color="text-green-400" />
+        <InfoCard label="Поражения" value={formatNumber(detail.losses)} icon={Ban} color="text-red-400" />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <InfoCard label="Тенге" value={formatNumber(detail.balanceTenge)} icon={DollarSign} color="text-emerald-400" />
+        <InfoCard label="Шаныраки" value={formatNumber(detail.balanceShanyrak)} icon={DollarSign} color="text-yellow-400" />
+        <InfoCard label="Обучение" value={detail.tutorialCompleted ? "Пройдено" : "Нет"} icon={CheckCircle} color={detail.tutorialCompleted ? "text-green-400" : "text-gray-500"} />
+        <InfoCard label="Роль" value={detail.role === "admin" ? "Админ" : "Игрок"} icon={Crown} color={detail.role === "admin" ? "text-amber-400" : "text-gray-400"} />
+      </div>
+
+      {/* Details table */}
+      <div className="border border-gray-800 rounded-lg overflow-hidden">
+        <table className="w-full text-sm">
+          <tbody className="divide-y divide-gray-800">
+            <DetailRow label="Profile ID" value={`#${detail.id}`} />
+            <DetailRow label="Game ID" value={`#${detail.gameId}`} />
+            <DetailRow label="Open ID" value={detail.openId || "—"} mono />
+            <DetailRow label="Email" value={detail.email || "—"} />
+            <DetailRow label="Аватар" value={detail.avatarId || "wolf"} />
+            <DetailRow label="Рамка" value={detail.equippedFrame || "Нет"} />
+            <DetailRow label="Последний вход" value={formatDate(detail.lastSignedIn)} />
+            <DetailRow label="Регистрация (user)" value={formatDate(detail.userCreatedAt)} />
+            <DetailRow label="Регистрация (profile)" value={formatDate(detail.createdAt)} />
+            {detail.isBanned && (
+              <>
+                <DetailRow label="Причина бана" value={detail.banReason || "—"} highlight="red" />
+                <DetailRow label="Дата бана" value={formatDate(detail.bannedAt)} highlight="red" />
+              </>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Role change button */}
+      <div className="flex gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowRoleDialog(true)}
+          className="border-gray-700 text-gray-300"
+        >
+          <Crown className="w-4 h-4 mr-2" />
+          Сменить роль на {newRole === "admin" ? "Админ" : "Игрок"}
+        </Button>
+      </div>
+
+      {/* Role change dialog */}
+      <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-gray-100">
+          <DialogHeader>
+            <DialogTitle>Смена роли</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Вы уверены, что хотите изменить роль игрока <strong className="text-amber-100">{detail.displayName}</strong> с{" "}
+              <strong className="text-amber-100">{detail.role}</strong> на{" "}
+              <strong className="text-amber-100">{newRole}</strong>?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRoleDialog(false)} className="border-gray-700 text-gray-300">
+              Отмена
+            </Button>
+            <Button
+              disabled={isUpdatingRole}
+              onClick={() => {
+                onUpdateRole(newRole);
+                setShowRoleDialog(false);
+              }}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              Подтвердить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function InfoCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: React.ElementType; color: string }) {
+  return (
+    <div className="border border-gray-800 rounded-lg p-4 bg-gray-900/30">
+      <div className="flex items-center gap-2 mb-1">
+        <Icon className={`w-4 h-4 ${color}`} />
+        <span className="text-xs text-gray-500">{label}</span>
+      </div>
+      <div className="text-xl font-bold text-gray-100">{value}</div>
+    </div>
+  );
+}
+
+function DetailRow({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: "red" }) {
+  return (
+    <tr className="hover:bg-gray-900/30">
+      <td className="px-4 py-2.5 text-gray-500 text-sm w-48">{label}</td>
+      <td className={`px-4 py-2.5 text-sm ${
+        highlight === "red" ? "text-red-400" : "text-gray-100"
+      } ${mono ? "font-mono text-xs" : ""}`}>
+        {value}
+      </td>
+    </tr>
+  );
+}
+
+/* ─── Profile Transactions Section ─── */
+function ProfileTransactionsSection({ profileId }: { profileId: number }) {
+  const [page, setPage] = useState(0);
+  const [sortBy, setSortBy] = useState<"date" | "amount">("date");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const limit = 30;
+
+  const { data, isLoading } = trpc.admin.playerTransactions.useQuery({
+    profileId,
+    limit,
+    offset: page * limit,
+    sortBy,
+    sortDir,
+  });
+
+  const totalPages = Math.ceil((data?.total ?? 0) / limit);
+
+  const toggleSort = (col: "date" | "amount") => {
+    if (sortBy === col) {
+      setSortDir(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(col);
+      setSortDir("desc");
+    }
+    setPage(0);
+  };
+
+  const SortIcon = ({ col }: { col: "date" | "amount" }) => {
+    if (sortBy !== col) return <ArrowUpDown className="w-3 h-3 ml-1 opacity-40" />;
+    return sortDir === "asc"
+      ? <ChevronUp className="w-3 h-3 ml-1 text-amber-400" />
+      : <ChevronDown className="w-3 h-3 ml-1 text-amber-400" />;
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Всего транзакций: {formatNumber(data?.total)}</span>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-gray-800">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-900/50">
+            <tr className="text-left text-gray-400">
+              <th className="px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("date")}>
+                <span className="flex items-center">Дата <SortIcon col="date" /></span>
+              </th>
+              <th className="px-4 py-3 font-medium">Тип</th>
+              <th className="px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("amount")}>
+                <span className="flex items-center">Сумма <SortIcon col="amount" /></span>
+              </th>
+              <th className="px-4 py-3 font-medium">Валюта</th>
+              <th className="px-4 py-3 font-medium">Баланс после</th>
+              <th className="px-4 py-3 font-medium">Описание</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {isLoading ? (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+            ) : !data?.transactions?.length ? (
+              <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Транзакций нет</td></tr>
+            ) : (
+              data.transactions.map((t: any) => (
+                <tr key={t.id} className="hover:bg-gray-900/30 transition-colors">
+                  <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(t.createdAt)}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                      t.type === 'game_entry' ? 'bg-red-900/50 text-red-300' :
+                      t.type === 'game_reward' ? 'bg-green-900/50 text-green-300' :
+                      t.type === 'tutorial_reward' ? 'bg-blue-900/50 text-blue-300' :
+                      t.type === 'free_topup' ? 'bg-amber-900/50 text-amber-300' :
+                      t.type === 'shop_purchase' ? 'bg-purple-900/50 text-purple-300' :
+                      'bg-gray-800 text-gray-400'
+                    }`}>
+                      {t.type}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={t.amount >= 0 ? "text-green-400" : "text-red-400"}>
+                      {t.amount >= 0 ? "+" : ""}{formatNumber(t.amount)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{t.currency === "shanyrak" ? "🏠 Шаныраки" : "₸ Тенге"}</td>
+                  <td className="px-4 py-3 text-gray-400">{t.balanceAfter != null ? formatNumber(t.balanceAfter) : "—"}</td>
+                  <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{t.description || "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline" size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(p => p - 1)}
+            className="border-gray-700 text-gray-300"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+          </Button>
+          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <Button
+            variant="outline" size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(p => p + 1)}
+            className="border-gray-700 text-gray-300"
+          >
+            Далее <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── Profile Games Section ─── */
+function ProfileGamesSection({ profileId }: { profileId: number }) {
+  const [page, setPage] = useState(0);
+  const limit = 20;
+
+  const { data, isLoading } = trpc.admin.playerGameHistory.useQuery({
+    profileId,
+    limit,
+    offset: page * limit,
+  });
+
+  const totalPages = Math.ceil((data?.total ?? 0) / limit);
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Всего игр: {formatNumber(data?.total)}</span>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-gray-800">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-900/50">
+            <tr className="text-left text-gray-400">
+              <th className="px-4 py-3 font-medium">Дата</th>
+              <th className="px-4 py-3 font-medium">Игроков</th>
+              <th className="px-4 py-3 font-medium">Место</th>
+              <th className="px-4 py-3 font-medium">Результат</th>
+              <th className="px-4 py-3 font-medium">Рейтинг</th>
+              <th className="px-4 py-3 font-medium">Длительность</th>
+              <th className="px-4 py-3 font-medium">Комната</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {isLoading ? (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+            ) : !data?.games?.length ? (
+              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Игр не найдено</td></tr>
+            ) : (
+              data.games.map((g: any) => (
+                <tr key={g.id} className="hover:bg-gray-900/30 transition-colors">
+                  <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(g.createdAt)}</td>
+                  <td className="px-4 py-3">{g.playerCount}</td>
+                  <td className="px-4 py-3">
+                    <span className={`font-medium ${
+                      g.place === 1 ? "text-amber-400" :
+                      g.isLoser ? "text-red-400" :
+                      "text-gray-300"
+                    }`}>
+                      {g.place === 1 ? "🥇 1-е" :
+                       g.place === 2 ? "🥈 2-е" :
+                       g.place === 3 ? "🥉 3-е" :
+                       `${g.place}-е`}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    {g.isLoser ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-red-900/50 text-red-300">Дурак</span>
+                    ) : g.place === 1 ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-green-900/50 text-green-300">Победа</span>
+                    ) : (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-gray-800 text-gray-400">Вышел</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={g.ratingDelta >= 0 ? "text-green-400" : "text-red-400"}>
+                      {g.ratingDelta >= 0 ? "+" : ""}{g.ratingDelta}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-gray-400">{formatDuration(g.durationSeconds)}</td>
+                  <td className="px-4 py-3 text-gray-500 font-mono text-xs">{g.roomId?.slice(0, 8) || "—"}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline" size="sm"
+            disabled={page === 0}
+            onClick={() => setPage(p => p - 1)}
+            className="border-gray-700 text-gray-300"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+          </Button>
+          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <Button
+            variant="outline" size="sm"
+            disabled={page >= totalPages - 1}
+            onClick={() => setPage(p => p + 1)}
+            className="border-gray-700 text-gray-300"
+          >
+            Далее <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

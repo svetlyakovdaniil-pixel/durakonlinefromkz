@@ -1342,3 +1342,126 @@ export async function adminGetGlobalStats() {
     totalGames: gameStats?.totalGames ?? 0,
   };
 }
+
+/**
+ * Admin: Get full player detail (profile + user info including role).
+ */
+export async function adminGetPlayerDetail(profileId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile) return null;
+
+  const [user] = await db.select().from(users).where(eq(users.id, profile.userId)).limit(1);
+
+  return {
+    ...profile,
+    openId: user?.openId ?? null,
+    email: user?.email ?? null,
+    role: user?.role ?? 'user',
+    lastSignedIn: user?.lastSignedIn ?? null,
+    userCreatedAt: user?.createdAt ?? null,
+  };
+}
+
+/**
+ * Admin: Update a player's role (admin/user).
+ */
+export async function adminUpdateRole(profileId: number, role: 'admin' | 'user') {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile) return { success: false };
+
+  await db.update(users).set({ role }).where(eq(users.id, profile.userId));
+  return { success: true };
+}
+
+/**
+ * Admin: Get player transactions with sorting by amount.
+ */
+export async function adminGetPlayerTransactions(opts: {
+  profileId: number;
+  limit?: number;
+  offset?: number;
+  sortBy?: 'date' | 'amount';
+  sortDir?: 'asc' | 'desc';
+}) {
+  const db = await getDb();
+  if (!db) return { transactions: [], total: 0 };
+
+  const limit = opts.limit ?? 50;
+  const offset = opts.offset ?? 0;
+  const sortBy = opts.sortBy ?? 'date';
+  const sortDir = opts.sortDir ?? 'desc';
+
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(transactions)
+    .where(eq(transactions.profileId, opts.profileId));
+  const total = countResult[0]?.count ?? 0;
+
+  const orderColumn = sortBy === 'amount' ? transactions.amount : transactions.createdAt;
+  const orderFn = sortDir === 'asc' ? asc : desc;
+
+  const rows = await db.select()
+    .from(transactions)
+    .where(eq(transactions.profileId, opts.profileId))
+    .orderBy(orderFn(orderColumn))
+    .limit(limit)
+    .offset(offset);
+
+  return { transactions: rows, total };
+}
+
+/**
+ * Admin: Get player game history with pagination.
+ */
+export async function adminGetPlayerGameHistory(opts: {
+  profileId: number;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { games: [], total: 0 };
+
+  const limit = opts.limit ?? 20;
+  const offset = opts.offset ?? 0;
+
+  const whereClause = sql`JSON_CONTAINS(${gameHistory.playersJson}, CAST(${opts.profileId} AS JSON))`;
+
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(gameHistory)
+    .where(whereClause);
+  const total = countResult[0]?.count ?? 0;
+
+  const records = await db.select()
+    .from(gameHistory)
+    .where(whereClause)
+    .orderBy(desc(gameHistory.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  // Enrich with place and rating delta
+  const ratingByPlace: Record<number, number[]> = {
+    2: [25, -25],
+    3: [25, 15, -25],
+    4: [25, 20, 15, -25],
+    5: [25, 20, 15, 10, -25],
+    6: [25, 20, 15, 10, 5, -25],
+    7: [25, 20, 15, 10, 5, 5, -25],
+    8: [25, 20, 15, 10, 5, 5, 5, -25],
+  };
+
+  const games = records.map(record => {
+    const playerIds = JSON.parse(record.playersJson || '[]') as number[];
+    const place = playerIds.indexOf(opts.profileId) + 1;
+    const isLoser = opts.profileId === record.loserId;
+    const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
+    const ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+    return { ...record, place, ratingDelta, isLoser };
+  });
+
+  return { games, total };
+}

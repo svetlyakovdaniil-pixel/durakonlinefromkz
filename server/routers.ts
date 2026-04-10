@@ -47,6 +47,10 @@ import {
   adminResetStats,
   adminGetTransactions,
   adminGetGlobalStats,
+  adminGetPlayerDetail,
+  adminUpdateRole,
+  adminGetPlayerTransactions,
+  adminGetPlayerGameHistory,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
@@ -536,6 +540,47 @@ export const appRouter = router({
           limit: input?.limit ?? 50,
           offset: input?.offset ?? 0,
         });
+      }),
+
+    /** Get full player detail */
+    playerDetail: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .query(async ({ input }) => {
+        return adminGetPlayerDetail(input.profileId);
+      }),
+
+    /** Update player role */
+    updateRole: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        role: z.enum(['admin', 'user']),
+      }))
+      .mutation(async ({ input }) => {
+        return adminUpdateRole(input.profileId, input.role);
+      }),
+
+    /** Get player transactions with sorting */
+    playerTransactions: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+        sortBy: z.enum(['date', 'amount']).optional(),
+        sortDir: z.enum(['asc', 'desc']).optional(),
+      }))
+      .query(async ({ input }) => {
+        return adminGetPlayerTransactions(input);
+      }),
+
+    /** Get player game history */
+    playerGameHistory: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+      }))
+      .query(async ({ input }) => {
+        return adminGetPlayerGameHistory(input);
       }),
 
     /** Kick a player (disconnect their socket) */
