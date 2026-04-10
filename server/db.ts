@@ -2346,6 +2346,14 @@ export async function seedChinesePlaylist() {
   });
 }
 
+/** Remove old "Rules house" playlist from DB if it exists */
+export async function cleanupOldPlaylists() {
+  const db = await getDb();
+  if (!db) return;
+  // Delete any playlist named 'Rules house' (legacy)
+  await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Rules house'));
+}
+
 /** Seed the default "Standard" playlist if it doesn't exist */
 export async function seedDefaultPlaylist() {
   const db = await getDb();

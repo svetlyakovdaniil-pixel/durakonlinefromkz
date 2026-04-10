@@ -115,26 +115,25 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     } catch {}
   };
 
+  // Default tracks (same as useMusic hook)
+  const DEFAULT_TRACKS = [
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+  ];
+
   // When playlist data loads or changes, switch the music tracks
   useEffect(() => {
     if (selectedPlaylistId === 'default') {
-      // Reset to default tracks (Rules house)
-      // The default tracks are hardcoded in useMusic hook
-      // We need to set them back — import the default list
-      const DEFAULT_TRACKS = [
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
-        'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
-      ];
+      // Reset to default tracks (Стандартный)
       music.setTracks(DEFAULT_TRACKS);
     } else if (selectedPlaylistData?.tracks?.length) {
-      // tracks from backend are already string URLs (not objects)
-      const urls = selectedPlaylistData.tracks.map((t: any) => typeof t === 'string' ? t : t.url);
-      music.setTracks(urls);
+      // tracks from backend are already string URLs
+      music.setTracks(selectedPlaylistData.tracks as string[]);
     }
   }, [selectedPlaylistId, selectedPlaylistData]);
 
@@ -245,7 +244,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                     <SelectItem value="default" className="text-amber-100 text-sm">
-                      Rules house ({locale === 'kk' ? 'стандартты' : 'стандартный'})
+                      {locale === 'kk' ? 'Стандартты' : 'Стандартный'}
                     </SelectItem>
                     {ownedPlaylists.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">

@@ -61,8 +61,8 @@ export default function Home() {
   useEffect(() => {
     if (roomPlaylistId && roomPlaylistData?.tracks?.length) {
       if (prevPlaylistIdRef.current !== roomPlaylistId) {
-        const urls = roomPlaylistData.tracks.map((t: any) => t.url);
-        music.setTracks(urls);
+        // tracks from backend are already string URLs
+        music.setTracks(roomPlaylistData.tracks as string[]);
         prevPlaylistIdRef.current = roomPlaylistId;
       }
     } else if (!roomPlaylistId && prevPlaylistIdRef.current !== null) {

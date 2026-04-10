@@ -109,6 +109,74 @@ describe('Playlist features (Batch 93)', () => {
   });
 });
 
+describe('Playlist bug fixes (Batch 95)', () => {
+  describe('No Rules house references', () => {
+    it('SettingsSheet should not contain Rules house text', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
+      expect(source).not.toContain('Rules house');
+      expect(source).not.toContain('Relus house');
+    });
+
+    it('should have Стандартный as default playlist label in SettingsSheet', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
+      expect(source).toContain('Стандартный');
+      expect(source).toContain('Стандартты');
+    });
+
+    it('cleanupOldPlaylists function should exist in db.ts', async () => {
+      const db = await import('./db');
+      expect(typeof db.cleanupOldPlaylists).toBe('function');
+    });
+  });
+
+  describe('Track format fix', () => {
+    it('SettingsSheet should use tracks as string[] not map .url', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
+      // Should NOT have the old .url mapping
+      expect(source).not.toContain('.map((t: any) => typeof t');
+      expect(source).not.toContain("t.url");
+      // Should cast tracks as string[]
+      expect(source).toContain('as string[]');
+    });
+
+    it('Home.tsx should use tracks as string[] not map .url', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/pages/Home.tsx', 'utf-8');
+      // Should NOT have the old .url mapping
+      expect(source).not.toContain('.map((t: any) => t.url');
+      // Should cast tracks as string[]
+      expect(source).toContain('as string[]');
+    });
+  });
+
+  describe('ShopModal preview toggle', () => {
+    it('should use togglePreview function instead of startPreview', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
+      expect(source).toContain('togglePreview');
+      expect(source).not.toContain('startPreview');
+    });
+
+    it('should save wasMusicPlayingRef before stopping music', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
+      // wasMusicPlayingRef should be set to music.enabled before stopMusic
+      expect(source).toContain('wasMusicPlayingRef.current = music.enabled');
+    });
+
+    it('should resume music in stopPreview when wasMusicPlayingRef is true', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
+      // In stopPreview, should check wasMusicPlayingRef and call startMusic
+      expect(source).toContain('if (wasMusicPlayingRef.current)');
+      expect(source).toContain('music.startMusic()');
+    });
+  });
+});
+
 describe('Playlist features (Batch 94)', () => {
   describe('GameSettingsSheet has no playlist selector', () => {
     it('should not import any playlist-related components', async () => {

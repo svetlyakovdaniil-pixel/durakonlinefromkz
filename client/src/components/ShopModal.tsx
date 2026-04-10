@@ -151,39 +151,61 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
 
   // Preview audio functions
   const stopPreview = useCallback(() => {
+    // Stop preview audio
     if (previewAudioRef.current) {
       previewAudioRef.current.pause();
+      previewAudioRef.current.removeEventListener('ended', stopPreview as any);
       previewAudioRef.current = null;
     }
+    // Clear countdown timer
     if (previewIntervalRef.current) {
       clearInterval(previewIntervalRef.current);
       previewIntervalRef.current = null;
     }
     setPreviewPlaylistId(null);
     setPreviewTimer(0);
-    // Resume background music if it was playing before preview
+    // Resume background music if it was playing before preview started
     if (wasMusicPlayingRef.current) {
-      music.startMusic();
       wasMusicPlayingRef.current = false;
+      music.startMusic();
     }
   }, [music]);
 
-  const startPreview = useCallback((playlistId: number, firstTrackUrl: string) => {
-    // Remember if background music was playing
-    const wasMusicPlaying = music.enabled;
-    // Stop any existing preview first (this resets wasMusicPlayingRef)
-    stopPreview();
-    // Stop background music before playing preview
-    if (wasMusicPlaying) {
-      wasMusicPlayingRef.current = true;
-      music.stopMusic();
+  const togglePreview = useCallback((playlistId: number, firstTrackUrl: string) => {
+    // If this playlist is already previewing, stop it
+    if (previewPlaylistId === playlistId) {
+      stopPreview();
+      return;
     }
+    // If another playlist is previewing, stop it first (but keep wasMusicPlayingRef)
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.removeEventListener('ended', stopPreview as any);
+      previewAudioRef.current = null;
+    }
+    if (previewIntervalRef.current) {
+      clearInterval(previewIntervalRef.current);
+      previewIntervalRef.current = null;
+    }
+
+    // If no preview was active before, check if background music is playing and pause it
+    if (previewPlaylistId === null) {
+      // First time starting preview — save background music state
+      wasMusicPlayingRef.current = music.enabled;
+      if (music.enabled) {
+        music.stopMusic();
+      }
+    }
+    // (If switching between previews, wasMusicPlayingRef is already set correctly)
+
+    // Create and play preview audio
     const audio = new Audio(firstTrackUrl);
     audio.volume = 0.5;
     previewAudioRef.current = audio;
     setPreviewPlaylistId(playlistId);
     setPreviewTimer(30);
     audio.play().catch(() => {});
+
     // Auto-stop after 30 seconds
     let remaining = 30;
     previewIntervalRef.current = setInterval(() => {
@@ -193,9 +215,10 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         stopPreview();
       }
     }, 1000);
-    // Also stop when audio ends naturally
+
+    // Also stop when audio ends naturally (if track < 30s)
     audio.addEventListener('ended', () => stopPreview());
-  }, [stopPreview, music]);
+  }, [stopPreview, music, previewPlaylistId]);
 
   // Cleanup preview on unmount or close
   useEffect(() => {
@@ -557,13 +580,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               ? 'bg-red-600/80 text-white hover:bg-red-500'
                               : 'bg-amber-700/30 text-amber-200 hover:bg-amber-700/50'
                           }`}
-                          onClick={() => {
-                            if (isPreviewPlaying) {
-                              stopPreview();
-                            } else {
-                              startPreview(playlist.id, playlist.tracks[0]);
-                            }
-                          }}
+                          onClick={() => togglePreview(playlist.id, playlist.tracks[0])}
                         >
                           {isPreviewPlaying ? (
                             <><Square className="w-3 h-3" /> {locale === 'kk' ? 'Тоқтату' : 'Стоп'} ({previewTimer}{locale === 'kk' ? 'с' : 'с'})</>

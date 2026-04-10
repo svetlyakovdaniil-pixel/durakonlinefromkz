@@ -8,7 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
-import { seedDefaultPlaylist, seedChinesePlaylist } from "../db";
+import { seedDefaultPlaylist, seedChinesePlaylist, cleanupOldPlaylists } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -49,6 +49,7 @@ async function startServer() {
   initSocketServer(server);
 
   // Seed music playlists
+  cleanupOldPlaylists().catch(e => console.warn('[Music] Failed to cleanup old playlists:', e));
   seedDefaultPlaylist().catch(e => console.warn('[Music] Failed to seed default playlist:', e));
   seedChinesePlaylist().catch(e => console.warn('[Music] Failed to seed Chinese playlist:', e));
 
