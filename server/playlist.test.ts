@@ -66,6 +66,47 @@ describe('Playlist features (Batch 93)', () => {
       expect(typeof db.seedChinesePlaylist).toBe('function');
     });
   });
+
+  describe('Batch 94 — Settings playlist selector', () => {
+    it('should have playlist translation keys in ru', async () => {
+      const { ru } = await import('../client/src/i18n/ru');
+      expect(ru.settings.playlist).toBe('Плейлист');
+      expect(ru.settings.selectPlaylist).toBe('Выберите плейлист');
+    });
+
+    it('should have playlist translation keys in kk', async () => {
+      const { kk } = await import('../client/src/i18n/kk');
+      expect(kk.settings.playlist).toBe('Плейлист');
+      expect(kk.settings.selectPlaylist).toBe('Плейлистті таңдаңыз');
+    });
+
+    it('GameSettingsSheet should NOT have playlist imports', async () => {
+      // Read the GameSettingsSheet source to confirm no playlist selector
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/GameSettingsSheet.tsx', 'utf-8');
+      expect(source).not.toContain('playlists.list');
+      expect(source).not.toContain('playlists.owned');
+      expect(source).not.toContain('SelectItem');
+      expect(source).not.toContain('personalPlaylistId');
+    });
+
+    it('SettingsSheet should have playlist selector code', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
+      expect(source).toContain('playlists.list');
+      expect(source).toContain('playlists.owned');
+      expect(source).toContain('personalPlaylistId');
+      expect(source).toContain('handlePlaylistChange');
+    });
+
+    it('ShopModal should stop background music on preview', async () => {
+      const fs = await import('fs');
+      const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
+      expect(source).toContain('music.stopMusic()');
+      expect(source).toContain('wasMusicPlayingRef');
+      expect(source).toContain('music.startMusic()');
+    });
+  });
 });
 
 describe('Playlist features (Batch 94)', () => {

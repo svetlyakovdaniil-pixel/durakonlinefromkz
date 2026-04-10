@@ -195,7 +195,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     }, 1000);
     // Also stop when audio ends naturally
     audio.addEventListener('ended', () => stopPreview());
-  }, [stopPreview]);
+  }, [stopPreview, music]);
 
   // Cleanup preview on unmount or close
   useEffect(() => {
