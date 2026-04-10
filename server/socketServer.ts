@@ -299,7 +299,17 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // --- Room Management ---
 
-    socket.on('createRoom', (data, cb) => {
+    socket.on('createRoom', async (data, cb) => {
+      // Check if player is banned
+      const user = await getUserByOpenId(odId);
+      if (user) {
+        const profile = await getProfileByUserId(user.id);
+        if (profile?.isBanned) {
+          socket.emit('error', 'Ваш аккаунт заблокирован. Причина: ' + (profile.banReason || 'Не указана'));
+          cb(false as any);
+          return;
+        }
+      }
       const roomId = nanoid(8);
       const rawBet = data.settings?.betAmount || 100;
       const validBets = [100, 200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000];
@@ -349,7 +359,17 @@ export function initSocketServer(httpServer: HttpServer) {
       cb(sanitizeRoom(room));
     });
 
-    socket.on('joinRoom', (data, cb) => {
+    socket.on('joinRoom', async (data, cb) => {
+      // Check if player is banned
+      const banUser = await getUserByOpenId(odId);
+      if (banUser) {
+        const banProfile = await getProfileByUserId(banUser.id);
+        if (banProfile?.isBanned) {
+          socket.emit('error', 'Ваш аккаунт заблокирован. Причина: ' + (banProfile.banReason || 'Не указана'));
+          cb(false);
+          return;
+        }
+      }
       const roomId = typeof data === 'string' ? data : data.roomId;
       const password = typeof data === 'string' ? undefined : data.password;
       const room = rooms.get(roomId);
