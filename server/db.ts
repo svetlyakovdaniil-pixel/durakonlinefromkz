@@ -344,19 +344,32 @@ export async function recordGameResult(data: {
     totalPlayersInRoom,
   });
 
-  // Progressive rating table based on player count
+  // === HUMAN rating table (<=33.4% bots) ===
   // Last place (дурак) always gets -25
-  const ratingByPlace: Record<number, number[]> = {
+  const humanRatingByPlace: Record<number, number[]> = {
     2: [25, -25],
     3: [25, 15, -25],
     4: [25, 20, 15, -25],
     5: [25, 20, 15, 10, -25],
     6: [25, 20, 15, 10, 5, -25],
-    7: [25, 20, 15, 10, 5, 5, -25],
-    8: [25, 20, 15, 10, 5, 5, 5, -25],
+    7: [25, 20, 15, 10, 5, 0, -25],
+    8: [25, 20, 15, 10, 5, 0, 0, -25],
   };
 
-  // Get rating table for this player count (default to 2 if not found)
+  // === BOT rating table (>33.4% bots) ===
+  // Mapping: +25→+10, +20→+5, +15→0, +10→-5, +5→-10, 0→-10, -25→-10
+  const botRatingByPlace: Record<number, number[]> = {
+    2: [10, -10],
+    3: [10, 0, -10],
+    4: [10, 5, 0, -10],
+    5: [10, 5, 0, -5, -10],
+    6: [10, 5, 0, -5, -10, -10],
+    7: [10, 5, 0, -5, -10, -10, -10],
+    8: [10, 5, 0, -5, -10, -10, -10, -10],
+  };
+
+  // Select the appropriate rating table
+  const ratingByPlace = isBotGame ? botRatingByPlace : humanRatingByPlace;
   const ratingTable = ratingByPlace[data.playerCount] || ratingByPlace[2];
 
   // Update stats for all participants
@@ -369,18 +382,18 @@ export async function recordGameResult(data: {
     const isWinner = !isLoser;
 
     // Get rating change from table (place = idx, 0-indexed)
-    // If place is beyond table length, use last entry (shouldn't happen)
     const ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
 
     if (isBotGame) {
-      // Bot games (>33.4% bots): update bot stats, NO rating change
+      // Bot games (>33.4% bots): update bot stats + bot rating
       await db.update(playerProfiles).set({
         botGamesPlayed: sql`${playerProfiles.botGamesPlayed} + 1`,
         botWins: isWinner ? sql`${playerProfiles.botWins} + 1` : sql`${playerProfiles.botWins}`,
         botLosses: isLoser ? sql`${playerProfiles.botLosses} + 1` : sql`${playerProfiles.botLosses}`,
+        rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
       }).where(eq(playerProfiles.gameId, gameId));
     } else {
-      // Human games (<=33.4% bots): update human stats + rating
+      // Human games (<=33.4% bots): update human stats + human rating
       await db.update(playerProfiles).set({
         gamesPlayed: sql`${playerProfiles.gamesPlayed} + 1`,
         wins: isWinner ? sql`${playerProfiles.wins} + 1` : sql`${playerProfiles.wins}`,
@@ -402,10 +415,11 @@ export async function recordForfeitLoss(gameId: number, isBotGame: boolean) {
   if (!db) return;
 
   if (isBotGame) {
-    // Bot game: update bot stats only, no rating change
+    // Bot game: update bot stats + rating penalty (-10 for bot game loser)
     await db.update(playerProfiles).set({
       botGamesPlayed: sql`${playerProfiles.botGamesPlayed} + 1`,
       botLosses: sql`${playerProfiles.botLosses} + 1`,
+      rating: sql`GREATEST(0, ${playerProfiles.rating} - 10)`,
     }).where(eq(playerProfiles.gameId, gameId));
   } else {
     // Human game: update human stats + rating penalty (-25 for loss)
@@ -451,24 +465,33 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
     const place = playerIds.indexOf(profileId) + 1;
     const isLoser = profileId === record.loserId;
 
-    // Progressive rating table based on player count
-    const ratingByPlace: Record<number, number[]> = {
+    // Human rating table
+    const humanRatingByPlace: Record<number, number[]> = {
       2: [25, -25],
       3: [25, 15, -25],
       4: [25, 20, 15, -25],
       5: [25, 20, 15, 10, -25],
       6: [25, 20, 15, 10, 5, -25],
-      7: [25, 20, 15, 10, 5, 5, -25],
-      8: [25, 20, 15, 10, 5, 5, 5, -25],
+      7: [25, 20, 15, 10, 5, 0, -25],
+      8: [25, 20, 15, 10, 5, 0, 0, -25],
+    };
+    // Bot rating table
+    const botRatingByPlace: Record<number, number[]> = {
+      2: [10, -10],
+      3: [10, 0, -10],
+      4: [10, 5, 0, -10],
+      5: [10, 5, 0, -5, -10],
+      6: [10, 5, 0, -5, -10, -10],
+      7: [10, 5, 0, -5, -10, -10, -10],
+      8: [10, 5, 0, -5, -10, -10, -10, -10],
     };
 
-    const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
-    const rawDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
-
-    // Use 33.4% bot threshold to determine if rating was affected
+    // Use 33.4% bot threshold to determine which table to use
     const botRatio = record.totalPlayersInRoom > 0 ? record.botCount / record.totalPlayersInRoom : 0;
     const isBotGame = botRatio > 0.334;
-    const ratingDelta = isBotGame ? 0 : rawDelta;
+    const ratingByPlace = isBotGame ? botRatingByPlace : humanRatingByPlace;
+    const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
+    const ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
 
     return {
       ...record,
@@ -1363,7 +1386,10 @@ export async function adminGetTransactions(opts: {
     description: transactions.description,
     balanceAfter: transactions.balanceAfter,
     createdAt: transactions.createdAt,
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
   }).from(transactions)
+    .leftJoin(playerProfiles, eq(transactions.profileId, playerProfiles.id))
     .where(whereClause)
     .orderBy(desc(transactions.createdAt))
     .limit(limit)
@@ -1594,9 +1620,22 @@ export async function getAuditLog(opts: {
     : await db.select({ count: sql<number>`COUNT(*)` }).from(adminAuditLog);
   const total = countResult[0]?.count ?? 0;
 
+  const baseQuery = db.select({
+    id: adminAuditLog.id,
+    adminId: adminAuditLog.adminId,
+    adminName: adminAuditLog.adminName,
+    action: adminAuditLog.action,
+    targetProfileId: adminAuditLog.targetProfileId,
+    details: adminAuditLog.details,
+    createdAt: adminAuditLog.createdAt,
+    targetGameId: playerProfiles.gameId,
+    targetName: playerProfiles.displayName,
+  }).from(adminAuditLog)
+    .leftJoin(playerProfiles, eq(adminAuditLog.targetProfileId, playerProfiles.id));
+
   const entries = whereClause
-    ? await db.select().from(adminAuditLog).where(whereClause).orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset)
-    : await db.select().from(adminAuditLog).orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset);
+    ? await baseQuery.where(whereClause).orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset)
+    : await baseQuery.orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset);
 
   return { entries, total };
 }

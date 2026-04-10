@@ -1185,7 +1185,7 @@ function TransactionsTab() {
               data.transactions.map((t: any) => (
                 <tr key={t.id} className="hover:bg-gray-900/30 transition-colors">
                   <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(t.createdAt)}</td>
-                  <td className="px-4 py-3 text-amber-100">{t.displayName || `Profile #${t.profileId}`}</td>
+                  <td className="px-4 py-3 text-amber-100">{t.displayName || 'Игрок'} <span className="text-gray-500 text-xs">(ID {t.gameId ?? t.profileId})</span></td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded ${
                       t.type === 'bet' ? 'bg-red-900/50 text-red-300' :
@@ -1310,7 +1310,9 @@ function AuditTab() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-400">
-                      {entry.targetProfileId ? `Profile #${entry.targetProfileId}` : "—"}
+                      {entry.targetProfileId
+                        ? `${entry.targetName || 'Игрок'} (ID ${entry.targetGameId ?? entry.targetProfileId})`
+                        : "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">
                       {Object.entries(details).map(([k, v]) => `${k}: ${v}`).join(", ") || "—"}
@@ -1398,7 +1400,7 @@ function AntifraudTab() {
                 winRateData.data.map((p: any) => (
                   <tr key={p.id} className="hover:bg-gray-900/30 transition-colors">
                     <td className="px-4 py-3 text-gray-400">#{p.gameId}</td>
-                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"}</td>
+                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"} <span className="text-gray-500 text-xs">(ID {p.gameId})</span></td>
                     <td className="px-4 py-3">{formatNumber(p.gamesPlayed)}</td>
                     <td className="px-4 py-3 text-green-400">{formatNumber(p.wins)}</td>
                     <td className="px-4 py-3">
@@ -1442,7 +1444,7 @@ function AntifraudTab() {
                 txData.data.map((t: any) => (
                   <tr key={t.id} className="hover:bg-gray-900/30 transition-colors">
                     <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(t.createdAt)}</td>
-                    <td className="px-4 py-3 text-amber-100">{t.displayName || `#${t.gameId}`}</td>
+                    <td className="px-4 py-3 text-amber-100">{t.displayName || 'Игрок'} <span className="text-gray-500 text-xs">(ID {t.gameId})</span></td>
                     <td className="px-4 py-3 text-gray-400">{t.type}</td>
                     <td className="px-4 py-3">
                       <span className={t.amount >= 0 ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
@@ -1481,7 +1483,7 @@ function AntifraudTab() {
                 growthData.data.map((p: any) => (
                   <tr key={p.profileId} className="hover:bg-gray-900/30 transition-colors">
                     <td className="px-4 py-3 text-gray-400">#{p.gameId}</td>
-                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"}</td>
+                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"} <span className="text-gray-500 text-xs">(ID {p.gameId})</span></td>
                     <td className="px-4 py-3">
                       <span className="text-red-400 font-bold">+{formatNumber(p.totalGained)} 🏠</span>
                     </td>

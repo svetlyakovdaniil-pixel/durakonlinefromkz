@@ -240,6 +240,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
     socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
 
+    // --- requestRoomList: client explicitly requests a fresh room list ---
+    socket.on('requestRoomList', () => {
+      socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
+    });
+
     // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
     socket.on('rejoinRoom', (roomId, cb) => {
       // Block rejoin if player intentionally forfeited from this room

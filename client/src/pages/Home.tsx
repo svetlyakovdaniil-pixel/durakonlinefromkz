@@ -28,6 +28,7 @@ export default function Home() {
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, transferCards, showPassThrough, showPassThroughs, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
+    requestRoomList,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
     isAuthenticated ? user?.name || t('landing.guest') : null
@@ -241,6 +242,7 @@ export default function Home() {
         onlineFriendIds={onlineFriendIds}
         onInviteFriend={undefined}
         refetchProfile={refetchProfile}
+        refreshRooms={requestRoomList}
       />
       <InviteModal
         invite={activeInvite}

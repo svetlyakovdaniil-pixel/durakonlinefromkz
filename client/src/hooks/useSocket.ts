@@ -433,6 +433,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     setPrizeData(null);
   }, []);
 
+  const requestRoomList = useCallback(() => {
+    socketRef.current?.emit('requestRoomList');
+  }, []);
+
   return {
     connected,
     rooms,
@@ -469,6 +473,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     declineInvite,
     registerProfile,
     returnToLobby,
+    requestRoomList,
     clearError: () => setError(null),
   };
 }

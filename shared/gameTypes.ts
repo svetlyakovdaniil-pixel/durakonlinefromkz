@@ -239,6 +239,8 @@ export interface ClientToServerEvents {
   declineInvite: (data: { roomId: string; fromGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
   registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null }, cb?: (ok: boolean) => void) => void;
+  /** Request fresh room list */
+  requestRoomList: () => void;
 }
 
 // --- Client-side game state ---

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -50,9 +50,10 @@ interface LobbyProps {
   onlineFriendIds: number[];
   onInviteFriend: ((targetGameId: number) => void) | undefined;
   refetchProfile?: () => void;
+  refreshRooms?: () => void;
 }
 
-export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile }: LobbyProps) {
+export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile, refreshRooms }: LobbyProps) {
   const { t, locale } = useTranslation();
   const { user: authUser } = useAuth();
   const [, setLocation] = useLocation();
@@ -502,7 +503,18 @@ onClick={() => setShowTengeTopUp(true)}
             {/* Bottom row: Комнаты + Фильтр + Поиск + Создать */}
             <div className="mt-4 pt-3 pb-1 border-t border-amber-700/15 space-y-3">
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => refreshRooms?.()}
+                    className="text-amber-400/70 hover:text-amber-200 hover:bg-amber-900/20 h-8 w-8 p-0"
+                    title={t('lobby.refresh')}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </Button>
+                </div>
                 <div className="flex items-center gap-2">
                   {/* Search input */}
                   <div className="relative">
@@ -788,7 +800,18 @@ onClick={() => setShowTengeTopUp(true)}
       <div className="sm:hidden border-t border-amber-700/20 bg-black/20 relative z-10">
         <div className="container py-3 space-y-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
+            <div className="flex items-center gap-1.5">
+              <h2 className="text-xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => refreshRooms?.()}
+                className="text-amber-400/70 hover:text-amber-200 hover:bg-amber-900/20 h-7 w-7 p-0"
+                title={t('lobby.refresh')}
+              >
+                <RefreshCw className="w-3.5 h-3.5" />
+              </Button>
+            </div>
             <div className="flex items-center gap-1.5">
               <Button
                 variant="outline"
