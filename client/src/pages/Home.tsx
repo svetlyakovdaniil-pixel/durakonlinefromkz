@@ -78,10 +78,18 @@ export default function Home() {
     setPendingInvite(null);
   }, [pendingInvite, setPendingInvite, gameState, currentRoom]);
 
-  const handleAcceptInvite = useCallback((roomId: string) => {
-    joinRoom(roomId);
+  const handleAcceptInvite = useCallback(async (roomId: string) => {
     setActiveInvite(null);
-  }, [joinRoom]);
+    try {
+      const ok = await joinRoom(roomId);
+      if (!ok) {
+        toast.error(t('invite.joinFailed') || 'Не удалось присоединиться к комнате');
+      }
+    } catch (err) {
+      console.error('[Home] Failed to accept invite:', err);
+      toast.error(t('invite.joinFailed') || 'Не удалось присоединиться к комнате');
+    }
+  }, [joinRoom, t]);
 
   const handleDeclineInvite = useCallback((roomId: string, fromGameId: number) => {
     declineInvite(roomId, fromGameId);

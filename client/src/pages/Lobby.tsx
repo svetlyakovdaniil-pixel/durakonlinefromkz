@@ -56,6 +56,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { user: authUser } = useAuth();
   const [, setLocation] = useLocation();
   const isAdmin = authUser?.role === 'admin';
+  const isGM = authUser?.role === 'gm';
+  const hasAdminAccess = isAdmin || isGM;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
@@ -257,12 +259,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
               {/* Left column: Settings / Bell / Rules — spread top/center/bottom */}
               <div className="flex flex-col items-start justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
-                {/* Row 0: Admin (only for admins) */}
-                {isAdmin && (
+                {/* Row 0: Admin (only for admins/GMs) */}
+                {hasAdminAccess && (
                   <button
                     className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
                     onClick={() => setLocation('/admin')}
-                    title="Админ-панель"
+                    title={isGM ? 'GM-панель' : 'Админ-панель'}
                   >
                     <Shield className="w-5 h-5" />
                   </button>
@@ -390,12 +392,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <h1 className="text-xl font-bold text-amber-100">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
-                {/* Admin button (only for admins) */}
-                {isAdmin && (
+                {/* Admin button (only for admins/GMs) */}
+                {hasAdminAccess && (
                   <button
                     className="text-amber-500 hover:text-amber-300 transition-colors p-2 rounded"
                     onClick={() => setLocation('/admin')}
-                    title="Админ-панель"
+                    title={isGM ? 'GM-панель' : 'Админ-панель'}
                   >
                     <Shield className="w-5 h-5" />
                   </button>

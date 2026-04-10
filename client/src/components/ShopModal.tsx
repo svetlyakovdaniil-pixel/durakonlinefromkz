@@ -111,13 +111,29 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
   const { data: ownedTables = [], refetch: refetchOwnedTables } = trpc.shop.ownedTables.useQuery(undefined, { enabled: open });
   const { data: ownedFrames = [], refetch: refetchOwnedFrames } = trpc.shop.ownedFrames.useQuery(undefined, { enabled: open });
   const { data: ownedAvatars = [], refetch: refetchOwnedAvatars } = trpc.shop.ownedAvatars.useQuery(undefined, { enabled: open });
+  const { data: priceOverrides = [] } = trpc.shopPrices.overrides.useQuery(undefined, { enabled: open });
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
   const purchaseAvatarMutation = trpc.shop.purchaseAvatar.useMutation();
 
+  /** Get effective price considering admin overrides */
+  const getPrice = (itemType: string, itemId: string, defaultPrice: number): number => {
+    const override = priceOverrides.find((o: any) => o.itemType === itemType && o.itemId === itemId);
+    if (override && override.priceTenge !== null && override.priceTenge !== undefined) return override.priceTenge;
+    return defaultPrice;
+  };
+
+  /** Check if item is available (not disabled by admin) */
+  const isItemAvailable = (itemType: string, itemId: string): boolean => {
+    const override = priceOverrides.find((o: any) => o.itemType === itemType && o.itemId === itemId);
+    if (override) return override.isAvailable;
+    return true;
+  };
+
+  const customDeckPrice = getPrice('deck', 'custom', CUSTOM_DECK_PRICE);
   const isCustomOwned = ownedDecks.includes('custom');
-  const canAfford = currentTenge >= CUSTOM_DECK_PRICE;
+  const canAfford = currentTenge >= customDeckPrice;
 
   const executePurchase = async (item: ConfirmPurchase) => {
     setPurchasing(true);
@@ -259,10 +275,10 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                   ) : (
                     <div className="flex items-center gap-3">
                       <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: t('shop.customDeck'), price: CUSTOM_DECK_PRICE })}
+                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: t('shop.customDeck'), price: customDeckPrice })}
                         disabled={purchasing || !canAfford}>{purchasing ? '...' : t('shop.buy')}</Button>
                       <div className="flex items-center gap-1">
-                        <span className="text-amber-100 font-bold text-base">{CUSTOM_DECK_PRICE}</span>
+                        <span className="text-amber-100 font-bold text-base">{customDeckPrice}</span>
                         <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
                       </div>
                     </div>
@@ -275,9 +291,10 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
           {activeTab === 'tables' && (
             <div className="space-y-4">
-              {purchasableTables.map(([tableId, table]) => {
+              {purchasableTables.filter(([tableId]) => isItemAvailable('table', tableId)).map(([tableId, table]) => {
                 const isOwned = ownedTables.includes(tableId);
-                const canAffordTable = currentTenge >= table.price;
+                const effectivePrice = getPrice('table', tableId, table.price);
+                const canAffordTable = currentTenge >= effectivePrice;
                 return (
                   <div key={tableId} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex flex-col gap-3">
@@ -295,10 +312,10 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                         ) : (
                           <div className="flex items-center gap-3">
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: table.name, price: table.price })}
+                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: table.name, price: effectivePrice })}
                               disabled={purchasing || !canAffordTable}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
-                              <span className="text-amber-100 font-bold text-base">{table.price}</span>
+                              <span className="text-amber-100 font-bold text-base">{effectivePrice}</span>
                               <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
                             </div>
                           </div>
@@ -314,9 +331,10 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
           {activeTab === 'frames' && (
             <div className="space-y-4">
-              {AVATAR_FRAMES.map(frame => {
+              {AVATAR_FRAMES.filter(frame => isItemAvailable('frame', frame.id)).map(frame => {
                 const isOwned = ownedFrames.includes(frame.id);
-                const canAffordFrame = currentTenge >= frame.price;
+                const effectivePrice = getPrice('frame', frame.id, frame.price);
+                const canAffordFrame = currentTenge >= effectivePrice;
                 const IconComp = frame.icon;
                 return (
                   <div key={frame.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
@@ -347,11 +365,11 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                               onClick={() => setConfirmPurchase({
                                 type: 'frame', id: frame.id,
                                 name: locale === 'kk' ? frame.nameKk : frame.name,
-                                price: frame.price,
+                                price: effectivePrice,
                               })}
                               disabled={purchasing || !canAffordFrame}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
-                              <span className="text-amber-100 font-bold text-base">{frame.price}</span>
+                              <span className="text-amber-100 font-bold text-base">{effectivePrice}</span>
                               <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
                             </div>
                           </div>
@@ -367,9 +385,10 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
           {activeTab === 'avatars' && (
             <div className="space-y-4">
-              {AVATAR_OPTIONS.filter(a => a.premium).map(avatar => {
+              {AVATAR_OPTIONS.filter(a => a.premium).filter(a => isItemAvailable('avatar', a.id)).map(avatar => {
                 const isOwned = ownedAvatars.includes(avatar.id);
-                const canAffordAvatar = currentTenge >= (avatar.price || 0);
+                const effectiveAvatarPrice = getPrice('avatar', avatar.id, avatar.price || 0);
+                const canAffordAvatar = currentTenge >= effectiveAvatarPrice;
                 return (
                   <div key={avatar.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-4">
@@ -396,11 +415,11 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                               onClick={() => setConfirmPurchase({
                                 type: 'avatar', id: avatar.id,
                                 name: avatar.name,
-                                price: avatar.price || 0,
+                                price: effectiveAvatarPrice,
                               })}
                               disabled={purchasing || !canAffordAvatar}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
-                              <span className="text-amber-100 font-bold text-base">{avatar.price}</span>
+                              <span className="text-amber-100 font-bold text-base">{effectiveAvatarPrice}</span>
                               <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
                             </div>
                           </div>

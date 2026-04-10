@@ -1476,31 +1476,37 @@ export default function GameTable({
                 </div>
               )}
 
-              <div data-tutorial="table-area" className="flex flex-wrap gap-2 sm:gap-4 justify-center max-w-xs sm:max-w-3xl">
-                {gs.battleField.map((pair: BattlePair, i: number) => (
-                  <div
-                    key={i}
-                    className={`relative ${
-                      selectedCardId && isDefender && !pair.defense
-                        ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      if (selectedCardId && isDefender && !pair.defense && playableIds.has(selectedCardId)) {
-                        onPlayCard(selectedCardId, i);
-                        setSelectedCardId(null);
-                      }
-                    }}
-                  >
-                    <PlayingCard card={pair.attack} medium deckStyle={gs.deckStyle} />
-                    {pair.defense && (
-                      <div className="absolute top-3 left-3 sm:top-5 sm:left-5 z-10">
-                        <PlayingCard card={pair.defense} medium deckStyle={gs.deckStyle} />
-                      </div>
-                    )}
-                  </div>
-                ))}
-
+              <div data-tutorial="table-area" className="flex flex-wrap gap-1.5 sm:gap-4 justify-center max-w-[95vw] sm:max-w-3xl overflow-y-auto" style={{ maxHeight: 'calc(100dvh - 320px)' }}>
+                {gs.battleField.map((pair: BattlePair, i: number) => {
+                  // Adaptive card size based on pair count
+                  const pairCount = gs.battleField.length;
+                  const bSize: 'lg' | 'md' | 'sm' | 'xs' = pairCount <= 2 ? 'lg' : pairCount <= 4 ? 'md' : pairCount <= 6 ? 'sm' : 'xs';
+                  // Adaptive defense offset
+                  const defenseOffset = bSize === 'lg' ? 'top-4 left-4 sm:top-5 sm:left-5' : bSize === 'md' ? 'top-3 left-3 sm:top-5 sm:left-5' : bSize === 'sm' ? 'top-2 left-2 sm:top-4 sm:left-4' : 'top-1.5 left-1.5 sm:top-3 sm:left-3';
+                  return (
+                    <div
+                      key={i}
+                      className={`relative ${
+                        selectedCardId && isDefender && !pair.defense
+                          ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
+                          : ''
+                      }`}
+                      onClick={() => {
+                        if (selectedCardId && isDefender && !pair.defense && playableIds.has(selectedCardId)) {
+                          onPlayCard(selectedCardId, i);
+                          setSelectedCardId(null);
+                        }
+                      }}
+                    >
+                      <PlayingCard card={pair.attack} battleSize={bSize} deckStyle={gs.deckStyle} />
+                      {pair.defense && (
+                        <div className={`absolute ${defenseOffset} z-10`}>
+                          <PlayingCard card={pair.defense} battleSize={bSize} deckStyle={gs.deckStyle} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

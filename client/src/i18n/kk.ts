@@ -457,6 +457,7 @@ export const kk = {
     accept: 'Қабылдау',
     decline: 'Қабылдамау',
     invitesYou: 'сізді шақырады',
+    joinFailed: 'Бөлмеге қосылу мүмкін болмады',
   },
 
   // Password dialog

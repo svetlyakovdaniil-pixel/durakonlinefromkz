@@ -459,6 +459,7 @@ export const ru = {
     accept: 'Принять',
     decline: 'Отклонить',
     invitesYou: 'приглашает вас в',
+    joinFailed: 'Не удалось присоединиться к комнате',
   },
 
   // Password dialog
