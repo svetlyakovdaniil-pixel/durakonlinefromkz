@@ -499,6 +499,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
     overrideMainBotName: 'Камила',
+    attackerPlayerIdx: -1,
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 1, cards: [
       { attack: '6s', defense: '10s' },
@@ -511,6 +512,22 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       throwableCards: ['6h', '6h', '6d', '6c'],
       minThrows: 1,
     },
+  },
+  // Step 21: Duplicate of step 4 (Две колоды в игре)
+  {
+    id: 21,
+    title: 'Две колоды в игре',
+    description: 'Структура игры',
+    highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
+    text: 'В игре используются 2 колоды карт. Сначала разыгрывается колода №1 между всеми игроками. Когда она заканчивается, начинается колода №2.',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'center',
   },
 ];
 
