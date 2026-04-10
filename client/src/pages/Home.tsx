@@ -51,7 +51,14 @@ export default function Home() {
 
   // Tutorial congratulations dialog state
   const [showTutorialCongrats, setShowTutorialCongrats] = useState(false);
-  const completeTutorialMutation = trpc.balance.completeTutorial.useMutation();
+  const [tutorialRewardGiven, setTutorialRewardGiven] = useState(false);
+  const completeTutorialMutation = trpc.balance.completeTutorial.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        setTutorialRewardGiven(true);
+      }
+    },
+  });
 
   // Invite modal state — shown when a friend invites us to a room
   const [activeInvite, setActiveInvite] = useState<{
@@ -139,8 +146,16 @@ export default function Home() {
         isTutorial={gameState.isTutorial}
         onTutorialComplete={() => {
           // Credit tutorial reward (one-time)
-          completeTutorialMutation.mutate();
-          setShowTutorialCongrats(true);
+          setTutorialRewardGiven(false);
+          completeTutorialMutation.mutate(undefined, {
+            onSuccess: (data) => {
+              if (data.success) setTutorialRewardGiven(true);
+              setShowTutorialCongrats(true);
+            },
+            onError: () => {
+              setShowTutorialCongrats(true);
+            },
+          });
         }}
       />
       {showTutorialCongrats && (
@@ -151,13 +166,20 @@ export default function Home() {
             <p className="text-white text-sm sm:text-base mb-4">
               Если вы захотите пройти обучение повторно, вы можете нажать на кнопку "обучение" в лобби.
             </p>
-            <p className="text-yellow-300 text-sm sm:text-base mb-1">
-              За успешное прохождение обучения, вам начислено:
-            </p>
-            <div className="flex items-center justify-center gap-2 mb-6">
-              <span className="text-3xl sm:text-4xl font-bold text-yellow-400">+2000</span>
-              <span className="text-lg text-yellow-300">шаныраков</span>
-            </div>
+            {tutorialRewardGiven && (
+              <>
+                <p className="text-yellow-300 text-sm sm:text-base mb-1">
+                  За успешное прохождение обучения, вам начислено:
+                </p>
+                <div className="flex items-center justify-center gap-2 mb-6">
+                  <span className="text-3xl sm:text-4xl font-bold text-yellow-400">+2000</span>
+                  <span className="text-lg text-yellow-300">шаныраков</span>
+                </div>
+              </>
+            )}
+            {!tutorialRewardGiven && (
+              <div className="mb-6" />
+            )}
             <Button
               onClick={() => {
                 setShowTutorialCongrats(false);

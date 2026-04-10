@@ -544,11 +544,13 @@ export default function GameTable({
   }, [isTutorial]);
 
   // Handle tutorial completion — return to lobby
+  const tutorialCompleteCalledRef = useRef(false);
   useEffect(() => {
-    if (tutorialCompleted && onTutorialComplete) {
+    if (tutorialCompleted && onTutorialComplete && !tutorialCompleteCalledRef.current) {
+      tutorialCompleteCalledRef.current = true;
       onTutorialComplete();
     }
-  }, [tutorialCompleted, onTutorialComplete]);
+  }, [tutorialCompleted]);
 
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
