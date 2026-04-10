@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -1464,4 +1464,369 @@ export async function adminGetPlayerGameHistory(opts: {
   });
 
   return { games, total };
+}
+
+// ============================================================
+// ADMIN AUDIT LOG helpers
+// ============================================================
+
+/**
+ * Log an admin action to the audit log.
+ */
+export async function logAdminAction(data: {
+  adminId: number;
+  adminName: string | null;
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify';
+  targetProfileId?: number | null;
+  details?: Record<string, unknown>;
+}) {
+  const db = await getDb();
+  if (!db) return;
+
+  await db.insert(adminAuditLog).values({
+    adminId: data.adminId,
+    adminName: data.adminName ?? 'Unknown',
+    action: data.action,
+    targetProfileId: data.targetProfileId ?? null,
+    details: data.details ? JSON.stringify(data.details) : null,
+  });
+}
+
+/**
+ * Get audit log entries with filters and pagination.
+ */
+export async function getAuditLog(opts: {
+  actionFilter?: string;
+  adminId?: number;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { entries: [], total: 0 };
+
+  const limit = opts.limit ?? 50;
+  const offset = opts.offset ?? 0;
+
+  const conditions: ReturnType<typeof eq>[] = [];
+  if (opts.actionFilter) {
+    conditions.push(eq(adminAuditLog.action, opts.actionFilter as any));
+  }
+  if (opts.adminId) {
+    conditions.push(eq(adminAuditLog.adminId, opts.adminId));
+  }
+
+  const whereClause = conditions.length > 0
+    ? conditions.length === 1 ? conditions[0] : and(...conditions)
+    : undefined;
+
+  const countResult = whereClause
+    ? await db.select({ count: sql<number>`COUNT(*)` }).from(adminAuditLog).where(whereClause)
+    : await db.select({ count: sql<number>`COUNT(*)` }).from(adminAuditLog);
+  const total = countResult[0]?.count ?? 0;
+
+  const entries = whereClause
+    ? await db.select().from(adminAuditLog).where(whereClause).orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset)
+    : await db.select().from(adminAuditLog).orderBy(desc(adminAuditLog.createdAt)).limit(limit).offset(offset);
+
+  return { entries, total };
+}
+
+// ============================================================
+// TEMPORARY BAN helpers
+// ============================================================
+
+/**
+ * Admin: Ban a player with optional duration.
+ * duration: null = permanent, otherwise milliseconds.
+ */
+export async function adminBanPlayerWithDuration(
+  profileId: number,
+  reason: string,
+  durationMs: number | null
+) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  const bannedUntil = durationMs ? new Date(Date.now() + durationMs) : null;
+
+  await db.update(playerProfiles).set({
+    isBanned: true,
+    banReason: reason,
+    bannedAt: new Date(),
+    bannedUntil,
+  }).where(eq(playerProfiles.id, profileId));
+
+  return { success: true, bannedUntil };
+}
+
+/**
+ * Check if a player's temporary ban has expired and auto-unban if so.
+ * Returns true if the player is currently banned, false if not (or was auto-unbanned).
+ */
+export async function checkAndAutoUnban(profileId: number): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  const [profile] = await db.select({
+    isBanned: playerProfiles.isBanned,
+    bannedUntil: playerProfiles.bannedUntil,
+  }).from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+
+  if (!profile) return false;
+  if (!profile.isBanned) return false;
+
+  // If bannedUntil is set and has passed, auto-unban
+  if (profile.bannedUntil && new Date() >= profile.bannedUntil) {
+    await db.update(playerProfiles).set({
+      isBanned: false,
+      banReason: null,
+      bannedAt: null,
+      bannedUntil: null,
+    }).where(eq(playerProfiles.id, profileId));
+    return false; // no longer banned
+  }
+
+  return true; // still banned
+}
+
+// ============================================================
+// ANTI-FRAUD helpers
+// ============================================================
+
+/**
+ * Detect players with abnormally high win rates (>80% with 20+ games).
+ */
+export async function detectAbnormalWinRate(minGames: number = 20, minWinRate: number = 80) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({
+    id: playerProfiles.id,
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+    gamesPlayed: playerProfiles.gamesPlayed,
+    wins: playerProfiles.wins,
+    losses: playerProfiles.losses,
+    rating: playerProfiles.rating,
+    isBanned: playerProfiles.isBanned,
+    winRate: sql<number>`ROUND(${playerProfiles.wins} * 100.0 / GREATEST(${playerProfiles.gamesPlayed}, 1), 1)`,
+  }).from(playerProfiles)
+    .where(
+      and(
+        sql`${playerProfiles.gamesPlayed} >= ${minGames}`,
+        sql`(${playerProfiles.wins} * 100.0 / GREATEST(${playerProfiles.gamesPlayed}, 1)) >= ${minWinRate}`
+      )
+    )
+    .orderBy(sql`(${playerProfiles.wins} * 100.0 / GREATEST(${playerProfiles.gamesPlayed}, 1)) DESC`)
+    .limit(50);
+
+  return rows;
+}
+
+/**
+ * Detect suspiciously large transactions (top outliers).
+ */
+export async function detectSuspiciousTransactions(minAmount: number = 10000) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({
+    id: transactions.id,
+    profileId: transactions.profileId,
+    type: transactions.type,
+    amount: transactions.amount,
+    currency: transactions.currency,
+    description: transactions.description,
+    balanceAfter: transactions.balanceAfter,
+    createdAt: transactions.createdAt,
+  }).from(transactions)
+    .where(sql`ABS(${transactions.amount}) >= ${minAmount}`)
+    .orderBy(sql`ABS(${transactions.amount}) DESC`)
+    .limit(50);
+
+  // Enrich with player info
+  const profileIds = Array.from(new Set(rows.map(r => r.profileId)));
+  if (profileIds.length === 0) return rows.map(r => ({ ...r, gameId: null, displayName: null }));
+
+  const profiles = await db.select({
+    id: playerProfiles.id,
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+  }).from(playerProfiles).where(
+    sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
+  );
+
+  const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+  return rows.map(r => ({
+    ...r,
+    gameId: profileMap.get(r.profileId)?.gameId ?? null,
+    displayName: profileMap.get(r.profileId)?.displayName ?? null,
+  }));
+}
+
+/**
+ * Detect players with rapid balance growth (gained > threshold in last 24h).
+ */
+export async function detectRapidBalanceGrowth(thresholdShanyrak: number = 50000) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const rows = await db.select({
+    profileId: transactions.profileId,
+    totalGained: sql<number>`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END)`,
+    txCount: sql<number>`COUNT(*)`,
+  }).from(transactions)
+    .where(
+      and(
+        sql`${transactions.createdAt} >= ${oneDayAgo}`,
+        eq(transactions.currency, 'shanyrak')
+      )
+    )
+    .groupBy(transactions.profileId)
+    .having(sql`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END) >= ${thresholdShanyrak}`)
+    .orderBy(sql`SUM(CASE WHEN ${transactions.amount} > 0 THEN ${transactions.amount} ELSE 0 END) DESC`)
+    .limit(50);
+
+  if (rows.length === 0) return [];
+
+  const profileIds = rows.map(r => r.profileId);
+  const profiles = await db.select({
+    id: playerProfiles.id,
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+    balanceShanyrak: playerProfiles.balanceShanyrak,
+    isBanned: playerProfiles.isBanned,
+  }).from(playerProfiles).where(
+    sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
+  );
+
+  const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+  return rows.map(r => ({
+    ...r,
+    gameId: profileMap.get(r.profileId)?.gameId ?? null,
+    displayName: profileMap.get(r.profileId)?.displayName ?? null,
+    balanceShanyrak: profileMap.get(r.profileId)?.balanceShanyrak ?? 0,
+    isBanned: profileMap.get(r.profileId)?.isBanned ?? false,
+  }));
+}
+
+// ============================================================
+// MASS NOTIFICATION helpers
+// ============================================================
+
+/**
+ * Send a mass notification to a segment of players.
+ * Returns the number of notifications created.
+ */
+export async function sendMassNotification(data: {
+  adminId: number;
+  adminName: string | null;
+  title: string;
+  content: string;
+  segment: 'all' | 'inactive_7d' | 'top_100' | 'newbies';
+}): Promise<{ sentCount: number; campaignId: number }> {
+  const db = await getDb();
+  if (!db) return { sentCount: 0, campaignId: 0 };
+
+  // Get target profile IDs based on segment
+  let profileIds: number[] = [];
+
+  switch (data.segment) {
+    case 'all': {
+      const rows = await db.select({ id: playerProfiles.id }).from(playerProfiles);
+      profileIds = rows.map(r => r.id);
+      break;
+    }
+    case 'inactive_7d': {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const rows = await db.select({ id: playerProfiles.id, userId: playerProfiles.userId })
+        .from(playerProfiles);
+      // Get users who haven't signed in for 7+ days
+      const userIds = rows.map(r => r.userId);
+      if (userIds.length === 0) break;
+      const inactiveUsers = await db.select({ id: users.id })
+        .from(users)
+        .where(
+          and(
+            sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`,
+            sql`${users.lastSignedIn} < ${sevenDaysAgo}`
+          )
+        );
+      const inactiveUserIds = new Set(inactiveUsers.map(u => u.id));
+      profileIds = rows.filter(r => inactiveUserIds.has(r.userId)).map(r => r.id);
+      break;
+    }
+    case 'top_100': {
+      const rows = await db.select({ id: playerProfiles.id })
+        .from(playerProfiles)
+        .orderBy(desc(playerProfiles.rating))
+        .limit(100);
+      profileIds = rows.map(r => r.id);
+      break;
+    }
+    case 'newbies': {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const rows = await db.select({ id: playerProfiles.id })
+        .from(playerProfiles)
+        .where(sql`${playerProfiles.createdAt} >= ${sevenDaysAgo}`);
+      profileIds = rows.map(r => r.id);
+      break;
+    }
+  }
+
+  // Create notifications in batches
+  const batchSize = 100;
+  for (let i = 0; i < profileIds.length; i += batchSize) {
+    const batch = profileIds.slice(i, i + batchSize);
+    const values = batch.map(profileId => ({
+      profileId,
+      type: 'admin_announcement' as const,
+      data: JSON.stringify({ title: data.title, content: data.content }),
+      isRead: false,
+    }));
+    if (values.length > 0) {
+      await db.insert(notifications).values(values);
+    }
+  }
+
+  // Record the campaign
+  const [campaign] = await db.insert(massNotifications).values({
+    adminId: data.adminId,
+    adminName: data.adminName,
+    title: data.title,
+    content: data.content,
+    segment: data.segment,
+    sentCount: profileIds.length,
+  }).$returningId();
+
+  return { sentCount: profileIds.length, campaignId: campaign?.id ?? 0 };
+}
+
+/**
+ * Get mass notification campaign history.
+ */
+export async function getMassNotificationHistory(opts: {
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { campaigns: [], total: 0 };
+
+  const limit = opts.limit ?? 20;
+  const offset = opts.offset ?? 0;
+
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` }).from(massNotifications);
+  const total = countResult[0]?.count ?? 0;
+
+  const campaigns = await db.select()
+    .from(massNotifications)
+    .orderBy(desc(massNotifications.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return { campaigns, total };
 }

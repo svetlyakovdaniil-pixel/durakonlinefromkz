@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, bigint, boolean } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, bigint, boolean, json } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -64,6 +64,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   banReason: text("banReason"),
   /** When the ban was applied */
   bannedAt: timestamp("bannedAt"),
+  /** When the ban expires (null = permanent) */
+  bannedUntil: timestamp("bannedUntil"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -123,7 +125,7 @@ export const notifications = mysqlTable("notifications", {
   /** The player who receives this notification (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Notification type */
-  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired"]).notNull(),
+  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired", "admin_announcement"]).notNull(),
   /** JSON data with extra info */
   data: text("data"),
   /** Whether the notification has been read */
@@ -157,3 +159,52 @@ export const transactions = mysqlTable("transactions", {
 
 export type Transaction = typeof transactions.$inferSelect;
 export type InsertTransaction = typeof transactions.$inferInsert;
+
+/**
+ * Admin audit log — records all admin actions for accountability.
+ */
+export const adminAuditLog = mysqlTable("admin_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Admin user ID (users.id) */
+  adminId: int("adminId").notNull(),
+  /** Admin display name (snapshot at time of action) */
+  adminName: varchar("adminName", { length: 100 }),
+  /** Action type */
+  action: mysqlEnum("action", [
+    "ban", "unban", "temp_ban",
+    "update_balance", "reset_stats", "change_role",
+    "kick", "update_shop_item", "create_shop_item",
+    "toggle_shop_item", "mass_notify",
+  ]).notNull(),
+  /** Target player profile ID (if applicable) */
+  targetProfileId: int("targetProfileId"),
+  /** JSON details about the action */
+  details: text("details"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type AdminAuditLogEntry = typeof adminAuditLog.$inferSelect;
+export type InsertAdminAuditLog = typeof adminAuditLog.$inferInsert;
+
+/**
+ * Mass notification campaigns sent by admins.
+ */
+export const massNotifications = mysqlTable("mass_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Admin who sent this (users.id) */
+  adminId: int("adminId").notNull(),
+  /** Admin name snapshot */
+  adminName: varchar("adminName", { length: 100 }),
+  /** Notification title */
+  title: varchar("title", { length: 200 }).notNull(),
+  /** Notification content */
+  content: text("content").notNull(),
+  /** Target segment */
+  segment: mysqlEnum("segment", ["all", "inactive_7d", "top_100", "newbies"]).notNull(),
+  /** Number of notifications sent */
+  sentCount: int("sentCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type MassNotification = typeof massNotifications.$inferSelect;
+export type InsertMassNotification = typeof massNotifications.$inferInsert;

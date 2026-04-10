@@ -120,6 +120,20 @@
       "when": 1775824797309,
       "tag": "0016_lively_red_ghost",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1775827980810,
+      "tag": "0017_condemned_human_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1775828006553,
+      "tag": "0018_slow_callisto",
+      "breakpoints": true
     }
   ]
 }

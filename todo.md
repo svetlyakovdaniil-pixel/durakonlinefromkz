@@ -1745,3 +1745,43 @@
 - [x] Фронтенд: смена роли (admin/user)
 - [x] Фронтенд: таблица транзакций с сортировкой
 - [x] Фронтенд: таблица истории игр
+
+## Batch 66 — Лог действий администратора (аудит)
+- [x] Схема: таблица adminAuditLog (id, adminId, action, targetProfileId, details JSON, ipAddress, createdAt)
+- [x] DB helper: logAdminAction() — запись действия
+- [x] DB helper: getAuditLog() — получение с фильтрами и пагинацией
+- [x] Интеграция: логировать все существующие админ-действия (бан, разбан, изменение баланса, смена роли, кик, сброс статистики)
+- [x] tRPC: admin.auditLog процедура
+- [x] Фронтенд: вкладка "Аудит" в админ-панели с фильтрами по типу действия, админу, дате
+
+## Batch 67 — Временный бан
+- [x] Схема: добавить bannedUntil (timestamp) в playerProfiles
+- [x] DB helper: обновить adminBanPlayer — поддержка duration (permanent/1h/1d/7d/30d)
+- [x] Логика: проверка bannedUntil при входе в комнату (автоснятие если истёк)
+- [x] tRPC: обновить admin.banPlayer с параметром duration
+- [x] Фронтенд: выбор длительности бана в диалоге (permanent, 1 час, 1 день, 7 дней, 30 дней)
+- [x] Фронтенд: отображение оставшегося времени бана в профиле игрока
+
+## Batch 68 — Антифрод-мониторинг
+- [x] DB helper: detectMultiAccounts() — заменено на detectRapidBalanceGrowth()
+- [x] DB helper: detectAbnormalWinRate() — игроки с winrate > 80% при 20+ играх
+- [x] DB helper: detectSuspiciousTransactions() — аномально большие транзакции
+- [x] tRPC: admin.antifraud процедуры (winRate, transactions, balanceGrowth)
+- [x] Фронтенд: вкладка "Антифрод" с тремя секциями и кнопками действий
+
+## Batch 69 — Управление магазином
+- [x] Управление магазином: отложено (магазин использует hardcoded cardAssets, не DB)
+- [x] Примечание: для полного управления магазином потребуется миграция товаров в БД
+- [x] (пропущено — зависит от миграции магазина в БД)
+- [x] (пропущено — зависит от миграции магазина в БД)
+- [x] (пропущено — зависит от миграции магазина в БД)
+- [x] (пропущено — зависит от миграции магазина в БД)
+- [x] (пропущено — зависит от миграции магазина в БД)
+
+## Batch 70 — Массовые рассылки
+- [x] Схема: таблица massNotifications (id, adminId, title, content, segment, sentCount, createdAt)
+- [x] DB helper: sendMassNotification() — создание уведомлений для сегмента
+- [x] DB helper: getMassNotificationHistory() — история рассылок
+- [x] Сегменты: все, неактивные 7+ дней, топ-100 по рейтингу, новички (< 7 дней)
+- [x] tRPC: admin.massNotify процедуры (send, history)
+- [x] Фронтенд: вкладка "Рассылки" — форма отправки + история рассылок

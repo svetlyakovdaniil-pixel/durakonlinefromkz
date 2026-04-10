@@ -21,7 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer,
 } from './gameEngine';
-import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId } from './db';
+import { recordGameResult, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
 
 // In-memory store
 const rooms = new Map<string, Room>();
@@ -305,9 +305,16 @@ export function initSocketServer(httpServer: HttpServer) {
       if (user) {
         const profile = await getProfileByUserId(user.id);
         if (profile?.isBanned) {
-          socket.emit('error', 'Ваш аккаунт заблокирован. Причина: ' + (profile.banReason || 'Не указана'));
-          cb(false as any);
-          return;
+          // Check if temp ban has expired
+          const stillBanned = await checkAndAutoUnban(profile.id);
+          if (stillBanned) {
+            const banMsg = profile.bannedUntil
+              ? `Ваш аккаунт заблокирован до ${new Date(profile.bannedUntil).toLocaleString('ru-RU')}. Причина: ${profile.banReason || 'Не указана'}`
+              : `Ваш аккаунт заблокирован. Причина: ${profile.banReason || 'Не указана'}`;
+            socket.emit('error', banMsg);
+            cb(false as any);
+            return;
+          }
         }
       }
       const roomId = nanoid(8);
@@ -365,9 +372,16 @@ export function initSocketServer(httpServer: HttpServer) {
       if (banUser) {
         const banProfile = await getProfileByUserId(banUser.id);
         if (banProfile?.isBanned) {
-          socket.emit('error', 'Ваш аккаунт заблокирован. Причина: ' + (banProfile.banReason || 'Не указана'));
-          cb(false);
-          return;
+          // Check if temp ban has expired
+          const stillBanned = await checkAndAutoUnban(banProfile.id);
+          if (stillBanned) {
+            const banMsg = banProfile.bannedUntil
+              ? `Ваш аккаунт заблокирован до ${new Date(banProfile.bannedUntil).toLocaleString('ru-RU')}. Причина: ${banProfile.banReason || 'Не указана'}`
+              : `Ваш аккаунт заблокирован. Причина: ${banProfile.banReason || 'Не указана'}`;
+            socket.emit('error', banMsg);
+            cb(false);
+            return;
+          }
         }
       }
       const roomId = typeof data === 'string' ? data : data.roomId;

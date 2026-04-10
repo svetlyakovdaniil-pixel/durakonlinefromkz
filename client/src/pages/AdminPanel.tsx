@@ -7,7 +7,8 @@ import {
   ChevronLeft, ChevronRight, Ban, CheckCircle, Trash2,
   DollarSign, ArrowLeft, RefreshCw, LogOut as KickIcon,
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
+  ShoppingCart, Bell, Send, Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
-type Tab = "players" | "monitoring" | "transactions";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -33,6 +34,40 @@ function formatDuration(seconds: number | null | undefined) {
   const s = seconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+function formatTimeRemaining(dateStr: string | Date | null | undefined) {
+  if (!dateStr) return "Перманентный";
+  const until = new Date(dateStr).getTime();
+  const now = Date.now();
+  if (until <= now) return "Истёк";
+  const diff = until - now;
+  const hours = Math.floor(diff / 3600000);
+  const mins = Math.floor((diff % 3600000) / 60000);
+  if (hours >= 24) return `${Math.floor(hours / 24)}д ${hours % 24}ч`;
+  return `${hours}ч ${mins}м`;
+}
+
+const ACTION_LABELS: Record<string, string> = {
+  ban: "Бан", unban: "Разбан", temp_ban: "Временный бан",
+  update_balance: "Изменение баланса", reset_stats: "Сброс статистики",
+  change_role: "Смена роли", kick: "Кик",
+  update_shop_item: "Обновление товара", create_shop_item: "Новый товар",
+  toggle_shop_item: "Вкл/выкл товар", mass_notify: "Массовая рассылка",
+};
+
+const SEGMENT_LABELS: Record<string, string> = {
+  all: "Все игроки",
+  inactive_7d: "Неактивные 7+ дней",
+  top_100: "Топ-100 по рейтингу",
+  newbies: "Новички (< 7 дней)",
+};
+
+const BAN_DURATIONS = [
+  { label: "1 час", ms: 3600000 },
+  { label: "1 день", ms: 86400000 },
+  { label: "7 дней", ms: 604800000 },
+  { label: "30 дней", ms: 2592000000 },
+  { label: "Навсегда", ms: null },
+] as const;
 
 /* ================================================================
    ADMIN PANEL
@@ -69,6 +104,10 @@ export default function AdminPanel() {
     { id: "players", label: "Игроки", icon: Users },
     { id: "monitoring", label: "Мониторинг", icon: Activity },
     { id: "transactions", label: "Транзакции", icon: ArrowLeftRight },
+    { id: "audit", label: "Аудит", icon: ClipboardList },
+    { id: "antifraud", label: "Антифрод", icon: AlertTriangle },
+    { id: "shop", label: "Магазин", icon: ShoppingCart },
+    { id: "notifications", label: "Рассылки", icon: Bell },
   ];
 
   return (
@@ -89,13 +128,13 @@ export default function AdminPanel() {
       </div>
 
       {/* Tab bar */}
-      <div className="border-b border-gray-800">
+      <div className="border-b border-gray-800 overflow-x-auto">
         <div className="max-w-7xl mx-auto px-4 flex gap-1">
           {tabs.map(t => (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                 tab === t.id
                   ? "border-amber-500 text-amber-100"
                   : "border-transparent text-gray-500 hover:text-gray-300"
@@ -113,6 +152,10 @@ export default function AdminPanel() {
         {tab === "players" && <PlayersTab />}
         {tab === "monitoring" && <MonitoringTab />}
         {tab === "transactions" && <TransactionsTab />}
+        {tab === "audit" && <AuditTab />}
+        {tab === "antifraud" && <AntifraudTab />}
+        {tab === "shop" && <ShopManagementTab />}
+        {tab === "notifications" && <MassNotificationsTab />}
       </div>
     </div>
   );
@@ -136,6 +179,7 @@ function PlayersTab() {
   const [showBanDialog, setShowBanDialog] = useState(false);
   const [showBalanceDialog, setShowBalanceDialog] = useState(false);
   const [banReason, setBanReason] = useState("");
+  const [banDuration, setBanDuration] = useState<number | null>(null);
   const [balanceCurrency, setBalanceCurrency] = useState<"tenge" | "shanyrak">("shanyrak");
   const [balanceAmount, setBalanceAmount] = useState("");
   const [balanceDescription, setBalanceDescription] = useState("");
@@ -147,6 +191,7 @@ function PlayersTab() {
       toast.success("Игрок заблокирован");
       setShowBanDialog(false);
       setBanReason("");
+      setBanDuration(null);
       utils.admin.players.invalidate();
     },
     onError: (e) => toast.error(e.message),
@@ -257,7 +302,7 @@ function PlayersTab() {
                     )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
                       <Button
                         variant="ghost" size="sm"
                         className="h-7 px-2 text-xs text-blue-400 hover:text-blue-300"
@@ -285,7 +330,7 @@ function PlayersTab() {
                         <Button
                           variant="ghost" size="sm"
                           className="h-7 px-2 text-xs text-red-400 hover:text-red-300"
-                          onClick={() => { setSelectedPlayer(p); setShowBanDialog(true); }}
+                          onClick={() => { setSelectedPlayer(p); setBanDuration(null); setShowBanDialog(true); }}
                         >
                           <Ban className="w-3 h-3 mr-1" /> Бан
                         </Button>
@@ -336,29 +381,53 @@ function PlayersTab() {
         </div>
       )}
 
-      {/* Ban Dialog */}
+      {/* Ban Dialog — with duration selection */}
       <Dialog open={showBanDialog} onOpenChange={setShowBanDialog}>
         <DialogContent className="bg-gray-900 border-gray-700 text-gray-100">
           <DialogHeader>
             <DialogTitle>Заблокировать {selectedPlayer?.displayName}</DialogTitle>
-            <DialogDescription className="text-gray-400">Укажите причину блокировки</DialogDescription>
+            <DialogDescription className="text-gray-400">Укажите причину и длительность блокировки</DialogDescription>
           </DialogHeader>
-          <Input
-            placeholder="Причина бана..."
-            value={banReason}
-            onChange={e => setBanReason(e.target.value)}
-            className="bg-gray-800 border-gray-700 text-gray-100"
-          />
+          <div className="space-y-3">
+            <Input
+              placeholder="Причина бана..."
+              value={banReason}
+              onChange={e => setBanReason(e.target.value)}
+              className="bg-gray-800 border-gray-700 text-gray-100"
+            />
+            <div>
+              <label className="text-xs text-gray-400 mb-2 block">Длительность</label>
+              <div className="flex flex-wrap gap-2">
+                {BAN_DURATIONS.map(d => (
+                  <button
+                    key={d.label}
+                    onClick={() => setBanDuration(d.ms)}
+                    className={`px-3 py-1.5 text-xs rounded border transition-colors ${
+                      banDuration === d.ms
+                        ? "border-amber-500 bg-amber-900/30 text-amber-100"
+                        : "border-gray-700 text-gray-400 hover:text-gray-200"
+                    }`}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowBanDialog(false)} className="border-gray-700 text-gray-300">
               Отмена
             </Button>
             <Button
               variant="destructive"
-              disabled={!banReason.trim() || banMutation.isPending}
-              onClick={() => selectedPlayer && banMutation.mutate({ profileId: selectedPlayer.id, reason: banReason })}
+              disabled={!banReason.trim() || banDuration === undefined || banMutation.isPending}
+              onClick={() => selectedPlayer && banMutation.mutate({
+                profileId: selectedPlayer.id,
+                reason: banReason,
+                durationMs: banDuration,
+              })}
             >
-              Заблокировать
+              {banDuration === null ? "Заблокировать навсегда" : "Заблокировать"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -491,6 +560,9 @@ function PlayerProfileView({ profileId, onBack }: { profileId: number; onBack: (
           {detail.isBanned && (
             <span className="text-xs bg-red-900/50 text-red-300 px-2 py-0.5 rounded flex items-center gap-1">
               <Ban className="w-3 h-3" /> Забанен
+              {detail.bannedUntil && (
+                <span className="ml-1 text-red-400">({formatTimeRemaining(detail.bannedUntil)})</span>
+              )}
             </span>
           )}
         </div>
@@ -578,6 +650,7 @@ function ProfileInfoSection({
               <>
                 <DetailRow label="Причина бана" value={detail.banReason || "—"} highlight="red" />
                 <DetailRow label="Дата бана" value={formatDate(detail.bannedAt)} highlight="red" />
+                <DetailRow label="Бан до" value={detail.bannedUntil ? `${formatDate(detail.bannedUntil)} (${formatTimeRemaining(detail.bannedUntil)})` : "Навсегда"} highlight="red" />
               </>
             )}
           </tbody>
@@ -748,21 +821,11 @@ function ProfileTransactionsSection({ profileId }: { profileId: number }) {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline" size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(p => p - 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
             <ChevronLeft className="w-4 h-4 mr-1" /> Назад
           </Button>
           <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
-          <Button
-            variant="outline" size="sm"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage(p => p + 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
             Далее <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
@@ -850,21 +913,11 @@ function ProfileGamesSection({ profileId }: { profileId: number }) {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline" size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(p => p - 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
             <ChevronLeft className="w-4 h-4 mr-1" /> Назад
           </Button>
           <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
-          <Button
-            variant="outline" size="sm"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage(p => p + 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
             Далее <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
@@ -1049,25 +1102,585 @@ function TransactionsTab() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
-          <Button
-            variant="outline" size="sm"
-            disabled={page === 0}
-            onClick={() => setPage(p => p - 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
             <ChevronLeft className="w-4 h-4 mr-1" /> Назад
           </Button>
           <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
-          <Button
-            variant="outline" size="sm"
-            disabled={page >= totalPages - 1}
-            onClick={() => setPage(p => p + 1)}
-            className="border-gray-700 text-gray-300"
-          >
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
             Далее <ChevronRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ================================================================
+   AUDIT TAB
+   ================================================================ */
+function AuditTab() {
+  const [page, setPage] = useState(0);
+  const [actionFilter, setActionFilter] = useState<string>("");
+  const limit = 50;
+
+  const { data, isLoading, refetch } = trpc.admin.auditLog.useQuery({
+    actionFilter: actionFilter || undefined,
+    limit,
+    offset: page * limit,
+  });
+
+  const totalPages = Math.ceil((data?.total ?? 0) / limit);
+
+  const actionTypes = [
+    "", "ban", "unban", "temp_ban", "update_balance", "reset_stats",
+    "change_role", "kick", "mass_notify",
+  ];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h3 className="text-lg font-semibold text-amber-100">Лог действий администраторов</h3>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <select
+              value={actionFilter}
+              onChange={e => { setActionFilter(e.target.value); setPage(0); }}
+              className="bg-gray-900 border border-gray-700 text-gray-100 text-sm rounded px-3 py-1.5"
+            >
+              <option value="">Все действия</option>
+              {actionTypes.filter(Boolean).map(a => (
+                <option key={a} value={a}>{ACTION_LABELS[a] || a}</option>
+              ))}
+            </select>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-gray-500">Всего: {formatNumber(data?.total)}</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-lg border border-gray-800">
+        <table className="w-full text-sm">
+          <thead className="bg-gray-900/50">
+            <tr className="text-left text-gray-400">
+              <th className="px-4 py-3 font-medium">Дата</th>
+              <th className="px-4 py-3 font-medium">Админ</th>
+              <th className="px-4 py-3 font-medium">Действие</th>
+              <th className="px-4 py-3 font-medium">Цель</th>
+              <th className="px-4 py-3 font-medium">Детали</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-800">
+            {isLoading ? (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+            ) : !data?.entries?.length ? (
+              <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Записей нет</td></tr>
+            ) : (
+              data.entries.map((entry: any) => {
+                let details: Record<string, unknown> = {};
+                try { details = entry.details ? JSON.parse(entry.details) : {}; } catch {}
+
+                return (
+                  <tr key={entry.id} className="hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(entry.createdAt)}</td>
+                    <td className="px-4 py-3 text-amber-100">{entry.adminName || `Admin #${entry.adminId}`}</td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        entry.action === 'ban' || entry.action === 'temp_ban' ? 'bg-red-900/50 text-red-300' :
+                        entry.action === 'unban' ? 'bg-green-900/50 text-green-300' :
+                        entry.action === 'update_balance' ? 'bg-amber-900/50 text-amber-300' :
+                        entry.action === 'change_role' ? 'bg-purple-900/50 text-purple-300' :
+                        entry.action === 'mass_notify' ? 'bg-blue-900/50 text-blue-300' :
+                        'bg-gray-800 text-gray-400'
+                      }`}>
+                        {ACTION_LABELS[entry.action] || entry.action}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">
+                      {entry.targetProfileId ? `Profile #${entry.targetProfileId}` : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs max-w-xs truncate">
+                      {Object.entries(details).map(([k, v]) => `${k}: ${v}`).join(", ") || "—"}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
+            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+          </Button>
+          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
+            Далее <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   ANTIFRAUD TAB
+   ================================================================ */
+function AntifraudTab() {
+  const [section, setSection] = useState<"winrate" | "transactions" | "growth">("winrate");
+
+  const winRateData = trpc.admin.antifraudWinRate.useQuery({}, { enabled: section === "winrate" });
+  const txData = trpc.admin.antifraudTransactions.useQuery({}, { enabled: section === "transactions" });
+  const growthData = trpc.admin.antifraudBalanceGrowth.useQuery({}, { enabled: section === "growth" });
+
+  const sections = [
+    { id: "winrate" as const, label: "Высокий винрейт", icon: Trophy },
+    { id: "transactions" as const, label: "Крупные транзакции", icon: DollarSign },
+    { id: "growth" as const, label: "Быстрый рост баланса", icon: ArrowUpDown },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold text-amber-100">Антифрод-мониторинг</h3>
+
+      <div className="flex gap-2 flex-wrap">
+        {sections.map(s => (
+          <button
+            key={s.id}
+            onClick={() => setSection(s.id)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-colors ${
+              section === s.id
+                ? "border-amber-500 bg-amber-900/20 text-amber-100"
+                : "border-gray-700 text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            <s.icon className="w-4 h-4" />
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      {section === "winrate" && (
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">ID</th>
+                <th className="px-4 py-3 font-medium">Имя</th>
+                <th className="px-4 py-3 font-medium">Игры</th>
+                <th className="px-4 py-3 font-medium">Победы</th>
+                <th className="px-4 py-3 font-medium">Винрейт</th>
+                <th className="px-4 py-3 font-medium">Рейтинг</th>
+                <th className="px-4 py-3 font-medium">Статус</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {winRateData.isLoading ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+              ) : !winRateData.data?.length ? (
+                <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">Подозрительных игроков не найдено</td></tr>
+              ) : (
+                winRateData.data.map((p: any) => (
+                  <tr key={p.id} className="hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-gray-400">#{p.gameId}</td>
+                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"}</td>
+                    <td className="px-4 py-3">{formatNumber(p.gamesPlayed)}</td>
+                    <td className="px-4 py-3 text-green-400">{formatNumber(p.wins)}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-red-400 font-bold">{p.winRate}%</span>
+                    </td>
+                    <td className="px-4 py-3">{formatNumber(p.rating)}</td>
+                    <td className="px-4 py-3">
+                      {p.isBanned ? (
+                        <span className="text-xs text-red-400">Забанен</span>
+                      ) : (
+                        <span className="text-xs text-yellow-400">Подозрительный</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {section === "transactions" && (
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">Дата</th>
+                <th className="px-4 py-3 font-medium">Игрок</th>
+                <th className="px-4 py-3 font-medium">Тип</th>
+                <th className="px-4 py-3 font-medium">Сумма</th>
+                <th className="px-4 py-3 font-medium">Валюта</th>
+                <th className="px-4 py-3 font-medium">Описание</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {txData.isLoading ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+              ) : !txData.data?.length ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Крупных транзакций не найдено</td></tr>
+              ) : (
+                txData.data.map((t: any) => (
+                  <tr key={t.id} className="hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(t.createdAt)}</td>
+                    <td className="px-4 py-3 text-amber-100">{t.displayName || `#${t.gameId}`}</td>
+                    <td className="px-4 py-3 text-gray-400">{t.type}</td>
+                    <td className="px-4 py-3">
+                      <span className={t.amount >= 0 ? "text-green-400 font-bold" : "text-red-400 font-bold"}>
+                        {t.amount >= 0 ? "+" : ""}{formatNumber(t.amount)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">{t.currency === "shanyrak" ? "🏠" : "₸"}</td>
+                    <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{t.description || "—"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {section === "growth" && (
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">ID</th>
+                <th className="px-4 py-3 font-medium">Имя</th>
+                <th className="px-4 py-3 font-medium">Заработано за 24ч</th>
+                <th className="px-4 py-3 font-medium">Транзакций</th>
+                <th className="px-4 py-3 font-medium">Текущий баланс</th>
+                <th className="px-4 py-3 font-medium">Статус</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {growthData.isLoading ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+              ) : !growthData.data?.length ? (
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-gray-500">Аномалий не обнаружено</td></tr>
+              ) : (
+                growthData.data.map((p: any) => (
+                  <tr key={p.profileId} className="hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-gray-400">#{p.gameId}</td>
+                    <td className="px-4 py-3 text-amber-100">{p.displayName || "—"}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-red-400 font-bold">+{formatNumber(p.totalGained)} 🏠</span>
+                    </td>
+                    <td className="px-4 py-3">{formatNumber(p.txCount)}</td>
+                    <td className="px-4 py-3">{formatNumber(p.balanceShanyrak)} 🏠</td>
+                    <td className="px-4 py-3">
+                      {p.isBanned ? (
+                        <span className="text-xs text-red-400">Забанен</span>
+                      ) : (
+                        <span className="text-xs text-yellow-400">Подозрительный</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ================================================================
+   SHOP MANAGEMENT TAB
+   ================================================================ */
+function ShopManagementTab() {
+  // Shop items are currently hardcoded in the frontend (ShopModal.tsx and cardAssets.ts).
+  // This tab provides a read-only view of the current catalog for admin reference,
+  // with the ability to see what's available and at what prices.
+
+  const SHOP_ITEMS = [
+    { id: "custom_deck", category: "Колоды", name: "Казахская колода", price: 60, currency: "tenge" as const, available: true },
+    { id: "dark_kazakh", category: "Столы", name: "Тёмный Казахский", price: 500, currency: "tenge" as const, available: true },
+    { id: "fire", category: "Рамки", name: "Огненная рамка", price: 500, currency: "tenge" as const, available: true },
+    { id: "neon", category: "Рамки", name: "Неоновая рамка", price: 800, currency: "tenge" as const, available: true },
+    { id: "lightning", category: "Рамки", name: "Молния рамка", price: 1200, currency: "tenge" as const, available: true },
+    { id: "ice", category: "Рамки", name: "Ледяная рамка", price: 1000, currency: "tenge" as const, available: true },
+  ];
+
+  const EXCHANGE_TIERS = [
+    { tier: "10k", shanyrak: 10000, tenge: 50 },
+    { tier: "50k", shanyrak: 50000, tenge: 220 },
+    { tier: "100k", shanyrak: 100000, tenge: 400 },
+    { tier: "500k", shanyrak: 500000, tenge: 1500 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-amber-100">Управление магазином</h3>
+      <p className="text-sm text-gray-400">
+        Текущий каталог товаров. Цены определены в коде (ShopModal.tsx, cardAssets.ts).
+        Для изменения цен обратитесь к разработчику.
+      </p>
+
+      {/* Shop items */}
+      <div>
+        <h4 className="text-md font-medium text-gray-200 mb-3">Товары магазина</h4>
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">ID</th>
+                <th className="px-4 py-3 font-medium">Категория</th>
+                <th className="px-4 py-3 font-medium">Название</th>
+                <th className="px-4 py-3 font-medium">Цена</th>
+                <th className="px-4 py-3 font-medium">Статус</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {SHOP_ITEMS.map(item => (
+                <tr key={item.id} className="hover:bg-gray-900/30 transition-colors">
+                  <td className="px-4 py-3 text-gray-400 font-mono text-xs">{item.id}</td>
+                  <td className="px-4 py-3">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                      item.category === "Колоды" ? "bg-blue-900/50 text-blue-300" :
+                      item.category === "Столы" ? "bg-green-900/50 text-green-300" :
+                      "bg-purple-900/50 text-purple-300"
+                    }`}>
+                      {item.category}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-amber-100">{item.name}</td>
+                  <td className="px-4 py-3">{formatNumber(item.price)} ₸</td>
+                  <td className="px-4 py-3">
+                    <span className="text-xs text-green-400 flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Доступен
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Exchange rates */}
+      <div>
+        <h4 className="text-md font-medium text-gray-200 mb-3">Курсы обмена (Тенге → Шаныраки)</h4>
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">Пакет</th>
+                <th className="px-4 py-3 font-medium">Шаныраки</th>
+                <th className="px-4 py-3 font-medium">Цена (тенге)</th>
+                <th className="px-4 py-3 font-medium">Курс</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {EXCHANGE_TIERS.map(t => (
+                <tr key={t.tier} className="hover:bg-gray-900/30 transition-colors">
+                  <td className="px-4 py-3 text-amber-100 font-medium">{t.tier}</td>
+                  <td className="px-4 py-3">{formatNumber(t.shanyrak)} 🏠</td>
+                  <td className="px-4 py-3">{formatNumber(t.tenge)} ₸</td>
+                  <td className="px-4 py-3 text-gray-400">{Math.round(t.shanyrak / t.tenge)} 🏠/₸</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Economy settings */}
+      <div>
+        <h4 className="text-md font-medium text-gray-200 mb-3">Экономические параметры</h4>
+        <div className="border border-gray-800 rounded-lg overflow-hidden">
+          <table className="w-full text-sm">
+            <tbody className="divide-y divide-gray-800">
+              <DetailRow label="Начальный баланс (тенге)" value="25" />
+              <DetailRow label="Начальный баланс (шаныраки)" value="5 000" />
+              <DetailRow label="Бесплатный топап (до)" value="2 000 шаныраков" />
+              <DetailRow label="Кулдаун топапа" value="12 часов" />
+              <DetailRow label="Награда за обучение" value="2 000 шаныраков (одноразово)" />
+              <DetailRow label="Начальный рейтинг" value="1 000" />
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   MASS NOTIFICATIONS TAB
+   ================================================================ */
+function MassNotificationsTab() {
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [segment, setSegment] = useState<"all" | "inactive_7d" | "top_100" | "newbies">("all");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [page, setPage] = useState(0);
+  const limit = 20;
+
+  const utils = trpc.useUtils();
+
+  const sendMutation = trpc.admin.sendMassNotification.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Рассылка отправлена: ${data.sentCount} уведомлений`);
+      setTitle("");
+      setContent("");
+      setShowConfirm(false);
+      utils.admin.massNotificationHistory.invalidate();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const { data: history, isLoading } = trpc.admin.massNotificationHistory.useQuery({
+    limit,
+    offset: page * limit,
+  });
+
+  const totalPages = Math.ceil((history?.total ?? 0) / limit);
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold text-amber-100">Массовые рассылки</h3>
+
+      {/* Send form */}
+      <div className="border border-gray-800 rounded-lg p-6 bg-gray-900/30 space-y-4">
+        <h4 className="text-md font-medium text-gray-200">Новая рассылка</h4>
+
+        <div>
+          <label className="text-xs text-gray-400 mb-1 block">Сегмент</label>
+          <div className="flex flex-wrap gap-2">
+            {(Object.entries(SEGMENT_LABELS) as [string, string][]).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setSegment(key as any)}
+                className={`px-3 py-1.5 text-xs rounded border transition-colors ${
+                  segment === key
+                    ? "border-amber-500 bg-amber-900/30 text-amber-100"
+                    : "border-gray-700 text-gray-400 hover:text-gray-200"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <Input
+          placeholder="Заголовок уведомления"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          maxLength={200}
+          className="bg-gray-800 border-gray-700 text-gray-100"
+        />
+
+        <textarea
+          placeholder="Текст уведомления..."
+          value={content}
+          onChange={e => setContent(e.target.value)}
+          maxLength={2000}
+          rows={4}
+          className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
+        />
+
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-gray-500">{content.length}/2000 символов</span>
+          <Button
+            disabled={!title.trim() || !content.trim() || sendMutation.isPending}
+            onClick={() => setShowConfirm(true)}
+            className="bg-amber-600 hover:bg-amber-700"
+          >
+            <Send className="w-4 h-4 mr-2" />
+            Отправить
+          </Button>
+        </div>
+      </div>
+
+      {/* Confirm dialog */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-gray-100">
+          <DialogHeader>
+            <DialogTitle>Подтверждение рассылки</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Вы отправляете уведомление сегменту <strong className="text-amber-100">{SEGMENT_LABELS[segment]}</strong>.
+              Это действие нельзя отменить.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="border border-gray-800 rounded p-3 bg-gray-800/50 space-y-1">
+            <div className="text-sm font-medium text-amber-100">{title}</div>
+            <div className="text-sm text-gray-300">{content}</div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowConfirm(false)} className="border-gray-700 text-gray-300">
+              Отмена
+            </Button>
+            <Button
+              disabled={sendMutation.isPending}
+              onClick={() => sendMutation.mutate({ title, content, segment })}
+              className="bg-amber-600 hover:bg-amber-700"
+            >
+              {sendMutation.isPending ? "Отправка..." : "Подтвердить отправку"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* History */}
+      <div>
+        <h4 className="text-md font-medium text-gray-200 mb-3">История рассылок</h4>
+        <div className="overflow-x-auto rounded-lg border border-gray-800">
+          <table className="w-full text-sm">
+            <thead className="bg-gray-900/50">
+              <tr className="text-left text-gray-400">
+                <th className="px-4 py-3 font-medium">Дата</th>
+                <th className="px-4 py-3 font-medium">Админ</th>
+                <th className="px-4 py-3 font-medium">Заголовок</th>
+                <th className="px-4 py-3 font-medium">Сегмент</th>
+                <th className="px-4 py-3 font-medium">Отправлено</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-800">
+              {isLoading ? (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Загрузка...</td></tr>
+              ) : !history?.campaigns?.length ? (
+                <tr><td colSpan={5} className="px-4 py-8 text-center text-gray-500">Рассылок пока нет</td></tr>
+              ) : (
+                history.campaigns.map((c: any) => (
+                  <tr key={c.id} className="hover:bg-gray-900/30 transition-colors">
+                    <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(c.createdAt)}</td>
+                    <td className="px-4 py-3 text-amber-100">{c.adminName || `Admin #${c.adminId}`}</td>
+                    <td className="px-4 py-3 text-gray-100 max-w-xs truncate">{c.title}</td>
+                    <td className="px-4 py-3">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-blue-900/50 text-blue-300">
+                        {SEGMENT_LABELS[c.segment] || c.segment}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400">{formatNumber(c.sentCount)}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
+              <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+            </Button>
+            <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+            <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
+              Далее <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

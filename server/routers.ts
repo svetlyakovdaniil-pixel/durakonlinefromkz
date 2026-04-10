@@ -51,6 +51,15 @@ import {
   adminUpdateRole,
   adminGetPlayerTransactions,
   adminGetPlayerGameHistory,
+  logAdminAction,
+  getAuditLog,
+  adminBanPlayerWithDuration,
+  checkAndAutoUnban,
+  detectAbnormalWinRate,
+  detectSuspiciousTransactions,
+  detectRapidBalanceGrowth,
+  sendMassNotification,
+  getMassNotificationHistory,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
@@ -499,32 +508,73 @@ export const appRouter = router({
         amount: z.number(),
         description: z.string().min(1),
       }))
-      .mutation(async ({ input }) => {
-        return adminUpdateBalance(input.profileId, input.currency, input.amount, input.description);
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminUpdateBalance(input.profileId, input.currency, input.amount, input.description);
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'update_balance',
+            targetProfileId: input.profileId,
+            details: { currency: input.currency, amount: input.amount, description: input.description },
+          });
+        }
+        return result;
       }),
 
-    /** Ban a player */
+    /** Ban a player (with optional duration) */
     banPlayer: adminProcedure
       .input(z.object({
         profileId: z.number(),
         reason: z.string().min(1),
+        durationMs: z.number().nullable().optional(),
       }))
-      .mutation(async ({ input }) => {
-        return adminBanPlayer(input.profileId, input.reason);
+      .mutation(async ({ ctx, input }) => {
+        const durationMs = input.durationMs ?? null;
+        const result = await adminBanPlayerWithDuration(input.profileId, input.reason, durationMs);
+        if (result.success) {
+          const actionType = durationMs ? 'temp_ban' as const : 'ban' as const;
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: actionType,
+            targetProfileId: input.profileId,
+            details: { reason: input.reason, durationMs, bannedUntil: result.bannedUntil },
+          });
+        }
+        return result;
       }),
 
     /** Unban a player */
     unbanPlayer: adminProcedure
       .input(z.object({ profileId: z.number() }))
-      .mutation(async ({ input }) => {
-        return adminUnbanPlayer(input.profileId);
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminUnbanPlayer(input.profileId);
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'unban',
+            targetProfileId: input.profileId,
+          });
+        }
+        return result;
       }),
 
     /** Reset player stats */
     resetStats: adminProcedure
       .input(z.object({ profileId: z.number() }))
-      .mutation(async ({ input }) => {
-        return adminResetStats(input.profileId);
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminResetStats(input.profileId);
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'reset_stats',
+            targetProfileId: input.profileId,
+          });
+        }
+        return result;
       }),
 
     /** Get transaction history */
@@ -555,8 +605,18 @@ export const appRouter = router({
         profileId: z.number(),
         role: z.enum(['admin', 'user']),
       }))
-      .mutation(async ({ input }) => {
-        return adminUpdateRole(input.profileId, input.role);
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminUpdateRole(input.profileId, input.role);
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'change_role',
+            targetProfileId: input.profileId,
+            details: { newRole: input.role },
+          });
+        }
+        return result;
       }),
 
     /** Get player transactions with sorting */
@@ -586,9 +646,96 @@ export const appRouter = router({
     /** Kick a player (disconnect their socket) */
     kickPlayer: adminProcedure
       .input(z.object({ openId: z.string() }))
-      .mutation(async ({ input }) => {
+      .mutation(async ({ ctx, input }) => {
         const kicked = adminKickPlayer(input.openId);
+        if (kicked) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'kick',
+            details: { openId: input.openId },
+          });
+        }
         return { success: kicked };
+      }),
+
+    // ── Audit Log ──
+    auditLog: adminProcedure
+      .input(z.object({
+        actionFilter: z.string().optional(),
+        adminId: z.number().optional(),
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return getAuditLog({
+          actionFilter: input?.actionFilter,
+          adminId: input?.adminId,
+          limit: input?.limit ?? 50,
+          offset: input?.offset ?? 0,
+        });
+      }),
+
+    // ── Anti-Fraud ──
+    antifraudWinRate: adminProcedure
+      .input(z.object({
+        minGames: z.number().optional(),
+        minWinRate: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return detectAbnormalWinRate(input?.minGames ?? 20, input?.minWinRate ?? 80);
+      }),
+
+    antifraudTransactions: adminProcedure
+      .input(z.object({
+        minAmount: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return detectSuspiciousTransactions(input?.minAmount ?? 10000);
+      }),
+
+    antifraudBalanceGrowth: adminProcedure
+      .input(z.object({
+        threshold: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return detectRapidBalanceGrowth(input?.threshold ?? 50000);
+      }),
+
+    // ── Mass Notifications ──
+    sendMassNotification: adminProcedure
+      .input(z.object({
+        title: z.string().min(1).max(200),
+        content: z.string().min(1).max(2000),
+        segment: z.enum(['all', 'inactive_7d', 'top_100', 'newbies']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await sendMassNotification({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          title: input.title,
+          content: input.content,
+          segment: input.segment,
+        });
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'mass_notify',
+          details: { title: input.title, segment: input.segment, sentCount: result.sentCount },
+        });
+        return result;
+      }),
+
+    massNotificationHistory: adminProcedure
+      .input(z.object({
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return getMassNotificationHistory({
+          limit: input?.limit ?? 20,
+          offset: input?.offset ?? 0,
+        });
       }),
   }),
 });

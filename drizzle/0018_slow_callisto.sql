@@ -1,0 +1,1 @@
+ALTER TABLE `notifications` MODIFY COLUMN `type` enum('friend_request','friend_accepted','balance_topup','cooldown_expired','admin_announcement') NOT NULL;
