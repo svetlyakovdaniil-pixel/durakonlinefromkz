@@ -70,8 +70,8 @@ export type TableStyle = 'classic' | 'dark_kazakh' | 'neon';
 
 export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; price: number }> = {
   classic: { url: GAME_TABLE_URL, name: 'Классический', price: 0 },
-  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Тёмный Казахский', price: 500 },
-  neon: { url: GAME_TABLE_NEON_URL, name: 'Неон', price: 350 },
+  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Ханский Октогон', price: 500 },
+  neon: { url: GAME_TABLE_NEON_URL, name: 'Неоновый Нексус', price: 350 },
 };
 
 export const SUIT_SYMBOLS: Record<string, string> = {

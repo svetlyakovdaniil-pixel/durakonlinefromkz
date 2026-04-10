@@ -1918,3 +1918,63 @@ export async function getShopItemPrice(itemType: 'deck' | 'table' | 'frame', ite
   }
   return { priceTenge: null, isAvailable: true };
 }
+
+
+/**
+ * Purchase a premium avatar for a player.
+ */
+export async function purchaseAvatar(
+  userId: number,
+  avatarId: string,
+  tengeCost: number
+): Promise<{ success: boolean; newTenge?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  const owned: string[] = profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [];
+  if (owned.includes(avatarId)) {
+    return { success: false, reason: 'already_owned' };
+  }
+
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+
+  const newTenge = profile.balanceTenge - tengeCost;
+  owned.push(avatarId);
+
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    ownedAvatars: JSON.stringify(owned),
+  }).where(eq(playerProfiles.id, profile.id));
+
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'shop_purchase',
+    amount: -tengeCost,
+    currency: 'tenge',
+    description: `Покупка аватара: ${avatarId}`,
+    balanceAfter: newTenge,
+  });
+
+  return { success: true, newTenge };
+}
+
+/**
+ * Get list of owned premium avatar IDs for a player.
+ */
+export async function getOwnedAvatars(userId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+
+  const [profile] = await db.select({ ownedAvatars: playerProfiles.ownedAvatars })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.userId, userId))
+    .limit(1);
+
+  if (!profile || !profile.ownedAvatars) return [];
+  return JSON.parse(profile.ownedAvatars);
+}

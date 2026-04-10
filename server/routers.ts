@@ -40,6 +40,8 @@ import {
   getOwnedFrames,
   purchaseFrame,
   equipFrame,
+  purchaseAvatar,
+  getOwnedAvatars,
   completeTutorial,
   adminGetPlayers,
   adminUpdateBalance,
@@ -460,6 +462,19 @@ export const appRouter = router({
       .input(z.object({ frameId: z.string().nullable() }))
       .mutation(async ({ ctx, input }) => {
         const result = await equipFrame(ctx.user.id, input.frameId);
+        return result;
+      }),
+
+    /** Get owned premium avatar IDs for the current user */
+    ownedAvatars: protectedProcedure.query(async ({ ctx }) => {
+      return getOwnedAvatars(ctx.user.id);
+    }),
+
+    /** Purchase a premium avatar */
+    purchaseAvatar: protectedProcedure
+      .input(z.object({ avatarId: z.string(), tengeCost: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await purchaseAvatar(ctx.user.id, input.avatarId, input.tengeCost);
         return result;
       }),
   }),

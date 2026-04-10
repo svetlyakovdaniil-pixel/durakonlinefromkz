@@ -54,6 +54,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   ownedTables: text("ownedTables"),
   /** JSON array of owned avatar frame IDs, e.g. ["fire"] */
   ownedFrames: text("ownedFrames"),
+  /** JSON array of owned premium avatar IDs, e.g. ["nexus_bunny"] */
+  ownedAvatars: text("ownedAvatars"),
   /** Currently equipped avatar frame ID (null = no frame) */
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */

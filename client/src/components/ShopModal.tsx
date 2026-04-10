@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
+import { AVATAR_OPTIONS } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
 import { NeonFrame } from './NeonFrame';
 import { LightningFrame } from './LightningFrame';
@@ -92,10 +93,10 @@ interface ShopModalProps {
   onPurchased?: () => void;
 }
 
-type ShopTab = 'decks' | 'tables' | 'frames';
+type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars';
 
 interface ConfirmPurchase {
-  type: 'deck' | 'table' | 'frame';
+  type: 'deck' | 'table' | 'frame' | 'avatar';
   id: string;
   name: string;
   price: number;
@@ -109,9 +110,11 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
   const { data: ownedDecks = [], refetch: refetchOwned } = trpc.shop.ownedDecks.useQuery(undefined, { enabled: open });
   const { data: ownedTables = [], refetch: refetchOwnedTables } = trpc.shop.ownedTables.useQuery(undefined, { enabled: open });
   const { data: ownedFrames = [], refetch: refetchOwnedFrames } = trpc.shop.ownedFrames.useQuery(undefined, { enabled: open });
+  const { data: ownedAvatars = [], refetch: refetchOwnedAvatars } = trpc.shop.ownedAvatars.useQuery(undefined, { enabled: open });
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
+  const purchaseAvatarMutation = trpc.shop.purchaseAvatar.useMutation();
 
   const isCustomOwned = ownedDecks.includes('custom');
   const canAfford = currentTenge >= CUSTOM_DECK_PRICE;
@@ -162,6 +165,20 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
         } else {
           toast.error(t('common.error'));
         }
+      } else if (item.type === 'avatar') {
+        const result = await purchaseAvatarMutation.mutateAsync({ avatarId: item.id, tengeCost: item.price });
+        if (result.success) {
+          toast.success(t('toast.purchaseSuccess'));
+          refetchOwnedAvatars();
+          onPurchased?.();
+        } else if (result.reason === 'already_owned') {
+          toast.info(t('shop.owned'));
+          refetchOwnedAvatars();
+        } else if (result.reason === 'insufficient_tenge') {
+          toast.error(t('shop.notEnough'));
+        } else {
+          toast.error(t('common.error'));
+        }
       }
     } catch {
       toast.error(t('common.error'));
@@ -204,17 +221,17 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
 
         {/* Tabs */}
         <div className="flex border-b border-amber-700/20">
-          {(['decks', 'tables', 'frames'] as const).map(tab => (
+          {(['decks', 'tables', 'frames', 'avatars'] as const).map(tab => (
             <button
               key={tab}
-              className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 text-xs sm:text-sm font-medium transition-colors ${
                 activeTab === tab
                   ? 'text-amber-100 border-b-2 border-amber-400 bg-amber-900/10'
                   : 'text-amber-200/50 hover:text-amber-200/70'
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : (locale === 'kk' ? 'Жақтаулар' : 'Рамки')}
+              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? (locale === 'kk' ? 'Жақтаулар' : 'Рамки') : (locale === 'kk' ? 'Аватарлар' : 'Аватары')}
             </button>
           ))}
         </div>
@@ -270,7 +287,6 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-amber-100 font-bold text-sm">{table.name}</h3>
-                          <p className="text-amber-200/50 text-xs mt-0.5">{t('shop.darkTableDesc')}</p>
                         </div>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -341,6 +357,55 @@ export default function ShopModal({ open, onClose, currentTenge, onPurchased }: 
                           </div>
                         )}
                         {!isOwned && !canAffordFrame && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {activeTab === 'avatars' && (
+            <div className="space-y-4">
+              {AVATAR_OPTIONS.filter(a => a.premium).map(avatar => {
+                const isOwned = ownedAvatars.includes(avatar.id);
+                const canAffordAvatar = currentTenge >= (avatar.price || 0);
+                return (
+                  <div key={avatar.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                    <div className="flex items-center gap-4">
+                      <div className="shrink-0 relative">
+                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-cyan-500/60 shadow-lg shadow-cyan-500/20">
+                          <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover animate-pulse-slow" />
+                        </div>
+                        <div className="absolute -top-1 -right-1 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                          PRO
+                        </div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-amber-100 font-bold text-sm mb-1">{avatar.name}</h3>
+                        <p className="text-amber-200/50 text-xs mb-3">
+                          {locale === 'kk' ? 'Премиум аватар' : 'Премиум аватар'}
+                        </p>
+                        {isOwned ? (
+                          <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                            <Check className="w-4 h-4" /><span>{t('shop.purchased')}</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
+                              onClick={() => setConfirmPurchase({
+                                type: 'avatar', id: avatar.id,
+                                name: avatar.name,
+                                price: avatar.price || 0,
+                              })}
+                              disabled={purchasing || !canAffordAvatar}>{purchasing ? '...' : t('shop.buy')}</Button>
+                            <div className="flex items-center gap-1">
+                              <span className="text-amber-100 font-bold text-base">{avatar.price}</span>
+                              <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
+                            </div>
+                          </div>
+                        )}
+                        {!isOwned && !canAffordAvatar && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                       </div>
                     </div>
                   </div>

@@ -3,6 +3,8 @@ export interface AvatarOption {
   id: string;
   name: string;
   url: string;
+  premium?: boolean;
+  price?: number;
 }
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
@@ -35,6 +37,13 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     id: 'snow-leopard',
     name: 'Барс',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-snow-leopard-UGXKzhokntwzXvBoUdi5Lq.webp',
+  },
+  {
+    id: 'nexus_bunny',
+    name: 'Nexus Bunny',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/nexus_bunny_avatar-JL5A5iF6tsP42JWaLwG3Uf.webp',
+    premium: true,
+    price: 250,
   },
 ];
 
