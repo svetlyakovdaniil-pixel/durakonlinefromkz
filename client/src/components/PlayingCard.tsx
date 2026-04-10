@@ -75,7 +75,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
     );
   }
 
-  // For custom deck, all cards have images; for classic, only face cards/aces/777
+  // Both decks now have images for all cards (6-10, J, Q, K, A, 777)
   const imageKey = isCustom
     ? getCustomCardImageKey(card.rank, card.suit)
     : getCardImageKey(card.rank, card.suit);

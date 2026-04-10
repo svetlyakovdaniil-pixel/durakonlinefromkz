@@ -16,6 +16,26 @@ export const CARD_IMAGES: Record<string, string> = {
   'A-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/ace_hearts-atLyq8Ng474qAdLwxZ6BEF.webp',
   'A-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/ace_diamonds-HuKNAotfw9LsSDDKHxedB3.webp',
   'A-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/ace_clubs-UM9BjM668KcCdcKRRCRo2T.webp',
+  '6-spades': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/6_spades-L2t6UemnACXmAqAmWhKzfg.webp',
+  '6-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/6_hearts-RTWhYSMsZmbFheTyHPdPGs.webp',
+  '6-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/6_diamonds-Z6fxjHcdcyS7D6YWSzbsnJ.webp',
+  '6-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/6_clubs-5iSYcZrnLfLTy45eFnYNCV.webp',
+  '7-spades': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/7_spades-c4ecByNgtNCMiCHtLJo7up.webp',
+  '7-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/7_hearts-D7GMYaWedRzpq48vj6KwXj.webp',
+  '7-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/7_diamonds-aVfc3b9TYR5CccJ3fuSXN5.webp',
+  '7-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/7_clubs-SiksR5B3QREM3RDDN2dZgY.webp',
+  '8-spades': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/8_spades-eMivvkVXmeQFKxYVWQGTZu.webp',
+  '8-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/8_hearts-6EAkbrurtez2oPnMwWLwUX.webp',
+  '8-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/8_diamonds-RxVmamX7CuZg5c3hxwetGR.webp',
+  '8-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/8_clubs-CpUnWew6BrxqragiazVpjn.webp',
+  '9-spades': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/9_spades-MQ9VgKsgb7wSq4aN2VZYFz.webp',
+  '9-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/9_hearts-YShCsF4QBvVu8fvfFSK9JK.webp',
+  '9-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/9_diamonds-kbAcgaQmQ49L2tRidPuFSV.webp',
+  '9-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/9_clubs-khVHtfvL6v7ExvcqDrrz2v.webp',
+  '10-spades': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/10_spades-H9iAjJ5Hhch2NmX5YKPzGu.webp',
+  '10-hearts': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/10_hearts-7emtcvDpdnuMLCLS3tVXEg.webp',
+  '10-diamonds': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/10_diamonds-LBGvYhhurAy9TvJKcpnUN8.webp',
+  '10-clubs': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/10_clubs-8JLykp6bKsbeoZtcL5efwZ.webp',
   '777': 'https://d2xsxph8kpxj0f.cloudfront.net/310519663506723312/TbGkXKwS7vrkz8cwb2Zvno/card_777-FrG2yDo9nWFYjaXivAPZBY.webp',
 };
 
@@ -90,7 +110,7 @@ export const SUIT_COLORS: Record<string, string> = {
 
 export function getCardImageKey(rank: string, suit: string | null): string | null {
   if (rank === '777') return '777';
-  if (['J', 'Q', 'K', 'A'].includes(rank) && suit) return `${rank}-${suit}`;
+  if (suit) return `${rank}-${suit}`;
   return null;
 }
 
