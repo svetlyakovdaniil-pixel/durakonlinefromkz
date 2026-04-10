@@ -8,7 +8,8 @@ import {
   DollarSign, ArrowLeft, RefreshCw, LogOut as KickIcon,
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
-  ShoppingCart, Bell, Send, Filter, Menu, X,
+  ShoppingCart, Bell, Send, Filter, Menu, X, Flag,
+  MessageSquare, AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import { TABLE_STYLES } from "@shared/cardAssets";
 import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -115,6 +116,7 @@ export default function AdminPanel() {
     { id: "antifraud", label: "Антифрод", icon: AlertTriangle },
     { id: "shop", label: "Магазин", icon: ShoppingCart, adminOnly: true },
     { id: "notifications", label: "Рассылки", icon: Bell, adminOnly: true },
+    { id: "moderation", label: "Модерация", icon: Flag, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -198,6 +200,7 @@ export default function AdminPanel() {
         {tab === "antifraud" && <AntifraudTab />}
         {tab === "shop" && isAdmin && <ShopManagementTab />}
         {tab === "notifications" && isAdmin && <MassNotificationsTab />}
+        {tab === "moderation" && isAdmin && <ModerationTab />}
       </div>
     </div>
   );
@@ -1913,6 +1916,323 @@ function MassNotificationsTab() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ================================================================
+   MODERATION TAB — Player Complaints
+   ================================================================ */
+const REASON_LABELS: Record<string, string> = {
+  cheating: "Читерство",
+  toxic_behavior: "Токсичное поведение",
+  inappropriate_name: "Неприемлемое имя",
+  afk_abuse: "AFK злоупотребление",
+  other: "Другое",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Ожидает",
+  reviewed: "Рассмотрена",
+  resolved: "Решена",
+  dismissed: "Отклонена",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+  pending: "bg-yellow-900/40 text-yellow-300 border-yellow-700/30",
+  reviewed: "bg-blue-900/40 text-blue-300 border-blue-700/30",
+  resolved: "bg-green-900/40 text-green-300 border-green-700/30",
+  dismissed: "bg-gray-800/40 text-gray-400 border-gray-700/30",
+};
+
+const ACTION_TAKEN_LABELS: Record<string, string> = {
+  none: "Нет",
+  warning: "Предупреждение",
+  temp_ban: "Временный бан",
+  permanent_ban: "Перманентный бан",
+};
+
+function ModerationTab() {
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(0);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [resolveStatus, setResolveStatus] = useState<"reviewed" | "resolved" | "dismissed">("resolved");
+  const [adminNote, setAdminNote] = useState("");
+  const [actionTaken, setActionTaken] = useState<"none" | "warning" | "temp_ban" | "permanent_ban">("none");
+
+  const stats = trpc.moderation.stats.useQuery();
+  const complaints = trpc.moderation.list.useQuery({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    page: page + 1,
+    limit: 15,
+  });
+  const detail = trpc.moderation.detail.useQuery(
+    { id: selectedId! },
+    { enabled: selectedId !== null }
+  );
+  const resolveMut = trpc.moderation.resolve.useMutation();
+  const utils = trpc.useUtils();
+
+  const handleResolve = async () => {
+    if (!selectedId) return;
+    try {
+      await resolveMut.mutateAsync({
+        id: selectedId,
+        status: resolveStatus,
+        adminNote: adminNote || undefined,
+        actionTaken,
+      });
+      toast.success("Жалоба обновлена");
+      setSelectedId(null);
+      setAdminNote("");
+      setActionTaken("none");
+      utils.moderation.list.invalidate();
+      utils.moderation.stats.invalidate();
+    } catch {
+      toast.error("Ошибка при обновлении жалобы");
+    }
+  };
+
+  const totalPages = complaints.data ? Math.ceil(complaints.data.total / 15) : 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Stats cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        {[
+          { label: "Всего", value: stats.data?.total ?? 0, color: "text-amber-100" },
+          { label: "Ожидают", value: stats.data?.pending ?? 0, color: "text-yellow-300" },
+          { label: "Рассмотрено", value: stats.data?.reviewed ?? 0, color: "text-blue-300" },
+          { label: "Решено", value: stats.data?.resolved ?? 0, color: "text-green-300" },
+          { label: "Отклонено", value: stats.data?.dismissed ?? 0, color: "text-gray-400" },
+        ].map(s => (
+          <div key={s.label} className="bg-gray-900/80 border border-gray-800 rounded-lg p-3 text-center">
+            <div className="text-xs text-gray-500 mb-1">{s.label}</div>
+            <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <Filter className="w-4 h-4 text-gray-500" />
+        {["all", "pending", "reviewed", "resolved", "dismissed"].map(s => (
+          <Button
+            key={s}
+            variant={statusFilter === s ? "default" : "outline"}
+            size="sm"
+            onClick={() => { setStatusFilter(s); setPage(0); }}
+            className={statusFilter === s ? "bg-amber-600 hover:bg-amber-700 text-white" : "border-gray-700 text-gray-400"}
+          >
+            {s === "all" ? "Все" : STATUS_LABELS[s]}
+          </Button>
+        ))}
+      </div>
+
+      {/* Complaints table */}
+      <div className="bg-gray-900/60 border border-gray-800 rounded-lg overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-gray-800 text-gray-500 text-xs">
+              <th className="px-3 py-2 text-left">ID</th>
+              <th className="px-3 py-2 text-left">Жалобщик</th>
+              <th className="px-3 py-2 text-left">Нарушитель</th>
+              <th className="px-3 py-2 text-left">Причина</th>
+              <th className="px-3 py-2 text-left">Статус</th>
+              <th className="px-3 py-2 text-left">Дата</th>
+              <th className="px-3 py-2 text-left">Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            {complaints.isLoading ? (
+              <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-500">Загрузка...</td></tr>
+            ) : complaints.data?.complaints.length === 0 ? (
+              <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-500">Нет жалоб</td></tr>
+            ) : (
+              complaints.data?.complaints.map((c: any) => (
+                <tr key={c.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                  <td className="px-3 py-2 text-gray-400">#{c.id}</td>
+                  <td className="px-3 py-2 text-amber-100">ID {c.reporterProfileId}</td>
+                  <td className="px-3 py-2 text-amber-100">ID {c.targetProfileId}</td>
+                  <td className="px-3 py-2">
+                    <span className="text-amber-200">{REASON_LABELS[c.reason] || c.reason}</span>
+                  </td>
+                  <td className="px-3 py-2">
+                    <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLORS[c.status] || ''}`}>
+                      {STATUS_LABELS[c.status] || c.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-gray-400 text-xs">{formatDate(c.createdAt)}</td>
+                  <td className="px-3 py-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-700 text-gray-300 h-7 text-xs"
+                      onClick={() => {
+                        setSelectedId(c.id);
+                        setResolveStatus(c.status === 'pending' ? 'resolved' : c.status);
+                        setAdminNote(c.adminNote || '');
+                        setActionTaken(c.actionTaken || 'none');
+                      }}
+                    >
+                      <Eye className="w-3 h-3 mr-1" /> Детали
+                    </Button>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-3">
+          <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
+            <ChevronLeft className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-gray-400">{page + 1} / {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
+            <ChevronRight className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
+      {/* Detail dialog */}
+      <Dialog open={selectedId !== null} onOpenChange={open => { if (!open) setSelectedId(null); }}>
+        <DialogContent className="bg-gray-900 border-gray-700 text-gray-100 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-amber-100 flex items-center gap-2">
+              <Flag className="w-5 h-5 text-red-400" />
+              Жалоба #{selectedId}
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Просмотр и обработка жалобы
+            </DialogDescription>
+          </DialogHeader>
+
+          {detail.isLoading ? (
+            <div className="py-8 text-center text-gray-500">Загрузка...</div>
+          ) : detail.data ? (
+            <div className="space-y-4">
+              {/* Reporter & Target info */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                  <div className="text-xs text-gray-500 mb-1">Жалобщик</div>
+                  <div className="text-amber-100 font-medium text-sm">
+                    {detail.data.reporterProfile?.displayName || `ID ${detail.data.complaint.reporterProfileId}`}
+                  </div>
+                  {detail.data.reporterProfile && (
+                    <div className="text-xs text-gray-400">
+                      Рейтинг: {detail.data.reporterProfile.rating} | Игр: {detail.data.reporterProfile.gamesPlayed}
+                    </div>
+                  )}
+                </div>
+                <div className="bg-gray-800/50 rounded-lg p-3 border border-gray-700/50">
+                  <div className="text-xs text-gray-500 mb-1">Нарушитель</div>
+                  <div className="text-amber-100 font-medium text-sm">
+                    {detail.data.targetProfile?.displayName || `ID ${detail.data.complaint.targetProfileId}`}
+                  </div>
+                  {detail.data.targetProfile && (
+                    <div className="text-xs text-gray-400">
+                      Рейтинг: {detail.data.targetProfile.rating} | Игр: {detail.data.targetProfile.gamesPlayed}
+                      {detail.data.targetProfile.isBanned && <span className="text-red-400 ml-1">(Забанен)</span>}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Complaint details */}
+              <div className="bg-gray-800/30 rounded-lg p-3 border border-gray-700/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Причина</span>
+                  <span className="text-amber-200 text-sm font-medium">{REASON_LABELS[detail.data.complaint.reason]}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Статус</span>
+                  <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLORS[detail.data.complaint.status]}`}>
+                    {STATUS_LABELS[detail.data.complaint.status]}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-500">Дата</span>
+                  <span className="text-gray-300 text-xs">{formatDate(detail.data.complaint.createdAt)}</span>
+                </div>
+                {detail.data.complaint.description && (
+                  <div>
+                    <span className="text-xs text-gray-500 block mb-1">Описание</span>
+                    <p className="text-gray-300 text-sm bg-gray-900/50 rounded p-2">{detail.data.complaint.description}</p>
+                  </div>
+                )}
+                {detail.data.complaint.actionTaken && detail.data.complaint.actionTaken !== 'none' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-500">Принятые меры</span>
+                    <span className="text-orange-300 text-xs">{ACTION_TAKEN_LABELS[detail.data.complaint.actionTaken]}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Resolution form */}
+              <div className="space-y-3 border-t border-gray-700/50 pt-3">
+                <h4 className="text-sm font-semibold text-amber-100">Решение</h4>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Статус</label>
+                  <select
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    value={resolveStatus}
+                    onChange={e => setResolveStatus(e.target.value as any)}
+                  >
+                    <option value="reviewed">Рассмотрена</option>
+                    <option value="resolved">Решена</option>
+                    <option value="dismissed">Отклонена</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Принятые меры</label>
+                  <select
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    value={actionTaken}
+                    onChange={e => setActionTaken(e.target.value as any)}
+                  >
+                    <option value="none">Нет</option>
+                    <option value="warning">Предупреждение</option>
+                    <option value="temp_ban">Временный бан</option>
+                    <option value="permanent_ban">Перманентный бан</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-gray-500 block mb-1">Заметка администратора</label>
+                  <textarea
+                    className="w-full bg-gray-800 border border-gray-700 rounded-md px-3 py-2 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Комментарий к решению..."
+                    value={adminNote}
+                    onChange={e => setAdminNote(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="py-8 text-center text-gray-500">Жалоба не найдена</div>
+          )}
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setSelectedId(null)} className="border-gray-700 text-gray-300">
+              Закрыть
+            </Button>
+            {detail.data && (
+              <Button
+                onClick={handleResolve}
+                disabled={resolveMut.isPending}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {resolveMut.isPending ? "Сохранение..." : "Сохранить решение"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

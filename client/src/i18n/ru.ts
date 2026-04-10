@@ -229,8 +229,10 @@ export const ru = {
     roleWaiting: 'Ожидание...',
     multiSelectAttackN: 'Выберите сколько карт положить на стол ({n} выбрано)',
     multiSelectTransferN: 'Выберите сколько карт перевести ({n} выбрано)',
+    multiSelectPassThroughN: 'Выберите сколько проездных показать ({n} выбрано)',
     playN: 'Походить ({n})',
     transferN: 'Перевести ({n})',
+    passThroughN: 'Проездной ({n})',
     bitoEnough: 'Бито (хватит)',
     skip: 'Пропустить',
     youExited: 'Вы вышли — наблюдайте',
@@ -551,6 +553,26 @@ export const ru = {
     saving: 'Сохранение...',
   },
 
+  // Complaint / Report
+  complaint: {
+    report: 'Пожаловаться',
+    title: 'Жалоба на игрока',
+    reason: 'Причина',
+    reasonCheating: 'Читерство',
+    reasonToxic: 'Токсичное поведение',
+    reasonName: 'Неприемлемое имя',
+    reasonAfk: 'AFK злоупотребление',
+    reasonOther: 'Другое',
+    description: 'Описание (необязательно)',
+    descriptionPlaceholder: 'Что произошло?',
+    submit: 'Отправить',
+    submitting: 'Отправка...',
+    success: 'Жалоба отправлена',
+    duplicate: 'Вы уже подавали жалобу на этого игрока в течение 24 часов',
+    error: 'Произошла ошибка',
+    cancel: 'Отмена',
+  },
+
   // Toast messages
   toast: {
     roomCreated: 'Комната создана',
@@ -570,5 +592,6 @@ export const ru = {
     kicked: 'Игрок исключён',
     bonusClaimed: 'Бонус получен!',
     purchaseSuccess: 'Покупка успешна!',
+    complaintSent: 'Жалоба отправлена!',
   },
 };

@@ -240,3 +240,34 @@ export const shopPriceOverrides = mysqlTable("shop_price_overrides", {
 
 export type ShopPriceOverride = typeof shopPriceOverrides.$inferSelect;
 export type InsertShopPriceOverride = typeof shopPriceOverrides.$inferInsert;
+
+/**
+ * Player complaints — allows players to report other players.
+ * Status flow: pending → reviewed → resolved / dismissed
+ */
+export const playerComplaints = mysqlTable("player_complaints", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Reporter player profile ID (playerProfiles.id) */
+  reporterProfileId: int("reporterProfileId").notNull(),
+  /** Reported player profile ID (playerProfiles.id) */
+  targetProfileId: int("targetProfileId").notNull(),
+  /** Complaint reason category */
+  reason: mysqlEnum("reason", [
+    "cheating", "toxic_behavior", "inappropriate_name", "afk_abuse", "other",
+  ]).notNull(),
+  /** Free-text description from the reporter */
+  description: text("description"),
+  /** Complaint status */
+  status: mysqlEnum("complaint_status", ["pending", "reviewed", "resolved", "dismissed"]).default("pending").notNull(),
+  /** Admin who reviewed this complaint (users.id) */
+  reviewedBy: int("reviewedBy"),
+  /** Admin resolution note */
+  adminNote: text("adminNote"),
+  /** Action taken (if any) */
+  actionTaken: mysqlEnum("action_taken", ["none", "warning", "temp_ban", "permanent_ban"]),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type PlayerComplaint = typeof playerComplaints.$inferSelect;
+export type InsertPlayerComplaint = typeof playerComplaints.$inferInsert;

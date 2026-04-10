@@ -7,7 +7,7 @@ import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Settings, X, UserPlus, Clock, Check } from 'lucide-react';
+import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Settings, X, UserPlus, Clock, Check, Flag } from 'lucide-react';
 import { useSoundContext } from '@/contexts/SoundContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
@@ -450,6 +450,7 @@ export interface GameTableProps {
   onEndAttack: () => void;
   onSkipTurn: () => void;
   onShowPassThrough: (cardId: string) => void;
+  onShowPassThroughs?: (cardIds: string[]) => void;
   onLeaveGame?: () => void;
   onReturnToLobby?: () => void;
   roomPenalty?: number;
@@ -464,7 +465,7 @@ export interface GameTableProps {
 
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
-  onPlayCard, onTransferCard, onTransferCards, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough,
+  onPlayCard, onTransferCard, onTransferCards, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough, onShowPassThroughs,
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
@@ -493,7 +494,7 @@ export default function GameTable({
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
   // Multi-card opening attack / transfer selection
   const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
-  const [multiSelectMode, setMultiSelectMode] = useState<'attack' | 'transfer' | null>(null);
+  const [multiSelectMode, setMultiSelectMode] = useState<'attack' | 'transfer' | 'passthrough' | null>(null);
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
@@ -868,14 +869,14 @@ export default function GameTable({
     if (selectedCards.length === 0) return new Set<string>();
     const rank = selectedCards[0].rank;
     const ids = new Set<string>();
-    const validPool = multiSelectMode === 'transfer' ? transferIds : playableIds;
+    const validPool = multiSelectMode === 'transfer' ? transferIds : multiSelectMode === 'passthrough' ? passThroughIds : playableIds;
     for (const c of gs.myHand) {
       if (c.rank === rank && !multiSelectIds.has(c.id) && validPool.has(c.id)) {
         ids.add(c.id);
       }
     }
     return ids;
-  }, [multiSelectIds, multiSelectMode, gs.myHand, playableIds, transferIds]);
+  }, [multiSelectIds, multiSelectMode, gs.myHand, playableIds, transferIds, passThroughIds]);
 
   // Clear multi-select when trick changes
   useEffect(() => {
@@ -923,12 +924,28 @@ export default function GameTable({
     setSelectedCardId(null);
   }, [multiSelectIds, onTransferCard, onTransferCards]);
 
+  // Pass-through all multi-selected cards at once
+  const handleMultiPassThrough = useCallback(() => {
+    const ids = Array.from(multiSelectIds);
+    if (onShowPassThroughs && ids.length > 1) {
+      onShowPassThroughs(ids);
+    } else {
+      // Fallback: single card pass-through
+      if (ids.length > 0) {
+        onShowPassThrough(ids[0]);
+      }
+    }
+    setMultiSelectIds(new Set());
+    setMultiSelectMode(null);
+    setSelectedCardId(null);
+  }, [multiSelectIds, onShowPassThrough, onShowPassThroughs]);
+
   const handleCardClick = (card: Card) => {
     // If in multi-select mode, handle toggling cards of the same rank
     if (isMultiSelecting) {
       const selectedCards = gs.myHand.filter(c => multiSelectIds.has(c.id));
       const multiRank = selectedCards.length > 0 ? selectedCards[0].rank : null;
-      const validPool = multiSelectMode === 'transfer' ? transferIds : playableIds;
+      const validPool = multiSelectMode === 'transfer' ? transferIds : multiSelectMode === 'passthrough' ? passThroughIds : playableIds;
       if (card.rank === multiRank && validPool.has(card.id)) {
         const newSet = new Set(multiSelectIds);
         if (newSet.has(card.id)) {
@@ -976,6 +993,18 @@ export default function GameTable({
         return;
       }
       if (passThroughIds.has(card.id)) {
+        // Check if there are more pass-through cards of the same rank
+        const sameRankPassThrough = gs.myHand.filter(
+          c => c.rank === card.rank && passThroughIds.has(c.id) && c.id !== card.id
+        );
+        if (sameRankPassThrough.length > 0) {
+          // Enter multi-select mode for pass-through
+          setMultiSelectIds(new Set([card.id]));
+          setMultiSelectMode('passthrough');
+          setSelectedCardId(null);
+          return;
+        }
+        // Single pass-through card — use old select behavior
         if (selectedCardId === card.id) {
           setSelectedCardId(null);
         } else {
@@ -1491,9 +1520,13 @@ export default function GameTable({
                 </div>
               )}
 
-              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl overflow-y-auto sm:overflow-y-visible battlefield-scroll ${
+              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl battlefield-scroll ${
+                gs.battleField.length >= 15 ? 'overflow-y-auto' : 'overflow-y-visible'
+              } ${
+                gs.battleField.length >= 30 ? 'sm:overflow-y-auto' : 'sm:overflow-y-visible'
+              } ${
                 gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
-              }`} style={{ maxHeight: 'calc(100dvh - 280px)' }}>
+              }`} style={gs.battleField.length >= 15 || gs.battleField.length >= 30 ? { maxHeight: 'calc(100dvh - 280px)' } : undefined}>
                 {gs.battleField.map((pair: BattlePair, i: number) => (
                   <div
                     key={i}
@@ -1706,6 +1739,8 @@ export default function GameTable({
                   <span className="text-amber-200 text-sm sm:text-base bg-black/50 px-3 py-1 rounded-lg backdrop-blur-sm">
                     {multiSelectMode === 'transfer'
                       ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
+                      : multiSelectMode === 'passthrough'
+                      ? t('game.multiSelectPassThroughN', { n: String(multiSelectIds.size) })
                       : t('game.multiSelectAttackN', { n: String(multiSelectIds.size) })}
                   </span>
                 </div>
@@ -1737,6 +1772,24 @@ export default function GameTable({
                       onClick={handleMultiTransfer}
                     >
                       {t('game.transferN', { n: String(multiSelectIds.size) })}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                      onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
+                    >
+                      {t('game.cancel')}
+                    </Button>
+                  </>
+                )}
+                {isMultiSelecting && multiSelectMode === 'passthrough' && (
+                  <>
+                    <Button
+                      className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
+                      onClick={handleMultiPassThrough}
+                    >
+                      <Eye className="w-5 h-5 mr-1.5" />
+                      {t('game.passThroughN', { n: String(multiSelectIds.size) })}
                     </Button>
                     <Button
                       variant="outline"
@@ -1827,6 +1880,8 @@ export default function GameTable({
                 <span className="text-amber-200 text-xs bg-black/60 px-2.5 py-0.5 rounded-lg backdrop-blur-sm">
                   {multiSelectMode === 'transfer'
                     ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
+                    : multiSelectMode === 'passthrough'
+                    ? t('game.multiSelectPassThroughN', { n: String(multiSelectIds.size) })
                     : t('game.multiSelectAttackN', { n: String(multiSelectIds.size) })}
                 </span>
               </div>
@@ -1859,6 +1914,24 @@ export default function GameTable({
                   >
                     {t('game.transferN', { n: String(multiSelectIds.size) })}
                     </Button>
+                  <Button
+                    variant="outline"
+                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
+                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
+                  >
+                    {t('game.cancel')}
+                  </Button>
+                </>
+              )}
+              {isMultiSelecting && multiSelectMode === 'passthrough' && (
+                <>
+                  <Button
+                    className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
+                    onClick={handleMultiPassThrough}
+                  >
+                    <Eye className="w-4 h-4 mr-1" />
+                    {t('game.passThroughN', { n: String(multiSelectIds.size) })}
+                  </Button>
                   <Button
                     variant="outline"
                     className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
@@ -1975,12 +2048,35 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
   const { t } = useTranslation();
   const { data: profile, isLoading } = trpc.profile.withFriendStatus.useQuery({ targetGameId: gameId });
   const sendRequest = trpc.friends.sendRequest.useMutation();
+  const submitComplaint = trpc.complaints.submit.useMutation();
   const utils = trpc.useUtils();
+  const [showComplaintForm, setShowComplaintForm] = useState(false);
+  const [complaintReason, setComplaintReason] = useState<'cheating' | 'toxic_behavior' | 'inappropriate_name' | 'afk_abuse' | 'other'>('cheating');
+  const [complaintDesc, setComplaintDesc] = useState('');
 
   const handleAddFriend = async () => {
     const result = await sendRequest.mutateAsync({ targetGameId: gameId });
     if (result.result === 'sent') {
       utils.profile.withFriendStatus.invalidate({ targetGameId: gameId });
+    }
+  };
+
+  const handleSubmitComplaint = async () => {
+    try {
+      await submitComplaint.mutateAsync({
+        targetGameId: gameId,
+        reason: complaintReason,
+        description: complaintDesc || undefined,
+      });
+      setShowComplaintForm(false);
+      setComplaintDesc('');
+      (await import('sonner')).toast.success(t('complaint.success'));
+    } catch (err: any) {
+      if (err?.message?.includes('24')) {
+        (await import('sonner')).toast.error(t('complaint.duplicate'));
+      } else {
+        (await import('sonner')).toast.error(t('complaint.error'));
+      }
     }
   };
 
@@ -2074,6 +2170,64 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
                 <Check className="w-4 h-4" />
                  {t('game.alreadyFriends')}
                </div>
+            )}
+
+            {/* Report button — only for other players */}
+            {!profile.isSelf && !showComplaintForm && (
+              <button
+                className="w-full flex items-center justify-center gap-2 bg-red-900/30 hover:bg-red-900/50 text-red-300 rounded-lg px-4 py-2 transition-colors text-sm border border-red-700/20"
+                onClick={() => setShowComplaintForm(true)}
+              >
+                <Flag className="w-4 h-4" />
+                {t('complaint.report')}
+              </button>
+            )}
+
+            {/* Complaint form */}
+            {showComplaintForm && (
+              <div className="w-full bg-black/30 rounded-lg p-3 border border-red-700/30 space-y-2">
+                <h4 className="text-red-300 font-semibold text-sm">{t('complaint.title')}</h4>
+                <div>
+                  <label className="text-amber-200/60 text-xs block mb-1">{t('complaint.reason')}</label>
+                  <select
+                    className="w-full bg-[#0f1923] border border-amber-700/30 rounded-md px-2 py-1.5 text-amber-100 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50"
+                    value={complaintReason}
+                    onChange={e => setComplaintReason(e.target.value as any)}
+                  >
+                    <option value="cheating">{t('complaint.reasonCheating')}</option>
+                    <option value="toxic_behavior">{t('complaint.reasonToxic')}</option>
+                    <option value="inappropriate_name">{t('complaint.reasonName')}</option>
+                    <option value="afk_abuse">{t('complaint.reasonAfk')}</option>
+                    <option value="other">{t('complaint.reasonOther')}</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-amber-200/60 text-xs block mb-1">{t('complaint.description')}</label>
+                  <textarea
+                    className="w-full bg-[#0f1923] border border-amber-700/30 rounded-md px-2 py-1.5 text-amber-100 text-sm focus:outline-none focus:ring-1 focus:ring-amber-500/50 resize-none"
+                    rows={2}
+                    maxLength={500}
+                    placeholder={t('complaint.descriptionPlaceholder')}
+                    value={complaintDesc}
+                    onChange={e => setComplaintDesc(e.target.value)}
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="flex-1 bg-red-700/60 hover:bg-red-700/80 text-white rounded-md px-3 py-1.5 text-sm font-semibold transition-colors disabled:opacity-50"
+                    onClick={handleSubmitComplaint}
+                    disabled={submitComplaint.isPending}
+                  >
+                    {submitComplaint.isPending ? t('complaint.submitting') : t('complaint.submit')}
+                  </button>
+                  <button
+                    className="flex-1 bg-gray-700/40 hover:bg-gray-700/60 text-gray-300 rounded-md px-3 py-1.5 text-sm transition-colors"
+                    onClick={() => setShowComplaintForm(false)}
+                  >
+                    {t('complaint.cancel')}
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ) : (

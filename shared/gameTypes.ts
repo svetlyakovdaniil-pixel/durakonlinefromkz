@@ -224,6 +224,7 @@ export interface ClientToServerEvents {
   transferCard: (data: { roomId: string; cardId: string }) => void;
   transferCards: (data: { roomId: string; cardIds: string[] }) => void;
   showPassThrough: (data: { roomId: string; cardId: string }) => void;
+  showPassThroughs: (data: { roomId: string; cardIds: string[] }) => void;
   takeCards: (roomId: string) => void;
   passTurn: (roomId: string) => void;
   endAttack: (roomId: string) => void;

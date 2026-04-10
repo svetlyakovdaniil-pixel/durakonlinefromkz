@@ -26,7 +26,7 @@ export default function Home() {
     connected, rooms, currentRoom, gameState, availableActions, error, turnTimer,
     gameOverData, prizeData, onlineFriendIds, pendingInvite, setPendingInvite, frozenInfo,
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
-    playCard, transferCard, transferCards, showPassThrough, takeCards, passTurn, endAttack, skipTurn,
+    playCard, transferCard, transferCards, showPassThrough, showPassThroughs, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
@@ -144,6 +144,7 @@ export default function Home() {
         onEndAttack={() => endAttack(gameState.roomId)}
         onSkipTurn={() => skipTurn(gameState.roomId)}
         onShowPassThrough={(cardId) => showPassThrough(gameState.roomId, cardId)}
+        onShowPassThroughs={(cardIds) => showPassThroughs(gameState.roomId, cardIds)}
         onLeaveGame={() => leaveGame(gameState.roomId)}
         onReturnToLobby={returnToLobby}
         roomPenalty={gameState.betAmount || 0}

@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -851,6 +851,7 @@ export async function getPlayerProfileWithFriendStatus(targetGameId: number, myP
     losses: target.losses,
     friendStatus,
     friendshipId,
+    isSelf: target.id === myProfileId,
   };
 }
 
@@ -1991,4 +1992,143 @@ export async function getOwnedAvatars(userId: number): Promise<string[]> {
 
   if (!profile || !profile.ownedAvatars) return [];
   return JSON.parse(profile.ownedAvatars);
+}
+
+// ============================================================
+// COMPLAINT helpers
+// ============================================================
+
+/**
+ * Create a new player complaint.
+ */
+export async function createComplaint(data: InsertPlayerComplaint): Promise<{ success: boolean; id?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  // Check for duplicate complaint from same reporter to same target within 24h
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const existing = await db.select({ id: playerComplaints.id })
+    .from(playerComplaints)
+    .where(and(
+      eq(playerComplaints.reporterProfileId, data.reporterProfileId),
+      eq(playerComplaints.targetProfileId, data.targetProfileId),
+      sql`${playerComplaints.createdAt} > ${oneDayAgo}`,
+    ))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return { success: false, reason: 'duplicate_complaint' };
+  }
+
+  const [result] = await db.insert(playerComplaints).values(data).$returningId();
+  return { success: true, id: result.id };
+}
+
+/**
+ * Get complaints list for admin moderation panel.
+ */
+export async function getComplaints(opts: {
+  status?: string;
+  page?: number;
+  limit?: number;
+}): Promise<{ complaints: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { complaints: [], total: 0 };
+
+  const page = opts.page || 1;
+  const limit = opts.limit || 20;
+  const offset = (page - 1) * limit;
+
+  let whereClause = undefined;
+  if (opts.status && opts.status !== 'all') {
+    whereClause = eq(playerComplaints.status, opts.status as any);
+  }
+
+  const [countResult] = await db.select({ count: sql<number>`count(*)` })
+    .from(playerComplaints)
+    .where(whereClause);
+
+  const complaints = await db.select({
+    id: playerComplaints.id,
+    reporterProfileId: playerComplaints.reporterProfileId,
+    targetProfileId: playerComplaints.targetProfileId,
+    reason: playerComplaints.reason,
+    description: playerComplaints.description,
+    status: playerComplaints.status,
+    reviewedBy: playerComplaints.reviewedBy,
+    adminNote: playerComplaints.adminNote,
+    actionTaken: playerComplaints.actionTaken,
+    createdAt: playerComplaints.createdAt,
+    updatedAt: playerComplaints.updatedAt,
+  })
+    .from(playerComplaints)
+    .where(whereClause)
+    .orderBy(desc(playerComplaints.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return { complaints, total: Number(countResult.count) };
+}
+
+/**
+ * Get a single complaint by ID.
+ */
+export async function getComplaintById(id: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [complaint] = await db.select()
+    .from(playerComplaints)
+    .where(eq(playerComplaints.id, id))
+    .limit(1);
+
+  return complaint || null;
+}
+
+/**
+ * Update complaint status (admin action).
+ */
+export async function updateComplaintStatus(
+  id: number,
+  data: {
+    status: 'reviewed' | 'resolved' | 'dismissed';
+    reviewedBy: number;
+    adminNote?: string;
+    actionTaken?: 'none' | 'warning' | 'temp_ban' | 'permanent_ban';
+  }
+): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+
+  await db.update(playerComplaints).set({
+    status: data.status,
+    reviewedBy: data.reviewedBy,
+    adminNote: data.adminNote || null,
+    actionTaken: data.actionTaken || 'none',
+  }).where(eq(playerComplaints.id, id));
+
+  return true;
+}
+
+/**
+ * Get complaint count by status for dashboard stats.
+ */
+export async function getComplaintStats(): Promise<{ pending: number; reviewed: number; resolved: number; dismissed: number; total: number }> {
+  const db = await getDb();
+  if (!db) return { pending: 0, reviewed: 0, resolved: 0, dismissed: 0, total: 0 };
+
+  const results = await db.select({
+    status: playerComplaints.status,
+    count: sql<number>`count(*)`,
+  })
+    .from(playerComplaints)
+    .groupBy(playerComplaints.status);
+
+  const stats = { pending: 0, reviewed: 0, resolved: 0, dismissed: 0, total: 0 };
+  for (const r of results) {
+    const s = r.status as keyof typeof stats;
+    if (s in stats) stats[s] = Number(r.count);
+    stats.total += Number(r.count);
+  }
+  return stats;
 }

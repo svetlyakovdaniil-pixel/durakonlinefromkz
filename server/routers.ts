@@ -66,6 +66,11 @@ import {
   getShopPriceOverrides,
   upsertShopPriceOverride,
   getShopItemPrice,
+  createComplaint,
+  getComplaints,
+  getComplaintById,
+  updateComplaintStatus,
+  getComplaintStats,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
@@ -815,6 +820,118 @@ export const appRouter = router({
     overrides: publicProcedure.query(async () => {
       return getShopPriceOverrides();
     }),
+  }),
+
+  // ---- Player Complaints ----
+  complaints: router({
+    /** Submit a complaint against another player */
+    submit: protectedProcedure
+      .input(z.object({
+        targetGameId: z.number(),
+        reason: z.enum(['cheating', 'toxic_behavior', 'inappropriate_name', 'afk_abuse', 'other']),
+        description: z.string().max(500).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user!.id);
+        if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Профиль не найден' });
+
+        const targetProfile = await getProfileByGameId(input.targetGameId);
+        if (!targetProfile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Игрок не найден' });
+
+        if (profile.id === targetProfile.id) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Нельзя пожаловаться на себя' });
+        }
+
+        const result = await createComplaint({
+          reporterProfileId: profile.id,
+          targetProfileId: targetProfile.id,
+          reason: input.reason,
+          description: input.description || null,
+        });
+
+        if (!result.success) {
+          if (result.reason === 'duplicate_complaint') {
+            throw new TRPCError({ code: 'TOO_MANY_REQUESTS', message: 'Вы уже подавали жалобу на этого игрока в течение 24 часов' });
+          }
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Ошибка при создании жалобы' });
+        }
+
+        return { success: true, id: result.id };
+      }),
+  }),
+
+  // ---- Admin Moderation (complaints) ----
+  moderation: router({
+    /** Get complaint stats */
+    stats: adminProcedure.query(async () => {
+      return getComplaintStats();
+    }),
+
+    /** List complaints with optional status filter */
+    list: adminProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        page: z.number().optional(),
+        limit: z.number().optional(),
+      }))
+      .query(async ({ input }) => {
+        return getComplaints(input);
+      }),
+
+    /** Get single complaint detail */
+    detail: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        const complaint = await getComplaintById(input.id);
+        if (!complaint) throw new TRPCError({ code: 'NOT_FOUND', message: 'Жалоба не найдена' });
+
+        // Fetch reporter and target profiles
+        const db = (await import('./db'));
+        const [reporterProfile, targetProfile] = await Promise.all([
+          db.adminGetPlayerDetail(complaint.reporterProfileId),
+          db.adminGetPlayerDetail(complaint.targetProfileId),
+        ]);
+
+        return { complaint, reporterProfile, targetProfile };
+      }),
+
+    /** Update complaint status (resolve/dismiss) */
+    resolve: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['reviewed', 'resolved', 'dismissed']),
+        adminNote: z.string().max(500).optional(),
+        actionTaken: z.enum(['none', 'warning', 'temp_ban', 'permanent_ban']).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const success = await updateComplaintStatus(input.id, {
+          status: input.status,
+          reviewedBy: ctx.user!.id,
+          adminNote: input.adminNote,
+          actionTaken: input.actionTaken,
+        });
+
+        if (!success) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Ошибка при обновлении жалобы' });
+        }
+
+        // Log admin action
+        await logAdminAction({
+          adminId: ctx.user!.id,
+          adminName: ctx.user!.name || 'Admin',
+          action: 'ban', // reuse existing action type for audit
+          targetProfileId: null,
+          details: {
+            type: 'complaint_resolution',
+            complaintId: input.id,
+            status: input.status,
+            actionTaken: input.actionTaken || 'none',
+            adminNote: input.adminNote,
+          },
+        });
+
+        return { success: true };
+      }),
   }),
 });
 

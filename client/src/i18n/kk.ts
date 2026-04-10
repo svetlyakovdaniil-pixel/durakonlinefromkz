@@ -229,8 +229,10 @@ export const kk = {
     roleWaiting: 'Күту...',
     multiSelectAttackN: 'Үстелге қанша карта қоюды таңдаңыз ({n} таңдалды)',
     multiSelectTransferN: 'Қанша карта аударуды таңдаңыз ({n} таңдалды)',
+    multiSelectPassThroughN: 'Қанша проездной көрсетуді таңдаңыз ({n} таңдалды)',
     playN: 'Жүру ({n})',
     transferN: 'Аудару ({n})',
+    passThroughN: 'Проездной ({n})',
     bitoEnough: 'Биіт (жеткілікті)',
     skip: 'Өткізу',
     youExited: 'Сіз шықтыңыз — бақылаңыз',
@@ -549,6 +551,26 @@ export const kk = {
     saving: 'Сақталуда...',
   },
 
+  // Complaint / Report
+  complaint: {
+    report: 'Шағым жасау',
+    title: 'Ойыншыға шағым',
+    reason: 'Себебі',
+    reasonCheating: 'Алдау',
+    reasonToxic: 'Токсик мінез-құлқ',
+    reasonName: 'Жарамсыз ат',
+    reasonAfk: 'AFK көтермелік',
+    reasonOther: 'Басқа',
+    description: 'Түсіндірме (міндетті емес)',
+    descriptionPlaceholder: 'Не болды?',
+    submit: 'Жіберу',
+    submitting: 'Жіберілуде...',
+    success: 'Шағым жіберілді',
+    duplicate: 'Сіз бұл ойыншыға 24 сағат ішінде шағым жасадыңыз',
+    error: 'Қате орын алды',
+    cancel: 'Болдырмау',
+  },
+
   // Toast messages
   toast: {
     roomCreated: 'Бөлме құрылды',
@@ -568,5 +590,6 @@ export const kk = {
     kicked: 'Ойыншы шығарылды',
     bonusClaimed: 'Бонус алынды!',
     purchaseSuccess: 'Сатып алу сәтті!',
+    complaintSent: 'Шағым жіберілді!',
   },
 };

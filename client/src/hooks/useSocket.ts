@@ -390,6 +390,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     socketRef.current?.emit('showPassThrough', { roomId, cardId });
   }, []);
 
+  const showPassThroughs = useCallback((roomId: string, cardIds: string[]) => {
+    socketRef.current?.emit('showPassThroughs', { roomId, cardIds });
+  }, []);
+
   const takeCardsAction = useCallback((roomId: string) => {
     socketRef.current?.emit('takeCards', roomId);
   }, []);
@@ -455,6 +459,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     transferCard,
     transferCards,
     showPassThrough,
+    showPassThroughs,
     takeCards: takeCardsAction,
     passTurn,
     endAttack,

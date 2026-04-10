@@ -705,6 +705,82 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
   return null;
 }
 
+// ---- Multi-card Pass-through ----
+// Show multiple pass-through cards at once (e.g., multiple 10s as proezdnoy).
+// Each 10 reverses direction, so odd count = reverse, even count = no change.
+
+export function showMultiplePassThroughs(state: GameState, playerIdx: number, cardIds: string[]): string | null {
+  if (cardIds.length === 0) return 'No cards to show';
+  if (cardIds.length === 1) return showPassThrough(state, playerIdx, cardIds[0]);
+
+  if (playerIdx !== state.currentDefenderIdx) return 'Не ваш ход';
+  if (state.defenderTaking) return 'Вы уже берёте карты';
+  if (state.battleField.length === 0) return 'Нет карт на столе';
+  if (state.battleField.some(p => p.defense !== null)) {
+    return 'Проездной можно показать только до начала защиты';
+  }
+
+  const player = state.players[playerIdx];
+  const attackRank = state.battleField[0]?.attack.rank;
+
+  // Validate all cards
+  const cards: Card[] = [];
+  for (const cardId of cardIds) {
+    const card = player.hand.find(c => c.id === cardId);
+    if (!card) return `Карта ${cardId} не в руке`;
+    if (card.rank !== attackRank) return 'Проездной должен совпадать по номиналу с атакующей картой';
+    if (card.suit !== state.trumpInfo.currentTrump) return 'Проездной должен быть козырной картой';
+    if (state.passThroughUsedIds.includes(cardId)) return `Карта ${cardId} уже использовалась как проездной`;
+    cards.push(card);
+  }
+
+  // Calculate direction change for multiple 10s
+  const tens = cards.filter(c => c.rank === '10').length;
+  const directionChanges = tens % 2 === 1;
+  const hasDirectionChange = tens > 0 && state.leadCardRank === '10';
+
+  const potentialDir = (directionChanges && hasDirectionChange)
+    ? (state.direction === 'cw' ? 'ccw' : 'cw')
+    : state.direction;
+
+  // Check if the next defender has enough cards
+  const totalAttackCards = state.battleField.length;
+  const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
+  const nextDefender = state.players[newDefenderIdxCheck];
+  if (nextDefender.hand.length < totalAttackCards) {
+    return `Нельзя проехать — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе ${totalAttackCards}`;
+  }
+
+  // Mark all cards as used
+  for (const card of cards) {
+    state.passThroughUsedIds.push(card.id);
+  }
+
+  // Add to revealed pass-throughs
+  const existing = state.revealedPassThroughs.find(r => r.playerId === player.id);
+  if (existing) {
+    existing.cards.push(...cards);
+  } else {
+    state.revealedPassThroughs.push({ playerId: player.id, cards: [...cards] });
+  }
+
+  // Apply direction change
+  if (directionChanges && hasDirectionChange) {
+    state.direction = potentialDir as Direction;
+  }
+
+  // Transfer the attack
+  const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
+  state.currentAttackerIdx = state.currentDefenderIdx;
+  state.currentDefenderIdx = newDefenderIdx;
+
+  state.passedAttackers = [];
+  state.attackerHasPriority = true;
+  state.defenderTaking = false;
+  resetTurnTimer(state);
+  return null;
+}
+
 // ---- Take cards (defender chooses to take) ----
 // NEW: Does NOT immediately take. Sets defenderTaking=true so attackers can add more cards.
 // Cards are actually picked up when all attackers press "bito" (via finalizeTake).

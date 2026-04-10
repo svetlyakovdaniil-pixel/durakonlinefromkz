@@ -15,7 +15,7 @@ import {
 import {
   createGame, toClientState, getAvailableActions,
   playAttackCard, playDefenseCard, transferAttack,
-  showPassThrough, takeCards as engineTakeCards,
+  showPassThrough, showMultiplePassThroughs, takeCards as engineTakeCards,
   finalizeTake as engineFinalizeTake,
   successfulDefense, shouldSkipTurn, getNextActivePlayer,
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
@@ -704,6 +704,26 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = showPassThrough(gameState, playerIdx, data.cardId);
+      if (error) { socket.emit('error', error); return; }
+
+      // Reset consecutive timeout counter — player took action
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
+      markProgress(data.roomId);
+      restartTurnTimer(data.roomId);
+      broadcastGameState(data.roomId, gameState);
+      scheduleBotAction(data.roomId);
+    });
+
+    // Multi-card pass-through: show multiple pass-through cards at once
+    socket.on('showPassThroughs', (data: { roomId: string; cardIds: string[] }) => {
+      const gameState = games.get(data.roomId);
+      if (!gameState) return;
+
+      const playerIdx = gameState.players.findIndex(p => p.id === odId);
+      const error = showMultiplePassThroughs(gameState, playerIdx, data.cardIds);
       if (error) { socket.emit('error', error); return; }
 
       // Reset consecutive timeout counter — player took action
