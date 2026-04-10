@@ -75,6 +75,19 @@ export interface TutorialScenario {
   passThroughBotIdx?: number;
   /** Override the main bot's name for this step */
   overrideMainBotName?: string;
+  /** Indices of opponents to add a glow effect around (1=first bot, 2=second, etc.) */
+  glowOpponents?: number[];
+  /** Card notations to highlight GREEN and raise in player hand */
+  highlightCardsGreen?: string[];
+  /** Card notations to highlight RED (no raise) in player hand */
+  highlightCardsRed?: string[];
+  /** Throw-cards mechanic: player clicks green-highlighted cards to throw them onto the table */
+  throwCards?: {
+    /** Card notations the player can throw (e.g. ['6h','6d','6c']) */
+    throwableCards: string[];
+    /** Minimum cards to throw before Next is enabled (default: 1) */
+    minThrows?: number;
+  };
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -449,6 +462,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     description: 'Подкидывание 6-ки любым игроком',
     text: 'По правилам игры, обороняющемуся игроку могут подкидывать только соседи. Но если кто-то походил с 6-ки, то любой игрок за столом может подкинуть 6-ки, даже если не является соседом',
     highlightElements: ['[data-tutorial="table-area"]'],
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
     trumpSuit: 'hearts',
     trumpCard: 'Qh',
     requiredAction: 'none',
@@ -464,6 +479,38 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       { attack: '6s', defense: '10s' },
       { attack: '6d', defense: '10d' },
     ] }],
+    glowOpponents: [1, 2], // Камила and Мадина
+  },
+  // Step 20: Подкидывание 6-ок
+  {
+    id: 20,
+    title: '6-ка вне очереди',
+    description: 'Подкидывание 6-ок на стол',
+    text: 'У Камилы и Бота 3 в руке нет карт, которые они могли бы подкинуть, но так как Камила изначально походила с 6-ки, ход перешел к вам. Вы можете подкинуть 6-ки Мадине, хоть и не являетесь ее соседом. Десятки в данном случае подкидывать нельзя.',
+    highlightElements: ['[data-tutorial="player-hand"]'],
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'hearts',
+    trumpCard: 'Qh',
+    requiredAction: 'none',
+    discardCount: 10,
+    textPosition: 'bottom',
+    showArrows: false,
+    extraBots: 2,
+    extraBotNames: ['Мадина', 'Бот 3'],
+    overrideMainBotName: 'Камила',
+    defenderPlayerIdx: 2,
+    tableCards: [{ playerId: 1, cards: [
+      { attack: '6s', defense: '10s' },
+      { attack: '6d', defense: '10d' },
+    ] }],
+    glowOpponents: [2], // Only Мадина
+    highlightCardsGreen: ['6h', '6h', '6d', '6c'],
+    highlightCardsRed: ['10h', '10c', '10d', '10s'],
+    throwCards: {
+      throwableCards: ['6h', '6h', '6d', '6c'],
+      minThrows: 1,
+    },
   },
 ];
 

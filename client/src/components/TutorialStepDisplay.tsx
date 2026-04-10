@@ -14,6 +14,7 @@ interface TutorialStepDisplayProps {
   onSkip: () => void;
   onCardClick?: (cardId: string) => void;
   tutorialHighlightIds?: Set<string>;
+  tutorialGreenIds?: Set<string>;
   gameState?: ClientGameState;
 }
 
@@ -87,6 +88,7 @@ export default function TutorialStepDisplay({
   onSkip,
   onCardClick,
   tutorialHighlightIds,
+  tutorialGreenIds,
   gameState,
 }: TutorialStepDisplayProps) {
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
@@ -97,6 +99,9 @@ export default function TutorialStepDisplay({
   });
   const cardClickHandledRef = useRef(false);
   const textBoxRef = useRef<HTMLDivElement>(null);
+
+  // Throw-cards mechanic state
+  const [thrownCardIds, setThrownCardIds] = useState<Set<string>>(new Set());
 
   // Sequential defend state
   const [seqPhase, setSeqPhase] = useState<SeqDefendPhase>('waiting');
@@ -128,6 +133,7 @@ export default function TutorialStepDisplay({
     setBitoFlyPhase('start');
     tableCardRectsRef.current = [];
     setTransferPhase('idle');
+    setThrownCardIds(new Set());
 
     // Restore any previously hidden card elements
     hiddenCardElementsRef.current.forEach(el => {
@@ -296,6 +302,62 @@ export default function TutorialStepDisplay({
       });
     };
   }, [scenario, tutorialHighlightIds]);
+
+  // Make tutorial GREEN cards clickable through overlay (for throw-cards mechanic)
+  useEffect(() => {
+    if (!scenario || !tutorialGreenIds || tutorialGreenIds.size === 0) return;
+
+    const greenElements: HTMLElement[] = [];
+    tutorialGreenIds.forEach(cardId => {
+      if (thrownCardIds.has(cardId)) return; // Already thrown
+      const el = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+      if (el) {
+        el.style.position = 'relative';
+        el.style.zIndex = '60';
+        el.style.pointerEvents = 'auto';
+        greenElements.push(el);
+      }
+    });
+
+    return () => {
+      greenElements.forEach(el => {
+        el.style.position = '';
+        el.style.zIndex = '';
+        el.style.pointerEvents = '';
+      });
+    };
+  }, [scenario, tutorialGreenIds, thrownCardIds]);
+
+  // Handle throw-cards click: when player clicks a green card, animate it to the table
+  useEffect(() => {
+    if (!scenario?.throwCards || !tutorialGreenIds || tutorialGreenIds.size === 0) return;
+
+    const handleThrowClick = (e: Event) => {
+      const target = e.target as HTMLElement;
+      const cardElement = target.closest('[data-card-id]');
+      if (!cardElement) return;
+
+      const cardId = cardElement.getAttribute('data-card-id');
+      if (!cardId || !tutorialGreenIds.has(cardId) || thrownCardIds.has(cardId)) return;
+
+      // Animate card disappearing from hand
+      const clickedEl = cardElement as HTMLElement;
+      clickedEl.style.transition = 'all 0.4s ease-out';
+      clickedEl.style.opacity = '0';
+      clickedEl.style.transform = 'translateY(-40px) scale(0.5)';
+      clickedEl.style.pointerEvents = 'none';
+      hiddenCardElementsRef.current.push(clickedEl);
+
+      setThrownCardIds(prev => {
+        const next = new Set(prev);
+        next.add(cardId);
+        return next;
+      });
+    };
+
+    document.addEventListener('click', handleThrowClick, true);
+    return () => document.removeEventListener('click', handleThrowClick, true);
+  }, [scenario, tutorialGreenIds, thrownCardIds]);
 
   // State for auto-defend animation (legacy single-click)
   const [autoDefendActive, setAutoDefendActive] = useState(false);
@@ -614,6 +676,10 @@ export default function TutorialStepDisplay({
     if (scenario.transferMechanic) {
       return transferPhase !== 'transferred' && transferPhase !== 'card-on-table';
     }
+    if (scenario.throwCards) {
+      const minThrows = scenario.throwCards.minThrows ?? 1;
+      return thrownCardIds.size < minThrows;
+    }
     if (scenario.requiredAction === 'click-card' && !cardClickHandledRef.current) return true;
     if (scenario.requiredAction === 'click-sort' && !sortClicked) return true;
     return false;
@@ -786,6 +852,73 @@ export default function TutorialStepDisplay({
           }}
         />
       ))}
+
+      {/* Glow effect around specific opponents */}
+      {scenario.glowOpponents && scenario.glowOpponents.length > 0 && (() => {
+        const allOpponents = document.querySelectorAll('[data-tutorial="opponent-info"]');
+        return scenario.glowOpponents!.map((oppPlayerIdx) => {
+          const oppIndex = oppPlayerIdx - 1; // 0-based among opponents
+          const targetEl = allOpponents[oppIndex];
+          if (!targetEl) return null;
+          const rect = targetEl.getBoundingClientRect();
+          return (
+            <div
+              key={`glow-opp-${oppPlayerIdx}`}
+              className="fixed z-[52] rounded-xl pointer-events-none animate-pulse"
+              style={{
+                left: rect.left - 6,
+                top: rect.top - 6,
+                width: rect.width + 12,
+                height: rect.height + 12,
+                boxShadow: '0 0 16px rgba(250, 204, 21, 0.6), 0 0 32px rgba(250, 204, 21, 0.3), inset 0 0 16px rgba(250, 204, 21, 0.1)',
+                border: '2px solid rgba(250, 204, 21, 0.7)',
+              }}
+            />
+          );
+        });
+      })()}
+
+      {/* Thrown cards appearing on table (throw-cards mechanic) */}
+      {scenario.throwCards && thrownCardIds.size > 0 && (() => {
+        const tableArea = document.querySelector('[data-tutorial="table-area"]');
+        if (!tableArea) return null;
+        const tableRect = tableArea.getBoundingClientRect();
+        // Find existing table card size
+        const existingCardParent = tableArea.querySelector('.relative') as HTMLElement;
+        let cardW = 56;
+        let cardH = 84;
+        if (existingCardParent) {
+          const r = existingCardParent.getBoundingClientRect();
+          cardW = r.width;
+          cardH = r.height;
+        }
+        // Map thrown card IDs back to card notations
+        const thrownCards: { id: string; notation: string }[] = [];
+        if (gameState) {
+          for (const card of gameState.myHand) {
+            if (thrownCardIds.has(card.id)) {
+              const suitChar = card.suit === 'spades' ? 's' : card.suit === 'hearts' ? 'h' : card.suit === 'diamonds' ? 'd' : card.suit === 'clubs' ? 'c' : '';
+              const notation = card.rank === '777' ? '777' : `${card.rank}${suitChar}`;
+              thrownCards.push({ id: card.id, notation });
+            }
+          }
+        }
+        const gap = 8;
+        return thrownCards.map((tc, i) => (
+          <div
+            key={`thrown-${tc.id}`}
+            className="fixed z-[52] animate-bounce-in"
+            style={{
+              left: tableRect.right + gap + i * (cardW + gap),
+              top: tableRect.top + (tableRect.height - cardH) / 2,
+              width: cardW,
+              height: cardH,
+            }}
+          >
+            <MiniCardFace cardNotation={tc.notation} />
+          </div>
+        ));
+      })()}
 
       {/* Pass-through (проездной) badge under specific bot */}
       {scenario.passThroughBotIdx !== undefined && (() => {

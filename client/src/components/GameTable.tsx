@@ -52,6 +52,8 @@ function PlayerHand({
   multiSelectIds,
   highlightedIds,
   tutorialHighlightIds,
+  tutorialGreenIds,
+  tutorialRedIds,
   onCardClick,
   onCardDrop,
   deckStyle,
@@ -64,6 +66,8 @@ function PlayerHand({
   multiSelectIds: Set<string>;
   highlightedIds: Set<string>;
   tutorialHighlightIds?: Set<string>;
+  tutorialGreenIds?: Set<string>;
+  tutorialRedIds?: Set<string>;
   onCardClick: (card: Card) => void;
   onCardDrop?: (card: Card) => boolean;
   deckStyle?: 'classic' | 'custom';
@@ -141,16 +145,19 @@ function PlayerHand({
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
             const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id);
             const isTutorialHighlighted = tutorialHighlightIds?.has(card.id) ?? false;
+            const isTutorialGreen = tutorialGreenIds?.has(card.id) ?? false;
+            const isTutorialRed = tutorialRedIds?.has(card.id) ?? false;
+            const hasColoredHighlight = isTutorialGreen || isTutorialRed;
             const isPassThroughCard = passThroughIds.has(card.id);
             const canDrag = playableIds.has(card.id) || transferIds.has(card.id);
             return (
               <div
                 key={card.id}
                 data-card-id={card.id}
-                className={`relative flex-shrink-0 ${isTutorialHighlighted ? 'z-[60]' : ''}`}
+                className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight) ? 'z-[60]' : ''}`}
                 style={{
                   marginLeft: getCardMargin(i),
-                  zIndex: isTutorialHighlighted ? 60 : isSelected ? 50 : i,
+                  zIndex: (isTutorialHighlighted || hasColoredHighlight) ? 60 : isSelected ? 50 : i,
                 }}
               >
                 {canDrag && onCardDrop ? (
@@ -166,10 +173,23 @@ function PlayerHand({
                 ) : (
                   <div
                     style={{
-                      transform: isTutorialHighlighted ? 'translateY(-16px)' : isSelected ? 'translateY(-8px)' : undefined,
+                      transform: (isTutorialHighlighted || isTutorialGreen) ? 'translateY(-16px)' : isSelected ? 'translateY(-8px)' : undefined,
                       transition: 'transform 0.15s',
                     }}
                   >
+                    {/* Colored glow wrapper for green/red tutorial highlights */}
+                    {hasColoredHighlight && (
+                      <div
+                        className="absolute inset-0 rounded-lg pointer-events-none"
+                        style={{
+                          boxShadow: isTutorialGreen
+                            ? '0 0 12px rgba(34,197,94,0.7), 0 0 24px rgba(34,197,94,0.4)'
+                            : '0 0 12px rgba(239,68,68,0.7), 0 0 24px rgba(239,68,68,0.4)',
+                          border: isTutorialGreen ? '2px solid rgba(34,197,94,0.8)' : '2px solid rgba(239,68,68,0.8)',
+                          zIndex: 1,
+                        }}
+                      />
+                    )}
                     <PlayingCard
                       card={card}
                       playable={isPlayable}
@@ -782,6 +802,54 @@ export default function GameTable({
     }
     return ids;
   }, [isTutorial, currentTutorialScenario?.highlightCards, gs.myHand]);
+
+  // Compute tutorial GREEN highlighted card IDs (raised + green glow)
+  const tutorialGreenIds = useMemo(() => {
+    if (!isTutorial || !currentTutorialScenario?.highlightCardsGreen || currentTutorialScenario.highlightCardsGreen.length === 0) {
+      return new Set<string>();
+    }
+    const requestedCounts = new Map<string, number>();
+    for (const notation of currentTutorialScenario.highlightCardsGreen) {
+      requestedCounts.set(notation, (requestedCounts.get(notation) || 0) + 1);
+    }
+    const matchedCounts = new Map<string, number>();
+    const ids = new Set<string>();
+    for (const card of gs.myHand) {
+      const suitChar = card.suit === 'spades' ? 's' : card.suit === 'hearts' ? 'h' : card.suit === 'diamonds' ? 'd' : card.suit === 'clubs' ? 'c' : '';
+      const notation = card.rank === '777' ? '777' : `${card.rank}${suitChar}`;
+      const needed = requestedCounts.get(notation) || 0;
+      const matched = matchedCounts.get(notation) || 0;
+      if (matched < needed) {
+        ids.add(card.id);
+        matchedCounts.set(notation, matched + 1);
+      }
+    }
+    return ids;
+  }, [isTutorial, currentTutorialScenario?.highlightCardsGreen, gs.myHand]);
+
+  // Compute tutorial RED highlighted card IDs (no raise, red glow)
+  const tutorialRedIds = useMemo(() => {
+    if (!isTutorial || !currentTutorialScenario?.highlightCardsRed || currentTutorialScenario.highlightCardsRed.length === 0) {
+      return new Set<string>();
+    }
+    const requestedCounts = new Map<string, number>();
+    for (const notation of currentTutorialScenario.highlightCardsRed) {
+      requestedCounts.set(notation, (requestedCounts.get(notation) || 0) + 1);
+    }
+    const matchedCounts = new Map<string, number>();
+    const ids = new Set<string>();
+    for (const card of gs.myHand) {
+      const suitChar = card.suit === 'spades' ? 's' : card.suit === 'hearts' ? 'h' : card.suit === 'diamonds' ? 'd' : card.suit === 'clubs' ? 'c' : '';
+      const notation = card.rank === '777' ? '777' : `${card.rank}${suitChar}`;
+      const needed = requestedCounts.get(notation) || 0;
+      const matched = matchedCounts.get(notation) || 0;
+      if (matched < needed) {
+        ids.add(card.id);
+        matchedCounts.set(notation, matched + 1);
+      }
+    }
+    return ids;
+  }, [isTutorial, currentTutorialScenario?.highlightCardsRed, gs.myHand]);
 
   // Compute highlighted card IDs: cards of the same rank as selected multi-attack/transfer cards
   const highlightedIds = useMemo(() => {
@@ -1839,6 +1907,8 @@ export default function GameTable({
               multiSelectIds={multiSelectIds}
               highlightedIds={highlightedIds}
               tutorialHighlightIds={tutorialHighlightIds}
+              tutorialGreenIds={tutorialGreenIds}
+              tutorialRedIds={tutorialRedIds}
               onCardClick={handleCardClick}
               onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
               deckStyle={gs.deckStyle}
@@ -1866,6 +1936,7 @@ export default function GameTable({
           onPrevious={tutorialPreviousStep}
           onSkip={skipTutorial}
           tutorialHighlightIds={tutorialHighlightIds}
+          tutorialGreenIds={tutorialGreenIds}
           gameState={gs}
         />
       )}
