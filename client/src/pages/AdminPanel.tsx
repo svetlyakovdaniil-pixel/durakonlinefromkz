@@ -8,7 +8,7 @@ import {
   DollarSign, ArrowLeft, RefreshCw, LogOut as KickIcon,
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
-  ShoppingCart, Bell, Send, Filter,
+  ShoppingCart, Bell, Send, Filter, Menu, X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,6 +79,7 @@ export default function AdminPanel() {
   const { user, loading } = useAuth();
   const [, setLocation] = useLocation();
   const [tab, setTab] = useState<Tab>("players");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   if (loading) {
     return (
@@ -121,41 +122,75 @@ export default function AdminPanel() {
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-gray-100">
       {/* Header */}
       <div className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="text-gray-400 hover:text-amber-100">
-              <ArrowLeft className="w-4 h-4 mr-1" /> Лобби
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="text-gray-400 hover:text-amber-100 px-2 sm:px-3">
+              <ArrowLeft className="w-4 h-4 sm:mr-1" />
+              <span className="hidden sm:inline">Лобби</span>
             </Button>
-            <div className="h-6 w-px bg-gray-700" />
-            <Shield className="w-5 h-5 text-amber-500" />
-            <span className="font-bold text-amber-100">{isGM ? "GM-панель" : "Админ-панель"}</span>
+            <div className="h-5 sm:h-6 w-px bg-gray-700" />
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 shrink-0" />
+            <span className="text-sm sm:text-base font-bold text-amber-100">{isGM ? "GM" : "Админ"}</span>
           </div>
-          <span className="text-sm text-gray-500">{user.name}</span>
+          <span className="text-xs sm:text-sm text-gray-500 truncate max-w-[120px] sm:max-w-none">{user.name}</span>
         </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="border-b border-gray-800 overflow-x-auto">
-        <div className="max-w-7xl mx-auto px-4 flex gap-1">
-          {tabs.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                tab === t.id
-                  ? "border-amber-500 text-amber-100"
-                  : "border-transparent text-gray-500 hover:text-gray-300"
-              }`}
-            >
-              <t.icon className="w-4 h-4" />
-              {t.label}
-            </button>
-          ))}
+      {/* Tab bar — desktop: horizontal tabs, mobile: dropdown */}
+      <div className="border-b border-gray-800">
+        {/* Desktop tabs */}
+        <div className="hidden sm:block overflow-x-auto">
+          <div className="max-w-7xl mx-auto px-4 flex gap-1">
+            {tabs.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  tab === t.id
+                    ? "border-amber-500 text-amber-100"
+                    : "border-transparent text-gray-500 hover:text-gray-300"
+                }`}
+              >
+                <t.icon className="w-4 h-4" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        {/* Mobile tab selector */}
+        <div className="sm:hidden">
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-amber-100"
+          >
+            <div className="flex items-center gap-2">
+              {(() => { const cur = tabs.find(t => t.id === tab); return cur ? <><cur.icon className="w-4 h-4" />{cur.label}</> : null; })()}
+            </div>
+            {mobileMenuOpen ? <X className="w-4 h-4 text-gray-400" /> : <Menu className="w-4 h-4 text-gray-400" />}
+          </button>
+          {mobileMenuOpen && (
+            <div className="border-t border-gray-800 bg-gray-950/95 backdrop-blur">
+              {tabs.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => { setTab(t.id); setMobileMenuOpen(false); }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
+                    tab === t.id
+                      ? "bg-amber-900/20 text-amber-100 border-l-2 border-amber-500"
+                      : "text-gray-400 hover:bg-gray-900/50 hover:text-gray-200 border-l-2 border-transparent"
+                  }`}
+                >
+                  <t.icon className="w-4 h-4" />
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
+      <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6">
         {tab === "players" && <PlayersTab isGM={isGM} />}
         {tab === "monitoring" && isAdmin && <MonitoringTab />}
         {tab === "transactions" && isAdmin && <TransactionsTab />}
@@ -247,8 +282,8 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
   return (
     <div className="space-y-4">
       {/* Search */}
-      <div className="flex gap-3 items-center">
-        <div className="relative flex-1 max-w-md">
+      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:items-center">
+        <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
           <Input
             placeholder="Поиск по имени или Game ID..."
@@ -257,26 +292,28 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
             className="pl-10 bg-gray-900 border-gray-700 text-gray-100 placeholder:text-gray-500"
           />
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
-          <RefreshCw className="w-4 h-4" />
-        </Button>
-        <span className="text-sm text-gray-500">Всего: {formatNumber(data?.total)}</span>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+          <span className="text-sm text-gray-500">Всего: {formatNumber(data?.total)}</span>
+        </div>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+        <table className="w-full text-sm min-w-[800px]">
           <thead className="bg-gray-900/50">
             <tr className="text-left text-gray-400">
-              <th className="px-4 py-3 font-medium">ID</th>
-              <th className="px-4 py-3 font-medium">Имя</th>
-              <th className="px-4 py-3 font-medium">Рейтинг</th>
-              <th className="px-4 py-3 font-medium">Игры</th>
-              <th className="px-4 py-3 font-medium">W/L</th>
-              <th className="px-4 py-3 font-medium">Тенге</th>
-              <th className="px-4 py-3 font-medium">Шаныраки</th>
-              <th className="px-4 py-3 font-medium">Статус</th>
-              <th className="px-4 py-3 font-medium">Действия</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">ID</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Имя</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Рейтинг</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Игры</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">W/L</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Тенге</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Шаныраки</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Статус</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Действия</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -555,12 +592,16 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
           <Button variant="ghost" size="sm" onClick={onBack} className="text-gray-400 hover:text-amber-100">
-            <ArrowLeft className="w-4 h-4 mr-1" /> Назад к списку
+            <ArrowLeft className="w-4 h-4 mr-1" /> Назад
           </Button>
-          <div className="h-6 w-px bg-gray-700" />
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+            <RefreshCw className="w-4 h-4" />
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-lg font-bold text-amber-100">
             {detail.displayName || "Без имени"} <span className="text-gray-500 font-normal text-sm">#{detail.gameId}</span>
           </h2>
@@ -583,18 +624,15 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
             </span>
           )}
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
-          <RefreshCw className="w-4 h-4" />
-        </Button>
       </div>
 
       {/* Sub-tabs */}
-      <div className="flex gap-1 border-b border-gray-800">
+      <div className="flex gap-1 border-b border-gray-800 overflow-x-auto">
         {profileTabs.map(t => (
           <button
             key={t.id}
             onClick={() => setProfileTab(t.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors ${
+            className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               profileTab === t.id
                 ? "border-amber-500 text-amber-100"
                 : "border-transparent text-gray-500 hover:text-gray-300"
@@ -639,14 +677,14 @@ function ProfileInfoSection({
   return (
     <div className="space-y-6">
       {/* Info cards grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <InfoCard label="Рейтинг" value={formatNumber(detail.rating)} icon={Trophy} color="text-amber-400" />
         <InfoCard label="Игры" value={formatNumber(detail.gamesPlayed)} icon={Gamepad2} color="text-blue-400" />
         <InfoCard label="Победы" value={formatNumber(detail.wins)} icon={Trophy} color="text-green-400" />
         <InfoCard label="Поражения" value={formatNumber(detail.losses)} icon={Ban} color="text-red-400" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <InfoCard label="Тенге" value={formatNumber(detail.balanceTenge)} icon={DollarSign} color="text-emerald-400" />
         <InfoCard label="Шаныраки" value={formatNumber(detail.balanceShanyrak)} icon={DollarSign} color="text-yellow-400" />
         <InfoCard label="Обучение" value={detail.tutorialCompleted ? "Пройдено" : "Нет"} icon={CheckCircle} color={detail.tutorialCompleted ? "text-green-400" : "text-gray-500"} />
@@ -748,12 +786,12 @@ function ProfileInfoSection({
 
 function InfoCard({ label, value, icon: Icon, color }: { label: string; value: string; icon: React.ElementType; color: string }) {
   return (
-    <div className="border border-gray-800 rounded-lg p-4 bg-gray-900/30">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-xs text-gray-500">{label}</span>
+    <div className="border border-gray-800 rounded-lg p-3 sm:p-4 bg-gray-900/30">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${color}`} />
+        <span className="text-[10px] sm:text-xs text-gray-500 leading-tight">{label}</span>
       </div>
-      <div className="text-xl font-bold text-gray-100">{value}</div>
+      <div className="text-lg sm:text-xl font-bold text-gray-100 truncate">{value}</div>
     </div>
   );
 }
@@ -761,10 +799,10 @@ function InfoCard({ label, value, icon: Icon, color }: { label: string; value: s
 function DetailRow({ label, value, mono, highlight }: { label: string; value: string; mono?: boolean; highlight?: "red" }) {
   return (
     <tr className="hover:bg-gray-900/30">
-      <td className="px-4 py-2.5 text-gray-500 text-sm w-48">{label}</td>
-      <td className={`px-4 py-2.5 text-sm ${
+      <td className="px-3 sm:px-4 py-2.5 text-gray-500 text-xs sm:text-sm w-28 sm:w-48">{label}</td>
+      <td className={`px-3 sm:px-4 py-2.5 text-xs sm:text-sm break-all ${
         highlight === "red" ? "text-red-400" : "text-gray-100"
-      } ${mono ? "font-mono text-xs" : ""}`}>
+      } ${mono ? "font-mono" : ""}`}>
         {value}
       </td>
     </tr>
@@ -811,20 +849,20 @@ function ProfileTransactionsSection({ profileId }: { profileId: number }) {
         <span className="text-sm text-gray-500">Всего транзакций: {formatNumber(data?.total)}</span>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-900/50">
             <tr className="text-left text-gray-400">
-              <th className="px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("date")}>
+              <th className="px-3 sm:px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("date")}>
                 <span className="flex items-center">Дата <SortIcon col="date" /></span>
               </th>
-              <th className="px-4 py-3 font-medium">Тип</th>
-              <th className="px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("amount")}>
+              <th className="px-3 sm:px-4 py-3 font-medium">Тип</th>
+              <th className="px-3 sm:px-4 py-3 font-medium cursor-pointer select-none" onClick={() => toggleSort("amount")}>
                 <span className="flex items-center">Сумма <SortIcon col="amount" /></span>
               </th>
-              <th className="px-4 py-3 font-medium">Валюта</th>
-              <th className="px-4 py-3 font-medium">Баланс после</th>
-              <th className="px-4 py-3 font-medium">Описание</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Валюта</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Баланс после</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Описание</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -864,13 +902,13 @@ function ProfileTransactionsSection({ profileId }: { profileId: number }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+            <ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline ml-1">Назад</span>
           </Button>
-          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <span className="text-xs sm:text-sm text-gray-500">{page + 1}/{totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
-            Далее <ChevronRight className="w-4 h-4 ml-1" />
+            <span className="hidden sm:inline mr-1">Далее</span><ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -897,17 +935,17 @@ function ProfileGamesSection({ profileId }: { profileId: number }) {
         <span className="text-sm text-gray-500">Всего игр: {formatNumber(data?.total)}</span>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+        <table className="w-full text-sm min-w-[650px]">
           <thead className="bg-gray-900/50">
             <tr className="text-left text-gray-400">
-              <th className="px-4 py-3 font-medium">Дата</th>
-              <th className="px-4 py-3 font-medium">Игроков</th>
-              <th className="px-4 py-3 font-medium">Место</th>
-              <th className="px-4 py-3 font-medium">Результат</th>
-              <th className="px-4 py-3 font-medium">Рейтинг</th>
-              <th className="px-4 py-3 font-medium">Длительность</th>
-              <th className="px-4 py-3 font-medium">Комната</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Дата</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Игроков</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Место</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Результат</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Рейтинг</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Длительность</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Комната</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -956,13 +994,13 @@ function ProfileGamesSection({ profileId }: { profileId: number }) {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+            <ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline ml-1">Назад</span>
           </Button>
-          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <span className="text-xs sm:text-sm text-gray-500">{page + 1}/{totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
-            Далее <ChevronRight className="w-4 h-4 ml-1" />
+            <span className="hidden sm:inline mr-1">Далее</span><ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -987,7 +1025,7 @@ function MonitoringTab() {
   return (
     <div className="space-y-6">
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         <StatCard label="Игроков онлайн" value={data?.onlinePlayerCount ?? 0} icon={Users} color="text-green-400" />
         <StatCard label="Активных комнат" value={data?.activeRoomCount ?? 0} icon={Activity} color="text-blue-400" />
         <StatCard label="Всего игроков" value={globalStats.data?.totalPlayers ?? 0} icon={Users} color="text-amber-400" />
@@ -1031,9 +1069,9 @@ function MonitoringTab() {
 
       {/* Active rooms */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-lg font-semibold text-amber-100">Активные комнаты</h3>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+        <div className="flex items-center justify-between mb-3 gap-2">
+          <h3 className="text-base sm:text-lg font-semibold text-amber-100">Активные комнаты</h3>
+          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300 shrink-0">
             <RefreshCw className="w-4 h-4" />
           </Button>
         </div>
@@ -1046,8 +1084,8 @@ function MonitoringTab() {
           <div className="space-y-3">
             {data.rooms.map((room: any) => (
               <div key={room.roomId} className="border border-gray-800 rounded-lg p-4 bg-gray-900/30">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 sm:gap-0 mb-2">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <span className="text-xs text-gray-500 font-mono">{room.roomId.slice(0, 8)}</span>
                     {room.isTutorial && <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded">Обучение</span>}
                     {room.withBots && <span className="text-xs bg-purple-900/50 text-purple-300 px-2 py-0.5 rounded">С ботами</span>}
@@ -1089,12 +1127,12 @@ function MonitoringTab() {
 
 function StatCard({ label, value, icon: Icon, color }: { label: string; value: number; icon: React.ElementType; color: string }) {
   return (
-    <div className="border border-gray-800 rounded-lg p-4 bg-gray-900/30">
-      <div className="flex items-center gap-2 mb-1">
-        <Icon className={`w-4 h-4 ${color}`} />
-        <span className="text-xs text-gray-500">{label}</span>
+    <div className="border border-gray-800 rounded-lg p-3 sm:p-4 bg-gray-900/30">
+      <div className="flex items-center gap-1.5 sm:gap-2 mb-1">
+        <Icon className={`w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0 ${color}`} />
+        <span className="text-[10px] sm:text-xs text-gray-500 leading-tight">{label}</span>
       </div>
-      <div className="text-2xl font-bold text-gray-100">{formatNumber(value)}</div>
+      <div className="text-xl sm:text-2xl font-bold text-gray-100 truncate">{formatNumber(value)}</div>
     </div>
   );
 }
@@ -1114,7 +1152,7 @@ function TransactionsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <h3 className="text-lg font-semibold text-amber-100">История транзакций</h3>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
@@ -1124,15 +1162,15 @@ function TransactionsTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-900/50">
             <tr className="text-left text-gray-400">
-              <th className="px-4 py-3 font-medium">Дата</th>
-              <th className="px-4 py-3 font-medium">Игрок</th>
-              <th className="px-4 py-3 font-medium">Тип</th>
-              <th className="px-4 py-3 font-medium">Сумма</th>
-              <th className="px-4 py-3 font-medium">Описание</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Дата</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Игрок</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Тип</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Сумма</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Описание</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -1171,13 +1209,13 @@ function TransactionsTab() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+            <ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline ml-1">Назад</span>
           </Button>
-          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <span className="text-xs sm:text-sm text-gray-500">{page + 1}/{totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
-            Далее <ChevronRight className="w-4 h-4 ml-1" />
+            <span className="hidden sm:inline mr-1">Далее</span><ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -1208,9 +1246,9 @@ function AuditTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h3 className="text-lg font-semibold text-amber-100">Лог действий администраторов</h3>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h3 className="text-lg font-semibold text-amber-100">Лог действий</h3>
+        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <Filter className="w-4 h-4 text-gray-500" />
             <select
@@ -1231,15 +1269,15 @@ function AuditTab() {
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-800">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-gray-900/50">
             <tr className="text-left text-gray-400">
-              <th className="px-4 py-3 font-medium">Дата</th>
-              <th className="px-4 py-3 font-medium">Админ</th>
-              <th className="px-4 py-3 font-medium">Действие</th>
-              <th className="px-4 py-3 font-medium">Цель</th>
-              <th className="px-4 py-3 font-medium">Детали</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Дата</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Админ</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Действие</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Цель</th>
+              <th className="px-3 sm:px-4 py-3 font-medium">Детали</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -1283,13 +1321,13 @@ function AuditTab() {
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
-            <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+            <ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline ml-1">Назад</span>
           </Button>
-          <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+          <span className="text-xs sm:text-sm text-gray-500">{page + 1}/{totalPages}</span>
           <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
-            Далее <ChevronRight className="w-4 h-4 ml-1" />
+            <span className="hidden sm:inline mr-1">Далее</span><ChevronRight className="w-4 h-4" />
           </Button>
         </div>
       )}
@@ -1335,17 +1373,17 @@ function AntifraudTab() {
       </div>
 
       {section === "winrate" && (
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Имя</th>
-                <th className="px-4 py-3 font-medium">Игры</th>
-                <th className="px-4 py-3 font-medium">Победы</th>
-                <th className="px-4 py-3 font-medium">Винрейт</th>
-                <th className="px-4 py-3 font-medium">Рейтинг</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">ID</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Имя</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Игры</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Победы</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Винрейт</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Рейтинг</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Статус</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1380,16 +1418,16 @@ function AntifraudTab() {
       )}
 
       {section === "transactions" && (
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Дата</th>
-                <th className="px-4 py-3 font-medium">Игрок</th>
-                <th className="px-4 py-3 font-medium">Тип</th>
-                <th className="px-4 py-3 font-medium">Сумма</th>
-                <th className="px-4 py-3 font-medium">Валюта</th>
-                <th className="px-4 py-3 font-medium">Описание</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Дата</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Игрок</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Тип</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Сумма</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Валюта</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Описание</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1419,16 +1457,16 @@ function AntifraudTab() {
       )}
 
       {section === "growth" && (
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">ID</th>
-                <th className="px-4 py-3 font-medium">Имя</th>
-                <th className="px-4 py-3 font-medium">Заработано за 24ч</th>
-                <th className="px-4 py-3 font-medium">Транзакций</th>
-                <th className="px-4 py-3 font-medium">Текущий баланс</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">ID</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Имя</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">За 24ч</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Транзакций</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Баланс</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Статус</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1552,16 +1590,16 @@ function ShopManagementTab() {
       {/* Shop items */}
       <div>
         <h4 className="text-md font-medium text-gray-200 mb-3">Товары магазина</h4>
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[650px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Категория</th>
-                <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">Цена по умолч.</th>
-                <th className="px-4 py-3 font-medium">Текущая цена</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
-                <th className="px-4 py-3 font-medium">Действия</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Категория</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Название</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Базовая</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Текущая</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Статус</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Действия</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1664,14 +1702,14 @@ function ShopManagementTab() {
       {/* Exchange rates */}
       <div>
         <h4 className="text-md font-medium text-gray-200 mb-3">Курсы обмена (Тенге → Шаныраки)</h4>
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[400px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Пакет</th>
-                <th className="px-4 py-3 font-medium">Шаныраки</th>
-                <th className="px-4 py-3 font-medium">Цена (тенге)</th>
-                <th className="px-4 py-3 font-medium">Курс</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Пакет</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Шаныраки</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Цена</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Курс</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1691,15 +1729,15 @@ function ShopManagementTab() {
       {/* Economy settings */}
       <div>
         <h4 className="text-md font-medium text-gray-200 mb-3">Экономические параметры</h4>
-        <div className="border border-gray-800 rounded-lg overflow-hidden">
+        <div className="border border-gray-800 rounded-lg overflow-hidden -mx-4 sm:mx-0">
           <table className="w-full text-sm">
             <tbody className="divide-y divide-gray-800">
-              <DetailRow label="Начальный баланс (тенге)" value="25" />
-              <DetailRow label="Начальный баланс (шаныраки)" value="5 000" />
-              <DetailRow label="Бесплатный топап (до)" value="2 000 шаныраков" />
+              <DetailRow label="Нач. баланс (тенге)" value="25" />
+              <DetailRow label="Нач. баланс (шаныраки)" value="5 000" />
+              <DetailRow label="Беспл. топап" value="2 000 шаныраков" />
               <DetailRow label="Кулдаун топапа" value="12 часов" />
-              <DetailRow label="Награда за обучение" value="2 000 шаныраков (одноразово)" />
-              <DetailRow label="Начальный рейтинг" value="1 000" />
+              <DetailRow label="Награда за обучение" value="2 000 шаныраков" />
+              <DetailRow label="Нач. рейтинг" value="1 000" />
             </tbody>
           </table>
         </div>
@@ -1744,7 +1782,7 @@ function MassNotificationsTab() {
       <h3 className="text-lg font-semibold text-amber-100">Массовые рассылки</h3>
 
       {/* Send form */}
-      <div className="border border-gray-800 rounded-lg p-6 bg-gray-900/30 space-y-4">
+      <div className="border border-gray-800 rounded-lg p-4 sm:p-6 bg-gray-900/30 space-y-4">
         <h4 className="text-md font-medium text-gray-200">Новая рассылка</h4>
 
         <div>
@@ -1783,15 +1821,15 @@ function MassNotificationsTab() {
           className="w-full bg-gray-800 border border-gray-700 text-gray-100 rounded-md px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-amber-500"
         />
 
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">{content.length}/2000 символов</span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-xs text-gray-500">{content.length}/2000</span>
           <Button
             disabled={!title.trim() || !content.trim() || sendMutation.isPending}
             onClick={() => setShowConfirm(true)}
             className="bg-amber-600 hover:bg-amber-700"
           >
-            <Send className="w-4 h-4 mr-2" />
-            Отправить
+            <Send className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Отправить</span>
           </Button>
         </div>
       </div>
@@ -1828,15 +1866,15 @@ function MassNotificationsTab() {
       {/* History */}
       <div>
         <h4 className="text-md font-medium text-gray-200 mb-3">История рассылок</h4>
-        <div className="overflow-x-auto rounded-lg border border-gray-800">
-          <table className="w-full text-sm">
+        <div className="overflow-x-auto rounded-lg border border-gray-800 -mx-4 sm:mx-0">
+          <table className="w-full text-sm min-w-[550px]">
             <thead className="bg-gray-900/50">
               <tr className="text-left text-gray-400">
-                <th className="px-4 py-3 font-medium">Дата</th>
-                <th className="px-4 py-3 font-medium">Админ</th>
-                <th className="px-4 py-3 font-medium">Заголовок</th>
-                <th className="px-4 py-3 font-medium">Сегмент</th>
-                <th className="px-4 py-3 font-medium">Отправлено</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Дата</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Админ</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Заголовок</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Сегмент</th>
+                <th className="px-3 sm:px-4 py-3 font-medium">Отпр.</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
@@ -1864,13 +1902,13 @@ function MassNotificationsTab() {
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
+          <div className="flex items-center justify-between gap-2 mt-4">
             <Button variant="outline" size="sm" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="border-gray-700 text-gray-300">
-              <ChevronLeft className="w-4 h-4 mr-1" /> Назад
+              <ChevronLeft className="w-4 h-4" /><span className="hidden sm:inline ml-1">Назад</span>
             </Button>
-            <span className="text-sm text-gray-500">Страница {page + 1} из {totalPages}</span>
+            <span className="text-xs sm:text-sm text-gray-500">{page + 1}/{totalPages}</span>
             <Button variant="outline" size="sm" disabled={page >= totalPages - 1} onClick={() => setPage(p => p + 1)} className="border-gray-700 text-gray-300">
-              Далее <ChevronRight className="w-4 h-4 ml-1" />
+              <span className="hidden sm:inline mr-1">Далее</span><ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         )}
