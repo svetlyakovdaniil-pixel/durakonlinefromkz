@@ -1,4 +1,4 @@
-import { eq, and, or, sql, desc, asc } from "drizzle-orm";
+import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -1119,4 +1119,226 @@ export async function completeTutorial(userId: number): Promise<{ success: boole
   });
 
   return { success: true, newBalance };
+}
+
+// ============================================================
+// ADMIN helpers
+// ============================================================
+
+/**
+ * Admin: Get all players with search/pagination.
+ */
+export async function adminGetPlayers(opts: {
+  search?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { players: [], total: 0 };
+
+  const limit = opts.limit ?? 20;
+  const offset = opts.offset ?? 0;
+
+  // Build where condition
+  let whereCondition = undefined;
+  if (opts.search) {
+    const searchTerm = `%${opts.search}%`;
+    const numericSearch = parseInt(opts.search);
+    if (!isNaN(numericSearch)) {
+      whereCondition = or(
+        like(playerProfiles.displayName, searchTerm),
+        eq(playerProfiles.gameId, numericSearch)
+      );
+    } else {
+      whereCondition = like(playerProfiles.displayName, searchTerm);
+    }
+  }
+
+  // Get total count (with filter)
+  const countQuery = whereCondition
+    ? db.select({ count: sql<number>`COUNT(*)` }).from(playerProfiles).where(whereCondition)
+    : db.select({ count: sql<number>`COUNT(*)` }).from(playerProfiles);
+  const countResult = await countQuery;
+  const total = countResult[0]?.count ?? 0;
+
+  const baseQuery = db.select({
+    id: playerProfiles.id,
+    userId: playerProfiles.userId,
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+    avatarId: playerProfiles.avatarId,
+    equippedFrame: playerProfiles.equippedFrame,
+    rating: playerProfiles.rating,
+    gamesPlayed: playerProfiles.gamesPlayed,
+    wins: playerProfiles.wins,
+    losses: playerProfiles.losses,
+    balanceTenge: playerProfiles.balanceTenge,
+    balanceShanyrak: playerProfiles.balanceShanyrak,
+    isBanned: playerProfiles.isBanned,
+    banReason: playerProfiles.banReason,
+    bannedAt: playerProfiles.bannedAt,
+    tutorialCompleted: playerProfiles.tutorialCompleted,
+    createdAt: playerProfiles.createdAt,
+    updatedAt: playerProfiles.updatedAt,
+  }).from(playerProfiles);
+
+  const players = whereCondition
+    ? await baseQuery.where(whereCondition).orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset)
+    : await baseQuery.orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset);
+
+  return { players, total };
+}
+
+/**
+ * Admin: Update a player's balance.
+ */
+export async function adminUpdateBalance(
+  profileId: number,
+  currency: 'tenge' | 'shanyrak',
+  amount: number,
+  description: string
+) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.id, profileId)).limit(1);
+  if (!profile) return { success: false };
+
+  const currentBalance = currency === 'tenge' ? profile.balanceTenge : profile.balanceShanyrak;
+  const newBalance = Math.max(0, currentBalance + amount);
+
+  if (currency === 'tenge') {
+    await db.update(playerProfiles).set({ balanceTenge: newBalance }).where(eq(playerProfiles.id, profileId));
+  } else {
+    await db.update(playerProfiles).set({ balanceShanyrak: newBalance }).where(eq(playerProfiles.id, profileId));
+  }
+
+  await recordTransaction({
+    profileId,
+    type: 'free_topup', // reuse type for admin adjustments
+    amount,
+    currency,
+    description: `[Админ] ${description}`,
+    balanceAfter: newBalance,
+  });
+
+  return { success: true, newBalance };
+}
+
+/**
+ * Admin: Ban a player.
+ */
+export async function adminBanPlayer(profileId: number, reason: string) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  await db.update(playerProfiles).set({
+    isBanned: true,
+    banReason: reason,
+    bannedAt: new Date(),
+  }).where(eq(playerProfiles.id, profileId));
+
+  return { success: true };
+}
+
+/**
+ * Admin: Unban a player.
+ */
+export async function adminUnbanPlayer(profileId: number) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  await db.update(playerProfiles).set({
+    isBanned: false,
+    banReason: null,
+    bannedAt: null,
+  }).where(eq(playerProfiles.id, profileId));
+
+  return { success: true };
+}
+
+/**
+ * Admin: Reset a player's stats.
+ */
+export async function adminResetStats(profileId: number) {
+  const db = await getDb();
+  if (!db) return { success: false };
+
+  await db.update(playerProfiles).set({
+    rating: 1000,
+    gamesPlayed: 0,
+    wins: 0,
+    losses: 0,
+  }).where(eq(playerProfiles.id, profileId));
+
+  return { success: true };
+}
+
+/**
+ * Admin: Get all transactions with optional filters.
+ */
+export async function adminGetTransactions(opts: {
+  profileId?: number;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return { transactions: [], total: 0 };
+
+  const limit = opts.limit ?? 50;
+  const offset = opts.offset ?? 0;
+
+  let whereClause = undefined;
+  if (opts.profileId) {
+    whereClause = eq(transactions.profileId, opts.profileId);
+  }
+
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` }).from(transactions);
+  const total = countResult[0]?.count ?? 0;
+
+  const rows = await db.select({
+    id: transactions.id,
+    profileId: transactions.profileId,
+    type: transactions.type,
+    amount: transactions.amount,
+    currency: transactions.currency,
+    description: transactions.description,
+    balanceAfter: transactions.balanceAfter,
+    createdAt: transactions.createdAt,
+  }).from(transactions)
+    .where(whereClause)
+    .orderBy(desc(transactions.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return { transactions: rows, total };
+}
+
+/**
+ * Admin: Get global stats summary.
+ */
+export async function adminGetGlobalStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [playerStats] = await db.select({
+    totalPlayers: sql<number>`COUNT(*)`,
+    totalShanyrak: sql<number>`SUM(${playerProfiles.balanceShanyrak})`,
+    totalTenge: sql<number>`SUM(${playerProfiles.balanceTenge})`,
+    bannedCount: sql<number>`SUM(CASE WHEN ${playerProfiles.isBanned} = true THEN 1 ELSE 0 END)`,
+    avgRating: sql<number>`AVG(${playerProfiles.rating})`,
+  }).from(playerProfiles);
+
+  const [gameStats] = await db.select({
+    totalGames: sql<number>`COUNT(*)`,
+  }).from(gameHistory);
+
+  return {
+    totalPlayers: playerStats?.totalPlayers ?? 0,
+    totalShanyrak: playerStats?.totalShanyrak ?? 0,
+    totalTenge: playerStats?.totalTenge ?? 0,
+    bannedCount: playerStats?.bannedCount ?? 0,
+    avgRating: Math.round(playerStats?.avgRating ?? 1000),
+    totalGames: gameStats?.totalGames ?? 0,
+  };
 }

@@ -58,6 +58,12 @@ export const playerProfiles = mysqlTable("player_profiles", {
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */
   tutorialCompleted: boolean("tutorialCompleted").default(false).notNull(),
+  /** Whether the player is banned */
+  isBanned: boolean("isBanned").default(false).notNull(),
+  /** Reason for ban (admin note) */
+  banReason: text("banReason"),
+  /** When the ban was applied */
+  bannedAt: timestamp("bannedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

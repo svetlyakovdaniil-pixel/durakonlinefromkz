@@ -54,6 +54,42 @@ const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Да
 
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
 
+/** Admin: Get online monitoring stats */
+export function getAdminOnlineStats() {
+  const activeRooms = Array.from(rooms.entries())
+    .filter(([_, r]) => r.gameState !== null || r.players.length > 0)
+    .map(([id, r]) => ({
+      roomId: id,
+      hostId: r.hostId,
+      playerCount: r.players.length,
+      maxPlayers: r.maxPlayers,
+      players: r.players.map(p => ({ id: p.id, name: p.name, isBot: p.isBot })),
+      betAmount: r.settings.betAmount || 0,
+      isTutorial: r.settings.isTutorial || false,
+      withBots: r.settings.withBots || false,
+      hasActiveGame: r.gameState !== null,
+    }));
+  return {
+    onlinePlayerCount: playerSockets.size,
+    activeRoomCount: activeRooms.length,
+    rooms: activeRooms,
+  };
+}
+
+/** Admin: Kick a player by disconnecting their socket */
+export function adminKickPlayer(odId: string) {
+  const sid = playerSockets.get(odId);
+  if (sid) {
+    const socket = io?.sockets.sockets.get(sid);
+    if (socket) {
+      socket.emit('error', 'Вы были отключены администратором');
+      socket.disconnect(true);
+      return true;
+    }
+  }
+  return false;
+}
+
 /** Emit balanceUpdated to a player by openId so their client refreshes the balance */
 async function emitBalanceUpdated(odId: string) {
   const sid = playerSockets.get(odId);

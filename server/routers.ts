@@ -1,7 +1,7 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import {
   getOrCreateProfile,
@@ -40,8 +40,15 @@ import {
   purchaseFrame,
   equipFrame,
   completeTutorial,
+  adminGetPlayers,
+  adminUpdateBalance,
+  adminBanPlayer,
+  adminUnbanPlayer,
+  adminResetStats,
+  adminGetTransactions,
+  adminGetGlobalStats,
 } from "./db";
-import { emitNotificationToProfile } from "./socketServer";
+import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -448,6 +455,95 @@ export const appRouter = router({
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) return [];
         return getPlayerGameHistory(profile.id, input?.limit ?? 20);
+      }),
+  }),
+
+  // ============================================================
+  // ADMIN PANEL
+  // ============================================================
+  admin: router({
+    /** Get global stats summary */
+    globalStats: adminProcedure.query(async () => {
+      return adminGetGlobalStats();
+    }),
+
+    /** Get online monitoring stats */
+    onlineStats: adminProcedure.query(async () => {
+      return getAdminOnlineStats();
+    }),
+
+    /** Get players list with search/pagination */
+    players: adminProcedure
+      .input(z.object({
+        search: z.string().optional(),
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return adminGetPlayers({
+          search: input?.search,
+          limit: input?.limit ?? 20,
+          offset: input?.offset ?? 0,
+        });
+      }),
+
+    /** Update player balance */
+    updateBalance: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        currency: z.enum(['tenge', 'shanyrak']),
+        amount: z.number(),
+        description: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        return adminUpdateBalance(input.profileId, input.currency, input.amount, input.description);
+      }),
+
+    /** Ban a player */
+    banPlayer: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        reason: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        return adminBanPlayer(input.profileId, input.reason);
+      }),
+
+    /** Unban a player */
+    unbanPlayer: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input }) => {
+        return adminUnbanPlayer(input.profileId);
+      }),
+
+    /** Reset player stats */
+    resetStats: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input }) => {
+        return adminResetStats(input.profileId);
+      }),
+
+    /** Get transaction history */
+    transactions: adminProcedure
+      .input(z.object({
+        profileId: z.number().optional(),
+        limit: z.number().min(1).max(100).optional(),
+        offset: z.number().min(0).optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        return adminGetTransactions({
+          profileId: input?.profileId,
+          limit: input?.limit ?? 50,
+          offset: input?.offset ?? 0,
+        });
+      }),
+
+    /** Kick a player (disconnect their socket) */
+    kickPlayer: adminProcedure
+      .input(z.object({ openId: z.string() }))
+      .mutation(async ({ input }) => {
+        const kicked = adminKickPlayer(input.openId);
+        return { success: kicked };
       }),
   }),
 });

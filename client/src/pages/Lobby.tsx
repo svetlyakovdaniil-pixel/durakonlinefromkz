@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -23,6 +23,8 @@ import ShopModal from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
 import { TutorialModal } from '@/components/TutorialModal';
 import { useTranslation } from '@/i18n';
+import { useAuth } from '@/_core/hooks/useAuth';
+import { useLocation } from 'wouter';
 import { FrameWrapper } from '@/components/AvatarWithFrame';
 
 interface LobbyProps {
@@ -51,6 +53,9 @@ interface LobbyProps {
 
 export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile }: LobbyProps) {
   const { t, locale } = useTranslation();
+  const { user: authUser } = useAuth();
+  const [, setLocation] = useLocation();
+  const isAdmin = authUser?.role === 'admin';
   const [dialogOpen, setDialogOpen] = useState(false);
   const [roomName, setRoomName] = useState('');
   const [maxPlayers, setMaxPlayers] = useState('4');
@@ -206,6 +211,16 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
               {/* Left column: Settings / Bell / Rules — spread top/center/bottom */}
               <div className="flex flex-col items-start justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
+                {/* Row 0: Admin (only for admins) */}
+                {isAdmin && (
+                  <button
+                    className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
+                    onClick={() => setLocation('/admin')}
+                    title="Админ-панель"
+                  >
+                    <Shield className="w-5 h-5" />
+                  </button>
+                )}
                 {/* Row 1: Settings */}
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded">
@@ -329,6 +344,16 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <h1 className="text-xl font-bold text-amber-100">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
+                {/* Admin button (only for admins) */}
+                {isAdmin && (
+                  <button
+                    className="text-amber-500 hover:text-amber-300 transition-colors p-2 rounded"
+                    onClick={() => setLocation('/admin')}
+                    title="Админ-панель"
+                  >
+                    <Shield className="w-5 h-5" />
+                  </button>
+                )}
                 {/* Tutorial button */}
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"

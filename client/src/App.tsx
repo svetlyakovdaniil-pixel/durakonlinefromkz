@@ -9,12 +9,14 @@ import { SoundProvider } from "./contexts/SoundContext";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
 import Home from "./pages/Home";
+import AdminPanel from "./pages/AdminPanel";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/admin"} component={AdminPanel} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>

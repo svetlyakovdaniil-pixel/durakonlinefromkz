@@ -113,6 +113,13 @@
       "when": 1775817920642,
       "tag": "0015_grey_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "5",
+      "when": 1775824797309,
+      "tag": "0016_lively_red_ghost",
+      "breakpoints": true
     }
   ]
 }
