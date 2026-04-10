@@ -131,6 +131,10 @@ export default function Home() {
         onMusicVolumeChange={music.setVolume}
         frozenInfo={frozenInfo}
         isTutorial={gameState.isTutorial}
+        onTutorialComplete={() => {
+          leaveGame(gameState.roomId);
+          returnToLobby();
+        }}
       />
     );
   }

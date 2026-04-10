@@ -543,6 +543,13 @@ export default function GameTable({
     }
   }, [isTutorial]);
 
+  // Handle tutorial completion — return to lobby
+  useEffect(() => {
+    if (tutorialCompleted && onTutorialComplete) {
+      onTutorialComplete();
+    }
+  }, [tutorialCompleted, onTutorialComplete]);
+
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
 

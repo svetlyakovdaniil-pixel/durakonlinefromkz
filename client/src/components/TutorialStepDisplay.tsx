@@ -1213,10 +1213,10 @@ export default function TutorialStepDisplay({
             onClick={onNext}
             variant="default"
             size={isCompact ? 'xs' as any : 'sm'}
-            className={`flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
+            className={`flex items-center gap-1 ${scenario?.isLastStep ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
             disabled={isNextDisabled}
           >
-            Далее
+            {scenario?.finishButtonText || (scenario?.isLastStep ? 'Завершить обучение' : 'Далее')}
             <ChevronRight size={isCompact ? 10 : 14} />
           </Button>
         </div>

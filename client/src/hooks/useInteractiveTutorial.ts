@@ -88,6 +88,16 @@ export interface TutorialScenario {
     /** Minimum cards to throw before Next is enabled (default: 1) */
     minThrows?: number;
   };
+  /** Override deck1 card count (default: 59) */
+  deck1Count?: number;
+  /** Override deck2 card count (default: 58) */
+  deck2Count?: number;
+  /** Hidden trump card 1 (revealed when deck1 is empty, e.g. 'Ac' = Ace of clubs) */
+  hiddenTrumpCard1?: string;
+  /** Whether this is the last step — shows 'Завершить обучение' instead of 'Далее' */
+  isLastStep?: boolean;
+  /** Custom text for the finish button (default: 'Завершить обучение') */
+  finishButtonText?: string;
 }
 
 // Standard player hand for all tutorial scenarios (14 cards, includes 777)
@@ -513,13 +523,13 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
       minThrows: 1,
     },
   },
-  // Step 21: Duplicate of step 4 (Две колоды в игре)
+  // Step 21: Потайной козырь
   {
     id: 21,
-    title: 'Две колоды в игре',
-    description: 'Структура игры',
+    title: 'Потайной козырь',
+    description: 'Потайные козыри под колодами',
     highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
-    text: 'В игре используются 2 колоды карт. Сначала разыгрывается колода №1 между всеми игроками. Когда она заканчивается, начинается колода №2.',
+    text: 'Сейчас в игре 2 колоды. Под колодой №1 лежит дама черви - козырь. \nПод дамой черви спрятана карта - потайной козырь №1. Под колодой №2 лежит потайной козырь №2',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -528,6 +538,43 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     requiredAction: 'click-button',
     discardCount: 10,
     textPosition: 'center',
+  },
+  // Step 22: Потайной козырь №1 — колода 1 закончилась, козырь сменился на крести
+  {
+    id: 22,
+    title: 'Потайной козырь №1',
+    description: 'Смена козыря при окончании колоды 1',
+    highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
+    text: 'Когда колода №1 заканчивается, вскрывается потайной козырь №1, и козырь в игре меняется. В данном случае козырь поменялся на крести',
+    instruction: 'Нажмите "Далее" чтобы продолжить',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'clubs',
+    trumpCard: 'Qh',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'center',
+    deck1Count: 0,
+    hiddenTrumpCard1: 'Ac',
+  },
+  // Step 23: Потайной козырь №2 — обе колоды закончились, козырь буби
+  {
+    id: 23,
+    title: 'Потайной козырь №2',
+    description: 'Финальная смена козыря',
+    highlightElements: ['[data-tutorial="deck-area"]', '[data-tutorial="mobile-decks"]'],
+    text: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайной козырь №2, меняя козырь в игре в последний раз',
+    instruction: 'Нажмите "Завершить обучение"',
+    playerHand: STANDARD_PLAYER_HAND,
+    botHand: STANDARD_BOT_HAND,
+    trumpSuit: 'diamonds',
+    requiredAction: 'click-button',
+    discardCount: 10,
+    textPosition: 'center',
+    deck1Count: 0,
+    deck2Count: 0,
+    isLastStep: true,
+    finishButtonText: 'Завершить обучение',
   },
 ];
 

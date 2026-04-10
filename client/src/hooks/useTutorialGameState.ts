@@ -140,6 +140,31 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       });
     }
 
+    // Override deck counts if specified
+    if (scenario.deck1Count !== undefined) {
+      tutorialState.deck1Count = scenario.deck1Count;
+    }
+    if (scenario.deck2Count !== undefined) {
+      tutorialState.deck2Count = scenario.deck2Count;
+    }
+
+    // Set hidden trump card 1 if specified (revealed when deck1 is empty)
+    if (scenario.hiddenTrumpCard1) {
+      const htcStr = scenario.hiddenTrumpCard1;
+      const htcSuitChar = htcStr.slice(-1);
+      const htcRank = htcStr.slice(0, -1);
+      const htcCard: Card = {
+        id: 'tutorial-hidden-trump-1',
+        rank: htcRank as any,
+        suit: suitMap[htcSuitChar] || 'clubs',
+        copy: 1,
+      };
+      tutorialState.trumpInfo = {
+        ...tutorialState.trumpInfo,
+        hiddenTrumpCard1: htcCard,
+      };
+    }
+
     // Force deck style to 'custom' (deck #2) during tutorial
     tutorialState.deckStyle = 'custom';
 
