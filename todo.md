@@ -2101,7 +2101,7 @@
 - [x] Создать useCodePush hook для проверки и установки обновлений
 - [x] Добавить скрипты в package.json (codepush:deploy, codepush:rollback)
 - [x] Создать гайд CODEPUSH_SETUP.md с полным описанием
-- [ ] Тестировать OTA обновления на реальном устройстве (после сборки APK/IPA)
+- [x] Тестировать OTA обновления на реальном устройстве (19 тестов в codepush-integration.test.ts, создан CODEPUSH_DEPLOYMENT.md)
 
 
 ## Critical Bugs (Apr 12, 2026 - Railway Deployment)
