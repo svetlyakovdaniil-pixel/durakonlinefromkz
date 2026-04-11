@@ -177,6 +177,43 @@ describe('Playlist bug fixes (Batch 95)', () => {
   });
 });
 
+describe('Batch 96 — Chinese URL fix & duplicate cleanup', () => {
+  it('seedChinesePlaylist should use %2B in track URLs, not +', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync('server/db.ts', 'utf-8');
+    // Find the chineseTracks array within seedChinesePlaylist
+    const tracksStart = source.indexOf("const chineseTracks = [");
+    const tracksEnd = source.indexOf('];', tracksStart) + 2;
+    const tracksArray = source.substring(tracksStart, tracksEnd);
+    // All track URLs in the array should use %2B encoding
+    expect(tracksArray).toContain('chill%2Bhiphop');
+    // Track URLs should NOT contain raw + (the name field is separate)
+    expect(tracksArray).not.toContain('chill+hiphop');
+  });
+
+  it('fixChinesePlaylistUrls function should exist in db.ts', async () => {
+    const db = await import('./db');
+    expect(typeof db.fixChinesePlaylistUrls).toBe('function');
+  });
+
+  it('cleanupOldPlaylists should handle duplicate Стандартный playlists', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync('server/db.ts', 'utf-8');
+    const cleanupSection = source.substring(source.indexOf('cleanupOldPlaylists'));
+    // Should check for duplicate Стандартный playlists
+    expect(cleanupSection).toContain('Стандартный');
+    expect(cleanupSection).toContain('defaults.length > 1');
+  });
+
+  it('seedDefaultPlaylist should check by name too, not just isDefault', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync('server/db.ts', 'utf-8');
+    const seedSection = source.substring(source.indexOf('seedDefaultPlaylist'));
+    expect(seedSection).toContain('existingByName');
+    expect(seedSection).toContain('Стандартный');
+  });
+});
+
 describe('Playlist features (Batch 94)', () => {
   describe('GameSettingsSheet has no playlist selector', () => {
     it('should not import any playlist-related components', async () => {

@@ -2325,13 +2325,13 @@ export async function seedChinesePlaylist() {
   if (existing.length > 0) return;
 
   const chineseTracks = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives1_de29af93.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives2_f4033f03.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives3_a0d85a28.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives4_888af5a4.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives5_dcef8e36.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives6_34e4a5fa.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill+hiphopmotives7_69ba9d28.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives1_de29af93.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives2_f4033f03.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives3_a0d85a28.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives4_888af5a4.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives5_dcef8e36.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives6_34e4a5fa.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives7_69ba9d28.mp3',
   ];
 
   await db.insert(musicPlaylists).values({
@@ -2346,12 +2346,37 @@ export async function seedChinesePlaylist() {
   });
 }
 
-/** Remove old "Rules house" playlist from DB if it exists */
+/** Fix Chinese playlist URLs (replace + with %2B for CloudFront) */
+export async function fixChinesePlaylistUrls() {
+  const db = await getDb();
+  if (!db) return;
+  const rows = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Chinese chill+hiphop motives'));
+  for (const row of rows) {
+    const tracks = JSON.parse(row.tracksJson || '[]') as string[];
+    const needsFix = tracks.some(t => t.includes('chill+hiphop'));
+    if (needsFix) {
+      const fixedTracks = tracks.map(t => t.replace('chill+hiphop', 'chill%2Bhiphop'));
+      await db.update(musicPlaylists).set({ tracksJson: JSON.stringify(fixedTracks) }).where(eq(musicPlaylists.id, row.id));
+    }
+  }
+}
+
+/** Remove old/duplicate playlists from DB */
 export async function cleanupOldPlaylists() {
   const db = await getDb();
   if (!db) return;
   // Delete any playlist named 'Rules house' (legacy)
   await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Rules house'));
+  // Remove duplicate Стандартный playlists — keep only the one with isDefault=true
+  const defaults = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
+  if (defaults.length > 1) {
+    // Keep the one with isDefault=true, or the first one if none has isDefault
+    const keep = defaults.find(d => d.isDefault) || defaults[0];
+    const toDelete = defaults.filter(d => d.id !== keep.id);
+    for (const dup of toDelete) {
+      await db.delete(musicPlaylists).where(eq(musicPlaylists.id, dup.id));
+    }
+  }
 }
 
 /** Seed the default "Standard" playlist if it doesn't exist */
@@ -2359,9 +2384,11 @@ export async function seedDefaultPlaylist() {
   const db = await getDb();
   if (!db) return;
 
-  // Check if default playlist already exists
-  const existing = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isDefault, true));
-  if (existing.length > 0) return;
+  // Check if default playlist already exists (by isDefault flag OR by name)
+  const existingByDefault = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isDefault, true));
+  if (existingByDefault.length > 0) return;
+  const existingByName = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
+  if (existingByName.length > 0) return;
 
   const standardTracks = [
     'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',

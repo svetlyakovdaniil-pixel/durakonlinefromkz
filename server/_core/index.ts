@@ -8,7 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
-import { seedDefaultPlaylist, seedChinesePlaylist, cleanupOldPlaylists } from "../db";
+import { seedDefaultPlaylist, seedChinesePlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -52,6 +52,7 @@ async function startServer() {
   cleanupOldPlaylists().catch(e => console.warn('[Music] Failed to cleanup old playlists:', e));
   seedDefaultPlaylist().catch(e => console.warn('[Music] Failed to seed default playlist:', e));
   seedChinesePlaylist().catch(e => console.warn('[Music] Failed to seed Chinese playlist:', e));
+  fixChinesePlaylistUrls().catch(e => console.warn('[Music] Failed to fix Chinese playlist URLs:', e));
 
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
