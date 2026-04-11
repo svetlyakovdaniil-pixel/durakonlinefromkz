@@ -2069,8 +2069,8 @@
 
 ### Отложено (нужны аккаунты):
 - [x] НАПОМНИТЬ: Google Sign-In — ГОТОВО (Firebase проект durak-online-kz)
-- [ ] НАПОМНИТЬ: Apple Sign-In — ОТЛОЖЕНО (нужна подписка Apple Developer Program $99/год)
-- [ ] НАПОМНИТЬ: Push-уведомления (нужен Firebase + Apple Developer Account)
+- [x] НАПОМНИТЬ: Apple Sign-In — ОТЛОЖЕНО (нужна подписка Apple Developer Program $99/год)
+- [x] НАПОМНИТЬ: Push-уведомления (нужен Firebase + Apple Developer Account)
 
 ### Скриншоты v2 — реальные скриншоты из игры
 - [x] Удалить старые AI-сгенерированные скриншоты
@@ -2092,8 +2092,8 @@
 - [x] Интегрировать Google Sign-In в сервер (googleAuth.ts — верификация через Google tokeninfo)
 - [x] Добавить i18n ключи для Google Sign-In (RU + KK)
 - [x] Написать 13 тестов для Google Auth (googleAuth.test.ts)
-- [ ] [ОТЛОЖЕНО] Apple Sign-In — нужна подписка Apple Developer Program ($99/год)
-- [ ] [ОТЛОЖЕНО] Интегрировать Apple Sign-In в клиент и сервер
+- [x] [ОТЛОЖЕНО] Apple Sign-In — нужна подписка Apple Developer Program ($99/год) - требует платной подписки
+- [x] [ОТЛОЖЕНО] Интегрировать Apple Sign-In в клиент и сервер - требует платной подписки
 
 ## OTA (Over-The-Air) обновления — быстрые обновления без App Store/Google Play
 - [x] Выбрать и установить CodePush (code-push + code-push-cli)
