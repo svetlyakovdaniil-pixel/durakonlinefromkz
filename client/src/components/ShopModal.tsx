@@ -343,11 +343,11 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-amber-700/20">
+        <div className="flex gap-1 sm:gap-0 border-b border-amber-700/20">
           {(['decks', 'tables', 'frames', 'avatars', 'music'] as const).map(tab => (
             <button
               key={tab}
-              className={`flex-1 py-2.5 text-[10px] sm:text-sm font-medium transition-colors ${
+              className={`flex-1 py-2.5 px-1 text-[10px] sm:text-sm font-medium transition-colors ${
                 activeTab === tab
                   ? 'text-amber-100 border-b-2 border-amber-400 bg-amber-900/10'
                   : 'text-amber-200/50 hover:text-amber-200/70'
