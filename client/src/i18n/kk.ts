@@ -146,6 +146,7 @@ export const kk = {
     take: 'Алу',
     pass: 'Пас',
     transfer: 'Аудару',
+    beat: 'Жеңу',
     passThrough: 'Жол билеті',
     endAttack: 'Биіт',
     yourTurn: 'Сіздің жүрісіңіз',

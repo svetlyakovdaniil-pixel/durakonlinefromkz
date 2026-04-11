@@ -1111,7 +1111,19 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // Disconnect — start grace period instead of immediate removal
     socket.on('disconnect', (reason) => {
-      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId}) reason: ${reason}`);
+      // Detailed disconnect logging for diagnostics
+      const disconnectReasons: Record<string, string> = {
+        'server namespace disconnect': 'Server explicitly disconnected the client',
+        'client namespace disconnect': 'Client called socket.disconnect()',
+        'ping timeout': 'Client did not respond to ping within pingTimeout',
+        'transport close': 'Connection was closed (network issue, proxy timeout, etc)',
+        'transport error': 'Transport encountered an error',
+        'parse error': 'Received invalid packet',
+        'forced close': 'Server called socket.disconnect(true)',
+        'forced server close': 'Server shut down',
+      };
+      const reasonDesc = disconnectReasons[reason] || 'Unknown reason';
+      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId}) reason: ${reason} (${reasonDesc})`);
 
       socketPlayers.delete(socket.id);
       // Broadcast offline status to friends
@@ -1263,10 +1275,6 @@ export function initSocketServer(httpServer: HttpServer) {
       }
     });
 
-    // Handle requestRoomList from client
-    socket.on('requestRoomList', () => {
-      socket.emit('roomList', Array.from(rooms.values()));
-    });
   });
 
   // ---- Online friends broadcasting ----

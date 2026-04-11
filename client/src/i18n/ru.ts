@@ -146,6 +146,7 @@ export const ru = {
     take: 'Забрать',
     pass: 'Пас',
     transfer: 'Перевести',
+    beat: 'Побить',
     passThrough: 'Проездной',
     endAttack: 'Бито',
     yourTurn: 'Ваш ход',

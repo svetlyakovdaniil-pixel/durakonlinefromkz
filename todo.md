@@ -2123,3 +2123,9 @@
 - [x] Добавить DisconnectTracker для обнаружения одновременных disconnect (реализовано в stability-improvements.ts)
 - [x] Улучшить watchdog для обнаружения partial reconnects (реализовано в watchdog-improvements.ts)
 - [x] Добавить валидацию game state consistency после критических операций (9 тестов в watchdog-improvements.test.ts)
+
+## Баги и улучшения (Apr 12, 2026 - Сессия 2)
+
+- [x] Добавить кнопку "Побить" когда защитник может одновременно побить, перевести и показать проездной (все 4 кнопки: Побить, Перевести, Проездной, Отмена)
+- [x] Центрировать карты в руке игрока по экрану на десктопе (margin: 0 auto на inner container)
+- [x] Проанализировать и исправить потерю соединения WebSocket (улучшено: heartbeat, visibility threshold, диагностика)

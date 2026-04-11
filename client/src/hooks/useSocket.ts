@@ -314,12 +314,29 @@ export function useSocket(userId: string | null, userName: string | null) {
         if (socket.disconnected) {
           console.log('[Socket] Socket disconnected — forcing reconnect');
           socket.connect();
-        } else if (hiddenDuration > 30000) {
-          // If hidden for >30s, the WebSocket transport is likely stale
+        } else if (hiddenDuration > 120000) {
+          // If hidden for >2 minutes, the WebSocket transport is likely stale
           // Force a disconnect+reconnect to get a fresh connection
-          console.log('[Socket] Hidden for >30s — forcing fresh reconnect to avoid stale transport');
+          console.log('[Socket] Hidden for >2min — forcing fresh reconnect to avoid stale transport');
           socket.disconnect();
           setTimeout(() => socket.connect(), 100);
+        } else if (hiddenDuration > 10000) {
+          // Medium background (10s-2min) — verify connection without forcing reconnect
+          console.log('[Socket] Medium background — verifying connection with ping');
+          socket.volatile.emit('ping_check' as any);
+          socket.emit('requestRoomList');
+          // If no pong received within 5s, force reconnect
+          const pongTimeout = setTimeout(() => {
+            if (socket.connected) {
+              console.log('[Socket] No pong after 5s — connection may be stale, forcing reconnect');
+              socket.disconnect();
+              setTimeout(() => socket.connect(), 100);
+            }
+          }, 5000);
+          socket.once('pong_check' as any, () => {
+            clearTimeout(pongTimeout);
+            console.log('[Socket] Pong received — connection is alive');
+          });
         } else {
           // Short background — just verify connection is alive
           console.log('[Socket] Short background — verifying connection');
@@ -345,7 +362,16 @@ export function useSocket(userId: string | null, userName: string | null) {
     };
     window.addEventListener('online', handleOnline);
 
+    // Application-level heartbeat: verify connection is alive every 20s
+    // This catches "zombie" connections where Socket.IO thinks it's connected but data isn't flowing
+    const heartbeatInterval = setInterval(() => {
+      if (socket.connected && currentRoomIdRef.current) {
+        socket.volatile.emit('ping_check' as any);
+      }
+    }, 20000);
+
     return () => {
+      clearInterval(heartbeatInterval);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('online', handleOnline);
       socket.disconnect();

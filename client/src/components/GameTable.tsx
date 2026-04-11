@@ -151,7 +151,7 @@ function PlayerHand({
           WebkitOverflowScrolling: 'touch',
         } : undefined}
       >
-        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : 'justify-center'}`} style={needsScroll ? { minWidth: 'min-content' } : undefined}>
+        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : ''}`} style={needsScroll ? { minWidth: 'min-content', margin: '0 auto' } : undefined}>
           {sortedHand.map((card, i) => {
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
@@ -796,7 +796,11 @@ export default function GameTable({
   const canTransfer = transferIds.size > 0;
   const canPassThrough = passThroughIds.size > 0;
   const isMultiSelecting = multiSelectIds.size > 0;
-  const hasAnyAction = canTake || canEndAttack || canSkip || isMultiSelecting || (canTransfer && selectedCardId && transferIds.has(selectedCardId)) || (canPassThrough && selectedCardId && passThroughIds.has(selectedCardId));
+  const canBeat = playableIds.size > 0;
+  const selectedCanBeat = canBeat && selectedCardId && playableIds.has(selectedCardId);
+  const selectedCanTransfer = canTransfer && selectedCardId && transferIds.has(selectedCardId);
+  const selectedCanPassThrough = canPassThrough && selectedCardId && passThroughIds.has(selectedCardId);
+  const hasAnyAction = canTake || canEndAttack || canSkip || isMultiSelecting || selectedCanTransfer || selectedCanPassThrough || selectedCanBeat;
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -975,17 +979,25 @@ export default function GameTable({
     }
 
     if (isDefender && gs.turnPhase === 'defend' && !gs.defenderTaking) {
-      // Multi-card transfer: if defender clicks a transfer card and has more of the same rank
-      if (transferIds.has(card.id)) {
-        // If this card is ALSO a pass-through card, just select it so both buttons appear
-        if (passThroughIds.has(card.id)) {
-          if (selectedCardId === card.id) {
-            setSelectedCardId(null);
-          } else {
-            setSelectedCardId(card.id);
-          }
-          return;
+      // Check how many action types this card supports
+      const canBeatThis = playableIds.has(card.id);
+      const canTransferThis = transferIds.has(card.id);
+      const canPassThroughThis = passThroughIds.has(card.id);
+      const actionCount = (canBeatThis ? 1 : 0) + (canTransferThis ? 1 : 0) + (canPassThroughThis ? 1 : 0);
+
+      // If card has multiple possible actions (beat + transfer, beat + passthrough, etc.),
+      // always select it to show all action buttons
+      if (actionCount >= 2) {
+        if (selectedCardId === card.id) {
+          setSelectedCardId(null);
+        } else {
+          setSelectedCardId(card.id);
         }
+        return;
+      }
+
+      // Single-action cards: handle normally
+      if (canTransferThis) {
         const sameRankTransfer = gs.myHand.filter(
           c => c.rank === card.rank && transferIds.has(c.id) && c.id !== card.id
         );
@@ -1004,7 +1016,7 @@ export default function GameTable({
         }
         return;
       }
-      if (passThroughIds.has(card.id)) {
+      if (canPassThroughThis) {
         // Check if there are more pass-through cards of the same rank
         const sameRankPassThrough = gs.myHand.filter(
           c => c.rank === card.rank && passThroughIds.has(c.id) && c.id !== card.id
@@ -1024,7 +1036,7 @@ export default function GameTable({
         }
         return;
       }
-      if (playableIds.has(card.id)) {
+      if (canBeatThis) {
         const undefended = gs.battleField
           .map((p, i) => ({ pair: p, idx: i }))
           .filter(x => !x.pair.defense);
@@ -1817,21 +1829,39 @@ export default function GameTable({
                     </Button>
                   </>
                 )}
-                {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
+                {selectedCanBeat && (
+                  <Button
+                    className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-blue-500/20"
+                    onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}
+                  >
+                    <Shield className="w-5 h-5 mr-1.5" />
+                    {t('game.beat')}
+                  </Button>
+                )}
+                {selectedCanTransfer && (
                   <Button
                     className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
-                    onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
+                    onClick={() => { onTransferCard(selectedCardId!); setSelectedCardId(null); }}
                   >
                     {t('game.transfer')}
                   </Button>
                 )}
-                {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+                {selectedCanPassThrough && (
                   <Button
                     className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
-                    onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+                    onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}
                   >
                     <Eye className="w-5 h-5 mr-1.5" />
                     {t('game.passThrough')}
+                  </Button>
+                )}
+                {selectedCardId && !isMultiSelecting && (
+                  <Button
+                    variant="outline"
+                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                    onClick={() => setSelectedCardId(null)}
+                  >
+                    {t('game.cancel')}
                   </Button>
                 )}
                 {canTake && (
@@ -1958,21 +1988,39 @@ export default function GameTable({
                   </Button>
                 </>
               )}
-              {canTransfer && selectedCardId && transferIds.has(selectedCardId) && (
+              {selectedCanBeat && (
+                <Button
+                  className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-blue-500/20"
+                  onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}
+                >
+                  <Shield className="w-4 h-4 mr-1" />
+                  {t('game.beat')}
+                </Button>
+              )}
+              {selectedCanTransfer && (
                 <Button
                   className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
-                  onClick={() => { onTransferCard(selectedCardId); setSelectedCardId(null); }}
+                  onClick={() => { onTransferCard(selectedCardId!); setSelectedCardId(null); }}
                 >
                   {t('game.transfer')}
                 </Button>
               )}
-              {canPassThrough && selectedCardId && passThroughIds.has(selectedCardId) && (
+              {selectedCanPassThrough && (
                 <Button
                   className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
-                  onClick={() => { onShowPassThrough(selectedCardId); setSelectedCardId(null); }}
+                  onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}
                 >
                   <Eye className="w-4 h-4 mr-1" />
                   {t('game.passThrough')}
+                </Button>
+              )}
+              {selectedCardId && !isMultiSelecting && (
+                <Button
+                  variant="outline"
+                  className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
+                  onClick={() => setSelectedCardId(null)}
+                >
+                  {t('game.cancel')}
                 </Button>
               )}
               {canTake && (
