@@ -323,16 +323,19 @@ export function useSocket(userId: string | null, userName: string | null) {
         } else if (hiddenDuration > 10000) {
           // Medium background (10s-2min) — verify connection without forcing reconnect
           console.log('[Socket] Medium background — verifying connection with ping');
-          socket.volatile.emit('ping_check' as any);
+          // CRITICAL FIX: Use regular emit (not volatile) so the ping is NOT dropped
+          // if the connection is slightly unstable. Volatile emits are silently discarded
+          // when the socket is not in a connected/ready state, causing false "no pong" timeouts.
+          socket.emit('ping_check' as any);
           socket.emit('requestRoomList');
-          // If no pong received within 5s, force reconnect
+          // If no pong received within 8s (increased from 5s), force reconnect
           const pongTimeout = setTimeout(() => {
             if (socket.connected) {
-              console.log('[Socket] No pong after 5s — connection may be stale, forcing reconnect');
+              console.log('[Socket] No pong after 8s — connection may be stale, forcing reconnect');
               socket.disconnect();
               setTimeout(() => socket.connect(), 100);
             }
-          }, 5000);
+          }, 8000);
           socket.once('pong_check' as any, () => {
             clearTimeout(pongTimeout);
             console.log('[Socket] Pong received — connection is alive');

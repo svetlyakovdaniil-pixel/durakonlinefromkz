@@ -192,11 +192,10 @@ export function initSocketServer(httpServer: HttpServer) {
     perMessageDeflate: {
       threshold: 1024, // only compress messages > 1KB
     },
-    // Connection state recovery — allows seamless reconnection within 2 minutes
-    connectionStateRecovery: {
-      maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
-      skipMiddlewares: true,
-    },
+    // NOTE: connectionStateRecovery is intentionally disabled.
+    // We have our own custom reconnect logic in io.on('connection') that handles
+    // room re-joining, freeze timers, and game state restoration. Socket.IO's built-in
+    // recovery would conflict with this logic and cause double-execution of reconnect handlers.
   });
 
   io.on('connection', (socket) => {
@@ -231,10 +230,19 @@ export function initSocketServer(httpServer: HttpServer) {
         });
 
         // Restart the turn timer and watchdog
+        // CRITICAL FIX: Delay watchdog start by 500ms to ensure socket.join(roomId)
+        // happens first (it occurs in the Rejoin section below). Without this delay,
+        // watchdog could fire before the player is in the Socket.IO room, causing false forfeit.
         const gameState = games.get(frozenRoomId);
         if (gameState && gameState.gamePhase === 'playing') {
           restartTurnTimer(frozenRoomId);
-          startWatchdog(frozenRoomId);
+          setTimeout(() => {
+            // Only start watchdog if game is still playing
+            const gs = games.get(frozenRoomId);
+            if (gs && gs.gamePhase === 'playing') {
+              startWatchdog(frozenRoomId);
+            }
+          }, 500);
         }
       }
     }
@@ -261,8 +269,10 @@ export function initSocketServer(httpServer: HttpServer) {
             room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
             console.log(`[Socket] Re-added ${odId} to room.players during auto-rejoin`);
           }
+          // CRITICAL FIX: Always call socket.join(roomId) even if room object is missing.
+          // Without this, watchdog sees player not in Socket.IO room and forfeits them.
+          socket.join(roomId);
           if (room) {
-            socket.join(roomId);
             // Send current room state
             socket.emit('roomUpdated', sanitizeRoom(room));
             // If game is in progress, send game state
@@ -274,8 +284,16 @@ export function initSocketServer(httpServer: HttpServer) {
               const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
               socket.emit('yourTurn', actions);
             }
-            console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
+          } else if (isInGame && gameState && gameState.gamePhase === 'playing') {
+            // Room object missing but game is in progress — still send game state
+            console.warn(`[Socket] Room ${roomId} not in rooms Map but game exists — sending game state only`);
+            const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, 0, false);
+            socket.emit('gameStateUpdate', clientState);
+            const playerIdx = gameState.players.findIndex(p => p.id === odId);
+            const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+            socket.emit('yourTurn', actions);
           }
+          console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
         }
       }
     }
@@ -1484,11 +1502,28 @@ function startWatchdog(roomId: string) {
       
       if (!isInSocketRoom) {
         // Player has no active socket connection to this room
+        // CRITICAL FIX: Do NOT forfeit if there is an active freeze timer for this player
+        // The freeze timer means the player disconnected and has 30s to reconnect
+        // Watchdog runs every 10s so it would fire BEFORE the freeze expires — causing false forfeit
+        const freezeInfo = frozenRooms.get(roomId);
+        if (freezeInfo && freezeInfo.disconnectedOdId === p.id) {
+          console.log(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active freeze timer (${freezeInfo.secondsLeft}s left) — skipping forfeit`);
+          continue; // Let the freeze timer handle it
+        }
+
+        // Also skip if there is a pending disconnect grace timer for this player
+        if (disconnectTimers.has(p.id)) {
+          console.log(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active grace timer — skipping forfeit`);
+          continue; // Let the grace timer handle it
+        }
+
         const playerIdx = gs.players.indexOf(p);
-        console.warn(`[Watchdog] Player ${p.name} (${p.id}) has no socket connection to room ${roomId}. Auto-forfeiting.`);
+        console.warn(`[Watchdog] Player ${p.name} (${p.id}) has no socket connection to room ${roomId} and no grace/freeze timer. Auto-forfeiting.`);
         forfeitedFromRoom.add(`${p.id}:${roomId}`);
         untrackPlayerRoom(p.id, roomId);
         forfeitPlayer(gs, playerIdx);
+        // STABILITY: Check if game should end after forfeit
+        checkGameOver(gs);
         markProgress(roomId);
         resetTurnTimer(gs);
         restartTurnTimer(roomId);
