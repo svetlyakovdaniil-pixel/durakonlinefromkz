@@ -305,7 +305,7 @@ function LandingPage() {
 
               <div className="flex flex-wrap gap-3 mb-8">
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Users className="w-3 h-3 mr-1" /> 2-6
+                  <Users className="w-3 h-3 mr-1" /> 2-8
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
                   <Swords className="w-3 h-3 mr-1" /> 145
