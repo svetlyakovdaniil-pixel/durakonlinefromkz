@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { AVATAR_OPTIONS, getAvatarUrl, isAnimatedAvatar, getAvatarOption } from '@shared/avatars';
 
 /**
  * Tests for V23 notification system logic and friend request notification payloads.
@@ -241,5 +242,60 @@ describe('Avatar in Game', () => {
 
     const avatarId = player.avatarId ?? 'wolf';
     expect(avatarId).toBe('wolf');
+  });
+});
+
+describe('Animated Avatars', () => {
+  it('should include goose_animated in AVATAR_OPTIONS', () => {
+    const goose = AVATAR_OPTIONS.find(a => a.id === 'goose_animated');
+    expect(goose).toBeDefined();
+    expect(goose!.animated).toBe(true);
+    expect(goose!.premium).toBe(true);
+    expect(goose!.price).toBe(100);
+    expect(goose!.url).toContain('.gif');
+  });
+
+  it('should have correct name and nameKk for goose avatar', () => {
+    const goose = AVATAR_OPTIONS.find(a => a.id === 'goose_animated');
+    expect(goose!.name).toBe('Весёлый гусь');
+    expect(goose!.nameKk).toBe('Көңілді қаз');
+  });
+
+  it('getAvatarUrl should return GIF URL for animated avatar', () => {
+    const url = getAvatarUrl('goose_animated');
+    expect(url).toContain('.gif');
+    expect(url).toContain('goose_animated');
+  });
+
+  it('isAnimatedAvatar should return true for animated avatars', () => {
+    expect(isAnimatedAvatar('goose_animated')).toBe(true);
+    expect(isAnimatedAvatar('wolf')).toBe(false);
+    expect(isAnimatedAvatar('nexus_bunny')).toBe(false);
+    expect(isAnimatedAvatar(null)).toBe(false);
+    expect(isAnimatedAvatar(undefined)).toBe(false);
+  });
+
+  it('getAvatarOption should return full avatar object', () => {
+    const goose = getAvatarOption('goose_animated');
+    expect(goose).toBeDefined();
+    expect(goose!.id).toBe('goose_animated');
+    expect(goose!.animated).toBe(true);
+    expect(goose!.previewUrl).toBeDefined();
+  });
+
+  it('should have previewUrl for animated avatars', () => {
+    const animatedAvatars = AVATAR_OPTIONS.filter(a => a.animated);
+    expect(animatedAvatars.length).toBeGreaterThan(0);
+    for (const avatar of animatedAvatars) {
+      expect(avatar.previewUrl).toBeDefined();
+      expect(avatar.previewUrl).not.toContain('.gif');
+    }
+  });
+
+  it('non-animated premium avatars should not have animated flag', () => {
+    const nexusBunny = AVATAR_OPTIONS.find(a => a.id === 'nexus_bunny');
+    expect(nexusBunny).toBeDefined();
+    expect(nexusBunny!.animated).toBeUndefined();
+    expect(nexusBunny!.premium).toBe(true);
   });
 });

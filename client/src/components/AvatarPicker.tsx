@@ -82,9 +82,15 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                   </div>
                 )}
                 {avatar.premium && !isLocked && (
-                  <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
-                    PRO
-                  </div>
+                  avatar.animated ? (
+                    <div className="absolute top-0 right-0 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
+                      GIF
+                    </div>
+                  ) : (
+                    <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
+                      PRO
+                    </div>
+                  )
                 )}
               </button>
             );

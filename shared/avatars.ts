@@ -2,8 +2,14 @@
 export interface AvatarOption {
   id: string;
   name: string;
+  /** Display name in Kazakh */
+  nameKk?: string;
   url: string;
+  /** Static preview image for shop display (used for animated avatars) */
+  previewUrl?: string;
   premium?: boolean;
+  /** Whether this is an animated avatar (GIF) */
+  animated?: boolean;
   price?: number;
 }
 
@@ -45,6 +51,16 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     premium: true,
     price: 250,
   },
+  {
+    id: 'goose_animated',
+    name: 'Весёлый гусь',
+    nameKk: 'Көңілді қаз',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_animated_a1984779.gif',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_center-FBNMZSN9bdiS3CdHwf6e3J.webp',
+    premium: true,
+    animated: true,
+    price: 100,
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -55,4 +71,15 @@ export const BOT_AVATAR_ID = 'bot';
 export function getAvatarUrl(avatarId: string | null | undefined): string {
   const found = AVATAR_OPTIONS.find(a => a.id === avatarId);
   return found?.url || AVATAR_OPTIONS[0].url;
+}
+
+/** Check if an avatar ID corresponds to an animated avatar */
+export function isAnimatedAvatar(avatarId: string | null | undefined): boolean {
+  const found = AVATAR_OPTIONS.find(a => a.id === avatarId);
+  return found?.animated === true;
+}
+
+/** Get the avatar option object by ID */
+export function getAvatarOption(avatarId: string | null | undefined): AvatarOption | undefined {
+  return AVATAR_OPTIONS.find(a => a.id === avatarId);
 }
