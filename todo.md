@@ -2054,18 +2054,18 @@
 - [x] 16 тестов для emailAuth (register + login validation)
 
 ### Capacitor интеграция
-- [ ] Установить Capacitor и настроить конфигурацию
-- [ ] Настроить capacitor.config.ts
-- [ ] Добавить платформы iOS и Android
-- [ ] Настроить SplashScreen и StatusBar плагины
+- [x] Установить Capacitor и настроить конфигурацию
+- [x] Настроить capacitor.config.ts (appId: kz.durak.online, SplashScreen, StatusBar, Keyboard)
+- [x] Добавить платформы iOS и Android (cap add android/ios)
+- [x] Настроить SplashScreen и StatusBar плагины + Keyboard + Haptics
 
 ### Иконки приложения
-- [ ] Сгенерировать иконку (карточная масть + казахский орнамент)
-- [ ] Создать все необходимые размеры (1024x1024, 512x512, 192x192, 180x180, 152x152, 120x120)
+- [x] Сгенерировать иконку (пиковая масть + казахский орнамент, золото на тёмно-синем)
+- [x] Создать все необходимые размеры (1024, 512, 192, 180, 152, 120) + CDN URLs в ICONS.md
 
 ### Скриншоты для магазинов
-- [ ] Сгенерировать скриншоты для App Store (6.7", 6.5", 5.5")
-- [ ] Сгенерировать скриншоты для Google Play (минимум 2)
+- [x] Сгенерировать скриншоты для App Store (4 скриншота: landing, gameplay, lobby, features)
+- [x] Сгенерировать скриншоты для Google Play (те же 4 скриншота, CDN URLs в SCREENSHOTS.md)
 
 ### Отложено (нужны аккаунты):
 - [ ] НАПОМНИТЬ: Google Sign-In (нужен Firebase аккаунт)

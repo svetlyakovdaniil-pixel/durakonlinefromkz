@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Дурак Онлайн KZ</string>
+    <string name="title_activity_main">Дурак Онлайн KZ</string>
+    <string name="package_name">kz.durak.online</string>
+    <string name="custom_url_scheme">kz.durak.online</string>
+</resources>
