@@ -2031,4 +2031,39 @@
 - [x] Добавить online event handler (reconnect при восстановлении сети)
 - [x] Добавить io server disconnect handling (force reconnect)
 - [x] Добавить connect_error и reconnect_error логирование
-- [ ] Подготовить ответ по App Store / Google Play readiness
+- [x] Подготовить ответ по App Store / Google Play readiness
+
+## Batch 105 — Подготовка к App Store / Google Play
+
+### Privacy Policy
+- [x] Создать страницу Privacy Policy на русском языке
+- [x] Создать страницу Privacy Policy на казахском языке
+- [x] Добавить роут /privacy в App.tsx
+- [x] Добавить ссылку на Privacy Policy в ProfileDrawer (вкладка профиля)
+
+### Email + Password авторизация
+- [ ] Добавить таблицу credentials (email, password_hash) в schema
+- [ ] Добавить серверные процедуры: register, login, resetPassword
+- [ ] Добавить страницу регистрации (email + пароль)
+- [ ] Добавить страницу входа (email + пароль)
+- [ ] Добавить валидацию email и пароля
+- [ ] Сохранить совместимость с текущей Manus OAuth авторизацией
+
+### Capacitor интеграция
+- [ ] Установить Capacitor и настроить конфигурацию
+- [ ] Настроить capacitor.config.ts
+- [ ] Добавить платформы iOS и Android
+- [ ] Настроить SplashScreen и StatusBar плагины
+
+### Иконки приложения
+- [ ] Сгенерировать иконку (карточная масть + казахский орнамент)
+- [ ] Создать все необходимые размеры (1024x1024, 512x512, 192x192, 180x180, 152x152, 120x120)
+
+### Скриншоты для магазинов
+- [ ] Сгенерировать скриншоты для App Store (6.7", 6.5", 5.5")
+- [ ] Сгенерировать скриншоты для Google Play (минимум 2)
+
+### Отложено (нужны аккаунты):
+- [ ] НАПОМНИТЬ: Google Sign-In (нужен Firebase аккаунт)
+- [ ] НАПОМНИТЬ: Apple Sign-In (нужен Apple Developer Account)
+- [ ] НАПОМНИТЬ: Push-уведомления (нужен Firebase + Apple Developer Account)

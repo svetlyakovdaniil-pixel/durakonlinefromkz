@@ -592,4 +592,10 @@ export const ru = {
     purchaseSuccess: 'Покупка успешна!',
     complaintSent: 'Жалоба отправлена!',
   },
+  // Privacy Policy
+  privacy: {
+    title: 'Политика конфиденциальности',
+    lastUpdated: 'Последнее обновление',
+    link: 'Политика конфиденциальности',
+  },
 };

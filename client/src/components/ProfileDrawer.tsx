@@ -281,6 +281,18 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         </div>
       )}
 
+      {/* Privacy Policy link */}
+      <div className="mt-4 text-center">
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-amber-200/40 hover:text-amber-200/70 text-xs underline underline-offset-2 transition-colors"
+        >
+          {t('privacy.link')}
+        </a>
+      </div>
+
       {/* Avatar Picker Modal */}
       {showAvatarPicker && (
         <AvatarPicker

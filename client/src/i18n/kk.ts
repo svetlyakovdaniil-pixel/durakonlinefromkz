@@ -591,4 +591,10 @@ export const kk = {
     purchaseSuccess: 'Сатып алу сәтті!',
     complaintSent: 'Шағым жіберілді!',
   },
+  // Privacy Policy
+  privacy: {
+    title: 'Құпиялылық саясаты',
+    lastUpdated: 'Соңғы жаңарту',
+    link: 'Құпиялылық саясаты',
+  },
 };
