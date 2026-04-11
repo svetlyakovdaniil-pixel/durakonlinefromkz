@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square, Eye } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
-import { AVATAR_OPTIONS } from '@shared/avatars';
+import { AVATAR_OPTIONS, type AvatarOption } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
 import { NeonFrame } from './NeonFrame';
 import { LightningFrame } from './LightningFrame';
@@ -113,6 +113,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
   const wasMusicPlayingRef = useRef(false);
   const [activeTab, setActiveTab] = useState<ShopTab>('decks');
   const [confirmPurchase, setConfirmPurchase] = useState<ConfirmPurchase | null>(null);
+  const [previewAvatar, setPreviewAvatar] = useState<AvatarOption | null>(null);
   // Preview audio state
   const [previewPlaylistId, setPreviewPlaylistId] = useState<number | null>(null);
   const [previewTimer, setPreviewTimer] = useState(0);
@@ -499,9 +500,12 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 return (
                   <div key={avatar.id} className="bg-[#0f2035]/80 border rounded-xl p-4 border-amber-700/20">
                     <div className="flex items-center gap-4">
-                      <div className="shrink-0 relative">
-                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 shadow-lg border-cyan-500/60 shadow-cyan-500/20">
+                      <div className="shrink-0 relative group cursor-pointer" onClick={() => setPreviewAvatar(avatar)}>
+                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 shadow-lg border-cyan-500/60 shadow-cyan-500/20 transition-transform group-hover:scale-105">
                           <img src={avatar.url} alt={displayName} className="w-full h-full object-cover" />
+                        </div>
+                        <div className="absolute inset-0 w-20 h-20 rounded-full bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                          <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
                         </div>
                         <div className="absolute -top-1 -right-1 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                             PRO
@@ -633,6 +637,66 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         <div className="px-5 pb-4 text-center">
           <p className="text-amber-200/30 text-xs">{t('shop.comingSoon')}</p>
         </div>
+
+        {/* Avatar preview overlay */}
+        {previewAvatar && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 backdrop-blur-sm rounded-2xl" onClick={() => setPreviewAvatar(null)}>
+            <div className="bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-xl shadow-2xl p-6 mx-6 max-w-xs w-full" onClick={e => e.stopPropagation()}>
+              {/* Close button */}
+              <button className="absolute top-3 right-3 text-amber-200/50 hover:text-amber-100 transition-colors" onClick={() => setPreviewAvatar(null)}>
+                <X className="w-5 h-5" />
+              </button>
+
+              {/* Large avatar image */}
+              <div className="flex justify-center mb-4">
+                <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
+                  <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name} className="w-full h-full object-cover" />
+                </div>
+              </div>
+
+              {/* Avatar name */}
+              <h3 className="text-amber-100 font-bold text-lg text-center mb-1">
+                {locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name}
+              </h3>
+              <p className="text-amber-200/50 text-xs text-center mb-4">
+                {locale === 'kk' ? '\u041f\u0440\u0435\u043c\u0438\u0443\u043c \u0430\u0432\u0430\u0442\u0430\u0440' : '\u041f\u0440\u0435\u043c\u0438\u0443\u043c \u0430\u0432\u0430\u0442\u0430\u0440'}
+              </p>
+
+              {/* Status & action */}
+              {ownedAvatars.includes(previewAvatar.id) ? (
+                <div className="flex items-center justify-center gap-1.5 text-green-400 text-sm font-medium py-2">
+                  <Check className="w-5 h-5" />
+                  <span>{t('shop.purchased')}</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-amber-100 font-bold text-xl">{getPrice('avatar', previewAvatar.id, previewAvatar.price || 0)}</span>
+                    <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
+                  </div>
+                  <Button
+                    className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-10 px-8 font-semibold w-full"
+                    onClick={() => {
+                      setPreviewAvatar(null);
+                      setConfirmPurchase({
+                        type: 'avatar',
+                        id: previewAvatar.id,
+                        name: locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name,
+                        price: getPrice('avatar', previewAvatar.id, previewAvatar.price || 0),
+                      });
+                    }}
+                    disabled={purchasing || currentTenge < getPrice('avatar', previewAvatar.id, previewAvatar.price || 0)}
+                  >
+                    {purchasing ? '...' : t('shop.buy')}
+                  </Button>
+                  {currentTenge < getPrice('avatar', previewAvatar.id, previewAvatar.price || 0) && (
+                    <p className="text-red-400/80 text-xs">{t('shop.notEnough')}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Purchase confirmation overlay */}
         {confirmPurchase && (
