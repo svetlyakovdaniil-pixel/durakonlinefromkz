@@ -68,6 +68,10 @@ async function startServer() {
     console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
   }
 
+  // Keep-alive settings to prevent proxy/load-balancer from closing idle connections
+  server.keepAliveTimeout = 65000; // 65s — must be > proxy timeout (usually 60s)
+  server.headersTimeout = 66000;   // slightly higher than keepAliveTimeout
+
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });

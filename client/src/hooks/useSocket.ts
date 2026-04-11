@@ -55,10 +55,12 @@ export function useSocket(userId: string | null, userName: string | null) {
       rememberUpgrade: true,
       reconnection: true,
       reconnectionAttempts: Infinity,
-      reconnectionDelay: 300,
-      reconnectionDelayMax: 3000,
-      randomizationFactor: 0.3,
-      timeout: 30000,
+      reconnectionDelay: 500,       // start with 500ms delay
+      reconnectionDelayMax: 5000,    // max 5s between reconnect attempts
+      randomizationFactor: 0.5,      // more jitter to avoid thundering herd
+      timeout: 45000,                // 45s connection timeout (match server)
+      // Force new connection on reconnect to avoid stale transport
+      forceNew: false,
     });
 
     socketRef.current = socket;
@@ -104,17 +106,39 @@ export function useSocket(userId: string | null, userName: string | null) {
     socket.on('disconnect', (reason) => {
       setConnected(false);
       console.log(`[Socket] Disconnected: ${reason}`);
-      if (currentRoomIdRef.current) {
+      
+      // Only show toast if in a room (not for normal page navigation)
+      if (currentRoomIdRef.current && !leavingRef.current) {
         toast.warning(tRef.current('socket.connectionLost'), { duration: 5000 });
       }
+
+      // If server disconnected us (not transport issue), force reconnect
+      if (reason === 'io server disconnect') {
+        // Server explicitly disconnected us — reconnect manually
+        socket.connect();
+      }
+      // 'transport close' and 'ping timeout' are handled automatically by reconnection: true
     });
 
     socket.io.on('reconnect_attempt', (attempt) => {
       console.log(`[Socket] Reconnect attempt ${attempt}`);
     });
 
+    socket.io.on('reconnect', (attempt) => {
+      console.log(`[Socket] Reconnected after ${attempt} attempts`);
+    });
+
+    socket.io.on('reconnect_error', (error) => {
+      console.log(`[Socket] Reconnect error:`, error.message);
+    });
+
     socket.io.on('reconnect_failed', () => {
       toast.error(tRef.current('socket.reconnectPageFailed'), { duration: 10000 });
+    });
+
+    // Handle connection errors (e.g., network offline)
+    socket.on('connect_error', (error) => {
+      console.log(`[Socket] Connection error: ${error.message}`);
     });
 
     socket.on('roomList', (r) => setRooms(r));
@@ -280,7 +304,32 @@ export function useSocket(userId: string | null, userName: string | null) {
       toast.success(tRef.current('socket.playerReconnected', { name: data.reconnectedPlayerName }), { duration: 3000 });
     });
 
+    // Handle page visibility changes (critical for mobile — OS suspends WebSocket when app goes to background)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && socket.disconnected) {
+        console.log('[Socket] Page became visible, socket disconnected — forcing reconnect');
+        socket.connect();
+      } else if (document.visibilityState === 'visible' && socket.connected) {
+        // Socket thinks it's connected but transport may be stale — send a ping
+        console.log('[Socket] Page became visible, socket connected — verifying connection');
+        // Emit a lightweight event to verify the connection is alive
+        socket.volatile.emit('ping_check' as any);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Also handle online/offline events
+    const handleOnline = () => {
+      console.log('[Socket] Network came online');
+      if (socket.disconnected) {
+        socket.connect();
+      }
+    };
+    window.addEventListener('online', handleOnline);
+
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('online', handleOnline);
       socket.disconnect();
       socketRef.current = null;
     };

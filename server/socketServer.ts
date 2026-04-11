@@ -182,12 +182,21 @@ export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
     path: '/api/socket.io',
-    pingTimeout: 30000,     // 30s before considering connection dead (was 60s)
-    pingInterval: 10000,    // ping every 10s for faster dead connection detection (was 25s)
-    connectTimeout: 30000,  // 30s connection timeout (was 45s)
+    pingTimeout: 60000,     // 60s before considering connection dead — generous for mobile/unstable networks
+    pingInterval: 25000,    // ping every 25s — standard interval, not too aggressive
+    connectTimeout: 45000,  // 45s connection timeout
     maxHttpBufferSize: 1e6, // 1MB buffer
     transports: ['websocket', 'polling'], // Allow both transports
     allowUpgrades: true,
+    // Compress WebSocket frames to reduce bandwidth
+    perMessageDeflate: {
+      threshold: 1024, // only compress messages > 1KB
+    },
+    // Connection state recovery — allows seamless reconnection within 2 minutes
+    connectionStateRecovery: {
+      maxDisconnectionDuration: 2 * 60 * 1000, // 2 minutes
+      skipMiddlewares: true,
+    },
   });
 
   io.on('connection', (socket) => {
@@ -1094,8 +1103,8 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     // Disconnect — start grace period instead of immediate removal
-    socket.on('disconnect', () => {
-      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId})`);
+    socket.on('disconnect', (reason) => {
+      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId}) reason: ${reason}`);
 
       socketPlayers.delete(socket.id);
       // Broadcast offline status to friends

@@ -2019,3 +2019,16 @@
 
 ## Batch 103 — Мобильный промежуток табов в магазине
 - [x] Увеличить промежуток между табами в мобильной версии (gap-1 + px-1 на мобильных)
+
+## Batch 104 — Диагностика и фикс потери соединения WebSocket
+- [x] Проверить Socket.IO конфигурацию сервера (pingTimeout 60s, pingInterval 25s, connectTimeout 45s)
+- [x] Проверить клиентскую reconnect-логику (reconnectionDelay 500ms, max 5s, jitter 0.5)
+- [x] Добавить логирование disconnect reason на сервере
+- [x] Добавить connectionStateRecovery (2 мин seamless reconnect)
+- [x] Добавить perMessageDeflate (сжатие WebSocket фреймов)
+- [x] Добавить HTTP keepAliveTimeout 65s / headersTimeout 66s
+- [x] Добавить visibilitychange handler (reconnect при возврате из background)
+- [x] Добавить online event handler (reconnect при восстановлении сети)
+- [x] Добавить io server disconnect handling (force reconnect)
+- [x] Добавить connect_error и reconnect_error логирование
+- [ ] Подготовить ответ по App Store / Google Play readiness
