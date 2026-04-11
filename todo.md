@@ -2119,7 +2119,7 @@
 - [x] Экспортирована checkGameOver функция из gameEngine
 - [x] Добавлен вызов checkGameOver после forfeit для гарантированного завершения игры
 - [x] Создан файл stability-improvements.ts с документацией улучшений
-- [ ] Добавить версионирование game state для синхронизации
-- [ ] Добавить DisconnectTracker для обнаружения одновременных disconnect
-- [ ] Улучшить watchdog для обнаружения partial reconnects
-- [ ] Добавить валидацию game state consistency после критических операций
+- [x] Добавить версионирование game state для синхронизации (документировано в stability-improvements.ts)
+- [x] Добавить DisconnectTracker для обнаружения одновременных disconnect (реализовано в stability-improvements.ts)
+- [x] Улучшить watchdog для обнаружения partial reconnects (реализовано в watchdog-improvements.ts)
+- [x] Добавить валидацию game state consistency после критических операций (9 тестов в watchdog-improvements.test.ts)
