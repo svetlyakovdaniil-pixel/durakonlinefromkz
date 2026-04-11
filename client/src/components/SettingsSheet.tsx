@@ -126,19 +126,25 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
   ];
 
-  // When playlist data loads or changes, switch the music tracks
+  // When playlist data loads or changes, switch the music tracks and apply volume multiplier
   useEffect(() => {
     if (selectedPlaylistId === 'default') {
-      // Reset to default tracks (Стандартный)
+      // Reset to default tracks (Стандартный) with normal volume
       music.setTracks(DEFAULT_TRACKS);
+      music.setVolume(music.volume); // reset to user's volume (multiplier 1.0)
     } else if (selectedPlaylistData?.tracks?.length) {
       // tracks from backend are already string URLs
       music.setTracks(selectedPlaylistData.tracks as string[]);
+      // Apply volume multiplier if playlist has one (e.g. Chinese playlist is 20% quieter)
+      const multiplier = (selectedPlaylistData as any).volumeMultiplier ?? 1.0;
+      if (multiplier < 1.0) {
+        music.setVolume(music.volume * multiplier);
+      }
     }
   }, [selectedPlaylistId, selectedPlaylistData]);
 
-  // Filter to only owned playlists
-  const ownedPlaylists = allPlaylists.filter((p: any) => ownedPlaylistIds.includes(p.id));
+  // Filter to only owned playlists, excluding the default one (already shown as hardcoded "Стандартный" option)
+  const ownedPlaylists = allPlaylists.filter((p: any) => ownedPlaylistIds.includes(p.id) && !p.isDefault);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

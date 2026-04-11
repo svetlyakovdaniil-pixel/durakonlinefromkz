@@ -691,16 +691,13 @@ onClick={() => setShowTengeTopUp(true)}
                     <Music className="w-3.5 h-3.5" /> {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
                   </Label>
                   <Select
-                    value={selectedPlaylistId !== null ? String(selectedPlaylistId) : 'none'}
-                    onValueChange={(v) => setSelectedPlaylistId(v === 'none' ? null : parseInt(v))}
+                    value={selectedPlaylistId !== null ? String(selectedPlaylistId) : (lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id))[0]?.id ? String(lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id))[0].id) : '')}
+                    onValueChange={(v) => setSelectedPlaylistId(parseInt(v))}
                   >
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="none" className="text-amber-100">
-                        {locale === 'kk' ? 'Плейлистсіз' : 'Без плейлиста'}
-                      </SelectItem>
                       {lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id)).map((p: any) => (
                         <SelectItem key={p.id} value={String(p.id)} className="text-amber-100">
                           {locale === 'kk' && p.nameKk ? p.nameKk : p.name}

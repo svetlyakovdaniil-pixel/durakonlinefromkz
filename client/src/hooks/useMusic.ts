@@ -130,6 +130,27 @@ export function useMusic() {
     }
   }, []);
 
+  // Pause music without changing enabled state (for preview)
+  const pauseMusic = useCallback(() => {
+    if (audioRef.current && isPlayingRef.current) {
+      audioRef.current.pause();
+      isPlayingRef.current = false;
+    }
+  }, []);
+
+  // Resume music from where it was paused (for preview)
+  const resumeMusic = useCallback(() => {
+    if (audioRef.current && !isPlayingRef.current && enabled) {
+      audioRef.current.play().catch(() => {});
+      isPlayingRef.current = true;
+    }
+  }, [enabled]);
+
+  // Check if music is actually playing (not just enabled)
+  const isPlaying = useCallback(() => {
+    return isPlayingRef.current;
+  }, []);
+
   // Toggle music on/off
   const toggle = useCallback(() => {
     if (enabled) {
@@ -198,6 +219,9 @@ export function useMusic() {
     makeChoice,
     startMusic,
     stopMusic,
+    pauseMusic,
+    resumeMusic,
+    isPlaying,
     volume,
     setVolume,
     tracks,

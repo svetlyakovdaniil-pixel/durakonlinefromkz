@@ -2341,9 +2341,15 @@ export async function seedChinesePlaylist() {
     priceShanyrak: 100000,
     isDefault: false,
     isAvailable: true,
+    volumeMultiplier: 0.8,
     description: 'Чилл и хип-хоп мотивы в китайском стиле — 7 треков',
     descriptionKk: 'Қытай стиліндегі чилл және хип-хоп мотивтері — 7 трек',
   });
+
+  // Also update existing Chinese playlist to have volumeMultiplier 0.8
+  await db.update(musicPlaylists)
+    .set({ volumeMultiplier: 0.8 })
+    .where(eq(musicPlaylists.name, 'Chinese chill+hiphop motives'));
 }
 
 /** Fix Chinese playlist URLs (replace + with %2B for CloudFront) */

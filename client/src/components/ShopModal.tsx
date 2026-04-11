@@ -167,7 +167,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     // Resume background music if it was playing before preview started
     if (wasMusicPlayingRef.current) {
       wasMusicPlayingRef.current = false;
-      music.startMusic();
+      music.resumeMusic();
     }
   }, [music]);
 
@@ -188,12 +188,12 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
       previewIntervalRef.current = null;
     }
 
-    // If no preview was active before, check if background music is playing and pause it
+    // If no preview was active before, check if background music is actually playing and pause it
     if (previewPlaylistId === null) {
-      // First time starting preview — save background music state
-      wasMusicPlayingRef.current = music.enabled;
-      if (music.enabled) {
-        music.stopMusic();
+      // First time starting preview — check if music is actually playing (not just enabled)
+      wasMusicPlayingRef.current = music.isPlaying();
+      if (wasMusicPlayingRef.current) {
+        music.pauseMusic();
       }
     }
     // (If switching between previews, wasMusicPlayingRef is already set correctly)

@@ -99,12 +99,12 @@ describe('Playlist features (Batch 93)', () => {
       expect(source).toContain('handlePlaylistChange');
     });
 
-    it('ShopModal should stop background music on preview', async () => {
+    it('ShopModal should pause/resume background music on preview', async () => {
       const fs = await import('fs');
       const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
-      expect(source).toContain('music.stopMusic()');
+      expect(source).toContain('music.pauseMusic()');
       expect(source).toContain('wasMusicPlayingRef');
-      expect(source).toContain('music.startMusic()');
+      expect(source).toContain('music.resumeMusic()');
     });
   });
 });
@@ -160,19 +160,20 @@ describe('Playlist bug fixes (Batch 95)', () => {
       expect(source).not.toContain('startPreview');
     });
 
-    it('should save wasMusicPlayingRef before stopping music', async () => {
+    it('should save wasMusicPlayingRef using isPlaying before pausing music', async () => {
       const fs = await import('fs');
       const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
-      // wasMusicPlayingRef should be set to music.enabled before stopMusic
-      expect(source).toContain('wasMusicPlayingRef.current = music.enabled');
+      // wasMusicPlayingRef should be set using music.isPlaying() before pauseMusic
+      expect(source).toContain('wasMusicPlayingRef.current = music.isPlaying()');
+      expect(source).toContain('music.pauseMusic()');
     });
 
     it('should resume music in stopPreview when wasMusicPlayingRef is true', async () => {
       const fs = await import('fs');
       const source = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
-      // In stopPreview, should check wasMusicPlayingRef and call startMusic
+      // In stopPreview, should check wasMusicPlayingRef and call resumeMusic
       expect(source).toContain('if (wasMusicPlayingRef.current)');
-      expect(source).toContain('music.startMusic()');
+      expect(source).toContain('music.resumeMusic()');
     });
   });
 });
@@ -237,13 +238,13 @@ describe('Playlist features (Batch 94)', () => {
   });
 
   describe('ShopModal stops background music during preview', () => {
-    it('should import useMusicContext and use it in preview', async () => {
+    it('should import useMusicContext and use pauseMusic/resumeMusic in preview', async () => {
       const fs = await import('fs');
       const content = fs.readFileSync('client/src/components/ShopModal.tsx', 'utf-8');
       expect(content).toContain('useMusicContext');
       expect(content).toContain('wasMusicPlayingRef');
-      expect(content).toContain('music.stopMusic()');
-      expect(content).toContain('music.startMusic()');
+      expect(content).toContain('music.pauseMusic()');
+      expect(content).toContain('music.resumeMusic()');
     });
   });
 });

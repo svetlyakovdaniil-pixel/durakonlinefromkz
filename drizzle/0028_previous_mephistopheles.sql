@@ -1,0 +1,1 @@
+ALTER TABLE `music_playlists` ADD `volumeMultiplier` float DEFAULT 1 NOT NULL;

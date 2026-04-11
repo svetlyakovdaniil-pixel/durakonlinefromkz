@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, bigint, boolean, json } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, bigint, boolean, json, float } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -298,6 +298,8 @@ export const musicPlaylists = mysqlTable("music_playlists", {
   isDefault: boolean("isDefault").default(false).notNull(),
   /** Whether this playlist is available for purchase */
   isAvailable: boolean("isAvailable").default(true).notNull(),
+  /** Volume multiplier (1.0 = normal, 0.8 = 20% quieter) */
+  volumeMultiplier: float("volumeMultiplier").default(1.0).notNull(),
   /** Short description */
   description: text("description"),
   /** Kazakh description */

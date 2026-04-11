@@ -10,7 +10,8 @@ import WaitingRoom from "./WaitingRoom";
 import GameTable from "@/components/GameTable";
 import { CARD_IMAGES } from "../../../shared/cardAssets";
 import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
-import { useMusicContext } from "@/contexts/MusicContext";
+import { useMusicContext } from '@/contexts/MusicContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
 import { toast } from 'sonner';
 import InviteModal from '@/components/InviteModal';
@@ -35,6 +36,7 @@ export default function Home() {
   );
 
   const music = useMusicContext();
+  const { setMusicEnabled } = useSettings();
   const registeredRef = useRef(false);
 
   // Register profile with socket when profile loads
@@ -136,13 +138,8 @@ export default function Home() {
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
         <MusicChoiceDialog onChoice={(enable) => {
           music.makeChoice(enable);
-          // Sync with settings context
-          try {
-            const raw = localStorage.getItem('kazakh-durak-settings');
-            const settings = raw ? JSON.parse(raw) : {};
-            settings.musicEnabled = enable;
-            localStorage.setItem('kazakh-durak-settings', JSON.stringify(settings));
-          } catch {}
+          // Sync with SettingsContext so the checkbox in settings reflects the choice
+          setMusicEnabled(enable);
         }} />
       </div>
     );
