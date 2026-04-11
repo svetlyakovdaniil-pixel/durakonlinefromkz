@@ -282,6 +282,13 @@ export function initSocketServer(httpServer: HttpServer) {
 
     socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
 
+    // --- ping_check: client sends this to verify connection is alive (e.g. after tab becomes visible) ---
+    socket.on('ping_check' as any, () => {
+      // Just receiving this means the connection is alive — no response needed
+      // But we can send back a pong to confirm
+      socket.emit('pong_check' as any);
+    });
+
     // --- requestRoomList: client explicitly requests a fresh room list ---
     socket.on('requestRoomList', () => {
       socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
@@ -1215,18 +1222,42 @@ export function initSocketServer(httpServer: HttpServer) {
         }, DISCONNECT_GRACE_MS);
         disconnectTimers.set(odId, timer);
       } else {
-        // Not in active game — remove immediately
-        playerSockets.delete(odId);
-        const allRoomIds = playerRooms.get(odId);
-        if (allRoomIds) {
-          for (const rid of Array.from(allRoomIds)) {
-            const r = rooms.get(rid);
-            if (r && r.players.some((p: { id: string }) => p.id === odId)) {
-              handlePlayerLeaveRoom(odId, rid);
+        // Not in active game — but still give a grace period for waiting rooms
+        // This prevents rooms from closing when the host has a brief connection drop
+        const roomSet2 = playerRooms.get(odId);
+        const isInWaitingRoom = roomSet2 && Array.from(roomSet2).some(rid => {
+          const r = rooms.get(rid);
+          return r && r.players.some((p: { id: string }) => p.id === odId);
+        });
+
+        if (isInWaitingRoom) {
+          // Grace period for waiting rooms — don't remove immediately
+          console.log(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId} (waiting room)`);
+          const timer = setTimeout(() => {
+            disconnectTimers.delete(odId);
+            // Check if player reconnected (has a new socket)
+            if (playerSockets.get(odId)) {
+              console.log(`[Socket] Grace period expired but ${odId} already reconnected — skipping removal`);
+              return;
             }
-          }
+            playerSockets.delete(odId);
+            const allRoomIds = playerRooms.get(odId);
+            if (allRoomIds) {
+              for (const rid of Array.from(allRoomIds)) {
+                const r = rooms.get(rid);
+                if (r && r.players.some((p: { id: string }) => p.id === odId)) {
+                  handlePlayerLeaveRoom(odId, rid);
+                }
+              }
+            }
+            playerRooms.delete(odId);
+          }, DISCONNECT_GRACE_MS);
+          disconnectTimers.set(odId, timer);
+        } else {
+          // Not in any room — clean up immediately
+          playerSockets.delete(odId);
+          playerRooms.delete(odId);
         }
-        playerRooms.delete(odId);
       }
     });
     });

@@ -305,15 +305,30 @@ export function useSocket(userId: string | null, userName: string | null) {
     });
 
     // Handle page visibility changes (critical for mobile — OS suspends WebSocket when app goes to background)
+    let lastVisibleTime = Date.now();
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && socket.disconnected) {
-        console.log('[Socket] Page became visible, socket disconnected — forcing reconnect');
-        socket.connect();
-      } else if (document.visibilityState === 'visible' && socket.connected) {
-        // Socket thinks it's connected but transport may be stale — send a ping
-        console.log('[Socket] Page became visible, socket connected — verifying connection');
-        // Emit a lightweight event to verify the connection is alive
-        socket.volatile.emit('ping_check' as any);
+      if (document.visibilityState === 'visible') {
+        const hiddenDuration = Date.now() - lastVisibleTime;
+        console.log(`[Socket] Page became visible after ${Math.round(hiddenDuration / 1000)}s`);
+        
+        if (socket.disconnected) {
+          console.log('[Socket] Socket disconnected — forcing reconnect');
+          socket.connect();
+        } else if (hiddenDuration > 30000) {
+          // If hidden for >30s, the WebSocket transport is likely stale
+          // Force a disconnect+reconnect to get a fresh connection
+          console.log('[Socket] Hidden for >30s — forcing fresh reconnect to avoid stale transport');
+          socket.disconnect();
+          setTimeout(() => socket.connect(), 100);
+        } else {
+          // Short background — just verify connection is alive
+          console.log('[Socket] Short background — verifying connection');
+          socket.volatile.emit('ping_check' as any);
+          // Also request fresh room list in case we missed updates
+          socket.emit('requestRoomList');
+        }
+      } else {
+        lastVisibleTime = Date.now();
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -323,6 +338,9 @@ export function useSocket(userId: string | null, userName: string | null) {
       console.log('[Socket] Network came online');
       if (socket.disconnected) {
         socket.connect();
+      } else {
+        // Network restored but socket thinks it's connected — verify
+        socket.volatile.emit('ping_check' as any);
       }
     };
     window.addEventListener('online', handleOnline);
