@@ -2106,10 +2106,10 @@
 
 ## Critical Bugs (Apr 12, 2026 - Railway Deployment)
 
-- [ ] Fix deck positioning - deck should be centered in play area, not shifted left
-- [ ] Debug server stability - players disconnecting during gameplay
-- [ ] Fix game state bug - player automatically marked as loser without leaving lobby
-- [ ] Investigate WebSocket connection issues on Railway server
+- [x] Fix deck positioning - deck should be centered in play area, not shifted left (FIXED: PlayerHand now always uses justify-center)
+- [x] Debug server stability - players disconnecting during gameplay (FIXED: Added checkGameOver after forfeit, improved watchdog)
+- [x] Fix game state bug - player automatically marked as loser without leaving lobby (FIXED: checkGameOver ensures proper game termination)
+- [x] Investigate WebSocket connection issues on Railway server (FIXED: Added partial reconnect detection and validation)
 
 
 ## Баг: нестабильность мультиплеера (новые исправления)
