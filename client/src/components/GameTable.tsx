@@ -1520,10 +1520,10 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden sm:overflow-visible">
+          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden">
             <div
               id="battlefield-drop-zone"
-              className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all ${
+              className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all w-full ${
                 dropZoneHighlight ? 'drop-zone-active' : ''
               }`}
             >
@@ -1549,17 +1549,21 @@ export default function GameTable({
                 </div>
               )}
 
-              <div data-tutorial="table-area" className={`flex flex-wrap justify-center max-w-xs sm:max-w-3xl battlefield-scroll ${
-                gs.battleField.length >= 15 ? 'overflow-y-auto' : 'overflow-y-visible'
-              } ${
-                gs.battleField.length >= 30 ? 'sm:overflow-y-auto' : 'sm:overflow-y-visible'
-              } ${
-                gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
-              }`} style={gs.battleField.length >= 15 || gs.battleField.length >= 30 ? { maxHeight: 'calc(100dvh - 280px)' } : undefined}>
+              {/* Mobile: wrap + vertical scroll; Desktop: single row + horizontal scroll */}
+              <div
+                data-tutorial="table-area"
+                className={`battlefield-scroll ${
+                  gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
+                }
+                  flex flex-wrap justify-center max-w-xs
+                  overflow-y-auto
+                  sm:flex-nowrap sm:justify-start sm:max-w-none sm:w-full sm:overflow-x-auto sm:overflow-y-visible
+                `}
+              >
                 {gs.battleField.map((pair: BattlePair, i: number) => (
                   <div
                     key={i}
-                    className={`relative ${
+                    className={`relative flex-shrink-0 ${
                       selectedCardId && isDefender && !pair.defense
                         ? 'ring-2 ring-amber-400/50 rounded-lg cursor-pointer'
                         : ''

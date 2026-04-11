@@ -356,24 +356,39 @@
   animation: bounceIn 0.5s ease-out forwards;
 }
 
-/* Battlefield scroll — thin scrollbar on mobile, hidden on desktop */
+/* Battlefield scroll — mobile: vertical wrap+scroll, desktop: horizontal scroll */
 .battlefield-scroll {
   -webkit-overflow-scrolling: touch;
 }
-/* Desktop: hide scrollbar completely */
+/* Desktop: horizontal scroll, no height limit, thin amber scrollbar at bottom */
 @media (min-width: 640px) {
   .battlefield-scroll {
+    overflow-x: auto !important;
     overflow-y: visible !important;
     max-height: none !important;
-    scrollbar-width: none;
+    padding-bottom: 6px; /* space for scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(217, 119, 6, 0.4) transparent;
   }
   .battlefield-scroll::-webkit-scrollbar {
-    display: none;
+    height: 5px;
+    width: 0;
+  }
+  .battlefield-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .battlefield-scroll::-webkit-scrollbar-thumb {
+    background-color: rgba(217, 119, 6, 0.4);
+    border-radius: 3px;
+  }
+  .battlefield-scroll::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(217, 119, 6, 0.7);
   }
 }
-/* Mobile: thin subtle scrollbar */
+/* Mobile: vertical scroll with height limit + thin scrollbar */
 @media (max-width: 639px) {
   .battlefield-scroll {
+    max-height: calc(100dvh - 280px);
     scrollbar-width: thin;
     scrollbar-color: rgba(217, 119, 6, 0.3) transparent;
   }
