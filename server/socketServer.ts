@@ -145,6 +145,39 @@ export async function emitNotificationToProfile(profileId: number, type: string)
   }
 }
 
+/** Update a player's display name in the in-memory maps (called from tRPC when name changes) */
+export function updatePlayerDisplayName(odId: string, newName: string) {
+  playerDisplayNames.set(odId, newName);
+  // Update socketPlayers entry if player is connected
+  const sid = playerSockets.get(odId);
+  if (sid) {
+    socketPlayers.set(sid, { odId, name: newName });
+  }
+  // Update name in all rooms this player is in
+  const roomSet = playerRooms.get(odId);
+  if (roomSet) {
+    for (const rid of Array.from(roomSet)) {
+      const room = rooms.get(rid);
+      if (room) {
+        const player = room.players.find(p => p.id === odId);
+        if (player) {
+          player.name = newName;
+        }
+        // Broadcast updated room list to all clients
+        if (io) broadcastRoomList();
+      }
+      // Also update name in active game state
+      const gameState = games.get(rid);
+      if (gameState) {
+        const gamePlayer = gameState.players.find(p => p.id === odId);
+        if (gamePlayer) {
+          gamePlayer.name = newName;
+        }
+      }
+    }
+  }
+}
+
 export function initSocketServer(httpServer: HttpServer) {
   io = new Server<ClientToServerEvents, ServerToClientEvents>(httpServer, {
     cors: { origin: '*', methods: ['GET', 'POST'] },
@@ -1028,6 +1061,9 @@ export function initSocketServer(httpServer: HttpServer) {
         // Store custom display name for reconnect scenarios
         if (data.displayName) {
           playerDisplayNames.set(odId, data.displayName);
+          // Update the local name variable and socketPlayers entry
+          name = data.displayName;
+          socketPlayers.set(socket.id, { odId, name: data.displayName });
           // Update name in all rooms this player is in
           const roomSet = playerRooms.get(odId);
           if (roomSet) {
@@ -1066,6 +1102,9 @@ export function initSocketServer(httpServer: HttpServer) {
       broadcastOnlineFriends(odId);
       // Don't delete from playerSockets yet — wait for grace period
 
+      // Use the latest display name (custom name from settings)
+      const disconnectName = playerDisplayNames.get(odId) || name;
+
       // Check if this player is in any active game rooms
       const roomSet = playerRooms.get(odId);
       const isInActiveGame = roomSet && Array.from(roomSet).some(rid => {
@@ -1092,7 +1131,7 @@ export function initSocketServer(httpServer: HttpServer) {
           const freezeInfo = {
             roomId: rid,
             disconnectedOdId: odId,
-            disconnectedName: name,
+            disconnectedName: disconnectName,
             secondsLeft: Math.floor(FREEZE_TIMEOUT_MS / 1000),
             timer: null as any,
             tickInterval: null as any,
@@ -1101,7 +1140,7 @@ export function initSocketServer(httpServer: HttpServer) {
           // Notify other players in the room
           io.to(rid).emit('roomFrozen', {
             roomId: rid,
-            disconnectedPlayerName: name,
+            disconnectedPlayerName: disconnectName,
             timeoutSeconds: freezeInfo.secondsLeft,
           });
 

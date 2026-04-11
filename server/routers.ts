@@ -77,7 +77,7 @@ import {
   setActivePlaylist,
   getPlaylistById,
 } from "./db";
-import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer } from "./socketServer";
+import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -151,6 +151,10 @@ export const appRouter = router({
           }
         }
         await updateProfileDisplayName(ctx.user.id, input.displayName);
+        // Also update the in-memory socket maps so disconnect/reconnect uses the new name
+        if (ctx.user.openId) {
+          updatePlayerDisplayName(ctx.user.openId, input.displayName);
+        }
         return { success: true };
       }),
 

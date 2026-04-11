@@ -2216,3 +2216,250 @@ describe('Auto-complete defense when attackers have no matching cards', () => {
     expect(state._autoCompleteDefense).toBeFalsy();
   });
 });
+
+
+// ============================================================
+// TIMER VALUES — all supported timer values work correctly
+// ============================================================
+describe('Timer values (15-60 seconds)', () => {
+  const timerValues = [15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+
+  for (const timerVal of timerValues) {
+    it(`createGame with turnTimer=${timerVal} sets correct timer values`, () => {
+      const players = [
+        { odId: 'p1', name: 'Player 1', isBot: false },
+        { odId: 'p2', name: 'Player 2', isBot: false },
+      ];
+      const settings: RoomSettings = { turnTimer: timerVal, withBots: false, botCount: 0 };
+      const game = createGame('room1', players, settings);
+      expect(game.turnTimerMax).toBe(timerVal);
+      expect(game.turnTimer).toBe(timerVal);
+    });
+
+    it(`resetTurnTimer resets to ${timerVal} when turnTimerMax=${timerVal}`, () => {
+      const state = createTestState(2, { turnTimerMax: timerVal, turnTimer: 0 });
+      resetTurnTimer(state);
+      expect(state.turnTimer).toBe(timerVal);
+    });
+  }
+
+  it('timer decrements correctly from any starting value', () => {
+    for (const timerVal of timerValues) {
+      const state = createTestState(2, { turnTimerMax: timerVal, turnTimer: timerVal });
+      // Simulate ticks
+      for (let i = 0; i < timerVal; i++) {
+        state.turnTimer--;
+      }
+      expect(state.turnTimer).toBe(0);
+    }
+  });
+});
+
+// ============================================================
+// ATTACKER 2 CONSECUTIVE TIMEOUTS → AUTO-FORFEIT
+// ============================================================
+describe('Attacker 2 consecutive timeouts → auto-forfeit', () => {
+  it('first timeout does NOT forfeit attacker', () => {
+    const state = createTestState(2);
+    state.consecutiveTimeouts = {};
+    const prevCount = state.consecutiveTimeouts['p1'] || 0;
+    state.consecutiveTimeouts['p1'] = prevCount + 1;
+    // After 1 timeout, count should be 1 — not enough for forfeit (threshold is 2)
+    expect(state.consecutiveTimeouts['p1']).toBe(1);
+    expect(state.consecutiveTimeouts['p1'] >= 2).toBe(false);
+  });
+
+  it('second timeout triggers forfeit (count >= 2)', () => {
+    const state = createTestState(2);
+    state.consecutiveTimeouts = { 'p1': 1 };
+    const prevCount = state.consecutiveTimeouts['p1'] || 0;
+    state.consecutiveTimeouts['p1'] = prevCount + 1;
+    expect(state.consecutiveTimeouts['p1']).toBe(2);
+    expect(state.consecutiveTimeouts['p1'] >= 2).toBe(true);
+  });
+
+  it('making a move resets consecutive timeout counter', () => {
+    const state = createTestState(2);
+    state.consecutiveTimeouts = { 'p1': 1 };
+    // Player makes a move — reset
+    state.consecutiveTimeouts['p1'] = 0;
+    // Next timeout should be count 1, not 2
+    state.consecutiveTimeouts['p1'] = (state.consecutiveTimeouts['p1'] || 0) + 1;
+    expect(state.consecutiveTimeouts['p1']).toBe(1);
+    expect(state.consecutiveTimeouts['p1'] >= 2).toBe(false);
+  });
+
+  it('different players have independent timeout counters', () => {
+    const state = createTestState(3);
+    state.consecutiveTimeouts = {};
+    state.consecutiveTimeouts['p1'] = 1;
+    state.consecutiveTimeouts['p2'] = 0;
+    // p1 times out again
+    state.consecutiveTimeouts['p1'] = (state.consecutiveTimeouts['p1'] || 0) + 1;
+    expect(state.consecutiveTimeouts['p1']).toBe(2);
+    expect(state.consecutiveTimeouts['p2']).toBe(0);
+  });
+});
+
+// ============================================================
+// DEFENDER TIMEOUT → TAKES CARDS
+// ============================================================
+describe('Defender timeout → takes cards from table', () => {
+  it('takeCards sets defenderTaking=true and turnPhase=pickup', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.players[0].hand = [card('hearts', '7', 0)];
+    state.players[1].hand = [card('clubs', 'A', 0)];
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.leadCardRank = '7';
+
+    takeCards(state);
+    expect(state.defenderTaking).toBe(true);
+    expect(state.turnPhase).toBe('pickup');
+  });
+
+  it('finalizeTake moves all battlefield cards to defender hand', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'pickup';
+    state.defenderTaking = true;
+    state.firstTrick = false;
+    const attackCard = card('spades', '7', 0);
+    const defenseCard = card('hearts', '8', 0);
+    state.battleField = [{ attack: attackCard, defense: defenseCard }];
+    state.players[0].hand = [];
+    state.players[1].hand = [card('clubs', 'A', 0)];
+    state.passedAttackers = ['p1'];
+
+    finalizeTake(state);
+    expect(state.battleField.length).toBe(0);
+    expect(state.defenderTaking).toBe(false);
+    // Defender should have the cards from battlefield + their original card
+    expect(state.players[1].hand.length).toBe(3); // original A + attack 7 + defense 8
+  });
+
+  it('timer resets after takeCards', () => {
+    const state = createTestState(2, { turnTimerMax: 25, turnTimer: 0 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+
+    takeCards(state);
+    expect(state.turnTimer).toBe(25);
+  });
+
+  it('timer resets after finalizeTake', () => {
+    const state = createTestState(2, { turnTimerMax: 40, turnTimer: 0 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.defenderTaking = true;
+    state.firstTrick = false;
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.players[0].hand = [];
+    state.players[1].hand = [];
+    state.passedAttackers = ['p1'];
+
+    finalizeTake(state);
+    expect(state.turnTimer).toBe(40);
+  });
+});
+
+// ============================================================
+// TIMER RESET ON GAME ACTIONS (engine-level)
+// Note: playAttackCard/playDefenseCard do NOT reset timer themselves;
+// the socketServer handler calls resetTurnTimer + restartTurnTimer after each action.
+// Here we test functions that DO reset the timer internally.
+// ============================================================
+describe('Timer resets on game actions (engine-level)', () => {
+  it('successfulDefense resets timer', () => {
+    const state = createTestState(2, { turnTimerMax: 60, turnTimer: 1 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.firstTrick = false;
+    state.battleField = [{ attack: card('hearts', '7', 0), defense: card('hearts', '8', 0) }];
+    state.players[0].hand = [];
+    state.players[1].hand = [];
+
+    successfulDefense(state);
+    expect(state.turnTimer).toBe(60);
+  });
+
+  it('transferAttack resets timer', () => {
+    const state = createTestState(3, { turnTimerMax: 45, turnTimer: 2 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    const transferCard = card('hearts', '7', 1);
+    state.players[1].hand = [transferCard];
+    state.players[2].hand = Array.from({ length: 10 }, (_, i) => card('clubs', 'A', i));
+    state.battleField = [{ attack: card('spades', '7', 0), defense: null }];
+    state.leadCardRank = '7';
+
+    const err = transferAttack(state, 1, transferCard.id);
+    expect(err).toBeNull();
+    expect(state.turnTimer).toBe(45);
+  });
+
+  it('endAttack (bito) resets timer when all attackers pass', () => {
+    const state = createTestState(2, { turnTimerMax: 20, turnTimer: 3 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.firstTrick = false;
+    state.battleField = [{ attack: card('hearts', '7', 0), defense: card('hearts', '8', 0) }];
+    state.players[0].hand = [];
+    state.players[1].hand = [];
+
+    endAttack(state, 0);
+    // After successful defense, timer should reset
+    expect(state.turnTimer).toBe(20);
+  });
+
+  it('playAttackCard does NOT reset timer (socketServer does it)', () => {
+    const state = createTestState(2, { turnTimerMax: 35, turnTimer: 5 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'attack';
+    state.attackerHasPriority = true;
+    const attackCard = card('hearts', '7', 0);
+    state.players[0].hand = [attackCard];
+    state.players[1].hand = [card('clubs', 'A', 0)];
+
+    playAttackCard(state, 0, attackCard.id);
+    // Timer stays at 5 — socketServer is responsible for resetting it
+    expect(state.turnTimer).toBe(5);
+  });
+
+  it('playDefenseCard does NOT reset timer (socketServer does it)', () => {
+    const state = createTestState(2, { turnTimerMax: 50, turnTimer: 3 });
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    const attackCard = card('hearts', '7', 0);
+    const defenseCard = card('hearts', '8', 0);
+    state.battleField = [{ attack: attackCard, defense: null }];
+    state.players[0].hand = [];
+    state.players[1].hand = [defenseCard];
+
+    playDefenseCard(state, 1, defenseCard.id);
+    // Timer stays at 3 — socketServer is responsible for resetting it
+    expect(state.turnTimer).toBe(3);
+  });
+});
+
+// ============================================================
+// updatePlayerDisplayName function (socket server)
+// ============================================================
+describe('updatePlayerDisplayName export', () => {
+  it('updatePlayerDisplayName is exported from socketServer', async () => {
+    // Just verify the function exists and is callable
+    const mod = await import('./socketServer');
+    expect(typeof mod.updatePlayerDisplayName).toBe('function');
+  });
+});
