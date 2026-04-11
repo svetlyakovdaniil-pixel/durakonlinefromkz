@@ -3,6 +3,7 @@ import { X, ShoppingCart, AlertTriangle } from "lucide-react";
 import { formatBalance } from "@shared/formatBalance";
 import { trpc } from "@/lib/trpc";
 import { useTranslation } from "@/i18n";
+import { toast } from "sonner";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
 
@@ -129,7 +130,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   : 'bg-slate-700/50 text-amber-200 hover:bg-slate-600/50'
               }`}
             >
-              История
+              {t('topUp.historyTab') || 'История'}
             </button>
           </div>
         </div>
@@ -183,12 +184,12 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         {activeTab === 'history' && (
           <div className="space-y-2">
             {transactionsQuery.isLoading && (
-              <div className="text-center text-amber-300/60 py-4">Загрузка...</div>
+              <div className="text-center text-amber-300/60 py-4">{t('common.loading') || 'Загрузка...'}</div>
             )}
             {transactionsQuery.data && transactionsQuery.data.length === 0 && (
-              <div className="text-center text-amber-300/60 py-4">История пуста</div>
+              <div className="text-center text-amber-300/60 py-4">{t('topUp.historyEmpty') || 'История пуста'}</div>
             )}
-            {transactionsQuery.data && transactionsQuery.data.map((tx: any) => (
+            {transactionsQuery.data && transactionsQuery.data.map((tx: { id: number; description: string | null; amount: number; createdAt: Date; balanceAfter?: number | null }) => (
               <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-amber-200 font-semibold text-sm">{tx.description}</span>
@@ -202,7 +203,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   <span className="text-amber-300/60 text-xs">
                     {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString()}
                   </span>
-                  <span className="text-amber-300/60 text-xs">Баланс: {formatBalance(tx.balanceAfter || 0)}</span>
+                  <span className="text-amber-300/60 text-xs">{t('topUp.balance') || 'Баланс'}: {formatBalance(tx.balanceAfter || 0)}</span>
                 </div>
               </div>
             ))}
@@ -245,7 +246,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm transition-colors"
                   onClick={() => {
                     setSelectedTier(null);
-                    alert(t('topUp.purchaseComingSoon'));
+                    toast.info(t('topUp.purchaseComingSoon'));
                   }}
                 >
                   {t('topUp.buyBtn')}

@@ -52,6 +52,10 @@ const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; 
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
 
+// Verbose logging only in development
+const isDev = process.env.NODE_ENV !== 'production';
+const dbg = (...args: unknown[]) => { if (isDev) console.log(...args); };
+
 let io: Server<ClientToServerEvents, ServerToClientEvents>;
 
 /** Admin: Get online monitoring stats */
@@ -199,7 +203,7 @@ export function initSocketServer(httpServer: HttpServer) {
   });
 
   io.on('connection', (socket) => {
-    console.log(`[Socket] Connected: ${socket.id}`);
+    dbg(`[Socket] Connected: ${socket.id}`);
 
     const odId = socket.handshake.auth?.odId as string || socket.id;
     // Use stored display name from registerProfile if available, fallback to auth name
@@ -212,7 +216,7 @@ export function initSocketServer(httpServer: HttpServer) {
     if (pendingTimer) {
       clearTimeout(pendingTimer);
       disconnectTimers.delete(odId);
-      console.log(`[Socket] Player ${odId} reconnected — grace timer cancelled`);
+      dbg(`[Socket] Player ${odId} reconnected — grace timer cancelled`);
     }
 
     // Unfreeze any rooms frozen for this player
@@ -221,7 +225,7 @@ export function initSocketServer(httpServer: HttpServer) {
         clearTimeout(freezeInfo.timer);
         clearInterval(freezeInfo.tickInterval);
         frozenRooms.delete(frozenRoomId);
-        console.log(`[Socket] Unfreezing room ${frozenRoomId} — player ${odId} reconnected`);
+        dbg(`[Socket] Unfreezing room ${frozenRoomId} — player ${odId} reconnected`);
 
         // Notify all players in the room that the game is unfrozen
         io.to(frozenRoomId).emit('roomUnfrozen', {
@@ -254,7 +258,7 @@ export function initSocketServer(httpServer: HttpServer) {
         // Skip if player intentionally left this room
         // NOTE: Do NOT delete from forfeitedFromRoom — keep the block permanent
         if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
-          console.log(`[Socket] Skipping auto-rejoin for ${odId} in room ${roomId} (forfeited)`);
+          dbg(`[Socket] Skipping auto-rejoin for ${odId} in room ${roomId} (forfeited)`);
           untrackPlayerRoom(odId, roomId);
           continue;
         }
@@ -267,7 +271,7 @@ export function initSocketServer(httpServer: HttpServer) {
           // If player is in game but not in room.players, re-add them
           if (!isInRoom && isInGame && room) {
             room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
-            console.log(`[Socket] Re-added ${odId} to room.players during auto-rejoin`);
+            dbg(`[Socket] Re-added ${odId} to room.players during auto-rejoin`);
           }
           // CRITICAL FIX: Always call socket.join(roomId) even if room object is missing.
           // Without this, watchdog sees player not in Socket.IO room and forfeits them.
@@ -293,7 +297,7 @@ export function initSocketServer(httpServer: HttpServer) {
             const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
             socket.emit('yourTurn', actions);
           }
-          console.log(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
+          dbg(`[Socket] Player ${odId} auto-rejoined room ${roomId}`);
         }
       }
     }
@@ -317,7 +321,7 @@ export function initSocketServer(httpServer: HttpServer) {
       // Block rejoin if player intentionally forfeited from this room
       // NOTE: Do NOT delete from forfeitedFromRoom — keep the block permanent
       if (forfeitedFromRoom.has(`${odId}:${roomId}`)) {
-        console.log(`[Socket] Blocking rejoin for ${odId} in room ${roomId} (forfeited)`);
+        dbg(`[Socket] Blocking rejoin for ${odId} in room ${roomId} (forfeited)`);
         untrackPlayerRoom(odId, roomId);
         cb(false);
         return;
@@ -336,7 +340,7 @@ export function initSocketServer(httpServer: HttpServer) {
       // If player is in game but not in room.players, re-add them
       if (!isInRoom && isInGame) {
         room.players.push({ id: odId, name: playerDisplayNames.get(odId) || name, ready: true, isBot: false });
-        console.log(`[Socket] Re-added ${odId} to room.players during rejoin`);
+        dbg(`[Socket] Re-added ${odId} to room.players during rejoin`);
       }
 
       // Cancel any pending grace period timer for this player
@@ -344,7 +348,7 @@ export function initSocketServer(httpServer: HttpServer) {
       if (graceTimer) {
         clearTimeout(graceTimer);
         disconnectTimers.delete(odId);
-        console.log(`[Socket] Cancelled grace period for ${odId} — player reconnected`);
+        dbg(`[Socket] Cancelled grace period for ${odId} — player reconnected`);
       }
 
       // Update socket mapping
@@ -434,7 +438,7 @@ export function initSocketServer(httpServer: HttpServer) {
       rooms.set(roomId, room);
       socket.join(roomId);
       trackPlayerRoom(odId, roomId);
-      console.log(`[Socket] Room created: ${roomId}, password=${settings.password ? '***(' + settings.password.length + ' chars)' : 'none'}, isPrivate=${settings.isPrivate}`);
+      dbg(`[Socket] Room created: ${roomId}, password=${settings.password ? '***(' + settings.password.length + ' chars)' : 'none'}, isPrivate=${settings.isPrivate}`);
       broadcastRoomList();
       cb(sanitizeRoom(room));
     });
@@ -470,14 +474,14 @@ export function initSocketServer(httpServer: HttpServer) {
 
       if (isInGame && !isForfeited) {
         // Player is reconnecting to their active game via lobby
-        console.log(`[Socket] Player ${odId} rejoining active game in room ${roomId} via joinRoom`);
+        dbg(`[Socket] Player ${odId} rejoining active game in room ${roomId} via joinRoom`);
         
         // Cancel any pending grace period timer
         const graceTimer = disconnectTimers.get(odId);
         if (graceTimer) {
           clearTimeout(graceTimer);
           disconnectTimers.delete(odId);
-          console.log(`[Socket] Cancelled grace period for ${odId} — player reconnected via joinRoom`);
+          dbg(`[Socket] Cancelled grace period for ${odId} — player reconnected via joinRoom`);
         }
 
         // Re-add to room.players if not there
@@ -515,15 +519,15 @@ export function initSocketServer(httpServer: HttpServer) {
       // Password check: skip if player is invited or is the host
       const isInvited = room.invitedPlayerIds?.includes(odId);
       const roomHasPassword = !!room.settings.password && room.settings.password.trim().length > 0;
-      console.log(`[Socket] joinRoom password check: roomHasPassword=${roomHasPassword}, isInvited=${isInvited}, isHost=${room.hostId === odId}, providedPassword=${password ? '***' : 'none'}`);
+      dbg(`[Socket] joinRoom password check: roomHasPassword=${roomHasPassword}, isInvited=${isInvited}, isHost=${room.hostId === odId}, providedPassword=${password ? '***' : 'none'}`);
       if (roomHasPassword && !isInvited && room.hostId !== odId) {
         if (!password || password.trim() !== room.settings.password!.trim()) {
-          console.log(`[Socket] joinRoom: password mismatch for room ${roomId}`);
+          dbg(`[Socket] joinRoom: password mismatch for room ${roomId}`);
           socket.emit('error', 'Неверный пароль');
           cb(false);
           return;
         }
-        console.log(`[Socket] joinRoom: password correct for room ${roomId}`);
+        dbg(`[Socket] joinRoom: password correct for room ${roomId}`);
       }
 
       // Skip balance check for tutorial rooms
@@ -636,7 +640,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // Skip bet deduction for tutorial rooms
       if (room.settings.isTutorial) {
-        console.log(`[Socket] Tutorial room ${roomId} - skipping bet deduction`);
+        dbg(`[Socket] Tutorial room ${roomId} - skipping bet deduction`);
         return;
       }
 
@@ -984,15 +988,15 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // --- Invite friend to room ---
     socket.on('inviteFriend', (data) => {
-      console.log(`[Socket] inviteFriend called by ${odId} for room ${data.roomId}, targetGameId: ${data.targetGameId}`);
+      dbg(`[Socket] inviteFriend called by ${odId} for room ${data.roomId}, targetGameId: ${data.targetGameId}`);
       const room = rooms.get(data.roomId);
       if (!room) {
-        console.log(`[Socket] inviteFriend: room ${data.roomId} not found`);
+        dbg(`[Socket] inviteFriend: room ${data.roomId} not found`);
         return;
       }
       // Only room host or players in the room can invite
       if (!room.players.some(p => p.id === odId)) {
-        console.log(`[Socket] inviteFriend: player ${odId} not in room`);
+        dbg(`[Socket] inviteFriend: player ${odId} not in room`);
         return;
       }
 
@@ -1011,11 +1015,11 @@ export function initSocketServer(httpServer: HttpServer) {
       }
 
       if (!targetOdId || !targetSid) {
-        console.log(`[Socket] inviteFriend: target gameId ${targetGameId} not found. socketPlayers size: ${socketPlayers.size}, playerGameIds:`, Array.from(playerGameIds.entries()));
+        dbg(`[Socket] inviteFriend: target gameId ${targetGameId} not found. socketPlayers size: ${socketPlayers.size}, playerGameIds:`, Array.from(playerGameIds.entries()));
         socket.emit('error', 'Игрок не найден или не в сети');
         return;
       }
-      console.log(`[Socket] inviteFriend: found target ${targetOdId} with sid ${targetSid}`);
+      dbg(`[Socket] inviteFriend: found target ${targetOdId} with sid ${targetSid}`);
 
       // Check if target is in lobby (not in any active game)
       const targetRoomSet = playerRooms.get(targetOdId);
@@ -1054,7 +1058,7 @@ export function initSocketServer(httpServer: HttpServer) {
         fromName: name,
         fromGameId: senderGameId,
       });
-      console.log(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
+      dbg(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
     });
 
     // --- Decline room invitation ---
@@ -1076,7 +1080,7 @@ export function initSocketServer(httpServer: HttpServer) {
           declinedByName: name,
           declinedByGameId: myGameId,
         });
-        console.log(`[Socket] ${name} declined invite to room ${data.roomId} from gameId ${inviterGameId}`);
+        dbg(`[Socket] ${name} declined invite to room ${data.roomId} from gameId ${inviterGameId}`);
       }
     });
 
@@ -1120,7 +1124,7 @@ export function initSocketServer(httpServer: HttpServer) {
             }
           }
         }
-        console.log(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
+        dbg(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
         // Broadcast online status to friends
         broadcastOnlineFriends(odId);
       }
@@ -1141,7 +1145,7 @@ export function initSocketServer(httpServer: HttpServer) {
         'forced server close': 'Server shut down',
       };
       const reasonDesc = disconnectReasons[reason] || 'Unknown reason';
-      console.log(`[Socket] Disconnected: ${socket.id} (odId: ${odId}) reason: ${reason} (${reasonDesc})`);
+      dbg(`[Socket] Disconnected: ${socket.id} (odId: ${odId}) reason: ${reason} (${reasonDesc})`);
 
       socketPlayers.delete(socket.id);
       // Broadcast offline status to friends
@@ -1160,7 +1164,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       if (isInActiveGame) {
         // Start grace period — give player time to reconnect
-        console.log(`[Socket] Starting ${FREEZE_TIMEOUT_MS / 1000}s freeze period for ${odId}`);
+        dbg(`[Socket] Starting ${FREEZE_TIMEOUT_MS / 1000}s freeze period for ${odId}`);
 
         // Freeze all active game rooms this player is in
         const activeRoomIds = roomSet ? Array.from(roomSet).filter(rid => {
@@ -1198,7 +1202,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
           // After timeout, forfeit the player
           freezeInfo.timer = setTimeout(() => {
-            console.log(`[Socket] Freeze expired for ${odId} in room ${rid} — forfeiting`);
+            dbg(`[Socket] Freeze expired for ${odId} in room ${rid} — forfeiting`);
             clearInterval(freezeInfo.tickInterval);
             frozenRooms.delete(rid);
             disconnectTimers.delete(odId);
@@ -1264,12 +1268,12 @@ export function initSocketServer(httpServer: HttpServer) {
 
         if (isInWaitingRoom) {
           // Grace period for waiting rooms — don't remove immediately
-          console.log(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId} (waiting room)`);
+          dbg(`[Socket] Starting ${DISCONNECT_GRACE_MS / 1000}s grace period for ${odId} (waiting room)`);
           const timer = setTimeout(() => {
             disconnectTimers.delete(odId);
             // Check if player reconnected (has a new socket)
             if (playerSockets.get(odId)) {
-              console.log(`[Socket] Grace period expired but ${odId} already reconnected — skipping removal`);
+              dbg(`[Socket] Grace period expired but ${odId} already reconnected — skipping removal`);
               return;
             }
             playerSockets.delete(odId);
@@ -1289,6 +1293,11 @@ export function initSocketServer(httpServer: HttpServer) {
           // Not in any room — clean up immediately
           playerSockets.delete(odId);
           playerRooms.delete(odId);
+          // Clean up display name / profile caches to prevent memory leak
+          playerDisplayNames.delete(odId);
+          playerGameIds.delete(odId);
+          playerAvatarIds.delete(odId);
+          playerEquippedFrames.delete(odId);
         }
       }
     });
@@ -1507,13 +1516,13 @@ function startWatchdog(roomId: string) {
         // Watchdog runs every 10s so it would fire BEFORE the freeze expires — causing false forfeit
         const freezeInfo = frozenRooms.get(roomId);
         if (freezeInfo && freezeInfo.disconnectedOdId === p.id) {
-          console.log(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active freeze timer (${freezeInfo.secondsLeft}s left) — skipping forfeit`);
+          dbg(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active freeze timer (${freezeInfo.secondsLeft}s left) — skipping forfeit`);
           continue; // Let the freeze timer handle it
         }
 
         // Also skip if there is a pending disconnect grace timer for this player
         if (disconnectTimers.has(p.id)) {
-          console.log(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active grace timer — skipping forfeit`);
+          dbg(`[Watchdog] Player ${p.name} (${p.id}) not in socket room but has active grace timer — skipping forfeit`);
           continue; // Let the grace timer handle it
         }
 
@@ -1625,7 +1634,7 @@ function restartTurnTimer(roomId: string) {
 // Helper: kick a player due to consecutive timeouts (reused for any phase)
 function kickPlayerForTimeouts(roomId: string, gameState: GameState, playerIdx: number) {
   const player = gameState.players[playerIdx];
-  console.log(`[Timer] ${player.name} forfeited due to 2 consecutive timeouts`);
+  dbg(`[Timer] ${player.name} forfeited due to 2 consecutive timeouts`);
   forfeitPlayer(gameState, playerIdx);
   forfeitedFromRoom.add(`${player.id}:${roomId}`);
   untrackPlayerRoom(player.id, roomId);
@@ -1655,7 +1664,11 @@ function kickPlayerForTimeouts(roomId: string, gameState: GameState, playerIdx: 
 }
 
 function handleTimeUp(roomId: string, gameState: GameState) {
-  console.log(`[Timer] Time up. Phase: ${gameState.turnPhase}, taking: ${gameState.defenderTaking}, bf: ${gameState.battleField.length}, attacker: ${gameState.players[gameState.currentAttackerIdx]?.name}, defender: ${gameState.players[gameState.currentDefenderIdx]?.name}`);
+  dbg(`[Timer] Time up. Phase: ${gameState.turnPhase}, taking: ${gameState.defenderTaking}, bf: ${gameState.battleField.length}, attacker: ${gameState.players[gameState.currentAttackerIdx]?.name}, defender: ${gameState.players[gameState.currentDefenderIdx]?.name}`);
+  // Keep warn for unexpected states
+  if (!gameState.players[gameState.currentAttackerIdx] || !gameState.players[gameState.currentDefenderIdx]) {
+    console.warn('[Timer] handleTimeUp: missing attacker or defender — possible stale game state');
+  }
 
   // ── Determine which player "owns" this timeout ──
   let timeoutPlayerId: string | null = null;
@@ -1687,7 +1700,7 @@ function handleTimeUp(roomId: string, gameState: GameState) {
   if (timeoutPlayerId) {
     const prevCount = gameState.consecutiveTimeouts[timeoutPlayerId] || 0;
     gameState.consecutiveTimeouts[timeoutPlayerId] = prevCount + 1;
-    console.log(`[Timer] Player ${gameState.players[timeoutPlayerIdx]?.name} timeout #${prevCount + 1}`);
+    dbg(`[Timer] Player ${gameState.players[timeoutPlayerIdx]?.name} timeout #${prevCount + 1}`);
 
     // 2 consecutive timeouts = auto-forfeit
     if (prevCount + 1 >= 2) {
@@ -2061,7 +2074,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       newTrump: currentSuit,
       phase: currentPhase,
     });
-    console.log(`[Game] Trump changed in room ${roomId}: phase ${prevPhase}→${currentPhase}, suit ${prevSuit}→${currentSuit}`);
+    dbg(`[Game] Trump changed in room ${roomId}: phase ${prevPhase}→${currentPhase}, suit ${prevSuit}→${currentSuit}`);
   }
   
   // Update tracking
@@ -2085,7 +2098,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           .catch(err =>
             console.error(`[Prize] Failed to credit ${prize.amount} to ${prize.playerId}:`, err)
           );
-        console.log(`[Prize] Credited ${prize.amount} shanyraks to ${prize.playerId} (place ${prize.place}) in room ${roomId}`);
+        dbg(`[Prize] Credited ${prize.amount} shanyraks to ${prize.playerId} (place ${prize.place}) in room ${roomId}`);
       }
     }
   }
@@ -2122,7 +2135,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
         pool: gameState.prizePool,
         prizes: gameState.playerPrizes,
       });
-      console.log(`[Prize] Final distribution emitted for room ${roomId}: pool=${gameState.prizePool}, winners=${gameState.playerPrizes.length}`);
+      dbg(`[Prize] Final distribution emitted for room ${roomId}: pool=${gameState.prizePool}, winners=${gameState.playerPrizes.length}`);
     }
     
     // Clean up credited prizes tracking
@@ -2137,7 +2150,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     const totalPlayersInRoom = gameState.players.length; // humans + bots
     const isTutorial = room?.settings.isTutorial || false;
     if (isTutorial) {
-      console.log(`[Stats] Skipping stats for room ${roomId} (tutorial)`);
+      dbg(`[Stats] Skipping stats for room ${roomId} (tutorial)`);
     }
     // Exclude forfeited human players — their stats were already recorded on forfeit
     const humanPlayers = gameState.players.filter(p => !p.isBot && !p.leftGame);
