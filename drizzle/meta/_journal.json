@@ -204,6 +204,13 @@
       "when": 1775866736697,
       "tag": "0028_previous_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "5",
+      "when": 1775906878423,
+      "tag": "0029_careless_moon_knight",
+      "breakpoints": true
     }
   ]
 }

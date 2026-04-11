@@ -11,12 +11,16 @@ import { I18nProvider } from "./i18n";
 import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
 
 function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/login"} component={Login} />
+      <Route path={"/register"} component={Register} />
       <Route path={"/admin"} component={AdminPanel} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/404"} component={NotFound} />

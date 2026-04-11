@@ -309,3 +309,23 @@ export const musicPlaylists = mysqlTable("music_playlists", {
 
 export type MusicPlaylist = typeof musicPlaylists.$inferSelect;
 export type InsertMusicPlaylist = typeof musicPlaylists.$inferInsert;
+
+
+/**
+ * User credentials — stores email/password for local auth.
+ * Links to users table via userId.
+ */
+export const userCredentials = mysqlTable("user_credentials", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Foreign key to users.id */
+  userId: int("userId").notNull().unique(),
+  /** Email address (unique, used for login) */
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  /** bcrypt hashed password */
+  passwordHash: varchar("passwordHash", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserCredential = typeof userCredentials.$inferSelect;
+export type InsertUserCredential = typeof userCredentials.$inferInsert;

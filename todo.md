@@ -2042,12 +2042,16 @@
 - [x] Добавить ссылку на Privacy Policy в ProfileDrawer (вкладка профиля)
 
 ### Email + Password авторизация
-- [ ] Добавить таблицу credentials (email, password_hash) в schema
-- [ ] Добавить серверные процедуры: register, login, resetPassword
-- [ ] Добавить страницу регистрации (email + пароль)
-- [ ] Добавить страницу входа (email + пароль)
-- [ ] Добавить валидацию email и пароля
-- [ ] Сохранить совместимость с текущей Manus OAuth авторизацией
+- [x] Добавить таблицу credentials (email, password_hash) в schema
+- [x] Добавить серверные процедуры: register, login (emailAuth.ts)
+- [x] Добавить страницу входа (Login.tsx — email + пароль + Manus OAuth)
+- [x] Добавить страницу регистрации (Register.tsx — имя + email + пароль + Manus OAuth)
+- [x] Добавить валидацию email и пароля (клиент + сервер)
+- [x] Сохранить совместимость с текущей Manus OAuth авторизацией
+- [x] Добавить i18n ключи auth для RU и KK
+- [x] Добавить роуты /login и /register в App.tsx
+- [x] Перенаправление на /login при UNAUTHED (main.tsx)
+- [x] 16 тестов для emailAuth (register + login validation)
 
 ### Capacitor интеграция
 - [ ] Установить Capacitor и настроить конфигурацию

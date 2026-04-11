@@ -323,7 +323,7 @@ function LandingPage() {
                 size="lg"
                 className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg shadow-amber-900/40 text-lg px-8"
               >
-                <a href={getLoginUrl()}>
+                <a href="/login">
                   {t('landing.login')}
                 </a>
               </Button>
