@@ -1,18 +1,27 @@
 # App Store & Google Play Screenshots — CDN URLs
 
-## App Store Screenshots (9:16 portrait, 1536x2752px)
+## Промо-скриншоты (с рамкой телефона и текстом)
 
-| # | Description | Original URL |
-|---|-------------|-------------|
-| 1 | Landing / Login | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/screenshot-1-landing-nosQvMETuVFPfJ83YrxoPQ.png |
-| 2 | Gameplay | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/screenshot-2-gameplay-Qta5VYFCHeYNki6ud57Nz7.png |
-| 3 | Lobby | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/screenshot-3-lobby-4kuwX57pv6NuMxdU2ydcRx.png |
-| 4 | Features | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/screenshot-4-features-XHeWkryN3ryahM4nnNruGp.png |
+Формат: 1290x2796px (iPhone 15 Pro Max, 6.7")
 
-## Google Play Screenshots
-Same images can be used for Google Play (minimum 2 required). Recommended: screenshots 1 (Landing) and 2 (Gameplay).
+| # | Описание | CDN URL |
+|---|----------|---------|
+| 1 | Landing — главная страница | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/promo-1-landing_8b350817.png |
+| 2 | Login — страница входа | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/promo-2-login_5109ee24.png |
+| 3 | Lobby — лобби с комнатами | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/promo-3-lobby_fbddaffe.png |
 
-## Notes
-- Screenshots are AI-generated promotional mockups, not actual app screenshots
-- For final store submission, consider capturing real screenshots from the running app
-- All images are in 9:16 portrait format suitable for both App Store (6.7", 6.5", 5.5") and Google Play
+## Сырые скриншоты (без рамки)
+
+Формат: 1179x2556px (3x scale, iPhone 14 Pro viewport)
+
+| # | Описание | CDN URL |
+|---|----------|---------|
+| 1 | Landing | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/real-landing_a8d4820c.png |
+| 2 | Login | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/real-login_6dec3559.png |
+| 3 | Lobby | https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/real-lobby_54d723ea.png |
+
+## Примечания
+
+Все скриншоты сделаны из реально работающей игры через Playwright с мобильным viewport (iPhone 14 Pro, 393x852 @3x).
+Промо-версии содержат рамку телефона, тень и золотые заголовки на тёмно-синем фоне.
+Для App Store рекомендуется использовать промо-версии. Для Google Play подходят как промо, так и сырые.

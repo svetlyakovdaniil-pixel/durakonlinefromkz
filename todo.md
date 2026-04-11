@@ -2071,3 +2071,9 @@
 - [ ] НАПОМНИТЬ: Google Sign-In (нужен Firebase аккаунт)
 - [ ] НАПОМНИТЬ: Apple Sign-In (нужен Apple Developer Account)
 - [ ] НАПОМНИТЬ: Push-уведомления (нужен Firebase + Apple Developer Account)
+
+### Скриншоты v2 — реальные скриншоты из игры
+- [x] Удалить старые AI-сгенерированные скриншоты
+- [x] Сделать реальные скриншоты из игры (landing, login, lobby)
+- [x] Наложить рамку телефона и промо-текст на каждый скриншот
+- [x] Обновить SCREENSHOTS.md с новыми CDN URLs
