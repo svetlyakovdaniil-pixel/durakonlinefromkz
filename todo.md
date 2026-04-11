@@ -2102,3 +2102,24 @@
 - [x] Добавить скрипты в package.json (codepush:deploy, codepush:rollback)
 - [x] Создать гайд CODEPUSH_SETUP.md с полным описанием
 - [ ] Тестировать OTA обновления на реальном устройстве (после сборки APK/IPA)
+
+
+## Critical Bugs (Apr 12, 2026 - Railway Deployment)
+
+- [ ] Fix deck positioning - deck should be centered in play area, not shifted left
+- [ ] Debug server stability - players disconnecting during gameplay
+- [ ] Fix game state bug - player automatically marked as loser without leaving lobby
+- [ ] Investigate WebSocket connection issues on Railway server
+
+
+## Баг: нестабильность мультиплеера (новые исправления)
+- [x] Исправлена синтаксическая ошибка: двойная закрывающая скобка в disconnect handler
+- [x] Добавлена обработка requestRoomList для свежего списка комнат
+- [x] Добавлены 10 комплексных тестов для disconnect/reconnect сценариев
+- [x] Экспортирована checkGameOver функция из gameEngine
+- [x] Добавлен вызов checkGameOver после forfeit для гарантированного завершения игры
+- [x] Создан файл stability-improvements.ts с документацией улучшений
+- [ ] Добавить версионирование game state для синхронизации
+- [ ] Добавить DisconnectTracker для обнаружения одновременных disconnect
+- [ ] Улучшить watchdog для обнаружения partial reconnects
+- [ ] Добавить валидацию game state consistency после критических операций

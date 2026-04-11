@@ -151,7 +151,7 @@ function PlayerHand({
           WebkitOverflowScrolling: 'touch',
         } : undefined}
       >
-        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : ''}`} style={needsScroll ? { minWidth: 'min-content' } : undefined}>
+        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : 'justify-center'}`} style={needsScroll ? { minWidth: 'min-content' } : undefined}>
           {sortedHand.map((card, i) => {
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);

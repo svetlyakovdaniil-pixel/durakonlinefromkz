@@ -19,7 +19,7 @@ import {
   finalizeTake as engineFinalizeTake,
   successfulDefense, shouldSkipTurn, getNextActivePlayer,
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
-  canPlayerAddCards, forfeitPlayer, transferMultipleCards,
+  canPlayerAddCards, forfeitPlayer, transferMultipleCards, checkGameOver,
 } from './gameEngine';
 import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
 
@@ -1180,6 +1180,8 @@ export function initSocketServer(httpServer: HttpServer) {
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
               if (playerIdx !== -1 && !gameState.players[playerIdx].isOut) {
                 forfeitPlayer(gameState, playerIdx);
+                // STABILITY: Check if game should end after forfeit
+                checkGameOver(gameState);
                 markProgress(rid);
                 resetTurnTimer(gameState);
                 restartTurnTimer(rid);
@@ -1260,7 +1262,12 @@ export function initSocketServer(httpServer: HttpServer) {
         }
       }
     });
+
+    // Handle requestRoomList from client
+    socket.on('requestRoomList', () => {
+      socket.emit('roomList', Array.from(rooms.values()));
     });
+  });
 
   // ---- Online friends broadcasting ----
   // When a player connects/disconnects, notify all their friends about online status

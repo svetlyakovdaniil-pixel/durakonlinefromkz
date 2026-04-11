@@ -1136,7 +1136,7 @@ export function forfeitPlayer(state: GameState, playerIdx: number): void {
 
 // ---- Game over check ----
 
-function checkGameOver(state: GameState): void {
+export function checkGameOver(state: GameState): void {
   const activePlayers = state.players.filter(p => !p.isOut);
   if (activePlayers.length <= 1) {
     state.gamePhase = 'finished';
