@@ -2094,3 +2094,11 @@
 - [x] Написать 13 тестов для Google Auth (googleAuth.test.ts)
 - [ ] [ОТЛОЖЕНО] Apple Sign-In — нужна подписка Apple Developer Program ($99/год)
 - [ ] [ОТЛОЖЕНО] Интегрировать Apple Sign-In в клиент и сервер
+
+## OTA (Over-The-Air) обновления — быстрые обновления без App Store/Google Play
+- [x] Выбрать и установить CodePush (code-push + code-push-cli)
+- [x] Создать конфиг codepush.config.ts с ключами для iOS и Android
+- [x] Создать useCodePush hook для проверки и установки обновлений
+- [x] Добавить скрипты в package.json (codepush:deploy, codepush:rollback)
+- [x] Создать гайд CODEPUSH_SETUP.md с полным описанием
+- [ ] Тестировать OTA обновления на реальном устройстве (после сборки APK/IPA)
