@@ -55,10 +55,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     id: 'goose_animated',
     name: 'Весёлый гусь',
     nameKk: 'Көңілді қаз',
-    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_animated_a1984779.gif',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_center-FBNMZSN9bdiS3CdHwf6e3J.webp',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_new_8597b7f9.png',
     premium: true,
-    animated: true,
     price: 100,
   },
 ];

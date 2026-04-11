@@ -497,34 +497,20 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const canAffordAvatar = currentTenge >= effectiveAvatarPrice;
                 const displayName = locale === 'kk' && avatar.nameKk ? avatar.nameKk : avatar.name;
                 return (
-                  <div key={avatar.id} className={`bg-[#0f2035]/80 border rounded-xl p-4 ${
-                    avatar.animated ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10' : 'border-amber-700/20'
-                  }`}>
+                  <div key={avatar.id} className="bg-[#0f2035]/80 border rounded-xl p-4 border-amber-700/20">
                     <div className="flex items-center gap-4">
                       <div className="shrink-0 relative">
-                        <div className={`w-20 h-20 rounded-full overflow-hidden border-2 shadow-lg ${
-                          avatar.animated
-                            ? 'border-emerald-400/60 shadow-emerald-500/20'
-                            : 'border-cyan-500/60 shadow-cyan-500/20'
-                        }`}>
+                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 shadow-lg border-cyan-500/60 shadow-cyan-500/20">
                           <img src={avatar.url} alt={displayName} className="w-full h-full object-cover" />
                         </div>
-                        {avatar.animated ? (
-                          <div className="absolute -top-1 -right-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
-                            GIF
-                          </div>
-                        ) : (
-                          <div className="absolute -top-1 -right-1 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                        <div className="absolute -top-1 -right-1 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
                             PRO
                           </div>
-                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-amber-100 font-bold text-sm mb-1">{displayName}</h3>
                         <p className="text-amber-200/50 text-xs mb-3">
-                          {avatar.animated
-                            ? (locale === 'kk' ? 'Анимациялық аватар' : 'Анимированный аватар')
-                            : (locale === 'kk' ? 'Премиум аватар' : 'Премиум аватар')}
+                          {locale === 'kk' ? 'Премиум аватар' : 'Премиум аватар'}
                         </p>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">

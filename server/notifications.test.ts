@@ -245,14 +245,14 @@ describe('Avatar in Game', () => {
   });
 });
 
-describe('Animated Avatars', () => {
-  it('should include goose_animated in AVATAR_OPTIONS', () => {
+describe('Goose Premium Avatar', () => {
+  it('should include goose_animated in AVATAR_OPTIONS as premium', () => {
     const goose = AVATAR_OPTIONS.find(a => a.id === 'goose_animated');
     expect(goose).toBeDefined();
-    expect(goose!.animated).toBe(true);
     expect(goose!.premium).toBe(true);
     expect(goose!.price).toBe(100);
-    expect(goose!.url).toContain('.gif');
+    expect(goose!.url).toContain('.png');
+    expect(goose!.animated).toBeUndefined();
   });
 
   it('should have correct name and nameKk for goose avatar', () => {
@@ -261,38 +261,28 @@ describe('Animated Avatars', () => {
     expect(goose!.nameKk).toBe('Көңілді қаз');
   });
 
-  it('getAvatarUrl should return GIF URL for animated avatar', () => {
+  it('getAvatarUrl should return PNG URL for goose avatar', () => {
     const url = getAvatarUrl('goose_animated');
-    expect(url).toContain('.gif');
-    expect(url).toContain('goose_animated');
+    expect(url).toContain('.png');
+    expect(url).toContain('goose_new');
   });
 
-  it('isAnimatedAvatar should return true for animated avatars', () => {
-    expect(isAnimatedAvatar('goose_animated')).toBe(true);
+  it('isAnimatedAvatar should return false for goose (no longer animated)', () => {
+    expect(isAnimatedAvatar('goose_animated')).toBe(false);
     expect(isAnimatedAvatar('wolf')).toBe(false);
-    expect(isAnimatedAvatar('nexus_bunny')).toBe(false);
     expect(isAnimatedAvatar(null)).toBe(false);
     expect(isAnimatedAvatar(undefined)).toBe(false);
   });
 
-  it('getAvatarOption should return full avatar object', () => {
+  it('getAvatarOption should return full avatar object for goose', () => {
     const goose = getAvatarOption('goose_animated');
     expect(goose).toBeDefined();
     expect(goose!.id).toBe('goose_animated');
-    expect(goose!.animated).toBe(true);
-    expect(goose!.previewUrl).toBeDefined();
+    expect(goose!.animated).toBeUndefined();
+    expect(goose!.previewUrl).toBeUndefined();
   });
 
-  it('should have previewUrl for animated avatars', () => {
-    const animatedAvatars = AVATAR_OPTIONS.filter(a => a.animated);
-    expect(animatedAvatars.length).toBeGreaterThan(0);
-    for (const avatar of animatedAvatars) {
-      expect(avatar.previewUrl).toBeDefined();
-      expect(avatar.previewUrl).not.toContain('.gif');
-    }
-  });
-
-  it('non-animated premium avatars should not have animated flag', () => {
+  it('nexus_bunny should also be premium without animated flag', () => {
     const nexusBunny = AVATAR_OPTIONS.find(a => a.id === 'nexus_bunny');
     expect(nexusBunny).toBeDefined();
     expect(nexusBunny!.animated).toBeUndefined();
