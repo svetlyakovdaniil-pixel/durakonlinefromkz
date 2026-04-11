@@ -129,7 +129,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   // When playlist data loads or changes, switch the music tracks and apply volume multiplier
   useEffect(() => {
     if (selectedPlaylistId === 'default') {
-      // Reset to default tracks (Стандартный) with normal volume
+      // Reset to default tracks (Классический) with normal volume
       music.setTracks(DEFAULT_TRACKS);
       music.setVolume(music.volume); // reset to user's volume (multiplier 1.0)
     } else if (selectedPlaylistData?.tracks?.length) {
@@ -143,7 +143,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     }
   }, [selectedPlaylistId, selectedPlaylistData]);
 
-  // Filter to only owned playlists, excluding the default one (already shown as hardcoded "Стандартный" option)
+  // Filter to only owned playlists, excluding the default one (already shown as hardcoded "Классический" option)
   const ownedPlaylists = allPlaylists.filter((p: any) => ownedPlaylistIds.includes(p.id) && !p.isDefault);
 
   return (
@@ -250,7 +250,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                     <SelectItem value="default" className="text-amber-100 text-sm">
-                      {locale === 'kk' ? 'Стандартты' : 'Стандартный'}
+                      {locale === 'kk' ? 'Классикалық' : 'Классический'}
                     </SelectItem>
                     {ownedPlaylists.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">

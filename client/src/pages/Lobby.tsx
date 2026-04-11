@@ -66,7 +66,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [withBots, setWithBots] = useState(false);
   const [botCount, setBotCount] = useState(3);
   const [turnTimer, setTurnTimer] = useState(30);
-  const [deckStyle, setDeckStyle] = useState<DeckStyle>('classic');
+  const [deckStyle, setDeckStyle] = useState<DeckStyle>('custom');
   const [tableStyle, setTableStyle] = useState<TableStyle>('classic');
   const [betAmountIdx, setBetAmountIdx] = useState(0); // index into BET_AMOUNTS
   const [isPrivate, setIsPrivate] = useState(false);

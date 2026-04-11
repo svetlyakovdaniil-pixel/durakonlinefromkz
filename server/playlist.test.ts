@@ -42,9 +42,9 @@ describe('Playlist features (Batch 93)', () => {
   describe('Deck names', () => {
     it('should have renamed deck labels in ru translations', async () => {
       const { ru: translations } = await import('../client/src/i18n/ru');
-      // Deck 1 should be "Стандартная" in all contexts
-      expect(translations.lobby.deckClassic).toBe('Стандартная');
-      expect(translations.waitingRoom.deckN1).toBe('Стандартная');
+      // Deck 1 should be "Батыры великой степи" in all contexts
+      expect(translations.lobby.deckClassic).toBe('Батыры великой степи');
+      expect(translations.waitingRoom.deckN1).toBe('Батыры великой степи');
       // Deck 2 should be "Товарищ Мырза" in all contexts
       expect(translations.lobby.deckCustom).toBe('Товарищ Мырза');
       expect(translations.waitingRoom.deckN2).toBe('Товарищ Мырза');
@@ -53,8 +53,8 @@ describe('Playlist features (Batch 93)', () => {
     it('should have renamed deck labels in kk translations', async () => {
       const { kk: translations } = await import('../client/src/i18n/kk');
       // Kazakh uses localized names
-      expect(translations.lobby.deckClassic).toBe('Стандартты');
-      expect(translations.waitingRoom.deckN1).toBe('Стандартты');
+      expect(translations.lobby.deckClassic).toBe('ұлы даланың батырлары');
+      expect(translations.waitingRoom.deckN1).toBe('ұлы даланың батырлары');
       expect(translations.lobby.deckCustom).toBe('Жолдас Мырза');
       expect(translations.waitingRoom.deckN2).toBe('Жолдас Мырза');
     });
@@ -118,11 +118,11 @@ describe('Playlist bug fixes (Batch 95)', () => {
       expect(source).not.toContain('Relus house');
     });
 
-    it('should have Стандартный as default playlist label in SettingsSheet', async () => {
+    it('should have Классический as default playlist label in SettingsSheet', async () => {
       const fs = await import('fs');
       const source = fs.readFileSync('client/src/components/SettingsSheet.tsx', 'utf-8');
-      expect(source).toContain('Стандартный');
-      expect(source).toContain('Стандартты');
+      expect(source).toContain('Классический');
+      expect(source).toContain('Классикалық');
     });
 
     it('cleanupOldPlaylists function should exist in db.ts', async () => {
@@ -197,12 +197,12 @@ describe('Batch 96 — Chinese URL fix & duplicate cleanup', () => {
     expect(typeof db.fixChinesePlaylistUrls).toBe('function');
   });
 
-  it('cleanupOldPlaylists should handle duplicate Стандартный playlists', async () => {
+  it('cleanupOldPlaylists should handle duplicate Классический playlists', async () => {
     const fs = await import('fs');
     const source = fs.readFileSync('server/db.ts', 'utf-8');
     const cleanupSection = source.substring(source.indexOf('cleanupOldPlaylists'));
-    // Should check for duplicate Стандартный playlists
-    expect(cleanupSection).toContain('Стандартный');
+    // Should check for duplicate Классический playlists
+    expect(cleanupSection).toContain('Классический');
     expect(cleanupSection).toContain('defaults.length > 1');
   });
 
@@ -211,7 +211,7 @@ describe('Batch 96 — Chinese URL fix & duplicate cleanup', () => {
     const source = fs.readFileSync('server/db.ts', 'utf-8');
     const seedSection = source.substring(source.indexOf('seedDefaultPlaylist'));
     expect(seedSection).toContain('existingByName');
-    expect(seedSection).toContain('Стандартный');
+    expect(seedSection).toContain('Классический');
   });
 });
 

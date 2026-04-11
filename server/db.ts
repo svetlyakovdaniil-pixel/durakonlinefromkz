@@ -2373,8 +2373,15 @@ export async function cleanupOldPlaylists() {
   if (!db) return;
   // Delete any playlist named 'Rules house' (legacy)
   await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Rules house'));
-  // Remove duplicate Стандартный playlists — keep only the one with isDefault=true
-  const defaults = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
+  // Rename Стандартный → Классический (migration)
+  const oldStandard = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
+  for (const p of oldStandard) {
+    await db.update(musicPlaylists)
+      .set({ name: 'Классический', nameKk: 'Классикалық', description: 'Классическая фоновая музыка — 7 треков', descriptionKk: 'Классикалық фондық музыка — 7 трек' })
+      .where(eq(musicPlaylists.id, p.id));
+  }
+  // Remove duplicate Классический playlists — keep only the one with isDefault=true
+  const defaults = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Классический'));
   if (defaults.length > 1) {
     // Keep the one with isDefault=true, or the first one if none has isDefault
     const keep = defaults.find(d => d.isDefault) || defaults[0];
@@ -2393,7 +2400,7 @@ export async function seedDefaultPlaylist() {
   // Check if default playlist already exists (by isDefault flag OR by name)
   const existingByDefault = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isDefault, true));
   if (existingByDefault.length > 0) return;
-  const existingByName = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
+  const existingByName = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Классический'));
   if (existingByName.length > 0) return;
 
   const standardTracks = [
@@ -2407,14 +2414,14 @@ export async function seedDefaultPlaylist() {
   ];
 
   await db.insert(musicPlaylists).values({
-    name: 'Стандартный',
-    nameKk: 'Стандартты',
+    name: 'Классический',
+    nameKk: 'Классикалық',
     tracksJson: JSON.stringify(standardTracks),
     priceShanyrak: 0,
     isDefault: true,
     isAvailable: true,
-    description: 'Стандартная фоновая музыка — 7 треков',
-    descriptionKk: 'Стандартты фондық музыка — 7 трек',
+    description: 'Классическая фоновая музыка — 7 треков',
+    descriptionKk: 'Классикалық фондық музыка — 7 трек',
   });
 }
 

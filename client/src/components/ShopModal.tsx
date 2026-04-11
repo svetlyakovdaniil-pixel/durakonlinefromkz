@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square, Eye } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
-import { CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
+import { CARD_BACK_URL, CARD_IMAGES, CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
 import { AVATAR_OPTIONS, type AvatarOption } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
 import { NeonFrame } from './NeonFrame';
@@ -14,6 +14,9 @@ import { IceFrame } from './IceFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
+// Batyry deck (classic) assets for shop display
+const CLASSIC_DECK_BACK = CARD_BACK_URL;
+const CLASSIC_KING_SPADES = CARD_IMAGES['K-spades'];
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
 const CUSTOM_DECK_PRICE = 60;
@@ -366,31 +369,18 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 shrink-0">
                   <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
-                    <img src={CUSTOM_DECK_BACK} alt="Deck back" className="w-full h-full object-cover" />
+                    <img src={CLASSIC_DECK_BACK} alt="Deck back" className="w-full h-full object-cover" />
                   </div>
                   <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
-                    <img src={KING_SPADES} alt="King" className="w-full h-full object-cover" />
+                    <img src={CLASSIC_KING_SPADES} alt="King of Spades" className="w-full h-full object-cover" />
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.customDeck')}</h3>
+                  <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.default')}</h3>
                   <p className="text-amber-200/50 text-xs mb-3">{t('shop.customDeckDesc')}</p>
-                  {isCustomOwned ? (
-                    <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
-                      <Check className="w-4 h-4" /><span>{t('shop.purchased')}</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-3">
-                      <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                        onClick={() => setConfirmPurchase({ type: 'deck', id: 'custom', name: t('shop.customDeck'), price: customDeckPrice })}
-                        disabled={purchasing || !canAfford}>{purchasing ? '...' : t('shop.buy')}</Button>
-                      <div className="flex items-center gap-1">
-                        <span className="text-amber-100 font-bold text-base">{customDeckPrice}</span>
-                        <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
-                      </div>
-                    </div>
-                  )}
-                  {!isCustomOwned && !canAfford && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
+                  <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                    <Check className="w-4 h-4" /><span>{t('shop.free')}</span>
+                  </div>
                 </div>
               </div>
             </div>
