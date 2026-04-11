@@ -620,5 +620,9 @@ export const kk = {
     invalidEmail: 'Дұрыс email енгізіңіз',
     invalidName: 'Ат 1-ден 12 таңбаға дейін болуы керек',
     back: 'Артқа',
+    google: 'Google',
+    googleError: 'Google арқылы кіру қатесі',
+    apple: 'Apple',
+    appleError: 'Apple арқылы кіру қатесі',
   },
 };

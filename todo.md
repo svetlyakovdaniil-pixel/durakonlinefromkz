@@ -2068,8 +2068,8 @@
 - [x] Сгенерировать скриншоты для Google Play (те же 4 скриншота, CDN URLs в SCREENSHOTS.md)
 
 ### Отложено (нужны аккаунты):
-- [ ] НАПОМНИТЬ: Google Sign-In (нужен Firebase аккаунт)
-- [ ] НАПОМНИТЬ: Apple Sign-In (нужен Apple Developer Account)
+- [x] НАПОМНИТЬ: Google Sign-In — ГОТОВО (Firebase проект durak-online-kz)
+- [ ] НАПОМНИТЬ: Apple Sign-In — ОТЛОЖЕНО (нужна подписка Apple Developer Program $99/год)
 - [ ] НАПОМНИТЬ: Push-уведомления (нужен Firebase + Apple Developer Account)
 
 ### Скриншоты v2 — реальные скриншоты из игры
@@ -2084,3 +2084,13 @@
 ## Баг: потеря соединения + автозакрытие комнат
 - [x] Исправить частые потери соединения: улучшена обработка visibility change (force reconnect после >30с в фоне), добавлен ping_check handler на сервере, улучшена обработка online event
 - [x] Убрать автозакрытие комнат: добавлен grace period 60с для комнат ожидания (раньше был только для активных игр)
+
+## Google Sign-In + Apple Sign-In интеграция
+- [x] Настроить Firebase проект (durak-online-kz) и включить Google Authentication
+- [x] Получить Firebase Web Client ID и API ключи
+- [x] Интегрировать Google Sign-In в клиент (firebase.ts + кнопка на Login/Register)
+- [x] Интегрировать Google Sign-In в сервер (googleAuth.ts — верификация через Google tokeninfo)
+- [x] Добавить i18n ключи для Google Sign-In (RU + KK)
+- [x] Написать 13 тестов для Google Auth (googleAuth.test.ts)
+- [ ] [ОТЛОЖЕНО] Apple Sign-In — нужна подписка Apple Developer Program ($99/год)
+- [ ] [ОТЛОЖЕНО] Интегрировать Apple Sign-In в клиент и сервер

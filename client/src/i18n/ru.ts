@@ -621,5 +621,9 @@ export const ru = {
     invalidEmail: 'Введите корректный email',
     invalidName: 'Имя должно быть от 1 до 12 символов',
     back: 'Назад',
+    google: 'Google',
+    googleError: 'Ошибка входа через Google',
+    apple: 'Apple',
+    appleError: 'Ошибка входа через Apple',
   },
 };
