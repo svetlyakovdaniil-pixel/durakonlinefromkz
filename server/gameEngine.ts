@@ -376,8 +376,11 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
 
   // After first card, check if this player can add cards
   if (state.battleField.length > 0 && playerIdx !== state.currentAttackerIdx) {
+    // SIX EXCEPTION: when lead card is 6 and player is throwing a six, bypass attacker priority
+    const isSixException = state.leadCardRank === '6' && card.rank === '6';
     // PRIORITY RULE: Edge players cannot add cards while attacker has priority
-    if (state.attackerHasPriority) return 'Attacker has priority — wait for them to press Бито';
+    // But sixes bypass this rule when the lead card is 6
+    if (state.attackerHasPriority && !isSixException) return 'Attacker has priority — wait for them to press Бито';
     if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
   }
 

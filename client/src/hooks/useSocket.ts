@@ -424,6 +424,11 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, []);
 
   const returnToLobby = useCallback(() => {
+    // Also notify server so the room gets cleaned up when all players leave
+    const roomId = currentRoomIdRef.current;
+    if (roomId) {
+      socketRef.current?.emit('leaveRoom', roomId);
+    }
     currentRoomIdRef.current = null;
     setCurrentRoom(null);
     setGameState(null);

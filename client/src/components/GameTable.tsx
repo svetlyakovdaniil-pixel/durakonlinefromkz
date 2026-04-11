@@ -151,7 +151,7 @@ function PlayerHand({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        <div className="flex items-end px-4 sm:px-6" style={{ minWidth: 'min-content' }}>
+        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center w-full' : ''}`} style={{ minWidth: 'min-content' }}>
           {sortedHand.map((card, i) => {
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
