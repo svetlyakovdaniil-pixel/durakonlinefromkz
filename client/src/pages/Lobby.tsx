@@ -271,18 +271,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left column: Admin button at bottom (if applicable) */}
-              <div className="flex flex-col items-start justify-end relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
-                {hasAdminAccess ? (
-                  <button
-                    className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                    onClick={() => setLocation('/admin')}
-                    title={isGM ? 'GM-панель' : 'Админ-панель'}
-                  >
-                    <Shield className="w-5 h-5" />
-                  </button>
-                ) : <div />}
-              </div>
+              {/* Left column: placeholder to maintain layout */}
+              <div className="relative z-20" style={{marginLeft: '-4px', width: '28px'}} />
               {/* Title — shifted right toward avatar, 20% larger */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
                 <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '205px', fontSize: '1.2rem'}}>
@@ -321,8 +311,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: Tenge top / Shanyrak bottom — icon on top, balance below each */}
+              {/* Right column: Admin (if any) / Tenge / Shanyrak */}
               <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-2px'}}>
+                {/* Admin button — only shown to admins, sits above tenge */}
+                {hasAdminAccess ? (
+                  <button
+                    className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded self-end"
+                    onClick={() => setLocation('/admin')}
+                    title={isGM ? 'GM-панель' : 'Админ-панель'}
+                  >
+                    <Shield className="w-5 h-5" />
+                  </button>
+                ) : null}
                 {/* Tenge */}
                 <button
                   className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
