@@ -2312,3 +2312,4 @@
 - [x] Redesign bottom tab bar: 3 buttons — Профиль (left), Создать игру (center, gold circle), Комнаты (right, DoorOpen icon)
 - [x] Equalize tab bar button sizes: make "Создать игру" same size as Профиль and Комнаты (smaller gold circle, no elevation)
 - [x] Move "Create room" functionality to tab bar "Создать игру" button; remove old "+ Создать" button from mobile lobby header
+- [x] Create RoomsView tab in lobby: move room list, filter, search, refresh button there; remove them from main lobby view; activate "Комнаты" tab bar button

@@ -83,6 +83,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialLoading, setTutorialLoading] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Room filter & search
   const [showFilter, setShowFilter] = useState(false);
@@ -825,6 +826,9 @@ onClick={() => setShowTengeTopUp(true)}
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
+      {/* Mobile: Rooms tab view */}
+      {activeTab === 'rooms' && (
+      <>
       {/* Mobile: Комнаты + Фильтр + Поиск + Создать (below header, only on mobile) */}
       <div className="sm:hidden border-t border-amber-700/20 bg-black/20 relative z-10">
         <div className="container py-3 space-y-2">
@@ -1039,8 +1043,9 @@ onClick={() => setShowTengeTopUp(true)}
             })}
           </div>
         )}
-      </div>
-
+       </div>
+      </>
+      )}
       {/* Password dialog */}
       <PasswordDialog
         open={!!passwordRoom}
@@ -1260,19 +1265,22 @@ onClick={() => setShowTengeTopUp(true)}
           {/* Profile — left */}
           <button
             className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
-            style={{ opacity: 0.5 }}
-            onClick={() => {}}
+            style={{ opacity: activeTab === 'lobby' ? 1 : 0.45 }}
+            onClick={() => setActiveTab('lobby')}
           >
             <UserCircle2 className="w-6 h-6" style={{ color: '#c9a84c' }} />
             <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
               {t('tabBar.profile')}
             </span>
+            {activeTab === 'lobby' && (
+              <span className="w-4 h-0.5 rounded-full mt-0.5" style={{ background: '#c9a84c' }} />
+            )}
           </button>
 
-          {/* Create game — center, same size */}
+          {/* Create game — center */}
           <button
             className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
-            style={{ opacity: 0.5 }}
+            style={{ opacity: 0.75 }}
             onClick={() => setDialogOpen(true)}
           >
             <div
@@ -1292,13 +1300,16 @@ onClick={() => setShowTengeTopUp(true)}
           {/* Rooms — right */}
           <button
             className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
-            style={{ opacity: 0.5 }}
-            onClick={() => {}}
+            style={{ opacity: activeTab === 'rooms' ? 1 : 0.45 }}
+            onClick={() => setActiveTab('rooms')}
           >
             <DoorOpen className="w-6 h-6" style={{ color: '#c9a84c' }} />
             <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
               {t('tabBar.rooms')}
             </span>
+            {activeTab === 'rooms' && (
+              <span className="w-4 h-0.5 rounded-full mt-0.5" style={{ background: '#c9a84c' }} />
+            )}
           </button>
 
         </div>
