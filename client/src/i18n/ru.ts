@@ -25,6 +25,7 @@ export const ru = {
     private: 'Приватные',
     create: 'Создать игру',
     rooms: 'Комнаты',
+    quickGame: 'Быстрая игра',
   },
 
   // Language selector

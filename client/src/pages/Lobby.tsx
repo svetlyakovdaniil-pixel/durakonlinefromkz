@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -825,6 +825,33 @@ onClick={() => setShowTengeTopUp(true)}
       <div className="sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
+
+      {/* Mobile: Quick Game button — visible on lobby tab only */}
+      {activeTab === 'lobby' && (
+        <div className="sm:hidden px-4 pt-3 pb-1">
+          <button
+            className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-all active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.03) 100%)',
+              border: '1px solid rgba(201,168,76,0.25)',
+            }}
+            onClick={() => {}}
+          >
+            <div
+              className="w-10 h-10 rounded-full flex items-center justify-center"
+              style={{
+                background: 'rgba(201,168,76,0.12)',
+                border: '1px solid rgba(201,168,76,0.3)',
+              }}
+            >
+              <Play className="w-5 h-5 ml-0.5" style={{ color: '#c9a84c' }} fill="#c9a84c" />
+            </div>
+            <span className="text-base font-bold tracking-wide" style={{ color: '#e8c96a', fontFamily: 'serif' }}>
+              {t('tabBar.quickGame')}
+            </span>
+          </button>
+        </div>
+      )}
 
       {/* Mobile: Rooms tab view */}
       {activeTab === 'rooms' && (

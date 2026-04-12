@@ -25,6 +25,7 @@ export const en = {
     private: 'Private',
     create: 'Create Game',
     rooms: 'Rooms',
+    quickGame: 'Quick Game',
   },
 
   // Language selector

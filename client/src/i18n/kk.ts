@@ -25,6 +25,7 @@ export const kk = {
     private: 'Жабық',
     create: 'Ойын жасау',
     rooms: 'Бөлмелер',
+    quickGame: 'Жылдам ойын',
   },
 
   // Language selector

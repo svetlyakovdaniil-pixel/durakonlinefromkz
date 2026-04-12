@@ -2313,3 +2313,4 @@
 - [x] Equalize tab bar button sizes: make "Создать игру" same size as Профиль and Комнаты (smaller gold circle, no elevation)
 - [x] Move "Create room" functionality to tab bar "Создать игру" button; remove old "+ Создать" button from mobile lobby header
 - [x] Create RoomsView tab in lobby: move room list, filter, search, refresh button there; remove them from main lobby view; activate "Комнаты" tab bar button
+- [x] Add "Быстрая игра" full-width button in mobile lobby (activeTab='lobby'), gold play icon, inactive/visual only
