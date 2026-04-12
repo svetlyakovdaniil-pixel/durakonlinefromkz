@@ -3,6 +3,7 @@ import { X, Clock, Play, ArrowRightLeft, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
+import { translateTxDescription } from "./TengeTopUpModal";
 
 const TENGE_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png";
 const SHANYRAK_ICON = "https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png";
@@ -32,7 +33,7 @@ function formatTime(ms: number): string {
 }
 
 export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTenge, onBalanceUpdated }: ShanyrakTopUpModalProps) {
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const [confirmTier, setConfirmTier] = useState<string | null>(null);
   const [showInsufficientTenge, setShowInsufficientTenge] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
@@ -281,7 +282,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             {transactionsQuery.data && transactionsQuery.data.map((tx: any) => (
               <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-green-200 font-semibold text-sm">{tx.description}</span>
+                  <span className="text-green-200 font-semibold text-sm">{translateTxDescription(tx, locale)}</span>
                   <span className={`font-bold text-sm ${
                     tx.amount > 0 ? 'text-green-400' : 'text-red-400'
                   }`}>

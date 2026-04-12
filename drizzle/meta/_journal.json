@@ -225,6 +225,13 @@
       "when": 1775954940250,
       "tag": "0031_reflective_rumiko_fujikawa",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "5",
+      "when": 1775994635330,
+      "tag": "0032_powerful_harrier",
+      "breakpoints": true
     }
   ]
 }

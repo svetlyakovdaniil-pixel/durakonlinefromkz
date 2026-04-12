@@ -4,6 +4,8 @@ export interface AvatarOption {
   name: string;
   /** Display name in Kazakh */
   nameKk?: string;
+  /** Display name in English */
+  nameEn?: string;
   url: string;
   /** Static preview image for shop display (used for animated avatars) */
   previewUrl?: string;
@@ -17,36 +19,43 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   {
     id: 'bot',
     name: 'Робот (Бот)',
+    nameEn: 'Robot (Bot)',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bot_avatar-bkCC7RwD3DYoJiFYZiby6m.webp',
   },
   {
     id: 'wolf',
     name: 'Волк',
+    nameEn: 'Wolf',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-wolf-fJ9SNhipdz6heHu7Au5XVp.webp',
   },
   {
     id: 'eagle',
     name: 'Орёл',
+    nameEn: 'Eagle',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-eagle-KxvbVg3oAviwrdXzEpvXdT.webp',
   },
   {
     id: 'bear',
     name: 'Медведь',
+    nameEn: 'Bear',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-bear-ggTgCeFCLsPRpzpWmUe6og.webp',
   },
   {
     id: 'fox',
     name: 'Лиса',
+    nameEn: 'Fox',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-fox-A7ZAaomsUx9cfjYNNWxFw7.webp',
   },
   {
     id: 'snow-leopard',
     name: 'Барс',
+    nameEn: 'Snow Leopard',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar-snow-leopard-UGXKzhokntwzXvBoUdi5Lq.webp',
   },
   {
     id: 'nexus_bunny',
     name: 'Nexus Bunny',
+    nameEn: 'Nexus Bunny',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/nexus_bunny_avatar-JL5A5iF6tsP42JWaLwG3Uf.webp',
     premium: true,
     price: 250,
@@ -55,6 +64,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     id: 'goose_animated',
     name: 'Весёлый гусь',
     nameKk: 'Көңілді қаз',
+    nameEn: 'Happy Goose',
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/goose_new_8597b7f9.png',
     premium: true,
     price: 100,

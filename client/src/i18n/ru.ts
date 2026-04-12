@@ -386,6 +386,10 @@ export const ru = {
     customDeckDesc: 'Уникальный дизайн карт для вашей игры',
     darkTableDesc: '',
     comingSoon: 'Больше предметов скоро появится в магазине',
+    premiumAvatar: 'Премиум аватар',
+    listenBtn: 'Прослушать',
+    stopBtn: 'Стоп',
+    notEnoughShanyrak: 'Недостаточно шаныраков',
   },
 
   // Settings

@@ -386,6 +386,10 @@ export const kk = {
     customDeckDesc: 'Ойыныңызға арналған бірегей карта дизайны',
     darkTableDesc: '',
     comingSoon: 'Көбірек заттар жақында дүкенде пайда болады',
+    premiumAvatar: 'Премиум аватар',
+    listenBtn: 'Тыңдау',
+    stopBtn: 'Тоқтату',
+    notEnoughShanyrak: 'Шаңырақ жеткіліксіз',
   },
 
   // Settings

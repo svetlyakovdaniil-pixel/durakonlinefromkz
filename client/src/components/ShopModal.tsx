@@ -27,8 +27,10 @@ export const AVATAR_FRAMES = [
     id: 'fire',
     name: 'Огненная рамка',
     nameKk: 'Отты жақтау',
+    nameEn: 'Fire Frame',
     description: 'Реалистичная анимация огня вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы нақты от анимациясы',
+    descriptionEn: 'Realistic fire animation around your avatar',
     price: 500,
     icon: Flame,
     iconColor: 'text-orange-400',
@@ -38,8 +40,10 @@ export const AVATAR_FRAMES = [
     id: 'neon',
     name: 'Неоновая рамка',
     nameKk: 'Неон жақтау',
+    nameEn: 'Neon Frame',
     description: 'Яркое неоновое свечение с переливами цветов',
     descriptionKk: 'Түстердің ауысуымен жарқын неон жарқылы',
+    descriptionEn: 'Bright neon glow with color transitions',
     price: 800,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
@@ -54,8 +58,10 @@ export const AVATAR_FRAMES = [
     id: 'lightning',
     name: 'Молния рамка',
     nameKk: 'Найзағай жақтау',
+    nameEn: 'Lightning Frame',
     description: 'Электрические молнии и искры вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы электр найзағайлары мен ұшқындар',
+    descriptionEn: 'Electric lightning bolts and sparks around your avatar',
     price: 1200,
     icon: Zap,
     iconColor: 'text-blue-300',
@@ -65,8 +71,10 @@ export const AVATAR_FRAMES = [
     id: 'ice',
     name: 'Ледяная рамка',
     nameKk: 'Мұз жақтау',
+    nameEn: 'Ice Frame',
     description: 'Ледяные кристаллы и снежинки вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы мұз кристалдары мен қар ұшқындары',
+    descriptionEn: 'Ice crystals and snowflakes around your avatar',
     price: 1000,
     icon: Snowflake,
     iconColor: 'text-sky-300',
@@ -400,7 +408,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-amber-100 font-bold text-sm">{locale === 'kk' ? table.nameKk : table.name}</h3>
+                          <h3 className="text-amber-100 font-bold text-sm">{locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : table.name}</h3>
                         </div>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -409,7 +417,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                         ) : (
                           <div className="flex items-center gap-3">
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: locale === 'kk' ? table.nameKk : table.name, price: effectivePrice })}
+                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : table.name, price: effectivePrice })}
                               disabled={purchasing || !canAffordTable}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
                               <span className="text-amber-100 font-bold text-base">{effectivePrice}</span>
@@ -447,10 +455,10 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-amber-100 font-bold text-sm mb-1">
-                          {locale === 'kk' ? frame.nameKk : frame.name}
+                          {locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}
                         </h3>
                         <p className="text-amber-200/50 text-xs mb-3">
-                          {locale === 'kk' ? frame.descriptionKk : frame.description}
+                          {locale === 'kk' ? frame.descriptionKk : locale === 'en' ? (frame as any).descriptionEn || frame.description : frame.description}
                         </p>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -461,7 +469,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
                               onClick={() => setConfirmPurchase({
                                 type: 'frame', id: frame.id,
-                                name: locale === 'kk' ? frame.nameKk : frame.name,
+                                name: locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name,
                                 price: effectivePrice,
                               })}
                               disabled={purchasing || !canAffordFrame}>{purchasing ? '...' : t('shop.buy')}</Button>
@@ -486,7 +494,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const isOwned = ownedAvatars.includes(avatar.id);
                 const effectiveAvatarPrice = getPrice('avatar', avatar.id, avatar.price || 0);
                 const canAffordAvatar = currentTenge >= effectiveAvatarPrice;
-                const displayName = locale === 'kk' && avatar.nameKk ? avatar.nameKk : avatar.name;
+                const displayName = locale === 'kk' && avatar.nameKk ? avatar.nameKk : locale === 'en' && avatar.nameEn ? avatar.nameEn : avatar.name;
                 return (
                   <div key={avatar.id} className="bg-[#0f2035]/80 border rounded-xl p-4 border-amber-700/20">
                     <div className="flex items-center gap-4">
@@ -504,7 +512,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       <div className="flex-1 min-w-0">
                         <h3 className="text-amber-100 font-bold text-sm mb-1">{displayName}</h3>
                         <p className="text-amber-200/50 text-xs mb-3">
-                          {locale === 'kk' ? 'Премиум аватар' : 'Премиум аватар'}
+                          {t('shop.premiumAvatar')}
                         </p>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -538,8 +546,8 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-4">
                 <Music className="w-5 h-5 text-amber-400" />
-                <h3 className="text-amber-100 font-bold text-sm">
-                  {locale === 'kk' ? 'Фондық музыка' : 'Фоновая музыка'}
+                  <h3 className="text-amber-100 font-bold text-sm">
+                  {t('shop.music')}
                 </h3>
               </div>
               {allPlaylists.map((playlist: any) => {
@@ -548,8 +556,8 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const canAffordPlaylist = currentShanyrak >= playlist.priceShanyrak;
                 const isPreviewPlaying = previewPlaylistId === playlist.id;
                 const trackCount = playlist.tracks?.length || 0;
-                const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : playlist.name;
-                const displayDesc = locale === 'kk' && playlist.descriptionKk ? playlist.descriptionKk : (playlist.description || '');
+                const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : locale === 'en' && playlist.nameEn ? playlist.nameEn : playlist.name;
+                const displayDesc = locale === 'kk' && playlist.descriptionKk ? playlist.descriptionKk : locale === 'en' && playlist.descriptionEn ? playlist.descriptionEn : (playlist.description || '');
                 return (
                   <div key={playlist.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-3">
@@ -562,7 +570,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-amber-100 font-bold text-sm">{displayName}</h4>
-                        <p className="text-amber-200/50 text-xs">{trackCount} {locale === 'kk' ? 'трек' : 'треков'}</p>
+                        <p className="text-amber-200/50 text-xs">{trackCount} {locale === 'kk' ? 'трек' : locale === 'en' ? 'tracks' : 'треков'}</p>
                         {displayDesc && <p className="text-amber-200/40 text-[10px] mt-0.5">{displayDesc}</p>}
                       </div>
                     </div>
@@ -578,9 +586,9 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           onClick={() => togglePreview(playlist.id, playlist.tracks[0])}
                         >
                           {isPreviewPlaying ? (
-                            <><Square className="w-3 h-3" /> {locale === 'kk' ? 'Тоқтату' : 'Стоп'} ({previewTimer}{locale === 'kk' ? 'с' : 'с'})</>
+                            <><Square className="w-3 h-3" /> {t('shop.stopBtn')} ({previewTimer}s)</>
                           ) : (
-                            <><Play className="w-3 h-3" /> {locale === 'kk' ? 'Тыңдау' : 'Прослушать'}</>
+                            <><Play className="w-3 h-3" /> {t('shop.listenBtn')}</>
                           )}
                         </button>
                       )}
@@ -603,7 +611,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             })}
                             disabled={purchasing || !canAffordPlaylist}
                           >
-                            {purchasing ? '...' : (locale === 'kk' ? 'Сатып алу' : 'Купить')}
+                            {purchasing ? '...' : t('shop.buy')}
                           </Button>
                           <div className="flex items-center gap-1">
                             <span className="text-amber-100 font-bold text-sm">{playlist.priceShanyrak.toLocaleString()}</span>
@@ -614,7 +622,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                     </div>
                     {!isFree && !isOwned && !canAffordPlaylist && (
                       <p className="text-red-400/80 text-xs mt-2">
-                        {locale === 'kk' ? 'Шаңырақ жеткіліксіз' : 'Недостаточно шаныраков'}
+                        {t('shop.notEnoughShanyrak')}
                       </p>
                     )}
                   </div>

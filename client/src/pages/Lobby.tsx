@@ -161,8 +161,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     setTutorialLoading(true);
     try {
       // Create a tutorial room with specific name
+      const tutorialRoomName = locale === 'kk' ? '🎓 Оқыту' : locale === 'en' ? '🎓 Tutorial' : '🎓 Обучение';
       const tutorialRoom = await onCreateRoom(
-        '🎓 Обучение',
+        tutorialRoomName,
         2,
         {
           withBots: true,
@@ -314,9 +315,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Title — shifted right toward avatar */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
                 <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginRight: '155px'}}>
-                  Дурак
+                  {locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'}
                   <br/>
-                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span>
+                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span>
                   <br/>
                   <span>from KZ</span>
                 </h1>
@@ -396,7 +397,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Gamepad2 className="w-7 h-7 text-amber-400" />
-                <h1 className="text-xl font-bold text-amber-100">Дурак <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? 'онлайн' : 'оффлайн'}</span> from KZ</h1>
+                <h1 className="text-xl font-bold text-amber-100">{locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'} <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
                 {/* Admin button (only for admins/GMs) */}

@@ -500,7 +500,7 @@ export default function GameTable({
   // Use tutorial game state if in tutorial, otherwise use actual game state
   const gs = isTutorial && currentTutorialScenario ? tutorialModifiedGameState : gameState;
   const myIdx = gs.myIndex;
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
@@ -2113,6 +2113,7 @@ export default function GameTable({
           tutorialHighlightIds={tutorialHighlightIds}
           tutorialGreenIds={tutorialGreenIds}
           gameState={gs}
+          locale={locale}
         />
       )}
     </div>

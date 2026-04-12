@@ -2333,6 +2333,7 @@ export async function seedChinesePlaylist() {
   await db.insert(musicPlaylists).values({
     name: 'Chinese chill+hiphop motives',
     nameKk: 'Chinese chill+hiphop motives',
+    nameEn: 'Chinese Chill+HipHop Vibes',
     tracksJson: JSON.stringify(chineseTracks),
     priceShanyrak: 100000,
     isDefault: false,
@@ -2340,6 +2341,7 @@ export async function seedChinesePlaylist() {
     volumeMultiplier: 0.8,
     description: 'Чилл и хип-хоп мотивы в китайском стиле — 7 треков',
     descriptionKk: 'Қытай стиліндегі чилл және хип-хоп мотивтері — 7 трек',
+    descriptionEn: 'Chinese-style chill and hip-hop vibes — 7 tracks',
   });
 
   // Also update existing Chinese playlist to have volumeMultiplier 0.8
@@ -2373,9 +2375,17 @@ export async function cleanupOldPlaylists() {
   const oldStandard = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
   for (const p of oldStandard) {
     await db.update(musicPlaylists)
-      .set({ name: 'Классический', nameKk: 'Классикалық', description: 'Классическая фоновая музыка — 7 треков', descriptionKk: 'Классикалық фондық музыка — 7 трек' })
+      .set({ name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', description: 'Классическая фоновая музыка — 7 треков', descriptionKk: 'Классикалық фондық музыка — 7 трек', descriptionEn: 'Classic background music — 7 tracks' })
       .where(eq(musicPlaylists.id, p.id));
   }
+  // Update Классический playlist with English translations
+  await db.update(musicPlaylists)
+    .set({ nameEn: 'Classic', descriptionEn: 'Classic background music — 7 tracks' })
+    .where(eq(musicPlaylists.name, 'Классический'));
+  // Update Chinese playlist with English translations
+  await db.update(musicPlaylists)
+    .set({ nameEn: 'Chinese Chill+HipHop Vibes', descriptionEn: 'Chinese-style chill and hip-hop vibes — 7 tracks' })
+    .where(eq(musicPlaylists.name, 'Chinese chill+hiphop motives'));
   // Remove duplicate Классический playlists — keep only the one with isDefault=true
   const defaults = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Классический'));
   if (defaults.length > 1) {
@@ -2412,12 +2422,14 @@ export async function seedDefaultPlaylist() {
   await db.insert(musicPlaylists).values({
     name: 'Классический',
     nameKk: 'Классикалық',
+    nameEn: 'Classic',
     tracksJson: JSON.stringify(standardTracks),
     priceShanyrak: 0,
     isDefault: true,
     isAvailable: true,
     description: 'Классическая фоновая музыка — 7 треков',
     descriptionKk: 'Классикалық фондық музыка — 7 трек',
+    descriptionEn: 'Classic background music — 7 tracks',
   });
 }
 

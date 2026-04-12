@@ -302,7 +302,7 @@ export function initSocketServer(httpServer: HttpServer) {
       }
     }
 
-    socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
+    socket.emit('roomList', Array.from(rooms.values()).filter(r => !r.settings.isTutorial).map(sanitizeRoom));
 
     // --- ping_check: client sends this to verify connection is alive (e.g. after tab becomes visible) ---
     socket.on('ping_check' as any, () => {
@@ -313,7 +313,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
     // --- requestRoomList: client explicitly requests a fresh room list ---
     socket.on('requestRoomList', () => {
-      socket.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
+      socket.emit('roomList', Array.from(rooms.values()).filter(r => !r.settings.isTutorial).map(sanitizeRoom));
     });
 
     // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
@@ -2196,7 +2196,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
 }
 
 function broadcastRoomList() {
-  io.emit('roomList', Array.from(rooms.values()).map(sanitizeRoom));
+  io.emit('roomList', Array.from(rooms.values()).filter(r => !r.settings.isTutorial).map(sanitizeRoom));
 }
 
 function sanitizeRoom(room: Room): Room {

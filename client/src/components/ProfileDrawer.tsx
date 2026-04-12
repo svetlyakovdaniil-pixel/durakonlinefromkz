@@ -243,8 +243,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             </FrameWrapper>
             <div className="text-amber-100 text-sm">
               {equippedFrame
-                ? (locale === 'kk' ? AVATAR_FRAMES.find(f => f.id === equippedFrame)?.nameKk : AVATAR_FRAMES.find(f => f.id === equippedFrame)?.name) || equippedFrame
-                : (locale === 'kk' ? 'Жақтау жоқ' : 'Без рамки')}
+                ? (() => { const f = AVATAR_FRAMES.find(f => f.id === equippedFrame); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : f?.name) || equippedFrame; })()
+                : (locale === 'kk' ? 'Жақтау жоқ' : locale === 'en' ? 'No frame' : 'Без рамки')}
             </div>
           </div>
 
@@ -260,7 +260,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 <div className="w-10 h-10 rounded-full bg-[#1a2d45] border-2 border-amber-700/30 flex items-center justify-center">
                   <X className="w-5 h-5 text-amber-200/40" />
                 </div>
-                <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : 'Без рамки'}</span>
+                <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : locale === 'en' ? 'No frame' : 'Без рамки'}</span>
                 {!equippedFrame && <Check className="w-4 h-4 text-green-400 ml-auto" />}
               </button>
 
@@ -280,7 +280,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                       </div>
                     </div>
                   </FrameWrapper>
-                  <span className="text-amber-100 text-sm">{locale === 'kk' ? frame.nameKk : frame.name}</span>
+                  <span className="text-amber-100 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
                   {equippedFrame === frame.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
               ))}

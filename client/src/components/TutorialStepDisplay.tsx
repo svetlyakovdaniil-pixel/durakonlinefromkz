@@ -16,6 +16,7 @@ interface TutorialStepDisplayProps {
   tutorialHighlightIds?: Set<string>;
   tutorialGreenIds?: Set<string>;
   gameState?: ClientGameState;
+  locale?: string;
 }
 
 interface SpotlightRect {
@@ -90,6 +91,7 @@ export default function TutorialStepDisplay({
   tutorialHighlightIds,
   tutorialGreenIds,
   gameState,
+  locale = 'ru',
 }: TutorialStepDisplayProps) {
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
   const [textPos, setTextPos] = useState<{ top: number; left: number; maxWidth: number }>({
@@ -1224,8 +1226,8 @@ export default function TutorialStepDisplay({
       >
         <div className={`flex justify-between items-start ${(isCompact || isBottom) ? 'mb-1' : 'mb-3'}`}>
           <div>
-            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{scenario.title}</h3>
-            <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>Шаг {currentStep + 1} из {totalSteps}</p>
+            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{locale === 'kk' ? ((scenario as any).titleKk || scenario.title) : locale === 'en' ? ((scenario as any).titleEn || scenario.title) : scenario.title}</h3>
+            <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>{locale === 'kk' ? `Қадам ${currentStep + 1} / ${totalSteps}` : locale === 'en' ? `Step ${currentStep + 1} of ${totalSteps}` : `Шаг ${currentStep + 1} из ${totalSteps}`}</p>
           </div>
           <button
             onClick={onSkip}
@@ -1236,25 +1238,32 @@ export default function TutorialStepDisplay({
         </div>
 
         {/* Desktop text */}
-        {scenario.mobileText ? (
-          <>
-            <p className={`hidden sm:block text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
-              dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
+        {(() => {
+          const localizedText = locale === 'kk' ? ((scenario as any).textKk || scenario.text) : locale === 'en' ? ((scenario as any).textEn || scenario.text) : scenario.text;
+          const localizedMobileText = scenario.mobileText ? (locale === 'kk' ? ((scenario as any).mobileTextKk || scenario.mobileText) : locale === 'en' ? ((scenario as any).mobileTextEn || scenario.mobileText) : scenario.mobileText) : null;
+          const fmt = (t: string) => t.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>');
+          return localizedMobileText ? (
+            <>
+              <p className={`hidden sm:block text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+                dangerouslySetInnerHTML={{ __html: fmt(localizedText) }}
+              />
+              <p className={`sm:hidden text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px]' : 'mb-3 text-xs'}`}
+                dangerouslySetInnerHTML={{ __html: fmt(localizedMobileText) }}
+              />
+            </>
+          ) : (
+            <p className={`text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
+              dangerouslySetInnerHTML={{ __html: fmt(localizedText) }}
             />
-            {/* Mobile text */}
-            <p className={`sm:hidden text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px]' : 'mb-3 text-xs'}`}
-              dangerouslySetInnerHTML={{ __html: scenario.mobileText.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
-            />
-          </>
-        ) : (
-          <p className={`text-white leading-relaxed whitespace-pre-line ${(isCompact || isBottom) ? 'mb-1 text-[10px] sm:text-xs' : 'mb-3 text-xs sm:text-sm'}`}
-            dangerouslySetInnerHTML={{ __html: scenario.text.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>') }}
-          />
-        )}
+          );
+        })()}
 
-        {scenario.instruction && (
-          <p className={`text-yellow-300 italic ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px] mb-1' : 'text-[10px] sm:text-xs mb-3'}`}>{scenario.instruction}</p>
-        )}
+        {(() => {
+          const localizedInstruction = locale === 'kk' ? ((scenario as any).instructionKk || scenario.instruction) : locale === 'en' ? ((scenario as any).instructionEn || scenario.instruction) : scenario.instruction;
+          return localizedInstruction ? (
+            <p className={`text-yellow-300 italic ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px] mb-1' : 'text-[10px] sm:text-xs mb-3'}`}>{localizedInstruction}</p>
+          ) : null;
+        })()}
 
         {/* Progress bar */}
         <div className={`w-full bg-gray-700 rounded-full ${(isCompact || isBottom) ? 'h-1 mb-1' : 'h-1.5 mb-3'}`}>

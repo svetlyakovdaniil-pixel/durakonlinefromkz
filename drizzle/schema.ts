@@ -290,6 +290,8 @@ export const musicPlaylists = mysqlTable("music_playlists", {
   name: varchar("name", { length: 100 }).notNull(),
   /** Kazakh name */
   nameKk: varchar("nameKk", { length: 100 }),
+  /** English name */
+  nameEn: varchar("nameEn", { length: 100 }),
   /** JSON array of CDN track URLs in play order */
   tracksJson: text("tracksJson").notNull(),
   /** Price in shanyrak (0 = free) */
@@ -304,6 +306,8 @@ export const musicPlaylists = mysqlTable("music_playlists", {
   description: text("description"),
   /** Kazakh description */
   descriptionKk: text("descriptionKk"),
+  /** English description */
+  descriptionEn: text("descriptionEn"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
