@@ -297,7 +297,15 @@ export function drawCards(state: GameState): void {
 
 export function shouldSkipTurn(state: GameState, playerIdx: number): boolean {
   const player = state.players[playerIdx];
-  return player.hand.length === 1 && is777(player.hand[0]) && playerIdx === state.currentAttackerIdx;
+  // Skip is only allowed when the player STARTS their attack turn with only the 777 card.
+  // The battlefield must be empty — meaning they haven't played any cards yet this turn.
+  // This prevents the skip button appearing after the player has already played all other cards.
+  return (
+    player.hand.length === 1 &&
+    is777(player.hand[0]) &&
+    playerIdx === state.currentAttackerIdx &&
+    state.battleField.length === 0
+  );
 }
 
 // ---- Attack validation ----

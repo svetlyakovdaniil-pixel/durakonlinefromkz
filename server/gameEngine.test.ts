@@ -589,12 +589,21 @@ describe('777 special rules', () => {
     expect(canPlayAsAttack(state, card777)).toBe(false);
   });
 
-  it('shouldSkipTurn returns true when player has only 777 and is attacker', () => {
+  it('shouldSkipTurn returns true when player has only 777 and is attacker and battlefield is empty', () => {
     const state = createTestState(2);
     state.currentAttackerIdx = 0;
     state.players[0].hand = [{ id: '777-0', suit: null, rank: '777', copy: 0 }];
     expect(shouldSkipTurn(state, 0)).toBe(true);
     expect(shouldSkipTurn(state, 1)).toBe(false);
+  });
+
+  it('shouldSkipTurn returns false when player has only 777 but has already played cards (battlefield not empty)', () => {
+    const state = createTestState(2);
+    state.currentAttackerIdx = 0;
+    state.players[0].hand = [{ id: '777-0', suit: null, rank: '777', copy: 0 }];
+    // Simulate that the player already played cards this turn
+    state.battleField = [{ attack: card('spades', 'A'), defense: null }];
+    expect(shouldSkipTurn(state, 0)).toBe(false);
   });
 
   it('777 can beat King of Spades', () => {
