@@ -294,6 +294,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     border: '1px solid rgba(251,191,36,0.6)',
                     color: '#fff8e1',
                     textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    marginRight: '205px',
                   }}
                 >
                   <span className="relative z-10">
