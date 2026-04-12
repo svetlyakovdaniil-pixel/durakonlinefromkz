@@ -298,7 +298,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   }}
                 >
                   <span className="relative z-10">
-                    {locale === 'kk' ? '✦ Премиум мәртебе' : locale === 'en' ? '✦ Premium Status' : '✦ Премиум статус'}
+                    PREMIUM
                   </span>
                   {/* Shine sweep overlay */}
                   <span
@@ -838,7 +838,7 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },
               { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
               { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
-              { icon: Settings, key: 'settings', borderR: true, borderB: false, action: null },
+              { icon: Settings, key: 'settings', borderR: true, borderB: true, action: null },
               { icon: Users, key: 'friends', borderR: false, borderB: false, action: () => setShowFriends(true) },
             ].map(({ icon: Icon, key, borderR, borderB, action }) => (
               action === null ? (

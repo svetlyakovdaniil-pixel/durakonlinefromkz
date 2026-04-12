@@ -2346,3 +2346,5 @@
 - [x] Swap Leaderboard↔Tutorial, Settings↔Friends in grid
 - [x] Shorten "dailyQuests" label to "Задания" in ru/kk/en translations
 - [x] Revert "Премиум статус" button to previous style (removed marginRight: 205px)
+- [x] Change premium button text to "PREMIUM" (no star icon, no "статус" word) in all 3 languages
+- [x] Add border/divider between "Настройки" and "Друзья" grid buttons (borderB: true on Settings row)
