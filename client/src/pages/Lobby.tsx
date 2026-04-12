@@ -268,10 +268,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left column: Settings / Bell / Rules — spread top/center/bottom */}
+              {/* Left column: Admin only (if applicable) */}
               <div className="flex flex-col items-start justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
-                {/* Row 0: Admin (only for admins/GMs) */}
-                {hasAdminAccess && (
+                {hasAdminAccess ? (
                   <button
                     className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
                     onClick={() => setLocation('/admin')}
@@ -279,41 +278,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   >
                     <Shield className="w-5 h-5" />
                   </button>
-                )}
-                {/* Row 1: Settings */}
-                <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
-                  <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded">
-                    <Settings className="w-5 h-5" />
-                  </button>
-                </SettingsSheet>
-                {/* Row 2: Bell (notifications) */}
-                <button
-                  className="relative text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
-                  onClick={handleOpenNotifications}
-                >
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
-                {/* Row 3: Rules + Tutorial on same line */}
-                <div className="flex items-center gap-1">
-                  <button
-                    className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
-                    onClick={() => setShowRules(true)}
-                  >
-                    <HelpCircle className="w-5 h-5" />
-                  </button>
-                  <button
-                    className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded"
-                    onClick={() => setShowTutorial(true)}
-                    title="Обучение"
-                  >
-                    <BookOpen className="w-5 h-5" />
-                  </button>
-                </div>
+                ) : <div />}
               </div>
               {/* Title — shifted right toward avatar */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
@@ -382,13 +347,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     +
                   </button>
                 </div>
-                {/* Row 3: Shop (aligned with Rules) */}
-                <button
-                  className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 rounded self-end"
-                  onClick={() => setShowShop(true)} style={{marginRight: '-3px'}}
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                </button>
+                {/* Shop moved to grid menu */}
               </div>
             </div>
 
@@ -850,17 +809,39 @@ onClick={() => setShowTengeTopUp(true)}
           {/* 2-column menu grid — fills remaining space */}
           <div className="grid grid-cols-2 flex-1" style={{ gridTemplateRows: 'repeat(5, 1fr)' }}>
             {[
-              { icon: BookOpen, key: 'tutorial', borderR: true, borderB: true },
-              { icon: Bell, key: 'notifications', borderR: false, borderB: true },
-              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true },
-              { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true },
-              { icon: Trophy, key: 'achievements', borderR: true, borderB: true },
-              { icon: CalendarCheck, key: 'dailyQuests', borderR: false, borderB: true },
-              { icon: Swords, key: 'tournaments', borderR: true, borderB: true },
-              { icon: Settings, key: 'settings', borderR: false, borderB: true },
-              { icon: Users, key: 'friends', borderR: true, borderB: false },
-              { icon: Medal, key: 'leaderboard', borderR: false, borderB: false },
-            ].map(({ icon: Icon, key, borderR, borderB }) => (
+              { icon: BookOpen, key: 'tutorial', borderR: true, borderB: true, action: () => setShowTutorial(true) },
+              { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
+              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
+              { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
+              { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => {} },
+              { icon: CalendarCheck, key: 'dailyQuests', borderR: false, borderB: true, action: () => {} },
+              { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
+              { icon: Settings, key: 'settings', borderR: false, borderB: true, action: null },
+              { icon: Users, key: 'friends', borderR: true, borderB: false, action: () => {} },
+              { icon: Medal, key: 'leaderboard', borderR: false, borderB: false, action: () => setShowLeaderboard(true) },
+            ].map(({ icon: Icon, key, borderR, borderB, action }) => (
+              action === null ? (
+                <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
+                  <button
+                    className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
+                    style={{
+                      background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                      borderBottom: '1px solid rgba(201,168,76,0.15)',
+                      gap: 'clamp(2px, 1.2vw, 6px)',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  >
+                    <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
+                    <span
+                      className="font-bold tracking-wide text-amber-100/80 text-center leading-tight px-1"
+                      style={{ fontSize: 'clamp(12px, 3.8vw, 16px)' }}
+                    >
+                      {t(`lobby.${key}`)}
+                    </span>
+                  </button>
+                </SettingsSheet>
+              ) : (
               <button
                 key={key}
                 className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
@@ -870,7 +851,7 @@ onClick={() => setShowTengeTopUp(true)}
                   borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
                   gap: 'clamp(2px, 1.2vw, 6px)',
                 }}
-                onClick={() => {}}
+                onClick={action}
               >
                 <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
                 <span
@@ -880,6 +861,7 @@ onClick={() => setShowTengeTopUp(true)}
                   {t(`lobby.${key}`)}
                 </span>
               </button>
+              )
             ))}
           </div>
         </div>
