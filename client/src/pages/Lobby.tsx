@@ -226,7 +226,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
       playlistId: selectedPlaylistId,
     };
-    await onCreateRoom(roomName || `Комната ${userName}`, parseInt(maxPlayers), settings);
+    await onCreateRoom(roomName || `${t('lobby.roomPrefix')} ${userName}`, parseInt(maxPlayers), settings);
     setLoading(false);
     setDialogOpen(false);
     setRoomName('');
@@ -527,7 +527,7 @@ onClick={() => setShowTengeTopUp(true)}
                     <Input
                       value={searchQuery}
                       onChange={e => setSearchQuery(e.target.value)}
-                      placeholder="Поиск комнаты..."
+                      placeholder={t('lobby.searchPlaceholder')}
                       className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-10 pl-8 pr-3 w-48 text-sm"
                     />
                   </div>
@@ -744,27 +744,27 @@ onClick={() => setShowTengeTopUp(true)}
                 <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-lg p-4 animate-in slide-in-from-top-2">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div>
-                      <Label className="text-amber-200/70 text-xs mb-1 block">Игроков за столом</Label>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">{t('lobby.filterPlayersLabel')}</Label>
                       <Select value={filterPlayers} onValueChange={setFilterPlayers}>
                         <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                          <SelectItem value="any">Любое</SelectItem>
+                          <SelectItem value="any">{t('lobby.filterAny')}</SelectItem>
                           {[2, 3, 4, 5, 6, 7, 8].map(n => (
-                            <SelectItem key={n} value={String(n)}>{n} игроков</SelectItem>
+                            <SelectItem key={n} value={String(n)}>{t('lobby.nPlayersOption').replace('{n}', String(n))}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-amber-200/70 text-xs mb-1 block">Ставка</Label>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">{t('lobby.filterBetLabel')}</Label>
                       <Select value={filterBet} onValueChange={setFilterBet}>
                         <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                          <SelectItem value="any">Любая</SelectItem>
+                          <SelectItem value="any">{t('lobby.filterAnyF')}</SelectItem>
                           {BET_AMOUNTS.map((bet, idx) => (
                             <SelectItem key={idx} value={String(idx)}>{formatBalance(bet)}</SelectItem>
                           ))}
@@ -772,28 +772,28 @@ onClick={() => setShowTengeTopUp(true)}
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-amber-200/70 text-xs mb-1 block">Боты</Label>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">{t('lobby.filterBotsLabel')}</Label>
                       <Select value={filterBots} onValueChange={setFilterBots}>
                         <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                          <SelectItem value="any">Любые</SelectItem>
-                          <SelectItem value="with">С ботами</SelectItem>
-                          <SelectItem value="without">Без ботов</SelectItem>
+                          <SelectItem value="any">{t('lobby.filterAny')}</SelectItem>
+                          <SelectItem value="with">{t('lobby.filterWithBots')}</SelectItem>
+                          <SelectItem value="without">{t('lobby.filterWithoutBots')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div>
-                      <Label className="text-amber-200/70 text-xs mb-1 block">Доступ</Label>
+                      <Label className="text-amber-200/70 text-xs mb-1 block">{t('lobby.filterAccessLabel')}</Label>
                       <Select value={filterPrivate} onValueChange={setFilterPrivate}>
                         <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                          <SelectItem value="any">Любой</SelectItem>
-                          <SelectItem value="public">Открытые</SelectItem>
-                          <SelectItem value="private">Закрытые</SelectItem>
+                          <SelectItem value="any">{t('lobby.filterAnyM')}</SelectItem>
+                          <SelectItem value="public">{t('lobby.filterPublic')}</SelectItem>
+                          <SelectItem value="private">{t('lobby.filterPrivate')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -806,7 +806,7 @@ onClick={() => setShowTengeTopUp(true)}
                         className="h-7 text-xs border-amber-700/30 text-amber-300 bg-transparent hover:bg-amber-900/20"
                         onClick={() => { setFilterPlayers('any'); setFilterBet('any'); setFilterBots('any'); setFilterPrivate('any'); }}
                       >
-                        <X className="w-3 h-3 mr-1" /> Сбросить
+                        <X className="w-3 h-3 mr-1" /> {t('lobby.filterReset')}
                       </Button>
                     </div>
                   )}
@@ -861,7 +861,7 @@ onClick={() => setShowTengeTopUp(true)}
             <Input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Поиск комнаты..."
+              placeholder={t('lobby.searchPlaceholder')}
               className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 pl-8 pr-3 text-sm"
             />
           </div>
@@ -870,13 +870,13 @@ onClick={() => setShowTengeTopUp(true)}
             <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-lg p-3 space-y-2">
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Игроки</Label>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">{t('lobby.filterPlayersLabelShort')}</Label>
                   <Select value={filterPlayers} onValueChange={setFilterPlayers}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="any">Любое</SelectItem>
+                      <SelectItem value="any">{t('lobby.filterAny')}</SelectItem>
                       {[2, 3, 4, 5, 6, 7, 8].map(n => (
                         <SelectItem key={n} value={String(n)}>{n}</SelectItem>
                       ))}
@@ -884,13 +884,13 @@ onClick={() => setShowTengeTopUp(true)}
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Ставка</Label>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">{t('lobby.filterBetLabel')}</Label>
                   <Select value={filterBet} onValueChange={setFilterBet}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="any">Любая</SelectItem>
+                      <SelectItem value="any">{t('lobby.filterAnyF')}</SelectItem>
                       {BET_AMOUNTS.map((bet, idx) => (
                         <SelectItem key={idx} value={String(idx)}>{formatBalance(bet)}</SelectItem>
                       ))}
@@ -898,28 +898,28 @@ onClick={() => setShowTengeTopUp(true)}
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Боты</Label>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">{t('lobby.filterBotsLabel')}</Label>
                   <Select value={filterBots} onValueChange={setFilterBots}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="any">Любые</SelectItem>
-                      <SelectItem value="with">С ботами</SelectItem>
-                      <SelectItem value="without">Без ботов</SelectItem>
+                      <SelectItem value="any">{t('lobby.filterAny')}</SelectItem>
+                      <SelectItem value="with">{t('lobby.filterWithBots')}</SelectItem>
+                      <SelectItem value="without">{t('lobby.filterWithoutBots')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">Доступ</Label>
+                  <Label className="text-amber-200/70 text-[10px] mb-0.5 block">{t('lobby.filterAccessLabel')}</Label>
                   <Select value={filterPrivate} onValueChange={setFilterPrivate}>
                     <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-xs">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                      <SelectItem value="any">Любой</SelectItem>
-                      <SelectItem value="public">Открытые</SelectItem>
-                      <SelectItem value="private">Закрытые</SelectItem>
+                      <SelectItem value="any">{t('lobby.filterAnyM')}</SelectItem>
+                      <SelectItem value="public">{t('lobby.filterPublic')}</SelectItem>
+                      <SelectItem value="private">{t('lobby.filterPrivate')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -931,7 +931,7 @@ onClick={() => setShowTengeTopUp(true)}
                   className="h-6 text-[10px] w-full border-amber-700/30 text-amber-300 bg-transparent"
                   onClick={() => { setFilterPlayers('any'); setFilterBet('any'); setFilterBots('any'); setFilterPrivate('any'); }}
                 >
-                  <X className="w-3 h-3 mr-1" /> Сбросить фильтры
+                  <X className="w-3 h-3 mr-1" /> {t('lobby.filterResetAll')}
                 </Button>
               )}
             </div>

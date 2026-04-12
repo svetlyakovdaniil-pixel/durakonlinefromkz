@@ -156,7 +156,11 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   : 'bg-slate-700/50 text-green-200 hover:bg-slate-600/50'
               }`}
             >
+<<<<<<< Updated upstream
               {t('topUp.historyTab') || 'История'}
+=======
+              {t('profile.history')}
+>>>>>>> Stashed changes
             </button>
           </div>
         </div>
@@ -273,10 +277,10 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
         {activeTab === 'history' && (
           <div className="space-y-2">
             {transactionsQuery.isLoading && (
-              <div className="text-center text-green-300/60 py-4">Загрузка...</div>
+              <div className="text-center text-green-300/60 py-4">{t('common.loading')}</div>
             )}
             {transactionsQuery.data && transactionsQuery.data.length === 0 && (
-              <div className="text-center text-green-300/60 py-4">История пуста</div>
+              <div className="text-center text-green-300/60 py-4">{t('lobby.historyEmpty')}</div>
             )}
             {transactionsQuery.data && transactionsQuery.data.map((tx: any) => (
               <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
@@ -292,7 +296,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   <span className="text-green-300/60 text-xs">
                     {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString()}
                   </span>
-                  <span className="text-green-300/60 text-xs">Баланс: {formatBalance(tx.balanceAfter || 0)}</span>
+                  <span className="text-green-300/60 text-xs">{t('shop.balance')}: {formatBalance(tx.balanceAfter || 0)}</span>
                 </div>
               </div>
             ))}

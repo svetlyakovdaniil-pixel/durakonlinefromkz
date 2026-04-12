@@ -366,7 +366,7 @@ function LandingPage() {
               />
               <FeatureCard
                 icon={<Shield className="w-8 h-8 text-amber-400" />}
-                title="777"
+                title={t('landing.feature3Title')}
                 desc={t('landing.feature3Desc')}
               />
             </div>

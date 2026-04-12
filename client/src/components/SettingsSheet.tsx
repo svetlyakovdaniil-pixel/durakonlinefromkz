@@ -96,7 +96,11 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
       onNameChanged?.();
     },
     onError: (err) => {
-      toast.error(err.message || t('settings.nameError'));
+      if (err.message === 'NAME_RESERVED_10003') {
+        toast.error(t('settings.nameReserved'));
+      } else {
+        toast.error(err.message || t('settings.nameError'));
+      }
     },
   });
 

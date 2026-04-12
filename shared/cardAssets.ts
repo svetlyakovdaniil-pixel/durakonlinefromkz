@@ -88,10 +88,10 @@ export const GAME_TABLE_NEON_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519
 
 export type TableStyle = 'classic' | 'dark_kazakh' | 'neon';
 
-export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; price: number }> = {
-  classic: { url: GAME_TABLE_URL, name: 'Классический', price: 0 },
-  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Ханский Октогон', price: 500 },
-  neon: { url: GAME_TABLE_NEON_URL, name: 'Неоновый Нексус', price: 350 },
+export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; nameKk: string; price: number }> = {
+  classic: { url: GAME_TABLE_URL, name: 'Классический', nameKk: 'Классикалық', price: 0 },
+  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Ханский Октогон', nameKk: 'Хандық Октогон', price: 500 },
+  neon: { url: GAME_TABLE_NEON_URL, name: 'Неоновый Нексус', nameKk: 'Неон Нексус', price: 350 },
 };
 
 export const SUIT_SYMBOLS: Record<string, string> = {

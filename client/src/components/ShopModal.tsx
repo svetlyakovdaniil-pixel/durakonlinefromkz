@@ -357,7 +357,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? (locale === 'kk' ? 'Жақтаулар' : 'Рамки') : tab === 'avatars' ? (locale === 'kk' ? 'Аватарлар' : 'Аватары') : (locale === 'kk' ? 'Музыка' : 'Музыка')}
+              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : t('shop.music')}
             </button>
           ))}
         </div>
@@ -400,7 +400,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-amber-100 font-bold text-sm">{table.name}</h3>
+                          <h3 className="text-amber-100 font-bold text-sm">{locale === 'kk' ? table.nameKk : table.name}</h3>
                         </div>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -409,7 +409,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                         ) : (
                           <div className="flex items-center gap-3">
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: table.name, price: effectivePrice })}
+                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: locale === 'kk' ? table.nameKk : table.name, price: effectivePrice })}
                               disabled={purchasing || !canAffordTable}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
                               <span className="text-amber-100 font-bold text-base">{effectivePrice}</span>

@@ -200,13 +200,12 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
             <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-amber-100">
-                  Вы действительно хотите выйти?
+                  {t('game.leaveConfirmTitle')}
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-amber-200/60 space-y-2">
                   <span className="block">
-                    {isTutorial ? 'Вы завершите обучение и вернётесь в лобби.' : `Если вы выберите "Да", то выйдите в лобби и потеряете ${roomPenalty} `}
+                    {isTutorial ? t('game.leaveTutorialDesc') : t('game.leaveConfirmDesc').replace('{penalty}', String(roomPenalty))}
                     {!isTutorial && <Banknote className="inline-block w-4 h-4 text-green-400" />}
-                    {!isTutorial && ' шаныраков.'}
                   </span>
                   {!isTutorial && (
                     <span className="block text-red-300 text-xs font-medium">

@@ -1,4 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
+import { COOKIE_NAME, RESERVED_NAME_ERR_MSG } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, gmProcedure, router } from "./_core/trpc";
@@ -151,7 +151,7 @@ export const appRouter = router({
             'owner', 'system', 'support', 'staff',
           ];
           if (forbidden.some(f => normalized.includes(f))) {
-            throw new TRPCError({ code: 'BAD_REQUEST', message: 'Это имя зарезервировано' });
+            throw new TRPCError({ code: 'BAD_REQUEST', message: RESERVED_NAME_ERR_MSG });
           }
         }
         await updateProfileDisplayName(ctx.user.id, input.displayName);
