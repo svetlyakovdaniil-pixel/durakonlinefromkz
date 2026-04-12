@@ -2318,3 +2318,4 @@
 - [x] Add 2-column grid below "Быстрая игра": left="Обучение" (BookOpen icon), right="Уведомления" (Bell icon), same dark style, inactive/visual only
 - [x] Add second row in mobile menu grid: left="Правила" (HelpCircle icon), right="Магазин" (ShoppingCart icon), same dark style, inactive/visual only
 - [x] Add third row in mobile menu grid: left="Достижения" (Trophy icon), right="Ежедневные задания" (CalendarCheck icon), same dark style, inactive/visual only
+- [x] Add fourth row in mobile menu grid: left="Турниры" (Swords icon), right="Настройки" (Settings icon), inactive/visual only, translations added for ru/kk/en

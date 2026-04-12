@@ -57,6 +57,7 @@ export const ru = {
     rules: 'Правила',
     achievements: 'Достижения',
     dailyQuests: 'Ежедневные задания',
+    tournaments: 'Турниры',
     settings: 'Настройки',
     logout: 'Выйти',
     dailyBonus: 'Ежедневный бонус',

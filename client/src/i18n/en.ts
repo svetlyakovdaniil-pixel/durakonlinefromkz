@@ -58,6 +58,7 @@ export const en = {
     rules: 'Rules',
     achievements: 'Achievements',
     dailyQuests: 'Daily Quests',
+    tournaments: 'Tournaments',
     settings: 'Settings',
     logout: 'Log out',
     dailyBonus: 'Daily bonus',

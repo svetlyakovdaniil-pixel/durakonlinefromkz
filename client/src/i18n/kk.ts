@@ -56,6 +56,7 @@ export const kk = {
     shop: 'Дүкен',
     achievements: 'Жетістіктер',
     dailyQuests: 'Күнделік тапсырмалар',
+    tournaments: 'Турнирлер',
     rules: 'Ережелер',
     settings: 'Баптаулар',
     logout: 'Шығу',
