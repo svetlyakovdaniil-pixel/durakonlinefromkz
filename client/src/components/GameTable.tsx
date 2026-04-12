@@ -1520,7 +1520,12 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className={`flex-1 flex items-center justify-center px-2 sm:px-4 ${gs.battleField.length > 36 ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'}`}>
+          <div className={`flex-1 flex justify-center px-2 sm:px-4 ${
+            // Mobile: allow scroll when ≥15 pairs; Desktop: allow scroll when >36 pairs
+            (gs.battleField.length >= 15 || gs.battleField.length > 36)
+              ? 'overflow-y-auto overflow-x-hidden items-start pt-2'
+              : 'overflow-hidden items-center'
+          }`}>
             <div
               id="battlefield-drop-zone"
               className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all w-full ${

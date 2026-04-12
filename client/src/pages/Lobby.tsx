@@ -82,6 +82,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showRules, setShowRules] = useState(false);
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialLoading, setTutorialLoading] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   // Room filter & search
   const [showFilter, setShowFilter] = useState(false);
@@ -501,7 +502,7 @@ onClick={() => setShowTengeTopUp(true)}
             </div>
             {/* Top players marquee (desktop) */}
             <div className="mt-4 hidden sm:block">
-              <TopPlayersMarquee />
+              <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
             </div>
 
             {/* Bottom row: Комнаты + Фильтр + Поиск + Создать */}
@@ -601,7 +602,7 @@ onClick={() => setShowTengeTopUp(true)}
                   <Slider
                     value={[turnTimer]}
                     onValueChange={v => setTurnTimer(v[0])}
-                    min={15}
+                    min={30}
                     max={60}
                     step={5}
                     className="mt-2"
@@ -818,7 +819,7 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Mobile: Top players marquee */}
       <div className="sm:hidden">
-        <TopPlayersMarquee />
+        <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
       {/* Mobile: Комнаты + Фильтр + Поиск + Создать (below header, only on mobile) */}
@@ -1230,6 +1231,17 @@ onClick={() => setShowTengeTopUp(true)}
           </div>
         </div>
       )}
+      {/* Leaderboard ProfileDrawer triggered from marquee click */}
+      <ProfileDrawer
+        profile={profile}
+        onlineFriendIds={onlineFriendIds}
+        inRoom={false}
+        initialTab="leaderboard"
+        open={showLeaderboard}
+        onOpenChange={setShowLeaderboard}
+      >
+        <span style={{ display: 'none' }} />
+      </ProfileDrawer>
     </div>
   );
 }

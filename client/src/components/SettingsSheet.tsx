@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal, MessageSquare } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal, MessageSquare, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -402,7 +402,25 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             </div>
           </button>
 
-          {/* 8. Logout */}
+          {/* 8. Privacy Policy */}
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
+          >
+            <Shield className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-200/80">
+                {locale === 'kk' ? 'Күпіялылық саясаты' : locale === 'en' ? 'Privacy Policy' : 'Политика конфиденциальности'}
+              </p>
+              <p className="text-xs text-amber-200/40 mt-0.5">
+                {locale === 'kk' ? 'Деректерді оқу' : locale === 'en' ? 'Read our privacy policy' : 'Ознакомиться с политикой'}
+              </p>
+            </div>
+          </a>
+
+          {/* 9. Logout */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">

@@ -8,7 +8,11 @@ const PLACE_CONFIG = [
   { icon: Award, color: 'text-amber-600', bg: 'bg-amber-600/10', border: 'border-amber-600/30', label: '#3' },
 ];
 
-export default function TopPlayersMarquee() {
+interface TopPlayersMarqueeProps {
+  onClick?: () => void;
+}
+
+export default function TopPlayersMarquee({ onClick }: TopPlayersMarqueeProps = {}) {
   const { t } = useTranslation();
   const { data: topPlayers } = trpc.stats.leaderboard.useQuery(
     { limit: 3 },
@@ -67,7 +71,12 @@ export default function TopPlayersMarquee() {
   const content = topPlayers.map((p: typeof topPlayers[number], i: number) => renderPlayer(p, i));
 
   return (
-    <div className="w-full overflow-hidden bg-gradient-to-r from-amber-900/20 via-amber-800/15 to-amber-900/20 border-y border-amber-700/20 py-1.5 relative">
+    <div
+      className={`w-full overflow-hidden bg-gradient-to-r from-amber-900/20 via-amber-800/15 to-amber-900/20 border-y border-amber-700/20 py-1.5 relative ${onClick ? 'cursor-pointer hover:from-amber-900/30 hover:via-amber-800/25 hover:to-amber-900/30 transition-colors' : ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      title={onClick ? (t('lobby.viewRating') || 'Посмотреть рейтинг') : undefined}
+    >
       {/* Fade edges */}
       <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0a1628] to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0a1628] to-transparent z-10 pointer-events-none" />

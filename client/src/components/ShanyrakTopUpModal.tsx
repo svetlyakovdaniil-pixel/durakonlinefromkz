@@ -116,7 +116,6 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
 
   const isFreeAvailable = freeTopupStatus.data?.available ?? false;
   const isCooldown = !isFreeAvailable && cooldownRemaining > 0;
-  const isAlreadyMax = !isFreeAvailable && cooldownRemaining <= 0 && currentShanyrak >= 2000;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -157,7 +156,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   : 'bg-slate-700/50 text-green-200 hover:bg-slate-600/50'
               }`}
             >
-              История
+              {t('topUp.historyTab') || 'История'}
             </button>
           </div>
         </div>
@@ -189,22 +188,20 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             <div className="mb-3">
               <button
                 className={`w-full rounded-xl p-3 flex items-center justify-center gap-2 font-semibold text-sm transition-all ${
-                  isFreeAvailable && !isAlreadyMax
+                  isFreeAvailable
                     ? 'bg-green-700/50 hover:bg-green-600/60 text-green-100 border border-green-500/30'
                     : 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
                 }`}
                 onClick={handleFreeTopup}
-                disabled={!isFreeAvailable || isAlreadyMax || freeTopupMutation.isPending}
+                disabled={!isFreeAvailable || freeTopupMutation.isPending}
               >
                 {freeTopupMutation.isPending ? (
                   <span>{t('topUp.crediting')}</span>
                 ) : isCooldown ? (
                   <>
                     <Clock className="w-4 h-4" />
-                    <span>{formatTime(cooldownRemaining)}</span>
+                    <span>{t('topUp.alreadyMax')} {formatTime(cooldownRemaining)}</span>
                   </>
-                ) : isAlreadyMax ? (
-                  <span>{t('topUp.alreadyMax')}</span>
                 ) : (
                   <>
                     <span>{t('topUp.freeTopup')}</span>

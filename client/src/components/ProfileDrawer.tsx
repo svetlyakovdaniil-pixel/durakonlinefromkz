@@ -37,13 +37,21 @@ interface ProfileDrawerProps {
   onInviteFriend?: (targetGameId: number) => void;
   /** Whether we're in a room (show invite buttons) */
   inRoom?: boolean;
+  /** Initial tab to open */
+  initialTab?: 'profile' | 'friends' | 'leaderboard' | 'history';
+  /** Controlled open state (optional) */
+  open?: boolean;
+  /** Controlled open change handler (optional) */
+  onOpenChange?: (open: boolean) => void;
 }
 
 export default function ProfileDrawer({
-  profile, onlineFriendIds, children, onInviteFriend, inRoom,
+  profile, onlineFriendIds, children, onInviteFriend, inRoom, initialTab, open: controlledOpen, onOpenChange: controlledOnOpenChange,
 }: ProfileDrawerProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const { t } = useTranslation();
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -52,7 +60,7 @@ export default function ProfileDrawer({
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
         </SheetHeader>
-        <Tabs defaultValue={inRoom ? 'friends' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
+        <Tabs defaultValue={initialTab ?? (inRoom ? 'friends' : 'profile')} className="flex flex-col h-[calc(100%-60px)]">
           <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
             <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.title')}</span>
@@ -280,18 +288,6 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
           )}
         </div>
       )}
-
-      {/* Privacy Policy link */}
-      <div className="mt-4 text-center">
-        <a
-          href="/privacy"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-amber-200/40 hover:text-amber-200/70 text-xs underline underline-offset-2 transition-colors"
-        >
-          {t('privacy.link')}
-        </a>
-      </div>
 
       {/* Avatar Picker Modal */}
       {showAvatarPicker && (

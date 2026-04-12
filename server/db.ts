@@ -625,13 +625,9 @@ export async function freeShanyrakTopup(userId: number): Promise<{
     }
   }
 
-  // Already at or above 2000
-  if (profile.balanceShanyrak >= 2000) {
-    return { success: false, reason: 'already_max' };
-  }
-
-  const added = 2000 - profile.balanceShanyrak;
-  const newBalance = 2000;
+  // Give +2000 shanyraks regardless of current balance
+  const added = 2000;
+  const newBalance = profile.balanceShanyrak + 2000;
 
   await db.update(playerProfiles).set({
     balanceShanyrak: newBalance,
