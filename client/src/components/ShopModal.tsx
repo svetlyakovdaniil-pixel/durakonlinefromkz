@@ -648,16 +648,16 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               {/* Large avatar image */}
               <div className="flex justify-center mb-4">
                 <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
-                  <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name} className="w-full h-full object-cover" />
+                  <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name} className="w-full h-full object-cover" />
                 </div>
               </div>
 
               {/* Avatar name */}
               <h3 className="text-amber-100 font-bold text-lg text-center mb-1">
-                {locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name}
+                {locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name}
               </h3>
               <p className="text-amber-200/50 text-xs text-center mb-4">
-                {locale === 'kk' ? '\u041f\u0440\u0435\u043c\u0438\u0443\u043c \u0430\u0432\u0430\u0442\u0430\u0440' : '\u041f\u0440\u0435\u043c\u0438\u0443\u043c \u0430\u0432\u0430\u0442\u0430\u0440'}
+                {t('shop.premiumAvatar')}
               </p>
 
               {/* Status & action */}
@@ -679,7 +679,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       setConfirmPurchase({
                         type: 'avatar',
                         id: previewAvatar.id,
-                        name: locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : previewAvatar.name,
+                        name: locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name,
                         price: getPrice('avatar', previewAvatar.id, previewAvatar.price || 0),
                       });
                     }}

@@ -2245,3 +2245,19 @@
 - [x] i18n: исправить "profile.NoMatches" в истории матчей (en) — profile.noMatches есть в en.ts
 - [x] i18n: убрать все кодовые ключи (profile., shop. и т.д.) из UI (en) — все ключи есть в en.ts
 - [x] i18n: перевести "Дурак онлайн from KZ" в лобби (kk, en) — Lobby.tsx inline locale conditions
+
+## Задачи Apr 12, 2026 — Сессия 10
+
+- [x] i18n: перевести названия аватарок в модале (при клике на аватарку в магазине) (kk, en) — ShopModal.tsx previewAvatar nameEn
+- [x] i18n: перевести политику конфиденциальности (kk, en) — PrivacyPolicy.tsx
+- [x] i18n: K1/K2 → D1/D2 в английской версии (мобиль + обучение) — GameTable.tsx locale === 'en'
+- [x] i18n: перевести кнопки "Далее" и "Назад" в обучении (kk, en) — TutorialStepDisplay.tsx
+- [x] i18n: перевести оповещения "Бито", "Перевести" и т.д. в обучении (kk, en) — TutorialStepDisplay.tsx
+- [x] i18n: перевести "Вы перевели ход на игрока Мадина" (шаг 13) (kk, en) — TutorialStepDisplay.tsx transferPhase
+- [x] i18n: имена ботов латиницей в английской версии — BOT_NAMES_EN + locale в RoomSettings
+- [x] i18n: перевести шаги 21, 22, 23 обучения (kk, en) — уже были переведены в сессии 9
+- [x] i18n: перевести кнопку "Завершить обучение" (kk, en) — TutorialStepDisplay.tsx isLastStep
+- [x] i18n: перевести поздравление после обучения (kk, en) — Home.tsx showTutorialCongrats
+- [x] i18n: перевести "Плейлисты" и названия плейлистов в настройках комнаты (kk, en) — Lobby.tsx t('shop.music') + nameEn
+- [x] UI: исправить отображение колоды и стола в настройках комнаты (мобиль) — grid-cols-1 sm:grid-cols-2
+- [x] i18n: добавить выбор английского языка в настройках внутри игры — GameSettingsSheet.tsx English опция

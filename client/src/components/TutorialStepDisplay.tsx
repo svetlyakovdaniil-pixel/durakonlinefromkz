@@ -1205,8 +1205,8 @@ export default function TutorialStepDisplay({
         <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
             <div className="text-4xl mb-2">✅</div>
-            <p className="text-emerald-300 font-bold text-lg">Отбито!</p>
-            <p className="text-emerald-200/70 text-sm mt-1">Карты побили сами себя</p>
+            <p className="text-emerald-300 font-bold text-lg">{locale === 'kk' ? 'Бітті!' : locale === 'en' ? 'Beaten!' : 'Отбито!'}</p>
+            <p className="text-emerald-200/70 text-sm mt-1">{locale === 'kk' ? 'Карталар өздігінен-өзі ұтты' : locale === 'en' ? 'Cards beat themselves' : 'Карты побили сами себя'}</p>
           </div>
         </div>
       )}
@@ -1285,7 +1285,7 @@ export default function TutorialStepDisplay({
             className={`flex items-center gap-1 ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
           >
             <ChevronLeft size={isCompact ? 10 : 14} />
-            Назад
+            {locale === 'kk' ? 'Алдыңғы' : locale === 'en' ? 'Back' : 'Назад'}
           </Button>
 
           <Button
@@ -1295,7 +1295,7 @@ export default function TutorialStepDisplay({
             className={`flex items-center gap-1 ${scenario?.isLastStep ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
             disabled={isNextDisabled}
           >
-            {scenario?.finishButtonText || (scenario?.isLastStep ? 'Завершить обучение' : 'Далее')}
+            {scenario?.finishButtonText || (scenario?.isLastStep ? (locale === 'kk' ? 'Оқытуды аяқтау' : locale === 'en' ? 'Finish Tutorial' : 'Завершить обучение') : (locale === 'kk' ? 'Алға' : locale === 'en' ? 'Next' : 'Далее'))}
             <ChevronRight size={isCompact ? 10 : 14} />
           </Button>
         </div>
@@ -1344,7 +1344,7 @@ export default function TutorialStepDisplay({
               size="sm"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2 shadow-lg shadow-emerald-500/30"
             >
-              Перевести
+              {locale === 'kk' ? 'Аудару' : locale === 'en' ? 'Transfer' : 'Перевести'}
             </Button>
           </div>
         );
@@ -1388,8 +1388,14 @@ export default function TutorialStepDisplay({
         <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
             <div className="text-4xl mb-2">↩️</div>
-            <p className="text-emerald-300 font-bold text-lg">Перевод!</p>
-            <p className="text-emerald-200/70 text-sm mt-1">Вы перевели ход на игрока "{scenario.transferMechanic.targetBotName}",<br/>теперь бьется этот игрок</p>
+            <p className="text-emerald-300 font-bold text-lg">{locale === 'kk' ? 'Аудару!' : locale === 'en' ? 'Transfer!' : 'Перевод!'}</p>
+            <p className="text-emerald-200/70 text-sm mt-1">
+              {locale === 'kk'
+                ? `Сіз жүрісті "${scenario.transferMechanic.targetBotName}" ойыншысына аудардыңыз,\nенді осы ойыншы ұрады`
+                : locale === 'en'
+                ? `You transferred the turn to "${scenario.transferMechanic.targetBotName}",\nnow this player defends`
+                : `Вы перевели ход на игрока "${scenario.transferMechanic.targetBotName}",\nтеперь бьется этот игрок`}
+            </p>
           </div>
         </div>
       )}

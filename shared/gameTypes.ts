@@ -92,6 +92,8 @@ export interface RoomSettings {
   isTutorial?: boolean;
   /** Selected playlist ID for room music (all players hear the same music) */
   playlistId?: number | null;
+  /** Locale of the room creator (used for bot names) */
+  locale?: string;
 }
 
 /** Valid bet amounts for room creation */

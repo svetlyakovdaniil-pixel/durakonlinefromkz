@@ -51,6 +51,7 @@ const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
 const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; disconnectedName: string; timer: NodeJS.Timeout; tickInterval: NodeJS.Timeout; secondsLeft: number }>(); // roomId -> freeze info
 
 const BOT_NAMES = ['Алтынбек', 'Жанибек', 'Айгерим', 'Дана', 'Ерлан', 'Мадина', 'Нурсултан', 'Камила', 'Бауыржан', 'Сауле'];
+const BOT_NAMES_EN = ['Altynbek', 'Zhanibek', 'Aigerim', 'Dana', 'Yerlan', 'Madina', 'Nursultan', 'Kamila', 'Baurzhan', 'Saule'];
 
 // Verbose logging only in development
 const isDev = process.env.NODE_ENV !== 'production';
@@ -423,7 +424,8 @@ export function initSocketServer(httpServer: HttpServer) {
       // Add bots if requested
       if (settings.withBots && settings.botCount > 0) {
         const botCount = Math.min(settings.botCount, room.maxPlayers - 1);
-        const shuffledNames = [...BOT_NAMES].sort(() => Math.random() - 0.5);
+        const botNameList = settings.locale === 'en' ? BOT_NAMES_EN : BOT_NAMES;
+        const shuffledNames = [...botNameList].sort(() => Math.random() - 0.5);
         for (let i = 0; i < botCount; i++) {
           room.players.push({
             id: `bot-${nanoid(6)}`,

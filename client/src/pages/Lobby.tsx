@@ -226,6 +226,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       betAmount: BET_AMOUNTS[betAmountIdx],
       ...(isPrivate && roomPassword ? { password: roomPassword, isPrivate: true } : {}),
       playlistId: selectedPlaylistId,
+      locale,
     };
     await onCreateRoom(roomName || `${t('lobby.roomPrefix')} ${userName}`, parseInt(maxPlayers), settings);
     setLoading(false);
@@ -613,14 +614,14 @@ onClick={() => setShowTengeTopUp(true)}
                   <Label className="text-amber-200/70 text-sm">{t('lobby.addBots')}</Label>
                   <Switch checked={withBots} onCheckedChange={setWithBots} />
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="min-w-0">
                     <Label className="text-amber-200/70 text-sm">{t('lobby.deckStyle')}</Label>
                     <Select value={deckStyle} onValueChange={(v) => {
                       if (v === 'custom' && !isCustomDeckOwned) return;
                       setDeckStyle(v as DeckStyle);
                     }}>
-                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
+                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
@@ -638,14 +639,14 @@ onClick={() => setShowTengeTopUp(true)}
                       </SelectContent>
                     </Select>
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Label className="text-amber-200/70 text-sm">{t('lobby.tableStyle')}</Label>
                     <Select value={tableStyle} onValueChange={(v) => {
                       if (v === 'dark_kazakh' && !isDarkTableOwned) return;
                       if (v === 'neon' && !isNeonTableOwned) return;
                       setTableStyle(v as TableStyle);
                     }}>
-                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10">
+                      <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
@@ -690,7 +691,7 @@ onClick={() => setShowTengeTopUp(true)}
                 {/* Playlist selector */}
                 <div>
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
-                    <Music className="w-3.5 h-3.5" /> {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+                    <Music className="w-3.5 h-3.5" /> {t('shop.music')}
                   </Label>
                   <Select
                     value={selectedPlaylistId !== null ? String(selectedPlaylistId) : (lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id))[0]?.id ? String(lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id))[0].id) : '')}
@@ -702,7 +703,7 @@ onClick={() => setShowTengeTopUp(true)}
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                       {lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id)).map((p: any) => (
                         <SelectItem key={p.id} value={String(p.id)} className="text-amber-100">
-                          {locale === 'kk' && p.nameKk ? p.nameKk : p.name}
+                          {locale === 'kk' && p.nameKk ? p.nameKk : locale === 'en' && p.nameEn ? p.nameEn : p.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
