@@ -7,8 +7,7 @@ import { X, Crown, Star, Zap, RefreshCw, Percent, Shield, Sparkles } from 'lucid
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
-
-const PREMIUM_FRAME_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/premium-frame-v2_3b824022.png';
+import { PremiumFrame } from './PremiumFrame';
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
 interface PremiumModalProps {
@@ -261,16 +260,15 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
         {/* Premium Frame Preview */}
         <div className="px-6 mb-4">
           <div className="relative rounded-xl overflow-hidden bg-gradient-to-b from-yellow-900/20 to-black/40 border border-yellow-600/20 p-4 flex items-center gap-4">
-            <div className="relative w-20 h-20 flex-shrink-0">
-              <img
-                src={PREMIUM_FRAME_URL}
-                alt="PREMIUM frame"
-                className="w-full h-full object-contain"
-                style={{
-                  filter: 'drop-shadow(0 0 12px rgba(250,204,21,0.6))',
-                  animation: 'float 3s ease-in-out infinite',
-                }}
-              />
+            <div className="relative flex-shrink-0 flex items-center justify-center">
+              <PremiumFrame size={64} active={true}>
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center"
+                  style={{ background: 'linear-gradient(135deg, #1a1200 0%, #2d2000 100%)', border: '2px solid rgba(250,204,21,0.3)' }}
+                >
+                  <Crown className="w-8 h-8 text-yellow-400" />
+                </div>
+              </PremiumFrame>
             </div>
             <div>
               <div className="text-sm font-bold text-yellow-300">{t.frameTitle}</div>
@@ -322,14 +320,28 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
           </button>
         </div>
 
-        {/* Float animation */}
-        <style>{`
-          @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-6px); }
-          }
-        `}</style>
         </div>{/* end scrollable content */}
+
+        {/* Fixed close button at bottom */}
+        <div
+          className="flex-shrink-0 px-6 py-3"
+          style={{
+            borderTop: '1px solid rgba(250,204,21,0.15)',
+            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+          }}
+        >
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, rgba(250,204,21,0.12) 0%, rgba(250,204,21,0.06) 100%)',
+              border: '1px solid rgba(250,204,21,0.3)',
+              color: '#fbbf24',
+            }}
+          >
+            {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+          </button>
+        </div>
       </div>
     </div>
   );

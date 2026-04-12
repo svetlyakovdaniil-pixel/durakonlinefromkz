@@ -101,7 +101,6 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     >
       <div
         className="w-full max-w-lg bg-[#1a1a2e] border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] h-[92vh]"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10 flex-shrink-0">
@@ -246,10 +245,13 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-white/10 flex-shrink-0">
+        <div
+          className="px-5 py-3 border-t border-white/10 flex-shrink-0"
+          style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}
+        >
           <button
             onClick={onClose}
-            className="w-full py-2.5 rounded-xl bg-white/8 hover:bg-white/12 text-white text-sm font-medium transition-colors"
+            className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold transition-colors border border-white/20"
           >
             {locale === 'ru' ? 'Закрыть' : locale === 'kk' ? 'Жабу' : 'Close'}
           </button>

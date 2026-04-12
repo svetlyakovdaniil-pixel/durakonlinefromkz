@@ -150,7 +150,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
         </div>
 
         {/* Achievement list */}
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2 pb-4">
           {sorted.map(ach => {
             const isUnlocked = ach.unlocked;
             const isClaimed = ach.claimed;
@@ -268,6 +268,27 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
               </div>
             );
           })}
+        </div>
+
+        {/* Fixed close button at bottom */}
+        <div
+          className="px-4 py-3 shrink-0"
+          style={{
+            borderTop: '1px solid rgba(201,168,76,0.15)',
+            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+          }}
+        >
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+            style={{
+              background: 'linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0.08) 100%)',
+              border: '1px solid rgba(201,168,76,0.35)',
+              color: '#c9a84c',
+            }}
+          >
+            {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+          </button>
         </div>
       </div>
     </div>
