@@ -2316,3 +2316,4 @@
 - [x] Add "Быстрая игра" full-width button in mobile lobby (activeTab='lobby'), gold play icon, inactive/visual only
 - [x] Fix "Быстрая игра" button: full width (no px-4 padding), 20% shorter height, move Play icon after text, use same font as lobby title
 - [x] Add 2-column grid below "Быстрая игра": left="Обучение" (BookOpen icon), right="Уведомления" (Bell icon), same dark style, inactive/visual only
+- [x] Add second row in mobile menu grid: left="Правила" (HelpCircle icon), right="Магазин" (ShoppingCart icon), same dark style, inactive/visual only
