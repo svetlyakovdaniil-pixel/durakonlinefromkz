@@ -95,6 +95,10 @@ export interface TutorialScenario {
   passThroughBotIdx?: number;
   /** Override the main bot's name for this step */
   overrideMainBotName?: string;
+  /** Override the main bot's name in English */
+  overrideMainBotNameEn?: string;
+  /** Override the main bot's name in Kazakh */
+  overrideMainBotNameKk?: string;
   /** Indices of opponents to add a glow effect around (1=first bot, 2=second, etc.) */
   glowOpponents?: number[];
   /** Card notations to highlight GREEN and raise in player hand */
@@ -645,6 +649,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBotNamesEn: ['Madina', 'Bot 3'],
     extraBotNamesKk: ['Мадина', 'Қадам 3'],
     overrideMainBotName: 'Камила',
+    overrideMainBotNameEn: 'Kamila',
+    overrideMainBotNameKk: 'Камила',
     attackerPlayerIdx: 1,
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 1, cards: [
@@ -677,6 +683,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     extraBotNamesEn: ['Madina', 'Bot 3'],
     extraBotNamesKk: ['Мадина', 'Қадам 3'],
     overrideMainBotName: 'Камила',
+    overrideMainBotNameEn: 'Kamila',
+    overrideMainBotNameKk: 'Камила',
     attackerPlayerIdx: -1,
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 1, cards: [

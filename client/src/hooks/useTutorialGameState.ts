@@ -130,11 +130,15 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       tutorialState.currentDefenderIdx = scenario.defenderPlayerIdx;
     }
 
-    // Override main bot name if specified
+    // Override main bot name if specified (locale-aware)
     if (scenario.overrideMainBotName && tutorialState.players) {
+      const mainBotNameRu = scenario.overrideMainBotName;
+      const mainBotNameEn = scenario.overrideMainBotNameEn || mainBotNameRu;
+      const mainBotNameKk = scenario.overrideMainBotNameKk || mainBotNameRu;
+      const mainBotName = locale === 'en' ? mainBotNameEn : locale === 'kk' ? mainBotNameKk : mainBotNameRu;
       tutorialState.players = tutorialState.players.map(p => {
-        if (p.isBot) {
-          return { ...p, name: scenario.overrideMainBotName! };
+        if (p.isBot && !p.id.startsWith('tutorial-extra-bot-')) {
+          return { ...p, name: mainBotName };
         }
         return p;
       });
