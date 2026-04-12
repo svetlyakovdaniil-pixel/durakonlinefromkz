@@ -94,9 +94,7 @@ export const kk = {
     cooldownExpiredDefault: 'Енді +2000 шаңырақ алуға болады!',
     accept: 'Қабылдау',
     decline: 'Қабылдамау',
-<<<<<<< Updated upstream
     viewRating: 'Рейтингті қарау',
-=======
     filterPlayersLabel: 'Үстелдегі ойыншылар',
     filterPlayersLabelShort: 'Ойыншылар',
     filterBetLabel: 'Ставка',
@@ -118,7 +116,6 @@ export const kk = {
     leaveLobbyCancel: 'Қалу',
     historyEmpty: 'Тарих бос',
     roomPrefix: 'Бөлме',
->>>>>>> Stashed changes
   },
 
   // Room creation

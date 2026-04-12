@@ -156,11 +156,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   : 'bg-slate-700/50 text-green-200 hover:bg-slate-600/50'
               }`}
             >
-<<<<<<< Updated upstream
-              {t('topUp.historyTab') || 'История'}
-=======
-              {t('profile.history')}
->>>>>>> Stashed changes
+              {t('topUp.historyTab') || t('profile.history')}
             </button>
           </div>
         </div>

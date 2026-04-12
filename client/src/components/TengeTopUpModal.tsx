@@ -207,11 +207,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   : "bg-slate-700/50 text-amber-200 hover:bg-slate-600/50"
               }`}
             >
-<<<<<<< Updated upstream
-              {t("topUp.historyTab") || "История"}
-=======
-              {t('profile.history')}
->>>>>>> Stashed changes
+              {t('topUp.historyTab') || t('profile.history')}
             </button>
           </div>
         </div>
@@ -331,41 +327,6 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         {activeTab === "history" && (
           <div className="space-y-2">
             {transactionsQuery.isLoading && (
-<<<<<<< Updated upstream
-              <div className="text-center text-amber-300/60 py-4">{t("common.loading") || "Загрузка..."}</div>
-            )}
-            {transactionsQuery.data && transactionsQuery.data.length === 0 && (
-              <div className="text-center text-amber-300/60 py-4">{t("topUp.historyEmpty") || "История пуста"}</div>
-            )}
-            {transactionsQuery.data &&
-              transactionsQuery.data.map(
-                (tx: {
-                  id: number;
-                  description: string | null;
-                  amount: number;
-                  createdAt: Date;
-                  balanceAfter?: number | null;
-                }) => (
-                  <div key={tx.id} className="bg-slate-700/40 rounded-xl p-3 border border-slate-600/30">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-amber-200 font-semibold text-sm">{tx.description}</span>
-                      <span className={`font-bold text-sm ${tx.amount > 0 ? "text-green-400" : "text-red-400"}`}>
-                        {tx.amount > 0 ? "+" : ""}
-                        {formatBalance(tx.amount)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-amber-300/60 text-xs">
-                        {new Date(tx.createdAt).toLocaleDateString()} {new Date(tx.createdAt).toLocaleTimeString()}
-                      </span>
-                      <span className="text-amber-300/60 text-xs">
-                        {t("topUp.balance") || "Баланс"}: {formatBalance(tx.balanceAfter || 0)}
-                      </span>
-                    </div>
-                  </div>
-                )
-              )}
-=======
               <div className="text-center text-amber-300/60 py-4">{t('common.loading')}</div>
             )}
             {transactionsQuery.data && transactionsQuery.data.length === 0 && (
@@ -389,7 +350,6 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                 </div>
               </div>
             ))}
->>>>>>> Stashed changes
           </div>
         )}
 

@@ -94,9 +94,7 @@ export const ru = {
     cooldownExpiredDefault: 'Теперь вы можете получить +2000 шаныраков!',
     accept: 'Принять',
     decline: 'Отклонить',
-<<<<<<< Updated upstream
     viewRating: 'Посмотреть рейтинг',
-=======
     filterPlayersLabel: 'Игроков за столом',
     filterPlayersLabelShort: 'Игроки',
     filterBetLabel: 'Ставка',
@@ -118,7 +116,6 @@ export const ru = {
     leaveLobbyCancel: 'Остаться',
     historyEmpty: 'История пуста',
     roomPrefix: 'Комната',
->>>>>>> Stashed changes
   },
 
   // Room creation
