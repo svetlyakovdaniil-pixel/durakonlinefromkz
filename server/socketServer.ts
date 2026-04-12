@@ -2288,8 +2288,15 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     // Exclude forfeited human players — their stats were already recorded on forfeit
     const humanPlayers = gameState.players.filter(p => !p.isBot && !p.leftGame);
     if (humanPlayers.length > 0 && !isTutorial) {
+      // Sort players by their finish place so ratingTable[idx] maps correctly:
+      // place 1 (winner) = idx 0 => +25, place null (loser/durak) = last => -25
+      const sortedHumanPlayers = [...humanPlayers].sort((a, b) => {
+        const pa = a.winPlace ?? Number.MAX_SAFE_INTEGER;
+        const pb = b.winPlace ?? Number.MAX_SAFE_INTEGER;
+        return pa - pb;
+      });
       // Look up profile IDs from playerGameIds map (odId -> gameId)
-      const allPlayerProfileIds = humanPlayers
+      const allPlayerProfileIds = sortedHumanPlayers
         .map(p => playerGameIds.get(p.id))
         .filter((id): id is number => id !== undefined && id > 0);
       const winnerOdId = gameState.winnersOrder[0] || null;
@@ -2298,7 +2305,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       const loserProfileId = loserOdId ? (playerGameIds.get(loserOdId) ?? null) : null;
       if (allPlayerProfileIds.length > 0) {
         // Collect premium gameIds for rating bonus
-        const premiumGameIds = humanPlayers
+        const premiumGameIds = sortedHumanPlayers
           .filter(p => playerIsPremium.get(p.id) === true)
           .map(p => playerGameIds.get(p.id))
           .filter((id): id is number => id !== undefined && id > 0);
