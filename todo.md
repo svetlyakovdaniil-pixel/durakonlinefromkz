@@ -2327,3 +2327,5 @@
 - [x] Create FriendsDrawer component (extract FriendsTab logic from ProfileDrawer)
 - [x] Connect Friends grid button to open FriendsDrawer (with showFriends state in Lobby)
 - [x] Remove leaderboard tab from ProfileDrawer (keep profile, friends, history tabs)
+- [x] Rename "Профиль" tab in bottom tab bar to "Лобби" (all 3 languages)
+- [x] Remove "Друзья" tab from ProfileDrawer (keep only profile + history tabs)

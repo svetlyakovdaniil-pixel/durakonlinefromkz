@@ -20,7 +20,7 @@ export const kk = {
 
   // Bottom tab bar
   tabBar: {
-    profile: 'Профиль',
+    profile: 'Лобби',
     open: 'Ашық',
     private: 'Жабық',
     create: 'Ойын жасау',

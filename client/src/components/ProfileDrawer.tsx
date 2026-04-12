@@ -60,15 +60,11 @@ export default function ProfileDrawer({
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
         </SheetHeader>
-        <Tabs defaultValue={initialTab ?? (inRoom ? 'friends' : 'profile')} className="flex flex-col h-[calc(100%-60px)]">
+        <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
           <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
             <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.title')}</span>
             </TabsTrigger>
-            <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.friends')}</span>
-            </TabsTrigger>
-
             <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.history')}</span>
             </TabsTrigger>
@@ -77,13 +73,7 @@ export default function ProfileDrawer({
           <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4">
             <ProfileTab profile={profile} />
           </TabsContent>
-          <TabsContent value="friends" className="flex-1 overflow-y-auto px-4 pb-4">
-            <FriendsTab
-              onlineFriendIds={onlineFriendIds}
-              onInviteFriend={onInviteFriend}
-              inRoom={inRoom}
-            />
-          </TabsContent>
+
 
           <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4">
             <MatchHistoryTab />

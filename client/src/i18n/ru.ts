@@ -20,7 +20,7 @@ export const ru = {
 
   // Bottom tab bar
   tabBar: {
-    profile: 'Профиль',
+    profile: 'Лобби',
     open: 'Открытые',
     private: 'Приватные',
     create: 'Создать игру',

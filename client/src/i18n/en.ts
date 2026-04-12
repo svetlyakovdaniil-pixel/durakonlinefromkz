@@ -20,7 +20,7 @@ export const en = {
 
   // Bottom tab bar
   tabBar: {
-    profile: 'Profile',
+    profile: 'Lobby',
     open: 'Open',
     private: 'Private',
     create: 'Create Game',
