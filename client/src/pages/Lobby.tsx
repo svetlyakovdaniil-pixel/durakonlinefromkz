@@ -321,31 +321,26 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: +Tenge / +Shanyrak / Shop — spread top/center/bottom */}
-              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-4px'}}>
-                {/* Row 1: Tenge — click to top up */}
+              {/* Right column: Tenge / Shanyrak — icon on top, balance below */}
+              <div className="flex flex-row items-end justify-end gap-2 relative z-20 self-stretch pb-1" style={{marginRight: '-2px'}}>
+                {/* Tenge */}
                 <button
-                  className="flex items-center gap-0.5 hover:opacity-80 active:opacity-60 transition-opacity"
+                  className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
                   onClick={() => setShowTengeTopUp(true)}
                   title={t('lobby.topUpTenge')}
                 >
-                  <span className="text-sm text-amber-300/60 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceTenge ?? 0)}</span>
-                  <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[28px] h-[28px] object-contain" />
-                  </div>
+                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-10 h-10 object-contain" />
+                  <span className="text-xs text-amber-300/70 font-semibold leading-tight mt-0.5">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                 </button>
-                {/* Row 2: Shanyrak — click to top up */}
+                {/* Shanyrak */}
                 <button
-                  className="flex items-center gap-0.5 hover:opacity-80 active:opacity-60 transition-opacity"
+                  className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
                   onClick={() => setShowShanyrakTopUp(true)}
                   title={t('lobby.topUpShanyrak')}
                 >
-                  <span className="text-sm text-green-400 font-semibold min-w-[24px] text-right">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
-                  <div className="flex items-center justify-center" style={{width: '28px', height: '28px'}}>
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" style={{width: '28px', height: '28px'}} className="object-contain" />
-                  </div>
+                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="w-10 h-10 object-contain" />
+                  <span className="text-xs text-green-400 font-semibold leading-tight mt-0.5">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                 </button>
-                {/* Shop moved to grid menu */}
               </div>
             </div>
 
