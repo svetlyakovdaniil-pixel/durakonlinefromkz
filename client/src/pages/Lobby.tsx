@@ -830,16 +830,16 @@ onClick={() => setShowTengeTopUp(true)}
           {/* 2-column menu grid — fills remaining space */}
           <div className="grid grid-cols-2 flex-1" style={{ gridTemplateRows: 'repeat(5, 1fr)' }}>
             {[
-              { icon: BookOpen, key: 'tutorial', borderR: true, borderB: true, action: () => setShowTutorial(true) },
+              { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => {} },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
-              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
+              { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
               { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => {} },
-              { icon: CalendarCheck, key: 'dailyQuests', borderR: false, borderB: true, action: () => {} },
-              { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
-              { icon: Settings, key: 'settings', borderR: false, borderB: true, action: null },
+              { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
+              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
+              { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },
               { icon: Users, key: 'friends', borderR: true, borderB: false, action: () => setShowFriends(true) },
-              { icon: Medal, key: 'leaderboard', borderR: false, borderB: false, action: () => setShowLeaderboard(true) },
+              { icon: Settings, key: 'settings', borderR: false, borderB: false, action: null },
             ].map(({ icon: Icon, key, borderR, borderB, action }) => (
               action === null ? (
                 <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>

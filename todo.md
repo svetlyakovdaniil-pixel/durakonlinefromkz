@@ -2342,3 +2342,4 @@
 - [x] Move admin panel button to right column, between avatar and tenge icon (top of right column)
 - [x] Place admin button between avatar (center) and tenge/shanyrak right column — as absolute positioned element; tenge/shanyrak stay in right column as before
 - [x] Add animated gold "Премиум статус" button below "Дурак онлайн from KZ" title — shimmer/gem animation, gold gradient, opens shop
+- [x] Swap grid buttons: Tutorial↔DailyQuests, Rules↔Tournaments, Settings↔Leaderboard
