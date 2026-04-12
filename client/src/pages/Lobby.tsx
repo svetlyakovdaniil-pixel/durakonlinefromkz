@@ -285,7 +285,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Title — shifted right toward avatar, 20% larger */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
-                <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '155px', fontSize: '1.2rem'}}>
+                <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '205px', fontSize: '1.2rem'}}>
                   {locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'}
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span>
