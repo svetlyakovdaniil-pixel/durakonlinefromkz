@@ -21,7 +21,7 @@ import { TABLE_STYLES } from "@shared/cardAssets";
 import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -117,6 +117,7 @@ export default function AdminPanel() {
     { id: "shop", label: "Магазин", icon: ShoppingCart, adminOnly: true },
     { id: "notifications", label: "Рассылки", icon: Bell, adminOnly: true },
     { id: "moderation", label: "Модерация", icon: Flag },
+    { id: "contact", label: "Сообщения", icon: MessageSquare, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -201,6 +202,7 @@ export default function AdminPanel() {
         {tab === "shop" && isAdmin && <ShopManagementTab />}
         {tab === "notifications" && isAdmin && <MassNotificationsTab />}
         {tab === "moderation" && (isAdmin || isGM) && <ModerationTab />}
+        {tab === "contact" && isAdmin && <ContactMessagesTab />}
       </div>
     </div>
   );
@@ -2232,6 +2234,179 @@ function ModerationTab() {
                 {resolveMut.isPending ? "Сохранение..." : "Сохранить решение"}
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ================================================================
+   CONTACT MESSAGES TAB
+   ================================================================ */
+function ContactMessagesTab() {
+  const [statusFilter, setStatusFilter] = useState<'all' | 'new' | 'read' | 'replied'>('all');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [adminNote, setAdminNote] = useState('');
+  const [newStatus, setNewStatus] = useState<'new' | 'read' | 'replied'>('read');
+
+  const { data, refetch, isLoading } = trpc.contact.adminList.useQuery(
+    { status: statusFilter, limit: 50, offset: 0 },
+    { refetchInterval: 30000 }
+  );
+
+  const updateMut = trpc.contact.adminUpdateStatus.useMutation({
+    onSuccess: () => {
+      toast.success('Статус обновлён');
+      refetch();
+      setSelectedId(null);
+      setAdminNote('');
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const messages = data?.messages ?? [];
+  const total = data?.total ?? 0;
+  const selectedMsg = messages.find((m: any) => m.id === selectedId);
+
+  const statusColors: Record<string, string> = {
+    new: 'bg-red-900/40 text-red-300 border-red-700/40',
+    read: 'bg-yellow-900/40 text-yellow-300 border-yellow-700/40',
+    replied: 'bg-green-900/40 text-green-300 border-green-700/40',
+  };
+  const statusLabels: Record<string, string> = {
+    new: 'Новое',
+    read: 'Прочитано',
+    replied: 'Отвечено',
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h2 className="text-lg font-bold text-amber-100 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-amber-400" />
+            Сообщения от игроков
+          </h2>
+          <p className="text-sm text-gray-400 mt-0.5">Всего: {total}</p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {(['all', 'new', 'read', 'replied'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                statusFilter === s
+                  ? 'bg-amber-600/80 text-white border-amber-500/60'
+                  : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-gray-200'
+              }`}
+            >
+              {s === 'all' ? 'Все' : statusLabels[s]}
+            </button>
+          ))}
+          <button onClick={() => refetch()} className="px-3 py-1.5 rounded-lg text-xs font-medium border bg-gray-800 text-gray-400 border-gray-700 hover:text-gray-200">
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="py-12 text-center text-gray-500">Загрузка...</div>
+      ) : messages.length === 0 ? (
+        <div className="py-12 text-center text-gray-500">Нет сообщений</div>
+      ) : (
+        <div className="space-y-2">
+          {messages.map((msg: any) => (
+            <div
+              key={msg.id}
+              onClick={() => { setSelectedId(msg.id); setAdminNote(msg.adminNote || ''); setNewStatus(msg.status); }}
+              className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 cursor-pointer hover:border-amber-700/40 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                    <span className="font-medium text-gray-200 text-sm">{msg.senderName}</span>
+                    <span className="text-xs text-gray-500">{msg.replyEmail}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[msg.status]}`}>
+                      {statusLabels[msg.status]}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400 line-clamp-2">{msg.message}</p>
+                </div>
+                <span className="text-xs text-gray-600 shrink-0">{formatDate(msg.createdAt)}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Detail dialog */}
+      <Dialog open={selectedId !== null} onOpenChange={open => { if (!open) setSelectedId(null); }}>
+        <DialogContent className="bg-gray-950 border border-gray-800 text-gray-100 max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-amber-100">Сообщение от игрока</DialogTitle>
+          </DialogHeader>
+          {selectedMsg && (
+            <div className="space-y-4 mt-2">
+              <div className="bg-gray-900/60 rounded-lg p-3 space-y-2">
+                <div className="flex gap-2 text-sm">
+                  <span className="text-gray-500 w-24 shrink-0">Игрок:</span>
+                  <span className="text-gray-200">{selectedMsg.senderName}</span>
+                </div>
+                <div className="flex gap-2 text-sm">
+                  <span className="text-gray-500 w-24 shrink-0">Email:</span>
+                  <a href={`mailto:${selectedMsg.replyEmail}`} className="text-amber-400 hover:underline">{selectedMsg.replyEmail}</a>
+                </div>
+                <div className="flex gap-2 text-sm">
+                  <span className="text-gray-500 w-24 shrink-0">Дата:</span>
+                  <span className="text-gray-300">{formatDate(selectedMsg.createdAt)}</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1.5">Сообщение:</p>
+                <div className="bg-gray-900/60 rounded-lg p-3 text-sm text-gray-200 whitespace-pre-wrap">{selectedMsg.message}</div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1.5">Статус:</p>
+                <div className="flex gap-2">
+                  {(['new', 'read', 'replied'] as const).map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setNewStatus(s)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        newStatus === s
+                          ? 'bg-amber-600/80 text-white border-amber-500/60'
+                          : 'bg-gray-800 text-gray-400 border-gray-700 hover:text-gray-200'
+                      }`}
+                    >
+                      {statusLabels[s]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-1.5">Заметка администратора (не видна игроку):</p>
+                <textarea
+                  rows={3}
+                  value={adminNote}
+                  onChange={e => setAdminNote(e.target.value)}
+                  placeholder="Заметка о решении..."
+                  className="w-full bg-gray-900/60 border border-gray-700 rounded-lg p-3 text-sm text-gray-200 placeholder-gray-600 resize-none focus:outline-none focus:border-amber-600/50"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setSelectedId(null)} className="border-gray-700 text-gray-300">
+              Закрыть
+            </Button>
+            <Button
+              onClick={() => updateMut.mutate({ id: selectedId!, status: newStatus, adminNote: adminNote || undefined })}
+              disabled={updateMut.isPending}
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+            >
+              {updateMut.isPending ? 'Сохранение...' : 'Сохранить'}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

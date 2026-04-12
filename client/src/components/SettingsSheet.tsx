@@ -6,7 +6,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal, MessageSquare } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useSoundContext } from '@/contexts/SoundContext';
@@ -32,6 +34,34 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactMessage, setContactMessage] = useState('');
+
+  const sendContactMutation = trpc.contact.send.useMutation({
+    onSuccess: () => {
+      toast.success(locale === 'kk' ? 'Хабарламаңыз жіберілді!' : 'Сообщение отправлено!');
+      setContactEmail('');
+      setContactMessage('');
+      setContactOpen(false);
+    },
+    onError: (err) => {
+      toast.error(err.message || (locale === 'kk' ? 'Қате орын алды' : 'Ошибка при отправке'));
+    },
+  });
+
+  const handleSendContact = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(contactEmail)) {
+      toast.error(locale === 'kk' ? 'Жарамды email енгізіңіз' : 'Введите корректный email');
+      return;
+    }
+    if (contactMessage.trim().length < 10) {
+      toast.error(locale === 'kk' ? 'Хабарлама тым қысқа (мин. 10 таңба)' : 'Сообщение слишком короткое (мин. 10 символов)');
+      return;
+    }
+    sendContactMutation.mutate({ replyEmail: contactEmail, message: contactMessage.trim() });
+  };
 
   // Playlist data
   const { data: allPlaylists = [] } = trpc.playlists.list.useQuery(undefined, { enabled: open });
@@ -147,6 +177,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const ownedPlaylists = allPlaylists.filter((p: any) => ownedPlaylistIds.includes(p.id) && !p.isDefault);
 
   return (
+    <>
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         {children || (
@@ -347,7 +378,23 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             </Popover>
           </div>
 
-          {/* 7. Logout */}
+          {/* 7. Contact admin */}
+          <button
+            onClick={() => setContactOpen(true)}
+            className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
+          >
+            <MessageSquare className="w-5 h-5 text-amber-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-200/80">
+                {locale === 'kk' ? 'Әкімшілікпен байланыс' : 'Связь с администрацией'}
+              </p>
+              <p className="text-xs text-amber-200/40 mt-0.5">
+                {locale === 'kk' ? 'Сұрақ немесе ұсыныс жіберіңіз' : 'Задать вопрос или оставить предложение'}
+              </p>
+            </div>
+          </button>
+
+          {/* 8. Logout */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">
@@ -378,5 +425,66 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         </div>
       </SheetContent>
     </Sheet>
+
+    {/* Contact Admin Dialog */}
+    <Dialog open={contactOpen} onOpenChange={setContactOpen}>
+      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-amber-100 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-amber-400" />
+            {locale === 'kk' ? 'Әкімшілікпен байланыс' : 'Связь с администрацией'}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <div>
+            <label className="text-xs text-amber-200/60 mb-1.5 block">
+              {locale === 'kk' ? 'Жауап електрондық пошта (email)' : 'Ваш email для обратной связи'}
+              <span className="text-red-400 ml-1">*</span>
+            </label>
+            <Input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder={locale === 'kk' ? 'example@mail.com' : 'example@mail.com'}
+              className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30"
+            />
+          </div>
+          <div>
+            <label className="text-xs text-amber-200/60 mb-1.5 block">
+              {locale === 'kk' ? 'Хабарлама' : 'Сообщение'}
+              <span className="text-red-400 ml-1">*</span>
+            </label>
+            <Textarea
+              value={contactMessage}
+              onChange={(e) => setContactMessage(e.target.value)}
+              placeholder={locale === 'kk' ? 'Сұрақтарыңызды немесе ұсыныстарыңызды жазыңыз...' : 'Опишите ваш вопрос или предложение...'}
+              rows={5}
+              maxLength={2000}
+              className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30 resize-none"
+            />
+            <p className="text-xs text-amber-200/30 text-right mt-1">{contactMessage.length}/2000</p>
+          </div>
+        </div>
+        <DialogFooter className="mt-2 gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setContactOpen(false)}
+            className="border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100 bg-transparent"
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            onClick={handleSendContact}
+            disabled={sendContactMutation.isPending}
+            className="bg-amber-600 hover:bg-amber-500 text-white"
+          >
+            {sendContactMutation.isPending
+              ? (locale === 'kk' ? 'Жіберілуде...' : 'Отправка...')
+              : (locale === 'kk' ? 'Жіберу' : 'Отправить')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

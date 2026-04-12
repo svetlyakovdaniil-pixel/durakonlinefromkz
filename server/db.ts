@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2455,4 +2455,54 @@ export async function getUserById(userId: number) {
   if (!db) return null;
   const rows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
   return rows[0] ?? null;
+}
+
+/**
+ * Create a contact message from a player to the administration.
+ */
+export async function createContactMessage(data: InsertContactMessage) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(contactMessages).values(data).$returningId();
+  return result ?? null;
+}
+
+/**
+ * Get contact messages for admin panel.
+ */
+export async function getContactMessages(opts: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<{ messages: any[]; total: number }> {
+  const db = await getDb();
+  if (!db) return { messages: [], total: 0 };
+  const { eq, desc, sql } = await import('drizzle-orm');
+  let whereClause: any = undefined;
+  if (opts.status && opts.status !== 'all') {
+    whereClause = eq(contactMessages.status, opts.status as any);
+  }
+  const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(contactMessages)
+    .where(whereClause);
+  const messages = await db.select()
+    .from(contactMessages)
+    .where(whereClause)
+    .orderBy(desc(contactMessages.createdAt))
+    .limit(opts.limit ?? 50)
+    .offset(opts.offset ?? 0);
+  return { messages, total: Number(totalRow?.count ?? 0) };
+}
+
+/**
+ * Update contact message status (admin action).
+ */
+export async function updateContactMessageStatus(id: number, status: 'new' | 'read' | 'replied', adminNote?: string) {
+  const db = await getDb();
+  if (!db) return false;
+  const { eq } = await import('drizzle-orm');
+  await db.update(contactMessages)
+    .set({ status, adminNote: adminNote ?? undefined })
+    .where(eq(contactMessages.id, id));
+  return true;
 }

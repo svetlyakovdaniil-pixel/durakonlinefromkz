@@ -329,3 +329,27 @@ export const userCredentials = mysqlTable("user_credentials", {
 
 export type UserCredential = typeof userCredentials.$inferSelect;
 export type InsertUserCredential = typeof userCredentials.$inferInsert;
+
+/**
+ * Contact messages — messages sent by players to the administration.
+ * Accessible from Settings → "Связь с администрацией".
+ */
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Profile ID of the sender (null if not authenticated) */
+  profileId: int("profileId"),
+  /** Player's display name at time of sending */
+  senderName: varchar("senderName", { length: 100 }).notNull(),
+  /** Reply-to email provided by the player */
+  replyEmail: varchar("replyEmail", { length: 320 }).notNull(),
+  /** Message text */
+  message: text("message").notNull(),
+  /** Admin status: 'new' | 'read' | 'replied' */
+  status: mysqlEnum("contact_status", ["new", "read", "replied"]).default("new").notNull(),
+  /** Optional admin note */
+  adminNote: text("adminNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = typeof contactMessages.$inferInsert;

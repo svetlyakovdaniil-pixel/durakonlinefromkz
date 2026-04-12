@@ -1549,16 +1549,18 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Mobile: wrap + vertical scroll; Desktop: single row + horizontal scroll */}
+              {/* Mobile: wrap + vertical scroll (only when ≥15 cards); Desktop: wrap + vertical scroll (only when >30 cards) */}
               <div
                 data-tutorial="table-area"
-                className={`battlefield-scroll ${
-                  gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4'
-                }
-                  flex flex-wrap justify-center max-w-xs
-                  overflow-y-auto
-                  sm:flex-nowrap sm:justify-start sm:max-w-none sm:w-full sm:overflow-x-auto sm:overflow-y-visible
-                `}
+                className={[
+                  'battlefield-scroll',
+                  gs.battleField.length > 4 ? 'gap-1 sm:gap-3' : gs.battleField.length > 2 ? 'gap-1.5 sm:gap-3' : 'gap-2 sm:gap-4',
+                  'flex flex-wrap justify-center w-full',
+                  // Mobile: enable scroll only when ≥15 pairs
+                  gs.battleField.length >= 15 ? 'mobile-needs-scroll' : '',
+                  // Desktop: enable vertical scroll only when >30 pairs
+                  gs.battleField.length > 30 ? 'desktop-needs-scroll' : '',
+                ].filter(Boolean).join(' ')}
               >
                 {gs.battleField.map((pair: BattlePair, i: number) => (
                   <div

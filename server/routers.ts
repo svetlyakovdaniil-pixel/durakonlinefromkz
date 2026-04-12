@@ -76,6 +76,9 @@ import {
   purchasePlaylist,
   setActivePlaylist,
   getPlaylistById,
+  createContactMessage,
+  getContactMessages,
+  updateContactMessageStatus,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
@@ -1029,6 +1032,51 @@ export const appRouter = router({
           nameKk: playlist.nameKk,
           tracks: playlist.tracks,
         };
+      }),
+  }),
+
+  contact: router({
+    /** Send a message to administration */
+    send: protectedProcedure
+      .input(z.object({
+        replyEmail: z.string().email({ message: 'Invalid email' }),
+        message: z.string().min(10, 'Message too short').max(2000, 'Message too long'),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const result = await createContactMessage({
+          profileId: profile.id,
+          senderName: profile.displayName || ctx.user.name || 'Unknown',
+          replyEmail: input.replyEmail,
+          message: input.message,
+        });
+        if (!result) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to send message' });
+        return { success: true };
+      }),
+
+    /** Admin: get all contact messages */
+    adminList: adminProcedure
+      .input(z.object({
+        status: z.enum(['all', 'new', 'read', 'replied']).default('all'),
+        limit: z.number().min(1).max(100).default(50),
+        offset: z.number().min(0).default(0),
+      }))
+      .query(async ({ input }) => {
+        return getContactMessages({ status: input.status, limit: input.limit, offset: input.offset });
+      }),
+
+    /** Admin: update message status */
+    adminUpdateStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(['new', 'read', 'replied']),
+        adminNote: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const ok = await updateContactMessageStatus(input.id, input.status, input.adminNote);
+        if (!ok) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        return { success: true };
       }),
   }),
 });

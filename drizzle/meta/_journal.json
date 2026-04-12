@@ -211,6 +211,13 @@
       "when": 1775906878423,
       "tag": "0029_careless_moon_knight",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "5",
+      "when": 1775951975799,
+      "tag": "0030_cultured_nekra",
+      "breakpoints": true
     }
   ]
 }
