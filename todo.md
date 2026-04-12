@@ -2310,3 +2310,4 @@
 ## UI Navigation
 - [x] Add bottom tab bar (Профиль / Открытые / Приватные / Создать игру) — visual only, inactive buttons, gold/dark style matching game design
 - [x] Redesign bottom tab bar: 3 buttons — Профиль (left), Создать игру (center, gold circle), Комнаты (right, DoorOpen icon)
+- [x] Equalize tab bar button sizes: make "Создать игру" same size as Профиль and Комнаты (smaller gold circle, no elevation)

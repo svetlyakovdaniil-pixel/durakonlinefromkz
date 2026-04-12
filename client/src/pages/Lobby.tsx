@@ -1257,11 +1257,11 @@ onClick={() => setShowTengeTopUp(true)}
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div className="flex items-end justify-between px-6 pt-2 pb-3">
+        <div className="flex items-center justify-between px-6 pt-2 pb-3">
 
           {/* Profile — left */}
           <button
-            className="flex flex-col items-center justify-center gap-1 w-16 transition-all active:scale-95"
+            className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
             style={{ opacity: 0.5 }}
             onClick={() => {}}
           >
@@ -1271,20 +1271,20 @@ onClick={() => setShowTengeTopUp(true)}
             </span>
           </button>
 
-          {/* Create game — center, elevated */}
+          {/* Create game — center, same size */}
           <button
-            className="flex flex-col items-center justify-center gap-1 transition-all active:scale-95"
-            style={{ opacity: 0.5, marginBottom: '4px' }}
+            className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
+            style={{ opacity: 0.5 }}
             onClick={() => {}}
           >
             <div
-              className="w-14 h-14 rounded-full flex items-center justify-center"
+              className="w-6 h-6 rounded-full flex items-center justify-center"
               style={{
                 background: 'linear-gradient(135deg, #c9a84c 0%, #f0d060 50%, #a07830 100%)',
-                boxShadow: '0 4px 16px rgba(201,168,76,0.45), 0 0 0 3px rgba(201,168,76,0.15)',
+                boxShadow: '0 2px 8px rgba(201,168,76,0.4)',
               }}
             >
-              <Plus className="w-7 h-7 text-[#0a1628]" strokeWidth={2.5} />
+              <Plus className="w-4 h-4 text-[#0a1628]" strokeWidth={2.5} />
             </div>
             <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
               {t('tabBar.create')}
@@ -1293,7 +1293,7 @@ onClick={() => setShowTengeTopUp(true)}
 
           {/* Rooms — right */}
           <button
-            className="flex flex-col items-center justify-center gap-1 w-16 transition-all active:scale-95"
+            className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
             style={{ opacity: 0.5 }}
             onClick={() => {}}
           >
