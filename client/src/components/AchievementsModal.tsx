@@ -30,7 +30,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const claimMutation = trpc.achievements.claim.useMutation({
     onSuccess: (result) => {
       const msgs = {
-        ru: `Получено: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаняраков` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
+        ru: `Получено: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаныраков` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
         kk: `Алынды: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаңырақ` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} теңге` : ''}`,
         en: `Claimed: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} shanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
       };

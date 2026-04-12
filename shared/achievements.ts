@@ -256,7 +256,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameRu: 'Первый миллионер',
     nameKk: 'Алғашқы миллионер',
     nameEn: 'First Millionaire',
-    descRu: 'Накопи 1 000 000 шаняраков',
+    descRu: 'Накопи 1 000 000 шаныраков',
     descKk: '1 000 000 шаңырақ жина',
     descEn: 'Accumulate 1,000,000 shanyrak',
     reward: { shanyrak: 10000 },
