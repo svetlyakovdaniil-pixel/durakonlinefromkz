@@ -1019,6 +1019,8 @@ function ProfileGamesSection({ profileId }: { profileId: number }) {
 function ProfilePurchasesSection({ profileId }: { profileId: number }) {
   const utils = trpc.useUtils();
   const [confirmRevoke, setConfirmRevoke] = useState<{ id: number; desc: string } | null>(null);
+  // Track revoked transaction IDs for optimistic UI (hide immediately after revoke)
+  const [revokedIds, setRevokedIds] = useState<Set<number>>(new Set());
 
   const { data: purchases, isLoading, refetch } = trpc.admin.getPlayerPurchases.useQuery({ profileId });
 
@@ -1026,6 +1028,10 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
     onSuccess: (result) => {
       if (result.success) {
         toast.success('Покупка отменена, средства возвращены');
+        // Optimistically remove the revoked item from the list
+        if (confirmRevoke) {
+          setRevokedIds(prev => new Set(Array.from(prev).concat(confirmRevoke.id)));
+        }
         refetch();
         utils.admin.playerDetail.invalidate({ profileId });
       } else {
@@ -1067,10 +1073,13 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
         </div>
       ) : (
         <div className="space-y-2">
-          {purchases.map((p: any) => {
+          {purchases
+            .filter((p: any) => !revokedIds.has(p.id))
+            .map((p: any) => {
             const { icon, label } = getItemLabel(p.description ?? '');
+            const isBeingRevoked = revokeMutation.isPending && confirmRevoke?.id === p.id;
             return (
-              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/40 border border-gray-800 hover:border-gray-700 transition-colors">
+              <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg bg-gray-900/40 border border-gray-800 hover:border-gray-700 transition-all ${isBeingRevoked ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-xl shrink-0">{icon}</span>
                   <div className="min-w-0">
@@ -1084,14 +1093,16 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
                     </div>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setConfirmRevoke({ id: p.id, desc: p.description ?? '' })}
-                  className="shrink-0 ml-2 border-red-800/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 hover:border-red-700"
-                >
-                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Отменить
-                </Button>
+                {!isBeingRevoked && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmRevoke({ id: p.id, desc: p.description ?? '' })}
+                    className="shrink-0 ml-2 border-red-800/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 hover:border-red-700"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 mr-1" /> Отменить
+                  </Button>
+                )}
               </div>
             );
           })}
