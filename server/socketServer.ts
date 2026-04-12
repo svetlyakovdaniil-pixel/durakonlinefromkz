@@ -30,6 +30,8 @@ import {
   processFirstBerkutAchievement, processLittleHeroAchievement,
 } from './achievementsTriggers';
 import { incrementDailyQuestProgress, setDailyQuestProgress, processDailyQuestsAfterGame } from './dailyQuestsDb';
+import { ACHIEVEMENT_MAP } from '../shared/achievements';
+import { DAILY_QUEST_MAP, getMoscowDayStart } from '../shared/dailyQuests';
 import { getDb } from './db';
 import { playerProfiles } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
@@ -56,6 +58,7 @@ const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump s
 const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
 const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-game display)
 const playerEquippedFrames = new Map<string, string>(); // odId -> equippedFrame (for in-game frame display)
+const playerIsPremium = new Map<string, boolean>(); // odId -> isPremium status
 const playerDisplayNames = new Map<string, string>(); // odId -> custom display name from settings
 // Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
 const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
@@ -1225,6 +1228,12 @@ export function initSocketServer(httpServer: HttpServer) {
         } else {
           playerEquippedFrames.delete(odId);
         }
+        // Track premium status
+        if (data.isPremium) {
+          playerIsPremium.set(odId, true);
+        } else {
+          playerIsPremium.delete(odId);
+        }
         // Store custom display name for reconnect scenarios
         if (data.displayName) {
           playerDisplayNames.set(odId, data.displayName);
@@ -2288,6 +2297,12 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       const winnerProfileId = winnerOdId ? (playerGameIds.get(winnerOdId) ?? null) : null;
       const loserProfileId = loserOdId ? (playerGameIds.get(loserOdId) ?? null) : null;
       if (allPlayerProfileIds.length > 0) {
+        // Collect premium gameIds for rating bonus
+        const premiumGameIds = humanPlayers
+          .filter(p => playerIsPremium.get(p.id) === true)
+          .map(p => playerGameIds.get(p.id))
+          .filter((id): id is number => id !== undefined && id > 0);
+
         recordGameResult({
           roomId,
           playerCount: humanPlayers.length,
@@ -2298,43 +2313,133 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           hasBots,
           botCount,
           totalPlayersInRoom,
+          premiumGameIds,
         }).catch(err => console.error('[DB] Failed to record game result:', err));
 
         // Process achievements for all human players
         // winnerTookNoCards: winner took 0 cards during the game
         const winnerTookNoCards = true; // conservative default — tracked in achievementsTriggers via gameCardsTaken
         const allHumanOdIds = humanPlayers.map(p => p.id);
-        processGameEndAchievements({
-          roomId,
-          playerGameIds,
-          winnersOrder: gameState.winnersOrder,
-          loserId: gameState.loserId,
-          allHumanOdIds,
-          botCount,
-          totalPlayersInRoom,
-          durationSeconds: 0,
-          winnerTookNoCards,
-          trumpDefenseCounts: new Map(),
-          totalDefenseCounts: new Map(),
-          throwCounts: new Map(),
-          consecutiveWinStreaks: new Map(),
-          transferCounts: new Map(),
-        }).catch(err => console.error('[Achievements] Failed to process game end:', err));
 
-        // Process daily quests for all human players
-        processDailyQuestsAfterGame({
-          roomId,
-          playerGameIds,
-          winnersOrder: gameState.winnersOrder,
-          loserId: gameState.loserId,
-          allHumanOdIds,
-          botCount,
-          totalPlayersInRoom,
-          durationSeconds: 0,
-        }).catch(err => console.error('[DailyQuests] Failed to process after game:', err));
+        // Process achievements + daily quests, then send toast notifications
+        const notifyAfterGame = async () => {
+          try {
+            // Snapshot achievement state before processing
+            const db = await getDb();
+            const { userAchievements: userAchievementsTable, userDailyQuests: userDailyQuestsTable } = await import('../drizzle/schema');
+            const { and: drizzleAnd, eq: drizzleEq, isNull } = await import('drizzle-orm');
 
-        // Cleanup tracking after processing
-        cleanupGameTracking(roomId);
+            // For each human player, record which achievements/quests were already unlocked
+            const preAchievements = new Map<string, Set<string>>(); // odId -> Set<achievementKey>
+            const preQuests = new Map<string, Set<string>>(); // odId -> Set<questKey>
+
+            if (db) {
+              const dayStart = getMoscowDayStart();
+              for (const odId of allHumanOdIds) {
+                const profileId = playerGameIds.get(odId);
+                if (!profileId) continue;
+                const achRows = await db.select({ achievementKey: userAchievementsTable.achievementKey })
+                  .from(userAchievementsTable)
+                  .where(drizzleEq(userAchievementsTable.profileId, profileId));
+                preAchievements.set(odId, new Set(achRows.filter(r => (r as any).unlocked !== false).map(r => r.achievementKey)));
+                const questRows = await db.select({ questKey: userDailyQuestsTable.questKey })
+                  .from(userDailyQuestsTable)
+                  .where(drizzleAnd(
+                    drizzleEq(userDailyQuestsTable.profileId, profileId),
+                    drizzleEq(userDailyQuestsTable.dayStartTs, dayStart),
+                  ));
+                preQuests.set(odId, new Set(questRows.filter(r => (r as any).completed).map(r => r.questKey)));
+              }
+            }
+
+            await processGameEndAchievements({
+              roomId,
+              playerGameIds,
+              winnersOrder: gameState.winnersOrder,
+              loserId: gameState.loserId,
+              allHumanOdIds,
+              botCount,
+              totalPlayersInRoom,
+              durationSeconds: 0,
+              winnerTookNoCards,
+              trumpDefenseCounts: new Map(),
+              totalDefenseCounts: new Map(),
+              throwCounts: new Map(),
+              consecutiveWinStreaks: new Map(),
+              transferCounts: new Map(),
+            });
+
+            await processDailyQuestsAfterGame({
+              roomId,
+              playerGameIds,
+              winnersOrder: gameState.winnersOrder,
+              loserId: gameState.loserId,
+              allHumanOdIds,
+              botCount,
+              totalPlayersInRoom,
+              durationSeconds: 0,
+            });
+
+            // Send toast notifications for newly unlocked achievements/quests
+            if (db) {
+              const dayStart = getMoscowDayStart();
+              for (const odId of allHumanOdIds) {
+                const profileId = playerGameIds.get(odId);
+                if (!profileId) continue;
+                const sid = playerSockets.get(odId);
+                if (!sid) continue;
+
+                // Check new achievements
+                const preAch = preAchievements.get(odId) ?? new Set<string>();
+                const achRows = await db.select()
+                  .from(userAchievementsTable)
+                  .where(drizzleEq(userAchievementsTable.profileId, profileId));
+                for (const row of achRows) {
+                  if ((row as any).unlocked && !preAch.has(row.achievementKey)) {
+                    const def = ACHIEVEMENT_MAP[row.achievementKey];
+                    if (def) {
+                      io.to(sid).emit('achievementUnlocked', {
+                        key: row.achievementKey,
+                        nameRu: def.nameRu,
+                        nameKk: def.nameKk,
+                        nameEn: def.nameEn,
+                        shanyrakReward: def.reward?.shanyrak ?? 0,
+                      });
+                    }
+                  }
+                }
+
+                // Check new completed quests
+                const preQ = preQuests.get(odId) ?? new Set<string>();
+                const questRows = await db.select()
+                  .from(userDailyQuestsTable)
+                  .where(drizzleAnd(
+                    drizzleEq(userDailyQuestsTable.profileId, profileId),
+                    drizzleEq(userDailyQuestsTable.dayStartTs, dayStart),
+                  ));
+                for (const row of questRows) {
+                  if ((row as any).completed && !preQ.has(row.questKey)) {
+                    const def = DAILY_QUEST_MAP[row.questKey];
+                    if (def) {
+                      io.to(sid).emit('questCompleted', {
+                        key: row.questKey,
+                        titleRu: def.nameRu,
+                        titleKk: def.nameKk,
+                        titleEn: def.nameEn,
+                        shanyrakReward: def.reward?.shanyrak ?? 0,
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            console.error('[Notify] Failed to process game end notifications:', err);
+          } finally {
+            cleanupGameTracking(roomId);
+          }
+        };
+        notifyAfterGame();
       }
     }
     // After gameOver, also send final gameStateUpdate so client shows correct final state
@@ -2380,5 +2485,7 @@ function sanitizeRoom(room: Room): Room {
   const hasPassword = !!room.settings.password;
   // Strip password from settings before sending to clients
   const sanitizedSettings = { ...room.settings, password: undefined };
-  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, settings: sanitizedSettings };
+  // Add premium host flag
+  const isPremiumHost = playerIsPremium.get(room.hostId) === true;
+  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, isPremiumHost, settings: sanitizedSettings };
 }

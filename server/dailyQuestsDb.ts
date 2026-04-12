@@ -502,3 +502,61 @@ export async function processDailyQuestsAfterGame(params: {
     }
   }
 }
+
+/** Swap a specific daily quest with a new random one (premium feature, max 3/day) */
+export async function swapDailyQuest(profileId: number, questKey: string) {
+  const dayStart = getMoscowDayStart();
+  const db = await getDb();
+  if (!db) return [];
+
+  // Get today's quests
+  const existing = await db
+    .select()
+    .from(userDailyQuests)
+    .where(
+      and(
+        eq(userDailyQuests.profileId, profileId),
+        eq(userDailyQuests.dayStartTs, dayStart),
+      )
+    );
+
+  if (existing.length === 0) return [];
+
+  // Find the quest to swap
+  const questToSwap = existing.find((q: UserDailyQuest) => q.questKey === questKey);
+  if (!questToSwap) return getTodayQuestsWithDefs(profileId);
+
+  // Don't swap completed quests
+  if (questToSwap.completed) return getTodayQuestsWithDefs(profileId);
+
+  // Get all quest keys currently assigned today
+  const currentKeys = existing.map((q: UserDailyQuest) => q.questKey);
+
+  // Pick a new quest not currently assigned
+  const available = DAILY_QUESTS.filter(q => !currentKeys.includes(q.key));
+  if (available.length === 0) return getTodayQuestsWithDefs(profileId);
+
+  const newQuest = available[Math.floor(Math.random() * available.length)];
+
+  // Delete the old quest and insert the new one
+  await db
+    .delete(userDailyQuests)
+    .where(
+      and(
+        eq(userDailyQuests.profileId, profileId),
+        eq(userDailyQuests.questKey, questKey),
+        eq(userDailyQuests.dayStartTs, dayStart),
+      )
+    );
+
+  await db.insert(userDailyQuests).values({
+    profileId,
+    questKey: newQuest.key,
+    dayStartTs: dayStart,
+    progress: 0,
+    completed: false,
+    claimed: false,
+  });
+
+  return getTodayQuestsWithDefs(profileId);
+}

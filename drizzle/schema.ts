@@ -70,6 +70,14 @@ export const playerProfiles = mysqlTable("player_profiles", {
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */
   tutorialCompleted: boolean("tutorialCompleted").default(false).notNull(),
+  /** Whether the player has an active premium subscription */
+  isPremium: boolean("isPremium").default(false).notNull(),
+  /** When the premium subscription expires (null = no premium) */
+  premiumExpiresAt: timestamp("premiumExpiresAt"),
+  /** How many daily quest swaps the player has used today (resets at 0:00 MSK) */
+  dailyQuestSwapsUsed: int("dailyQuestSwapsUsed").default(0).notNull(),
+  /** Date of last daily quest swap reset (YYYY-MM-DD in MSK) */
+  lastQuestSwapDate: varchar("lastQuestSwapDate", { length: 10 }),
   /** Whether the player is banned */
   isBanned: boolean("isBanned").default(false).notNull(),
   /** Reason for ban (admin note) */

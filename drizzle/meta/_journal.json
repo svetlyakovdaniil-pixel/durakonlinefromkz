@@ -253,6 +253,13 @@
       "when": 1776028632827,
       "tag": "0035_lively_human_robot",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "5",
+      "when": 1776029952275,
+      "tag": "0036_ordinary_senator_kelly",
+      "breakpoints": true
     }
   ]
 }

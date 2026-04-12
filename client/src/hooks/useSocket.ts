@@ -255,6 +255,36 @@ export function useSocket(userId: string | null, userName: string | null) {
       }
     });
 
+    // Achievement unlocked — show in-game toast
+    socket.on('achievementUnlocked', (data) => {
+      const locale = (document.documentElement.lang || 'ru') as 'ru' | 'kk' | 'en';
+      const name = locale === 'kk' ? data.nameKk : locale === 'en' ? data.nameEn : data.nameRu;
+      const shanyrakText = data.shanyrakReward > 0 ? ` +${data.shanyrakReward} ш.` : '';
+      toast.success(`🏆 ${name}${shanyrakText}`, {
+        description: locale === 'kk' ? 'Жетістік ашылды!' : locale === 'en' ? 'Achievement unlocked!' : 'Достижение разблокировано!',
+        duration: 5000,
+      });
+      // Invalidate achievements so badge updates
+      if (trpcUtilsRef.current) {
+        trpcUtilsRef.current.achievements.unclaimedCount.invalidate();
+      }
+    });
+
+    // Daily quest completed — show in-game toast
+    socket.on('questCompleted', (data) => {
+      const locale = (document.documentElement.lang || 'ru') as 'ru' | 'kk' | 'en';
+      const title = locale === 'kk' ? data.titleKk : locale === 'en' ? data.titleEn : data.titleRu;
+      const shanyrakText = data.shanyrakReward > 0 ? ` +${data.shanyrakReward} ш.` : '';
+      toast.success(`✅ ${title}${shanyrakText}`, {
+        description: locale === 'kk' ? 'Күнделікті тапсырма орындалды!' : locale === 'en' ? 'Daily quest completed!' : 'Ежедневное задание выполнено!',
+        duration: 5000,
+      });
+      // Invalidate daily quests so badge updates
+      if (trpcUtilsRef.current) {
+        trpcUtilsRef.current.dailyQuests.unclaimedCount.invalidate();
+      }
+    });
+
     // Balance updated in real-time
     socket.on('balanceUpdated', () => {
       // Invalidate profile query so balance refreshes everywhere
@@ -383,8 +413,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, [userId, userName]);
 
   // Register profile with socket server (called from Home when profile loads)
-  const registerProfile = useCallback((gameId: number, displayName: string, avatarId?: string, equippedFrame?: string | null) => {
-    socketRef.current?.emit('registerProfile', { gameId, displayName, avatarId, equippedFrame }, (ok: boolean) => {
+  const registerProfile = useCallback((gameId: number, displayName: string, avatarId?: string, equippedFrame?: string | null, isPremium?: boolean) => {
+    socketRef.current?.emit('registerProfile', { gameId, displayName, avatarId, equippedFrame, isPremium }, (ok: boolean) => {
       if (ok) console.log(`[Socket] Profile registered: gameId=${gameId}`);
     });
   }, []);

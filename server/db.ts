@@ -319,6 +319,7 @@ export async function recordGameResult(data: {
   hasBots?: boolean;
   botCount?: number;
   totalPlayersInRoom?: number;
+  premiumGameIds?: number[]; // gameIds of premium players in this room
 }) {
   const db = await getDb();
   if (!db) return;
@@ -373,6 +374,12 @@ export async function recordGameResult(data: {
   const ratingByPlace = isBotGame ? botRatingByPlace : humanRatingByPlace;
   const ratingTable = ratingByPlace[data.playerCount] || ratingByPlace[2];
 
+  // Premium bonus logic:
+  // - Premium player themselves: +100% to their own ratingChange (only positive changes)
+  // - Other players at the table: +50% if at least one premium player is present (capped at +50% regardless of count)
+  const premiumGameIds = new Set(data.premiumGameIds ?? []);
+  const hasPremiumAtTable = premiumGameIds.size > 0;
+
   // Update stats for all participants
   // NOTE: allPlayerProfileIds actually contains gameId values (not profileId/id)
   // because playerGameIds map stores odId -> gameId
@@ -383,7 +390,19 @@ export async function recordGameResult(data: {
     const isWinner = !isLoser;
 
     // Get rating change from table (place = idx, 0-indexed)
-    const ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
+    let ratingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
+
+    // Apply premium bonuses (only for positive rating changes)
+    if (ratingChange > 0) {
+      const isOwnPremium = premiumGameIds.has(gameId);
+      if (isOwnPremium) {
+        // +100% to own rating
+        ratingChange = Math.round(ratingChange * 2);
+      } else if (hasPremiumAtTable) {
+        // +50% from another premium player at the table
+        ratingChange = Math.round(ratingChange * 1.5);
+      }
+    }
 
     if (isBotGame) {
       // Bot games (>33.4% bots): update bot stats + bot rating

@@ -31,6 +31,7 @@ import FriendsDrawer from '@/components/FriendsDrawer';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 import AchievementsModal from '@/components/AchievementsModal';
 import DailyQuestsModal from '@/components/DailyQuestsModal';
+import PremiumModal from '@/components/PremiumModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -90,6 +91,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showFriends, setShowFriends] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
   const [showDailyQuests, setShowDailyQuests] = useState(false);
+  const [showPremium, setShowPremium] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Room filter & search
@@ -134,6 +136,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     } else if (filterPrivate === 'public') {
       result = result.filter(r => !r.hasPassword);
     }
+    // Sort: premium rooms first, then by creation time (newest first)
+    result = [...result].sort((a, b) => {
+      if (a.isPremiumHost && !b.isPremiumHost) return -1;
+      if (!a.isPremiumHost && b.isPremiumHost) return 1;
+      return b.createdAt - a.createdAt;
+    });
     return result;
   }, [rooms, searchQuery, filterPlayers, filterBet, filterBots, filterPrivate]);
 
@@ -142,6 +150,16 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   // Achievements unclaimed count
   const { data: unclaimedAchievements = 0, refetch: refetchUnclaimedAchievements } = trpc.achievements.unclaimedCount.useQuery(undefined, { refetchInterval: 30000 });
+
+  // Daily quests unclaimed count
+  const { data: unclaimedDailyQuests = 0 } = trpc.dailyQuests.unclaimedCount.useQuery(undefined, { refetchInterval: 30000 });
+
+  // Premium status
+  const { data: premiumStatus } = trpc.premium.status.useQuery(undefined, { refetchInterval: 60000 });
+  const isPremium = premiumStatus?.isPremium ?? false;
+
+  // Online friends count
+  const onlineFriendsCount = onlineFriendIds.length;
   const { data: notifList = [], refetch: refetchNotifs } = trpc.notifications.list.useQuery(undefined, { enabled: notifOpen });
   const markAllRead = trpc.notifications.markAllRead.useMutation();
   const deleteNotif = trpc.notifications.delete.useMutation();
@@ -291,7 +309,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </h1>
                 {/* Premium status animated button */}
                 <button
-                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide pointer-events-none"
+                  onClick={() => setShowPremium(true)}
+                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -845,8 +864,8 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
               { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
               { icon: Settings, key: 'settings', borderR: true, borderB: true, action: null },
-              { icon: Users, key: 'friends', borderR: false, borderB: false, action: () => setShowFriends(true) },
-            ].map(({ icon: Icon, key, borderR, borderB, action }) => (
+              { icon: Users, key: 'friends', borderR: false, borderB: false, action: () => setShowFriends(true), badge: onlineFriendsCount > 0 ? onlineFriendsCount : null },
+            ].map(({ icon: Icon, key, borderR, borderB, action, badge }: { icon: React.ElementType; key: string; borderR: boolean; borderB: boolean; action: (() => void) | null; badge?: number | null }) => (
               action === null ? (
                 <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button
@@ -883,14 +902,32 @@ onClick={() => setShowTengeTopUp(true)}
               >
                 <div className="relative">
                   <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
+                  {/* Notifications badge */}
                   {key === 'notifications' && unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
+                  {/* Achievements unclaimed badge */}
                   {key === 'achievements' && unclaimedAchievements > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
                       {unclaimedAchievements > 9 ? '9+' : unclaimedAchievements}
+                    </span>
+                  )}
+                  {/* Daily quests unclaimed badge */}
+                  {key === 'dailyQuests' && unclaimedDailyQuests > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {unclaimedDailyQuests > 9 ? '9+' : unclaimedDailyQuests}
+                    </span>
+                  )}
+                  {/* Red dot for tournaments and shop (always show as "new") */}
+                  {(key === 'tournaments' || key === 'shop') && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500" />
+                  )}
+                  {/* Friends online count badge */}
+                  {key === 'friends' && badge != null && badge > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-green-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {badge > 9 ? '9+' : badge}
                     </span>
                   )}
                 </div>
@@ -1050,13 +1087,21 @@ onClick={() => setShowTengeTopUp(true)}
               return (
                 <div
                   key={room.id}
-                  className={`bg-[#1a2d45]/60 border rounded-xl p-3 sm:p-4 hover:border-amber-500/30 transition-colors ${
-                    canRejoin ? 'border-green-500/40 ring-1 ring-green-500/20' : 'border-amber-700/20'
+                  className={`bg-[#1a2d45]/60 border rounded-xl p-3 sm:p-4 transition-colors ${
+                    canRejoin
+                      ? 'border-green-500/40 ring-1 ring-green-500/20 hover:border-green-500/60'
+                      : room.isPremiumHost
+                        ? 'border-yellow-500/60 ring-2 ring-yellow-400/30 hover:border-yellow-400/80 premium-room-glow'
+                        : 'border-amber-700/20 hover:border-amber-500/30'
                   }`}
+                  style={room.isPremiumHost ? { boxShadow: '0 0 12px 2px rgba(234,179,8,0.25), 0 0 4px 1px rgba(234,179,8,0.15)' } : undefined}
                 >
                   <div className="flex items-center justify-between mb-2 sm:mb-3">
                     <div className="flex items-center gap-1.5">
                       {room.hasPassword && <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                      {room.isPremiumHost && (
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 shrink-0 tracking-wide">★ PREMIUM</span>
+                      )}
                       <h3 className="font-semibold text-amber-100 truncate text-sm sm:text-base">{room.name}</h3>
                     </div>
                     <div className="flex items-center gap-1 sm:gap-1.5 shrink-0 ml-2">
@@ -1157,6 +1202,7 @@ onClick={() => setShowTengeTopUp(true)}
         onClose={() => setShowShop(false)}
         currentTenge={profile?.balanceTenge ?? 0}
         currentShanyrak={profile?.balanceShanyrak ?? 0}
+        isPremium={isPremium}
         onPurchased={() => {
           refetchProfile?.();
           utils.shop.ownedDecks.invalidate();
@@ -1344,6 +1390,12 @@ onClick={() => setShowTengeTopUp(true)}
         onRewardClaimed={() => {
           refetchProfile?.();
         }}
+      />
+
+      {/* Premium Modal */}
+      <PremiumModal
+        open={showPremium}
+        onClose={() => setShowPremium(false)}
       />
 
       {/* Friends Drawer triggered from grid button */}

@@ -82,7 +82,8 @@ import {
   creditTengeIAP,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
-import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount } from "./dailyQuestsDb";
+import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
+import { getPremiumStatus, buyPremium, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
 export const appRouter = router({
@@ -1178,6 +1179,49 @@ export const appRouter = router({
           const msg = e instanceof Error ? e.message : 'Unknown error';
           throw new TRPCError({ code: 'BAD_REQUEST', message: msg });
         }
+      }),
+  }),
+
+  // ============================================================
+  // PREMIUM
+  // ============================================================
+  premium: router({
+    /** Get current user's premium status */
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      const status = await getPremiumStatus(profile.id);
+      const swapsRemaining = await getDailyQuestSwapsRemaining(profile.id);
+      return { ...status, swapsRemaining };
+    }),
+
+    /** Buy premium subscription for 1000 tenge */
+    buy: protectedProcedure.mutation(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      const result = await buyPremium(profile.id);
+      if (!result.success) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: result.error === 'insufficient_tenge' ? 'Недостаточно тенге' : result.error ?? 'Ошибка покупки',
+        });
+      }
+      return result;
+    }),
+
+    /** Swap a daily quest (premium only, max 3/day) */
+    swapQuest: protectedProcedure
+      .input(z.object({ questKey: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        if (!profile.isPremium) throw new TRPCError({ code: 'FORBIDDEN', message: 'Premium required' });
+        const swapResult = await useDailyQuestSwap(profile.id);
+        if (!swapResult.success) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'No swaps remaining today' });
+        }
+        const newQuests = await swapDailyQuest(profile.id, input.questKey);
+        return { success: true, remaining: swapResult.remaining, quests: newQuests };
       }),
   }),
 });

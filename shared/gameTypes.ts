@@ -172,6 +172,8 @@ export interface Room {
   invitedPlayerIds?: string[];
   /** Whether room has a password (sent to lobby, actual password is NOT sent) */
   hasPassword?: boolean;
+  /** Whether the room host has an active premium subscription */
+  isPremiumHost?: boolean;
 }
 
 // --- Hand sorting ---
@@ -214,6 +216,10 @@ export interface ServerToClientEvents {
   balanceUpdated: (data: { shanyrak: number; tenge: number }) => void;
   /** Prize pool distribution after game ends */
   prizeDistributed: (data: { pool: number; prizes: { playerId: string; place: number; amount: number }[] }) => void;
+  /** Achievement just unlocked — show toast in game */
+  achievementUnlocked: (data: { key: string; nameRu: string; nameKk: string; nameEn: string; shanyrakReward: number }) => void;
+  /** Daily quest just completed — show toast in game */
+  questCompleted: (data: { key: string; titleRu: string; titleKk: string; titleEn: string; shanyrakReward: number }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -242,7 +248,7 @@ export interface ClientToServerEvents {
   /** Decline a room invitation */
   declineInvite: (data: { roomId: string; fromGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
-  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null }, cb?: (ok: boolean) => void) => void;
+  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null; isPremium?: boolean }, cb?: (ok: boolean) => void) => void;
   /** Request fresh room list */
   requestRoomList: () => void;
 }

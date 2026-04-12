@@ -103,6 +103,7 @@ interface ShopModalProps {
   onClose: () => void;
   currentTenge: number;
   currentShanyrak?: number;
+  isPremium?: boolean;
   onPurchased?: () => void;
 }
 
@@ -117,7 +118,7 @@ interface ConfirmPurchase {
 
 const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
 
-export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, onPurchased }: ShopModalProps) {
+export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, isPremium = false, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
   const { t, locale } = useTranslation();
   const music = useMusicContext();
@@ -143,11 +144,13 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
   const purchaseAvatarMutation = trpc.shop.purchaseAvatar.useMutation();
 
-  /** Get effective price considering admin overrides */
+  /** Get effective price considering admin overrides and premium discount */
   const getPrice = (itemType: string, itemId: string, defaultPrice: number): number => {
     const override = priceOverrides.find((o: any) => o.itemType === itemType && o.itemId === itemId);
-    if (override && override.priceTenge !== null && override.priceTenge !== undefined) return override.priceTenge;
-    return defaultPrice;
+    const base = (override && override.priceTenge !== null && override.priceTenge !== undefined) ? override.priceTenge : defaultPrice;
+    // 5% discount for premium subscribers
+    if (isPremium && base > 0) return Math.floor(base * 0.95);
+    return base;
   };
 
   /** Check if item is available (not disabled by admin) */
