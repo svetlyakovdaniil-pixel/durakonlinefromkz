@@ -2315,3 +2315,4 @@
 - [x] Create RoomsView tab in lobby: move room list, filter, search, refresh button there; remove them from main lobby view; activate "Комнаты" tab bar button
 - [x] Add "Быстрая игра" full-width button in mobile lobby (activeTab='lobby'), gold play icon, inactive/visual only
 - [x] Fix "Быстрая игра" button: full width (no px-4 padding), 20% shorter height, move Play icon after text, use same font as lobby title
+- [x] Add 2-column grid below "Быстрая игра": left="Обучение" (BookOpen icon), right="Уведомления" (Bell icon), same dark style, inactive/visual only

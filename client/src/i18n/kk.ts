@@ -91,6 +91,7 @@ export const kk = {
     creating: 'Құрылуда...',
     topUpTenge: 'Теңгені толтыру',
     topUpShanyrak: 'Шаңырақты толтыру',
+    tutorial: 'Үйрету',
     notifications: 'Хабарламалар',
     noNotifications: 'Хабарламалар жоқ',
     deleteAll: 'Барлық хабарламаларды жою',

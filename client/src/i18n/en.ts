@@ -91,6 +91,7 @@ export const en = {
     creating: 'Creating...',
     topUpTenge: 'Top up tenge',
     topUpShanyrak: 'Top up shanyraks',
+    tutorial: 'Tutorial',
     notifications: 'Notifications',
     noNotifications: 'No notifications',
     deleteAll: 'Delete all notifications',

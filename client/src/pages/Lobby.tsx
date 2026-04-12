@@ -826,9 +826,10 @@ onClick={() => setShowTengeTopUp(true)}
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
-      {/* Mobile: Quick Game button — visible on lobby tab only */}
+      {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
         <div className="sm:hidden">
+          {/* Quick Game full-width button */}
           <button
             className="w-full flex flex-row items-center justify-center gap-3 py-3 transition-all active:scale-[0.98]"
             style={{
@@ -843,6 +844,36 @@ onClick={() => setShowTengeTopUp(true)}
             </span>
             <Play className="w-5 h-5 ml-0.5" style={{ color: '#c9a84c' }} fill="#c9a84c" />
           </button>
+
+          {/* 2-column menu grid */}
+          <div className="grid grid-cols-2">
+            {/* Обучение */}
+            <button
+              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderRight: '1px solid rgba(201,168,76,0.15)',
+                borderBottom: '1px solid rgba(201,168,76,0.15)',
+              }}
+              onClick={() => {}}
+            >
+              <BookOpen className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.tutorial')}</span>
+            </button>
+
+            {/* Уведомления */}
+            <button
+              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderBottom: '1px solid rgba(201,168,76,0.15)',
+              }}
+              onClick={() => {}}
+            >
+              <Bell className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.notifications')}</span>
+            </button>
+          </div>
         </div>
       )}
 

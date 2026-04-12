@@ -91,6 +91,7 @@ export const ru = {
     creating: 'Создание...',
     topUpTenge: 'Пополнить тенге',
     topUpShanyrak: 'Пополнить шаныраки',
+    tutorial: 'Обучение',
     notifications: 'Уведомления',
     noNotifications: 'Нет уведомлений',
     deleteAll: 'Удалить все уведомления',
