@@ -311,18 +311,19 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: Admin (if any) / Tenge / Shanyrak */}
+              {/* Admin button — absolute, between avatar and right column */}
+              {hasAdminAccess && (
+                <button
+                  className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
+                  style={{ right: '52px', bottom: '4px' }}
+                  onClick={() => setLocation('/admin')}
+                  title={isGM ? 'GM-панель' : 'Админ-панель'}
+                >
+                  <Shield className="w-5 h-5" />
+                </button>
+              )}
+              {/* Right column: Tenge top / Shanyrak bottom */}
               <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-2px'}}>
-                {/* Admin button — only shown to admins, sits above tenge */}
-                {hasAdminAccess ? (
-                  <button
-                    className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded self-end"
-                    onClick={() => setLocation('/admin')}
-                    title={isGM ? 'GM-панель' : 'Админ-панель'}
-                  >
-                    <Shield className="w-5 h-5" />
-                  </button>
-                ) : null}
                 {/* Tenge */}
                 <button
                   className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"

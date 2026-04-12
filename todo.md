@@ -2340,3 +2340,4 @@
 - [x] Move balance counters below tenge/shanyrak icons (icon on top, number below), increase icon sizes, keep header height unchanged
 - [x] Tenge icon+counter should be above shanyrak icon+counter (vertical layout, tenge top, shanyrak bottom)
 - [x] Move admin panel button to right column, between avatar and tenge icon (top of right column)
+- [x] Place admin button between avatar (center) and tenge/shanyrak right column — as absolute positioned element; tenge/shanyrak stay in right column as before
