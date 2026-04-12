@@ -28,6 +28,7 @@ import { useLocation } from 'wouter';
 import { FrameWrapper } from '@/components/AvatarWithFrame';
 import TopPlayersMarquee from '@/components/TopPlayersMarquee';
 import FriendsDrawer from '@/components/FriendsDrawer';
+import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 
 interface LobbyProps {
   rooms: Room[];
@@ -1282,17 +1283,12 @@ onClick={() => setShowTengeTopUp(true)}
           </div>
         </div>
       )}
-      {/* Leaderboard ProfileDrawer triggered from marquee click */}
-      <ProfileDrawer
-        profile={profile}
-        onlineFriendIds={onlineFriendIds}
-        inRoom={false}
-        initialTab="leaderboard"
+      {/* Leaderboard Drawer triggered from marquee click or grid button */}
+      <LeaderboardDrawer
         open={showLeaderboard}
         onOpenChange={setShowLeaderboard}
-      >
-        <span style={{ display: 'none' }} />
-      </ProfileDrawer>
+        myGameId={profile?.gameId}
+      />
 
       {/* Friends Drawer triggered from grid button */}
       <FriendsDrawer

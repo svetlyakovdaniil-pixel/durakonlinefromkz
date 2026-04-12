@@ -2329,3 +2329,6 @@
 - [x] Remove leaderboard tab from ProfileDrawer (keep profile, friends, history tabs)
 - [x] Rename "Профиль" tab in bottom tab bar to "Лобби" (all 3 languages)
 - [x] Remove "Друзья" tab from ProfileDrawer (keep only profile + history tabs)
+- [x] Move "Рамка аватарки" section in ProfileDrawer to appear between player name and rating stats
+- [x] Fix: clicking "Рейтинг" grid button should open LeaderboardDrawer, not ProfileDrawer
+- [x] Fix: clicking TopPlayersMarquee should open LeaderboardDrawer, not ProfileDrawer
