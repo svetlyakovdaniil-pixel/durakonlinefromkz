@@ -2343,3 +2343,6 @@
 - [x] Place admin button between avatar (center) and tenge/shanyrak right column — as absolute positioned element; tenge/shanyrak stay in right column as before
 - [x] Add animated gold "Премиум статус" button below "Дурак онлайн from KZ" title — shimmer/gem animation, gold gradient, opens shop
 - [x] Swap grid buttons: Tutorial↔DailyQuests, Rules↔Tournaments, Settings↔Leaderboard
+- [x] Swap Leaderboard↔Tutorial, Settings↔Friends in grid
+- [x] Shorten "dailyQuests" label to "Задания" in ru/kk/en translations
+- [x] Revert "Премиум статус" button to previous style (removed marginRight: 205px)

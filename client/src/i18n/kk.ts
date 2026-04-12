@@ -55,7 +55,7 @@ export const kk = {
     balance: 'Баланс',
     shop: 'Дүкен',
     achievements: 'Жетістіктер',
-    dailyQuests: 'Күнделік тапсырмалар',
+    dailyQuests: 'Тапсырмалар',
     tournaments: 'Турнирлер',
     friends: 'Достар',
     leaderboard: 'Рейтинг',

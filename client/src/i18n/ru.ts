@@ -56,7 +56,7 @@ export const ru = {
     shop: 'Магазин',
     rules: 'Правила',
     achievements: 'Достижения',
-    dailyQuests: 'Ежедневные задания',
+    dailyQuests: 'Задания',
     tournaments: 'Турниры',
     friends: 'Друзья',
     leaderboard: 'Рейтинг',

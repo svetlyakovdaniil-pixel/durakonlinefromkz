@@ -294,7 +294,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     border: '1px solid rgba(251,191,36,0.6)',
                     color: '#fff8e1',
                     textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                    marginRight: '205px',
                   }}
                 >
                   <span className="relative z-10">
@@ -835,11 +834,11 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
               { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => {} },
-              { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
-              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },
-              { icon: Users, key: 'friends', borderR: true, borderB: false, action: () => setShowFriends(true) },
-              { icon: Settings, key: 'settings', borderR: false, borderB: false, action: null },
+              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
+              { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
+              { icon: Settings, key: 'settings', borderR: true, borderB: false, action: null },
+              { icon: Users, key: 'friends', borderR: false, borderB: false, action: () => setShowFriends(true) },
             ].map(({ icon: Icon, key, borderR, borderB, action }) => (
               action === null ? (
                 <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
