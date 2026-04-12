@@ -173,6 +173,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           tableStyle: 'classic',
           betAmountIdx: 0,
           isTutorial: true, // Mark as tutorial room
+          locale, // Pass locale so bot names are in the correct language
         } as any
       );
       // Join the tutorial room

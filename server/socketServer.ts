@@ -409,6 +409,7 @@ export function initSocketServer(httpServer: HttpServer) {
         isPrivate: data.settings?.isPrivate || false,
         isTutorial: data.settings?.isTutorial || false,
         playlistId: typeof data.settings?.playlistId === 'number' ? data.settings.playlistId : null,
+        locale: typeof data.settings?.locale === 'string' ? data.settings.locale : undefined,
       };
       const room: Room = {
         id: roomId,
