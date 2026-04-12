@@ -18,6 +18,14 @@ export const ru = {
     online: 'Онлайн',
   },
 
+  // Bottom tab bar
+  tabBar: {
+    profile: 'Профиль',
+    open: 'Открытые',
+    private: 'Приватные',
+    create: 'Создать игру',
+  },
+
   // Language selector
   langSelector: {
     title: 'Тілді таңдаңыз / Выберите язык',

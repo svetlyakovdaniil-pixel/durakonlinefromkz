@@ -18,6 +18,14 @@ export const en = {
     online: 'Online',
   },
 
+  // Bottom tab bar
+  tabBar: {
+    profile: 'Profile',
+    open: 'Open',
+    private: 'Private',
+    create: 'Create Game',
+  },
+
   // Language selector
   langSelector: {
     title: 'Select language',

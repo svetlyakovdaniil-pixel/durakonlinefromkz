@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -1247,6 +1247,77 @@ onClick={() => setShowTengeTopUp(true)}
       >
         <span style={{ display: 'none' }} />
       </ProfileDrawer>
+
+      {/* ===== BOTTOM TAB BAR ===== */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 sm:hidden"
+        style={{
+          background: 'linear-gradient(to top, #060e1a 0%, #0a1628 80%, #0a162800 100%)',
+          borderTop: '1px solid rgba(180,130,30,0.18)',
+          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        }}
+      >
+        <div className="flex items-stretch justify-around px-1 pt-1 pb-2">
+          {/* Profile */}
+          <button
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
+            style={{ opacity: 0.45 }}
+            onClick={() => {}}
+          >
+            <UserCircle2 className="w-6 h-6" style={{ color: '#c9a84c' }} />
+            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
+              {t('tabBar.profile')}
+            </span>
+          </button>
+
+          {/* Open rooms */}
+          <button
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
+            style={{ opacity: 0.45 }}
+            onClick={() => {}}
+          >
+            <DoorOpen className="w-6 h-6" style={{ color: '#c9a84c' }} />
+            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
+              {t('tabBar.open')}
+            </span>
+          </button>
+
+          {/* Private rooms */}
+          <button
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
+            style={{ opacity: 0.45 }}
+            onClick={() => {}}
+          >
+            <KeyRound className="w-6 h-6" style={{ color: '#c9a84c' }} />
+            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
+              {t('tabBar.private')}
+            </span>
+          </button>
+
+          {/* Create game */}
+          <button
+            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
+            style={{ opacity: 0.45 }}
+            onClick={() => {}}
+          >
+            <div
+              className="w-8 h-8 rounded-full flex items-center justify-center mb-0.5"
+              style={{
+                background: 'linear-gradient(135deg, #c9a84c 0%, #f0d060 50%, #a07830 100%)',
+                boxShadow: '0 2px 8px rgba(201,168,76,0.4)',
+              }}
+            >
+              <PlusCircle className="w-5 h-5 text-[#0a1628]" />
+            </div>
+            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
+              {t('tabBar.create')}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Spacer so content doesn't hide behind tab bar on mobile */}
+      <div className="h-16 sm:hidden" />
     </div>
   );
 }

@@ -18,6 +18,14 @@ export const kk = {
     online: 'Онлайн',
   },
 
+  // Bottom tab bar
+  tabBar: {
+    profile: 'Профиль',
+    open: 'Ашық',
+    private: 'Жабық',
+    create: 'Ойын жасау',
+  },
+
   // Language selector
   langSelector: {
     title: 'Тілді таңдаңыз / Выберите язык',
