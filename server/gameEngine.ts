@@ -384,10 +384,19 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
     if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
   }
 
-  // Six exception: non-neighbors can ONLY add sixes, even if they became currentAttacker
-  // This check applies to ALL players (including current attacker when adding cards)
+  // Six exception: non-neighbors can ONLY add sixes
+  // For the current attacker: only restrict if they are NOT a neighbor AND leadCardRank is '6'
   if (state.battleField.length > 0) {
-    if (!canNonNeighborPlayCard(state, playerIdx, card)) return 'Вы можете подкинуть только шестёрку';
+    const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+    const isAttacker = playerIdx === state.currentAttackerIdx;
+    if (isAttacker) {
+      // Attacker is only restricted if lead is 6 AND they are not a neighbor
+      if (state.leadCardRank === '6' && !isNeighbor && card.rank !== '6') {
+        return 'Вы можете подкинуть только шестёрку';
+      }
+    } else {
+      if (!canNonNeighborPlayCard(state, playerIdx, card)) return 'Вы можете подкинуть только шестёрку';
+    }
   }
 
   if (!canPlayAsAttack(state, card)) return 'Cannot play this card as attack';
@@ -1294,10 +1303,17 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
         }
       }
     } else if (state.turnPhase === 'defend' && state.battleField.length > 0) {
-      // Attacker can always add matching cards during defend phase
+      // Attacker can add matching cards during defend phase
+      // Exception: if leadCardRank is '6' and attacker is NOT a neighbor, they can only add sixes
       if (canAddMoreAttackCards(state)) {
+        const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
         const playableIds = player.hand
-          .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
+          .filter(c => {
+            if (!canPlayAsAttack(state, c)) return false;
+            // If lead is 6 and attacker is not a neighbor, only sixes allowed
+            if (state.leadCardRank === '6' && !isNeighbor) return c.rank === '6';
+            return true;
+          })
           .map(c => c.id);
         if (playableIds.length > 0) {
           actions.push({ type: 'playCard', cardIds: playableIds });

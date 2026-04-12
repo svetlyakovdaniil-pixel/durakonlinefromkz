@@ -693,7 +693,7 @@ export async function getFreeTopupStatus(userId: number): Promise<{
     }
   }
 
-  return { available: profile.balanceShanyrak < 2000, currentBalance: profile.balanceShanyrak };
+  return { available: true, currentBalance: profile.balanceShanyrak };
 }
 
 // ============================================================

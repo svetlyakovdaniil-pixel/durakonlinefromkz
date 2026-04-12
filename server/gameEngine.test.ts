@@ -2463,3 +2463,84 @@ describe('updatePlayerDisplayName export', () => {
     expect(typeof mod.updatePlayerDisplayName).toBe('function');
   });
 });
+
+// ============================================================
+// BUG FIX: Attacker can always throw cards (even when not a direct neighbor)
+// ============================================================
+describe('Attacker can always throw cards regardless of neighbor status', () => {
+  function makePlayers(n: number) {
+    return Array.from({ length: n }, (_, i) => ({ id: `p${i+1}`, odId: `p${i+1}`, name: `Player ${i+1}`, isBot: false }));
+  }
+
+  it('attacker (non-neighbor) can throw matching non-6 card when leadCardRank is NOT 6', () => {
+    // This is the bug fix: attacker who is not a direct neighbor should still be able to throw
+    // matching cards when the lead card is NOT a 6
+    const state = createGame('room1', makePlayers(6));
+    // Manually set attacker to player 4 (not a neighbor of defender player 1)
+    state.currentAttackerIdx = 4;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '8'; // NOT a 6
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '8'), card('hearts', '8')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q')];
+    state.battleField = [
+      { attack: card('clubs', '8'), defense: card('clubs', 'J') },
+    ];
+
+    // Attacker should be able to throw 8 (matching rank) even though they are not a neighbor
+    const err = playAttackCard(state, 4, 'spades-8-0');
+    expect(err).toBeNull();
+  });
+
+  it('attacker (non-neighbor) can only throw 6 when leadCardRank is 6', () => {
+    // When lead is 6, non-neighbor attacker can only add sixes
+    const state = createGame('room1', makePlayers(6));
+    state.currentAttackerIdx = 4;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '6';
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '8'), card('spades', '6')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q')];
+    state.battleField = [
+      { attack: card('hearts', '6'), defense: card('hearts', '8') },
+    ];
+
+    // Non-neighbor attacker should NOT be able to play 8 when lead is 6
+    const err8 = playAttackCard(state, 4, 'spades-8-0');
+    expect(err8).toBe('Вы можете подкинуть только шестёрку');
+
+    // But CAN play 6
+    const err6 = playAttackCard(state, 4, 'spades-6-0');
+    expect(err6).toBeNull();
+  });
+
+  it('getAvailableActions shows all matching cards for attacker (non-neighbor) when lead is not 6', () => {
+    const state = createGame('room1', makePlayers(6));
+    state.currentAttackerIdx = 4;
+    state.currentDefenderIdx = 1;
+    state.turnPhase = 'defend';
+    state.leadCardRank = '8'; // NOT a 6
+    state.attackerHasPriority = true;
+    state.firstTrick = false;
+    state.players[4].hand = [card('spades', '8'), card('hearts', '8'), card('diamonds', '7')];
+    state.players[1].hand = [card('hearts', 'J'), card('hearts', 'Q'), card('hearts', 'K')];
+    state.battleField = [
+      { attack: card('clubs', '8'), defense: card('clubs', 'J') },
+    ];
+
+    const actions = getAvailableActions(state, 4);
+    const playAction = actions.find(a => a.type === 'playCard');
+    // Should include 8s (matching rank) but not 7 (non-matching)
+    if (playAction && playAction.type === 'playCard') {
+      expect(playAction.cardIds).toContain('spades-8-0');
+      expect(playAction.cardIds).toContain('hearts-8-0');
+      expect(playAction.cardIds).not.toContain('diamonds-7-0');
+    }
+    // endAttack should always be available
+    expect(actions.some(a => a.type === 'endAttack')).toBe(true);
+  });
+});
