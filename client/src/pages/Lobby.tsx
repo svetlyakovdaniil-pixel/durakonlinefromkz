@@ -94,6 +94,52 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showPremium, setShowPremium] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
+  // Smart red dots — track which sections have been visited
+  // Keys: 'tournaments', 'shop', 'friends', 'achievements', 'dailyQuests'
+  // We store the last-seen timestamp per section in localStorage.
+  // A dot appears if the section has new content since last visit.
+  // For static sections (tournaments, shop) we use a fixed "new content" date.
+  const NEW_CONTENT_DATES: Record<string, number> = useMemo(() => ({
+    tournaments: new Date('2026-04-13').getTime(),
+    shop: new Date('2026-04-13').getTime(),
+    friends: 0, // driven by onlineFriendsCount
+  }), []);
+
+  const getLastVisited = (key: string): number => {
+    try { return parseInt(localStorage.getItem(`lobby_visited_${key}`) || '0', 10); } catch { return 0; }
+  };
+  const markVisited = (key: string) => {
+    try { localStorage.setItem(`lobby_visited_${key}`, String(Date.now())); } catch {}
+  };
+
+  const [visitedKeys, setVisitedKeys] = useState<Record<string, number>>(() => ({
+    tournaments: getLastVisited('tournaments'),
+    shop: getLastVisited('shop'),
+    friends: getLastVisited('friends'),
+    achievements: getLastVisited('achievements'),
+    dailyQuests: getLastVisited('dailyQuests'),
+  }));
+
+  const hasNewContent = (key: string): boolean => {
+    const lastVisit = visitedKeys[key] ?? 0;
+    if (key === 'tournaments' || key === 'shop') {
+      return lastVisit < (NEW_CONTENT_DATES[key] ?? 0);
+    }
+    if (key === 'friends') {
+      // Show dot if there are online friends and user hasn't visited recently (within 10 min)
+      return onlineFriendsCount > 0 && lastVisit < Date.now() - 10 * 60 * 1000;
+    }
+    return false;
+  };
+
+  const handleGridButtonClick = (key: string, action: (() => void) | null) => {
+    if (action) action();
+    if (key in visitedKeys) {
+      markVisited(key);
+      setVisitedKeys(prev => ({ ...prev, [key]: Date.now() }));
+    }
+  };
+
   // Room filter & search
   const [showFilter, setShowFilter] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -898,7 +944,7 @@ onClick={() => setShowTengeTopUp(true)}
                   borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
                   gap: 'clamp(2px, 1.2vw, 6px)',
                 }}
-                onClick={action}
+                onClick={() => handleGridButtonClick(key, action)}
               >
                 <div className="relative">
                   <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
@@ -920,9 +966,14 @@ onClick={() => setShowTengeTopUp(true)}
                       {unclaimedDailyQuests > 9 ? '9+' : unclaimedDailyQuests}
                     </span>
                   )}
-                  {/* Red dot for tournaments and shop (always show as "new") */}
-                  {(key === 'tournaments' || key === 'shop') && (
-                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500" />
+                  {/* Smart red dot for sections with new content (tournaments, shop, friends) */}
+                  {hasNewContent(key) && !(
+                    (key === 'achievements' && unclaimedAchievements > 0) ||
+                    (key === 'dailyQuests' && unclaimedDailyQuests > 0) ||
+                    (key === 'notifications' && unreadCount > 0) ||
+                    (key === 'friends' && badge != null && badge > 0)
+                  ) && (
+                    <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
                   )}
                   {/* Friends online count badge */}
                   {key === 'friends' && badge != null && badge > 0 && (

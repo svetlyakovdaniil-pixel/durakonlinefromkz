@@ -213,16 +213,21 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative w-full max-w-lg max-h-[95vh] overflow-y-auto rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30">
+      {/* Modal wrapper — fixed height, flex column */}
+      <div className="relative w-full max-w-lg max-h-[95vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30">
 
-        {/* Close button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/40 text-gray-400 hover:text-white transition-colors"
-        >
-          <X className="w-5 h-5" />
-        </button>
+        {/* Sticky close button row — always visible at top */}
+        <div className="flex-shrink-0 flex justify-end px-3 pt-3">
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-black/40 text-gray-400 hover:text-white transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
 
         {/* Header */}
         <div className="relative pt-8 pb-4 px-6 text-center overflow-hidden">
@@ -315,15 +320,16 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
             )}
           </button>
         </div>
-      </div>
 
-      {/* Float animation */}
-      <style>{`
-        @keyframes float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-6px); }
-        }
-      `}</style>
+        {/* Float animation */}
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+          }
+        `}</style>
+        </div>{/* end scrollable content */}
+      </div>
     </div>
   );
 }

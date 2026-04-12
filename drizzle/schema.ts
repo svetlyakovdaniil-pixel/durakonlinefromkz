@@ -171,7 +171,7 @@ export const transactions = mysqlTable("transactions", {
   /** The player who performed this transaction (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Transaction type */
-  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry", "shop_purchase", "tutorial_reward", "daily_quest_reward", "achievement_reward"]).notNull(),
+  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry", "shop_purchase", "tutorial_reward", "daily_quest_reward", "achievement_reward", "premium_purchase"]).notNull(),
   /** Amount changed (positive = gained, negative = spent) */
   amount: int("amount").notNull(),
   /** Currency affected: 'tenge' or 'shanyrak' */

@@ -1,0 +1,1 @@
+ALTER TABLE `transactions` MODIFY COLUMN `type` enum('free_topup','buy_shanyrak','buy_tenge','game_reward','game_entry','shop_purchase','tutorial_reward','daily_quest_reward','achievement_reward','premium_purchase') NOT NULL;
