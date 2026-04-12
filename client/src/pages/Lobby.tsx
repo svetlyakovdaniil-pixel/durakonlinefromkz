@@ -282,7 +282,34 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <br/>
                   <span>from KZ</span>
                 </h1>
-
+                {/* Premium status animated button */}
+                <button
+                  onClick={() => setShowShop(true)}
+                  className="mt-1 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide"
+                  style={{
+                    background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'premiumShimmer 2.5s linear infinite, premiumPulse 2s ease-in-out infinite',
+                    boxShadow: '0 0 8px 2px rgba(251,191,36,0.5), inset 0 1px 0 rgba(255,255,255,0.25)',
+                    border: '1px solid rgba(251,191,36,0.6)',
+                    color: '#fff8e1',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                    marginRight: '205px',
+                  }}
+                >
+                  <span className="relative z-10">
+                    {locale === 'kk' ? '✦ Премиум мәртебе' : locale === 'en' ? '✦ Premium Status' : '✦ Премиум статус'}
+                  </span>
+                  {/* Shine sweep overlay */}
+                  <span
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'premiumShine 2.5s linear infinite',
+                    }}
+                  />
+                </button>
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
