@@ -496,6 +496,89 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     <Shield className="w-5 h-5" />
                   </button>
                 )}
+
+                {/* === DESKTOP FEATURE BUTTONS === */}
+
+                {/* Premium button (animated) */}
+                <button
+                  onClick={() => setShowPremium(true)}
+                  className="relative overflow-hidden rounded-full px-3 py-1 text-xs font-bold tracking-wide cursor-pointer"
+                  title="Premium"
+                  style={{
+                    background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
+                    backgroundSize: '200% 100%',
+                    animation: 'premiumShimmer 2.5s linear infinite, premiumPulse 2s ease-in-out infinite',
+                    boxShadow: '0 0 8px 2px rgba(251,191,36,0.4), inset 0 1px 0 rgba(255,255,255,0.2)',
+                    border: '1px solid rgba(251,191,36,0.5)',
+                    color: '#fff8e1',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  <span className="relative z-10">★ PREMIUM</span>
+                  <span
+                    className="absolute inset-0 rounded-full"
+                    style={{
+                      background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.3) 50%, transparent 60%)',
+                      backgroundSize: '200% 100%',
+                      animation: 'premiumShine 2.5s linear infinite',
+                    }}
+                  />
+                </button>
+
+                {/* Daily Quests button */}
+                <button
+                  className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowDailyQuests(true)}
+                  title={locale === 'kk' ? 'Күнделік тапсырмалар' : locale === 'en' ? 'Daily Quests' : 'Ежедневные задания'}
+                >
+                  <CalendarCheck className="w-5 h-5" />
+                  {unclaimedDailyQuests > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {unclaimedDailyQuests > 9 ? '9+' : unclaimedDailyQuests}
+                    </span>
+                  )}
+                </button>
+
+                {/* Achievements button */}
+                <button
+                  className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowAchievements(true)}
+                  title={locale === 'kk' ? 'Жетістіктер' : locale === 'en' ? 'Achievements' : 'Достижения'}
+                >
+                  <Trophy className="w-5 h-5" />
+                  {unclaimedAchievements > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-amber-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {unclaimedAchievements > 9 ? '9+' : unclaimedAchievements}
+                    </span>
+                  )}
+                </button>
+
+                {/* Leaderboard button */}
+                <button
+                  className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowLeaderboard(true)}
+                  title={locale === 'kk' ? 'Рейтинг' : locale === 'en' ? 'Leaderboard' : 'Лидерборд'}
+                >
+                  <Medal className="w-5 h-5" />
+                </button>
+
+                {/* Friends button */}
+                <button
+                  className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowFriends(true)}
+                  title={locale === 'kk' ? 'Достар' : locale === 'en' ? 'Friends' : 'Друзья'}
+                >
+                  <Users className="w-5 h-5" />
+                  {onlineFriendsCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 bg-green-500 text-white text-[9px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
+                      {onlineFriendsCount > 9 ? '9+' : onlineFriendsCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Divider */}
+                <div className="w-px h-5 bg-amber-700/30" />
+
                 {/* Tutorial button */}
                 <button
                   className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded"
