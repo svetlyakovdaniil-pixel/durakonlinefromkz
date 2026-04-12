@@ -100,14 +100,10 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full sm:max-w-lg sm:mx-4 flex flex-col"
+        className="relative w-full sm:max-w-lg sm:mx-4 flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl"
         style={{
           background: 'linear-gradient(180deg, #0e1e36 0%, #060e1a 100%)',
           border: '1px solid rgba(201,168,76,0.25)',
-          borderRadius: '16px 16px 0 0',
-          maxHeight: '92vh',
-          height: '92vh',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
         {/* Header */}
@@ -275,7 +271,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
           className="px-4 py-3 shrink-0"
           style={{
             borderTop: '1px solid rgba(201,168,76,0.15)',
-            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+            paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
           }}
         >
           <button

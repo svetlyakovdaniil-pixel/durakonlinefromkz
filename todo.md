@@ -2436,3 +2436,8 @@
 - [x] PremiumModal: добавить кнопку «Закрыть» снизу, заменить статическое изображение рамки на живую анимацию PremiumFrame
 - [x] AchievementsModal: добавить кнопку «Закрыть» снизу с safe-area padding
 - [x] DailyQuestsModal: убрать paddingBottom из контейнера, добавить safe-area в footer
+
+## Задачи от 13.04.2026 (Сессия 8 — адаптивность модалок)
+- [x] PremiumModal: адаптировать под мобильный (sheet снизу) и десктоп (центрированный диалог)
+- [x] AchievementsModal: адаптировать под мобильный и десктоп
+- [x] DailyQuestsModal: адаптировать под мобильный и десктоп

@@ -212,8 +212,10 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
         onClick={onClose}
       />
 
-      {/* Modal wrapper — fixed height, flex column */}
-      <div className="relative w-full max-w-lg h-[95vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30">
+      {/* Modal wrapper — mobile: full-height sheet, desktop: centered dialog */}
+      <div
+        className="relative w-full sm:max-w-lg flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30 h-[100dvh] sm:h-auto sm:max-h-[90vh]"
+      >
 
         {/* Sticky close button row — always visible at top */}
         <div className="flex-shrink-0 flex justify-end px-3 pt-3 pb-1">
@@ -327,7 +329,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
           className="flex-shrink-0 px-6 py-3"
           style={{
             borderTop: '1px solid rgba(250,204,21,0.15)',
-            paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))',
+            paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
           }}
         >
           <button
