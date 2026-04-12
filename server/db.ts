@@ -2690,6 +2690,10 @@ export async function adminRevokePlayerPurchase(opts: {
     // Revoke premium
     updates.isPremium = false;
     updates.premiumExpiresAt = null;
+    // Auto-unequip premium frame if it was equipped
+    if (profile.equippedFrame === 'premium') {
+      updates.equippedFrame = null;
+    }
   } else {
     return { success: false, reason: 'unknown_item_type' };
   }

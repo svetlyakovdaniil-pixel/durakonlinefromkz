@@ -1225,10 +1225,11 @@ export const appRouter = router({
       if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
       const result = await buyPremium(profile.id);
       if (!result.success) {
-        throw new TRPCError({
-          code: 'BAD_REQUEST',
-          message: result.error === 'insufficient_tenge' ? 'Недостаточно тенге' : result.error ?? 'Ошибка покупки',
-        });
+        const msg =
+          result.error === 'insufficient_tenge' ? 'Недостаточно тенге' :
+          result.error === 'already_active' ? 'Премиум уже активен' :
+          result.error ?? 'Ошибка покупки';
+        throw new TRPCError({ code: 'BAD_REQUEST', message: msg });
       }
       return result;
     }),

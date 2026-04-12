@@ -23,8 +23,8 @@ const TEXTS = {
     expires: 'Истекает',
     days: 'дн.',
     buyBtn: 'Купить за 1000',
-    buyBtnActive: 'Продлить за 1000',
     insufficientFunds: 'Недостаточно тенге',
+    alreadyActive: 'Премиум уже активен',
     buySuccess: 'Премиум активирован! Приятной игры 🎉',
     benefits: [
       {
@@ -70,8 +70,8 @@ const TEXTS = {
     expires: 'Аяқталады',
     days: 'күн',
     buyBtn: '1000-ға сатып ал',
-    buyBtnActive: '1000-ға ұзарт',
     insufficientFunds: 'Теңге жеткіліксіз',
+    alreadyActive: 'Премиум белсенді',
     buySuccess: 'Премиум белсендірілді! Жақсы ойын 🎉',
     benefits: [
       {
@@ -117,8 +117,8 @@ const TEXTS = {
     expires: 'Expires',
     days: 'd.',
     buyBtn: 'Buy for 1000',
-    buyBtnActive: 'Extend for 1000',
     insufficientFunds: 'Insufficient tenge',
+    alreadyActive: 'Premium is already active',
     buySuccess: 'Premium activated! Enjoy the game 🎉',
     benefits: [
       {
@@ -190,6 +190,10 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
     onError: (err) => {
       if (err.message === 'Недостаточно тенге') {
         toast.error(t.insufficientFunds);
+      } else if (err.message === 'Премиум уже активен') {
+        toast.error(t.alreadyActive);
+        // Refresh status so UI updates immediately
+        refetchStatus();
       } else {
         toast.error(err.message);
       }
@@ -302,25 +306,51 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
           <p className="text-xs text-blue-300/70 text-center">{t.botRule}</p>
         </div>
 
-        {/* Buy button */}
-        <div className="px-6 pb-6">
-          <button
-            onClick={handleBuy}
-            disabled={buying}
-            className="w-full py-4 rounded-xl font-black text-lg tracking-wide text-black bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 active:scale-95 transition-all duration-150 shadow-lg shadow-yellow-500/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {buying ? (
-              <span className="animate-spin w-5 h-5 border-2 border-black/30 border-t-black rounded-full" />
-            ) : (
-              <>
-                <Crown className="w-5 h-5" />
-                <span>{status?.isPremium ? t.buyBtnActive : t.buyBtn}</span>
-                <img src={TENGE_ICON} alt="₸" className="w-5 h-5" />
-                <span className="text-sm font-medium opacity-70">{t.perMonth}</span>
-              </>
-            )}
-          </button>
-        </div>
+        {/* Buy button — hidden when premium is already active */}
+        {status?.isPremium ? (
+          /* Premium active: show info block instead of buy button */
+          <div className="px-6 pb-6">
+            <div
+              className="w-full py-4 rounded-xl flex flex-col items-center justify-center gap-1"
+              style={{
+                background: 'linear-gradient(135deg, rgba(250,204,21,0.10) 0%, rgba(250,204,21,0.04) 100%)',
+                border: '1px solid rgba(250,204,21,0.35)',
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Crown className="w-5 h-5 text-yellow-400" />
+                <span className="font-bold text-yellow-300 text-base">
+                  {t.active}
+                </span>
+              </div>
+              {status.daysRemaining != null && (
+                <span className="text-xs text-yellow-200/60">
+                  {t.expires}: {status.daysRemaining} {t.days}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Premium not active: show buy button */
+          <div className="px-6 pb-6">
+            <button
+              onClick={handleBuy}
+              disabled={buying}
+              className="w-full py-4 rounded-xl font-black text-lg tracking-wide text-black bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 active:scale-95 transition-all duration-150 shadow-lg shadow-yellow-500/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {buying ? (
+                <span className="animate-spin w-5 h-5 border-2 border-black/30 border-t-black rounded-full" />
+              ) : (
+                <>
+                  <Crown className="w-5 h-5" />
+                  <span>{t.buyBtn}</span>
+                  <img src={TENGE_ICON} alt="₸" className="w-5 h-5" />
+                  <span className="text-sm font-medium opacity-70">{t.perMonth}</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
         </div>{/* end scrollable content */}
 

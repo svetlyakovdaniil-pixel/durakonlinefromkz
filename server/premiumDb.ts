@@ -13,13 +13,30 @@ function getMskDateString(): string {
   return msk.toISOString().slice(0, 10);
 }
 
+/**
+ * Expire premium for a profile: set isPremium=false and, if the player
+ * had the premium frame equipped, unequip it automatically.
+ */
+async function expirePremium(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, profileId: number, currentEquippedFrame?: string | null): Promise<void> {
+  const updates: Record<string, unknown> = { isPremium: false };
+  // Auto-unequip premium frame when premium expires
+  if (currentEquippedFrame === 'premium') {
+    updates.equippedFrame = null;
+  }
+  await db.update(playerProfiles).set(updates as any).where(eq(playerProfiles.id, profileId));
+}
+
 /** Check and update premium status — expires if past expiry date */
 export async function checkAndUpdatePremiumStatus(profileId: number): Promise<boolean> {
   const db = await getDb();
   if (!db) return false;
 
   const [profile] = await db
-    .select({ isPremium: playerProfiles.isPremium, premiumExpiresAt: playerProfiles.premiumExpiresAt })
+    .select({
+      isPremium: playerProfiles.isPremium,
+      premiumExpiresAt: playerProfiles.premiumExpiresAt,
+      equippedFrame: playerProfiles.equippedFrame,
+    })
     .from(playerProfiles)
     .where(eq(playerProfiles.id, profileId))
     .limit(1);
@@ -27,7 +44,7 @@ export async function checkAndUpdatePremiumStatus(profileId: number): Promise<bo
   if (!profile) return false;
 
   if (profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt < new Date()) {
-    await db.update(playerProfiles).set({ isPremium: false }).where(eq(playerProfiles.id, profileId));
+    await expirePremium(db, profileId, profile.equippedFrame);
     return false;
   }
 
@@ -44,7 +61,11 @@ export async function getPremiumStatus(profileId: number): Promise<{
   if (!db) return { isPremium: false, premiumExpiresAt: null, daysRemaining: null };
 
   const [profile] = await db
-    .select({ isPremium: playerProfiles.isPremium, premiumExpiresAt: playerProfiles.premiumExpiresAt })
+    .select({
+      isPremium: playerProfiles.isPremium,
+      premiumExpiresAt: playerProfiles.premiumExpiresAt,
+      equippedFrame: playerProfiles.equippedFrame,
+    })
     .from(playerProfiles)
     .where(eq(playerProfiles.id, profileId))
     .limit(1);
@@ -52,7 +73,7 @@ export async function getPremiumStatus(profileId: number): Promise<{
   if (!profile) return { isPremium: false, premiumExpiresAt: null, daysRemaining: null };
 
   if (profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt < new Date()) {
-    await db.update(playerProfiles).set({ isPremium: false }).where(eq(playerProfiles.id, profileId));
+    await expirePremium(db, profileId, profile.equippedFrame);
     return { isPremium: false, premiumExpiresAt: null, daysRemaining: null };
   }
 
@@ -89,16 +110,17 @@ export async function buyPremium(profileId: number): Promise<{
 
   if (!profile) return { success: false, error: "profile_not_found" };
 
+  // Block purchase if premium is already active (not expired)
+  const now = new Date();
+  if (profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt > now) {
+    return { success: false, error: "already_active" };
+  }
+
   if (profile.balanceTenge < PREMIUM_COST_TENGE) {
     return { success: false, error: "insufficient_tenge" };
   }
 
-  const now = new Date();
-  const currentExpiry =
-    profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt > now
-      ? profile.premiumExpiresAt
-      : now;
-  const newExpiry = new Date(currentExpiry.getTime() + PREMIUM_DURATION_MS);
+  const newExpiry = new Date(now.getTime() + PREMIUM_DURATION_MS);
   const newBalance = profile.balanceTenge - PREMIUM_COST_TENGE;
 
   await db
