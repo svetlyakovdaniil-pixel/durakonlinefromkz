@@ -260,7 +260,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] sm:block flex flex-col">
       {/* Header */}
       <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
         <div className="container py-3 sm:py-5" style={{paddingBottom: '5px', marginBottom: '12px'}}>
@@ -828,156 +828,59 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-        <div className="sm:hidden">
+        <div className="sm:hidden flex flex-col flex-1 overflow-hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
-            className="w-full flex flex-row items-center justify-center gap-3 py-3 transition-all active:scale-[0.98]"
+            className="w-full flex flex-row items-center justify-center gap-3 transition-all active:scale-[0.98] shrink-0"
             style={{
               background: 'linear-gradient(180deg, rgba(201,168,76,0.10) 0%, rgba(201,168,76,0.04) 100%)',
               borderTop: '1px solid rgba(201,168,76,0.20)',
               borderBottom: '1px solid rgba(201,168,76,0.20)',
+              paddingTop: '2.5vw',
+              paddingBottom: '2.5vw',
             }}
             onClick={() => {}}
           >
-            <span className="text-xl font-bold tracking-wide text-amber-100">
+            <span className="font-bold tracking-wide text-amber-100" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
               {t('tabBar.quickGame')}
             </span>
-            <Play className="w-5 h-5 ml-0.5" style={{ color: '#c9a84c' }} fill="#c9a84c" />
+            <Play className="ml-0.5 shrink-0" style={{ color: '#c9a84c', width: 'clamp(14px, 4vw, 20px)', height: 'clamp(14px, 4vw, 20px)' }} fill="#c9a84c" />
           </button>
 
-          {/* 2-column menu grid */}
-          <div className="grid grid-cols-2">
-            {/* Обучение */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderRight: '1px solid rgba(201,168,76,0.15)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <BookOpen className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.tutorial')}</span>
-            </button>
-
-            {/* Уведомления */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <Bell className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.notifications')}</span>
-            </button>
-
-            {/* Правила */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderRight: '1px solid rgba(201,168,76,0.15)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <HelpCircle className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.rules')}</span>
-            </button>
-
-            {/* Магазин */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <ShoppingCart className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.shop')}</span>
-            </button>
-
-            {/* Достижения */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderRight: '1px solid rgba(201,168,76,0.15)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <Trophy className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.achievements')}</span>
-            </button>
-
-            {/* Ежедневные задания */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <CalendarCheck className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.dailyQuests')}</span>
-            </button>
-
-            {/* Турниры */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderRight: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <Swords className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.tournaments')}</span>
-            </button>
-
-            {/* Настройки */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderBottom: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <Settings className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.settings')}</span>
-            </button>
-
-            {/* Друзья */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                borderRight: '1px solid rgba(201,168,76,0.15)',
-              }}
-              onClick={() => {}}
-            >
-              <Users className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.friends')}</span>
-            </button>
-
-            {/* Рейтинг */}
-            <button
-              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
-              style={{
-                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-              }}
-              onClick={() => {}}
-            >
-              <Medal className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
-              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.leaderboard')}</span>
-            </button>
+          {/* 2-column menu grid — fills remaining space */}
+          <div className="grid grid-cols-2 flex-1" style={{ gridTemplateRows: 'repeat(5, 1fr)' }}>
+            {[
+              { icon: BookOpen, key: 'tutorial', borderR: true, borderB: true },
+              { icon: Bell, key: 'notifications', borderR: false, borderB: true },
+              { icon: HelpCircle, key: 'rules', borderR: true, borderB: true },
+              { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true },
+              { icon: Trophy, key: 'achievements', borderR: true, borderB: true },
+              { icon: CalendarCheck, key: 'dailyQuests', borderR: false, borderB: true },
+              { icon: Swords, key: 'tournaments', borderR: true, borderB: true },
+              { icon: Settings, key: 'settings', borderR: false, borderB: true },
+              { icon: Users, key: 'friends', borderR: true, borderB: false },
+              { icon: Medal, key: 'leaderboard', borderR: false, borderB: false },
+            ].map(({ icon: Icon, key, borderR, borderB }) => (
+              <button
+                key={key}
+                className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
+                style={{
+                  background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                  borderRight: borderR ? '1px solid rgba(201,168,76,0.15)' : undefined,
+                  borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
+                  gap: 'clamp(2px, 1.2vw, 6px)',
+                }}
+                onClick={() => {}}
+              >
+                <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(16px, 5vw, 24px)', height: 'clamp(16px, 5vw, 24px)' }} />
+                <span
+                  className="font-bold tracking-wide text-amber-100/80 text-center leading-tight px-1"
+                  style={{ fontSize: 'clamp(9px, 2.8vw, 13px)' }}
+                >
+                  {t(`lobby.${key}`)}
+                </span>
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -1471,8 +1374,8 @@ onClick={() => setShowTengeTopUp(true)}
         </div>
       </div>
 
-      {/* Spacer so content doesn't hide behind tab bar on mobile */}
-      <div className="h-16 sm:hidden" />
+      {/* Spacer so content doesn't hide behind tab bar on mobile (rooms tab only) */}
+      {activeTab !== 'lobby' && <div className="h-16 sm:hidden" />}
     </div>
   );
 }
