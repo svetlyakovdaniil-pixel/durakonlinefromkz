@@ -55,6 +55,8 @@ export const ru = {
     balance: 'Баланс',
     shop: 'Магазин',
     rules: 'Правила',
+    achievements: 'Достижения',
+    dailyQuests: 'Ежедневные задания',
     settings: 'Настройки',
     logout: 'Выйти',
     dailyBonus: 'Ежедневный бонус',

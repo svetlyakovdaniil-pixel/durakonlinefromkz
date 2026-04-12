@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -899,6 +899,33 @@ onClick={() => setShowTengeTopUp(true)}
             >
               <ShoppingCart className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.shop')}</span>
+            </button>
+
+            {/* Достижения */}
+            <button
+              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderRight: '1px solid rgba(201,168,76,0.15)',
+                borderBottom: '1px solid rgba(201,168,76,0.15)',
+              }}
+              onClick={() => {}}
+            >
+              <Trophy className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.achievements')}</span>
+            </button>
+
+            {/* Ежедневные задания */}
+            <button
+              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderBottom: '1px solid rgba(201,168,76,0.15)',
+              }}
+              onClick={() => {}}
+            >
+              <CalendarCheck className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.dailyQuests')}</span>
             </button>
           </div>
         </div>

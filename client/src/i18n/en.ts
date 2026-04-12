@@ -56,6 +56,8 @@ export const en = {
     balance: 'Balance',
     shop: 'Shop',
     rules: 'Rules',
+    achievements: 'Achievements',
+    dailyQuests: 'Daily Quests',
     settings: 'Settings',
     logout: 'Log out',
     dailyBonus: 'Daily bonus',

@@ -54,6 +54,8 @@ export const kk = {
     online: 'Онлайн',
     balance: 'Баланс',
     shop: 'Дүкен',
+    achievements: 'Жетістіктер',
+    dailyQuests: 'Күнделік тапсырмалар',
     rules: 'Ережелер',
     settings: 'Баптаулар',
     logout: 'Шығу',
