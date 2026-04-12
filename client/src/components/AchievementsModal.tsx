@@ -1,12 +1,16 @@
 /**
  * AchievementsModal — full-screen modal showing all achievements with progress,
  * unlock status, and claim buttons.
+ *
+ * Sort order: claimable (unlocked & unclaimed) → locked → claimed
  */
 import { useState } from 'react';
 import { X, Trophy, Lock, CheckCircle, Gift } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
+
+const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
 
 interface AchievementsModalProps {
   open: boolean;
@@ -26,7 +30,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const claimMutation = trpc.achievements.claim.useMutation({
     onSuccess: (result) => {
       const msgs = {
-        ru: `Получено: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаныраков` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
+        ru: `Получено: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаняраков` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
         kk: `Алынды: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаңырақ` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} теңге` : ''}`,
         en: `Claimed: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} shanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
       };
@@ -49,6 +53,16 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const getDesc = (a: typeof achievements[0]) =>
     locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : a.descRu;
 
+  // Sort: claimable first (unlocked & not claimed), then locked, then claimed
+  const sorted = [...achievements].sort((a, b) => {
+    const rank = (x: typeof achievements[0]) => {
+      if (x.unlocked && !x.claimed) return 0; // claimable
+      if (!x.unlocked) return 1;              // locked
+      return 2;                               // claimed
+    };
+    return rank(a) - rank(b);
+  });
+
   const unlockedCount = achievements.filter(a => a.unlocked).length;
   const totalCount = achievements.length;
   const unclaimedCount = achievements.filter(a => a.unlocked && !a.claimed).length;
@@ -63,9 +77,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const claimedLabel = { ru: 'Получено', kk: 'Алынды', en: 'Claimed' }[locale as string] ?? 'Получено';
   const lockedLabel = { ru: 'Заблокировано', kk: 'Жабық', en: 'Locked' }[locale as string] ?? 'Заблокировано';
   const humanOnlyLabel = {
-    ru: 'Засчитывается только в играх с реальными людьми (менее 33% ботов)',
-    kk: 'Тек нақты адамдармен ойындарда есептеледі (33%-дан аз бот)',
-    en: 'Only counts in games with real people (less than 33% bots)',
+    ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
+    kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
+    en: 'Only counts in games with real people (less than 33.4% bots)',
   }[locale as string] ?? '';
   const unclaimedLabel = {
     ru: `${unclaimedCount} награды ожидают получения`,
@@ -134,19 +148,12 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
 
         {/* Achievement list */}
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-2">
-          {achievements.map(ach => {
+          {sorted.map(ach => {
             const isUnlocked = ach.unlocked;
             const isClaimed = ach.claimed;
             const progress = ach.progress ?? 0;
             const maxProg = ach.maxProgress;
             const progressPct = maxProg > 1 ? Math.min(100, Math.round((progress / maxProg) * 100)) : (isUnlocked ? 100 : 0);
-
-            // Build reward text — shanyrak only (tenge is rare bonus)
-            const shanyrakLabel = locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyrak' : 'шаняраков';
-            const rewardParts: string[] = [];
-            if (ach.reward.shanyrak) rewardParts.push(`+${ach.reward.shanyrak.toLocaleString()} ${shanyrakLabel}`);
-            if (ach.reward.tenge) rewardParts.push(`+${ach.reward.tenge} ${locale === 'en' ? 'tenge' : 'тенге'}`);
-            const rewardText = rewardParts.join(' ');
 
             return (
               <div
@@ -211,9 +218,23 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
 
                   {/* Reward + claim */}
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold" style={{ color: '#f0d060' }}>
-                      {rewardText}
-                    </span>
+                    {/* Shanyrak reward — green with icon */}
+                    <div className="flex items-center gap-1">
+                      {ach.reward.shanyrak ? (
+                        <>
+                          <img src={SHANYRAK_ICON} alt="" className="w-4 h-4 object-contain" />
+                          <span className="text-xs font-semibold text-green-400">
+                            +{ach.reward.shanyrak.toLocaleString()}
+                          </span>
+                        </>
+                      ) : null}
+                      {ach.reward.tenge ? (
+                        <span className="text-xs font-semibold ml-1" style={{ color: '#f0d060' }}>
+                          +{ach.reward.tenge} {locale === 'en' ? 'tenge' : 'тенге'}
+                        </span>
+                      ) : null}
+                    </div>
+
                     {isUnlocked && !isClaimed && (
                       <button
                         onClick={() => handleClaim(ach.key)}
