@@ -54,6 +54,8 @@ import {
   adminUpdateRole,
   adminGetPlayerTransactions,
   adminGetPlayerGameHistory,
+  adminRevokePlayerPurchase,
+  adminGetPlayerPurchases,
   logAdminAction,
   getAuditLog,
   adminBanPlayerWithDuration,
@@ -745,6 +747,28 @@ export const appRouter = router({
       }))
       .query(async ({ input }) => {
         return adminGetPlayerGameHistory(input);
+      }),
+
+    /** Get all shop purchases for a player */
+    getPlayerPurchases: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .query(async ({ input }) => {
+        return adminGetPlayerPurchases(input.profileId);
+      }),
+
+    /** Revoke a specific purchase from a player (refund + remove item) */
+    revokePlayerPurchase: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        transactionId: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminRevokePlayerPurchase({
+          profileId: input.profileId,
+          transactionId: input.transactionId,
+          adminId: ctx.user.id,
+        });
+        return result;
       }),
 
     /** Kick a player (disconnect their socket) */

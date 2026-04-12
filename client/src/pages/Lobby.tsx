@@ -32,6 +32,7 @@ import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 import AchievementsModal from '@/components/AchievementsModal';
 import DailyQuestsModal from '@/components/DailyQuestsModal';
 import PremiumModal from '@/components/PremiumModal';
+import { toast } from 'sonner';
 
 interface LobbyProps {
   rooms: Room[];
@@ -337,6 +338,33 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     return ok;
   };
 
+  const [isQuickGameLoading, setIsQuickGameLoading] = useState(false);
+
+  const handleQuickGame = async () => {
+    // Find public rooms that are waiting (not in active game)
+    const available = rooms.filter(r =>
+      !r.hasPassword &&
+      !r.hasActiveGame &&
+      r.players.length < r.maxPlayers
+    );
+    if (available.length === 0) {
+      toast.info(t('lobby.noRoomsAvailable') || 'Нет доступных комнат. Создайте свою!');
+      return;
+    }
+    // Pick the room with the most players relative to max (most filled)
+    const best = available.reduce((prev, curr) => {
+      const prevFill = prev.players.length / prev.maxPlayers;
+      const currFill = curr.players.length / curr.maxPlayers;
+      return currFill > prevFill ? curr : prev;
+    });
+    setIsQuickGameLoading(true);
+    try {
+      await onJoinRoom(best.id);
+    } finally {
+      setIsQuickGameLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] sm:block flex flex-col">
       {/* Header */}
@@ -604,6 +632,17 @@ onClick={() => setShowTengeTopUp(true)}
                       <span className="ml-1.5 w-2 h-2 rounded-full bg-amber-400 inline-block" />
                     )}
                   </Button>
+                  {/* Quick Game button (desktop) */}
+                  <Button
+                    variant="outline"
+                    className="h-10 px-4 border-amber-600/50 text-amber-200 bg-amber-900/20 hover:bg-amber-800/30 hover:text-amber-100 hover:border-amber-500"
+                    onClick={handleQuickGame}
+                    disabled={isQuickGameLoading}
+                  >
+                    <Play className="w-4 h-4 mr-2" fill="currentColor" />
+                    {isQuickGameLoading ? ('Вхожу...') : t('tabBar.quickGame')}
+                  </Button>
+
                   {/* Create room */}
                   <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                 <DialogTrigger asChild>
@@ -894,10 +933,11 @@ onClick={() => setShowTengeTopUp(true)}
               paddingTop: '2.5vw',
               paddingBottom: '2.5vw',
             }}
-            onClick={() => {}}
+            onClick={handleQuickGame}
+            disabled={isQuickGameLoading}
           >
             <span className="font-bold tracking-wide text-amber-100" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
-              {t('tabBar.quickGame')}
+              {isQuickGameLoading ? (t('lobby.joining') || 'Вхожу...') : t('tabBar.quickGame')}
             </span>
             <Play className="ml-0.5 shrink-0" style={{ color: '#c9a84c', width: 'clamp(14px, 4vw, 20px)', height: 'clamp(14px, 4vw, 20px)' }} fill="#c9a84c" />
           </button>

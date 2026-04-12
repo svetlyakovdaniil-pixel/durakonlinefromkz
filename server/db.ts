@@ -2610,3 +2610,135 @@ export async function creditTengeIAP(
 
   return { success: true, credited: tengeCredited, newBalance };
 }
+
+/**
+ * Admin: Revoke a specific shop purchase from a player.
+ * Removes the item from the player's owned items and refunds the cost.
+ * Works for: decks, tables, frames, avatars, playlists, premium.
+ */
+export async function adminRevokePlayerPurchase(opts: {
+  profileId: number;
+  transactionId: number;
+  adminId: number;
+}): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  // Get the transaction
+  const [txn] = await db.select().from(transactions)
+    .where(and(
+      eq(transactions.id, opts.transactionId),
+      eq(transactions.profileId, opts.profileId),
+    ))
+    .limit(1);
+
+  if (!txn) return { success: false, reason: 'transaction_not_found' };
+  if (txn.type !== 'shop_purchase' && txn.type !== ('premium_purchase' as any)) {
+    return { success: false, reason: 'not_a_purchase' };
+  }
+
+  // Get player profile
+  const [profile] = await db.select().from(playerProfiles)
+    .where(eq(playerProfiles.id, opts.profileId))
+    .limit(1);
+  if (!profile) return { success: false, reason: 'profile_not_found' };
+
+  const desc = txn.description ?? '';
+  const refundAmount = Math.abs(txn.amount); // amount was negative when purchased
+
+  // Determine item type and remove from owned list
+  const updates: Partial<typeof playerProfiles.$inferInsert> = {};
+
+  if (desc.startsWith('Покупка колоды:')) {
+    const deckId = desc.replace('Покупка колоды: ', '').trim();
+    const owned: string[] = JSON.parse(profile.ownedDecks || '[]');
+    updates.ownedDecks = JSON.stringify(owned.filter(id => id !== deckId));
+  } else if (desc.startsWith('Покупка стола:')) {
+    const tableId = desc.replace('Покупка стола: ', '').trim();
+    const owned: string[] = JSON.parse(profile.ownedTables || '[]');
+    updates.ownedTables = JSON.stringify(owned.filter(id => id !== tableId));
+  } else if (desc.startsWith('Покупка рамки:')) {
+    const frameId = desc.replace('Покупка рамки: ', '').trim();
+    const owned: string[] = JSON.parse(profile.ownedFrames || '[]');
+    updates.ownedFrames = JSON.stringify(owned.filter(id => id !== frameId));
+    // Unequip if currently equipped
+    if (profile.equippedFrame === frameId) {
+      updates.equippedFrame = null;
+    }
+  } else if (desc.startsWith('Покупка аватара:')) {
+    const avatarId = desc.replace('Покупка аватара: ', '').trim();
+    const owned: string[] = JSON.parse(profile.ownedAvatars || '[]');
+    updates.ownedAvatars = JSON.stringify(owned.filter(id => id !== avatarId));
+  } else if (desc.startsWith('Purchased playlist #')) {
+    const playlistId = parseInt(desc.replace('Purchased playlist #', '').trim(), 10);
+    const owned: number[] = JSON.parse(profile.ownedPlaylists || '[]');
+    updates.ownedPlaylists = JSON.stringify(owned.filter(id => id !== playlistId));
+    // Reset active playlist if it was this one
+    if (profile.activePlaylistId === playlistId) {
+      updates.activePlaylistId = null;
+    }
+  } else if (desc.startsWith('Premium subscription')) {
+    // Revoke premium
+    updates.isPremium = false;
+    updates.premiumExpiresAt = null;
+  } else {
+    return { success: false, reason: 'unknown_item_type' };
+  }
+
+  // Refund balance
+  if (txn.currency === 'tenge') {
+    const newBalance = profile.balanceTenge + refundAmount;
+    updates.balanceTenge = newBalance;
+    await db.update(playerProfiles).set(updates).where(eq(playerProfiles.id, opts.profileId));
+    // Record refund transaction
+    await db.insert(transactions).values({
+      profileId: opts.profileId,
+      type: 'shop_purchase',
+      amount: refundAmount,
+      currency: 'tenge',
+      description: `[ADMIN REFUND] ${desc}`,
+      balanceAfter: newBalance,
+    });
+  } else {
+    const newBalance = profile.balanceShanyrak + refundAmount;
+    updates.balanceShanyrak = newBalance;
+    await db.update(playerProfiles).set(updates).where(eq(playerProfiles.id, opts.profileId));
+    await db.insert(transactions).values({
+      profileId: opts.profileId,
+      type: 'shop_purchase',
+      amount: refundAmount,
+      currency: 'shanyrak',
+      description: `[ADMIN REFUND] ${desc}`,
+      balanceAfter: newBalance,
+    });
+  }
+
+  // Log admin action
+  await db.insert(adminAuditLog).values({
+    adminId: opts.adminId,
+    action: 'revoke_purchase',
+    targetProfileId: opts.profileId,
+    details: `Revoked transaction #${opts.transactionId}: ${desc}`,
+  });
+
+  return { success: true };
+}
+
+/**
+ * Admin: Get all shop purchases for a player (shop_purchase + premium_purchase transactions).
+ */
+export async function adminGetPlayerPurchases(profileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select().from(transactions)
+    .where(and(
+      eq(transactions.profileId, profileId),
+      sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
+    ))
+    .orderBy(desc(transactions.createdAt))
+    .limit(100);
+
+  // Only return purchases (negative amount = spent money), not refunds
+  return rows.filter(r => r.amount < 0);
+}

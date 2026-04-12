@@ -556,7 +556,7 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
    PLAYER PROFILE VIEW (sub-view inside Players tab)
    ================================================================ */
 function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: number; onBack: () => void; isGM?: boolean }) {
-  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games">("info");
+  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games" | "purchases">("info");
 
   const { data: detail, isLoading, refetch } = trpc.admin.playerDetail.useQuery({ profileId });
 
@@ -592,6 +592,7 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
     { id: "info" as const, label: "Информация", icon: Users },
     { id: "transactions" as const, label: "Транзакции", icon: ArrowLeftRight },
     { id: "games" as const, label: "История игр", icon: Gamepad2 },
+    { id: "purchases" as const, label: "Покупки", icon: ShoppingCart },
   ];
 
   return (
@@ -660,6 +661,7 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
       )}
       {profileTab === "transactions" && <ProfileTransactionsSection profileId={profileId} />}
       {profileTab === "games" && <ProfileGamesSection profileId={profileId} />}
+      {profileTab === "purchases" && <ProfilePurchasesSection profileId={profileId} />}
     </div>
   );
 }
@@ -1009,6 +1011,119 @@ function ProfileGamesSection({ profileId }: { profileId: number }) {
           </Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ─── Profile Purchases Section ─── */
+function ProfilePurchasesSection({ profileId }: { profileId: number }) {
+  const utils = trpc.useUtils();
+  const [confirmRevoke, setConfirmRevoke] = useState<{ id: number; desc: string } | null>(null);
+
+  const { data: purchases, isLoading, refetch } = trpc.admin.getPlayerPurchases.useQuery({ profileId });
+
+  const revokeMutation = trpc.admin.revokePlayerPurchase.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success('Покупка отменена, средства возвращены');
+        refetch();
+        utils.admin.playerDetail.invalidate({ profileId });
+      } else {
+        toast.error(`Ошибка: ${result.reason}`);
+      }
+      setConfirmRevoke(null);
+    },
+    onError: (e) => {
+      toast.error(e.message);
+      setConfirmRevoke(null);
+    },
+  });
+
+  const getItemLabel = (desc: string) => {
+    if (desc.startsWith('Покупка колоды:')) return { icon: '🃏', label: desc.replace('Покупка колоды: ', '') };
+    if (desc.startsWith('Покупка стола:')) return { icon: '🎯', label: desc.replace('Покупка стола: ', '') };
+    if (desc.startsWith('Покупка рамки:')) return { icon: '🖼️', label: desc.replace('Покупка рамки: ', '') };
+    if (desc.startsWith('Покупка аватара:')) return { icon: '👤', label: desc.replace('Покупка аватара: ', '') };
+    if (desc.startsWith('Purchased playlist #')) return { icon: '🎵', label: `Плейлист #${desc.replace('Purchased playlist #', '')}` };
+    if (desc.startsWith('Premium subscription')) return { icon: '👑', label: 'Premium подписка' };
+    return { icon: '🛒', label: desc };
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-500">Покупки игрока (можно отменить)</span>
+        <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
+          <RefreshCw className="w-3.5 h-3.5" />
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8 text-gray-500 animate-pulse">Загрузка...</div>
+      ) : !purchases?.length ? (
+        <div className="text-center py-8 text-gray-500">
+          <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30" />
+          <p>Покупок нет</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {purchases.map((p: any) => {
+            const { icon, label } = getItemLabel(p.description ?? '');
+            return (
+              <div key={p.id} className="flex items-center justify-between p-3 rounded-lg bg-gray-900/40 border border-gray-800 hover:border-gray-700 transition-colors">
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-xl shrink-0">{icon}</span>
+                  <div className="min-w-0">
+                    <div className="text-sm font-medium text-gray-200 truncate">{label}</div>
+                    <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
+                      <span>{formatDate(p.createdAt)}</span>
+                      <span>•</span>
+                      <span className={p.currency === 'shanyrak' ? 'text-amber-400' : 'text-green-400'}>
+                        {Math.abs(p.amount)} {p.currency === 'shanyrak' ? '🏠 шаныраков' : '₸ тенге'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmRevoke({ id: p.id, desc: p.description ?? '' })}
+                  className="shrink-0 ml-2 border-red-800/50 text-red-400 hover:bg-red-900/20 hover:text-red-300 hover:border-red-700"
+                >
+                  <Trash2 className="w-3.5 h-3.5 mr-1" /> Отменить
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Confirm dialog */}
+      <Dialog open={!!confirmRevoke} onOpenChange={(o) => !o && setConfirmRevoke(null)}>
+        <DialogContent className="bg-[#0f2035] border-gray-700 text-gray-100 max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-amber-100">Отменить покупку?</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Товар будет удалён из инвентаря игрока, а средства возвращены на баланс.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2 px-1 rounded-lg bg-gray-900/50 border border-gray-800 text-sm text-gray-300">
+            {confirmRevoke && getItemLabel(confirmRevoke.desc).label}
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmRevoke(null)} className="border-gray-700 text-gray-300">
+              Отмена
+            </Button>
+            <Button
+              onClick={() => confirmRevoke && revokeMutation.mutate({ profileId, transactionId: confirmRevoke.id })}
+              disabled={revokeMutation.isPending}
+              className="bg-red-700 hover:bg-red-600 text-white"
+            >
+              {revokeMutation.isPending ? 'Отмена...' : 'Подтвердить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

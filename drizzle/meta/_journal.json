@@ -267,6 +267,13 @@
       "when": 1776032048965,
       "tag": "0037_flaky_ares",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "5",
+      "when": 1776033200820,
+      "tag": "0038_silent_misty_knight",
+      "breakpoints": true
     }
   ]
 }
