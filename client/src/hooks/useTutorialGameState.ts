@@ -29,7 +29,7 @@ function parseCards(cardStrings: string[]): Card[] {
  * Utility to create a mock ClientGameState for tutorial scenarios
  * This prepares the game state with specific cards and situations for each tutorial step
  */
-export function useTutorialGameState(scenario: TutorialScenario | null, baseGameState: ClientGameState) {
+export function useTutorialGameState(scenario: TutorialScenario | null, baseGameState: ClientGameState, locale: string = 'ru') {
   return useMemo(() => {
     if (!scenario) return baseGameState;
 
@@ -172,7 +172,10 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
     if (scenario.extraBots && scenario.extraBots > 0) {
       const existingPlayers = tutorialState.players ? [...tutorialState.players] : [];
       for (let i = 0; i < scenario.extraBots; i++) {
-        const botName = scenario.extraBotNames?.[i] || `Бот ${i + 2}`;
+        const botNameRu = scenario.extraBotNames?.[i] || `Бот ${i + 2}`;
+        const botNameEn = scenario.extraBotNamesEn?.[i] || `Bot ${i + 2}`;
+        const botNameKk = scenario.extraBotNamesKk?.[i] || `Қадам ${i + 2}`;
+        const botName = locale === 'en' ? botNameEn : locale === 'kk' ? botNameKk : botNameRu;
         existingPlayers.push({
           id: `tutorial-extra-bot-${i + 2}`,
           name: botName,

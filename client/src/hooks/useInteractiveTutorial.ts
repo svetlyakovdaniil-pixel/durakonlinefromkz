@@ -65,11 +65,19 @@ export interface TutorialScenario {
     transferCard: string;
     /** Name of the bot the turn is transferred to */
     targetBotName: string;
+    /** Name of the bot in English */
+    targetBotNameEn?: string;
+    /** Name of the bot in Kazakh */
+    targetBotNameKk?: string;
   };
   /** Number of extra bots to show (besides the main opponent) */
   extraBots?: number;
   /** Custom names for extra bots (if not set, defaults to 'Бот 2', 'Бот 3', etc.) */
   extraBotNames?: string[];
+  /** Custom names for extra bots in English */
+  extraBotNamesEn?: string[];
+  /** Custom names for extra bots in Kazakh */
+  extraBotNamesKk?: string[];
   /** Override which player index is the attacker (0=player, 1=first bot, 2=second extra bot, etc.) */
   attackerPlayerIdx?: number;
   /** Override which player index is the defender */
@@ -450,9 +458,13 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textPosition: 'top',
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     transferMechanic: {
       transferCard: '7s',
       targetBotName: 'Мадина',
+      targetBotNameEn: 'Madina',
+      targetBotNameKk: 'Мадина',
     },
   },
   {
@@ -478,6 +490,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     attackerPlayerIdx: 3,
     defenderPlayerIdx: 0,
     customArrows: [
@@ -514,6 +528,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     attackerPlayerIdx: 3,
     defenderPlayerIdx: 0,
   },
@@ -540,6 +556,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     attackerPlayerIdx: 3,
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 2, cards: ['10d'] }],
@@ -567,6 +585,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     attackerPlayerIdx: 2,
     defenderPlayerIdx: 3,
     tableCards: [{ playerId: 2, cards: ['10d', '10s'] }],
@@ -594,6 +614,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     attackerPlayerIdx: 3,
     defenderPlayerIdx: 2,
     tableCards: [{ playerId: 2, cards: ['10d', '10s'] }],
@@ -620,6 +642,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     overrideMainBotName: 'Камила',
     attackerPlayerIdx: 1,
     defenderPlayerIdx: 2,
@@ -650,6 +674,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     showArrows: false,
     extraBots: 2,
     extraBotNames: ['Мадина', 'Бот 3'],
+    extraBotNamesEn: ['Madina', 'Bot 3'],
+    extraBotNamesKk: ['Мадина', 'Қадам 3'],
     overrideMainBotName: 'Камила',
     attackerPlayerIdx: -1,
     defenderPlayerIdx: 2,

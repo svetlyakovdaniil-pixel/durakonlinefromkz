@@ -494,13 +494,13 @@ export default function GameTable({
   } = useInteractiveTutorial();
   const currentTutorialScenario = getCurrentScenario();
   
+  const { t, locale } = useTranslation();
   // Apply tutorial game state modifications if in tutorial
-  const tutorialModifiedGameState = useTutorialGameState(currentTutorialScenario, gameState);
+  const tutorialModifiedGameState = useTutorialGameState(currentTutorialScenario, gameState, locale);
   
   // Use tutorial game state if in tutorial, otherwise use actual game state
   const gs = isTutorial && currentTutorialScenario ? tutorialModifiedGameState : gameState;
   const myIdx = gs.myIndex;
-  const { t, locale } = useTranslation();
 
   const [sortMode, setSortMode] = useState<'suit-rank' | 'rank-only'>('suit-rank');
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);

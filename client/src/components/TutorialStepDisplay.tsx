@@ -984,20 +984,44 @@ export default function TutorialStepDisplay({
           }
         }
         const vertCenter = tableRect.top + (tableRect.height - cardH) / 2;
-        return thrownCards.map((tc, i) => (
-          <div
-            key={`thrown-${tc.id}`}
-            className="fixed z-[52] animate-bounce-in"
-            style={{
-              left: lastCardRight + gap + i * (cardW + gap),
-              top: vertCenter,
-              width: cardW,
-              height: cardH,
-            }}
-          >
-            <MiniCardFace cardNotation={tc.notation} />
-          </div>
-        ));
+        // Step 20 special layout: insert thrown cards relative to existing pairs
+        // 1-2 cards: appear to the LEFT of first pair (6s/10s)
+        // 3-4 cards: first 2 to the LEFT of first pair, remaining to the RIGHT of last pair (6d/10d)
+        const firstPairLeft = pairEls.length > 0 ? pairEls[0].getBoundingClientRect().left : tableRect.left;
+        const lastPairRight = pairEls.length > 0 ? pairEls[pairEls.length - 1].getBoundingClientRect().right : tableRect.left;
+        const totalCards = thrownCards.length;
+        return thrownCards.map((tc, i) => {
+          let leftPos: number;
+          if (totalCards <= 2) {
+            // All cards go to the left of first pair
+            // Position them so the rightmost is just left of firstPairLeft
+            const totalWidth = totalCards * cardW + (totalCards - 1) * gap;
+            const startX = firstPairLeft - gap - totalWidth;
+            leftPos = startX + i * (cardW + gap);
+          } else {
+            // First 2 go left of first pair, rest go right of last pair
+            if (i < 2) {
+              const startX = firstPairLeft - gap - 2 * (cardW + gap) + gap;
+              leftPos = startX + i * (cardW + gap);
+            } else {
+              leftPos = lastPairRight + gap + (i - 2) * (cardW + gap);
+            }
+          }
+          return (
+            <div
+              key={`thrown-${tc.id}`}
+              className="fixed z-[52] animate-bounce-in"
+              style={{
+                left: leftPos,
+                top: vertCenter,
+                width: cardW,
+                height: cardH,
+              }}
+            >
+              <MiniCardFace cardNotation={tc.notation} />
+            </div>
+          );
+        });
       })()}
 
       {/* Pass-through (проездной) badge under specific bot */}
@@ -1023,7 +1047,7 @@ export default function TutorialStepDisplay({
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <span className="text-[9px] sm:text-[11px] text-yellow-300 font-medium whitespace-nowrap">Проездной</span>
+            <span className="text-[9px] sm:text-[11px] text-yellow-300 font-medium whitespace-nowrap">{locale === 'kk' ? 'Жолаушы' : locale === 'en' ? 'Pass-Through' : 'Проездной'}</span>
           </div>
         );
       })()}
@@ -1417,11 +1441,17 @@ export default function TutorialStepDisplay({
             <div className="text-4xl mb-2">↩️</div>
             <p className="text-emerald-300 font-bold text-lg">{locale === 'kk' ? 'Аудару!' : locale === 'en' ? 'Transfer!' : 'Перевод!'}</p>
             <p className="text-emerald-200/70 text-sm mt-1">
-              {locale === 'kk'
-                ? `Сіз жүрісті "${scenario.transferMechanic.targetBotName}" ойыншысына аудардыңыз,\nенді осы ойыншы ұрады`
-                : locale === 'en'
-                ? `You transferred the turn to "${scenario.transferMechanic.targetBotName}",\nnow this player defends`
-                : `Вы перевели ход на игрока "${scenario.transferMechanic.targetBotName}",\nтеперь бьется этот игрок`}
+              {(() => {
+                const nameRu = scenario.transferMechanic.targetBotName;
+                const nameEn = scenario.transferMechanic.targetBotNameEn || nameRu;
+                const nameKk = scenario.transferMechanic.targetBotNameKk || nameRu;
+                const displayName = locale === 'en' ? nameEn : locale === 'kk' ? nameKk : nameRu;
+                return locale === 'kk'
+                  ? `Сіз жүрісті "${displayName}" ойыншысына аудардыңыз,\nенді осы ойыншы ұрады`
+                  : locale === 'en'
+                  ? `You transferred the turn to "${displayName}",\nnow this player defends`
+                  : `Вы перевели ход на игрока "${displayName}",\nтеперь бьется этот игрок`;
+              })()}
             </p>
           </div>
         </div>

@@ -1141,7 +1141,7 @@ onClick={() => setShowTengeTopUp(true)}
                             <span className="text-amber-100 text-sm font-medium">{t('lobby.friendRequest')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs mb-2">
-                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) {t('lobby.friendRequestText', { name: '', id: '' }).split('(ID )')[0] ? '' : ''}{locale === 'kk' ? 'сізді достарға қосқысы келеді' : 'хочет добавить вас в друзья'}
+                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) {locale === 'kk' ? 'сізді достарға қосқысы келеді' : locale === 'en' ? 'wants to add you as a friend' : 'хочет добавить вас в друзья'}
                           </p>
                           <div className="flex gap-2">
                             <button
@@ -1166,7 +1166,7 @@ onClick={() => setShowTengeTopUp(true)}
                             <span className="text-amber-100 text-sm font-medium">{t('lobby.friendAccepted')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> {locale === 'kk' ? 'достық сұрауыңызды қабылдады' : 'принял(а) ваш запрос в друзья'}
+                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> {locale === 'kk' ? 'достық сұрауыңызды қабылдады' : locale === 'en' ? 'accepted your friend request' : 'принял(а) ваш запрос в друзья'}
                           </p>
                         </>
                       )}
@@ -1207,18 +1207,20 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-                            <span className="text-red-300 text-sm font-medium">Ваш аккаунт заблокирован</span>
+                            <span className="text-red-300 text-sm font-medium">
+                            {locale === 'kk' ? 'Сіздің аккаунтыңыз бұғатталды' : locale === 'en' ? 'Your account has been banned' : 'Ваш аккаунт заблокирован'}
+                          </span>
                           </div>
                           <p className="text-red-200/70 text-xs">
-                            Срок: {n.data?.duration || 'не указан'}
+                            {locale === 'kk' ? 'Мерзімі' : locale === 'en' ? 'Duration' : 'Срок'}: {n.data?.duration || (locale === 'kk' ? 'көрсетілмеген' : locale === 'en' ? 'not specified' : 'не указан')}
                           </p>
                           <p className="text-red-200/70 text-xs">
-                            Причина: {n.data?.reason || 'не указана'}
+                            {locale === 'kk' ? 'Себебі' : locale === 'en' ? 'Reason' : 'Причина'}: {n.data?.reason || (locale === 'kk' ? 'көрсетілмеген' : locale === 'en' ? 'not specified' : 'не указана')}
                           </p>
                         </>
                       )}
                       <span className="text-amber-200/30 text-[10px] mt-1 block">
-                        {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     <button
