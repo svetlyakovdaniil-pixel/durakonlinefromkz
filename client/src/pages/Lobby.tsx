@@ -872,10 +872,10 @@ onClick={() => setShowTengeTopUp(true)}
                 }}
                 onClick={() => {}}
               >
-                <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(16px, 5vw, 24px)', height: 'clamp(16px, 5vw, 24px)' }} />
+                <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
                 <span
                   className="font-bold tracking-wide text-amber-100/80 text-center leading-tight px-1"
-                  style={{ fontSize: 'clamp(9px, 2.8vw, 13px)' }}
+                  style={{ fontSize: 'clamp(12px, 3.8vw, 16px)' }}
                 >
                   {t(`lobby.${key}`)}
                 </span>
