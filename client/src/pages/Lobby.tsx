@@ -853,9 +853,7 @@ onClick={() => setShowTengeTopUp(true)}
                 <Filter className="w-3.5 h-3.5" />
                 {hasActiveFilters && <span className="ml-1 w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />}
               </Button>
-              <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm font-bold h-8 px-3 touch-manipulation" onClick={() => setDialogOpen(true)}>
-                <Plus className="w-3.5 h-3.5 mr-0.5" />{t('lobby.createRoomShort')}
-              </Button>
+
             </div>
           </div>
           {/* Mobile search */}
@@ -1275,7 +1273,7 @@ onClick={() => setShowTengeTopUp(true)}
           <button
             className="flex flex-col items-center justify-center gap-1 w-20 transition-all active:scale-95"
             style={{ opacity: 0.5 }}
-            onClick={() => {}}
+            onClick={() => setDialogOpen(true)}
           >
             <div
               className="w-6 h-6 rounded-full flex items-center justify-center"
