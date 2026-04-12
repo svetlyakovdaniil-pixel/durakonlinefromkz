@@ -849,7 +849,7 @@ onClick={() => setShowTengeTopUp(true)}
           <div className="grid grid-cols-2">
             {/* Обучение */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderRight: '1px solid rgba(201,168,76,0.15)',
@@ -857,26 +857,26 @@ onClick={() => setShowTengeTopUp(true)}
               }}
               onClick={() => {}}
             >
-              <BookOpen className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <BookOpen className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.tutorial')}</span>
             </button>
 
             {/* Уведомления */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderBottom: '1px solid rgba(201,168,76,0.15)',
               }}
               onClick={() => {}}
             >
-              <Bell className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <Bell className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.notifications')}</span>
             </button>
 
             {/* Правила */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderRight: '1px solid rgba(201,168,76,0.15)',
@@ -884,26 +884,26 @@ onClick={() => setShowTengeTopUp(true)}
               }}
               onClick={() => {}}
             >
-              <HelpCircle className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <HelpCircle className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.rules')}</span>
             </button>
 
             {/* Магазин */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderBottom: '1px solid rgba(201,168,76,0.15)',
               }}
               onClick={() => {}}
             >
-              <ShoppingCart className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <ShoppingCart className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.shop')}</span>
             </button>
 
             {/* Достижения */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderRight: '1px solid rgba(201,168,76,0.15)',
@@ -911,20 +911,20 @@ onClick={() => setShowTengeTopUp(true)}
               }}
               onClick={() => {}}
             >
-              <Trophy className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <Trophy className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.achievements')}</span>
             </button>
 
             {/* Ежедневные задания */}
             <button
-              className="flex flex-col items-center justify-center gap-2 py-5 transition-all active:scale-[0.97]"
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
                 borderBottom: '1px solid rgba(201,168,76,0.15)',
               }}
               onClick={() => {}}
             >
-              <CalendarCheck className="w-8 h-8" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <CalendarCheck className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.dailyQuests')}</span>
             </button>
           </div>
