@@ -315,7 +315,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                  style={{ right: '52px', bottom: '4px' }}
+                  style={{ right: '52px', bottom: '4px', marginRight: '271px', marginBottom: '84px' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
