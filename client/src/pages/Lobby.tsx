@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Swords, Medal } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Swords, Medal, Home } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -98,10 +98,10 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   // Keys: 'tournaments', 'shop', 'friends', 'achievements', 'dailyQuests'
   // We store the last-seen timestamp per section in localStorage.
   // A dot appears if the section has new content since last visit.
-  // For static sections (tournaments, shop) we use a fixed "new content" date.
+  // For static sections (tournaments) we use a fixed "new content" date.
+  // Shop dot: only shown if user has never visited (lastVisit === 0).
   const NEW_CONTENT_DATES: Record<string, number> = useMemo(() => ({
     tournaments: new Date('2026-04-13').getTime(),
-    shop: new Date('2026-04-13').getTime(),
     friends: 0, // driven by onlineFriendsCount
   }), []);
 
@@ -122,8 +122,12 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   const hasNewContent = (key: string): boolean => {
     const lastVisit = visitedKeys[key] ?? 0;
-    if (key === 'tournaments' || key === 'shop') {
+    if (key === 'tournaments') {
       return lastVisit < (NEW_CONTENT_DATES[key] ?? 0);
+    }
+    if (key === 'shop') {
+      // Show dot only if user has never visited the shop
+      return lastVisit === 0;
     }
     if (key === 'friends') {
       // Show dot if there are online friends and user hasn't visited recently (within 10 min)
@@ -1473,7 +1477,7 @@ onClick={() => setShowTengeTopUp(true)}
             style={{ opacity: activeTab === 'lobby' ? 1 : 0.45 }}
             onClick={() => setActiveTab('lobby')}
           >
-            <UserCircle2 className="w-6 h-6" style={{ color: '#c9a84c' }} />
+            <Home className="w-6 h-6" style={{ color: '#c9a84c' }} />
             <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
               {t('tabBar.profile')}
             </span>

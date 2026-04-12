@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square, Eye } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Play, Square, Eye, Crown } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_URL, CARD_IMAGES, CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
@@ -11,6 +11,7 @@ import { FireFrame } from './FireFrame';
 import { NeonFrame } from './NeonFrame';
 import { LightningFrame } from './LightningFrame';
 import { IceFrame } from './IceFrame';
+import { PremiumFrame } from './PremiumFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -80,6 +81,20 @@ export const AVATAR_FRAMES = [
     iconColor: 'text-sky-300',
     bgGradient: 'from-sky-900 to-blue-950',
   },
+  {
+    id: 'premium',
+    name: 'PREMIUM рамка',
+    nameKk: 'PREMIUM жақтауы',
+    nameEn: 'PREMIUM Frame',
+    description: 'Эксклюзивная анимированная рамка с золотыми монетами. Только для подписчиков Premium.',
+    descriptionKk: 'Алтын тиындармен эксклюзивті анимациялық жақтау. Тек Premium жазылушылары үшін.',
+    descriptionEn: 'Exclusive animated frame with gold coins. Premium subscribers only.',
+    price: 0,
+    icon: Crown,
+    iconColor: 'text-yellow-400',
+    bgGradient: 'from-yellow-900 to-amber-950',
+    premiumOnly: true,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -93,6 +108,8 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <LightningFrame size={size} active={true}>{children}</LightningFrame>;
     case 'ice':
       return <IceFrame size={size} active={true}>{children}</IceFrame>;
+    case 'premium':
+      return <PremiumFrame size={size} active={true}>{children}</PremiumFrame>;
     default:
       return <>{children}</>;
   }
@@ -440,12 +457,15 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           {activeTab === 'frames' && (
             <div className="space-y-4">
               {AVATAR_FRAMES.filter(frame => isItemAvailable('frame', frame.id)).map(frame => {
-                const isOwned = ownedFrames.includes(frame.id);
+                const isPremiumFrame = (frame as any).premiumOnly === true;
+                const isOwned = ownedFrames.includes(frame.id) || (isPremiumFrame && isPremium);
                 const effectivePrice = getPrice('frame', frame.id, frame.price);
                 const canAffordFrame = currentTenge >= effectivePrice;
                 const IconComp = frame.icon;
                 return (
-                  <div key={frame.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                  <div key={frame.id} className={`bg-[#0f2035]/80 border rounded-xl p-4 ${
+                    isPremiumFrame ? 'border-yellow-600/40' : 'border-amber-700/20'
+                  }`}>
                     <div className="flex items-center gap-4">
                       <div className="shrink-0">
                         <FramePreview frameId={frame.id} size={64}>
@@ -457,13 +477,30 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                         </FramePreview>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-amber-100 font-bold text-sm mb-1">
-                          {locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}
-                        </h3>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="text-amber-100 font-bold text-sm">
+                            {locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}
+                          </h3>
+                          {isPremiumFrame && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
+                          )}
+                        </div>
                         <p className="text-amber-200/50 text-xs mb-3">
                           {locale === 'kk' ? frame.descriptionKk : locale === 'en' ? (frame as any).descriptionEn || frame.description : frame.description}
                         </p>
-                        {isOwned ? (
+                        {isPremiumFrame ? (
+                          isOwned ? (
+                            <div className="flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
+                              <Crown className="w-4 h-4" />
+                              <span>{locale === 'kk' ? 'Белсенді' : locale === 'en' ? 'Active with Premium' : 'Активна с Premium'}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-amber-200/50 text-xs">
+                              <Crown className="w-4 h-4 text-yellow-600/60" />
+                              <span>{locale === 'kk' ? 'Premium жазылымы қажет' : locale === 'en' ? 'Requires Premium subscription' : 'Требуется подписка Premium'}</span>
+                            </div>
+                          )
+                        ) : isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                             <Check className="w-4 h-4" /><span>{t('shop.purchased')}</span>
                           </div>
@@ -482,7 +519,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             </div>
                           </div>
                         )}
-                        {!isOwned && !canAffordFrame && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
+                        {!isPremiumFrame && !isOwned && !canAffordFrame && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                       </div>
                     </div>
                   </div>

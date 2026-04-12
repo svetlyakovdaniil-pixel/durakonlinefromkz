@@ -94,6 +94,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
   const { t, locale } = useTranslation();
   const { data: ownedFrames = [] } = trpc.shop.ownedFrames.useQuery();
   const { data: myProfile } = trpc.profile.me.useQuery();
+  const { data: premiumStatus } = trpc.premium.status.useQuery();
+  const isPremium = premiumStatus?.isPremium ?? false;
   const equippedFrame = (myProfile as any)?.equippedFrame ?? null;
 
   const equipFrameMutation = trpc.shop.equipFrame.useMutation({
@@ -173,7 +175,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
       </div>
 
       {/* Frame Selection — moved here, between name and rating */}
-      {ownedFrames.length > 0 && (
+      {(ownedFrames.length > 0 || isPremium) && (
         <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
             <div className="text-amber-200/60 text-xs">{locale === 'kk' ? 'Аватар жақтауы' : 'Рамка аватарки'}</div>
@@ -211,7 +213,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : locale === 'en' ? 'No frame' : 'Без рамки'}</span>
                 {!equippedFrame && <Check className="w-4 h-4 text-green-400 ml-auto" />}
               </button>
-              {AVATAR_FRAMES.filter(f => ownedFrames.includes(f.id)).map(frame => (
+              {/* Regular owned frames */}
+              {AVATAR_FRAMES.filter(f => ownedFrames.includes(f.id) && !(f as any).premiumOnly).map(frame => (
                 <button
                   key={frame.id}
                   onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
@@ -229,6 +232,54 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                   <span className="text-amber-100 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
                   {equippedFrame === frame.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
+              ))}
+              {/* Premium frame — always shown, locked without premium */}
+              {AVATAR_FRAMES.filter(f => (f as any).premiumOnly).map(frame => (
+                isPremium ? (
+                  <button
+                    key={frame.id}
+                    onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                      equippedFrame === frame.id ? 'bg-yellow-700/30 border border-yellow-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-yellow-700/20'
+                    }`}
+                  >
+                    <FrameWrapper frameId={frame.id} size={40}>
+                      <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-yellow-500/60">
+                        <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                          <FrameIcon frameId={frame.id} />
+                        </div>
+                      </div>
+                    </FrameWrapper>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
+                      </div>
+                    </div>
+                    {equippedFrame === frame.id && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}
+                  </button>
+                ) : (
+                  <div
+                    key={frame.id}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg border border-yellow-700/20 opacity-60 cursor-not-allowed"
+                  >
+                    <FrameWrapper frameId={frame.id} size={40}>
+                      <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-yellow-700/40">
+                        <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                          <FrameIcon frameId={frame.id} />
+                        </div>
+                      </div>
+                    </FrameWrapper>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
+                      </div>
+                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Premium қажет' : locale === 'en' ? 'Requires Premium' : 'Требуется Premium'}</span>
+                    </div>
+                    <Crown className="w-4 h-4 text-yellow-600/50 ml-auto" />
+                  </div>
+                )
               ))}
             </div>
           )}
