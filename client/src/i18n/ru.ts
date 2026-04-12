@@ -376,6 +376,16 @@ export const ru = {
     noLeaderboard: 'Пока нет данных рейтинга',
     removeFriendTitle: 'Удалить друга',
     invite: 'Пригласить',
+    historyPlace1: '1-е место',
+    historyPlace2: '2-е место',
+    historyPlace3: '3-е место',
+    historyPlaceN: '{n}-е место',
+    historyPlayers: 'игроков',
+    historyMin: 'мин',
+    historySec: 'сек',
+    historyDurak: 'Дурак',
+    historyVsBot: 'Бот',
+    historyVsHuman: 'Люди',
   },
 
   // Shop

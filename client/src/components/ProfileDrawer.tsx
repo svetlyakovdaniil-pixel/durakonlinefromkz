@@ -780,8 +780,18 @@ function MatchHistoryTab() {
 
         const ratingColor = game.ratingDelta > 0 ? 'text-green-400' : game.ratingDelta < 0 ? 'text-red-400' : 'text-amber-300';
         const ratingPrefix = game.ratingDelta > 0 ? '+' : '';
-        const placeLabel = game.place === 1 ? '1st' : game.place === 2 ? '2nd' : game.place === 3 ? '3rd' : `${game.place}th`;
+        const placeLabel = game.place === 1
+          ? t('profile.historyPlace1')
+          : game.place === 2
+          ? t('profile.historyPlace2')
+          : game.place === 3
+          ? t('profile.historyPlace3')
+          : (t('profile.historyPlaceN') || '{n}-е место').replace('{n}', String(game.place));
         const isDurak = game.isLoser;
+        const vsLabel = game.isBotGame ? t('profile.historyVsBot') : t('profile.historyVsHuman');
+        const minLabel = t('profile.historyMin') || 'min';
+        const secLabel = t('profile.historySec') || 'sec';
+        const playersLabel = t('profile.historyPlayers') || 'players';
 
         return (
           <div key={game.id} className={`bg-[#1a2d45]/60 border rounded-lg p-2.5 ${
@@ -796,13 +806,13 @@ function MatchHistoryTab() {
                 ) : (
                   <Trophy className="w-3.5 h-3.5 text-amber-400" />
                 )}
-                <span className="text-amber-100 text-xs font-medium">
-                  {placeLabel} place • {game.playerCount} players
+                <span className={`text-xs font-medium ${isDurak ? 'text-red-300' : game.place === 1 ? 'text-yellow-300' : 'text-amber-100'}`}>
+                  {isDurak ? t('profile.historyDurak') : placeLabel} • {game.playerCount} {playersLabel}
                 </span>
                 <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
                   game.isBotGame ? 'bg-orange-900/40 text-orange-300 border border-orange-700/30' : 'bg-blue-900/40 text-blue-300 border border-blue-700/30'
                 }`}>
-                  {game.isBotGame ? '🤖' : '👤'}
+                  {game.isBotGame ? '🤖' : '👤'} {vsLabel}
                 </span>
               </div>
               <span className={`text-xs font-bold ${ratingColor}`}>
@@ -812,7 +822,7 @@ function MatchHistoryTab() {
             <div className="flex items-center justify-between">
               <span className="text-amber-200/30 text-[10px]">{timeStr}</span>
               <span className="text-amber-200/40 text-[10px]">
-                {Math.floor(game.durationSeconds / 60)}m {game.durationSeconds % 60}s
+                {Math.floor(game.durationSeconds / 60)}{minLabel} {game.durationSeconds % 60}{secLabel}
               </span>
             </div>
           </div>

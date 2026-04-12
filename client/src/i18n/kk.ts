@@ -376,6 +376,16 @@ export const kk = {
     noLeaderboard: 'Әлі рейтинг деректері жоқ',
     removeFriendTitle: 'Досты жою',
     invite: 'Шақыру',
+    historyPlace1: '1-ші орын',
+    historyPlace2: '2-ші орын',
+    historyPlace3: '3-ші орын',
+    historyPlaceN: '{n}-ші орын',
+    historyPlayers: 'ойыншы',
+    historyMin: 'мин',
+    historySec: 'сек',
+    historyDurak: 'Дұрақ',
+    historyVsBot: 'Бот',
+    historyVsHuman: 'Адамдар',
   },
 
   // Shop

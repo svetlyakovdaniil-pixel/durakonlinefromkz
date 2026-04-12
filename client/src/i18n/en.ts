@@ -376,6 +376,16 @@ export const en = {
     removeFriendTitle: 'Remove friend',
     invite: 'Invite',
     noMatches: 'No match history yet',
+    historyPlace1: '1st place',
+    historyPlace2: '2nd place',
+    historyPlace3: '3rd place',
+    historyPlaceN: '{n}th place',
+    historyPlayers: 'players',
+    historyMin: 'min',
+    historySec: 'sec',
+    historyDurak: 'Fool',
+    historyVsBot: 'Bot',
+    historyVsHuman: 'Human',
   },
 
   // Shop

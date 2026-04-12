@@ -2332,3 +2332,6 @@
 - [x] Move "Рамка аватарки" section in ProfileDrawer to appear between player name and rating stats
 - [x] Fix: clicking "Рейтинг" grid button should open LeaderboardDrawer, not ProfileDrawer
 - [x] Fix: clicking TopPlayersMarquee should open LeaderboardDrawer, not ProfileDrawer
+- [x] Translate match history in ProfileDrawer to ru/kk (all labels, statuses, result texts)
+- [x] Increase "Дурак онлайн from KZ" title size by 20% (keep 3-line structure)
+- [x] Move admin panel button to bottom-left corner of its area

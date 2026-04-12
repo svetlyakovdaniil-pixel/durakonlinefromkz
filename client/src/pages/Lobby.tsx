@@ -271,8 +271,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
             <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
-              {/* Left column: Admin only (if applicable) */}
-              <div className="flex flex-col items-start justify-between relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
+              {/* Left column: Admin button at bottom (if applicable) */}
+              <div className="flex flex-col items-start justify-end relative z-20 self-stretch" style={{marginLeft: '-4px'}}>
                 {hasAdminAccess ? (
                   <button
                     className="text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
@@ -283,9 +283,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </button>
                 ) : <div />}
               </div>
-              {/* Title — shifted right toward avatar */}
+              {/* Title — shifted right toward avatar, 20% larger */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
-                <h1 className="text-base font-bold text-amber-100 leading-tight text-center" style={{marginRight: '155px'}}>
+                <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '155px', fontSize: '1.2rem'}}>
                   {locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'}
                   <br/>
                   <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span>
