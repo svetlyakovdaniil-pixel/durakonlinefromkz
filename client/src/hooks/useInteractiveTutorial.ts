@@ -108,6 +108,10 @@ export interface TutorialScenario {
   hiddenTrumpCard1?: string;
   /** Override text for mobile view */
   mobileText?: string;
+  /** Override text for mobile view in Kazakh */
+  mobileTextKk?: string;
+  /** Override text for mobile view in English */
+  mobileTextEn?: string;
   /** Override text position for mobile view: 'bottom' puts text near player hand */
   mobileTextPosition?: 'auto' | 'center' | 'top' | 'bottom';
   /** Additional highlight elements for mobile only */
@@ -674,6 +678,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Қазір ойында 2 колода бар. Колода №1 астында жүрек дамасы жатыр — бұл қазіргі қозырды белгілейтін карта.\nЖүрек дамасының астында жасырын карта — жасырын қозыр №1.\nКолода №2 астында жасырын қозыр №2 жатыр',
     textEn: 'Now there are 2 decks in the game. Under deck #1 lies the Queen of Hearts — this is the card that determines the current trump.\nUnder the Queen of Hearts is a hidden card — hidden trump #1.\nUnder deck #2 lies hidden trump #2.',
     mobileText: 'В начале партии козырем стала масть черви. Как только карты в колоде №1 (К1) закончатся, козырь поменяется',
+    mobileTextKk: 'Ойын басында қозыр жүрек масы болды. Колода №1 (Қ1) біткенде, қозыр өзгереді',
+    mobileTextEn: 'At the start of the game, hearts became the trump suit. Once the cards in deck #1 (D1) run out, the trump will change.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -700,6 +706,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Колода №1 біткенде, жасырын қозыр №1 ашылады және ойындағы қозыр өзгереді. Бұл жағдайда қозыр крестіге өзгерді',
     textEn: 'When deck #1 runs out, hidden trump #1 is revealed and the trump in the game changes. In this case the trump changed to clubs.',
     mobileText: 'Когда колода №1 заканчивается, вскрывается потайный козырь №1, и козырь в игре меняется. Козырь поменялся на крести',
+    mobileTextKk: 'Колода №1 біткенде, жасырын қозыр №1 ашылады және ойындағы қозыр өзгереді. Қозыр крестіге өзгерді',
+    mobileTextEn: 'When deck #1 runs out, hidden trump #1 is revealed and the trump changes. The trump changed to clubs.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -728,6 +736,8 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Колода №1 мен колода №2 біткенде, жасырын қозыр №2 ашылады және ойындағы қозыр соңғы рет өзгереді. Енді ойындағы қозыр бүбі',
     textEn: 'When deck #1 and deck #2 run out, hidden trump #2 is revealed, changing the trump for the last time. Now the trump in the game is diamonds.',
     mobileText: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайный козырь №2, меняя козырь в игре в последний раз. Теперь козырь в игре буби',
+    mobileTextKk: 'Колода №1 мен колода №2 біткенде, жасырын қозыр №2 ашылады, ойындағы қозыр соңғы рет өзгереді. Енді қозыр бүбі',
+    mobileTextEn: 'When deck #1 and deck #2 run out, hidden trump #2 is revealed, changing the trump for the last time. Now the trump is diamonds.',
     instruction: 'Нажмите "Завершить обучение"',
     instructionKk: '"Оқытуды аяқтау" басыңыз',
     instructionEn: 'Click "Finish Tutorial"',

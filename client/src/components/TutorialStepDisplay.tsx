@@ -789,7 +789,7 @@ export default function TutorialStepDisplay({
               transition: 'opacity 0.5s',
             }}
           >
-            БИТО!
+            {locale === 'kk' ? 'БІТТІ!' : locale === 'en' ? 'BEATEN!' : 'БИТО!'}
           </div>
         </div>
       </div>

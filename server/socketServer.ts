@@ -412,7 +412,7 @@ export function initSocketServer(httpServer: HttpServer) {
       };
       const room: Room = {
         id: roomId,
-        name: data.name || `Комната ${roomId}`,
+        name: data.name || `${settings.locale === 'kk' ? 'Бөлме' : settings.locale === 'en' ? 'Room' : 'Комната'} ${roomId}`,
         hostId: odId,
         maxPlayers: Math.min(Math.max(data.maxPlayers || 2, 2), 8),
         players: [{ id: odId, name: playerDisplayNames.get(odId) || name, ready: false, isBot: false }],
@@ -886,9 +886,16 @@ export function initSocketServer(httpServer: HttpServer) {
         gameState.consecutiveTimeouts[odId] = 0;
       }
 
-      const nextAttacker = getNextActivePlayer(gameState.players, playerIdx, gameState.direction);
-      gameState.currentAttackerIdx = nextAttacker;
-      gameState.currentDefenderIdx = getNextActivePlayer(gameState.players, nextAttacker, gameState.direction);
+      // If defender is taking, finalize the take first (cards go to defender)
+      // before skipping the attacker's turn. Without this, the battlefield
+      // remains non-empty and the state becomes inconsistent.
+      if (gameState.defenderTaking) {
+        engineFinalizeTake(gameState);
+      } else {
+        const nextAttacker = getNextActivePlayer(gameState.players, playerIdx, gameState.direction);
+        gameState.currentAttackerIdx = nextAttacker;
+        gameState.currentDefenderIdx = getNextActivePlayer(gameState.players, nextAttacker, gameState.direction);
+      }
 
       markProgress(roomId);
       restartTurnTimer(roomId);

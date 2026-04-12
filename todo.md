@@ -2261,3 +2261,13 @@
 - [x] i18n: перевести "Плейлисты" и названия плейлистов в настройках комнаты (kk, en) — Lobby.tsx t('shop.music') + nameEn
 - [x] UI: исправить отображение колоды и стола в настройках комнаты (мобиль) — grid-cols-1 sm:grid-cols-2
 - [x] i18n: добавить выбор английского языка в настройках внутри игры — GameSettingsSheet.tsx English опция
+
+## Задачи Apr 12, 2026 — Сессия 11
+
+- [x] i18n: шаг 21 обучения — mobileTextKk/mobileTextEn добавлены в useInteractiveTutorial.ts
+- [x] i18n: шаг 22 обучения — mobileTextKk/mobileTextEn добавлены в useInteractiveTutorial.ts
+- [x] i18n: шаг 23 обучения — mobileTextKk/mobileTextEn добавлены в useInteractiveTutorial.ts
+- [x] i18n: кнопка "Завершить обучение" — уже была переведена в сессии 10
+- [x] i18n: надпись "БИТО!" в шагах 9, 10, 12 — renderBitoText() теперь locale-aware
+- [x] i18n: слово "Комната" в названии по умолчанию — socketServer.ts locale-aware (Бөлме/Room)
+- [x] БАГ: skipTurn при defenderTaking=true — исправлено: теперь вызывает engineFinalizeTake
