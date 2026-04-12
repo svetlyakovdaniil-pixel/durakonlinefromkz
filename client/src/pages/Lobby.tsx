@@ -828,27 +828,20 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Mobile: Quick Game button — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-        <div className="sm:hidden px-4 pt-3 pb-1">
+        <div className="sm:hidden">
           <button
-            className="w-full flex flex-col items-center justify-center gap-1.5 py-4 rounded-xl transition-all active:scale-[0.98]"
+            className="w-full flex flex-row items-center justify-center gap-3 py-3 transition-all active:scale-[0.98]"
             style={{
-              background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.03) 100%)',
-              border: '1px solid rgba(201,168,76,0.25)',
+              background: 'linear-gradient(180deg, rgba(201,168,76,0.10) 0%, rgba(201,168,76,0.04) 100%)',
+              borderTop: '1px solid rgba(201,168,76,0.20)',
+              borderBottom: '1px solid rgba(201,168,76,0.20)',
             }}
             onClick={() => {}}
           >
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center"
-              style={{
-                background: 'rgba(201,168,76,0.12)',
-                border: '1px solid rgba(201,168,76,0.3)',
-              }}
-            >
-              <Play className="w-5 h-5 ml-0.5" style={{ color: '#c9a84c' }} fill="#c9a84c" />
-            </div>
-            <span className="text-base font-bold tracking-wide" style={{ color: '#e8c96a', fontFamily: 'serif' }}>
+            <span className="text-xl font-bold tracking-wide text-amber-100">
               {t('tabBar.quickGame')}
             </span>
+            <Play className="w-5 h-5 ml-0.5" style={{ color: '#c9a84c' }} fill="#c9a84c" />
           </button>
         </div>
       )}
