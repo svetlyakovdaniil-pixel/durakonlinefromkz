@@ -1170,9 +1170,18 @@ export async function equipFrame(
 
   // If equipping, check ownership
   if (frameId) {
-    const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
-    if (!owned.includes(frameId)) {
-      return { success: false, reason: 'not_owned' };
+    // Premium frame is unlocked by active premium subscription, not by shop purchase
+    if (frameId === 'premium') {
+      const now = new Date();
+      const hasPremium = profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt > now;
+      if (!hasPremium) {
+        return { success: false, reason: 'premium_required' };
+      }
+    } else {
+      const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+      if (!owned.includes(frameId)) {
+        return { success: false, reason: 'not_owned' };
+      }
     }
   }
 

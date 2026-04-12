@@ -95,7 +95,10 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   const unclaimedCount = quests.filter(q => q.completed && !q.claimed).length;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
       <div
         className="w-full max-w-lg bg-[#1a1a2e] border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col max-h-[92vh] h-[92vh]"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
@@ -125,7 +128,11 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
                 {unclaimedCount}
               </span>
             )}
-            <button onClick={onClose} className="text-gray-400 hover:text-white transition-colors p-1">
+            <button
+              onClick={onClose}
+              className="w-9 h-9 flex items-center justify-center rounded-full bg-white/10 border border-white/20 text-gray-300 hover:text-white hover:bg-white/20 transition-colors"
+              aria-label="Закрыть"
+            >
               <X className="w-5 h-5" />
             </button>
           </div>

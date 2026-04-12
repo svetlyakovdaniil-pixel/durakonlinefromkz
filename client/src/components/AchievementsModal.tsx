@@ -122,8 +122,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
-            style={{ color: 'rgba(201,168,76,0.6)' }}
+            className="w-9 h-9 flex items-center justify-center rounded-full transition-colors bg-amber-900/40 border border-amber-600/30 hover:bg-amber-800/60"
+            style={{ color: 'rgba(201,168,76,0.9)' }}
+            aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
           </button>

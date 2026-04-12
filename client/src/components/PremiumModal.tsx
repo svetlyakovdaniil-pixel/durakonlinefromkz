@@ -214,13 +214,14 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
       />
 
       {/* Modal wrapper — fixed height, flex column */}
-      <div className="relative w-full max-w-lg max-h-[95vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30">
+      <div className="relative w-full max-w-lg h-[95vh] flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30">
 
         {/* Sticky close button row — always visible at top */}
-        <div className="flex-shrink-0 flex justify-end px-3 pt-3">
+        <div className="flex-shrink-0 flex justify-end px-3 pt-3 pb-1">
           <button
             onClick={onClose}
-            className="p-2 rounded-full bg-black/40 text-gray-400 hover:text-white transition-colors"
+            className="p-2.5 rounded-full bg-yellow-900/60 border border-yellow-600/40 text-yellow-200 hover:text-white hover:bg-yellow-800/80 transition-colors"
+            aria-label="Закрыть"
           >
             <X className="w-5 h-5" />
           </button>
