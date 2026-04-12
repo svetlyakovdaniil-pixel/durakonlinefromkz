@@ -277,7 +277,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             {ownedPlaylists.length > 0 && (
               <div className="mt-2">
                 <span className="text-xs text-amber-200/50 mb-1.5 block">
-                  {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+                  {locale === 'kk' ? 'Плейлист' : locale === 'en' ? 'Playlist' : 'Плейлист'}
                 </span>
                 <Select value={selectedPlaylistId} onValueChange={handlePlaylistChange}>
                   <SelectTrigger className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm">
@@ -285,7 +285,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                     <SelectItem value="default" className="text-amber-100 text-sm">
-                      {locale === 'kk' ? 'Классикалық' : 'Классический'}
+                      {locale === 'kk' ? 'Классикалық' : locale === 'en' ? 'Classic' : 'Классический'}
                     </SelectItem>
                     {ownedPlaylists.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">

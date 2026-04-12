@@ -378,3 +378,30 @@ export const iapTransactions = mysqlTable("iap_transactions", {
 });
 export type IapTransaction = typeof iapTransactions.$inferSelect;
 export type InsertIapTransaction = typeof iapTransactions.$inferInsert;
+
+/**
+ * User achievements — tracks which achievements each player has unlocked and claimed.
+ * Achievement definitions are hardcoded in shared/achievements.ts.
+ */
+export const userAchievements = mysqlTable("user_achievements", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Player profile ID (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Achievement key (e.g. 'first_game', 'steppe_student') */
+  achievementKey: varchar("achievementKey", { length: 64 }).notNull(),
+  /** Current progress value (e.g. games played count) */
+  progress: int("progress").default(0).notNull(),
+  /** Whether the achievement condition has been met (unlocked) */
+  unlocked: boolean("unlocked").default(false).notNull(),
+  /** Whether the reward has been claimed by the player */
+  claimed: boolean("claimed").default(false).notNull(),
+  /** When the achievement was unlocked */
+  unlockedAt: timestamp("unlockedAt"),
+  /** When the reward was claimed */
+  claimedAt: timestamp("claimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;

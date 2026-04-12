@@ -232,6 +232,13 @@
       "when": 1775994635330,
       "tag": "0032_powerful_harrier",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "5",
+      "when": 1776024433793,
+      "tag": "0033_wise_thunderbird",
+      "breakpoints": true
     }
   ]
 }

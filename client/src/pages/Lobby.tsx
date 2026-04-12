@@ -29,6 +29,7 @@ import { FrameWrapper } from '@/components/AvatarWithFrame';
 import TopPlayersMarquee from '@/components/TopPlayersMarquee';
 import FriendsDrawer from '@/components/FriendsDrawer';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
+import AchievementsModal from '@/components/AchievementsModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -86,6 +87,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [tutorialLoading, setTutorialLoading] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
+  const [showAchievements, setShowAchievements] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Room filter & search
@@ -135,6 +137,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   // Notifications
   const { data: unreadCount = 0 } = trpc.notifications.unreadCount.useQuery(undefined, { refetchInterval: 15000 });
+
+  // Achievements unclaimed count
+  const { data: unclaimedAchievements = 0, refetch: refetchUnclaimedAchievements } = trpc.achievements.unclaimedCount.useQuery(undefined, { refetchInterval: 30000 });
   const { data: notifList = [], refetch: refetchNotifs } = trpc.notifications.list.useQuery(undefined, { enabled: notifOpen });
   const markAllRead = trpc.notifications.markAllRead.useMutation();
   const deleteNotif = trpc.notifications.delete.useMutation();
@@ -284,8 +289,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </h1>
                 {/* Premium status animated button */}
                 <button
-                  onClick={() => setShowShop(true)}
-                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide"
+                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide pointer-events-none"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -834,7 +838,7 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
               { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
-              { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => {} },
+              { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => setShowAchievements(true) },
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },
               { icon: HelpCircle, key: 'rules', borderR: true, borderB: true, action: () => setShowRules(true) },
               { icon: BookOpen, key: 'tutorial', borderR: false, borderB: true, action: () => setShowTutorial(true) },
@@ -880,6 +884,11 @@ onClick={() => setShowTengeTopUp(true)}
                   {key === 'notifications' && unreadCount > 0 && (
                     <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
                       {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                  {key === 'achievements' && unclaimedAchievements > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {unclaimedAchievements > 9 ? '9+' : unclaimedAchievements}
                     </span>
                   )}
                 </div>
@@ -1314,6 +1323,16 @@ onClick={() => setShowTengeTopUp(true)}
         open={showLeaderboard}
         onOpenChange={setShowLeaderboard}
         myGameId={profile?.gameId}
+      />
+
+      {/* Achievements Modal */}
+      <AchievementsModal
+        open={showAchievements}
+        onClose={() => setShowAchievements(false)}
+        onRewardClaimed={() => {
+          refetchUnclaimedAchievements();
+          refetchProfile?.();
+        }}
       />
 
       {/* Friends Drawer triggered from grid button */}

@@ -81,6 +81,7 @@ import {
   updateContactMessageStatus,
   creditTengeIAP,
 } from "./db";
+import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
 export const appRouter = router({
@@ -1112,6 +1113,36 @@ export const appRouter = router({
         const ok = await updateContactMessageStatus(input.id, input.status, input.adminNote);
         if (!ok) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
         return { success: true };
+      }),
+  }),
+
+  // ============================================================
+  // ACHIEVEMENTS
+  // ============================================================
+  achievements: router({
+    /** Get all achievements with progress for the current player */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      return getAchievementsForProfile(profile.id);
+    }),
+
+    /** Get count of unclaimed (unlocked but not claimed) achievements */
+    unclaimedCount: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return 0;
+      return getUnclaimedAchievementCount(profile.id);
+    }),
+
+    /** Claim the reward for an unlocked achievement */
+    claim: protectedProcedure
+      .input(z.object({ achievementKey: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const result = await claimAchievementReward(profile.id, input.achievementKey);
+        if (!result.success) throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason });
+        return result;
       }),
   }),
 });

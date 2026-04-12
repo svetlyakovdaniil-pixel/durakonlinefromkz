@@ -2348,6 +2348,20 @@
 - [x] Revert "Премиум статус" button to previous style (removed marginRight: 205px)
 - [x] Change premium button text to "PREMIUM" (no star icon, no "статус" word) in all 3 languages
 - [x] Add border/divider between "Настройки" and "Друзья" grid buttons (borderB: true on Settings row)
-- [ ] Fix divider between Settings/Friends: add explicit border-bottom line element between rows 4 and 5
-- [ ] Add unreadCount badge on Notifications grid button
-- [ ] Shift PREMIUM button slightly lower (add marginTop)
+- [x] Fix divider between Settings/Friends: add explicit border-bottom line element between rows 4 and 5
+- [x] Add unreadCount badge on Notifications grid button
+- [x] Shift PREMIUM button slightly lower (add marginTop)
+
+## Задачи от 13.04.2026
+
+- [x] Перевести «Плейлист» и «Классический» на английский в настройках музыки лобби
+- [x] Деактивировать кнопку PREMIUM (убрать onClick, сделать некликабельной)
+- [x] Система достижений: БД-схема (таблицы achievements, userAchievements, achievementProgress)
+- [x] Система достижений: серверные tRPC процедуры (list, getProgress, claim, checkBotRatio)
+- [x] Система достижений: 24 достижения с условиями и наградами (шаныраки/тенге)
+- [x] Система достижений: интеграция триггеров в игровой движок (gameEngine.ts)
+- [x] Система достижений: интеграция триггеров в сокет-сервер (socketServer.ts) — проверка после каждой партии
+- [x] Система достижений: UI компонент AchievementsModal с прогресс-барами и кнопкой получения награды
+- [x] Система достижений: уведомление игрока что достижения засчитываются только при <33.4% ботов
+- [x] Система достижений: toast-уведомление при разблокировке достижения во время игры
+- [x] Система достижений: кнопка «Достижения» в сетке лобби открывает AchievementsModal
