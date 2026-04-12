@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Swords } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Swords, Medal } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -946,11 +946,37 @@ onClick={() => setShowTengeTopUp(true)}
               className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
               style={{
                 background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderBottom: '1px solid rgba(201,168,76,0.15)',
               }}
               onClick={() => {}}
             >
               <Settings className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
               <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.settings')}</span>
+            </button>
+
+            {/* Друзья */}
+            <button
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+                borderRight: '1px solid rgba(201,168,76,0.15)',
+              }}
+              onClick={() => {}}
+            >
+              <Users className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.friends')}</span>
+            </button>
+
+            {/* Рейтинг */}
+            <button
+              className="flex flex-col items-center justify-center gap-1.5 py-3 transition-all active:scale-[0.97]"
+              style={{
+                background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
+              }}
+              onClick={() => {}}
+            >
+              <Medal className="w-6 h-6" style={{ color: 'rgba(201,168,76,0.75)' }} />
+              <span className="text-sm font-bold tracking-wide text-amber-100/80">{t('lobby.leaderboard')}</span>
             </button>
           </div>
         </div>

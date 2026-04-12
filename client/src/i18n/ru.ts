@@ -58,6 +58,8 @@ export const ru = {
     achievements: 'Достижения',
     dailyQuests: 'Ежедневные задания',
     tournaments: 'Турниры',
+    friends: 'Друзья',
+    leaderboard: 'Рейтинг',
     settings: 'Настройки',
     logout: 'Выйти',
     dailyBonus: 'Ежедневный бонус',

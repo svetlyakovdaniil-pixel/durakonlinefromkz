@@ -57,6 +57,8 @@ export const kk = {
     achievements: 'Жетістіктер',
     dailyQuests: 'Күнделік тапсырмалар',
     tournaments: 'Турнирлер',
+    friends: 'Достар',
+    leaderboard: 'Рейтинг',
     rules: 'Ережелер',
     settings: 'Баптаулар',
     logout: 'Шығу',

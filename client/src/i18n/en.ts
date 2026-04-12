@@ -59,6 +59,8 @@ export const en = {
     achievements: 'Achievements',
     dailyQuests: 'Daily Quests',
     tournaments: 'Tournaments',
+    friends: 'Friends',
+    leaderboard: 'Leaderboard',
     settings: 'Settings',
     logout: 'Log out',
     dailyBonus: 'Daily bonus',
