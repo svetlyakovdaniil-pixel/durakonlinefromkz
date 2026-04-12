@@ -321,8 +321,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Right column: Tenge / Shanyrak — icon on top, balance below */}
-              <div className="flex flex-row items-end justify-end gap-2 relative z-20 self-stretch pb-1" style={{marginRight: '-2px'}}>
+              {/* Right column: Tenge top / Shanyrak bottom — icon on top, balance below each */}
+              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-2px'}}>
                 {/* Tenge */}
                 <button
                   className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"

@@ -2338,3 +2338,4 @@
 - [x] Remove "+" button next to tenge balance, make tenge icon/block clickable to open top-up
 - [x] Remove "+" button next to shanyrak balance, make shanyrak icon/block clickable to open top-up
 - [x] Move balance counters below tenge/shanyrak icons (icon on top, number below), increase icon sizes, keep header height unchanged
+- [x] Tenge icon+counter should be above shanyrak icon+counter (vertical layout, tenge top, shanyrak bottom)
