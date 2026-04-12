@@ -82,6 +82,7 @@ import {
   creditTengeIAP,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
+import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount } from "./dailyQuestsDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
 export const appRouter = router({
@@ -1143,6 +1144,40 @@ export const appRouter = router({
         const result = await claimAchievementReward(profile.id, input.achievementKey);
         if (!result.success) throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason });
         return result;
+      }),
+  }),
+
+  // ============================================================
+  // DAILY QUESTS
+  // ============================================================
+  dailyQuests: router({
+    /** Get today's 4 quests with definitions and progress */
+    today: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      return getTodayQuestsWithDefs(profile.id);
+    }),
+
+    /** Get count of unclaimed completed quests for today */
+    unclaimedCount: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return 0;
+      return getUnclaimedDailyQuestCount(profile.id);
+    }),
+
+    /** Claim reward for a completed daily quest */
+    claim: protectedProcedure
+      .input(z.object({ questKey: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        try {
+          const result = await claimDailyQuestReward(profile.id, input.questKey);
+          return { success: true, ...result };
+        } catch (e: unknown) {
+          const msg = e instanceof Error ? e.message : 'Unknown error';
+          throw new TRPCError({ code: 'BAD_REQUEST', message: msg });
+        }
       }),
   }),
 });

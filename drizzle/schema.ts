@@ -163,7 +163,7 @@ export const transactions = mysqlTable("transactions", {
   /** The player who performed this transaction (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Transaction type */
-  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry", "shop_purchase", "tutorial_reward"]).notNull(),
+  type: mysqlEnum("type", ["free_topup", "buy_shanyrak", "buy_tenge", "game_reward", "game_entry", "shop_purchase", "tutorial_reward", "daily_quest_reward", "achievement_reward"]).notNull(),
   /** Amount changed (positive = gained, negative = spent) */
   amount: int("amount").notNull(),
   /** Currency affected: 'tenge' or 'shanyrak' */
@@ -405,3 +405,34 @@ export const userAchievements = mysqlTable("user_achievements", {
 
 export type UserAchievement = typeof userAchievements.$inferSelect;
 export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+
+/**
+ * User daily quests — tracks which 4 quests are assigned to each player today,
+ * their progress, and whether the reward has been claimed.
+ *
+ * Quests reset at 00:00 Moscow time (UTC+3) each day.
+ * Quest definitions are hardcoded in shared/dailyQuests.ts.
+ */
+export const userDailyQuests = mysqlTable("user_daily_quests", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Player profile ID (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Quest key (e.g. 'steppe_start', 'first_koshkar') */
+  questKey: varchar("questKey", { length: 64 }).notNull(),
+  /** UTC timestamp (ms) of the Moscow-day start when this quest was assigned */
+  dayStartTs: bigint("dayStartTs", { mode: "number" }).notNull(),
+  /** Current progress value */
+  progress: int("progress").default(0).notNull(),
+  /** Whether the quest condition has been met */
+  completed: boolean("completed").default(false).notNull(),
+  /** Whether the reward has been claimed */
+  claimed: boolean("claimed").default(false).notNull(),
+  /** When the quest was completed */
+  completedAt: timestamp("completedAt"),
+  /** When the reward was claimed */
+  claimedAt: timestamp("claimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type UserDailyQuest = typeof userDailyQuests.$inferSelect;
+export type InsertUserDailyQuest = typeof userDailyQuests.$inferInsert;

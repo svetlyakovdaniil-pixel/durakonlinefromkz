@@ -29,6 +29,7 @@ import {
   processLucky777Achievement, processSpidermanMemeAchievement,
   processFirstBerkutAchievement, processLittleHeroAchievement,
 } from './achievementsTriggers';
+import { incrementDailyQuestProgress, setDailyQuestProgress, processDailyQuestsAfterGame } from './dailyQuestsDb';
 import { getDb } from './db';
 import { playerProfiles } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
@@ -2319,6 +2320,18 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           consecutiveWinStreaks: new Map(),
           transferCounts: new Map(),
         }).catch(err => console.error('[Achievements] Failed to process game end:', err));
+
+        // Process daily quests for all human players
+        processDailyQuestsAfterGame({
+          roomId,
+          playerGameIds,
+          winnersOrder: gameState.winnersOrder,
+          loserId: gameState.loserId,
+          allHumanOdIds,
+          botCount,
+          totalPlayersInRoom,
+          durationSeconds: 0,
+        }).catch(err => console.error('[DailyQuests] Failed to process after game:', err));
 
         // Cleanup tracking after processing
         cleanupGameTracking(roomId);

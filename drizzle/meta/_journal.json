@@ -239,6 +239,20 @@
       "when": 1776024433793,
       "tag": "0033_wise_thunderbird",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "5",
+      "when": 1776028462021,
+      "tag": "0034_hard_meteorite",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "5",
+      "when": 1776028632827,
+      "tag": "0035_lively_human_robot",
+      "breakpoints": true
     }
   ]
 }

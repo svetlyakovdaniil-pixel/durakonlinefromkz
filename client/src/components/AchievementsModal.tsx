@@ -11,6 +11,7 @@ import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
 
 const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
+const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
 interface AchievementsModalProps {
   open: boolean;
@@ -229,8 +230,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
                         </>
                       ) : null}
                       {ach.reward.tenge ? (
-                        <span className="text-xs font-semibold ml-1" style={{ color: '#f0d060' }}>
-                          +{ach.reward.tenge} {locale === 'en' ? 'tenge' : 'тенге'}
+                        <span className="flex items-center gap-0.5 ml-1">
+                          <span className="text-xs font-semibold" style={{ color: '#f0d060' }}>+{ach.reward.tenge}</span>
+                          <img src={TENGE_ICON} alt="тенге" className="w-4 h-4 object-contain" />
                         </span>
                       ) : null}
                     </div>

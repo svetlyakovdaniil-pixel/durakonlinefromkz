@@ -30,6 +30,7 @@ import TopPlayersMarquee from '@/components/TopPlayersMarquee';
 import FriendsDrawer from '@/components/FriendsDrawer';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 import AchievementsModal from '@/components/AchievementsModal';
+import DailyQuestsModal from '@/components/DailyQuestsModal';
 
 interface LobbyProps {
   rooms: Room[];
@@ -88,6 +89,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
   const [showAchievements, setShowAchievements] = useState(false);
+  const [showDailyQuests, setShowDailyQuests] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Room filter & search
@@ -834,7 +836,7 @@ onClick={() => setShowTengeTopUp(true)}
           {/* 2-column menu grid — fills remaining space */}
           <div className="grid grid-cols-2 flex-1" style={{ gridTemplateRows: 'repeat(5, 1fr)' }}>
             {[
-              { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => {} },
+              { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
               { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
@@ -1331,6 +1333,15 @@ onClick={() => setShowTengeTopUp(true)}
         onClose={() => setShowAchievements(false)}
         onRewardClaimed={() => {
           refetchUnclaimedAchievements();
+          refetchProfile?.();
+        }}
+      />
+
+      {/* Daily Quests Modal */}
+      <DailyQuestsModal
+        open={showDailyQuests}
+        onClose={() => setShowDailyQuests(false)}
+        onRewardClaimed={() => {
           refetchProfile?.();
         }}
       />
