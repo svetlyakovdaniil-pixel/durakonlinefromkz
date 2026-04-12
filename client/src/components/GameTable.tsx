@@ -1520,7 +1520,7 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className="flex-1 flex items-center justify-center px-2 sm:px-4 overflow-hidden">
+          <div className={`flex-1 flex items-center justify-center px-2 sm:px-4 ${gs.battleField.length > 36 ? 'overflow-y-auto overflow-x-hidden' : 'overflow-hidden'}`}>
             <div
               id="battlefield-drop-zone"
               className={`flex flex-col items-center gap-1 sm:gap-2 relative rounded-xl p-2 sm:p-4 transition-all w-full ${
@@ -1558,8 +1558,8 @@ export default function GameTable({
                   'flex flex-wrap justify-center w-full',
                   // Mobile: enable scroll only when ≥15 pairs
                   gs.battleField.length >= 15 ? 'mobile-needs-scroll' : '',
-                  // Desktop: enable vertical scroll only when >30 pairs
-                  gs.battleField.length > 30 ? 'desktop-needs-scroll' : '',
+                  // Desktop: enable vertical scroll only when >36 pairs
+                  gs.battleField.length > 36 ? 'desktop-needs-scroll' : '',
                 ].filter(Boolean).join(' ')}
               >
                 {gs.battleField.map((pair: BattlePair, i: number) => (

@@ -2,8 +2,9 @@ import { createContext, useContext, useCallback, type ReactNode } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { ru } from './ru';
 import { kk } from './kk';
+import { en } from './en';
 
-export type Locale = 'ru' | 'kk';
+export type Locale = 'ru' | 'kk' | 'en';
 
 // Flatten nested object keys with dot notation
 type FlattenKeys<T, Prefix extends string = ''> = T extends Record<string, unknown>
@@ -15,7 +16,7 @@ type FlattenKeys<T, Prefix extends string = ''> = T extends Record<string, unkno
 
 export type TranslationKey = FlattenKeys<typeof ru>;
 
-const translations: Record<Locale, Record<string, unknown>> = { ru, kk };
+const translations: Record<Locale, Record<string, unknown>> = { ru, kk, en };
 
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const keys = path.split('.');
@@ -40,7 +41,7 @@ const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider({ children }: { children: ReactNode }) {
   const { settings, setLanguage } = useSettings();
-  const locale = (settings.language === 'kk' ? 'kk' : 'ru') as Locale;
+  const locale = (['ru', 'kk', 'en'].includes(settings.language) ? settings.language : 'ru') as Locale;
 
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     let text = getNestedValue(translations[locale] as Record<string, unknown>, key);

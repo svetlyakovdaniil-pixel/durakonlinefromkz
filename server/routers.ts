@@ -79,6 +79,7 @@ import {
   createContactMessage,
   getContactMessages,
   updateContactMessageStatus,
+  creditTengeIAP,
 } from "./db";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
@@ -425,6 +426,40 @@ export const appRouter = router({
           return transactions.filter(t => t.currency === input.currency);
         }
         return transactions;
+      }),
+
+    /** Get current tenge + shanyrak balance */
+    myBalance: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return { tenge: 0, shanyrak: 0 };
+      return { tenge: profile.balanceTenge, shanyrak: profile.balanceShanyrak };
+    }),
+
+    /**
+     * Credit tenge after a successful RevenueCat In-App Purchase.
+     * Validates productId, deduplicates by transactionId, and credits the player.
+     */
+    creditTengeIAP: protectedProcedure
+      .input(z.object({
+        productId: z.enum(['durak_tenge_100', 'durak_tenge_500', 'durak_tenge_1000', 'durak_tenge_5000']),
+        transactionId: z.string().min(1).max(255),
+        platform: z.enum(['ios', 'android']),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await creditTengeIAP(
+          ctx.user.id,
+          input.productId,
+          input.transactionId,
+          input.platform,
+        );
+        if (!result.success) {
+          if (result.reason === 'duplicate') {
+            // Idempotent — already credited, return success
+            return { credited: 0, alreadyCredited: true };
+          }
+          throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason ?? 'iap_failed' });
+        }
+        return { credited: result.credited ?? 0, alreadyCredited: false };
       }),
   }),
 

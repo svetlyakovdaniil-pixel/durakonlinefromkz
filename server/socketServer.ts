@@ -2104,20 +2104,9 @@ function broadcastGameState(roomId: string, gameState: GameState) {
   }
 
   const room = rooms.get(roomId);
-  for (const p of gameState.players) {
-    if (p.isBot) continue;
-    const sid = playerSockets.get(p.id);
-    if (sid) {
-      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
-      io.to(sid).emit('gameStateUpdate', clientState);
 
-      // Always send actions — even empty array to clear stale client state
-      const playerIdx = gameState.players.findIndex(pl => pl.id === p.id);
-      const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
-      io.to(sid).emit('yourTurn', actions);
-    }
-  }
-
+  // If game is finished, send gameOver FIRST to avoid race condition
+  // where client sees a stale gameStateUpdate (wrong attacker) before gameOver
   if (gameState.gamePhase === 'finished') {
     stopTurnTimer(roomId);
     stopWatchdog(roomId);
@@ -2144,11 +2133,11 @@ function broadcastGameState(roomId: string, gameState: GameState) {
 
     // Record game result in database (async, non-blocking)
     // Skip stats only for tutorial rooms
-    const room = rooms.get(roomId);
+    const finishedRoom = rooms.get(roomId);
     const hasBots = gameState.players.some(p => p.isBot);
     const botCount = gameState.players.filter(p => p.isBot).length;
     const totalPlayersInRoom = gameState.players.length; // humans + bots
-    const isTutorial = room?.settings.isTutorial || false;
+    const isTutorial = finishedRoom?.settings.isTutorial || false;
     if (isTutorial) {
       dbg(`[Stats] Skipping stats for room ${roomId} (tutorial)`);
     }
@@ -2176,6 +2165,32 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           totalPlayersInRoom,
         }).catch(err => console.error('[DB] Failed to record game result:', err));
       }
+    }
+    // After gameOver, also send final gameStateUpdate so client shows correct final state
+    for (const p of gameState.players) {
+      if (p.isBot) continue;
+      const sid = playerSockets.get(p.id);
+      if (sid) {
+        const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, finishedRoom?.settings.betAmount || 0, isTutorial);
+        io.to(sid).emit('gameStateUpdate', clientState);
+        io.to(sid).emit('yourTurn', []);
+      }
+    }
+    return;
+  }
+
+  // Game still in progress — send gameStateUpdate and yourTurn to each player
+  for (const p of gameState.players) {
+    if (p.isBot) continue;
+    const sid = playerSockets.get(p.id);
+    if (sid) {
+      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
+      io.to(sid).emit('gameStateUpdate', clientState);
+
+      // Always send actions — even empty array to clear stale client state
+      const playerIdx = gameState.players.findIndex(pl => pl.id === p.id);
+      const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
+      io.to(sid).emit('yourTurn', actions);
     }
   }
 }

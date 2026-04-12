@@ -40,24 +40,24 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   const sendContactMutation = trpc.contact.send.useMutation({
     onSuccess: () => {
-      toast.success(locale === 'kk' ? 'Хабарламаңыз жіберілді!' : 'Сообщение отправлено!');
+      toast.success(locale === 'kk' ? 'Хабарламаңыз жіберілді!' : locale === 'en' ? 'Message sent!' : 'Сообщение отправлено!');
       setContactEmail('');
       setContactMessage('');
       setContactOpen(false);
     },
     onError: (err) => {
-      toast.error(err.message || (locale === 'kk' ? 'Қате орын алды' : 'Ошибка при отправке'));
+      toast.error(err.message || (locale === 'kk' ? 'Қате орын алды' : locale === 'en' ? 'Error sending message' : 'Ошибка при отправке'));
     },
   });
 
   const handleSendContact = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contactEmail)) {
-      toast.error(locale === 'kk' ? 'Жарамды email енгізіңіз' : 'Введите корректный email');
+      toast.error(locale === 'kk' ? 'Жарамды email енгізіңіз' : locale === 'en' ? 'Enter a valid email' : 'Введите корректный email');
       return;
     }
     if (contactMessage.trim().length < 10) {
-      toast.error(locale === 'kk' ? 'Хабарлама тым қысқа (мин. 10 таңба)' : 'Сообщение слишком короткое (мин. 10 символов)');
+      toast.error(locale === 'kk' ? 'Хабарлама тым қысқа (мин. 10 таңба)' : locale === 'en' ? 'Message too short (min. 10 characters)' : 'Сообщение слишком короткое (мин. 10 символов)');
       return;
     }
     sendContactMutation.mutate({ replyEmail: contactEmail, message: contactMessage.trim() });
@@ -353,8 +353,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <Popover open={langOpen} onOpenChange={setLangOpen}>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-2 text-sm text-amber-100 hover:text-amber-300 transition-colors bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
-                  <span className="text-base">{locale === 'kk' ? '🇰🇿' : '🇷🇺'}</span>
-                  {locale === 'kk' ? 'Қазақша' : 'Русский'}
+                  <span className="text-base">{locale === 'kk' ? '🇰🇿' : locale === 'en' ? '🇬🇧' : '🇷🇺'}</span>
+                  {locale === 'kk' ? 'Қазақша' : locale === 'en' ? 'English' : 'Русский'}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="bg-[#1a2d45] border-amber-700/30 w-48 p-2" align="end">
@@ -374,6 +374,14 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   Қазақша
                   {locale === 'kk' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
+                <button
+                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
+                  onClick={() => { setLocale('en'); setLangOpen(false); }}
+                >
+                  <span className="text-base">🇬🇧</span>
+                  English
+                  {locale === 'en' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+                </button>
               </PopoverContent>
             </Popover>
           </div>
@@ -386,10 +394,10 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <MessageSquare className="w-5 h-5 text-amber-400 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-amber-200/80">
-                {locale === 'kk' ? 'Әкімшілікпен байланыс' : 'Связь с администрацией'}
+                {locale === 'kk' ? 'Әкімшілікпен байланыс' : locale === 'en' ? 'Contact Administration' : 'Связь с администрацией'}
               </p>
               <p className="text-xs text-amber-200/40 mt-0.5">
-                {locale === 'kk' ? 'Сұрақ немесе ұсыныс жіберіңіз' : 'Задать вопрос или оставить предложение'}
+                {locale === 'kk' ? 'Сұрақ немесе ұсыныс жіберіңіз' : locale === 'en' ? 'Ask a question or leave a suggestion' : 'Задать вопрос или оставить предложение'}
               </p>
             </div>
           </button>
@@ -432,13 +440,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         <DialogHeader>
           <DialogTitle className="text-amber-100 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-amber-400" />
-            {locale === 'kk' ? 'Әкімшілікпен байланыс' : 'Связь с администрацией'}
+            {locale === 'kk' ? 'Әкімшілікпен байланыс' : locale === 'en' ? 'Contact Administration' : 'Связь с администрацией'}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div>
             <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {locale === 'kk' ? 'Жауап електрондық пошта (email)' : 'Ваш email для обратной связи'}
+              {locale === 'kk' ? 'Жауап електрондық пошта (email)' : locale === 'en' ? 'Your reply email' : 'Ваш email для обратной связи'}
               <span className="text-red-400 ml-1">*</span>
             </label>
             <Input
@@ -451,13 +459,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </div>
           <div>
             <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {locale === 'kk' ? 'Хабарлама' : 'Сообщение'}
+              {locale === 'kk' ? 'Хабарлама' : locale === 'en' ? 'Message' : 'Сообщение'}
               <span className="text-red-400 ml-1">*</span>
             </label>
             <Textarea
               value={contactMessage}
               onChange={(e) => setContactMessage(e.target.value)}
-              placeholder={locale === 'kk' ? 'Сұрақтарыңызды немесе ұсыныстарыңызды жазыңыз...' : 'Опишите ваш вопрос или предложение...'}
+              placeholder={locale === 'kk' ? 'Сұрақтарыңызды немесе ұсыныстарыңызды жазыңыз...' : locale === 'en' ? 'Describe your question or suggestion...' : 'Опишите ваш вопрос или предложение...'}
               rows={5}
               maxLength={2000}
               className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30 resize-none"
@@ -479,8 +487,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             className="bg-amber-600 hover:bg-amber-500 text-white"
           >
             {sendContactMutation.isPending
-              ? (locale === 'kk' ? 'Жіберілуде...' : 'Отправка...')
-              : (locale === 'kk' ? 'Жіберу' : 'Отправить')}
+              ? (locale === 'kk' ? 'Жіберілуде...' : locale === 'en' ? 'Sending...' : 'Отправка...')
+              : (locale === 'kk' ? 'Жіберу' : locale === 'en' ? 'Send' : 'Отправить')}
           </Button>
         </DialogFooter>
       </DialogContent>

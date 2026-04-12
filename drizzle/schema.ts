@@ -353,3 +353,24 @@ export const contactMessages = mysqlTable("contact_messages", {
 });
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export type InsertContactMessage = typeof contactMessages.$inferInsert;
+
+/**
+ * IAP Transactions — records of In-App Purchases via RevenueCat.
+ * Used for deduplication: each transactionId can only be credited once.
+ */
+export const iapTransactions = mysqlTable("iap_transactions", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Profile ID of the purchaser */
+  profileId: int("profileId").notNull(),
+  /** RevenueCat / StoreKit / Google Play transaction identifier */
+  transactionId: varchar("transactionId", { length: 255 }).notNull().unique(),
+  /** Product ID purchased (e.g. durak_tenge_100) */
+  productId: varchar("productId", { length: 100 }).notNull(),
+  /** Platform: ios or android */
+  platform: mysqlEnum("iap_platform", ["ios", "android"]).notNull(),
+  /** Amount of tenge credited */
+  tengeCredited: int("tengeCredited").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type IapTransaction = typeof iapTransactions.$inferSelect;
+export type InsertIapTransaction = typeof iapTransactions.$inferInsert;

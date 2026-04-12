@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
@@ -8,6 +9,8 @@ import { MusicProvider } from "./contexts/MusicContext";
 import { SoundProvider } from "./contexts/SoundContext";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
+import { initIAP } from "./lib/iap";
+import { trpc } from "./lib/trpc";
 import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
@@ -29,6 +32,16 @@ function Router() {
   );
 }
 
+/** Initialize RevenueCat IAP SDK once user is authenticated */
+function IAPInitializer() {
+  const meQuery = trpc.auth.me.useQuery();
+  useEffect(() => {
+    const userId = meQuery.data?.openId;
+    void initIAP(userId);
+  }, [meQuery.data?.openId]);
+  return null;
+}
+
 function LanguageGate({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings();
 
@@ -46,6 +59,7 @@ function App() {
       <ThemeProvider defaultTheme="dark">
         <SettingsProvider>
           <I18nProvider>
+          <IAPInitializer />
           <LanguageGate>
           <MusicProvider>
             <SoundProvider>

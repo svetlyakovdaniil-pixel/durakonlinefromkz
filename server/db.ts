@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -2505,4 +2505,80 @@ export async function updateContactMessageStatus(id: number, status: 'new' | 're
     .set({ status, adminNote: adminNote ?? undefined })
     .where(eq(contactMessages.id, id));
   return true;
+}
+
+// ============================================================
+// IAP (In-App Purchase) helpers
+// ============================================================
+
+/**
+ * Credit tenge to a player after a successful IAP purchase.
+ * Idempotent: if transactionId already exists, returns { success: false, reason: 'duplicate' }.
+ *
+ * Product → tenge mapping:
+ *   durak_tenge_100   → 100 tenge
+ *   durak_tenge_500   → 500 tenge
+ *   durak_tenge_1000  → 1000 tenge
+ *   durak_tenge_5000  → 5000 tenge
+ */
+export async function creditTengeIAP(
+  userId: number,
+  productId: string,
+  transactionId: string,
+  platform: 'ios' | 'android',
+): Promise<{ success: boolean; reason?: string; credited?: number; newBalance?: number }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const PRODUCT_TENGE: Record<string, number> = {
+    durak_tenge_100: 100,
+    durak_tenge_500: 500,
+    durak_tenge_1000: 1000,
+    durak_tenge_5000: 5000,
+  };
+
+  const tengeCredited = PRODUCT_TENGE[productId];
+  if (!tengeCredited) return { success: false, reason: 'unknown_product' };
+
+  // Check for duplicate transaction
+  const [existing] = await db.select({ id: iapTransactions.id })
+    .from(iapTransactions)
+    .where(eq(iapTransactions.transactionId, transactionId))
+    .limit(1);
+  if (existing) return { success: false, reason: 'duplicate' };
+
+  // Get player profile
+  const [profile] = await db.select()
+    .from(playerProfiles)
+    .where(eq(playerProfiles.userId, userId))
+    .limit(1);
+  if (!profile) return { success: false, reason: 'profile_not_found' };
+
+  const newBalance = profile.balanceTenge + tengeCredited;
+
+  // Update balance
+  await db.update(playerProfiles)
+    .set({ balanceTenge: newBalance })
+    .where(eq(playerProfiles.id, profile.id));
+
+  // Record IAP transaction (for deduplication)
+  await db.insert(iapTransactions).values({
+    profileId: profile.id,
+    transactionId,
+    productId,
+    platform,
+    tengeCredited,
+  });
+
+  // Record in transaction history
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'buy_tenge',
+    amount: tengeCredited,
+    currency: 'tenge',
+    description: `IAP: +${tengeCredited} тенге (${platform})`,
+    balanceAfter: newBalance,
+  });
+
+  return { success: true, credited: tengeCredited, newBalance };
 }
