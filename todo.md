@@ -2324,3 +2324,6 @@
 - [x] Remove Rules+Tutorial icons from mobile header left column
 - [x] Remove Bell icon from mobile header left column
 - [x] Remove Settings icon from mobile header left column
+- [x] Create FriendsDrawer component (extract FriendsTab logic from ProfileDrawer)
+- [x] Connect Friends grid button to open FriendsDrawer (with showFriends state in Lobby)
+- [x] Remove leaderboard tab from ProfileDrawer (keep profile, friends, history tabs)

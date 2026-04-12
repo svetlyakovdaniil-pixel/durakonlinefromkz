@@ -68,9 +68,7 @@ export default function ProfileDrawer({
             <TabsTrigger value="friends" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <Users className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.friends')}</span>
             </TabsTrigger>
-            <TabsTrigger value="leaderboard" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <Trophy className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.rating')}</span>
-            </TabsTrigger>
+
             <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
               <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.history')}</span>
             </TabsTrigger>
@@ -86,9 +84,7 @@ export default function ProfileDrawer({
               inRoom={inRoom}
             />
           </TabsContent>
-          <TabsContent value="leaderboard" className="flex-1 overflow-y-auto px-4 pb-4">
-            <LeaderboardTab myGameId={profile?.gameId} />
-          </TabsContent>
+
           <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4">
             <MatchHistoryTab />
           </TabsContent>

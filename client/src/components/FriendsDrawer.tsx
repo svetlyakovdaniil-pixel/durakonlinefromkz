@@ -1,0 +1,393 @@
+import { useState } from 'react';
+import { trpc } from '@/lib/trpc';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
+import {
+  Users, UserPlus, UserCheck, UserX,
+  Clock, Check, X, Loader2,
+  Eye, ArrowLeft, Send,
+} from 'lucide-react';
+import { getAvatarUrl } from '../../../shared/avatars';
+import { useTranslation } from '@/i18n';
+import { FrameWrapper } from './AvatarWithFrame';
+import { TrendingUp, Swords, Crown, Shield, Hash } from 'lucide-react';
+
+// ============================================================
+// Friend Profile View (inline, replaces friends list)
+// ============================================================
+function FriendProfileView({
+  gameId,
+  onBack,
+  onInviteFriend,
+  inRoom,
+  isOnline,
+}: {
+  gameId: number;
+  onBack: () => void;
+  onInviteFriend?: (targetGameId: number) => void;
+  inRoom?: boolean;
+  isOnline: boolean;
+}) {
+  const profileQuery = trpc.profile.byGameId.useQuery({ gameId }, { staleTime: 10_000 });
+  const profile = profileQuery.data;
+  const { t } = useTranslation();
+
+  if (profileQuery.isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-6 h-6 animate-spin text-amber-400" />
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="space-y-4 mt-3">
+        <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back')}
+        </Button>
+        <div className="text-center py-8 text-amber-200/30 text-sm">
+          {t('profile.playerNotFound')}
+        </div>
+      </div>
+    );
+  }
+
+  const winRate = profile.gamesPlayed > 0
+    ? ((profile.wins / profile.gamesPlayed) * 100).toFixed(1)
+    : '0.0';
+
+  return (
+    <div className="space-y-4 mt-3">
+      <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
+        <ArrowLeft className="w-4 h-4 mr-1" /> {t('common.back')}
+      </Button>
+
+      {/* Avatar + Name */}
+      <div className="bg-gradient-to-r from-amber-700/30 to-amber-600/20 border border-amber-600/30 rounded-xl p-4 text-center">
+        <div className="flex justify-center mb-3">
+          <FrameWrapper frameId={(profile as any).equippedFrame} size={64}>
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-500/60">
+              <img src={getAvatarUrl(profile.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+            </div>
+          </FrameWrapper>
+        </div>
+        <div className="text-amber-100 font-bold text-lg">{profile.displayName || t('profile.player')}</div>
+        <div className="flex items-center justify-center gap-1 mt-1">
+          <Hash className="w-3.5 h-3.5 text-amber-200/40" />
+          <span className="text-amber-200/40 text-xs">{profile.gameId}</span>
+          <span className={`ml-2 text-xs font-medium ${isOnline ? 'text-green-400' : 'text-gray-500'}`}>
+            {isOnline ? t('profile.online') : t('profile.offline')}
+          </span>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
+          <div>
+            <div className="text-amber-200/60 text-[10px]">{t('profile.rating')}</div>
+            <div className="text-amber-300 font-bold">{profile.rating}</div>
+          </div>
+        </div>
+        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+          <Swords className="w-4 h-4 text-blue-400 shrink-0" />
+          <div>
+            <div className="text-amber-200/60 text-[10px]">{t('profile.gamesPlayed')}</div>
+            <div className="text-amber-100 font-bold">{profile.gamesPlayed}</div>
+          </div>
+        </div>
+        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+          <Crown className="w-4 h-4 text-green-400 shrink-0" />
+          <div>
+            <div className="text-amber-200/60 text-[10px]">{t('profile.wins')}</div>
+            <div className="text-green-400 font-bold">{profile.wins}</div>
+          </div>
+        </div>
+        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+          <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+          <div>
+            <div className="text-amber-200/60 text-[10px]">{t('profile.winRate')}</div>
+            <div className="text-amber-300 font-bold">{winRate}%</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Invite button */}
+      {inRoom && isOnline && onInviteFriend && (
+        <Button
+          className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+          onClick={() => onInviteFriend(gameId)}
+        >
+          <Send className="w-4 h-4 mr-2" />
+          {t('profile.invite')}
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ============================================================
+// Friends content (list + add + requests)
+// ============================================================
+function FriendsContent({
+  onlineFriendIds,
+  onInviteFriend,
+  inRoom,
+}: {
+  onlineFriendIds: number[];
+  onInviteFriend?: (targetGameId: number) => void;
+  inRoom?: boolean;
+}) {
+  const [addGameId, setAddGameId] = useState('');
+  const [viewingFriendGameId, setViewingFriendGameId] = useState<number | null>(null);
+  const utils = trpc.useUtils();
+  const { t } = useTranslation();
+
+  const friendsQuery = trpc.friends.list.useQuery(undefined, { refetchInterval: 15_000 });
+  const pendingQuery = trpc.friends.pendingRequests.useQuery(undefined, { refetchInterval: 10_000 });
+
+  const sendRequest = trpc.friends.sendRequest.useMutation({
+    onSuccess: (data) => {
+      if (data.result === 'sent') {
+        toast.success(t('profile.requestSent'));
+        setAddGameId('');
+      } else if (data.result === 'already_friends') {
+        toast.info(t('profile.alreadyFriends'));
+      } else if (data.result === 'already_pending') {
+        toast.info(t('profile.alreadyPending'));
+      } else {
+        toast.error(t('profile.playerNotFound'));
+      }
+    },
+    onError: () => toast.error(t('profile.requestError')),
+  });
+
+  const acceptRequest = trpc.friends.acceptRequest.useMutation({
+    onSuccess: () => {
+      toast.success(t('profile.requestAccepted'));
+      utils.friends.list.invalidate();
+      utils.friends.pendingRequests.invalidate();
+    },
+  });
+
+  const rejectRequest = trpc.friends.rejectRequest.useMutation({
+    onSuccess: () => {
+      toast.info(t('profile.requestDeclined'));
+      utils.friends.pendingRequests.invalidate();
+    },
+  });
+
+  const removeFriend = trpc.friends.remove.useMutation({
+    onSuccess: () => {
+      toast.info(t('profile.friendRemoved'));
+      utils.friends.list.invalidate();
+    },
+  });
+
+  const handleSendRequest = () => {
+    const id = parseInt(addGameId);
+    if (!id || id <= 0) {
+      toast.error(t('profile.invalidId'));
+      return;
+    }
+    sendRequest.mutate({ targetGameId: id });
+  };
+
+  const friends = friendsQuery.data ?? [];
+  const pending = pendingQuery.data ?? [];
+
+  if (viewingFriendGameId !== null) {
+    const isOnline = onlineFriendIds.includes(viewingFriendGameId);
+    return (
+      <FriendProfileView
+        gameId={viewingFriendGameId}
+        onBack={() => setViewingFriendGameId(null)}
+        onInviteFriend={onInviteFriend}
+        inRoom={inRoom}
+        isOnline={isOnline}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4 mt-3">
+      {/* Add friend */}
+      <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
+        <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
+          <UserPlus className="w-3.5 h-3.5" /> {t('profile.addFriendById')}
+        </div>
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            placeholder={t('profile.playerIdPlaceholder')}
+            value={addGameId}
+            onChange={e => setAddGameId(e.target.value)}
+            className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-8 text-sm"
+            onKeyDown={e => e.key === 'Enter' && handleSendRequest()}
+          />
+          <Button
+            size="sm"
+            className="bg-amber-600 hover:bg-amber-500 text-white h-8 px-3"
+            onClick={handleSendRequest}
+            disabled={sendRequest.isPending}
+          >
+            {sendRequest.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Pending requests */}
+      {pending.length > 0 && (
+        <div>
+          <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
+            <Clock className="w-3.5 h-3.5" /> {t('profile.incomingRequests')} ({pending.length})
+          </div>
+          <div className="space-y-1.5">
+            {pending.map(req => (
+              <div key={req.friendshipId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
+                <div>
+                  <span className="text-amber-100 text-sm font-medium">{req.senderName}</span>
+                  <span className="text-amber-200/40 text-xs ml-1.5">#{req.senderGameId}</span>
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    size="sm"
+                    className="bg-green-700 hover:bg-green-600 text-white h-7 w-7 p-0"
+                    onClick={() => acceptRequest.mutate({ friendshipId: req.friendshipId })}
+                    disabled={acceptRequest.isPending}
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
+                    onClick={() => rejectRequest.mutate({ friendshipId: req.friendshipId })}
+                    disabled={rejectRequest.isPending}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Friends list */}
+      <div>
+        <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">
+          <UserCheck className="w-3.5 h-3.5" /> {t('profile.friendsList')} ({friends.length})
+        </div>
+        {friends.length === 0 ? (
+          <div className="text-center py-6 text-amber-200/30 text-sm">
+            {t('profile.noFriends')}
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {friends.map(friend => {
+              const isOnline = onlineFriendIds.includes(friend.gameId);
+              return (
+                <div key={friend.profileId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
+                  <div
+                    className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity flex-1 min-w-0"
+                    onClick={() => setViewingFriendGameId(friend.gameId)}
+                  >
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
+                    <div className="min-w-0">
+                      <span className="text-amber-100 text-sm font-medium">{friend.displayName || t('profile.player')}</span>
+                      <span className="text-amber-200/40 text-xs ml-1.5">#{friend.gameId}</span>
+                    </div>
+                    <Badge variant="outline" className="border-amber-700/20 text-amber-200/50 text-[10px] px-1.5 shrink-0">
+                      {friend.rating}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-1 shrink-0 ml-1">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-blue-700/40 text-blue-300 hover:bg-blue-900/30 h-7 w-7 p-0"
+                      onClick={() => setViewingFriendGameId(friend.gameId)}
+                      title={t('profile.viewProfile')}
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                    </Button>
+                    {inRoom && isOnline && onInviteFriend && (
+                      <Button
+                        size="sm"
+                        className="bg-amber-600 hover:bg-amber-500 text-white h-7 px-2 text-[10px]"
+                        onClick={() => onInviteFriend(friend.gameId)}
+                      >
+                        <Send className="w-3 h-3 mr-0.5" />
+                        {t('profile.invite')}
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
+                      onClick={() => removeFriend.mutate({ friendProfileId: friend.profileId })}
+                      disabled={removeFriend.isPending}
+                      title={t('profile.removeFriendTitle')}
+                    >
+                      <UserX className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
+// FriendsDrawer — main export
+// ============================================================
+interface FriendsDrawerProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onlineFriendIds: number[];
+  onInviteFriend?: (targetGameId: number) => void;
+  inRoom?: boolean;
+}
+
+export default function FriendsDrawer({
+  open,
+  onOpenChange,
+  onlineFriendIds,
+  onInviteFriend,
+  inRoom,
+}: FriendsDrawerProps) {
+  const { t } = useTranslation();
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[400px] p-0 overflow-hidden flex flex-col"
+      >
+        <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
+          <SheetTitle className="text-amber-100 flex items-center gap-2">
+            <Users className="w-5 h-5 text-amber-400" />
+            {t('profile.friends')}
+          </SheetTitle>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto px-4 pb-4">
+          <FriendsContent
+            onlineFriendIds={onlineFriendIds}
+            onInviteFriend={onInviteFriend}
+            inRoom={inRoom}
+          />
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

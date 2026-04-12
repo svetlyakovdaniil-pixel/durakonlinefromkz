@@ -27,6 +27,7 @@ import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { FrameWrapper } from '@/components/AvatarWithFrame';
 import TopPlayersMarquee from '@/components/TopPlayersMarquee';
+import FriendsDrawer from '@/components/FriendsDrawer';
 
 interface LobbyProps {
   rooms: Room[];
@@ -83,6 +84,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialLoading, setTutorialLoading] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showFriends, setShowFriends] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Room filter & search
@@ -817,7 +819,7 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: CalendarCheck, key: 'dailyQuests', borderR: false, borderB: true, action: () => {} },
               { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
               { icon: Settings, key: 'settings', borderR: false, borderB: true, action: null },
-              { icon: Users, key: 'friends', borderR: true, borderB: false, action: () => {} },
+              { icon: Users, key: 'friends', borderR: true, borderB: false, action: () => setShowFriends(true) },
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: false, action: () => setShowLeaderboard(true) },
             ].map(({ icon: Icon, key, borderR, borderB, action }) => (
               action === null ? (
@@ -1291,6 +1293,13 @@ onClick={() => setShowTengeTopUp(true)}
       >
         <span style={{ display: 'none' }} />
       </ProfileDrawer>
+
+      {/* Friends Drawer triggered from grid button */}
+      <FriendsDrawer
+        open={showFriends}
+        onOpenChange={setShowFriends}
+        onlineFriendIds={onlineFriendIds}
+      />
 
       {/* ===== BOTTOM TAB BAR ===== */}
       <div
