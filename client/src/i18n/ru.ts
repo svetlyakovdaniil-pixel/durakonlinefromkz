@@ -24,6 +24,7 @@ export const ru = {
     open: 'Открытые',
     private: 'Приватные',
     create: 'Создать игру',
+    rooms: 'Комнаты',
   },
 
   // Language selector

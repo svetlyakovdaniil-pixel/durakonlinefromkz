@@ -24,6 +24,7 @@ export const kk = {
     open: 'Ашық',
     private: 'Жабық',
     create: 'Ойын жасау',
+    rooms: 'Бөлмелер',
   },
 
   // Language selector

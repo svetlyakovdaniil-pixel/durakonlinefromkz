@@ -1252,16 +1252,17 @@ onClick={() => setShowTengeTopUp(true)}
       <div
         className="fixed bottom-0 left-0 right-0 z-40 sm:hidden"
         style={{
-          background: 'linear-gradient(to top, #060e1a 0%, #0a1628 80%, #0a162800 100%)',
+          background: 'linear-gradient(to top, #060e1a 0%, #0a1628 85%, #0a162800 100%)',
           borderTop: '1px solid rgba(180,130,30,0.18)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div className="flex items-stretch justify-around px-1 pt-1 pb-2">
-          {/* Profile */}
+        <div className="flex items-end justify-between px-6 pt-2 pb-3">
+
+          {/* Profile — left */}
           <button
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
-            style={{ opacity: 0.45 }}
+            className="flex flex-col items-center justify-center gap-1 w-16 transition-all active:scale-95"
+            style={{ opacity: 0.5 }}
             onClick={() => {}}
           >
             <UserCircle2 className="w-6 h-6" style={{ color: '#c9a84c' }} />
@@ -1270,49 +1271,38 @@ onClick={() => setShowTengeTopUp(true)}
             </span>
           </button>
 
-          {/* Open rooms */}
+          {/* Create game — center, elevated */}
           <button
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
-            style={{ opacity: 0.45 }}
-            onClick={() => {}}
-          >
-            <DoorOpen className="w-6 h-6" style={{ color: '#c9a84c' }} />
-            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
-              {t('tabBar.open')}
-            </span>
-          </button>
-
-          {/* Private rooms */}
-          <button
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
-            style={{ opacity: 0.45 }}
-            onClick={() => {}}
-          >
-            <KeyRound className="w-6 h-6" style={{ color: '#c9a84c' }} />
-            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
-              {t('tabBar.private')}
-            </span>
-          </button>
-
-          {/* Create game */}
-          <button
-            className="flex flex-col items-center justify-center gap-0.5 flex-1 py-1.5 rounded-xl transition-all active:scale-95"
-            style={{ opacity: 0.45 }}
+            className="flex flex-col items-center justify-center gap-1 transition-all active:scale-95"
+            style={{ opacity: 0.5, marginBottom: '4px' }}
             onClick={() => {}}
           >
             <div
-              className="w-8 h-8 rounded-full flex items-center justify-center mb-0.5"
+              className="w-14 h-14 rounded-full flex items-center justify-center"
               style={{
                 background: 'linear-gradient(135deg, #c9a84c 0%, #f0d060 50%, #a07830 100%)',
-                boxShadow: '0 2px 8px rgba(201,168,76,0.4)',
+                boxShadow: '0 4px 16px rgba(201,168,76,0.45), 0 0 0 3px rgba(201,168,76,0.15)',
               }}
             >
-              <PlusCircle className="w-5 h-5 text-[#0a1628]" />
+              <Plus className="w-7 h-7 text-[#0a1628]" strokeWidth={2.5} />
             </div>
             <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
               {t('tabBar.create')}
             </span>
           </button>
+
+          {/* Rooms — right */}
+          <button
+            className="flex flex-col items-center justify-center gap-1 w-16 transition-all active:scale-95"
+            style={{ opacity: 0.5 }}
+            onClick={() => {}}
+          >
+            <DoorOpen className="w-6 h-6" style={{ color: '#c9a84c' }} />
+            <span className="text-[10px] font-semibold tracking-wide" style={{ color: '#c9a84c' }}>
+              {t('tabBar.rooms')}
+            </span>
+          </button>
+
         </div>
       </div>
 
