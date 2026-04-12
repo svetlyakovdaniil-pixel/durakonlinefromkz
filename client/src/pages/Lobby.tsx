@@ -350,7 +350,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
               )}
               {/* Right column: Tenge top / Shanyrak bottom */}
-              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '-2px'}}>
+              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '10px'}}>
                 {/* Tenge */}
                 <button
                   className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
