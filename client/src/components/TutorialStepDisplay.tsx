@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { TutorialScenario } from '@/hooks/useInteractiveTutorial';
+import { useSoundContext } from '@/contexts/SoundContext';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ClientGameState } from '../../../shared/gameTypes';
@@ -93,6 +94,7 @@ export default function TutorialStepDisplay({
   gameState,
   locale = 'ru',
 }: TutorialStepDisplayProps) {
+  const { play: playSound } = useSoundContext();
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
   const [textPos, setTextPos] = useState<{ top: number; left: number; maxWidth: number }>({
     top: 0,
@@ -366,6 +368,8 @@ export default function TutorialStepDisplay({
       clickedEl.style.transform = 'translateY(-40px) scale(0.5)';
       clickedEl.style.pointerEvents = 'none';
       hiddenCardElementsRef.current.push(clickedEl);
+      // Play card sound when throwing
+      playSound('cardPlay', 0.6);
 
       setThrownCardIds(prev => {
         const next = new Set(prev);
@@ -419,6 +423,8 @@ export default function TutorialStepDisplay({
             if (clickNum <= totalDefenses) {
               // Update defended pairs count
               setDefendedPairs(clickNum);
+              // Play card sound when defending
+              playSound('cardPlay', 0.6);
 
               // Hide the clicked card from hand visually and track it
               const clickedEl = cardElement as HTMLElement;
@@ -459,6 +465,7 @@ export default function TutorialStepDisplay({
                 // After exactly 2 seconds, show БИТО text
                 setTimeout(() => {
                   setSeqPhase('bito-text');
+                  playSound('bito', 0.6);
                 }, 2000);
 
                 // After 3 seconds, start flying cards to bito
@@ -945,14 +952,25 @@ export default function TutorialStepDisplay({
         const tableArea = document.querySelector('[data-tutorial="table-area"]');
         if (!tableArea) return null;
         const tableRect = tableArea.getBoundingClientRect();
-        // Find existing table card size
-        const existingCardParent = tableArea.querySelector('.relative') as HTMLElement;
+        // Find existing table card pairs to determine size and last card position
+        const pairEls = tableArea.querySelectorAll(':scope > div');
         let cardW = 56;
         let cardH = 84;
-        if (existingCardParent) {
-          const r = existingCardParent.getBoundingClientRect();
-          cardW = r.width;
-          cardH = r.height;
+        let gap = 8;
+        let lastCardRight = tableRect.left; // start from left edge if no pairs
+        if (pairEls.length > 0) {
+          const firstPairRect = pairEls[0].getBoundingClientRect();
+          cardW = firstPairRect.width;
+          cardH = firstPairRect.height;
+          // Compute gap between existing pairs
+          if (pairEls.length > 1) {
+            const secondPairRect = pairEls[1].getBoundingClientRect();
+            gap = Math.max(4, secondPairRect.left - firstPairRect.right);
+          } else {
+            gap = 8;
+          }
+          const lastPairRect = pairEls[pairEls.length - 1].getBoundingClientRect();
+          lastCardRight = lastPairRect.right;
         }
         // Map thrown card IDs back to card notations
         const thrownCards: { id: string; notation: string }[] = [];
@@ -965,14 +983,14 @@ export default function TutorialStepDisplay({
             }
           }
         }
-        const gap = 8;
+        const vertCenter = tableRect.top + (tableRect.height - cardH) / 2;
         return thrownCards.map((tc, i) => (
           <div
             key={`thrown-${tc.id}`}
             className="fixed z-[52] animate-bounce-in"
             style={{
-              left: tableRect.right + gap + i * (cardW + gap),
-              top: tableRect.top + (tableRect.height - cardH) / 2,
+              left: lastCardRight + gap + i * (cardW + gap),
+              top: vertCenter,
               width: cardW,
               height: cardH,
             }}
@@ -1318,6 +1336,7 @@ export default function TutorialStepDisplay({
             <Button
               onClick={() => {
                 setTransferPhase('transferring');
+                playSound('cardPlay', 0.6);
                 // Hide the transfer card from hand
                 if (tutorialHighlightIds) {
                   tutorialHighlightIds.forEach(cardId => {
@@ -1355,24 +1374,32 @@ export default function TutorialStepDisplay({
         const tableArea = document.querySelector('[data-tutorial="table-area"]');
         if (!tableArea) return null;
         const tableRect = tableArea.getBoundingClientRect();
-        // Find an existing card on the table to match its size
-        const existingTableCard = tableArea.querySelector('.relative > div, .relative > img') as HTMLElement;
-        const existingCardParent = tableArea.querySelector('.relative') as HTMLElement;
+        // Find existing table card pairs to determine size and last card position
+        const pairEls = tableArea.querySelectorAll(':scope > div');
         let cardW = 56;
         let cardH = 84;
         let gap = 8;
-        if (existingCardParent) {
-          const r = existingCardParent.getBoundingClientRect();
-          cardW = r.width;
-          cardH = r.height;
+        let lastCardRight = tableRect.left;
+        if (pairEls.length > 0) {
+          const firstPairRect = pairEls[0].getBoundingClientRect();
+          cardW = firstPairRect.width;
+          cardH = firstPairRect.height;
+          if (pairEls.length > 1) {
+            const secondPairRect = pairEls[1].getBoundingClientRect();
+            gap = Math.max(4, secondPairRect.left - firstPairRect.right);
+          } else {
+            gap = 8;
+          }
+          const lastPairRect = pairEls[pairEls.length - 1].getBoundingClientRect();
+          lastCardRight = lastPairRect.right;
         }
-        // Position: right after the last card with a small gap
+        // Position: right after the last card with same gap as between existing cards
         const cardNotation = scenario.transferMechanic!.transferCard;
         return (
           <div
             className="fixed z-[52] animate-bounce-in"
             style={{
-              left: tableRect.right + gap,
+              left: lastCardRight + gap,
               top: tableRect.top + (tableRect.height - cardH) / 2,
               width: cardW,
               height: cardH,

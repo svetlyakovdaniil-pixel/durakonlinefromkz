@@ -886,12 +886,18 @@ export function initSocketServer(httpServer: HttpServer) {
         gameState.consecutiveTimeouts[odId] = 0;
       }
 
-      // If defender is taking, finalize the take first (cards go to defender)
-      // before skipping the attacker's turn. Without this, the battlefield
-      // remains non-empty and the state becomes inconsistent.
+      // Skip turn for 777-only hand:
+      // - If defender is taking: finalize the take (cards go to defender)
+      // - If cards on table but not in pickup mode: use engineEndAttack so the
+      //   engine properly handles the battlefield (successful defense or pass to next attacker)
+      // - No cards on table: just advance the turn
       if (gameState.defenderTaking) {
         engineFinalizeTake(gameState);
+      } else if (gameState.battleField.length > 0) {
+        // Use engineEndAttack so the battlefield is handled correctly
+        engineEndAttack(gameState, playerIdx);
       } else {
+        // No cards on table — just advance the turn
         const nextAttacker = getNextActivePlayer(gameState.players, playerIdx, gameState.direction);
         gameState.currentAttackerIdx = nextAttacker;
         gameState.currentDefenderIdx = getNextActivePlayer(gameState.players, nextAttacker, gameState.direction);
@@ -2052,9 +2058,15 @@ function executeBotAction(gs: GameState, botIdx: number, botAction: { action: st
       error = engineEndAttack(gs, botIdx);
       break;
     case 'skipTurn': {
-      const nextAttacker = getNextActivePlayer(gs.players, botIdx, gs.direction);
-      gs.currentAttackerIdx = nextAttacker;
-      gs.currentDefenderIdx = getNextActivePlayer(gs.players, nextAttacker, gs.direction);
+      if (gs.defenderTaking) {
+        engineFinalizeTake(gs);
+      } else if (gs.battleField.length > 0) {
+        error = engineEndAttack(gs, botIdx);
+      } else {
+        const nextAttacker = getNextActivePlayer(gs.players, botIdx, gs.direction);
+        gs.currentAttackerIdx = nextAttacker;
+        gs.currentDefenderIdx = getNextActivePlayer(gs.players, nextAttacker, gs.direction);
+      }
       break;
     }
     default:

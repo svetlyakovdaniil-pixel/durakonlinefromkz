@@ -753,7 +753,6 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     deck1Count: 0,
     deck2Count: 0,
     isLastStep: true,
-    finishButtonText: 'Завершить обучение',
   },
 ];
 
