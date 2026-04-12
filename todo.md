@@ -2348,3 +2348,6 @@
 - [x] Revert "Премиум статус" button to previous style (removed marginRight: 205px)
 - [x] Change premium button text to "PREMIUM" (no star icon, no "статус" word) in all 3 languages
 - [x] Add border/divider between "Настройки" and "Друзья" grid buttons (borderB: true on Settings row)
+- [ ] Fix divider between Settings/Friends: add explicit border-bottom line element between rows 4 and 5
+- [ ] Add unreadCount badge on Notifications grid button
+- [ ] Shift PREMIUM button slightly lower (add marginTop)

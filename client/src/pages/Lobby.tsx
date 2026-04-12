@@ -285,7 +285,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowShop(true)}
-                  className="mt-1 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide"
+                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -847,7 +847,8 @@ onClick={() => setShowTengeTopUp(true)}
                     className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
                     style={{
                       background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                      borderBottom: '1px solid rgba(201,168,76,0.15)',
+                      borderRight: borderR ? '1px solid rgba(201,168,76,0.15)' : undefined,
+                      borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
                       gap: 'clamp(2px, 1.2vw, 6px)',
                       width: '100%',
                       height: '100%',
@@ -874,7 +875,14 @@ onClick={() => setShowTengeTopUp(true)}
                 }}
                 onClick={action}
               >
-                <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
+                <div className="relative">
+                  <Icon style={{ color: 'rgba(201,168,76,0.75)', width: 'clamp(22px, 7vw, 32px)', height: 'clamp(22px, 7vw, 32px)' }} />
+                  {key === 'notifications' && unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </div>
                 <span
                   className="font-bold tracking-wide text-amber-100/80 text-center leading-tight px-1"
                   style={{ fontSize: 'clamp(12px, 3.8vw, 16px)' }}
