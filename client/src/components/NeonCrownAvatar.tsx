@@ -10,48 +10,20 @@ interface NeonCrownAvatarProps {
  * Season: Неоновая эра (Season 7) | Rank: Обсидиан (Obsidian)
  *
  * Animation:
- *   - Crown pulses steadily with cyan/blue neon glow
- *   - Three diamond flash points appear exactly over the three crown tip diamonds.
- *     After flashing they disappear completely (opacity 0) so the real diamonds are visible.
- *
- * Diamond positions (measured from the generated image, as % of full image size):
- *   The image is 1024×1024. The avatar circle clips it with objectFit:cover.
- *   Left diamond:   ~9%  left, ~28% top  → inside circle: ~9%  left, ~28% top
- *   Center diamond: ~48% left, ~6%  top  → inside circle: ~48% left, ~6%  top
- *   Right diamond:  ~83% left, ~28% top  → inside circle: ~83% left, ~28% top
- *
- * From the screenshot the dots appeared too high/outside. The fix:
- *   - Render dots INSIDE the overflow:hidden circle (not outside)
- *   - Use corrected % values that match the actual diamond positions in the image
+ *   - Crown image pulses with cyan/blue neon glow (brightness + halo)
+ *   - Electric ring runs along the INNER border of the avatar circle:
+ *       two conic-gradient layers rotate in opposite directions (same technique as LightningFrame)
+ *       plus a border-flash ring that flickers like a real neon tube
+ *   - All layers stay inside overflow:hidden so nothing bleeds outside the circle
  */
 export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarProps) {
   const uid = React.useId().replace(/:/g, '');
 
-  // Corrected diamond positions — measured carefully from the source image
-  // The image crown occupies roughly the center 70% of the square.
-  // Left/right diamonds are on the outer tips, center is the top peak.
-  //
-  // In the 1024×1024 source image:
-  //   Left diamond center:   ~95px from left,  ~285px from top  → 9.3%,  27.8%
-  //   Center diamond center: ~490px from left, ~60px  from top  → 47.9%, 5.9%
-  //   Right diamond center:  ~855px from left, ~285px from top  → 83.5%, 27.8%
-  //
-  // BUT the avatar circle clips the image. The circle has radius = size/2.
-  // The image is rendered as objectFit:cover inside the circle, so coordinates
-  // map 1:1 from image % to container %. We just need to place dots at those %.
-  // Diamond positions measured from screenshot analysis:
-  // Screenshot bright clusters: left=(105,155), center=(239,79), right=(362,155)
-  // Avatar circle in screenshot: x=75-415, y=65-405 (340x340px)
-  // Relative to circle: left=(8.8%, 26.5%), center=(48.2%, 4.1%), right=(84.4%, 26.5%)
-  // The dots appeared higher than diamonds due to large size (12% = 24px at 200px).
-  // Fix: reduce dot size to 7% and add +3% to topPct so center of dot aligns with diamond center.
-  const diamonds = [
-    { leftPct: 0.088, topPct: 0.295 },  // left diamond (26.5% + offset for dot center)
-    { leftPct: 0.482, topPct: 0.075 },  // center diamond (4.1% + offset)
-    { leftPct: 0.844, topPct: 0.295 },  // right diamond
-  ];
-
-  const dotSize = Math.max(2, size * 0.07);
+  // Ring thickness as fraction of size — thinner at small sizes, slightly thicker at large
+  const ringThickness = Math.max(2, Math.round(size * 0.06));
+  // Blur radius for the conic layers
+  const blur1 = Math.max(1, Math.round(size * 0.05));
+  const blur2 = Math.max(1, Math.round(size * 0.03));
 
   return (
     <div
@@ -65,64 +37,86 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
       }}
     >
       <style>{`
-        @keyframes neon-crown-halo-${uid} {
+        /* Outer halo pulse */
+        @keyframes ncrown-halo-${uid} {
           0%, 100% {
             box-shadow:
-              0 0 8px  3px rgba(0,220,255,0.5),
-              0 0 18px 6px rgba(0,180,255,0.3),
-              0 0 32px 10px rgba(0,120,255,0.15);
+              0 0 ${size * 0.16}px ${size * 0.06}px rgba(0,220,255,0.50),
+              0 0 ${size * 0.36}px ${size * 0.12}px rgba(0,180,255,0.28),
+              0 0 ${size * 0.60}px ${size * 0.20}px rgba(0,120,255,0.12);
           }
           50% {
             box-shadow:
-              0 0 14px 5px rgba(0,240,255,0.75),
-              0 0 26px 9px rgba(0,200,255,0.5),
-              0 0 44px 14px rgba(0,140,255,0.28);
+              0 0 ${size * 0.24}px ${size * 0.10}px rgba(0,240,255,0.80),
+              0 0 ${size * 0.50}px ${size * 0.18}px rgba(0,200,255,0.50),
+              0 0 ${size * 0.80}px ${size * 0.28}px rgba(0,140,255,0.25);
           }
         }
 
-        @keyframes neon-crown-body-${uid} {
+        /* Crown image brightness pulse */
+        @keyframes ncrown-body-${uid} {
           0%, 100% { filter: brightness(1.0) saturate(1.1); }
-          50%       { filter: brightness(1.3) saturate(1.35); }
+          50%       { filter: brightness(1.35) saturate(1.4); }
         }
 
-        /*
-         * Flash: invisible → bright → invisible
-         * 0–15%:   opacity 0  (real diamond visible)
-         * 15–30%:  fade in
-         * 30–50%:  hold bright
-         * 50–65%:  fade out
-         * 65–100%: opacity 0  (real diamond visible)
-         */
-        @keyframes neon-crown-gem-${uid} {
-          0%    { opacity: 0; transform: scale(0.5); }
-          15%   { opacity: 0; transform: scale(0.5); }
-          30%   { opacity: 1; transform: scale(1.0); }
-          50%   { opacity: 1; transform: scale(1.0); }
-          65%   { opacity: 0; transform: scale(0.5); }
-          100%  { opacity: 0; transform: scale(0.5); }
+        /* Conic ring layer 1 — clockwise */
+        @keyframes ncrown-ring1-${uid} {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Conic ring layer 2 — counter-clockwise, faster */
+        @keyframes ncrown-ring2-${uid} {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+
+        /* Border flash — like a real neon tube flickering */
+        @keyframes ncrown-border-${uid} {
+          0%, 100% {
+            border-color: rgba(0,200,255,0.80);
+            box-shadow: 0 0 ${ringThickness * 1.5}px ${ringThickness * 0.5}px rgba(0,200,255,0.55);
+          }
+          8% {
+            border-color: rgba(255,255,255,0.98);
+            box-shadow: 0 0 ${ringThickness * 3}px ${ringThickness}px rgba(255,255,255,0.90);
+          }
+          12% {
+            border-color: rgba(0,180,255,0.65);
+            box-shadow: 0 0 ${ringThickness}px ${ringThickness * 0.3}px rgba(0,180,255,0.40);
+          }
+          55% {
+            border-color: rgba(200,240,255,0.95);
+            box-shadow: 0 0 ${ringThickness * 3.5}px ${ringThickness * 1.2}px rgba(200,240,255,0.85);
+          }
+          60% {
+            border-color: rgba(0,180,255,0.65);
+            box-shadow: 0 0 ${ringThickness}px ${ringThickness * 0.3}px rgba(0,180,255,0.40);
+          }
         }
       `}</style>
 
-      {/* Outer halo ring */}
+      {/* Outer halo (outside the circle, just glow) */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
           borderRadius: '50%',
-          animation: `neon-crown-halo-${uid} 2.5s ease-in-out infinite`,
+          animation: `ncrown-halo-${uid} 2.5s ease-in-out infinite`,
           pointerEvents: 'none',
           zIndex: 0,
         }}
       />
 
-      {/* Circle clip — image + dots all inside */}
+      {/* Main circle — clips everything inside */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           borderRadius: '50%',
           overflow: 'hidden',
+          zIndex: 1,
         }}
       >
         {/* Base crown image */}
@@ -137,12 +131,12 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
             objectFit: 'cover',
             objectPosition: 'center',
             display: 'block',
-            animation: `neon-crown-body-${uid} 2.5s ease-in-out infinite`,
+            animation: `ncrown-body-${uid} 2.5s ease-in-out infinite`,
           }}
           draggable={false}
         />
 
-        {/* Ambient overlay */}
+        {/* Ambient cyan overlay */}
         <div
           aria-hidden="true"
           style={{
@@ -150,28 +144,74 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
             inset: 0,
             background: 'radial-gradient(ellipse at 50% 40%, rgba(0,180,255,0.07) 0%, transparent 70%)',
             pointerEvents: 'none',
+            zIndex: 1,
           }}
         />
 
-        {/* Diamond flash points — INSIDE the clipped circle */}
-        {diamonds.map((d, i) => (
-          <div
-            key={i}
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: `calc(${d.leftPct * 100}% - ${dotSize / 2}px)`,
-              top:  `calc(${d.topPct  * 100}% - ${dotSize / 2}px)`,
-              width: dotSize,
-              height: dotSize,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(140,240,255,0.9) 35%, rgba(0,200,255,0.5) 65%, transparent 85%)',
-              boxShadow: `0 0 ${dotSize * 0.7}px ${dotSize * 0.35}px rgba(0,220,255,0.95), 0 0 ${dotSize * 1.4}px ${dotSize * 0.6}px rgba(0,180,255,0.55)`,
-              pointerEvents: 'none',
-              animation: `neon-crown-gem-${uid} 3.5s ease-in-out infinite ${i * 0.15}s`,
-            }}
-          />
-        ))}
+        {/* ── Electric ring layer 1 — rotating conic, clockwise ── */}
+        {/* Positioned so only the outer rim is visible (inner area is transparent) */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: -ringThickness,
+            borderRadius: '50%',
+            background: `conic-gradient(
+              rgba(0,200,255,0)    0deg,
+              rgba(255,255,255,0.9) 20deg,
+              rgba(0,220,255,0.75) 40deg,
+              rgba(0,140,220,0.40) 80deg,
+              rgba(255,255,255,0.85) 130deg,
+              rgba(0,200,255,0.60) 170deg,
+              rgba(0,100,200,0.30) 210deg,
+              rgba(255,255,255,0.90) 250deg,
+              rgba(0,200,255,0.70) 290deg,
+              rgba(0,140,220,0.40) 330deg,
+              rgba(0,200,255,0)    360deg
+            )`,
+            animation: `ncrown-ring1-${uid} 1.4s linear infinite`,
+            filter: `blur(${blur1}px)`,
+            zIndex: 2,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* ── Electric ring layer 2 — counter-clockwise, faster ── */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: -Math.round(ringThickness * 0.5),
+            borderRadius: '50%',
+            background: `conic-gradient(
+              rgba(255,255,255,0)   0deg,
+              rgba(180,240,255,0.6) 60deg,
+              rgba(255,255,255,0.8) 120deg,
+              rgba(0,200,255,0.50)  180deg,
+              rgba(255,255,255,0.7) 240deg,
+              rgba(0,180,255,0.50)  300deg,
+              rgba(255,255,255,0)   360deg
+            )`,
+            animation: `ncrown-ring2-${uid} 0.9s linear infinite`,
+            filter: `blur(${blur2}px)`,
+            zIndex: 3,
+            pointerEvents: 'none',
+          }}
+        />
+
+        {/* ── Border flash ring — sharp neon tube edge ── */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: '50%',
+            border: `${Math.max(1, Math.round(ringThickness * 0.5))}px solid rgba(0,200,255,0.80)`,
+            animation: `ncrown-border-${uid} 1.8s ease-in-out infinite`,
+            zIndex: 4,
+            pointerEvents: 'none',
+          }}
+        />
       </div>
     </div>
   );
