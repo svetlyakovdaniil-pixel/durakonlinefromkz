@@ -28,38 +28,38 @@ export function KhanAvatar({ size = 48, className = '' }: KhanAvatarProps) {
       <style>{`
         /* Dust cloud rises from bottom, drifts up and fades */
         @keyframes khan-dust-1 {
-          0%   { transform: translate(-50%, 0%) scale(0.6); opacity: 0; }
-          15%  { opacity: 0.55; }
-          60%  { opacity: 0.35; transform: translate(-50%, -55%) scale(1.4); }
-          100% { transform: translate(-50%, -90%) scale(1.8); opacity: 0; }
+          0%   { transform: translate(-50%, 0%) scale(0.7); opacity: 0; }
+          12%  { opacity: 0.82; }
+          55%  { opacity: 0.62; transform: translate(-50%, -60%) scale(1.6); }
+          100% { transform: translate(-50%, -100%) scale(2.1); opacity: 0; }
         }
         @keyframes khan-dust-2 {
-          0%   { transform: translate(-50%, 0%) scale(0.5); opacity: 0; }
-          15%  { opacity: 0.45; }
-          60%  { opacity: 0.28; transform: translate(-50%, -50%) scale(1.3); }
-          100% { transform: translate(-50%, -85%) scale(1.7); opacity: 0; }
+          0%   { transform: translate(-50%, 0%) scale(0.6); opacity: 0; }
+          12%  { opacity: 0.72; }
+          55%  { opacity: 0.52; transform: translate(-50%, -55%) scale(1.5); }
+          100% { transform: translate(-50%, -95%) scale(2.0); opacity: 0; }
         }
         @keyframes khan-dust-3 {
-          0%   { transform: translate(-50%, 0%) scale(0.4); opacity: 0; }
-          15%  { opacity: 0.38; }
-          60%  { opacity: 0.22; transform: translate(-50%, -45%) scale(1.2); }
-          100% { transform: translate(-50%, -80%) scale(1.6); opacity: 0; }
+          0%   { transform: translate(-50%, 0%) scale(0.5); opacity: 0; }
+          12%  { opacity: 0.62; }
+          55%  { opacity: 0.42; transform: translate(-50%, -50%) scale(1.4); }
+          100% { transform: translate(-50%, -90%) scale(1.9); opacity: 0; }
         }
         @keyframes khan-dust-4 {
-          0%   { transform: translate(-50%, 0%) scale(0.35); opacity: 0; }
-          15%  { opacity: 0.3; }
-          60%  { opacity: 0.18; transform: translate(-50%, -40%) scale(1.1); }
-          100% { transform: translate(-50%, -75%) scale(1.5); opacity: 0; }
+          0%   { transform: translate(-50%, 0%) scale(0.45); opacity: 0; }
+          12%  { opacity: 0.55; }
+          55%  { opacity: 0.35; transform: translate(-50%, -45%) scale(1.3); }
+          100% { transform: translate(-50%, -85%) scale(1.8); opacity: 0; }
         }
         /* Warm steppe glow — golden horizon light */
         @keyframes khan-glow {
           0%, 100% { opacity: 0.0; }
-          40%, 60%  { opacity: 0.22; }
+          40%, 60%  { opacity: 0.42; }
         }
         /* Vignette pulse — subtle darkening of edges */
         @keyframes khan-vignette {
-          0%, 100% { opacity: 0.4; }
-          50%       { opacity: 0.65; }
+          0%, 100% { opacity: 0.5; }
+          50%       { opacity: 0.75; }
         }
       `}</style>
 

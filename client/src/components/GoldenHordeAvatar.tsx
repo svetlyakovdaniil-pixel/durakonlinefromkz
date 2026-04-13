@@ -50,21 +50,21 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         @keyframes gh-fire-pulse {
           0%, 100% {
             box-shadow:
-              0 0 ${Math.max(4, blurPx)}px ${Math.max(2, blurPx / 2)}px rgba(180,0,0,0.9),
-              0 0 ${Math.max(10, blurPx * 2.5)}px ${Math.max(4, blurPx)}px rgba(140,0,0,0.7),
-              0 0 ${Math.max(18, blurPx * 4)}px ${Math.max(6, blurPx * 2)}px rgba(100,0,0,0.45);
+              0 0 ${Math.max(4, blurPx)}px ${Math.max(2, blurPx / 2)}px rgba(218,165,32,0.9),
+              0 0 ${Math.max(10, blurPx * 2.5)}px ${Math.max(4, blurPx)}px rgba(184,134,11,0.7),
+              0 0 ${Math.max(18, blurPx * 4)}px ${Math.max(6, blurPx * 2)}px rgba(150,100,0,0.45);
           }
           33% {
             box-shadow:
-              0 0 ${Math.max(6, blurPx * 1.4)}px ${Math.max(3, blurPx * 0.8)}px rgba(220,0,0,1.0),
-              0 0 ${Math.max(14, blurPx * 3)}px ${Math.max(5, blurPx * 1.5)}px rgba(180,0,0,0.8),
-              0 0 ${Math.max(24, blurPx * 5)}px ${Math.max(8, blurPx * 2.5)}px rgba(120,0,0,0.5);
+              0 0 ${Math.max(6, blurPx * 1.4)}px ${Math.max(3, blurPx * 0.8)}px rgba(255,215,0,1.0),
+              0 0 ${Math.max(14, blurPx * 3)}px ${Math.max(5, blurPx * 1.5)}px rgba(218,165,32,0.8),
+              0 0 ${Math.max(24, blurPx * 5)}px ${Math.max(8, blurPx * 2.5)}px rgba(180,120,0,0.5);
           }
           66% {
             box-shadow:
-              0 0 ${Math.max(3, blurPx * 0.9)}px ${Math.max(1, blurPx * 0.5)}px rgba(160,0,0,0.95),
-              0 0 ${Math.max(8, blurPx * 2)}px ${Math.max(3, blurPx)}px rgba(120,0,0,0.75),
-              0 0 ${Math.max(14, blurPx * 3.2)}px ${Math.max(5, blurPx * 1.6)}px rgba(80,0,0,0.45);
+              0 0 ${Math.max(3, blurPx * 0.9)}px ${Math.max(1, blurPx * 0.5)}px rgba(200,150,0,0.95),
+              0 0 ${Math.max(8, blurPx * 2)}px ${Math.max(3, blurPx)}px rgba(170,120,0,0.75),
+              0 0 ${Math.max(14, blurPx * 3.2)}px ${Math.max(5, blurPx * 1.6)}px rgba(130,90,0,0.45);
           }
         }
         @keyframes gh-rim-pulse {
@@ -73,7 +73,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         }
       `}</style>
 
-      {/* ── Fire background layer 1 — large blood-red conic ── */}
+      {/* ── Fire background layer 1 — large golden conic ── */}
       <div
         aria-hidden="true"
         style={{
@@ -81,16 +81,16 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           inset: -Math.round(size * 0.15),
           borderRadius: '50%',
           background: `conic-gradient(
-            rgba(80,0,0,0.0)   0deg,
-            rgba(180,0,0,0.95) 40deg,
-            rgba(220,0,0,1.0)  80deg,
-            rgba(140,0,0,0.85) 120deg,
-            rgba(200,10,0,0.7) 160deg,
-            rgba(160,0,0,0.95) 200deg,
-            rgba(220,0,0,1.0)  240deg,
-            rgba(120,0,0,0.8)  280deg,
-            rgba(180,0,0,0.9)  320deg,
-            rgba(80,0,0,0.0)   360deg
+            rgba(80,50,0,0.0)    0deg,
+            rgba(218,165,32,0.95) 40deg,
+            rgba(255,215,0,1.0)   80deg,
+            rgba(184,134,11,0.85) 120deg,
+            rgba(240,190,0,0.7)   160deg,
+            rgba(200,150,0,0.95)  200deg,
+            rgba(255,200,0,1.0)   240deg,
+            rgba(170,120,0,0.8)   280deg,
+            rgba(218,165,32,0.9)  320deg,
+            rgba(80,50,0,0.0)     360deg
           )`,
           animation: 'gh-fire-rotate 2.2s linear infinite',
           filter: `blur(${blurPx}px)`,
@@ -98,7 +98,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         }}
       />
 
-      {/* ── Fire background layer 2 — counter-rotate, darker crimson ── */}
+      {/* ── Fire background layer 2 — counter-rotate, amber/dark gold ── */}
       <div
         aria-hidden="true"
         style={{
@@ -106,13 +106,13 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           inset: -Math.round(size * 0.08),
           borderRadius: '50%',
           background: `conic-gradient(
-            rgba(60,0,0,0.0)   0deg,
-            rgba(200,0,20,0.9) 60deg,
-            rgba(160,0,0,0.95) 120deg,
-            rgba(100,0,0,0.65) 180deg,
-            rgba(190,0,10,0.9) 240deg,
-            rgba(140,0,0,0.75) 300deg,
-            rgba(60,0,0,0.0)   360deg
+            rgba(60,40,0,0.0)    0deg,
+            rgba(210,160,0,0.9)  60deg,
+            rgba(170,120,0,0.95) 120deg,
+            rgba(100,70,0,0.65)  180deg,
+            rgba(200,150,0,0.9)  240deg,
+            rgba(150,100,0,0.75) 300deg,
+            rgba(60,40,0,0.0)    360deg
           )`,
           animation: 'gh-fire-rotate-rev 1.7s linear infinite',
           filter: `blur(${blurPx2}px)`,
