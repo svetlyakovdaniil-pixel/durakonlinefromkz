@@ -25,6 +25,8 @@ import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyr
 import {
   initGameTracking, cleanupGameTracking,
   trackTrumpDefense, trackThrow, trackTransfer, trackCardsTaken, track10Transfer,
+  trackTrumpAceUsed, getTrumpAceUsed,
+  getTrumpDefMap, getTotalDefMap, getThrowMap, getTransferMap, getCardsTakenMap,
   processGameEndAchievements, processDefenseAchievement, processAttackAchievement,
   processLucky777Achievement, processSpidermanMemeAchievement,
   processFirstBerkutAchievement, processLittleHeroAchievement,
@@ -731,6 +733,10 @@ export function initSocketServer(httpServer: HttpServer) {
               const currentTrump = gameState.trumpInfo.currentTrump;
               const isTrumpDefense = prePlayCard.suit === currentTrump && attackCard.suit !== currentTrump;
               trackTrumpDefense(data.roomId, odId, isTrumpDefense);
+              // Track trump ace usage (defender plays trump ace)
+              if (prePlayCard.rank === 'A' && prePlayCard.suit === currentTrump) {
+                trackTrumpAceUsed(data.roomId, odId);
+              }
               // Async achievement checks
               const isFirstGame = (gameState.players.find(p => p.id === odId)?.winPlace === null);
               getDb().then(db => {
@@ -1001,6 +1007,23 @@ export function initSocketServer(httpServer: HttpServer) {
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
         gameState.consecutiveTimeouts[odId] = 0;
+      }
+
+      // Счастливые семёрки — player skips turn because only 777 in hand
+      {
+        const botCount = gameState.players.filter(p => p.isBot).length;
+        const totalPlayersInRoom = gameState.players.length;
+        const gameId = playerGameIds.get(odId);
+        if (gameId) {
+          getDb().then(db => {
+            if (!db) return;
+            db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
+              const profileId = rows[0]?.id;
+              if (!profileId) return;
+              processLucky777Achievement({ profileId, botCount, totalPlayersInRoom }).catch(() => {});
+            }).catch(() => {});
+          }).catch(() => {});
+        }
       }
 
       // Skip turn for 777-only hand:
@@ -2376,6 +2399,44 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               transferCounts: new Map(),
             });
 
+            // Build perPlayerStats from in-memory tracking maps
+            const trumpDefMap = getTrumpDefMap(roomId);
+            const totalDefMap = getTotalDefMap(roomId);
+            const throwMap = getThrowMap(roomId);
+            const transferMap = getTransferMap(roomId);
+            const cardsTakenMap = getCardsTakenMap(roomId);
+            const trumpAceMap = getTrumpAceUsed(roomId);
+            const perPlayerStats = new Map<string, {
+              cardsTaken: number; trumpDefenses: number; defenses: number;
+              cardsThrown: number; attacks: number; trumpBeats: number;
+              trumpAceUsed: number; transfers: number; passCardsShown: number;
+              startedTurnWith10: number; defended777: number; threw6ToNonNeighbor: number;
+              beatSameRankSuit: number; spadeKingBeatsTrumpAce: number;
+              kingBeatsTrump: number; cardsInOneTurn: number; trumpAceInOneGame: number;
+            }>();
+            for (const odId of allHumanOdIds) {
+              const trumpAceCount = trumpAceMap.get(odId) ?? 0;
+              perPlayerStats.set(odId, {
+                cardsTaken: cardsTakenMap.get(odId) ?? 0,
+                trumpDefenses: trumpDefMap.get(odId) ?? 0,
+                defenses: totalDefMap.get(odId) ?? 0,
+                cardsThrown: throwMap.get(odId) ?? 0,
+                attacks: 0,
+                trumpBeats: trumpDefMap.get(odId) ?? 0,
+                trumpAceUsed: trumpAceCount,
+                transfers: transferMap.get(odId) ?? 0,
+                passCardsShown: 0,
+                startedTurnWith10: 0,
+                defended777: 0,
+                threw6ToNonNeighbor: 0,
+                beatSameRankSuit: 0,
+                spadeKingBeatsTrumpAce: 0,
+                kingBeatsTrump: 0,
+                cardsInOneTurn: 0,
+                trumpAceInOneGame: trumpAceCount,
+              });
+            }
+
             await processDailyQuestsAfterGame({
               roomId,
               playerGameIds,
@@ -2385,6 +2446,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               botCount,
               totalPlayersInRoom,
               durationSeconds: 0,
+              perPlayerStats,
             });
 
             // Send toast notifications for newly unlocked achievements/quests

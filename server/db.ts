@@ -2790,3 +2790,25 @@ export async function adminGetPlayerPurchases(profileId: number) {
   // Only return purchases that have NOT been refunded
   return purchases.filter(p => !refundedDescs.has(p.description ?? ''));
 }
+
+/**
+ * Get total tenge spent by a profile (for Donator achievement).
+ * Sums all negative tenge transactions of type shop_purchase or premium_purchase.
+ */
+export async function getTotalTengeSpentByProfile(profileId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+
+  const [row] = await db.select({
+    total: sql<number>`COALESCE(SUM(ABS(${transactions.amount})), 0)`,
+  })
+    .from(transactions)
+    .where(and(
+      eq(transactions.profileId, profileId),
+      sql`${transactions.currency} = 'tenge'`,
+      sql`${transactions.amount} < 0`,
+      sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
+    ));
+
+  return Number(row?.total ?? 0);
+}

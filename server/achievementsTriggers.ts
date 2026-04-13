@@ -94,6 +94,8 @@ const gameCardsTaken = new Map<string, Map<string, number>>();
 const game10Transfers = new Map<string, Map<string, { lastTarget: string; streak: number }>>();
 /** Consecutive win streaks: odId -> streak count (persists across games in memory) */
 const consecutiveWinStreaks = new Map<string, number>();
+/** Per-game tracking of trump ace usage: roomId -> { odId -> count } */
+const gameTrumpAceUsed = new Map<string, Map<string, number>>();
 
 export function initGameTracking(roomId: string): void {
   gameTrumpDefenses.set(roomId, new Map());
@@ -102,6 +104,7 @@ export function initGameTracking(roomId: string): void {
   gameTransferCounts.set(roomId, new Map());
   gameCardsTaken.set(roomId, new Map());
   game10Transfers.set(roomId, new Map());
+  gameTrumpAceUsed.set(roomId, new Map());
 }
 
 export function cleanupGameTracking(roomId: string): void {
@@ -111,6 +114,7 @@ export function cleanupGameTracking(roomId: string): void {
   gameTransferCounts.delete(roomId);
   gameCardsTaken.delete(roomId);
   game10Transfers.delete(roomId);
+  gameTrumpAceUsed.delete(roomId);
 }
 
 function incMap(map: Map<string, number>, key: string, by = 1): number {
@@ -145,6 +149,42 @@ export function trackTransfer(roomId: string, odId: string): void {
 export function trackCardsTaken(roomId: string, odId: string, count: number): void {
   const takenMap = gameCardsTaken.get(roomId);
   if (takenMap) incMap(takenMap, odId, count);
+}
+
+/** Track trump ace usage (played as defender to beat an attack) */
+export function trackTrumpAceUsed(roomId: string, odId: string): void {
+  const aceMap = gameTrumpAceUsed.get(roomId);
+  if (aceMap) incMap(aceMap, odId);
+}
+
+/** Get trump ace usage count for a player in a game */
+export function getTrumpAceUsed(roomId: string): Map<string, number> {
+  return gameTrumpAceUsed.get(roomId) ?? new Map();
+}
+
+/** Get trump defenses map for a game */
+export function getTrumpDefMap(roomId: string): Map<string, number> {
+  return gameTrumpDefenses.get(roomId) ?? new Map();
+}
+
+/** Get total defenses map for a game */
+export function getTotalDefMap(roomId: string): Map<string, number> {
+  return gameTotalDefenses.get(roomId) ?? new Map();
+}
+
+/** Get throw counts map for a game */
+export function getThrowMap(roomId: string): Map<string, number> {
+  return gameThrowCounts.get(roomId) ?? new Map();
+}
+
+/** Get transfer counts map for a game */
+export function getTransferMap(roomId: string): Map<string, number> {
+  return gameTransferCounts.get(roomId) ?? new Map();
+}
+
+/** Get cards taken map for a game */
+export function getCardsTakenMap(roomId: string): Map<string, number> {
+  return gameCardsTaken.get(roomId) ?? new Map();
 }
 
 /** Track 10-transfer chains: returns true if the spiderman meme condition is met */
@@ -230,7 +270,7 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
           .from(playerProfiles)
           .where(eq(playerProfiles.id, profileId))
           .limit(1);
-        if (profile && profile.rating >= 200) {
+        if (profile && profile.rating >= 1200) {
           await incrementAchievementProgress(profileId, 'golden_start', 0, profile.rating);
         }
       }

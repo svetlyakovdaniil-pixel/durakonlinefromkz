@@ -82,8 +82,10 @@ import {
   getContactMessages,
   updateContactMessageStatus,
   creditTengeIAP,
+  getTotalTengeSpentByProfile,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
+import { processDonatorAchievement } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
@@ -484,6 +486,13 @@ export const appRouter = router({
       .input(z.object({ deckId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseDeck(ctx.user.id, input.deckId, input.tengeCost);
+        if (result.success && input.tengeCost > 0) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+          }
+        }
         return result;
       }),
 
@@ -499,6 +508,13 @@ export const appRouter = router({
       .input(z.object({ tableId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseTable(ctx.user.id, input.tableId, input.tengeCost);
+        if (result.success && input.tengeCost > 0) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+          }
+        }
         return result;
       }),
 
@@ -514,6 +530,13 @@ export const appRouter = router({
       .input(z.object({ frameId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseFrame(ctx.user.id, input.frameId, input.tengeCost);
+        if (result.success && input.tengeCost > 0) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+          }
+        }
         return result;
       }),
 
@@ -535,6 +558,13 @@ export const appRouter = router({
       .input(z.object({ avatarId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseAvatar(ctx.user.id, input.avatarId, input.tengeCost);
+        if (result.success && input.tengeCost > 0) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+          }
+        }
         return result;
       }),
   }),

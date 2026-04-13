@@ -2467,3 +2467,11 @@
 ## Задачи от 13.04.2026 (Сессия 14 — Баги результатов игры)
 - [x] Баг: игрок покинувший игру показывается как "Покинул игру" но не помечается как дурак — нужно "Дурак · Покинул"игру"
 - [x] Баг: победитель с премиумом получает +25 в истории матчей вместо +37 — премиум-бонус не сохраняется в запись истории
+
+## Задачи от 13.04.2026 (Сессия 14 — Достижения и задания)
+- [x] Достижение "Донатор" не работало — processDonatorAchievement не вызывался после покупок в магазине (purchaseDeck, purchaseTable, purchaseFrame, purchaseAvatar)
+- [x] Достижение "Счастливые семерки" не работало — триггер стоял на playCard вместо skipTurn
+- [x] Достижение "Золотой старт" — изменить порог с 200 на 1200 рейтинга
+- [x] Задание "Первый беркут" не работало — processDailyQuestsAfterGame использовал gameId как profileId (playerGameIds.get(odId) возвращает gameId, нужен lookup через БД)
+- [x] Задание "Козырной туз" — добавить отслеживание trumpAceUsed через trackTrumpAceUsed + передать perPlayerStats в processDailyQuestsAfterGame
+- [x] Все задания не получали perPlayerStats — добавлена передача через in-memory maps (trumpDef, totalDef, throw, transfer, cardsTaken, trumpAce)

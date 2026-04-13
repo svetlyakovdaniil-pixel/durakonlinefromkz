@@ -360,12 +360,27 @@ export async function processDailyQuestsAfterGame(params: {
   const qualifies = botRatio < 0.334;
   if (!qualifies) return;
 
+  // Build odId -> profileId map by looking up gameId -> profileId in DB
+  // playerGameIds stores odId -> gameId (NOT profileId)
+  const db = await getDb();
+  if (!db) return;
+  const odIdToProfileId = new Map<string, number>();
+  for (const odId of allHumanOdIds) {
+    const gameId = playerGameIds.get(odId);
+    if (!gameId) continue;
+    const [row] = await db.select({ id: playerProfiles.id })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.gameId, gameId))
+      .limit(1);
+    if (row?.id) odIdToProfileId.set(odId, row.id);
+  }
+
   const winner1OdId = winnersOrder[0] || null;
   const winner2OdId = winnersOrder[1] || null;
   const winner3OdId = winnersOrder[2] || null;
 
   for (const odId of allHumanOdIds) {
-    const profileId = playerGameIds.get(odId);
+    const profileId = odIdToProfileId.get(odId);
     if (!profileId) continue;
 
     // Ensure today's quests are assigned
