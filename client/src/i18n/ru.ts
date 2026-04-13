@@ -57,7 +57,7 @@ export const ru = {
     rules: 'Правила',
     achievements: 'Достижения',
     dailyQuests: 'Задания',
-    tournaments: 'Турниры',
+    season: 'Сезон',
     friends: 'Друзья',
     leaderboard: 'Рейтинг',
     leaderboardTabs: {

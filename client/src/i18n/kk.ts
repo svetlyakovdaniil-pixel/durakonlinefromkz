@@ -56,7 +56,7 @@ export const kk = {
     shop: 'Дүкен',
     achievements: 'Жетістіктер',
     dailyQuests: 'Тапсырмалар',
-    tournaments: 'Турнирлер',
+    season: 'Маусым',
     friends: 'Достар',
     leaderboard: 'Рейтинг',
     leaderboardTabs: {

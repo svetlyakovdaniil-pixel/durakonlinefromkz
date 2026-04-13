@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Swords, Medal, Home } from 'lucide-react';
+import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -96,13 +96,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Smart red dots — track which sections have been visited
-  // Keys: 'tournaments', 'shop', 'friends', 'achievements', 'dailyQuests'
+  // Keys: 'season', 'shop', 'friends', 'achievements', 'dailyQuests'
   // We store the last-seen timestamp per section in localStorage.
   // A dot appears if the section has new content since last visit.
-  // For static sections (tournaments) we use a fixed "new content" date.
+  // For static sections (season) we use a fixed "new content" date.
   // Shop dot: only shown if user has never visited (lastVisit === 0).
   const NEW_CONTENT_DATES: Record<string, number> = useMemo(() => ({
-    tournaments: new Date('2026-04-13').getTime(),
+    season: new Date('2026-04-13').getTime(),
     friends: 0, // driven by onlineFriendsCount
   }), []);
 
@@ -114,7 +114,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   };
 
   const [visitedKeys, setVisitedKeys] = useState<Record<string, number>>(() => ({
-    tournaments: getLastVisited('tournaments'),
+    season: getLastVisited('season'),
     shop: getLastVisited('shop'),
     friends: getLastVisited('friends'),
     achievements: getLastVisited('achievements'),
@@ -123,7 +123,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   const hasNewContent = (key: string): boolean => {
     const lastVisit = visitedKeys[key] ?? 0;
-    if (key === 'tournaments') {
+    if (key === 'season') {
       return lastVisit < (NEW_CONTENT_DATES[key] ?? 0);
     }
     if (key === 'shop') {
@@ -1030,7 +1030,7 @@ onClick={() => setShowTengeTopUp(true)}
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
-              { icon: Swords, key: 'tournaments', borderR: true, borderB: true, action: () => {} },
+              { icon: Flame, key: 'season', borderR: true, borderB: true, action: () => {} },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
               { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => setShowAchievements(true) },
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },

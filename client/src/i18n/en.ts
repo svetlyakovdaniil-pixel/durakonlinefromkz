@@ -58,7 +58,7 @@ export const en = {
     rules: 'Rules',
     achievements: 'Achievements',
     dailyQuests: 'Quests',
-    tournaments: 'Tournaments',
+    season: 'Season',
     friends: 'Friends',
     leaderboard: 'Leaderboard',
     leaderboardTabs: {
