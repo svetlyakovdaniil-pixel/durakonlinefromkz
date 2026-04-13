@@ -10,6 +10,7 @@ import { KhanAvatar } from '@/components/KhanAvatar';
 import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
 import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
 import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
+import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -251,15 +252,27 @@ function RewardPopup({
             )}
 
             {/* Frame */}
-            {reward.frameId && (
-              <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
-                <span className="text-lg">✨</span>
-                <div>
-                  <div className="text-amber-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="italic opacity-70">{reward.frameId}</span>
+            {reward.frameId === 'great_khan' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(218,165,32,0.08)', border: '1px solid rgba(218,165,32,0.20)' }}
+              >
+                <div className="flex-shrink-0">
+                  <GreatKhanFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-yellow-900 to-amber-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-yellow-400">
+                        <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.3)" stroke="rgba(218,165,32,0.9)" />
+                        <circle cx="12" cy="12" r="2" fill="rgba(255,215,0,0.8)" />
+                      </svg>
+                    </div>
+                  </GreatKhanFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-yellow-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}
                   </div>
-                  <div className="text-amber-200/40 text-xs">
-                    {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+                  <div className="text-amber-200/50 text-xs mt-0.5">
+                    {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
                   </div>
                 </div>
               </div>
@@ -469,6 +482,23 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                           );
                         })()}
+                        {/* Frame reward — great_khan */}
+                        {rewardDef.frameId === 'great_khan' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <GreatKhanFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-yellow-900 to-amber-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-yellow-400">
+                                    <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.3)" stroke="rgba(218,165,32,0.9)" />
+                                  </svg>
+                                </div>
+                              </GreatKhanFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}</span>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     );
                   })()}

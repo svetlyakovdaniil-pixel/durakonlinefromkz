@@ -278,6 +278,56 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                   </div>
                 )
               ))}
+              {/* Season-only frames (great_khan) — shown locked unless owned */}
+              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly).map(frame => (
+                ownedFrames.includes(frame.id) ? (
+                  <button
+                    key={frame.id}
+                    onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
+                    className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                      equippedFrame === frame.id ? 'bg-yellow-700/30 border border-yellow-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-yellow-600/25'
+                    }`}
+                  >
+                    <FrameWrapper frameId={frame.id} size={40}>
+                      <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-yellow-500/60">
+                        <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                          <FrameIcon frameId={frame.id} />
+                        </div>
+                      </div>
+                    </FrameWrapper>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
+                      </div>
+                    </div>
+                    {equippedFrame === frame.id && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}
+                  </button>
+                ) : (
+                  <div
+                    key={frame.id}
+                    className="w-full flex items-center gap-3 p-2 rounded-lg border border-yellow-600/20 opacity-60 cursor-not-allowed"
+                  >
+                    <FrameWrapper frameId={frame.id} size={40}>
+                      <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-yellow-700/40">
+                        <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
+                          <FrameIcon frameId={frame.id} />
+                        </div>
+                      </div>
+                    </FrameWrapper>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300/60 border border-amber-500/20">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
+                      </div>
+                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Маусымда Ұлы Хан дәрежесін алыңыз' : locale === 'en' ? 'Earn Great Khan rank at season end' : 'Получите ранг Великий Хан'}</span>
+                    </div>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/50 ml-auto flex-shrink-0">
+                      <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.15)" stroke="rgba(218,165,32,0.5)" />
+                    </svg>
+                  </div>
+                )
+              ))}
             </div>
           )}
         </div>

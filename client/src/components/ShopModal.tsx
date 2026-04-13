@@ -12,6 +12,7 @@ import { NeonFrame } from './NeonFrame';
 import { LightningFrame } from './LightningFrame';
 import { IceFrame } from './IceFrame';
 import { PremiumFrame } from './PremiumFrame';
+import { GreatKhanFrame } from './GreatKhanFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -95,6 +96,25 @@ export const AVATAR_FRAMES = [
     bgGradient: 'from-yellow-900 to-amber-950',
     premiumOnly: true,
   },
+  {
+    id: 'great_khan',
+    name: 'Великий Хан',
+    nameKk: 'Ұлы Хан',
+    nameEn: 'Great Khan',
+    description: 'Эксклюзивная рамка для победителей сезона с рангом Великий Хан.',
+    descriptionKk: 'Маусымда Ұлы Хан дәрежесіне жеткен жеңімпаздарға арналған эксклюзивті жақтау.',
+    descriptionEn: 'Exclusive frame for season winners who reach the Great Khan rank.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-yellow-400">
+        <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.3)" stroke="rgba(218,165,32,0.9)" />
+        <circle cx="12" cy="12" r="2" fill="rgba(255,215,0,0.8)" />
+      </svg>
+    ),
+    iconColor: 'text-yellow-400',
+    bgGradient: 'from-yellow-900 to-amber-950',
+    seasonOnly: true,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -110,6 +130,8 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <IceFrame size={size} active={true}>{children}</IceFrame>;
     case 'premium':
       return <PremiumFrame size={size} active={true}>{children}</PremiumFrame>;
+    case 'great_khan':
+      return <GreatKhanFrame size={size} active={true}>{children}</GreatKhanFrame>;
     default:
       return <>{children}</>;
   }
@@ -458,13 +480,14 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
             <div className="space-y-4">
               {AVATAR_FRAMES.filter(frame => isItemAvailable('frame', frame.id)).map(frame => {
                 const isPremiumFrame = (frame as any).premiumOnly === true;
+                const isSeasonFrame = (frame as any).seasonOnly === true;
                 const isOwned = ownedFrames.includes(frame.id) || (isPremiumFrame && isPremium);
                 const effectivePrice = getPrice('frame', frame.id, frame.price);
                 const canAffordFrame = currentTenge >= effectivePrice;
                 const IconComp = frame.icon;
                 return (
                   <div key={frame.id} className={`bg-[#0f2035]/80 border rounded-xl p-4 ${
-                    isPremiumFrame ? 'border-yellow-600/40' : 'border-amber-700/20'
+                    isSeasonFrame ? 'border-yellow-500/50' : isPremiumFrame ? 'border-yellow-600/40' : 'border-amber-700/20'
                   }`}>
                     <div className="flex items-center gap-4">
                       <div className="shrink-0">
@@ -484,11 +507,28 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           {isPremiumFrame && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
                           )}
+                          {isSeasonFrame && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
+                          )}
                         </div>
                         <p className="text-amber-200/50 text-xs mb-3">
                           {locale === 'kk' ? frame.descriptionKk : locale === 'en' ? (frame as any).descriptionEn || frame.description : frame.description}
                         </p>
-                        {isPremiumFrame ? (
+                        {isSeasonFrame ? (
+                          isOwned ? (
+                            <div className="flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
+                              <Check className="w-4 h-4" />
+                              <span>{locale === 'kk' ? 'Алынды' : locale === 'en' ? 'Earned' : 'Получена'}</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2 text-amber-200/50 text-xs">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/60">
+                                <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.2)" stroke="rgba(218,165,32,0.6)" />
+                              </svg>
+                              <span>{locale === 'kk' ? 'Маусымда Ұлы Хан дәрежесін алу қажет' : locale === 'en' ? 'Earn Great Khan rank at season end' : 'Получите ранг Великий Хан в конце сезона'}</span>
+                            </div>
+                          )
+                        ) : isPremiumFrame ? (
                           isOwned ? (
                             <div className="flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
                               <Crown className="w-4 h-4" />
