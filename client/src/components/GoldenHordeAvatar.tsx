@@ -8,11 +8,20 @@ interface GoldenHordeAvatarProps {
 /**
  * GoldenHordeAvatar — AI-generated photorealistic Golden Horde warrior.
  * CSS effects:
- *   - Large red/crimson spark particles burst from blade area and fade
+ *   - Fire animation around the sword blade (same technique as FireFrame:
+ *     conic-gradient rotation + box-shadow pulse)
  *   - Golden rim pulse border
  * No Canvas, no JS loop — pure CSS @keyframes.
  */
 export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvatarProps) {
+  // Sword blade occupies roughly the upper-right quadrant of the circular avatar.
+  // We position a thin rotated rectangle (~15% wide, ~55% tall) at ~55% left, ~8% top,
+  // rotated ~-35deg to match the blade angle in the photo.
+  const bladeW = Math.max(4, Math.round(size * 0.13));
+  const bladeH = Math.max(14, Math.round(size * 0.55));
+  const blurPx = Math.max(2, Math.round(size * 0.06));
+  const blurPx2 = Math.max(1, Math.round(size * 0.04));
+
   return (
     <div
       className={className}
@@ -27,46 +36,36 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
       }}
     >
       <style>{`
-        /* ── Sparks: large red/crimson dots burst from blade area ── */
-        @keyframes gh-spark-a {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 1; }
-          100% { transform: translate(22px, -28px) scale(0.08); opacity: 0; }
+        /* ── Fire conic rotation (same as FireFrame) ── */
+        @keyframes gh-fire-rotate {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
-        @keyframes gh-spark-b {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.9; }
-          100% { transform: translate(-18px, -24px) scale(0.08); opacity: 0; }
+        @keyframes gh-fire-rotate-rev {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
         }
-        @keyframes gh-spark-c {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.85; }
-          100% { transform: translate(28px, -10px) scale(0.08); opacity: 0; }
-        }
-        @keyframes gh-spark-d {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.8; }
-          100% { transform: translate(-12px, -32px) scale(0.08); opacity: 0; }
-        }
-        @keyframes gh-spark-e {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.75; }
-          100% { transform: translate(10px, -36px) scale(0.08); opacity: 0; }
-        }
-        @keyframes gh-spark-f {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.7; }
-          100% { transform: translate(-26px, -16px) scale(0.08); opacity: 0; }
-        }
-        @keyframes gh-spark-g {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.65; }
-          100% { transform: translate(16px, -20px) scale(0.08); opacity: 0; }
-        }
-        @keyframes gh-spark-h {
-          0%   { transform: translate(0, 0) scale(1); opacity: 0; }
-          6%   { opacity: 0.6; }
-          100% { transform: translate(-8px, -38px) scale(0.08); opacity: 0; }
+
+        /* ── Fire pulse glow (same as FireFrame) ── */
+        @keyframes gh-fire-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 ${Math.max(3, blurPx)}px ${Math.max(1, blurPx / 2)}px rgba(255,100,0,0.8),
+              0 0 ${Math.max(6, blurPx * 2)}px ${Math.max(2, blurPx)}px rgba(255,60,0,0.6),
+              0 0 ${Math.max(10, blurPx * 3)}px ${Math.max(3, blurPx * 1.5)}px rgba(200,30,0,0.35);
+          }
+          33% {
+            box-shadow:
+              0 0 ${Math.max(4, blurPx * 1.2)}px ${Math.max(2, blurPx * 0.7)}px rgba(255,160,0,0.9),
+              0 0 ${Math.max(8, blurPx * 2.5)}px ${Math.max(3, blurPx * 1.2)}px rgba(255,80,0,0.7),
+              0 0 ${Math.max(14, blurPx * 4)}px ${Math.max(4, blurPx * 2)}px rgba(220,40,0,0.4);
+          }
+          66% {
+            box-shadow:
+              0 0 ${Math.max(2, blurPx * 0.8)}px ${Math.max(1, blurPx * 0.4)}px rgba(255,50,0,0.85),
+              0 0 ${Math.max(5, blurPx * 1.8)}px ${Math.max(2, blurPx * 0.8)}px rgba(200,20,0,0.65),
+              0 0 ${Math.max(9, blurPx * 2.8)}px ${Math.max(3, blurPx * 1.3)}px rgba(150,10,0,0.35);
+          }
         }
 
         /* ── Golden rim pulse ── */
@@ -74,15 +73,9 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           0%, 100% { opacity: 0.7; }
           50%       { opacity: 1.0; }
         }
-
-        /* ── Red ambient glow ── */
-        @keyframes gh-glow {
-          0%, 100% { opacity: 0.0; }
-          20%, 80%  { opacity: 0.2; }
-        }
       `}</style>
 
-      {/* Base photorealistic image — static, no tremor */}
+      {/* Base photorealistic image — static */}
       <img
         src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/golden_horde_warrior_avatar-oJWWxe5DCcpxB9nbWMET8o.webp"
         alt="Воин Золотой Орды"
@@ -96,115 +89,90 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         draggable={false}
       />
 
-      {/* ── Spark particles — positioned at blade tip (upper-right area) ── */}
+      {/* ── Fire around sword blade ──
+          The blade runs from ~(60%, 8%) to ~(72%, 62%) in avatar coords,
+          angled at ~-35deg. We use a thin rotated rectangle with:
+            - outer glow ring (fire-pulse box-shadow)
+            - two conic-gradient layers rotating around the blade center
+      */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
-          top: '28%',
-          left: '62%',
-          width: 0,
-          height: 0,
+          // Center of blade: ~66% from left, ~35% from top
+          left: `${size * 0.60}px`,
+          top: `${size * 0.06}px`,
+          width: bladeW,
+          height: bladeH,
+          transform: 'rotate(-35deg)',
+          transformOrigin: '50% 50%',
           pointerEvents: 'none',
+          zIndex: 2,
         }}
       >
-        {/* Spark A — large bright red */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(6, size * 0.13),
-          height: Math.max(6, size * 0.13),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,60,20,1) 0%, rgba(180,0,0,0.85) 40%, rgba(120,0,0,0.3) 70%, transparent 100%)',
-          animation: 'gh-spark-a 1.3s ease-out infinite',
-          animationDelay: '0s',
-        }} />
-        {/* Spark B — crimson */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(5, size * 0.11),
-          height: Math.max(5, size * 0.11),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(220,20,60,1) 0%, rgba(160,0,30,0.8) 40%, rgba(100,0,20,0.3) 70%, transparent 100%)',
-          animation: 'gh-spark-b 1.3s ease-out infinite',
-          animationDelay: '0.14s',
-        }} />
-        {/* Spark C — orange-red */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(5, size * 0.10),
-          height: Math.max(5, size * 0.10),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,80,0,1) 0%, rgba(200,20,0,0.8) 40%, rgba(130,0,0,0.25) 70%, transparent 100%)',
-          animation: 'gh-spark-c 1.3s ease-out infinite',
-          animationDelay: '0.07s',
-        }} />
-        {/* Spark D — dark crimson */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(4, size * 0.09),
-          height: Math.max(4, size * 0.09),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(200,0,40,1) 0%, rgba(140,0,20,0.75) 40%, rgba(80,0,10,0.25) 70%, transparent 100%)',
-          animation: 'gh-spark-d 1.3s ease-out infinite',
-          animationDelay: '0.22s',
-        }} />
-        {/* Spark E — bright red */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(4, size * 0.085),
-          height: Math.max(4, size * 0.085),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,40,10,0.95) 0%, rgba(190,0,0,0.7) 40%, rgba(110,0,0,0.2) 70%, transparent 100%)',
-          animation: 'gh-spark-e 1.3s ease-out infinite',
-          animationDelay: '0.30s',
-        }} />
-        {/* Spark F — deep crimson */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(4, size * 0.08),
-          height: Math.max(4, size * 0.08),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(180,0,50,0.9) 0%, rgba(120,0,30,0.65) 40%, rgba(70,0,15,0.2) 70%, transparent 100%)',
-          animation: 'gh-spark-f 1.3s ease-out infinite',
-          animationDelay: '0.38s',
-        }} />
-        {/* Spark G — medium red */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(3, size * 0.07),
-          height: Math.max(3, size * 0.07),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(240,30,30,0.85) 0%, rgba(170,0,0,0.6) 40%, transparent 100%)',
-          animation: 'gh-spark-g 1.3s ease-out infinite',
-          animationDelay: '0.10s',
-        }} />
-        {/* Spark H — small bright core */}
-        <div style={{
-          position: 'absolute',
-          width: Math.max(3, size * 0.065),
-          height: Math.max(3, size * 0.065),
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,100,50,0.9) 0%, rgba(200,20,0,0.55) 40%, transparent 100%)',
-          animation: 'gh-spark-h 1.3s ease-out infinite',
-          animationDelay: '0.45s',
-        }} />
-      </div>
+        {/* Glow pulse ring */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: -Math.round(bladeW * 0.5),
+            borderRadius: `${bladeW}px`,
+            animation: `gh-fire-pulse 1.4s ease-in-out infinite`,
+          }}
+        />
 
-      {/* ── Red ambient glow at blade area ── */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          top: '15%',
-          right: '10%',
-          width: '40%',
-          height: '40%',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(200,0,0,0.35) 0%, rgba(150,0,0,0.15) 50%, transparent 100%)',
-          animation: 'gh-glow 1.3s ease-in-out infinite',
-          pointerEvents: 'none',
-        }}
-      />
+        {/* Conic fire layer 1 — rotates around blade */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: -Math.round(bladeW * 0.9),
+            borderRadius: `${bladeW * 1.5}px`,
+            background: `conic-gradient(
+              rgba(255,200,0,0.0) 0deg,
+              rgba(255,120,0,0.9) 40deg,
+              rgba(255,60,0,1.0) 80deg,
+              rgba(200,20,0,0.8) 120deg,
+              rgba(255,80,0,0.6) 160deg,
+              rgba(255,180,0,0.9) 200deg,
+              rgba(255,60,0,1.0) 240deg,
+              rgba(180,10,0,0.7) 280deg,
+              rgba(255,140,0,0.8) 320deg,
+              rgba(255,200,0,0.0) 360deg
+            )`,
+            animation: `gh-fire-rotate 2.2s linear infinite`,
+            filter: `blur(${blurPx}px)`,
+          }}
+        />
+
+        {/* Conic fire layer 2 — counter-rotates */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: -Math.round(bladeW * 0.6),
+            borderRadius: `${bladeW * 1.2}px`,
+            background: `conic-gradient(
+              rgba(255,80,0,0.0) 0deg,
+              rgba(255,200,50,0.8) 60deg,
+              rgba(255,100,0,0.9) 120deg,
+              rgba(200,30,0,0.6) 180deg,
+              rgba(255,160,0,0.85) 240deg,
+              rgba(255,50,0,0.7) 300deg,
+              rgba(255,80,0,0.0) 360deg
+            )`,
+            animation: `gh-fire-rotate-rev 1.7s linear infinite`,
+            filter: `blur(${blurPx2}px)`,
+          }}
+        />
+
+        {/* Blade core — thin bright line to show fire is "on" the blade */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            borderRadius: `${bladeW}px`,
+            background: 'linear-gradient(180deg, rgba(255,240,200,0.6) 0%, rgba(255,160,50,0.4) 60%, rgba(255,80,0,0.2) 100%)',
+          }}
+        />
+      </div>
 
       {/* ── Dark vignette ── */}
       <div
@@ -215,6 +183,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           borderRadius: '50%',
           background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,0.5) 100%)',
           pointerEvents: 'none',
+          zIndex: 3,
         }}
       />
 
@@ -229,6 +198,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           animation: 'gh-rim-pulse 1.8s ease-in-out infinite',
           pointerEvents: 'none',
           boxSizing: 'border-box',
+          zIndex: 4,
         }}
       />
     </div>
