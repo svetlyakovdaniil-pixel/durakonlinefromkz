@@ -21,8 +21,9 @@ import { TABLE_STYLES } from "@shared/cardAssets";
 import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 import { SeasonTestTab } from "@/components/SeasonTestTab";
+import { AvatarEditorTab } from "@/components/AvatarEditorTab";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "avatar_editor";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -120,6 +121,7 @@ export default function AdminPanel() {
     { id: "moderation", label: "Модерация", icon: Flag },
     { id: "contact", label: "Сообщения", icon: MessageSquare, adminOnly: true },
     { id: "season_test", label: "Тест сезона", icon: FlaskConical, adminOnly: true },
+    { id: "avatar_editor", label: "Редактор аватарок", icon: Crown, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -206,6 +208,7 @@ export default function AdminPanel() {
         {tab === "moderation" && (isAdmin || isGM) && <ModerationTab />}
         {tab === "contact" && isAdmin && <ContactMessagesTab />}
         {tab === "season_test" && isAdmin && <SeasonTestTab />}
+        {tab === "avatar_editor" && isAdmin && <AvatarEditorTab />}
       </div>
     </div>
   );

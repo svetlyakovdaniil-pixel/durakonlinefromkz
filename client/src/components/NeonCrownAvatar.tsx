@@ -3,6 +3,12 @@ import React from 'react';
 interface NeonCrownAvatarProps {
   size?: number;
   className?: string;
+  /** Horizontal offset in percent (-50 to 50) */
+  offsetX?: number;
+  /** Vertical offset in percent (-50 to 50) */
+  offsetY?: number;
+  /** Scale multiplier (0.5 to 2.0) */
+  imgScale?: number;
 }
 
 /**
@@ -15,7 +21,7 @@ interface NeonCrownAvatarProps {
  *   - The crown itself stays bright and clearly visible.
  *   - A matching outer glow pulses in sync with the colour shift.
  */
-export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarProps) {
+export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offsetY = 0, imgScale = 1 }: NeonCrownAvatarProps) {
   const uid = React.useId().replace(/:/g, '');
 
   return (
@@ -90,12 +96,14 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
           alt="Обсидиан"
           style={{
             position: 'absolute',
-            inset: 0,
+            top: '50%',
+            left: '50%',
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            objectPosition: 'center',
             display: 'block',
+            transform: `translate(calc(-50% + ${offsetX}%), calc(-50% + ${offsetY}%)) scale(${imgScale})`,
+            transformOrigin: 'center center',
             animation: `ncrown-color-${uid} 4s ease-in-out infinite`,
           }}
           draggable={false}

@@ -6,7 +6,7 @@ import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
 import { NeonCrownAvatar } from './NeonCrownAvatar';
-import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
+import { getAvatarUrl, getBaseAvatarId, AVATAR_OPTIONS } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
   avatarId?: string | null;
@@ -61,7 +61,8 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
   }
 
   if (baseId === 'neon_crown') {
-    return <NeonCrownAvatar size={size} className={className} />;
+    const opt = AVATAR_OPTIONS.find(a => a.id === 'neon_crown');
+    return <NeonCrownAvatar size={size} className={className} offsetX={opt?.offsetX ?? 0} offsetY={opt?.offsetY ?? 0} imgScale={opt?.imgScale ?? 1} />;
   }
 
   return (

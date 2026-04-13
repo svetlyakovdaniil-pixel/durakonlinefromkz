@@ -17,6 +17,12 @@ export interface AvatarOption {
   seasonReward?: boolean;
   /** Minimum season rank ID required to unlock this avatar */
   seasonRankRequired?: string;
+  /** Image position offset X in percent (-50 to 50), default 0 */
+  offsetX?: number;
+  /** Image position offset Y in percent (-50 to 50), default 0 */
+  offsetY?: number;
+  /** Image scale multiplier (0.5 to 2.0), default 1 */
+  imgScale?: number;
 }
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
@@ -156,6 +162,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan',
+    offsetX: 0,
+    offsetY: 0,
+    imgScale: 1,
   },
 ];
 
