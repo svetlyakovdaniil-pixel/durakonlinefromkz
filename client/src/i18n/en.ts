@@ -634,6 +634,7 @@ export const en = {
     cancel: 'Cancel',
     save: 'Save',
     saving: 'Saving...',
+    seasonRewardHint: 'Avatar locked. Finish the season at “Sky Eagle” rank or higher to unlock.',
   },
 
   // Complaint / Report

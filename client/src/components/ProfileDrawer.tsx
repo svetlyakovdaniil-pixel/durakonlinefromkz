@@ -13,6 +13,7 @@ import {
   Coins, Banknote,
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
+import { AvatarDisplay } from './AvatarDisplay';
 import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper, FrameIcon } from './AvatarWithFrame';
@@ -144,11 +145,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         <div className="flex justify-center mb-3">
           <div className="relative group">
             <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
-              <img
-                src={getAvatarUrl(profile.avatarId)}
-                alt="Avatar"
-                className="w-full h-full object-cover"
-              />
+              <AvatarDisplay avatarId={profile.avatarId} size={80} className="w-full h-full" />
             </div>
             <button
               onClick={() => setShowAvatarPicker(true)}
@@ -189,7 +186,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
           <div className="flex items-center gap-3">
             <FrameWrapper frameId={equippedFrame} size={48}>
               <div className="w-[48px] h-[48px] rounded-full overflow-hidden border-2 border-amber-500/60">
-                <img src={getAvatarUrl(profile.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                <AvatarDisplay avatarId={profile.avatarId} size={48} className="w-full h-full" />
               </div>
             </FrameWrapper>
             <div className="text-amber-100 text-sm">
@@ -418,11 +415,7 @@ function FriendProfileView({
         {/* Avatar */}
         <div className="flex justify-center mb-2">
           <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-400/50 shadow-lg">
-            <img
-              src={getAvatarUrl((profile as any).avatarId)}
-              alt="Avatar"
-              className="w-full h-full object-cover"
-            />
+            <AvatarDisplay avatarId={(profile as any).avatarId} size={64} className="w-full h-full" />
           </div>
         </div>
         <div className="flex items-center justify-center gap-2 mb-1">

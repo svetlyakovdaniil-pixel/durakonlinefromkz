@@ -10,9 +10,13 @@ export interface AvatarOption {
   /** Static preview image for shop display (used for animated avatars) */
   previewUrl?: string;
   premium?: boolean;
-  /** Whether this is an animated avatar (GIF) */
+  /** Whether this is an animated avatar (GIF or Canvas) */
   animated?: boolean;
   price?: number;
+  /** Season reward avatar — not for sale, unlocked by finishing season at required rank */
+  seasonReward?: boolean;
+  /** Minimum season rank ID required to unlock this avatar */
+  seasonRankRequired?: string;
 }
 
 export const AVATAR_OPTIONS: AvatarOption[] = [
@@ -69,6 +73,16 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     premium: true,
     price: 100,
   },
+  {
+    id: 'sky_eagle',
+    name: 'Небесный Орёл',
+    nameKk: 'Аспан Бүркіт',
+    nameEn: 'Sky Eagle',
+    url: 'sky_eagle', // special: rendered by SkyEagleAvatar component
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // rank ID from SEASON_RANKS
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -78,6 +92,8 @@ export const BOT_AVATAR_ID = 'bot';
 
 export function getAvatarUrl(avatarId: string | null | undefined): string {
   const found = AVATAR_OPTIONS.find(a => a.id === avatarId);
+  // Season reward avatars use a special component, not a URL
+  if (found?.seasonReward) return AVATAR_OPTIONS.find(a => a.id === 'wolf')?.url || AVATAR_OPTIONS[0].url;
   return found?.url || AVATAR_OPTIONS[0].url;
 }
 

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { AVATAR_OPTIONS, getAvatarUrl } from '../../../shared/avatars';
 import { Button } from '@/components/ui/button';
-import { Check, X, Lock } from 'lucide-react';
+import { Check, X, Lock, Trophy } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
+import { SkyEagleAvatar } from './SkyEagleAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -20,9 +21,14 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   const canSelectAvatar = (avatarId: string) => {
     const avatar = AVATAR_OPTIONS.find(a => a.id === avatarId);
     if (!avatar) return false;
-    if (!avatar.premium) return true;
-    return ownedAvatars.includes(avatarId);
+    // Season reward avatars: unlocked via ownedAvatars (granted at season end)
+    if (avatar.seasonReward) return ownedAvatars.includes(avatarId);
+    // Premium shop avatars: must be purchased
+    if (avatar.premium) return ownedAvatars.includes(avatarId);
+    return true;
   };
+
+  const isLocked = (avatarId: string) => !canSelectAvatar(avatarId);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
@@ -37,59 +43,86 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         {/* Current avatar preview */}
         <div className="flex justify-center">
           <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
-            <img
-              src={getAvatarUrl(selected)}
-              alt="Selected avatar"
-              className="w-full h-full object-cover"
-            />
+            {selected === 'sky_eagle' ? (
+              <SkyEagleAvatar size={96} />
+            ) : (
+              <img
+                src={getAvatarUrl(selected)}
+                alt="Selected avatar"
+                className="w-full h-full object-cover"
+              />
+            )}
           </div>
         </div>
 
         {/* Avatar grid */}
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
           {AVATAR_OPTIONS.filter(avatar => avatar.id !== 'bot').map((avatar) => {
-            const isLocked = avatar.premium && !ownedAvatars.includes(avatar.id);
+            const locked = isLocked(avatar.id);
+            const isSkyEagle = avatar.id === 'sky_eagle';
             return (
               <button
                 key={avatar.id}
                 onClick={() => {
-                  if (!isLocked) setSelected(avatar.id);
+                  if (!locked) setSelected(avatar.id);
                 }}
                 className={`relative rounded-xl overflow-hidden border-2 transition-all duration-200 aspect-square ${
-                  isLocked
+                  locked
                     ? 'border-gray-600/50 opacity-60 cursor-not-allowed'
                     : selected === avatar.id
                       ? 'border-amber-500 shadow-lg shadow-amber-500/30 scale-105'
                       : 'border-amber-700/30 hover:border-amber-600/50 hover:scale-102'
                 }`}
               >
-                <img
-                  src={avatar.url}
-                  alt={avatar.name}
-                  className={`w-full h-full object-cover ${isLocked ? 'grayscale' : ''}`}
-                  loading="lazy"
-                />
-                {selected === avatar.id && !isLocked && (
+                {isSkyEagle ? (
+                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
+                    <SkyEagleAvatar size={60} className="w-full h-full" />
+                  </div>
+                ) : (
+                  <img
+                    src={avatar.url}
+                    alt={avatar.name}
+                    className={`w-full h-full object-cover ${locked ? 'grayscale' : ''}`}
+                    loading="lazy"
+                  />
+                )}
+                {selected === avatar.id && !locked && (
                   <div className="absolute inset-0 bg-amber-500/20 flex items-center justify-center">
                     <div className="w-6 h-6 rounded-full bg-amber-500 flex items-center justify-center">
                       <Check className="w-4 h-4 text-white" />
                     </div>
                   </div>
                 )}
-                {isLocked && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <Lock className="w-4 h-4 text-gray-300" />
+                {locked && (
+                  <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-0.5">
+                    {avatar.seasonReward ? (
+                      <Trophy className="w-3.5 h-3.5 text-amber-400" />
+                    ) : (
+                      <Lock className="w-4 h-4 text-gray-300" />
+                    )}
                   </div>
                 )}
-                {avatar.premium && !isLocked && (
+                {avatar.premium && !locked && !isSkyEagle && (
                   <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
                     PRO
+                  </div>
+                )}
+                {avatar.seasonReward && !locked && (
+                  <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
+                    🏆
                   </div>
                 )}
               </button>
             );
           })}
         </div>
+
+        {/* Season reward hint */}
+        {isLocked('sky_eagle') && (
+          <p className="text-xs text-amber-400/70 text-center">
+            🏆 {t('avatarPicker.seasonRewardHint')}
+          </p>
+        )}
 
         {/* Actions */}
         <div className="flex gap-2">

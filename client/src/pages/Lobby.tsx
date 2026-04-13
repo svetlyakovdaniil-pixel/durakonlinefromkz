@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
+import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
@@ -439,7 +440,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <button className="hover:opacity-80 transition-opacity">
                     <FrameWrapper frameId={(profile as any)?.equippedFrame} size={72}>
                       <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
-                        <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                        <AvatarDisplay avatarId={profile?.avatarId} size={72} className="w-full h-full" />
                       </div>
                     </FrameWrapper>
                   </button>
@@ -659,7 +660,7 @@ onClick={() => setShowTengeTopUp(true)}
                   <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2">
                     <FrameWrapper frameId={(profile as any)?.equippedFrame} size={40}>
                       <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
-                        <img src={getAvatarUrl(profile?.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+                        <AvatarDisplay avatarId={profile?.avatarId} size={40} className="w-full h-full" />
                       </div>
                     </FrameWrapper>
                   </button>

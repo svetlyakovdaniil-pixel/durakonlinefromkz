@@ -5,7 +5,9 @@ import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { getAvatarUrl } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
-import { X, Flame, Trophy, Clock, Gift } from 'lucide-react';
+import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
+import { SkyEagleAvatar } from '@/components/SkyEagleAvatar';
+import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
   open: boolean;
@@ -35,6 +37,29 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
   );
 }
 
+/** Full-screen avatar preview modal */
+function AvatarPreviewModal({ avatarId, onClose }: { avatarId: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative flex flex-col items-center gap-4">
+        <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-amber-500 shadow-2xl shadow-amber-500/30">
+          {avatarId === 'sky_eagle' ? (
+            <SkyEagleAvatar size={256} />
+          ) : null}
+        </div>
+        <div className="text-amber-200 font-bold text-lg">Небесный Орёл</div>
+        <button
+          onClick={onClose}
+          className="mt-2 px-6 py-2 rounded-xl bg-amber-700/60 hover:bg-amber-600/80 text-amber-100 text-sm font-medium transition-colors"
+        >
+          <X className="w-4 h-4 inline mr-1" />Закрыть
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /** Reward popup for a single rank */
 function RewardPopup({
   rankKey,
@@ -47,92 +72,120 @@ function RewardPopup({
 }) {
   const rank = SEASON_RANKS.find(r => r.key === rankKey);
   const reward = SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey);
+  const [avatarPreview, setAvatarPreview] = useLocalState<string | null>(null);
   if (!rank || !reward) return null;
 
   const rankName = locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
-      <div
-        className="relative w-[min(340px,90vw)] rounded-2xl p-5 flex flex-col gap-4"
-        style={{
-          background: 'linear-gradient(160deg, #0d1b2a 0%, #0a1628 100%)',
-          border: `1px solid ${rank.color}50`,
-          boxShadow: `0 0 24px ${rank.color}20`,
-        }}
-      >
-        {/* Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-amber-200/40 hover:text-amber-100 transition-colors"
+    <>
+      {avatarPreview && (
+        <AvatarPreviewModal avatarId={avatarPreview} onClose={() => setAvatarPreview(null)} />
+      )}
+      <div className="fixed inset-0 z-[60] flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+        <div
+          className="relative w-[min(340px,90vw)] rounded-2xl p-5 flex flex-col gap-4"
+          style={{
+            background: 'linear-gradient(160deg, #0d1b2a 0%, #0a1628 100%)',
+            border: `1px solid ${rank.color}50`,
+            boxShadow: `0 0 24px ${rank.color}20`,
+          }}
         >
-          <X className="w-4 h-4" />
-        </button>
+          {/* Close */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 text-amber-200/40 hover:text-amber-100 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
 
-        {/* Rank header */}
-        <div className="flex items-center gap-3">
-          <DiamondRankIcon seasonRating={rank.minRating} size={36} />
-          <div>
-            <div className="font-bold text-base" style={{ color: rank.color }}>{rankName}</div>
-            <div className="text-amber-200/50 text-xs mt-0.5">
-              {locale === 'kk' ? 'Маусым соңындағы сыйақы' : locale === 'en' ? 'End of season reward' : 'Награда в конце сезона'}
+          {/* Rank header */}
+          <div className="flex items-center gap-3">
+            <DiamondRankIcon seasonRating={rank.minRating} size={36} />
+            <div>
+              <div className="font-bold text-base" style={{ color: rank.color }}>{rankName}</div>
+              <div className="text-amber-200/50 text-xs mt-0.5">
+                {locale === 'kk' ? 'Маусым соңындағы сыйақы' : locale === 'en' ? 'End of season reward' : 'Награда в конце сезона'}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Rewards list */}
-        <div className="space-y-2">
-          {/* Shanyraks */}
-          <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(234,179,8,0.08)' }}>
-            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
-            <span className="text-amber-200 font-semibold text-sm">
-              +{reward.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
-            </span>
-          </div>
-
-          {/* Tenge */}
-          {reward.tenge > 0 && (
-            <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(139,92,246,0.10)' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
-              <span className="text-purple-300 font-semibold text-sm">
-                +{reward.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
+          {/* Rewards list */}
+          <div className="space-y-2">
+            {/* Shanyraks */}
+            <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(234,179,8,0.08)' }}>
+              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
+              <span className="text-amber-200 font-semibold text-sm">
+                +{reward.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
               </span>
             </div>
-          )}
 
-          {/* Avatar */}
-          {reward.avatarId && (
-            <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
-              <span className="text-lg">🖼</span>
-              <div>
-                <div className="text-amber-300 font-semibold text-sm">
-                  {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="italic opacity-70">{reward.avatarId}</span>
+            {/* Tenge */}
+            {reward.tenge > 0 && (
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(139,92,246,0.10)' }}>
+                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
+                <span className="text-purple-300 font-semibold text-sm">
+                  +{reward.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
+                </span>
+              </div>
+            )}
+
+            {/* Avatar — sky_eagle: show animated preview */}
+            {reward.avatarId === 'sky_eagle' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-amber-500/10 transition-colors"
+                style={{ background: 'rgba(251,191,36,0.06)' }}
+                onClick={() => setAvatarPreview('sky_eagle')}
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/50 flex-shrink-0">
+                  <SkyEagleAvatar size={48} />
                 </div>
-                <div className="text-amber-200/40 text-xs">
-                  {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+                <div className="flex-1 min-w-0">
+                  <div className="text-amber-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Аспан Бүркіт' : locale === 'en' ? 'Sky Eagle' : 'Небесный Орёл'}
+                  </div>
+                  <div className="text-amber-400/60 text-xs flex items-center gap-1 mt-0.5">
+                    <ZoomIn className="w-3 h-3" />
+                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Frame */}
-          {reward.frameId && (
-            <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
-              <span className="text-lg">✨</span>
-              <div>
-                <div className="text-amber-300 font-semibold text-sm">
-                  {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="italic opacity-70">{reward.frameId}</span>
-                </div>
-                <div className="text-amber-200/40 text-xs">
-                  {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+            {/* Avatar — other (coming soon) */}
+            {reward.avatarId && reward.avatarId !== 'sky_eagle' && (
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
+                <span className="text-lg">🖼</span>
+                <div>
+                  <div className="text-amber-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="italic opacity-70">{reward.avatarId}</span>
+                  </div>
+                  <div className="text-amber-200/40 text-xs">
+                    {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+
+            {/* Frame */}
+            {reward.frameId && (
+              <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
+                <span className="text-lg">✨</span>
+                <div>
+                  <div className="text-amber-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="italic opacity-70">{reward.frameId}</span>
+                  </div>
+                  <div className="text-amber-200/40 text-xs">
+                    {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 
