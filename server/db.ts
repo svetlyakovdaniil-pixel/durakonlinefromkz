@@ -2739,6 +2739,7 @@ export async function adminRevokePlayerPurchase(opts: {
 
 /**
  * Admin: Get all shop purchases for a player (shop_purchase + premium_purchase transactions).
+ * Excludes purchases that have already been refunded by an admin.
  */
 export async function adminGetPlayerPurchases(profileId: number) {
   const db = await getDb();
@@ -2750,8 +2751,16 @@ export async function adminGetPlayerPurchases(profileId: number) {
       sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
     ))
     .orderBy(desc(transactions.createdAt))
-    .limit(100);
+    .limit(200);
 
-  // Only return purchases (negative amount = spent money), not refunds
-  return rows.filter(r => r.amount < 0);
+  // Separate purchases (negative amount) from refunds (positive amount with [ADMIN REFUND] prefix)
+  const purchases = rows.filter(r => r.amount < 0);
+  const refundedDescs = new Set(
+    rows
+      .filter(r => r.amount > 0 && r.description?.startsWith('[ADMIN REFUND] '))
+      .map(r => r.description!.replace('[ADMIN REFUND] ', ''))
+  );
+
+  // Only return purchases that have NOT been refunded
+  return purchases.filter(p => !refundedDescs.has(p.description ?? ''));
 }
