@@ -153,7 +153,7 @@ export const notifications = mysqlTable("notifications", {
   /** The player who receives this notification (playerProfiles.id) */
   profileId: int("profileId").notNull(),
   /** Notification type */
-  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired", "admin_announcement", "account_banned"]).notNull(),
+  type: mysqlEnum("type", ["friend_request", "friend_accepted", "balance_topup", "cooldown_expired", "admin_announcement", "account_banned", "season_reward"]).notNull(),
   /** JSON data with extra info */
   data: text("data"),
   /** Whether the notification has been read */
@@ -446,3 +446,58 @@ export const userDailyQuests = mysqlTable("user_daily_quests", {
 });
 export type UserDailyQuest = typeof userDailyQuests.$inferSelect;
 export type InsertUserDailyQuest = typeof userDailyQuests.$inferInsert;
+
+/**
+ * Season ratings — tracks each player's seasonal rating per season.
+ * seasonKey format: "YYYY-MM" (e.g. "2026-04" for April 2026)
+ * Rating resets to 0 at the start of each new season.
+ * No premium bonus applied to season rating changes.
+ */
+export const seasonRatings = mysqlTable("season_ratings", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Player profile ID (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Season key in "YYYY-MM" format */
+  seasonKey: varchar("seasonKey", { length: 7 }).notNull(),
+  /** Current season rating (starts at 0, can go negative but floored at 0) */
+  seasonRating: int("seasonRating").default(0).notNull(),
+  /** Total games played this season */
+  gamesPlayed: int("gamesPlayed").default(0).notNull(),
+  /** Total wins this season */
+  wins: int("wins").default(0).notNull(),
+  /** Total losses this season */
+  losses: int("losses").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SeasonRating = typeof seasonRatings.$inferSelect;
+export type InsertSeasonRating = typeof seasonRatings.$inferInsert;
+
+/**
+ * Season rewards — tracks end-of-season reward claims per player per season.
+ * Created when a season ends and rewards are distributed.
+ */
+export const seasonRewards = mysqlTable("season_rewards", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Player profile ID (playerProfiles.id) */
+  profileId: int("profileId").notNull(),
+  /** Season key in "YYYY-MM" format */
+  seasonKey: varchar("seasonKey", { length: 7 }).notNull(),
+  /** Final season rating at end of season */
+  finalRating: int("finalRating").notNull(),
+  /** Rank achieved (e.g. "steppe_hare", "great_khan") */
+  rankKey: varchar("rankKey", { length: 32 }).notNull(),
+  /** Shanyrak reward amount */
+  shanyraksAwarded: int("shanyraksAwarded").default(0).notNull(),
+  /** Tenge reward amount */
+  tengeAwarded: int("tengeAwarded").default(0).notNull(),
+  /** Whether reward has been claimed (notification sent) */
+  claimed: boolean("claimed").default(false).notNull(),
+  /** When the reward was claimed */
+  claimedAt: timestamp("claimedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type SeasonReward = typeof seasonRewards.$inferSelect;
+export type InsertSeasonReward = typeof seasonRewards.$inferInsert;

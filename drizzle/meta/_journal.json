@@ -281,6 +281,20 @@
       "when": 1776073693852,
       "tag": "0039_legal_turbo",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "5",
+      "when": 1776081783224,
+      "tag": "0040_sticky_sway",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "5",
+      "when": 1776081921085,
+      "tag": "0041_fantastic_sasquatch",
+      "breakpoints": true
     }
   ]
 }

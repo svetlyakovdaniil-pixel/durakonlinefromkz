@@ -1,0 +1,197 @@
+import { getDb } from "./db";
+import { seasonRatings, seasonRewards, playerProfiles, notifications } from "../drizzle/schema";
+import { eq, and, desc, sql } from "drizzle-orm";
+import { getCurrentSeasonKey, getSeasonRank, getSeasonRewardDef } from "../shared/seasons";
+
+// ─── Season Rating Helpers ────────────────────────────────────────────────────
+
+/** Get or create a season rating record for a player in the current season */
+export async function getOrCreateSeasonRating(profileId: number, seasonKey?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const key = seasonKey ?? getCurrentSeasonKey();
+  const existing = await db
+    .select()
+    .from(seasonRatings)
+    .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)))
+    .limit(1);
+
+  if (existing.length > 0) return existing[0];
+
+  await db.insert(seasonRatings).values({
+    profileId,
+    seasonKey: key,
+    seasonRating: 0,
+    gamesPlayed: 0,
+    wins: 0,
+    losses: 0,
+  });
+
+  const created = await db
+    .select()
+    .from(seasonRatings)
+    .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)))
+    .limit(1);
+
+  return created[0];
+}
+
+/** Apply a season rating change (no premium bonus, floored at 0) */
+export async function applySeasonRatingChange(
+  profileId: number,
+  delta: number,
+  isWin: boolean,
+  isLoss: boolean,
+  seasonKey?: string,
+) {
+  const db = await getDb();
+  if (!db) return;
+  const key = seasonKey ?? getCurrentSeasonKey();
+  await getOrCreateSeasonRating(profileId, key);
+
+  await db
+    .update(seasonRatings)
+    .set({
+      seasonRating: sql`GREATEST(0, ${seasonRatings.seasonRating} + ${delta})`,
+      gamesPlayed: sql`${seasonRatings.gamesPlayed} + 1`,
+      wins: isWin ? sql`${seasonRatings.wins} + 1` : sql`${seasonRatings.wins}`,
+      losses: isLoss ? sql`${seasonRatings.losses} + 1` : sql`${seasonRatings.losses}`,
+    })
+    .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)));
+}
+
+/** Get season leaderboard for a given season key (top N players) */
+export async function getSeasonLeaderboard(seasonKey: string, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select({
+      profileId: seasonRatings.profileId,
+      seasonRating: seasonRatings.seasonRating,
+      gamesPlayed: seasonRatings.gamesPlayed,
+      wins: seasonRatings.wins,
+      losses: seasonRatings.losses,
+      displayName: playerProfiles.displayName,
+      gameId: playerProfiles.gameId,
+      avatarId: playerProfiles.avatarId,
+      avatarUrl: playerProfiles.avatarUrl,
+      equippedFrame: playerProfiles.equippedFrame,
+    })
+    .from(seasonRatings)
+    .innerJoin(playerProfiles, eq(seasonRatings.profileId, playerProfiles.id))
+    .where(eq(seasonRatings.seasonKey, seasonKey))
+    .orderBy(desc(seasonRatings.seasonRating))
+    .limit(limit);
+}
+
+/** Get a player's season rating for the current season */
+export async function getPlayerSeasonRating(profileId: number, seasonKey?: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const key = seasonKey ?? getCurrentSeasonKey();
+  const rows = await db
+    .select()
+    .from(seasonRatings)
+    .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+// ─── Season End Processing ────────────────────────────────────────────────────
+
+/**
+ * Process end-of-season rewards for all players who participated.
+ * Called by the cron job at the end of each month.
+ */
+export async function processSeasonEnd(seasonKey: string) {
+  const db = await getDb();
+  if (!db) return { processed: 0 };
+
+  // Get all players who participated in this season
+  const participants = await db
+    .select()
+    .from(seasonRatings)
+    .where(eq(seasonRatings.seasonKey, seasonKey));
+
+  let processed = 0;
+
+  for (const participant of participants) {
+    const rank = getSeasonRank(participant.seasonRating);
+    const rewardDef = getSeasonRewardDef(rank.key);
+
+    // Check if reward already processed
+    const existing = await db
+      .select()
+      .from(seasonRewards)
+      .where(and(
+        eq(seasonRewards.profileId, participant.profileId),
+        eq(seasonRewards.seasonKey, seasonKey),
+      ))
+      .limit(1);
+
+    if (existing.length > 0) continue;
+
+    // Create reward record
+    await db.insert(seasonRewards).values({
+      profileId: participant.profileId,
+      seasonKey,
+      finalRating: participant.seasonRating,
+      rankKey: rank.key,
+      shanyraksAwarded: rewardDef.shanyraks,
+      tengeAwarded: rewardDef.tenge,
+      claimed: false,
+    });
+
+    // Credit shanyrak balance
+    if (rewardDef.shanyraks > 0) {
+      await db
+        .update(playerProfiles)
+        .set({
+          balanceShanyrak: sql`${playerProfiles.balanceShanyrak} + ${rewardDef.shanyraks}`,
+        })
+        .where(eq(playerProfiles.id, participant.profileId));
+    }
+
+    // Credit tenge balance
+    if (rewardDef.tenge > 0) {
+      await db
+        .update(playerProfiles)
+        .set({
+          balanceTenge: sql`${playerProfiles.balanceTenge} + ${rewardDef.tenge}`,
+        })
+        .where(eq(playerProfiles.id, participant.profileId));
+    }
+
+    // Send in-app notification
+    await db.insert(notifications).values({
+      profileId: participant.profileId,
+      type: 'season_reward',
+      data: JSON.stringify({
+        seasonKey,
+        rankKey: rank.key,
+        rankNameRu: rank.nameRu,
+        shanyraks: rewardDef.shanyraks,
+        tenge: rewardDef.tenge,
+      }),
+      isRead: false,
+    });
+
+    processed++;
+  }
+
+  return { processed };
+}
+
+/** Get unclaimed season rewards for a player */
+export async function getUnclaimedSeasonRewards(profileId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(seasonRewards)
+    .where(and(
+      eq(seasonRewards.profileId, profileId),
+      eq(seasonRewards.claimed, false),
+    ))
+    .orderBy(desc(seasonRewards.createdAt));
+}

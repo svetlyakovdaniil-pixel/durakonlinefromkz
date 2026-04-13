@@ -32,6 +32,7 @@ import LeaderboardDrawer from '@/components/LeaderboardDrawer';
 import AchievementsModal from '@/components/AchievementsModal';
 import DailyQuestsModal from '@/components/DailyQuestsModal';
 import PremiumModal from '@/components/PremiumModal';
+import SeasonPage from '@/pages/Season';
 import { toast } from 'sonner';
 
 interface LobbyProps {
@@ -93,6 +94,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showAchievements, setShowAchievements] = useState(false);
   const [showDailyQuests, setShowDailyQuests] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
+  const [showSeason, setShowSeason] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Smart red dots — track which sections have been visited
@@ -1030,7 +1032,7 @@ onClick={() => setShowTengeTopUp(true)}
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
-              { icon: Flame, key: 'season', borderR: true, borderB: true, action: () => {} },
+              { icon: Flame, key: 'season', borderR: true, borderB: true, action: () => setShowSeason(true) },
               { icon: ShoppingCart, key: 'shop', borderR: false, borderB: true, action: () => setShowShop(true) },
               { icon: Trophy, key: 'achievements', borderR: true, borderB: true, action: () => setShowAchievements(true) },
               { icon: Medal, key: 'leaderboard', borderR: false, borderB: true, action: () => setShowLeaderboard(true) },
@@ -1575,6 +1577,9 @@ onClick={() => setShowTengeTopUp(true)}
         open={showPremium}
         onClose={() => setShowPremium(false)}
       />
+
+      {/* Season Page */}
+      <SeasonPage open={showSeason} onClose={() => setShowSeason(false)} />
 
       {/* Friends Drawer triggered from grid button */}
       <FriendsDrawer

@@ -415,6 +415,14 @@ export async function recordGameResult(data: {
       .limit(1);
     if (profileRow) {
       ratingChangesMap[profileRow.id] = ratingChange;
+      // Apply season rating change (no premium bonus — use base ratingChange from table)
+      const baseRatingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
+      try {
+        const { applySeasonRatingChange } = await import('./db.season');
+        await applySeasonRatingChange(profileRow.id, baseRatingChange, isWinner, isLoser);
+      } catch (e) {
+        console.error('[Season] Failed to apply season rating change:', e);
+      }
     }
 
     if (isBotGame) {

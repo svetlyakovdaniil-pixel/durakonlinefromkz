@@ -87,6 +87,8 @@ import {
   getShanyraqLeaderboard,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
+import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards } from "./db.season";
+import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
 import { processDonatorAchievement } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
@@ -1294,6 +1296,63 @@ export const appRouter = router({
         const newQuests = await swapDailyQuest(profile.id, input.questKey);
         return { success: true, remaining: swapResult.remaining, quests: newQuests };
       }),
+  }),
+
+  // ============================================================
+  // SEASON SYSTEM
+  // ============================================================
+  season: router({
+    /** Get current season info + player's season rating */
+    current: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      const seasonKey = getCurrentSeasonKey();
+      const seasonInfo = getSeasonInfo(seasonKey);
+      const bounds = getSeasonBounds(seasonKey);
+      const seasonRating = await getPlayerSeasonRating(profile.id, seasonKey);
+      const rank = getSeasonRank(seasonRating?.seasonRating ?? 0);
+      return {
+        seasonKey,
+        seasonInfo,
+        startDate: bounds.start,
+        endDate: bounds.end,
+        seasonRating: seasonRating?.seasonRating ?? 0,
+        gamesPlayed: seasonRating?.gamesPlayed ?? 0,
+        wins: seasonRating?.wins ?? 0,
+        losses: seasonRating?.losses ?? 0,
+        rank,
+        allRanks: SEASON_RANKS,
+      };
+    }),
+
+    /** Get season leaderboard */
+    leaderboard: publicProcedure
+      .input(z.object({ seasonKey: z.string().optional() }))
+      .query(async ({ input }) => {
+        const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
+        const entries = await getSeasonLeaderboard(seasonKey, 100);
+        return { seasonKey, entries };
+      }),
+
+    /** Get all season names (for display) */
+    allSeasons: publicProcedure.query(() => {
+      return SEASONS;
+    }),
+
+    /** Admin: manually trigger season end processing */
+    adminProcessSeasonEnd: adminProcedure
+      .input(z.object({ seasonKey: z.string() }))
+      .mutation(async ({ input }) => {
+        const result = await processSeasonEnd(input.seasonKey);
+        return result;
+      }),
+
+    /** Get unclaimed season rewards for current player */
+    unclaimedRewards: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+      return getUnclaimedSeasonRewards(profile.id);
+    }),
   }),
 });
 
