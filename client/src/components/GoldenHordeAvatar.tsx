@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef, useEffect } from "react";
+import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
 
 interface GoldenHordeAvatarProps {
   size?: number;
@@ -13,7 +14,7 @@ interface GoldenHordeAvatarProps {
  */
 export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+  const scheduleIdRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -435,9 +436,8 @@ export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvat
       ctx.restore();
     }
 
-    function frame(timestamp: number) {
+    scheduleIdRef.current = scheduleAnimation(function frame(timestamp: number) {
       if (timestamp - lastFrameTime < frameInterval * 0.8) {
-        rafRef.current = requestAnimationFrame(frame);
         return;
       }
       lastFrameTime = timestamp;
@@ -485,13 +485,10 @@ export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvat
       ctx.restore();
       drawBorder();
 
-      rafRef.current = requestAnimationFrame(frame);
-    }
-
-    rafRef.current = requestAnimationFrame(frame);
+    });
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      cancelAnimation(scheduleIdRef.current);
     };
   }, [size]);
 

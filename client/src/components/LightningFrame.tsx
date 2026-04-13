@@ -1,4 +1,5 @@
 import { useRef, useEffect, useCallback } from "react";
+import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
 
 interface LightningFrameProps {
   size: number;
@@ -26,12 +27,12 @@ interface Spark {
 }
 
 /**
- * LightningFrame — renders animated lightning bolts around a circular avatar.
- * Uses Canvas 2D with procedural lightning generation and electric sparks.
+ * LightningFrame — animated lightning bolts around a circular avatar.
+ * Performance: uses global AnimationScheduler (single RAF loop shared across all Canvas components).
  */
 export function LightningFrame({ size, children, active = true, className = "" }: LightningFrameProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animFrameRef = useRef<number>(0);
+  const scheduleIdRef = useRef<number>(0);
   const boltsRef = useRef<LightningBolt[]>([]);
   const sparksRef = useRef<Spark[]>([]);
 
@@ -84,10 +85,7 @@ export function LightningFrame({ size, children, active = true, className = "" }
   }, []);
 
   useEffect(() => {
-    if (!active) {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-      return;
-    }
+    if (!active) return;
 
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -102,127 +100,106 @@ export function LightningFrame({ size, children, active = true, className = "" }
     const bolts = boltsRef.current;
     const sparks = sparksRef.current;
     let time = 0;
-    let lastTime = 0;
-    const frameInterval = 1000 / 60;
 
-    const animate = (timestamp: number) => {
-      if (!lastTime) lastTime = timestamp;
-      const delta = timestamp - lastTime;
+    scheduleIdRef.current = scheduleAnimation((_timestamp: number) => {
+      time += 1;
 
-      if (delta >= frameInterval * 0.8) {
-        lastTime = timestamp;
-        time += 1;
+      ctx.clearRect(0, 0, canvasSize, canvasSize);
 
-        ctx.clearRect(0, 0, canvasSize, canvasSize);
+      const pulse = 0.3 + 0.3 * Math.sin(time * 0.1);
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
+      ctx.strokeStyle = `rgba(100, 180, 255, ${pulse})`;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "rgba(100, 180, 255, 0.8)";
+      ctx.shadowBlur = 15;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
 
-        // Electric glow ring
-        const pulse = 0.3 + 0.3 * Math.sin(time * 0.1);
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(100, 180, 255, ${pulse})`;
-        ctx.lineWidth = 3;
-        ctx.shadowColor = "rgba(100, 180, 255, 0.8)";
-        ctx.shadowBlur = 15;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        // Spawn new bolts
-        if (Math.random() < 0.15) {
-          bolts.push(generateBolt());
-          // Spawn sparks at bolt start
-          const bolt = bolts[bolts.length - 1];
-          const startPt = bolt.points[0];
-          for (let s = 0; s < 3; s++) {
-            sparks.push(generateSpark(startPt.x, startPt.y));
-          }
-        }
-
-        // Draw and update bolts
-        for (let i = bolts.length - 1; i >= 0; i--) {
-          const bolt = bolts[i];
-          bolt.life -= 1;
-          if (bolt.life <= 0) {
-            bolts.splice(i, 1);
-            continue;
-          }
-
-          const lifeRatio = bolt.life / bolt.maxLife;
-          const alpha = bolt.alpha * lifeRatio;
-
-          // Main bolt
-          ctx.beginPath();
-          ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-          for (let j = 1; j < bolt.points.length; j++) {
-            ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
-          }
-          ctx.strokeStyle = `rgba(180, 220, 255, ${alpha})`;
-          ctx.lineWidth = bolt.width;
-          ctx.shadowColor = `rgba(100, 180, 255, ${alpha})`;
-          ctx.shadowBlur = 10;
-          ctx.stroke();
-
-          // Bright core
-          ctx.beginPath();
-          ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-          for (let j = 1; j < bolt.points.length; j++) {
-            ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
-          }
-          ctx.strokeStyle = `rgba(220, 240, 255, ${alpha * 0.8})`;
-          ctx.lineWidth = bolt.width * 0.4;
-          ctx.stroke();
-          ctx.shadowBlur = 0;
-
-          // Jitter existing points for flicker effect
-          if (bolt.life > 2) {
-            for (let j = 1; j < bolt.points.length - 1; j++) {
-              bolt.points[j].x += (Math.random() - 0.5) * 2;
-              bolt.points[j].y += (Math.random() - 0.5) * 2;
-            }
-          }
-        }
-
-        // Draw and update sparks
-        for (let i = sparks.length - 1; i >= 0; i--) {
-          const s = sparks[i];
-          s.life -= 1;
-          if (s.life <= 0) {
-            sparks.splice(i, 1);
-            continue;
-          }
-          s.x += s.vx;
-          s.y += s.vy;
-          s.vx *= 0.95;
-          s.vy *= 0.95;
-
-          const lifeRatio = s.life / s.maxLife;
-          const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 3);
-          grad.addColorStop(0, `rgba(200, 230, 255, ${lifeRatio * 0.8})`);
-          grad.addColorStop(0.5, `rgba(100, 180, 255, ${lifeRatio * 0.4})`);
-          grad.addColorStop(1, `rgba(50, 100, 255, 0)`);
-
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
-          ctx.fillStyle = grad;
-          ctx.fill();
-        }
-
-        // Static electricity ambient particles
-        if (Math.random() < 0.3) {
-          const angle = Math.random() * Math.PI * 2;
-          const dist = radius + 2 + Math.random() * 15;
-          const px = centerX + Math.cos(angle) * dist;
-          const py = centerY + Math.sin(angle) * dist;
-          sparks.push(generateSpark(px, py));
+      if (Math.random() < 0.15) {
+        bolts.push(generateBolt());
+        const bolt = bolts[bolts.length - 1];
+        const startPt = bolt.points[0];
+        for (let s = 0; s < 3; s++) {
+          sparks.push(generateSpark(startPt.x, startPt.y));
         }
       }
 
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
+      for (let i = bolts.length - 1; i >= 0; i--) {
+        const bolt = bolts[i];
+        bolt.life -= 1;
+        if (bolt.life <= 0) {
+          bolts.splice(i, 1);
+          continue;
+        }
 
-    animFrameRef.current = requestAnimationFrame(animate);
+        const lifeRatio = bolt.life / bolt.maxLife;
+        const alpha = bolt.alpha * lifeRatio;
+
+        ctx.beginPath();
+        ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
+        for (let j = 1; j < bolt.points.length; j++) {
+          ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
+        }
+        ctx.strokeStyle = `rgba(180, 220, 255, ${alpha})`;
+        ctx.lineWidth = bolt.width;
+        ctx.shadowColor = `rgba(100, 180, 255, ${alpha})`;
+        ctx.shadowBlur = 10;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
+        for (let j = 1; j < bolt.points.length; j++) {
+          ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
+        }
+        ctx.strokeStyle = `rgba(220, 240, 255, ${alpha * 0.8})`;
+        ctx.lineWidth = bolt.width * 0.4;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        if (bolt.life > 2) {
+          for (let j = 1; j < bolt.points.length - 1; j++) {
+            bolt.points[j].x += (Math.random() - 0.5) * 2;
+            bolt.points[j].y += (Math.random() - 0.5) * 2;
+          }
+        }
+      }
+
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.life -= 1;
+        if (s.life <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vx *= 0.95;
+        s.vy *= 0.95;
+
+        const lifeRatio = s.life / s.maxLife;
+        const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 3);
+        grad.addColorStop(0, `rgba(200, 230, 255, ${lifeRatio * 0.8})`);
+        grad.addColorStop(0.5, `rgba(100, 180, 255, ${lifeRatio * 0.4})`);
+        grad.addColorStop(1, `rgba(50, 100, 255, 0)`);
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+
+      if (Math.random() < 0.3) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = radius + 2 + Math.random() * 15;
+        const px = centerX + Math.cos(angle) * dist;
+        const py = centerY + Math.sin(angle) * dist;
+        sparks.push(generateSpark(px, py));
+      }
+    });
 
     return () => {
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      cancelAnimation(scheduleIdRef.current);
       boltsRef.current = [];
       sparksRef.current = [];
     };

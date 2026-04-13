@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef, useEffect } from "react";
+import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
 
 interface KhanAvatarProps {
   size?: number;
@@ -13,7 +14,7 @@ interface KhanAvatarProps {
  */
 export function KhanAvatar({ size = 48, className = "" }: KhanAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+  const scheduleIdRef = useRef<number>(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -472,9 +473,8 @@ export function KhanAvatar({ size = 48, className = "" }: KhanAvatarProps) {
       ctx.restore();
     }
 
-    function frame(timestamp: number) {
+    scheduleIdRef.current = scheduleAnimation(function frame(timestamp: number) {
       if (timestamp - lastFrameTime < frameInterval * 0.8) {
-        rafRef.current = requestAnimationFrame(frame);
         return;
       }
       lastFrameTime = timestamp;
@@ -539,13 +539,10 @@ export function KhanAvatar({ size = 48, className = "" }: KhanAvatarProps) {
       ctx.restore();
       drawBorder();
 
-      rafRef.current = requestAnimationFrame(frame);
-    }
-
-    rafRef.current = requestAnimationFrame(frame);
+    });
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      cancelAnimation(scheduleIdRef.current);
     };
   }, [size]);
 
