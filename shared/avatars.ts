@@ -93,6 +93,16 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonReward: true,
     seasonRankRequired: 'steppe_khan', // rank ID from SEASON_RANKS
   },
+  {
+    id: 'golden_horde',
+    name: 'Золотая Орда',
+    nameKk: 'Алтын Орда',
+    nameEn: 'Golden Horde',
+    url: 'golden_horde', // special: rendered by GoldenHordeAvatar component
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // rank ID from SEASON_RANKS
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -101,7 +111,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use Canvas components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['sky_eagle', 'khan'] as const;
+export const ANIMATED_AVATAR_IDS = ['sky_eagle', 'khan', 'golden_horde'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {

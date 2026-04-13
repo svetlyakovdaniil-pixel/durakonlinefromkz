@@ -1,5 +1,6 @@
 import { SkyEagleAvatar } from './SkyEagleAvatar';
 import { KhanAvatar } from './KhanAvatar';
+import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { getAvatarUrl } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
@@ -22,6 +23,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   if (avatarId === 'khan') {
     return <KhanAvatar size={size} className={className} />;
+  }
+
+  if (avatarId === 'golden_horde') {
+    return <GoldenHordeAvatar size={size} className={className} />;
   }
 
   return (

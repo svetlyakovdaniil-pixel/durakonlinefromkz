@@ -6,6 +6,7 @@ import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
 import { SkyEagleAvatar } from './SkyEagleAvatar';
 import { KhanAvatar } from './KhanAvatar';
+import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -48,6 +49,8 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
               <SkyEagleAvatar size={96} />
             ) : selected === 'khan' ? (
               <KhanAvatar size={96} />
+            ) : selected === 'golden_horde' ? (
+              <GoldenHordeAvatar size={96} />
             ) : (
               <img
                 src={getAvatarUrl(selected)}
@@ -84,6 +87,10 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                 ) : avatar.id === 'khan' ? (
                   <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
                     <KhanAvatar size={60} className="w-full h-full" />
+                  </div>
+                ) : avatar.id === 'golden_horde' ? (
+                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
+                    <GoldenHordeAvatar size={60} className="w-full h-full" />
                   </div>
                 ) : (
                   <img

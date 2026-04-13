@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { SkyEagleAvatar } from '@/components/SkyEagleAvatar';
 import { KhanAvatar } from '@/components/KhanAvatar';
+import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -43,11 +44,12 @@ function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; l
   const avatarNames: Record<string, { ru: string; kk: string; en: string }> = {
     sky_eagle: { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт', en: 'Sky Eagle' },
     khan: { ru: 'Хан Степи', kk: 'Дала Ханы', en: 'Steppe Khan' },
+    golden_horde: { ru: 'Золотая Орда', kk: 'Алтын Орда', en: 'Golden Horde' },
   };
   const names = avatarNames[avatarId] ?? { ru: avatarId, kk: avatarId, en: avatarId };
   const displayName = locale === 'kk' ? names.kk : locale === 'en' ? names.en : names.ru;
-  const borderColor = avatarId === 'khan' ? '#f97316' : '#f59e0b';
-  const shadowColor = avatarId === 'khan' ? 'rgba(249,115,22,0.3)' : 'rgba(245,158,11,0.3)';
+  const borderColor = avatarId === 'khan' ? '#f97316' : avatarId === 'golden_horde' ? '#eab308' : '#f59e0b';
+  const shadowColor = avatarId === 'khan' ? 'rgba(249,115,22,0.3)' : avatarId === 'golden_horde' ? 'rgba(234,179,8,0.3)' : 'rgba(245,158,11,0.3)';
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -60,6 +62,8 @@ function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; l
             <SkyEagleAvatar size={256} />
           ) : avatarId === 'khan' ? (
             <KhanAvatar size={256} />
+          ) : avatarId === 'golden_horde' ? (
+            <GoldenHordeAvatar size={256} />
           ) : null}
         </div>
         <div className="font-bold text-lg" style={{ color: borderColor }}>{displayName}</div>
@@ -189,8 +193,30 @@ function RewardPopup({
               </div>
             )}
 
+            {/* Avatar — golden_horde: show animated preview */}
+            {reward.avatarId === 'golden_horde' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-yellow-500/10 transition-colors"
+                style={{ background: 'rgba(234,179,8,0.06)' }}
+                onClick={() => setAvatarPreview('golden_horde')}
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-500/50 flex-shrink-0">
+                  <GoldenHordeAvatar size={48} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-yellow-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Алтын Орда' : locale === 'en' ? 'Golden Horde' : 'Золотая Орда'}
+                  </div>
+                  <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
+                    <ZoomIn className="w-3 h-3" />
+                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Avatar — other (coming soon) */}
-            {reward.avatarId && reward.avatarId !== 'sky_eagle' && reward.avatarId !== 'khan' && (
+            {reward.avatarId && reward.avatarId !== 'sky_eagle' && reward.avatarId !== 'khan' && reward.avatarId !== 'golden_horde' && (
               <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
                 <span className="text-lg">🖼</span>
                 <div>
