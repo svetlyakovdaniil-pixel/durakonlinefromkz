@@ -436,6 +436,15 @@ export async function recordGameResult(data: {
         botLosses: isLoser ? sql`${playerProfiles.botLosses} + 1` : sql`${playerProfiles.botLosses}`,
         rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
       }).where(eq(playerProfiles.gameId, gameId));
+      // Trigger bot game achievements
+      try {
+        const [updatedProfile] = await db.select({ id: playerProfiles.id, botGamesPlayed: playerProfiles.botGamesPlayed })
+          .from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1);
+        if (updatedProfile) {
+          const { processBotGameAchievements } = await import('./achievementsTriggers');
+          processBotGameAchievements(updatedProfile.id, (updatedProfile.botGamesPlayed ?? 0) + 1).catch(() => {});
+        }
+      } catch (e) { /* non-blocking */ }
     } else {
       // Human games (<=33.4% bots): update human stats + human rating
       await db.update(playerProfiles).set({

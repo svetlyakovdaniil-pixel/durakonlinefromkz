@@ -103,6 +103,9 @@ export async function buyPremium(profileId: number): Promise<{
       balanceTenge: playerProfiles.balanceTenge,
       isPremium: playerProfiles.isPremium,
       premiumExpiresAt: playerProfiles.premiumExpiresAt,
+      premiumPurchaseCount: playerProfiles.premiumPurchaseCount,
+      premiumConsecutiveMonths: playerProfiles.premiumConsecutiveMonths,
+      lastPremiumPurchaseMonth: playerProfiles.lastPremiumPurchaseMonth,
     })
     .from(playerProfiles)
     .where(eq(playerProfiles.id, profileId))
@@ -123,9 +126,24 @@ export async function buyPremium(profileId: number): Promise<{
   const newExpiry = new Date(now.getTime() + PREMIUM_DURATION_MS);
   const newBalance = profile.balanceTenge - PREMIUM_COST_TENGE;
 
+  // Track consecutive months and total purchase count
+  const currentMonth = now.toISOString().slice(0, 7); // YYYY-MM
+  const lastMonth = profile.lastPremiumPurchaseMonth ?? null;
+  // Consecutive if last purchase was in the immediately preceding month
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().slice(0, 7);
+  const newConsecutive = lastMonth === prevMonth ? (profile.premiumConsecutiveMonths ?? 0) + 1 : 1;
+  const newPurchaseCount = (profile.premiumPurchaseCount ?? 0) + 1;
+
   await db
     .update(playerProfiles)
-    .set({ balanceTenge: newBalance, isPremium: true, premiumExpiresAt: newExpiry })
+    .set({
+      balanceTenge: newBalance,
+      isPremium: true,
+      premiumExpiresAt: newExpiry,
+      premiumPurchaseCount: newPurchaseCount,
+      premiumConsecutiveMonths: newConsecutive,
+      lastPremiumPurchaseMonth: currentMonth,
+    })
     .where(eq(playerProfiles.id, profileId));
 
   // Record transaction
@@ -138,6 +156,25 @@ export async function buyPremium(profileId: number): Promise<{
   });
 
   return { success: true, newBalance, expiresAt: newExpiry };
+}
+
+/** Get premium purchase stats for achievement tracking */
+export async function getPremiumStats(profileId: number): Promise<{ premiumPurchaseCount: number; premiumConsecutiveMonths: number } | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const [profile] = await db
+    .select({
+      premiumPurchaseCount: playerProfiles.premiumPurchaseCount,
+      premiumConsecutiveMonths: playerProfiles.premiumConsecutiveMonths,
+    })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return null;
+  return {
+    premiumPurchaseCount: profile.premiumPurchaseCount ?? 0,
+    premiumConsecutiveMonths: profile.premiumConsecutiveMonths ?? 0,
+  };
 }
 
 /** Get remaining daily quest swaps for premium player */

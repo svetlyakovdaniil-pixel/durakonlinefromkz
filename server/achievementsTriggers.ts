@@ -8,6 +8,7 @@
  */
 
 import { getDb } from './db';
+import { sql } from 'drizzle-orm';
 import { playerProfiles } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 import { incrementAchievementProgress } from './achievementsDb';
@@ -488,4 +489,144 @@ export async function processDonatorAchievement(profileId: number, totalTengeSpe
   if (totalTengeSpent > 100) {
     await incrementAchievementProgress(profileId, 'donator', 0, totalTengeSpent);
   }
+}
+
+// ============================================================
+// Achievement count achievements (9-12: Любитель, Эксперт, Мастер, Легенда)
+// Called after any achievement is claimed
+// ============================================================
+
+export async function processAchievementCountAchievements(profileId: number): Promise<void> {
+  const { getAchievementsForProfile } = await import('./achievementsDb');
+  const achievements = await getAchievementsForProfile(profileId);
+  // Count completed achievements (progress >= target)
+  const completedCount = achievements.filter(a => a.unlocked).length;
+  await incrementAchievementProgress(profileId, 'achievement_lover', 0, Math.min(completedCount, 10)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'achievement_expert', 0, Math.min(completedCount, 20)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'achievement_master', 0, Math.min(completedCount, 30)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'achievement_legend', 0, Math.min(completedCount, 50)).catch(() => {});
+}
+
+// ============================================================
+// Collector achievements (13-16: рамки, колоды, плейлисты, аватарки)
+// Called after buying/equipping items in shop
+// ============================================================
+
+export async function processCollectorAchievements(profileId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const [profile] = await db
+    .select({
+      ownedFrames: playerProfiles.ownedFrames,
+      ownedDecks: playerProfiles.ownedDecks,
+      ownedPlaylists: playerProfiles.ownedPlaylists,
+      ownedAvatars: playerProfiles.ownedAvatars,
+    })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return;
+
+  const frames = JSON.parse(profile.ownedFrames ?? '[]') as string[];
+  const decks = JSON.parse(profile.ownedDecks ?? '[]') as string[];
+  const playlists = JSON.parse(profile.ownedPlaylists ?? '[]') as number[];
+  const avatars = JSON.parse(profile.ownedAvatars ?? '[]') as string[];
+
+  // frame_collector: own 3 frames
+  await incrementAchievementProgress(profileId, 'frame_collector', 0, Math.min(frames.length, 3)).catch(() => {});
+  // deck_collector: own 3 decks
+  await incrementAchievementProgress(profileId, 'deck_collector', 0, Math.min(decks.length, 3)).catch(() => {});
+  // playlist_collector: own 3 playlists
+  await incrementAchievementProgress(profileId, 'playlist_collector', 0, Math.min(playlists.length, 3)).catch(() => {});
+  // avatar_collector: own 3 premium avatars
+  await incrementAchievementProgress(profileId, 'avatar_collector', 0, Math.min(avatars.length, 3)).catch(() => {});
+}
+
+// ============================================================
+// Season rank achievements (17-24)
+// Called at end of season when rank is determined
+// ============================================================
+
+export async function processSeasonRankAchievements(profileId: number, rankId: string): Promise<void> {
+  const rankOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster', 'great_khan'];
+  const rankIndex = rankOrder.indexOf(rankId);
+  if (rankIndex < 0) return;
+
+  // Each rank achievement: set progress to 1 if reached that rank or higher
+  const rankAchievementMap: Record<string, string> = {
+    bronze: 'season_bronze',
+    silver: 'season_silver',
+    gold: 'season_gold',
+    platinum: 'season_platinum',
+    diamond: 'season_diamond',
+    master: 'season_master',
+    grandmaster: 'season_grandmaster',
+    great_khan: 'season_great_khan',
+  };
+
+  // Award achievement for the exact rank reached
+  const achievementId = rankAchievementMap[rankId];
+  if (achievementId) {
+    await incrementAchievementProgress(profileId, achievementId, 0, 1).catch(() => {});
+  }
+
+  // Also award "Великий хан" if they reached great_khan
+  if (rankId === 'great_khan') {
+    await incrementAchievementProgress(profileId, 'great_khan_achievement', 0, 1).catch(() => {});
+  }
+}
+
+// ============================================================
+// Bot game achievements (25-28)
+// Called from recordGameResult when isBotGame is true
+// ============================================================
+
+export async function processBotGameAchievements(profileId: number, totalBotGames: number): Promise<void> {
+  await incrementAchievementProgress(profileId, 'bot_lover', 0, Math.min(totalBotGames, 10)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'bot_terror', 0, Math.min(totalBotGames, 25)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'programmer', 0, Math.min(totalBotGames, 50)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'bot_hater', 0, Math.min(totalBotGames, 100)).catch(() => {});
+}
+
+// ============================================================
+// Leaderboard achievements (29-31: №1, №2, №3)
+// Called periodically when leaderboard is checked
+// ============================================================
+
+export async function processLeaderboardAchievements(profileId: number, leaderboardPosition: number): Promise<void> {
+  if (leaderboardPosition === 1) {
+    await incrementAchievementProgress(profileId, 'leaderboard_1', 0, 1).catch(() => {});
+  } else if (leaderboardPosition === 2) {
+    await incrementAchievementProgress(profileId, 'leaderboard_2', 0, 1).catch(() => {});
+  } else if (leaderboardPosition === 3) {
+    await incrementAchievementProgress(profileId, 'leaderboard_3', 0, 1).catch(() => {});
+  }
+}
+
+// ============================================================
+// Tutorial achievements (32-34)
+// Called when player completes tutorial
+// ============================================================
+
+export async function processTutorialAchievements(profileId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+
+  // Increment tutorial completed count
+  await db
+    .update(playerProfiles)
+    .set({ tutorialCompletedCount: sql`${playerProfiles.tutorialCompletedCount} + 1` })
+    .where(eq(playerProfiles.id, profileId));
+
+  const [profile] = await db
+    .select({ tutorialCompletedCount: playerProfiles.tutorialCompletedCount })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return;
+
+  const count = profile.tutorialCompletedCount ?? 1;
+  await incrementAchievementProgress(profileId, 'tutorial_student', 0, Math.min(count, 1)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'tutorial_honor', 0, Math.min(count, 2)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'tutorial_grind', 0, Math.min(count, 5)).catch(() => {});
 }

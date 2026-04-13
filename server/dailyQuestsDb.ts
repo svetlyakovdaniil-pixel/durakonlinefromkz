@@ -294,6 +294,26 @@ export async function claimDailyQuestReward(
     description: `Daily quest reward: ${questKey}`,
   });
 
+  // Increment total daily quests completed counter
+  await db
+    .update(playerProfiles)
+    .set({ dailyQuestsCompleted: sql`dailyQuestsCompleted + 1` })
+    .where(eq(playerProfiles.id, profileId));
+
+  // Trigger daily quest achievements
+  const [updatedProfile] = await db
+    .select({ dailyQuestsCompleted: playerProfiles.dailyQuestsCompleted })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (updatedProfile) {
+    const total = (updatedProfile.dailyQuestsCompleted ?? 0) + 1;
+    const { incrementAchievementProgress } = await import('./achievementsDb');
+    await incrementAchievementProgress(profileId, 'daily_diary', 0, Math.min(total, 30)).catch(() => {});
+    await incrementAchievementProgress(profileId, 'daily_calendar', 0, Math.min(total, 60)).catch(() => {});
+    await incrementAchievementProgress(profileId, 'daily_regular', 0, Math.min(total, 120)).catch(() => {});
+  }
+
   return { shanyrakAwarded: shanyrak };
 }
 

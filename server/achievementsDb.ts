@@ -167,6 +167,12 @@ export async function claimAchievementReward(
     });
   }
 
+  // Trigger achievement count achievements (9-12)
+  try {
+    const { processAchievementCountAchievements } = await import('./achievementsTriggers');
+    processAchievementCountAchievements(profileId).catch(() => {});
+  } catch (e) { /* non-blocking */ }
+
   return { success: true, shanyrakAwarded: shanyrakAward, tengeAwarded: tengeAward };
 }
 

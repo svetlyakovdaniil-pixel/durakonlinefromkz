@@ -171,6 +171,12 @@ export async function processSeasonEnd(seasonKey: string) {
         .where(eq(playerProfiles.id, participant.profileId));
     }
 
+    // Trigger season rank achievements
+    try {
+      const { processSeasonRankAchievements } = await import('./achievementsTriggers');
+      await processSeasonRankAchievements(participant.profileId, rank.key);
+    } catch (e) { /* non-blocking */ }
+
     // Send in-app notification
     await db.insert(notifications).values({
       profileId: participant.profileId,

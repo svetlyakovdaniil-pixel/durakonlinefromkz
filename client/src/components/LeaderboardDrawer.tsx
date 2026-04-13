@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import { useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
+import { useAuth } from '@/_core/hooks/useAuth';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
 import { Trophy, Swords, Banknote, Loader2, Flame } from 'lucide-react';
@@ -18,6 +20,15 @@ type Tab = 'rating' | 'wins' | 'shanyrak' | 'season';
 export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: LeaderboardDrawerProps) {
   const { t, locale } = useTranslation();
   const [activeTab, setActiveTab] = useState<Tab>('rating');
+  const { isAuthenticated } = useAuth();
+  const checkLeaderboardAchievements = trpc.stats.checkLeaderboardAchievements.useMutation();
+
+  // Check leaderboard achievements when drawer opens
+  useEffect(() => {
+    if (open && isAuthenticated) {
+      checkLeaderboardAchievements.mutate();
+    }
+  }, [open, isAuthenticated]);
 
   const ratingQuery = trpc.stats.leaderboard.useQuery({ limit: 50 }, {
     staleTime: 15_000,

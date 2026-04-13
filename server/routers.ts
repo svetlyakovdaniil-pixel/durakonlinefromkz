@@ -89,9 +89,9 @@ import {
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
 import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
-import { processDonatorAchievement } from "./achievementsTriggers";
+import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
-import { getPremiumStatus, buyPremium, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
+import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
 export const appRouter = router({
@@ -466,7 +466,13 @@ export const appRouter = router({
       }),
     /** Complete tutorial and receive 2000 shanyrak reward (one-time) */
     completeTutorial: protectedProcedure.mutation(async ({ ctx }) => {
-      return completeTutorial(ctx.user.id);
+      const result = await completeTutorial(ctx.user.id);
+      // Trigger tutorial achievements
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (profile) {
+        processTutorialAchievements(profile.id).catch(() => {});
+      }
+      return result;
     }),
 
     /** [TEST] Add 10K shanyraks */
@@ -545,11 +551,14 @@ export const appRouter = router({
       .input(z.object({ deckId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseDeck(ctx.user.id, input.deckId, input.tengeCost);
-        if (result.success && input.tengeCost > 0) {
+        if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
           if (profile) {
-            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
-            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            if (input.tengeCost > 0) {
+              const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+              processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            }
+            processCollectorAchievements(profile.id).catch(() => {});
           }
         }
         return result;
@@ -589,11 +598,14 @@ export const appRouter = router({
       .input(z.object({ frameId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseFrame(ctx.user.id, input.frameId, input.tengeCost);
-        if (result.success && input.tengeCost > 0) {
+        if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
           if (profile) {
-            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
-            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            if (input.tengeCost > 0) {
+              const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+              processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            }
+            processCollectorAchievements(profile.id).catch(() => {});
           }
         }
         return result;
@@ -631,11 +643,14 @@ export const appRouter = router({
       .input(z.object({ avatarId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const result = await purchaseAvatar(ctx.user.id, input.avatarId, input.tengeCost);
-        if (result.success && input.tengeCost > 0) {
+        if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
           if (profile) {
-            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
-            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            if (input.tengeCost > 0) {
+              const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+              processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+            }
+            processCollectorAchievements(profile.id).catch(() => {});
           }
         }
         return result;
@@ -666,6 +681,19 @@ export const appRouter = router({
       .query(async ({ input }) => {
         return getShanyraqLeaderboard(input?.limit ?? 50);
       }),
+
+    /** Check and award leaderboard position achievements for the current user */
+    checkLeaderboardAchievements: protectedProcedure.mutation(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) return { position: null };
+      const leaderboard = await getLeaderboard(100);
+      const position = leaderboard.findIndex((p: any) => p.id === profile.id) + 1;
+      if (position > 0 && position <= 3) {
+        const { processLeaderboardAchievements } = await import('./achievementsTriggers');
+        await processLeaderboardAchievements(profile.id, position);
+      }
+      return { position: position > 0 ? position : null };
+    }),
 
   }),
 
@@ -1173,7 +1201,11 @@ export const appRouter = router({
 
         if (playlist.isDefault) return { success: false, reason: 'already_owned' };
 
-        return purchasePlaylist(profile.id, input.playlistId, playlist.priceShanyrak);
+        const result = await purchasePlaylist(profile.id, input.playlistId, playlist.priceShanyrak);
+        if (result.success) {
+          processCollectorAchievements(profile.id).catch(() => {});
+        }
+        return result;
       }),
 
     /** Set active playlist */
@@ -1347,6 +1379,22 @@ export const appRouter = router({
           result.error === 'already_active' ? 'Премиум уже активен' :
           result.error ?? 'Ошибка покупки';
         throw new TRPCError({ code: 'BAD_REQUEST', message: msg });
+      }
+      // Trigger premium achievements
+      const premiumStats = await getPremiumStats(profile.id);
+      if (premiumStats) {
+        const count = premiumStats.premiumPurchaseCount;
+        const streak = premiumStats.premiumConsecutiveMonths;
+        // premium_player: first purchase (set to 1 absolute)
+        await incrementAchievementProgress(profile.id, 'premium_player', 0, 1).catch(() => {});
+        // legendary_player: 2 consecutive months
+        await incrementAchievementProgress(profile.id, 'legendary_player', 0, Math.min(streak, 2)).catch(() => {});
+        // admin_pryanik: 3 consecutive months
+        await incrementAchievementProgress(profile.id, 'admin_pryanik', 0, Math.min(streak, 3)).catch(() => {});
+        // kazakhstan_pride: 6 consecutive months
+        await incrementAchievementProgress(profile.id, 'kazakhstan_pride', 0, Math.min(streak, 6)).catch(() => {});
+        // elbasy: 10 total purchases
+        await incrementAchievementProgress(profile.id, 'elbasy', 0, Math.min(count, 10)).catch(() => {});
       }
       return result;
     }),

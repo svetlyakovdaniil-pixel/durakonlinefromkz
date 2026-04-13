@@ -70,6 +70,16 @@ export const playerProfiles = mysqlTable("player_profiles", {
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */
   tutorialCompleted: boolean("tutorialCompleted").default(false).notNull(),
+  /** How many times the player has completed the tutorial */
+  tutorialCompletedCount: int("tutorialCompletedCount").default(0).notNull(),
+  /** Total number of premium purchases (all time, not necessarily consecutive) */
+  premiumPurchaseCount: int("premiumPurchaseCount").default(0).notNull(),
+  /** How many consecutive months the player has purchased premium */
+  premiumConsecutiveMonths: int("premiumConsecutiveMonths").default(0).notNull(),
+  /** Month of last premium purchase (YYYY-MM) for consecutive tracking */
+  lastPremiumPurchaseMonth: varchar("lastPremiumPurchaseMonth", { length: 7 }),
+  /** Total number of daily quests completed (all time) */
+  dailyQuestsCompleted: int("dailyQuestsCompleted").default(0).notNull(),
   /** Whether the player has an active premium subscription */
   isPremium: boolean("isPremium").default(false).notNull(),
   /** When the premium subscription expires (null = no premium) */

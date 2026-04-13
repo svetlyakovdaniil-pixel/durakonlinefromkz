@@ -295,6 +295,13 @@
       "when": 1776081921085,
       "tag": "0041_fantastic_sasquatch",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "5",
+      "when": 1776109942732,
+      "tag": "0042_wise_wolfsbane",
+      "breakpoints": true
     }
   ]
 }
