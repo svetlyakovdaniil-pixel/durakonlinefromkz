@@ -18,10 +18,10 @@ export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvat
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const S = size * dpr;
     canvas.width = S;
     canvas.height = S;
@@ -58,6 +58,8 @@ export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvat
     const riderXPositions = RIDER_LAYERS.map(r => r.xOffset);
 
     let t = 0;
+    let lastFrameTime = 0;
+    const frameInterval = 1000 / 60;
 
     function drawBackground() {
       if (!ctx) return;
@@ -433,11 +435,18 @@ export function GoldenHordeAvatar({ size = 48, className = "" }: GoldenHordeAvat
       ctx.restore();
     }
 
-    function frame() {
+    function frame(timestamp: number) {
+      if (timestamp - lastFrameTime < frameInterval * 0.8) {
+        rafRef.current = requestAnimationFrame(frame);
+        return;
+      }
+      lastFrameTime = timestamp;
       t++;
       if (!ctx) return;
 
-      ctx.clearRect(0, 0, S, S);
+      // With alpha:false we fill background instead of clearRect
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0, 0, S, S);
 
       ctx.save();
       ctx.beginPath();

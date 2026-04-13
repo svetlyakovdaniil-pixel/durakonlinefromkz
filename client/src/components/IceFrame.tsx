@@ -47,10 +47,10 @@ export function IceFrame({ size, children, active = true, className = "" }: IceF
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = canvasSize * dpr;
     canvas.height = canvasSize * dpr;
     ctx.scale(dpr, dpr);
@@ -122,7 +122,8 @@ export function IceFrame({ size, children, active = true, className = "" }: IceF
         lastTime = timestamp;
         time += 0.02;
 
-        ctx.clearRect(0, 0, canvasSize, canvasSize);
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, canvasSize, canvasSize);
 
         // Frost mist glow
         const mistPulse = 0.15 + 0.1 * Math.sin(time * 1.5);
