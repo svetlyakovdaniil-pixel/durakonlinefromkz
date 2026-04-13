@@ -413,8 +413,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   }, [userId, userName]);
 
   // Register profile with socket server (called from Home when profile loads)
-  const registerProfile = useCallback((gameId: number, displayName: string, avatarId?: string, equippedFrame?: string | null, isPremium?: boolean) => {
-    socketRef.current?.emit('registerProfile', { gameId, displayName, avatarId, equippedFrame, isPremium }, (ok: boolean) => {
+  const registerProfile = useCallback((gameId: number, displayName: string, avatarId?: string, equippedFrame?: string | null, isPremium?: boolean, seasonRating?: number) => {
+    socketRef.current?.emit('registerProfile', { gameId, displayName, avatarId, equippedFrame, isPremium, seasonRating }, (ok: boolean) => {
       if (ok) console.log(`[Socket] Profile registered: gameId=${gameId}`);
     });
   }, []);

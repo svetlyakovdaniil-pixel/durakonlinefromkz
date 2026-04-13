@@ -33,6 +33,7 @@ import AchievementsModal from '@/components/AchievementsModal';
 import DailyQuestsModal from '@/components/DailyQuestsModal';
 import PremiumModal from '@/components/PremiumModal';
 import SeasonPage from '@/pages/Season';
+import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { toast } from 'sonner';
 
 interface LobbyProps {
@@ -210,6 +211,10 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   // Premium status
   const { data: premiumStatus } = trpc.premium.status.useQuery(undefined, { refetchInterval: 60000 });
   const isPremium = premiumStatus?.isPremium ?? false;
+
+  // Season rating for rank icon
+  const { data: seasonData } = trpc.season.current.useQuery(undefined, { refetchInterval: 120000 });
+  const mySeasonRating = seasonData?.seasonRating ?? 0;
 
   // Online friends count
   const onlineFriendsCount = onlineFriendIds.length;
@@ -437,6 +442,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   </button>
                 </ProfileDrawer>
                 <div className="flex items-center gap-1.5 mt-1">
+                  <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
                   {profile && (
                     <span className="text-xs text-amber-300/60">ID {profile.gameId}</span>
@@ -655,7 +661,10 @@ onClick={() => setShowTengeTopUp(true)}
                     </FrameWrapper>
                   </button>
                 </ProfileDrawer>
-                <span className="text-base text-amber-200/70 font-medium">{userName}</span>
+                <div className="flex items-center gap-1.5">
+                  <DiamondRankIcon seasonRating={mySeasonRating} size={16} showTooltip />
+                  <span className="text-base text-amber-200/70 font-medium">{userName}</span>
+                </div>
                 <SettingsSheet onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-2 rounded">
                     <Settings className="w-5 h-5" />

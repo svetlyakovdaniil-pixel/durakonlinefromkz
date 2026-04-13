@@ -161,7 +161,7 @@ export interface Room {
   name: string;
   hostId: string;
   maxPlayers: number;
-  players: { id: string; name: string; ready: boolean; isBot: boolean; gameId?: number; avatarId?: string }[];
+  players: { id: string; name: string; ready: boolean; isBot: boolean; gameId?: number; avatarId?: string; seasonRating?: number }[];
   gameState: GameState | null;
   settings: RoomSettings;
   createdAt: number;
@@ -248,7 +248,7 @@ export interface ClientToServerEvents {
   /** Decline a room invitation */
   declineInvite: (data: { roomId: string; fromGameId: number }) => void;
   /** Register player profile (called on first connect after auth) */
-  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null; isPremium?: boolean }, cb?: (ok: boolean) => void) => void;
+  registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null; isPremium?: boolean; seasonRating?: number }, cb?: (ok: boolean) => void) => void;
   /** Request fresh room list */
   requestRoomList: () => void;
 }
@@ -309,6 +309,8 @@ export interface ClientPlayer {
   avatarId?: string;
   /** Player's equipped frame ID */
   equippedFrame?: string | null;
+  /** Player's current season rating */
+  seasonRating?: number;
 }
 
 // --- Available actions ---

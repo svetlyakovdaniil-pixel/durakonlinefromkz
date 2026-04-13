@@ -60,11 +60,13 @@ export async function applySeasonRatingChange(
     .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)));
 }
 
-/** Get season leaderboard for a given season key (top N players) */
+/** Get season leaderboard for a given season key (top N players, including 0-rating) */
 export async function getSeasonLeaderboard(seasonKey: string, limit = 100) {
   const db = await getDb();
   if (!db) return [];
-  return db
+
+  // All players who have a season_ratings row for this season (including 0 rating)
+  const rows = await db
     .select({
       profileId: seasonRatings.profileId,
       seasonRating: seasonRatings.seasonRating,
@@ -80,8 +82,10 @@ export async function getSeasonLeaderboard(seasonKey: string, limit = 100) {
     .from(seasonRatings)
     .innerJoin(playerProfiles, eq(seasonRatings.profileId, playerProfiles.id))
     .where(eq(seasonRatings.seasonKey, seasonKey))
-    .orderBy(desc(seasonRatings.seasonRating))
+    .orderBy(desc(seasonRatings.seasonRating), playerProfiles.gameId)
     .limit(limit);
+
+  return rows;
 }
 
 /** Get a player's season rating for the current season */

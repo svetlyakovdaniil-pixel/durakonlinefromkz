@@ -25,6 +25,7 @@ import { useTutorialScenarios } from '@/hooks/useTutorialScenarios';
 import { useInteractiveTutorial } from '@/hooks/useInteractiveTutorial';
 import TutorialStepDisplay from './TutorialStepDisplay';
 import { useTutorialGameState } from '@/hooks/useTutorialGameState';
+import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -1417,6 +1418,7 @@ export default function GameTable({
                       {isOppDefender && !gs.defenderTaking && <Shield className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-blue-400`} />}
                       {isOppDefender && gs.defenderTaking && <HandMetal className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-orange-400`} />}
                       {p.isOut && p.winPlace && <Crown className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-amber-400`} />}
+                      {!p.isBot && <DiamondRankIcon seasonRating={p.seasonRating ?? 0} size={manyOpponents ? 9 : 11} />}
                       <span className={`${manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
                     </div>
                     {isOppDefender && gs.defenderTaking && (

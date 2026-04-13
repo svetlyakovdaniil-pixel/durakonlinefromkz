@@ -5,6 +5,7 @@ import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserP
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
+import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 
 interface WaitingRoomProps {
   room: Room;
@@ -86,6 +87,7 @@ export default function WaitingRoom({
               <div className="flex items-center gap-1.5 sm:gap-2">
                 {p.id === room.hostId && <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />}
                 {p.isBot && <Bot className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />}
+                {!p.isBot && <DiamondRankIcon seasonRating={p.seasonRating ?? 0} size={13} showTooltip />}
                 <span className="text-amber-100 font-medium text-sm sm:text-base truncate max-w-32 sm:max-w-none">{p.name}</span>
                 {p.gameId && (
                   <span className="text-amber-200/30 text-[10px]">#{p.gameId}</span>

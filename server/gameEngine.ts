@@ -1391,6 +1391,7 @@ export function toClientState(
   playerEquippedFramesMap?: Map<string, string>,
   betAmount: number = 0,
   isTutorial: boolean = false,
+  playerSeasonRatingsMap?: Map<string, number>,
 ): ClientGameState {
   const myIndex = state.players.findIndex(p => p.id === playerId);
 
@@ -1406,6 +1407,7 @@ export function toClientState(
     gameId: playerGameIdsMap?.get(p.id),
     avatarId: playerAvatarIdsMap?.get(p.id) ?? p.avatarId ?? (p.isBot ? 'bot' : undefined),
     equippedFrame: playerEquippedFramesMap?.get(p.id) ?? null,
+    seasonRating: p.isBot ? 0 : (playerSeasonRatingsMap?.get(p.id) ?? 0),
   }));
 
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;

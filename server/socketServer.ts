@@ -62,6 +62,7 @@ const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-g
 const playerEquippedFrames = new Map<string, string>(); // odId -> equippedFrame (for in-game frame display)
 const playerIsPremium = new Map<string, boolean>(); // odId -> isPremium status
 const playerDisplayNames = new Map<string, string>(); // odId -> custom display name from settings
+const playerSeasonRatings = new Map<string, number>(); // odId -> current season rating
 // Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
 const FREEZE_TIMEOUT_MS = 30_000; // 30 seconds to reconnect
 const frozenRooms = new Map<string, { roomId: string; disconnectedOdId: string; disconnectedName: string; timer: NodeJS.Timeout; tickInterval: NodeJS.Timeout; secondsLeft: number }>(); // roomId -> freeze info
@@ -298,7 +299,7 @@ export function initSocketServer(httpServer: HttpServer) {
             socket.emit('roomUpdated', sanitizeRoom(room));
             // If game is in progress, send game state
             if (gameState && gameState.gamePhase === 'playing') {
-              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
+              const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false, playerSeasonRatings);
               socket.emit('gameStateUpdate', clientState);
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
               // Always send actions — even empty to clear stale client state
@@ -308,7 +309,7 @@ export function initSocketServer(httpServer: HttpServer) {
           } else if (isInGame && gameState && gameState.gamePhase === 'playing') {
             // Room object missing but game is in progress — still send game state
             console.warn(`[Socket] Room ${roomId} not in rooms Map but game exists — sending game state only`);
-            const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, 0, false);
+            const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, 0, false, playerSeasonRatings);
             socket.emit('gameStateUpdate', clientState);
             const playerIdx = gameState.players.findIndex(p => p.id === odId);
             const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
@@ -379,7 +380,7 @@ export function initSocketServer(httpServer: HttpServer) {
 
       // If game is in progress, send full game state (reuse gameState from above)
       if (gameState && gameState.gamePhase === 'playing') {
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false, playerSeasonRatings);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         // Always send actions — even empty to clear stale client state
@@ -516,7 +517,7 @@ export function initSocketServer(httpServer: HttpServer) {
         socket.emit('roomUpdated', sanitizeRoom(room));
 
         // Send game state
-        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false);
+        const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false, playerSeasonRatings);
         socket.emit('gameStateUpdate', clientState);
         const playerIdx = gameState.players.findIndex(p => p.id === odId);
         const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
@@ -1256,6 +1257,10 @@ export function initSocketServer(httpServer: HttpServer) {
           playerIsPremium.set(odId, true);
         } else {
           playerIsPremium.delete(odId);
+        }
+        // Track season rating
+        if (typeof data.seasonRating === 'number') {
+          playerSeasonRatings.set(odId, data.seasonRating);
         }
         // Store custom display name for reconnect scenarios
         if (data.displayName) {
@@ -2516,7 +2521,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       if (p.isBot) continue;
       const sid = playerSockets.get(p.id);
       if (sid) {
-        const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, finishedRoom?.settings.betAmount || 0, isTutorial);
+        const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, finishedRoom?.settings.betAmount || 0, isTutorial, playerSeasonRatings);
         io.to(sid).emit('gameStateUpdate', clientState);
         io.to(sid).emit('yourTurn', []);
       }
@@ -2529,7 +2534,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
-      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false);
+      const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false, playerSeasonRatings);
       io.to(sid).emit('gameStateUpdate', clientState);
 
       // Always send actions — even empty array to clear stale client state
@@ -2556,5 +2561,10 @@ function sanitizeRoom(room: Room): Room {
   const sanitizedSettings = { ...room.settings, password: undefined };
   // Add premium host flag
   const isPremiumHost = playerIsPremium.get(room.hostId) === true;
-  return { ...room, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, isPremiumHost, settings: sanitizedSettings };
+  // Inject season ratings into players
+  const playersWithRank = room.players.map(p => ({
+    ...p,
+    seasonRating: p.isBot ? 0 : (playerSeasonRatings.get(p.id) ?? 0),
+  }));
+  return { ...room, players: playersWithRank, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, isPremiumHost, settings: sanitizedSettings };
 }

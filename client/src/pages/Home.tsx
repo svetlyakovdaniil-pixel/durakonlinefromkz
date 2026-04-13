@@ -39,13 +39,20 @@ export default function Home() {
   const { setMusicEnabled } = useSettings();
   const registeredRef = useRef(false);
 
+  // Season rating for rank icon in room
+  const { data: homeSeasonData } = trpc.season.current.useQuery(undefined, {
+    enabled: !!profile,
+    refetchInterval: 120000,
+  });
+  const homeSeasonRating = homeSeasonData?.seasonRating ?? 0;
+
   // Register profile with socket when profile loads
   useEffect(() => {
     if (profile && connected && !registeredRef.current) {
-      registerProfile(profile.gameId, profile.displayName || t('landing.player'), profile.avatarId || undefined, (profile as any).equippedFrame || null, (profile as any).isPremium === true);
+      registerProfile(profile.gameId, profile.displayName || t('landing.player'), profile.avatarId || undefined, (profile as any).equippedFrame || null, (profile as any).isPremium === true, homeSeasonRating);
       registeredRef.current = true;
     }
-  }, [profile, connected, registerProfile]);
+  }, [profile, connected, registerProfile, homeSeasonRating]);
 
   // Reset registration flag on disconnect
   useEffect(() => {
