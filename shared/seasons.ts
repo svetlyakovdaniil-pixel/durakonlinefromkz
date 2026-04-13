@@ -34,9 +34,9 @@ export const SEASONS: SeasonInfo[] = [
   {
     index: 0,
     quarter: 1,
-    nameRu: 'Казахский колорит',
-    nameKk: 'Қазақ Колориті',
-    nameEn: 'Kazakh Colors',
+    nameRu: 'Подводный мир',
+    nameKk: 'Су Асты Әлемі',
+    nameEn: 'Underwater World',
   },
   {
     index: 1,
@@ -69,9 +69,9 @@ export const SEASONS: SeasonInfo[] = [
   {
     index: 5,
     quarter: 2,
-    nameRu: 'Подводный мир',
-    nameKk: 'Су Асты Әлемі',
-    nameEn: 'Underwater World',
+    nameRu: 'Казахский колорит',
+    nameKk: 'Қазақ Колориті',
+    nameEn: 'Kazakh Colors',
   },
   {
     index: 6,
