@@ -1,4 +1,3 @@
-import { SkyEagleAvatar } from './SkyEagleAvatar';
 import { KhanAvatar } from './KhanAvatar';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
@@ -14,12 +13,14 @@ interface AvatarDisplayProps {
 
 /**
  * Universal avatar renderer.
- * - For animated avatars: renders the corresponding SVG+CSS component
+ * - For animated avatars (khan, golden_horde, diving_eagle, great_khan): renders SVG+CSS component
  * - For all others: renders a standard <img> tag
+ * Note: legacy 'sky_eagle' avatarId is treated as 'diving_eagle' for backwards compatibility
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
+  // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
   if (avatarId === 'sky_eagle') {
-    return <SkyEagleAvatar size={size} className={className} />;
+    return <DivingEagleAvatar size={size} className={className} />;
   }
 
   if (avatarId === 'khan') {

@@ -175,7 +175,7 @@ export const SEASON_REWARD_DEFS: SeasonRewardDef[] = [
   { rankKey: 'mountain_ram',          shanyraks: 5000,   tenge: 0,   avatarId: null,          frameId: null },
   { rankKey: 'golden_falcon',         shanyraks: 7000,   tenge: 0,   avatarId: null,          frameId: null },
   { rankKey: 'winged_horse',          shanyraks: 10000,  tenge: 0,   avatarId: null,          frameId: null },
-  { rankKey: 'sky_eagle',             shanyraks: 30000,  tenge: 0,   avatarId: 'sky_eagle',   frameId: null },
+  { rankKey: 'sky_eagle',             shanyraks: 30000,  tenge: 0,   avatarId: 'diving_eagle', frameId: null },
   { rankKey: 'steppe_khan',           shanyraks: 50000,  tenge: 0,   avatarId: 'khan',        frameId: null },
   { rankKey: 'golden_horde_warrior',  shanyraks: 100000, tenge: 50,  avatarId: 'golden_horde', frameId: null },
   { rankKey: 'great_khan',            shanyraks: 500000, tenge: 100, avatarId: 'great_khan',  frameId: 'great_khan' },

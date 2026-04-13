@@ -2551,3 +2551,9 @@
 - [x] GreatKhanAvatar: SVG+CSS — казахский хан сидит неподвижно, одежда переливается золотом, казахские узоры
 - [x] Интегрировать DivingEagleAvatar в систему аватарок (ранг Небесный орёл)
 - [x] Интегрировать GreatKhanAvatar в систему аватарок (ранг Великий хан)
+
+## Задачи от 13.04.2026 (Сессия 25 — Замена sky_eagle на diving_eagle)
+- [x] Удалить sky_eagle из AVATAR_OPTIONS (shared/avatars.ts), оставить только diving_eagle для ранга Небесный орёл
+- [x] Обновить SEASON_REWARD_DEFS: sky_eagle ранг теперь даёт diving_eagle аватарку
+- [x] Убрать sky_eagle из AvatarPicker и AvatarDisplay (удалить ветки sky_eagle)
+- [x] Убрать SkyEagleAvatar импорты из AvatarPicker и AvatarDisplay

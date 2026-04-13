@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Check, X, Lock, Trophy } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
-import { SkyEagleAvatar } from './SkyEagleAvatar';
 import { KhanAvatar } from './KhanAvatar';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
@@ -47,13 +46,11 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         {/* Current avatar preview */}
         <div className="flex justify-center">
           <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
-            {selected === 'sky_eagle' ? (
-              <SkyEagleAvatar size={96} />
-            ) : selected === 'khan' ? (
+            {selected === 'khan' ? (
               <KhanAvatar size={96} />
             ) : selected === 'golden_horde' ? (
               <GoldenHordeAvatar size={96} />
-            ) : selected === 'diving_eagle' ? (
+            ) : selected === 'diving_eagle' || selected === 'sky_eagle' ? (
               <DivingEagleAvatar size={96} />
             ) : selected === 'great_khan' ? (
               <GreatKhanAvatar size={96} />
@@ -71,7 +68,6 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         <div className="grid grid-cols-5 gap-2 sm:gap-3">
           {AVATAR_OPTIONS.filter(avatar => avatar.id !== 'bot').map((avatar) => {
             const locked = isLocked(avatar.id);
-            const isSkyEagle = avatar.id === 'sky_eagle';
             return (
               <button
                 key={avatar.id}
@@ -86,11 +82,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                       : 'border-amber-700/30 hover:border-amber-600/50 hover:scale-102'
                 }`}
               >
-                {avatar.id === 'sky_eagle' ? (
-                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
-                    <SkyEagleAvatar size={60} className="w-full h-full" />
-                  </div>
-                ) : avatar.id === 'khan' ? (
+                {avatar.id === 'khan' ? (
                   <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
                     <KhanAvatar size={60} className="w-full h-full" />
                   </div>
@@ -146,7 +138,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         </div>
 
         {/* Season reward hint */}
-        {isLocked('sky_eagle') && (
+        {isLocked('diving_eagle') && (
           <p className="text-xs text-amber-400/70 text-center">
             🏆 {t('avatarPicker.seasonRewardHint')}
           </p>
