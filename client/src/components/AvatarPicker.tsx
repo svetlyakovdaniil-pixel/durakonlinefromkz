@@ -16,6 +16,7 @@ import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonPawAvatar } from './NeonPawAvatar';
+import { NeonDinoAvatar } from './NeonDinoAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -31,6 +32,7 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'diving_eagle' || baseId === 'sky_eagle') return <DivingEagleAvatar size={size} />;
   if (baseId === 'great_khan') return <GreatKhanAvatar size={size} />;
   if (baseId === 'neon_paw') return <NeonPawAvatar size={size} />;
+  if (baseId === 'neon_dino') return <NeonDinoAvatar size={size} />;
   return null;
 }
 

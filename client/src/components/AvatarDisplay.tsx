@@ -3,6 +3,7 @@ import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonPawAvatar } from './NeonPawAvatar';
+import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
@@ -47,6 +48,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   if (baseId === 'neon_paw') {
     return <NeonPawAvatar size={size} className={className} />;
+  }
+
+  if (baseId === 'neon_dino') {
+    return <NeonDinoAvatar size={size} className={className} />;
   }
 
   return (

@@ -193,9 +193,12 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-purple-400',
       emoji: '💜',
     },
-    // Season 7 unique rewards: Zircon rank gets the Neon Paw animated avatar
+    // Season 7 unique rewards:
+    // Zircon (sky_eagle) → Neon Paw animated avatar
+    // Ruby (winged_horse) → Neon Dino animated avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'neon_paw' },
+      { rankKey: 'winged_horse', avatarId: 'neon_dino' },
     ],
   },
   {

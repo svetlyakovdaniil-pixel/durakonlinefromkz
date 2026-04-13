@@ -2698,3 +2698,10 @@
 - [x] Lobby.tsx: в уведомлении конца сезона использовать avatarId из notification.data (уже суффиксированный)
 - [x] FriendsDrawer.tsx: заменить img+getAvatarUrl на AvatarDisplay
 - [x] GameTable.tsx: заменить img+getAvatarUrl на AvatarDisplay (2 места)
+
+## Batch 57 — Аватарки Рубин и Циркон (Неоновая эра)
+- [x] Сгенерировать изменённое изображение неонового динозавра (на основе 333.jpg)
+- [x] Создать NeonDinoAvatar.tsx с анимацией Scan Line (бегущая полоса снизу вверх)
+- [x] Зарегистрировать NeonDino в shared/avatars.ts (seasonReward, animated)
+- [x] Привязать NeonDino к рангу Рубин в сезоне Неоновая эра (rankRewardOverrides)
+- [x] Обновить NeonPawAvatar.tsx — изменить исходник, сохранить анимацию

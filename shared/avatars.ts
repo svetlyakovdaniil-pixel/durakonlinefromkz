@@ -109,7 +109,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Неон Табан',
     nameEn: 'Neon Paw',
     url: 'neon_paw', // special: rendered by NeonPawAvatar component
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon-paw-avatar_04256af6.jpg',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID — Zircon rank in Season 7 (Neon Era)
@@ -124,6 +124,17 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonReward: true,
     seasonRankRequired: 'great_khan', // rank ID from SEASON_RANKS
   },
+  {
+    id: 'neon_dino',
+    name: 'Неоновый динозавр',
+    nameKk: 'Неон Динозавр',
+    nameEn: 'Neon Dino',
+    url: 'neon_dino', // special: rendered by NeonDinoAvatar component
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'winged_horse', // rank ID — Ruby rank in Season 7 (Neon Era)
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -132,7 +143,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
