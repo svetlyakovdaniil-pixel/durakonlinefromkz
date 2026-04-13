@@ -1,9 +1,10 @@
 /**
  * DailyQuestsModal — shows today's 4 daily quests with progress bars and claim buttons.
  * Quests reset at 00:00 Moscow time (UTC+3).
+ * Premium players can swap any uncompleted quest (up to 3 times/day).
  */
 import { useState } from 'react';
-import { X, Calendar, CheckCircle, Lock, Gift, Clock } from 'lucide-react';
+import { X, Calendar, CheckCircle, Lock, Gift, Clock, RefreshCw, Crown } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
@@ -32,11 +33,21 @@ function getTimeUntilReset(): string {
 export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: DailyQuestsModalProps) {
   const { locale } = useTranslation();
   const [claimingKey, setClaimingKey] = useState<string | null>(null);
+  const [swappingKey, setSwappingKey] = useState<string | null>(null);
 
   const { data: quests = [], refetch, isLoading } = trpc.dailyQuests.today.useQuery(undefined, {
     enabled: open,
     refetchOnWindowFocus: false,
   });
+
+  // Fetch premium status to know if player has premium + swaps remaining
+  const { data: premiumStatus } = trpc.premium.status.useQuery(undefined, {
+    enabled: open,
+    refetchOnWindowFocus: false,
+  });
+
+  const isPremium = premiumStatus?.isPremium ?? false;
+  const swapsRemaining = premiumStatus?.swapsRemaining ?? 0;
 
   const claimMutation = trpc.dailyQuests.claim.useMutation({
     onSuccess: (result) => {
@@ -57,6 +68,27 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     },
   });
 
+  const swapMutation = trpc.premium.swapQuest.useMutation({
+    onSuccess: (result) => {
+      const msgs = {
+        ru: `Задание заменено! Осталось замен сегодня: ${result.remaining}`,
+        kk: `Тапсырма ауыстырылды! Бүгін қалды: ${result.remaining}`,
+        en: `Quest swapped! Swaps remaining today: ${result.remaining}`,
+      };
+      toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
+      refetch();
+      setSwappingKey(null);
+    },
+    onError: (err) => {
+      const isNoSwaps = err.message?.includes('No swaps');
+      const msgs = isNoSwaps
+        ? { ru: 'Лимит замен на сегодня исчерпан (3/3)', kk: 'Бүгінгі ауыстыру лимиті таусылды (3/3)', en: 'Daily swap limit reached (3/3)' }
+        : { ru: 'Ошибка замены задания', kk: 'Тапсырманы ауыстыру қатесі', en: 'Failed to swap quest' };
+      toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
+      setSwappingKey(null);
+    },
+  });
+
   if (!open) return null;
 
   const L = {
@@ -65,6 +97,8 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     claim: { ru: 'Получить', kk: 'Алу', en: 'Claim' }[locale as string] ?? 'Получить',
     claimed: { ru: 'Получено', kk: 'Алынды', en: 'Claimed' }[locale as string] ?? 'Получено',
     locked: { ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress' }[locale as string] ?? 'В процессе',
+    swap: { ru: 'Заменить', kk: 'Ауыстыру', en: 'Replace' }[locale as string] ?? 'Заменить',
+    swapsLeft: { ru: `Замен: ${swapsRemaining}/3`, kk: `Ауыстыру: ${swapsRemaining}/3`, en: `Swaps: ${swapsRemaining}/3` }[locale as string] ?? `Замен: ${swapsRemaining}/3`,
     humanOnly: {
       ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
       kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
@@ -145,6 +179,18 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
           </div>
         </div>
 
+        {/* Premium swap counter — shown only to premium players */}
+        {isPremium && (
+          <div className="mx-5 mt-2 mb-1 flex-shrink-0">
+            <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl px-4 py-2 flex items-center gap-2">
+              <Crown className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+              <p className="text-amber-300 text-xs">
+                {L.swapsLeft}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Quest list */}
         <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
           {isLoading ? (
@@ -155,10 +201,14 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
             sorted.map((quest) => {
               const isClaimable = quest.completed && !quest.claimed;
               const isClaimed = quest.claimed;
+              const isInProgress = !quest.completed && !quest.claimed;
               const progress = quest.progress ?? 0;
               const target = quest.def?.target ?? 1;
               const pct = Math.min(100, Math.round((progress / target) * 100));
               const isClaiming = claimingKey === quest.questKey;
+              const isSwapping = swappingKey === quest.questKey;
+              // Swap button: only for premium, only for uncompleted quests, only if swaps remain
+              const canSwap = isPremium && isInProgress && swapsRemaining > 0;
 
               return (
                 <div
@@ -218,8 +268,9 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
                       </div>
                     </div>
 
-                    {/* Claim / status button */}
-                    <div className="flex-shrink-0 ml-2">
+                    {/* Action buttons column */}
+                    <div className="flex-shrink-0 ml-2 flex flex-col items-end gap-2">
+                      {/* Claim / status button */}
                       {isClaimed ? (
                         <span className="text-green-400 text-xs font-medium">{L.claimed}</span>
                       ) : isClaimable ? (
@@ -235,6 +286,22 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
                         </button>
                       ) : (
                         <span className="text-gray-500 text-xs">{L.locked}</span>
+                      )}
+
+                      {/* Swap button — premium only, in-progress quests only */}
+                      {canSwap && (
+                        <button
+                          onClick={() => {
+                            setSwappingKey(quest.questKey);
+                            swapMutation.mutate({ questKey: quest.questKey });
+                          }}
+                          disabled={isSwapping}
+                          title={L.swap}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all border border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <RefreshCw className={`w-3 h-3 ${isSwapping ? 'animate-spin' : ''}`} />
+                          {isSwapping ? '...' : L.swap}
+                        </button>
                       )}
                     </div>
                   </div>

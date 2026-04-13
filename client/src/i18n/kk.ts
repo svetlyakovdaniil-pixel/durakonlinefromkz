@@ -146,6 +146,8 @@ export const kk = {
     leaveLobbyCancel: 'Қалу',
     historyEmpty: 'Тарих бос',
     roomPrefix: 'Бөлме',
+    noRoomsAvailable: 'Қол жетімді бөлме жоқ. Өзіңізді жасаңыз!',
+    joining: 'Кіруде...',
   },
 
   // Room creation

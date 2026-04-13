@@ -147,12 +147,12 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               {activeTab === 'wins' && (
                 <div className="mt-1">
                   {/* Column headers */}
-                  <div className="grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_4rem] items-center px-3 py-1 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide gap-x-1">
+                  <div className="grid grid-cols-[1.5rem_1fr_4rem_4rem_4.5rem] items-center px-3 py-1 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide gap-x-2">
                     <span />
                     <span>{t('profile.player')}</span>
-                    <span className="text-center">{t('lobby.leaderboardWins.wins')}</span>
-                    <span className="text-center">{t('lobby.leaderboardWins.losses')}</span>
-                    <span className="text-center">{t('lobby.leaderboardWins.winrate')}</span>
+                    <span className="text-center">W</span>
+                    <span className="text-center">L</span>
+                    <span className="text-center">WR%</span>
                   </div>
                   <div className="space-y-1">
                     {(winsQuery.data ?? []).map((player, idx) => {
@@ -161,7 +161,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                       return (
                         <div
                           key={player.gameId}
-                          className={`grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_4rem] items-center px-3 py-2 rounded-lg gap-x-1 ${
+                          className={`grid grid-cols-[1.5rem_1fr_4rem_4rem_4.5rem] items-center px-3 py-2 rounded-lg gap-x-2 ${
                             isMe ? 'bg-amber-700/20 border border-amber-600/30' : 'bg-[#1a2d45]/40'
                           }`}
                         >

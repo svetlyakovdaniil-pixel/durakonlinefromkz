@@ -146,6 +146,8 @@ export const en = {
     leaveLobbyCancel: 'Stay',
     historyEmpty: 'History is empty',
     roomPrefix: 'Room',
+    noRoomsAvailable: 'No rooms available. Create your own!',
+    joining: 'Joining...',
   },
 
   // Room creation

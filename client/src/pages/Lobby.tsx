@@ -746,7 +746,7 @@ onClick={() => setShowTengeTopUp(true)}
                     disabled={isQuickGameLoading}
                   >
                     <Play className="w-4 h-4 mr-2" fill="currentColor" />
-                    {isQuickGameLoading ? ('Вхожу...') : t('tabBar.quickGame')}
+                    {isQuickGameLoading ? t('lobby.joining') : t('tabBar.quickGame')}
                   </Button>
 
                   {/* Create room */}

@@ -146,6 +146,8 @@ export const ru = {
     leaveLobbyCancel: 'Остаться',
     historyEmpty: 'История пуста',
     roomPrefix: 'Комната',
+    noRoomsAvailable: 'Нет доступных комнат. Создайте свою!',
+    joining: 'Вхожу...',
   },
 
   // Room creation
