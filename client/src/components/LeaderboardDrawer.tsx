@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { Trophy, Swords, Coins, Loader2 } from 'lucide-react';
+import { Trophy, Swords, Banknote, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 interface LeaderboardDrawerProps {
@@ -18,18 +18,21 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
   const [activeTab, setActiveTab] = useState<Tab>('rating');
 
   const ratingQuery = trpc.stats.leaderboard.useQuery({ limit: 50 }, {
-    staleTime: 30_000,
-    enabled: open && activeTab === 'rating',
+    staleTime: 15_000,
+    refetchInterval: open ? 30_000 : false,
+    enabled: open,
   });
 
   const winsQuery = trpc.stats.winsLeaderboard.useQuery({ limit: 50 }, {
-    staleTime: 30_000,
-    enabled: open && activeTab === 'wins',
+    staleTime: 15_000,
+    refetchInterval: open ? 30_000 : false,
+    enabled: open,
   });
 
   const shanyraqQuery = trpc.stats.shanyraqLeaderboard.useQuery({ limit: 50 }, {
-    staleTime: 30_000,
-    enabled: open && activeTab === 'shanyrak',
+    staleTime: 15_000,
+    refetchInterval: open ? 30_000 : false,
+    enabled: open,
   });
 
   const isLoading =
@@ -38,16 +41,16 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
     (activeTab === 'shanyrak' && shanyraqQuery.isLoading);
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: 'rating', label: t('lobby.leaderboardTabs.rating'), icon: <Trophy className="w-3.5 h-3.5" /> },
-    { key: 'wins', label: t('lobby.leaderboardTabs.wins'), icon: <Swords className="w-3.5 h-3.5" /> },
-    { key: 'shanyrak', label: t('lobby.leaderboardTabs.shanyrak'), icon: <Coins className="w-3.5 h-3.5" /> },
+    { key: 'rating', label: t('lobby.leaderboardTabs.rating'), icon: <Trophy className="w-3.5 h-3.5 shrink-0" /> },
+    { key: 'wins', label: t('lobby.leaderboardTabs.wins'), icon: <Swords className="w-3.5 h-3.5 shrink-0" /> },
+    { key: 'shanyrak', label: t('lobby.leaderboardTabs.shanyrak'), icon: <Banknote className="w-3.5 h-3.5 shrink-0" /> },
   ];
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[420px] p-0 overflow-hidden flex flex-col"
+        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[480px] p-0 overflow-hidden flex flex-col"
       >
         <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
           <SheetTitle className="text-amber-100 flex items-center gap-2">
@@ -63,14 +66,14 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex-1 flex items-center justify-center gap-1 px-1 py-1.5 rounded-md text-xs font-medium transition-all ${
                   activeTab === tab.key
                     ? 'bg-amber-600/80 text-amber-100 shadow-sm'
                     : 'text-amber-300/60 hover:text-amber-300/90 hover:bg-[#1a2d45]'
                 }`}
               >
                 {tab.icon}
-                {tab.label}
+                <span className="truncate">{tab.label}</span>
               </button>
             ))}
           </div>
@@ -84,7 +87,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
             </div>
           ) : (
             <>
-              {/* Rating tab */}
+              {/* ── Rating tab ── */}
               {activeTab === 'rating' && (
                 <div className="mt-1 space-y-1">
                   {(ratingQuery.data ?? []).map((player, idx) => {
@@ -106,8 +109,8 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                           </span>
                           <span className="text-amber-200/30 text-[10px] shrink-0">#{player.gameId}</span>
                         </div>
-                        <div className="flex items-center gap-3 shrink-0">
-                          <span className="text-amber-200/50 text-[10px]">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-amber-200/50 text-[10px] hidden sm:inline">
                             {player.wins}W/{player.losses}L
                           </span>
                           <Badge variant="outline" className="border-amber-700/20 text-amber-300 text-xs px-1.5">
@@ -125,19 +128,17 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                 </div>
               )}
 
-              {/* Wins tab */}
+              {/* ── Wins tab ── */}
               {activeTab === 'wins' && (
                 <div className="mt-1">
-                  {/* Header row */}
-                  <div className="flex items-center px-3 py-1.5 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide">
-                    <span className="w-6 shrink-0" />
-                    <span className="flex-1">{t('profile.player')}</span>
-                    <div className="flex items-center gap-3 shrink-0 text-right">
-                      <span className="w-10">{t('lobby.leaderboardWins.matches')}</span>
-                      <span className="w-8">{t('lobby.leaderboardWins.wins')}</span>
-                      <span className="w-8">{t('lobby.leaderboardWins.losses')}</span>
-                      <span className="w-10">{t('lobby.leaderboardWins.winrate')}</span>
-                    </div>
+                  {/* Column headers */}
+                  <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center px-3 py-1 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide gap-x-1">
+                    <span />
+                    <span>{t('profile.player')}</span>
+                    <span className="text-center">{t('lobby.leaderboardWins.matches')}</span>
+                    <span className="text-center">{t('lobby.leaderboardWins.wins')}</span>
+                    <span className="text-center">{t('lobby.leaderboardWins.losses')}</span>
+                    <span className="text-center">{t('lobby.leaderboardWins.winrate')}</span>
                   </div>
                   <div className="space-y-1">
                     {(winsQuery.data ?? []).map((player, idx) => {
@@ -146,30 +147,25 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                       return (
                         <div
                           key={player.gameId}
-                          className={`flex items-center px-3 py-2 rounded-lg ${
+                          className={`grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center px-3 py-2 rounded-lg gap-x-1 ${
                             isMe ? 'bg-amber-700/20 border border-amber-600/30' : 'bg-[#1a2d45]/40'
                           }`}
                         >
-                          <span className="text-amber-200/50 text-xs w-6 text-right shrink-0">
+                          <span className="text-amber-200/50 text-xs text-right shrink-0">
                             {medal || `${idx + 1}.`}
                           </span>
-                          <span className={`flex-1 text-sm font-medium truncate ml-2 ${isMe ? 'text-amber-300' : 'text-amber-100'}`}>
+                          <span className={`text-sm font-medium truncate ${isMe ? 'text-amber-300' : 'text-amber-100'}`}>
                             {player.displayName || t('profile.player')}
                           </span>
-                          <div className="flex items-center gap-3 shrink-0 text-xs text-right">
-                            <span className="w-10 text-amber-200/50">{player.gamesPlayed}</span>
-                            <span className="w-8 text-green-400/80 font-medium">{player.wins}</span>
-                            <span className="w-8 text-red-400/70">{player.losses}</span>
-                            <Badge
-                              variant="outline"
-                              className={`w-10 justify-center border-amber-700/20 text-xs px-1 ${
-                                player.winrate >= 60 ? 'text-green-400' :
-                                player.winrate >= 40 ? 'text-amber-300' : 'text-red-400/80'
-                              }`}
-                            >
-                              {player.winrate}%
-                            </Badge>
-                          </div>
+                          <span className="text-center text-xs text-amber-200/50">{player.gamesPlayed}</span>
+                          <span className="text-center text-xs text-green-400/80 font-medium">{player.wins}</span>
+                          <span className="text-center text-xs text-red-400/70">{player.losses}</span>
+                          <span className={`text-center text-xs font-semibold ${
+                            player.winrate >= 60 ? 'text-green-400' :
+                            player.winrate >= 40 ? 'text-amber-300' : 'text-red-400/80'
+                          }`}>
+                            {player.winrate}%
+                          </span>
                         </div>
                       );
                     })}
@@ -182,7 +178,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                 </div>
               )}
 
-              {/* Shanyrak tab */}
+              {/* ── Shanyrak tab ── */}
               {activeTab === 'shanyrak' && (
                 <div className="mt-1 space-y-1">
                   {(shanyraqQuery.data ?? []).map((player, idx) => {
@@ -204,13 +200,11 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                           </span>
                           <span className="text-amber-200/30 text-[10px] shrink-0">#{player.gameId}</span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-amber-200/50 text-[10px]">
-                            {t('lobby.leaderboardShanyrak.balance')}
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <Banknote className="w-3.5 h-3.5 text-amber-400/60" />
+                          <span className="text-amber-300 text-sm font-semibold">
+                            {player.balanceShanyrak.toLocaleString()}
                           </span>
-                          <Badge variant="outline" className="border-amber-500/30 text-amber-300 text-xs px-1.5 font-semibold">
-                            ◈ {player.balanceShanyrak.toLocaleString()}
-                          </Badge>
                         </div>
                       </div>
                     );
