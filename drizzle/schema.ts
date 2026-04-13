@@ -135,6 +135,8 @@ export const gameHistory = mysqlTable("game_history", {
   botCount: int("botCount").default(0).notNull(),
   /** Total players (humans + bots) in the room when game started */
   totalPlayersInRoom: int("totalPlayersInRoom").default(0).notNull(),
+  /** JSON object mapping profileId -> actualRatingChange (with premium bonuses applied) */
+  ratingChangesJson: text("ratingChangesJson"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

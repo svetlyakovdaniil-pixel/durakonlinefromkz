@@ -1,0 +1,1 @@
+ALTER TABLE `game_history` ADD `ratingChangesJson` text;

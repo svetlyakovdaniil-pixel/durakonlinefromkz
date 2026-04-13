@@ -1188,12 +1188,14 @@ export default function GameTable({
               const prize = gs.playerPrizes?.find(pr => pr.playerId === p.id) || prizeData?.prizes.find(pr => pr.playerId === p.id);
               return (
                 <div key={p.id} className={`flex items-center justify-between px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base ${
+                  p.leftGame && p.id === gs.loserId ? 'bg-red-900/30 border border-red-700/30' :
                   p.leftGame ? 'bg-gray-800/40 border border-gray-600/30' :
                   p.id === gs.loserId ? 'bg-red-900/30 border border-red-700/30' :
                   p.winPlace ? 'bg-green-900/20 border border-green-700/20' : 'bg-[#0f2035]/50'
                 }`}>
                   <span className="text-amber-100 flex items-center gap-1.5 sm:gap-2 truncate">
-                    {p.leftGame && <DoorOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />}
+                    {p.leftGame && p.id === gs.loserId && <Frown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" />}
+                    {p.leftGame && p.id !== gs.loserId && <DoorOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400 shrink-0" />}
                     {!p.leftGame && p.winPlace && <Trophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />}
                     {!p.leftGame && p.id === gs.loserId && <Frown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" />}
                     <span className="truncate">{p.name}</span>
@@ -1205,8 +1207,16 @@ export default function GameTable({
                         <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3.5 h-3.5" />
                       </span>
                     )}
-                    <span className={`text-xs sm:text-sm ${p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
-                      {p.leftGame ? t('game.left') : p.id === gs.loserId ? t('game.fool') : p.winPlace ? t('game.placeN', { n: String(p.winPlace) }) : ''}
+                    <span className={`text-xs sm:text-sm ${p.leftGame && p.id === gs.loserId ? 'text-red-400' : p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
+                      {p.leftGame && p.id === gs.loserId
+                        ? t('game.leftFool')
+                        : p.leftGame
+                        ? t('game.left')
+                        : p.id === gs.loserId
+                        ? t('game.fool')
+                        : p.winPlace
+                        ? t('game.placeN', { n: String(p.winPlace) })
+                        : ''}
                     </span>
                   </div>
                 </div>

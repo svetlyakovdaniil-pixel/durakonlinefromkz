@@ -383,6 +383,10 @@ export async function recordGameResult(data: {
   // Update stats for all participants
   // NOTE: allPlayerProfileIds actually contains gameId values (not profileId/id)
   // because playerGameIds map stores odId -> gameId
+
+  // First pass: compute all ratingChanges and collect profileIds for ratingChangesJson
+  const ratingChangesMap: Record<number, number> = {}; // profileId -> ratingChange
+
   for (let idx = 0; idx < data.allPlayerProfileIds.length; idx++) {
     const gameId = data.allPlayerProfileIds[idx];
     const isLoser = gameId === data.loserProfileId;
@@ -404,6 +408,15 @@ export async function recordGameResult(data: {
       }
     }
 
+    // Look up the actual profileId (playerProfiles.id) from gameId
+    const [profileRow] = await db.select({ id: playerProfiles.id })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.gameId, gameId))
+      .limit(1);
+    if (profileRow) {
+      ratingChangesMap[profileRow.id] = ratingChange;
+    }
+
     if (isBotGame) {
       // Bot games (>33.4% bots): update bot stats + bot rating
       await db.update(playerProfiles).set({
@@ -421,6 +434,13 @@ export async function recordGameResult(data: {
         rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
       }).where(eq(playerProfiles.gameId, gameId));
     }
+  }
+
+  // Update game history record with actual rating changes
+  if (Object.keys(ratingChangesMap).length > 0) {
+    await db.update(gameHistory)
+      .set({ ratingChangesJson: JSON.stringify(ratingChangesMap) })
+      .where(eq(gameHistory.roomId, data.roomId));
   }
 }
 
@@ -485,33 +505,39 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
     const place = playerIds.indexOf(profileId) + 1;
     const isLoser = profileId === record.loserId;
 
-    // Human rating table
-    const humanRatingByPlace: Record<number, number[]> = {
-      2: [25, -25],
-      3: [25, 15, -25],
-      4: [25, 20, 15, -25],
-      5: [25, 20, 15, 10, -25],
-      6: [25, 20, 15, 10, 5, -25],
-      7: [25, 20, 15, 10, 5, 0, -25],
-      8: [25, 20, 15, 10, 5, 0, 0, -25],
-    };
-    // Bot rating table
-    const botRatingByPlace: Record<number, number[]> = {
-      2: [10, -10],
-      3: [10, 0, -10],
-      4: [10, 5, 0, -10],
-      5: [10, 5, 0, -5, -10],
-      6: [10, 5, 0, -5, -10, -10],
-      7: [10, 5, 0, -5, -10, -10, -10],
-      8: [10, 5, 0, -5, -10, -10, -10, -10],
-    };
-
     // Use 33.4% bot threshold to determine which table to use
     const botRatio = record.totalPlayersInRoom > 0 ? record.botCount / record.totalPlayersInRoom : 0;
     const isBotGame = botRatio > 0.334;
-    const ratingByPlace = isBotGame ? botRatingByPlace : humanRatingByPlace;
-    const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
-    const ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+
+    // Prefer stored ratingChangesJson (includes premium bonuses) over recalculation
+    let ratingDelta: number;
+    if (record.ratingChangesJson) {
+      const changesMap = JSON.parse(record.ratingChangesJson) as Record<string, number>;
+      ratingDelta = changesMap[String(profileId)] ?? 0;
+    } else {
+      // Fallback: recalculate from table (no premium bonus info available for old records)
+      const humanRatingByPlace: Record<number, number[]> = {
+        2: [25, -25],
+        3: [25, 15, -25],
+        4: [25, 20, 15, -25],
+        5: [25, 20, 15, 10, -25],
+        6: [25, 20, 15, 10, 5, -25],
+        7: [25, 20, 15, 10, 5, 0, -25],
+        8: [25, 20, 15, 10, 5, 0, 0, -25],
+      };
+      const botRatingByPlace: Record<number, number[]> = {
+        2: [10, -10],
+        3: [10, 0, -10],
+        4: [10, 5, 0, -10],
+        5: [10, 5, 0, -5, -10],
+        6: [10, 5, 0, -5, -10, -10],
+        7: [10, 5, 0, -5, -10, -10, -10],
+        8: [10, 5, 0, -5, -10, -10, -10, -10],
+      };
+      const ratingByPlace = isBotGame ? botRatingByPlace : humanRatingByPlace;
+      const ratingTable = ratingByPlace[record.playerCount] || ratingByPlace[2];
+      ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
+    }
 
     return {
       ...record,

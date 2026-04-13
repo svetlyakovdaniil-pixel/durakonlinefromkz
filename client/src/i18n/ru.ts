@@ -237,6 +237,7 @@ export const ru = {
     bank: 'Банк',
     resultsTitle: 'Результаты:',
     left: 'Покинул',
+    leftFool: 'Дурак · Покинул',
     fool: 'Дурак',
     placeN: '{n}-е место',
     backToLobbyBtn: 'Вернуться в лобби',

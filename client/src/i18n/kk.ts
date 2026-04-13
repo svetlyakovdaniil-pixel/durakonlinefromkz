@@ -237,6 +237,7 @@ export const kk = {
     bank: 'Банк',
     resultsTitle: 'Нәтижелер:',
     left: 'Шықты',
+    leftFool: 'Дурақ · Шықты',
     fool: 'Дурақ',
     placeN: '{n}-ші орын',
     backToLobbyBtn: 'Лоббиге қайту',

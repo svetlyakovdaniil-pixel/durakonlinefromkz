@@ -237,6 +237,7 @@ export const en = {
     bank: 'Bank',
     resultsTitle: 'Results:',
     left: 'Left',
+    leftFool: 'Fool · Left',
     fool: 'Fool',
     placeN: '{n}th place',
     backToLobbyBtn: 'Back to lobby',
