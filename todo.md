@@ -2486,3 +2486,16 @@
 - [x] Лидерборд "Победы": исправить верстку — текст матчи/победы/поражения/винрейт не должен перекрываться
 - [x] Лидерборд "Шаныраки": заменить значок ромба ◈ на значок купюры (Banknote иконка)
 - [x] Лидерборд: добавить авто-обновление в реальном времени (refetchInterval 30 сек)
+
+## Задачи от 13.04.2026 (Сессия 17 — Система сезонов)
+- [x] БД: таблицы season_ratings и season_rewards
+- [x] Enum notifications.type: добавить season_reward
+- [x] shared/seasons.ts: 12 сезонов, 8 рангов, награды
+- [x] server/db.season.ts: запросы к БД (getOrCreate, applyChange, leaderboard, processSeasonEnd)
+- [x] server/routers.ts: season router (current, leaderboard, allSeasons, adminProcessSeasonEnd, unclaimedRewards)
+- [x] Интеграция в recordGameResult: начисление сезонного рейтинга без премиум-бонуса
+- [x] DiamondRankIcon компонент: бриллиантовые иконки 8 цветов + анимация Великого хана
+- [x] Season.tsx: страница с вкладками (Мой рейтинг / Топ игроков / Ранги)
+- [x] Lobby.tsx: кнопка Сезон открывает SeasonPage
+- [x] LeaderboardDrawer: вкладка Сезон с бриллиантами и топ-3 золотой рамкой
+- [x] Кнопка "Сезон" в десктопном хедере лобби

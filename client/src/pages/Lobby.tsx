@@ -541,6 +541,15 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </button>
 
+                {/* Season button */}
+                <button
+                  className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
+                  onClick={() => setShowSeason(true)}
+                  title={locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон'}
+                >
+                  <Flame className="w-5 h-5" />
+                </button>
+
                 {/* Achievements button */}
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
