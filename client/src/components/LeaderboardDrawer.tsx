@@ -132,10 +132,9 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               {activeTab === 'wins' && (
                 <div className="mt-1">
                   {/* Column headers */}
-                  <div className="grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center px-3 py-1 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide gap-x-1">
+                  <div className="grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_4rem] items-center px-3 py-1 mb-1 text-[10px] text-amber-200/40 font-medium uppercase tracking-wide gap-x-1">
                     <span />
                     <span>{t('profile.player')}</span>
-                    <span className="text-center">{t('lobby.leaderboardWins.matches')}</span>
                     <span className="text-center">{t('lobby.leaderboardWins.wins')}</span>
                     <span className="text-center">{t('lobby.leaderboardWins.losses')}</span>
                     <span className="text-center">{t('lobby.leaderboardWins.winrate')}</span>
@@ -147,7 +146,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                       return (
                         <div
                           key={player.gameId}
-                          className={`grid grid-cols-[1.5rem_1fr_3rem_3rem_3rem_3.5rem] items-center px-3 py-2 rounded-lg gap-x-1 ${
+                          className={`grid grid-cols-[1.5rem_1fr_3.5rem_3.5rem_4rem] items-center px-3 py-2 rounded-lg gap-x-1 ${
                             isMe ? 'bg-amber-700/20 border border-amber-600/30' : 'bg-[#1a2d45]/40'
                           }`}
                         >
@@ -157,7 +156,6 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                           <span className={`text-sm font-medium truncate ${isMe ? 'text-amber-300' : 'text-amber-100'}`}>
                             {player.displayName || t('profile.player')}
                           </span>
-                          <span className="text-center text-xs text-amber-200/50">{player.gamesPlayed}</span>
                           <span className="text-center text-xs text-green-400/80 font-medium">{player.wins}</span>
                           <span className="text-center text-xs text-red-400/70">{player.losses}</span>
                           <span className={`text-center text-xs font-semibold ${
