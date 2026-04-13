@@ -201,6 +201,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'neon_paw' },
       { rankKey: 'steppe_khan', avatarId: 'neon_dino' },
       { rankKey: 'golden_horde_warrior', avatarId: 'neon_cat' },
+      { rankKey: 'great_khan', avatarId: 'neon_crown' },
     ],
   },
   {

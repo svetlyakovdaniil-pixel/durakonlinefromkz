@@ -146,6 +146,17 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // rank ID — Amber rank in Season 7 (Neon Era)
   },
+  {
+    id: 'neon_crown',
+    name: 'Неоновая корона',
+    nameKk: 'Неон Таж',
+    nameEn: 'Neon Crown',
+    url: 'neon_crown',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_obsidian-3s7gu4bnxW94srxC2sGYmd.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan',
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -154,7 +165,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
@@ -254,6 +265,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#ff00c8', shadowColor: 'rgba(255,0,200,0.4)', bgClass: 'rgba(255,0,200,0.08)', borderClass: 'border-pink-500/50', textClass: 'text-pink-300', hoverClass: 'hover:bg-pink-500/10' };
     case 'neon_cat':
       return { borderColor: '#ff6600', shadowColor: 'rgba(255,120,0,0.4)', bgClass: 'rgba(255,120,0,0.08)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
+    case 'neon_crown':
+      return { borderColor: '#00dcff', shadowColor: 'rgba(0,220,255,0.4)', bgClass: 'rgba(0,220,255,0.08)', borderClass: 'border-cyan-400/50', textClass: 'text-cyan-300', hoverClass: 'hover:bg-cyan-500/10' };
     case 'diving_eagle':
     case 'sky_eagle':
       return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };

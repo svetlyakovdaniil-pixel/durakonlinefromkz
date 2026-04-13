@@ -2726,3 +2726,10 @@
 
 ## Batch 61 — Исправление позиции очков в NeonCatAvatar
 - [x] Точно позиционировать анимацию очков по координатам реального изображения (left lens ~28-44%, right lens ~56-72%, top ~32-46% от высоты)
+
+## Batch 62 — Аватарка Обсидиан (Неоновая эра)
+- [x] Сгенерировать изменённое изображение голубой неоновой короны (на основе 444.jpg)
+- [x] Создать NeonCrownAvatar.tsx с анимацией Electric Surge (искра по контуру слева направо)
+- [x] Зарегистрировать neon_crown в shared/avatars.ts (animated, seasonReward, previewUrl, getAvatarAccentColors)
+- [x] Добавить neon_crown в AvatarDisplay.tsx
+- [x] Привязать neon_crown к рангу Обсидиан (great_khan) в rankRewardOverrides сезона Неоновая эра

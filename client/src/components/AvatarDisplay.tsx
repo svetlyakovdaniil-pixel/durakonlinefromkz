@@ -5,6 +5,7 @@ import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
+import { NeonCrownAvatar } from './NeonCrownAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
@@ -57,6 +58,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   if (baseId === 'neon_cat') {
     return <NeonCatAvatar size={size} className={className} />;
+  }
+
+  if (baseId === 'neon_crown') {
+    return <NeonCrownAvatar size={size} className={className} />;
   }
 
   return (
