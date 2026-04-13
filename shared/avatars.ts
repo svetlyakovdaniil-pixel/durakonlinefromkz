@@ -133,7 +133,18 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp',
     animated: true,
     seasonReward: true,
-    seasonRankRequired: 'winged_horse', // rank ID — Ruby rank in Season 7 (Neon Era)
+    seasonRankRequired: 'steppe_khan', // rank ID — Ruby rank in Season 7 (Neon Era)
+  },
+  {
+    id: 'neon_cat',
+    name: 'Неоновый кот',
+    nameKk: 'Неон Мысық',
+    nameEn: 'Neon Cat',
+    url: 'neon_cat', // special: rendered by NeonCatAvatar component
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_cat_amber-3iaxam7C5jZmTr6VeA4aeA.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // rank ID — Amber rank in Season 7 (Neon Era)
   },
 ];
 
@@ -143,7 +154,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
@@ -241,6 +252,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#a855f7', shadowColor: 'rgba(168,85,247,0.4)', bgClass: 'rgba(168,85,247,0.08)', borderClass: 'border-purple-500/50', textClass: 'text-purple-300', hoverClass: 'hover:bg-purple-500/10' };
     case 'neon_dino':
       return { borderColor: '#ff00c8', shadowColor: 'rgba(255,0,200,0.4)', bgClass: 'rgba(255,0,200,0.08)', borderClass: 'border-pink-500/50', textClass: 'text-pink-300', hoverClass: 'hover:bg-pink-500/10' };
+    case 'neon_cat':
+      return { borderColor: '#ff6600', shadowColor: 'rgba(255,120,0,0.4)', bgClass: 'rgba(255,120,0,0.08)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
     case 'diving_eagle':
     case 'sky_eagle':
       return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };

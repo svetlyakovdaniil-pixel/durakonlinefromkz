@@ -2710,3 +2710,11 @@
 - [x] Season.tsx: заменить все хардкод-списки isAnimated на isCanvasAvatar() из shared/avatars.ts
 - [x] Season.tsx: AnimatedAvatarComponent заменить на AvatarDisplay (уже поддерживает все аватарки)
 - [x] Season.tsx: цвета акцента/рамки вынести в getAvatarAccentColors() в shared/avatars.ts
+
+## Batch 59 — Аватарка Янтарь (Неоновая эра)
+- [x] Сгенерировать изменённое изображение неонового кота в очках (на основе 22.jpg)
+- [x] Создать NeonCatAvatar.tsx с анимацией Glasses Glint (блик на очках + пульс контура)
+- [x] Зарегистрировать neon_cat в shared/avatars.ts (animated, seasonReward, previewUrl)
+- [x] Добавить neon_cat в AvatarDisplay.tsx
+- [x] Добавить neon_cat в getAvatarAccentColors() в shared/avatars.ts
+- [x] Привязать neon_cat к рангу Янтарь (golden_horde_warrior) в rankRewardOverrides сезона Неоновая эра
