@@ -6,9 +6,10 @@ import { getAvatarUrl, getAvatarOption, AVATAR_OPTIONS } from '../../../shared/a
 import { SEASON_RANKS, SEASON_REWARD_DEFS } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
-import { SkyEagleAvatar } from '@/components/SkyEagleAvatar';
 import { KhanAvatar } from '@/components/KhanAvatar';
 import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
+import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
+import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -42,14 +43,24 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
 /** Full-screen avatar preview modal */
 function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; locale: string; onClose: () => void }) {
   const avatarNames: Record<string, { ru: string; kk: string; en: string }> = {
-    sky_eagle: { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт', en: 'Sky Eagle' },
-    khan: { ru: 'Хан Степи', kk: 'Дала Ханы', en: 'Steppe Khan' },
-    golden_horde: { ru: 'Золотая Орда', kk: 'Алтын Орда', en: 'Golden Horde' },
+    sky_eagle:    { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт',  en: 'Sky Eagle' },
+    diving_eagle: { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт',  en: 'Sky Eagle' },
+    khan:         { ru: 'Хан Степи',    kk: 'Дала Ханы',         en: 'Steppe Khan' },
+    golden_horde: { ru: 'Золотая Орда',  kk: 'Алтын Орда',        en: 'Golden Horde' },
+    great_khan:   { ru: 'Великий Хан',   kk: 'Ұлы Хан',              en: 'Great Khan' },
   };
   const names = avatarNames[avatarId] ?? { ru: avatarId, kk: avatarId, en: avatarId };
   const displayName = locale === 'kk' ? names.kk : locale === 'en' ? names.en : names.ru;
-  const borderColor = avatarId === 'khan' ? '#f97316' : avatarId === 'golden_horde' ? '#eab308' : '#f59e0b';
-  const shadowColor = avatarId === 'khan' ? 'rgba(249,115,22,0.3)' : avatarId === 'golden_horde' ? 'rgba(234,179,8,0.3)' : 'rgba(245,158,11,0.3)';
+  const borderColor =
+    avatarId === 'khan'         ? '#f97316' :
+    avatarId === 'golden_horde' ? '#eab308' :
+    avatarId === 'great_khan'   ? '#b8860b' :
+    '#f59e0b';
+  const shadowColor =
+    avatarId === 'khan'         ? 'rgba(249,115,22,0.3)' :
+    avatarId === 'golden_horde' ? 'rgba(234,179,8,0.3)' :
+    avatarId === 'great_khan'   ? 'rgba(184,134,11,0.4)' :
+    'rgba(245,158,11,0.3)';
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -58,12 +69,14 @@ function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; l
           className="w-64 h-64 rounded-full overflow-hidden"
           style={{ border: `4px solid ${borderColor}`, boxShadow: `0 0 40px ${shadowColor}` }}
         >
-          {avatarId === 'sky_eagle' ? (
-            <SkyEagleAvatar size={256} />
+          {(avatarId === 'sky_eagle' || avatarId === 'diving_eagle') ? (
+            <DivingEagleAvatar size={256} />
           ) : avatarId === 'khan' ? (
             <KhanAvatar size={256} />
           ) : avatarId === 'golden_horde' ? (
             <GoldenHordeAvatar size={256} />
+          ) : avatarId === 'great_khan' ? (
+            <GreatKhanAvatar size={256} />
           ) : null}
         </div>
         <div className="font-bold text-lg" style={{ color: borderColor }}>{displayName}</div>
@@ -149,15 +162,15 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Avatar — sky_eagle: show animated preview */}
-            {reward.avatarId === 'sky_eagle' && (
+            {/* Avatar — diving_eagle / sky_eagle (legacy): show animated preview */}
+            {(reward.avatarId === 'diving_eagle' || reward.avatarId === 'sky_eagle') && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-amber-500/10 transition-colors"
                 style={{ background: 'rgba(251,191,36,0.06)' }}
-                onClick={() => setAvatarPreview('sky_eagle')}
+                onClick={() => setAvatarPreview('diving_eagle')}
               >
                 <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/50 flex-shrink-0">
-                  <SkyEagleAvatar size={48} />
+                  <DivingEagleAvatar size={48} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-amber-300 font-semibold text-sm">
@@ -215,16 +228,23 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Avatar — other (coming soon) */}
-            {reward.avatarId && reward.avatarId !== 'sky_eagle' && reward.avatarId !== 'khan' && reward.avatarId !== 'golden_horde' && (
-              <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
-                <span className="text-lg">🖼</span>
-                <div>
-                  <div className="text-amber-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="italic opacity-70">{reward.avatarId}</span>
+            {/* Avatar — great_khan: show animated preview */}
+            {reward.avatarId === 'great_khan' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-yellow-900/20 transition-colors"
+                style={{ background: 'rgba(184,134,11,0.08)' }}
+                onClick={() => setAvatarPreview('great_khan')}
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-600/60 flex-shrink-0">
+                  <GreatKhanAvatar size={48} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-yellow-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}
                   </div>
-                  <div className="text-amber-200/40 text-xs">
-                    {locale === 'kk' ? '(жақында қосылады)' : locale === 'en' ? '(coming soon)' : '(будет добавлена позже)'}
+                  <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
+                    <ZoomIn className="w-3 h-3" />
+                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
                   </div>
                 </div>
               </div>
@@ -429,16 +449,17 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                         {/* Avatar */}
                         {rewardDef.avatarId && (() => {
                           const aid = rewardDef.avatarId;
-                          const isAnimated = aid === 'sky_eagle' || aid === 'khan' || aid === 'golden_horde';
+                          const isAnimated = aid === 'sky_eagle' || aid === 'diving_eagle' || aid === 'khan' || aid === 'golden_horde' || aid === 'great_khan';
                           return (
                             <div
                               className={`flex items-center gap-2 ${isAnimated ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                               onClick={isAnimated ? () => setRewardPopupKey(currentRank.key) : undefined}
                             >
                               <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 flex-shrink-0 bg-black/30">
-                                {aid === 'sky_eagle' ? <SkyEagleAvatar size={32} /> :
+                                {(aid === 'sky_eagle' || aid === 'diving_eagle') ? <DivingEagleAvatar size={32} /> :
                                  aid === 'khan' ? <KhanAvatar size={32} /> :
                                  aid === 'golden_horde' ? <GoldenHordeAvatar size={32} /> :
+                                 aid === 'great_khan' ? <GreatKhanAvatar size={32} /> :
                                  <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
                               </div>
                               <span>

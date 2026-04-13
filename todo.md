@@ -2557,3 +2557,6 @@
 - [x] Обновить SEASON_REWARD_DEFS: sky_eagle ранг теперь даёт diving_eagle аватарку
 - [x] Убрать sky_eagle из AvatarPicker и AvatarDisplay (удалить ветки sky_eagle)
 - [x] Убрать SkyEagleAvatar импорты из AvatarPicker и AvatarDisplay
+
+## Задачи от 13.04.2026 (Сессия 26 — Аватарки в наградах сезона)
+-- [x] Найти компонент наград сезона (кнопка «Наград» в меню «Ранги») и добавить DivingEagleAvatar и GreatKhanAvatar по аналогии с KhanAvatar и GoldenHordeAvatar
