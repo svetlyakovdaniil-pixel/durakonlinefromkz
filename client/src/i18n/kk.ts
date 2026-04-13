@@ -59,6 +59,20 @@ export const kk = {
     tournaments: 'Турнирлер',
     friends: 'Достар',
     leaderboard: 'Рейтинг',
+    leaderboardTabs: {
+      rating: 'Рейтинг',
+      wins: 'Жеңістер',
+      shanyrak: 'Шаңырақтар',
+    },
+    leaderboardWins: {
+      matches: 'Матчтар',
+      wins: 'Жеңістер',
+      losses: 'Жеңілістер',
+      winrate: 'Жеңіс пайызы',
+    },
+    leaderboardShanyrak: {
+      balance: 'Баланс',
+    },
     rules: 'Ережелер',
     settings: 'Баптаулар',
     logout: 'Шығу',

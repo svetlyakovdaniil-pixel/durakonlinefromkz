@@ -83,6 +83,8 @@ import {
   updateContactMessageStatus,
   creditTengeIAP,
   getTotalTengeSpentByProfile,
+  getWinsLeaderboard,
+  getShanyraqLeaderboard,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
 import { processDonatorAchievement } from "./achievementsTriggers";
@@ -578,6 +580,20 @@ export const appRouter = router({
       .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
       .query(async ({ input }) => {
         return getLeaderboard(input?.limit ?? 50);
+      }),
+
+    /** Get top players by wins (human games only) */
+    winsLeaderboard: publicProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
+      .query(async ({ input }) => {
+        return getWinsLeaderboard(input?.limit ?? 50);
+      }),
+
+    /** Get top players by shanyrak balance */
+    shanyraqLeaderboard: publicProcedure
+      .input(z.object({ limit: z.number().min(1).max(100).optional() }).optional())
+      .query(async ({ input }) => {
+        return getShanyraqLeaderboard(input?.limit ?? 50);
       }),
 
   }),

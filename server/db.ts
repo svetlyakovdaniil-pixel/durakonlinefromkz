@@ -489,6 +489,49 @@ export async function getLeaderboard(limit = 50) {
 }
 
 /**
+ * Get top players by wins (human games only, <33.4% bots).
+ * Returns wins, losses, gamesPlayed, and winrate.
+ */
+export async function getWinsLeaderboard(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db.select({
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+    gamesPlayed: playerProfiles.gamesPlayed,
+    wins: playerProfiles.wins,
+    losses: playerProfiles.losses,
+  }).from(playerProfiles)
+    .where(sql`${playerProfiles.gamesPlayed} > 0`)
+    .orderBy(desc(playerProfiles.wins), desc(playerProfiles.gamesPlayed))
+    .limit(limit);
+
+  return rows.map(r => ({
+    ...r,
+    winrate: r.gamesPlayed > 0 ? Math.round((r.wins / r.gamesPlayed) * 100) : 0,
+  }));
+}
+
+/**
+ * Get top players by shanyrak balance.
+ */
+export async function getShanyraqLeaderboard(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+
+  return db.select({
+    gameId: playerProfiles.gameId,
+    displayName: playerProfiles.displayName,
+    balanceShanyrak: playerProfiles.balanceShanyrak,
+    rating: playerProfiles.rating,
+  }).from(playerProfiles)
+    .where(sql`${playerProfiles.balanceShanyrak} > 0`)
+    .orderBy(desc(playerProfiles.balanceShanyrak))
+    .limit(limit);
+}
+
+/**
  * Get recent game history for a player with place and rating delta.
  */
 export async function getPlayerGameHistory(profileId: number, limit = 20) {

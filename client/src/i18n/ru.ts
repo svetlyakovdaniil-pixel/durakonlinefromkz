@@ -60,6 +60,20 @@ export const ru = {
     tournaments: 'Турниры',
     friends: 'Друзья',
     leaderboard: 'Рейтинг',
+    leaderboardTabs: {
+      rating: 'Рейтинг',
+      wins: 'Победы',
+      shanyrak: 'Шаныраки',
+    },
+    leaderboardWins: {
+      matches: 'Матчи',
+      wins: 'Победы',
+      losses: 'Поражения',
+      winrate: 'Винрейт',
+    },
+    leaderboardShanyrak: {
+      balance: 'Баланс',
+    },
     settings: 'Настройки',
     logout: 'Выйти',
     dailyBonus: 'Ежедневный бонус',

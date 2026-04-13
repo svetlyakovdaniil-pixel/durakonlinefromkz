@@ -61,6 +61,20 @@ export const en = {
     tournaments: 'Tournaments',
     friends: 'Friends',
     leaderboard: 'Leaderboard',
+    leaderboardTabs: {
+      rating: 'Rating',
+      wins: 'Wins',
+      shanyrak: 'Shanyraq',
+    },
+    leaderboardWins: {
+      matches: 'Matches',
+      wins: 'Wins',
+      losses: 'Losses',
+      winrate: 'Win Rate',
+    },
+    leaderboardShanyrak: {
+      balance: 'Balance',
+    },
     settings: 'Settings',
     logout: 'Log out',
     dailyBonus: 'Daily bonus',
