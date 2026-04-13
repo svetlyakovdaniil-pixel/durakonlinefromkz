@@ -603,12 +603,13 @@ export const appRouter = router({
     equipFrame: protectedProcedure
       .input(z.object({ frameId: z.string().nullable() }))
       .mutation(async ({ ctx, input }) => {
-        // Season-only frames (e.g. great_khan) can only be equipped if owned
-        // The db.equipFrame already checks ownedFrames, but we add an explicit
-        // guard here to return a clear error for season-only frames.
+        // Season-only frames (e.g. great_khan) can only be equipped if owned.
+        // getOwnedFrames expects profileId (not userId), so we look up the profile first.
         const SEASON_ONLY_FRAMES = ['great_khan'];
         if (input.frameId && SEASON_ONLY_FRAMES.includes(input.frameId)) {
-          const owned = await getOwnedFrames(ctx.user.id);
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+          const owned = await getOwnedFrames(profile.id);
           if (!owned.includes(input.frameId)) {
             throw new TRPCError({
               code: 'FORBIDDEN',

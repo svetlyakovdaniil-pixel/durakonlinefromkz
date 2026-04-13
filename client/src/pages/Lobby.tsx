@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
-import { getAvatarUrl } from '../../../shared/avatars';
+import { getAvatarUrl, AVATAR_OPTIONS } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank } from '../../../shared/seasons';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
@@ -21,7 +21,7 @@ import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { ShanyrakTopUpModal } from '@/components/ShanyrakTopUpModal';
 import { TengeTopUpModal } from '@/components/TengeTopUpModal';
-import ShopModal from '@/components/ShopModal';
+import ShopModal, { AVATAR_FRAMES } from '@/components/ShopModal';
 import RulesModal from '@/components/RulesModal';
 import { TutorialModal } from '@/components/TutorialModal';
 import { useTranslation } from '@/i18n';
@@ -1604,18 +1604,30 @@ onClick={() => setShowTengeTopUp(true)}
                                     +{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
                                   </div>
                                 )}
-                                {rewardDef.avatarId && (
-                                  <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                    <AvatarDisplay avatarId={rewardDef.avatarId} size={16} className="rounded-full" />
-                                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{rewardDef.avatarId}</span>
-                                  </div>
-                                )}
-                                {rewardDef.frameId && (
-                                  <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                    <span className="text-amber-400">🛡️</span>
-                                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{rewardDef.frameId}</span>
-                                  </div>
-                                )}
+                                {rewardDef.avatarId && (() => {
+                                  const avatarOpt = AVATAR_OPTIONS.find(a => a.id === rewardDef.avatarId);
+                                  const avatarName = avatarOpt
+                                    ? (locale === 'kk' ? (avatarOpt.nameKk ?? avatarOpt.name) : locale === 'en' ? (avatarOpt.nameEn ?? avatarOpt.name) : avatarOpt.name)
+                                    : rewardDef.avatarId;
+                                  return (
+                                    <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                      <AvatarDisplay avatarId={rewardDef.avatarId} size={16} className="rounded-full" />
+                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}</span>
+                                    </div>
+                                  );
+                                })()}
+                                {rewardDef.frameId && (() => {
+                                  const frameOpt = AVATAR_FRAMES.find(f => f.id === rewardDef.frameId);
+                                  const frameName = frameOpt
+                                    ? (locale === 'kk' ? (frameOpt as any).nameKk ?? frameOpt.name : locale === 'en' ? (frameOpt as any).nameEn ?? frameOpt.name : frameOpt.name)
+                                    : rewardDef.frameId;
+                                  return (
+                                    <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                      <span className="text-amber-400">🛡️</span>
+                                      {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{frameName}</span>
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             )}
                             {/* Claim button */}

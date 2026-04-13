@@ -11,6 +11,7 @@ import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
 import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
 import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
+import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -538,12 +539,12 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                           </div>
 
                           {/* Avatar */}
-                          <img
-                            src={entry.avatarUrl || getAvatarUrl(entry.avatarId ?? 'wolf')}
-                            alt=""
-                            className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+                          <div
+                            className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
                             style={isTop3 ? { boxShadow: '0 0 6px rgba(234,179,8,0.5)' } : undefined}
-                          />
+                          >
+                            <AvatarDisplay avatarId={entry.avatarId ?? 'wolf'} size={32} className="w-full h-full" />
+                          </div>
 
                           {/* Name + diamond */}
                           <div className="flex-1 min-w-0 flex items-center gap-1.5">

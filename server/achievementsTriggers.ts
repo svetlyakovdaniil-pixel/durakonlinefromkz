@@ -96,6 +96,8 @@ const game10Transfers = new Map<string, Map<string, { lastTarget: string; streak
 const consecutiveWinStreaks = new Map<string, number>();
 /** Per-game tracking of trump ace usage: roomId -> { odId -> count } */
 const gameTrumpAceUsed = new Map<string, Map<string, number>>();
+/** Per-game tracking of fully-defended rounds (whole table cleared by defender): roomId -> { odId -> count } */
+const gameSuccessfulRounds = new Map<string, Map<string, number>>();
 
 export function initGameTracking(roomId: string): void {
   gameTrumpDefenses.set(roomId, new Map());
@@ -105,6 +107,7 @@ export function initGameTracking(roomId: string): void {
   gameCardsTaken.set(roomId, new Map());
   game10Transfers.set(roomId, new Map());
   gameTrumpAceUsed.set(roomId, new Map());
+  gameSuccessfulRounds.set(roomId, new Map());
 }
 
 export function cleanupGameTracking(roomId: string): void {
@@ -115,6 +118,7 @@ export function cleanupGameTracking(roomId: string): void {
   gameCardsTaken.delete(roomId);
   game10Transfers.delete(roomId);
   gameTrumpAceUsed.delete(roomId);
+  gameSuccessfulRounds.delete(roomId);
 }
 
 function incMap(map: Map<string, number>, key: string, by = 1): number {
@@ -149,6 +153,20 @@ export function trackTransfer(roomId: string, odId: string): void {
 export function trackCardsTaken(roomId: string, odId: string, count: number): void {
   const takenMap = gameCardsTaken.get(roomId);
   if (takenMap) incMap(takenMap, odId, count);
+}
+
+/**
+ * Track a fully-defended round: the defender successfully beat the whole table
+ * (all cards defended, attack goes to discard). Call once per successfulDefense event.
+ */
+export function trackSuccessfulRound(roomId: string, defenderOdId: string): void {
+  const map = gameSuccessfulRounds.get(roomId);
+  if (map) incMap(map, defenderOdId);
+}
+
+/** Get successful rounds map for a game */
+export function getSuccessfulRoundsMap(roomId: string): Map<string, number> {
+  return gameSuccessfulRounds.get(roomId) ?? new Map();
 }
 
 /** Track trump ace usage (played as defender to beat an attack) */
@@ -237,6 +255,7 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
   const throwMap = gameThrowCounts.get(ctx.roomId) ?? new Map<string, number>();
   const transferMap = gameTransferCounts.get(ctx.roomId) ?? new Map<string, number>();
   const takenMap = gameCardsTaken.get(ctx.roomId) ?? new Map<string, number>();
+  const successfulRoundsMap = gameSuccessfulRounds.get(ctx.roomId) ?? new Map<string, number>();
 
   const winner1stOdId = winnersOrder[0] ?? null;
   const secondLastOdId = allHumanOdIds.length >= 2 ? allHumanOdIds[allHumanOdIds.length - 2] : null;
@@ -299,9 +318,10 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
         await incrementAchievementProgress(profileId, 'clean_win', 1);
       }
 
-      // Батыр-новобранец — deflect 10 attacks in one game
-      const defCount = totalDefMap.get(odId) ?? 0;
-      if (defCount >= 10) {
+      // Батыр-новобранец — successfully defend 10 full rounds in one game
+      // (a "round" = the entire table was beaten and attack went to discard)
+      const successfulRounds = successfulRoundsMap.get(odId) ?? 0;
+      if (successfulRounds >= 10) {
         await incrementAchievementProgress(profileId, 'batyr_recruit', 1);
       }
 

@@ -25,7 +25,7 @@ import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyr
 import {
   initGameTracking, cleanupGameTracking,
   trackTrumpDefense, trackThrow, trackTransfer, trackCardsTaken, track10Transfer,
-  trackTrumpAceUsed, getTrumpAceUsed,
+  trackTrumpAceUsed, getTrumpAceUsed, trackSuccessfulRound,
   getTrumpDefMap, getTotalDefMap, getThrowMap, getTransferMap, getCardsTakenMap,
   processGameEndAchievements, processDefenseAchievement, processAttackAchievement,
   processLucky777Achievement, processSpidermanMemeAchievement,
@@ -814,6 +814,9 @@ export function initSocketServer(httpServer: HttpServer) {
           if (!gs || gs.gamePhase === 'finished') return;
           // Guard: if a new trick already started, don't call successfulDefense
           if (gs.trickCount !== savedTrickCount) return;
+          // Track fully-defended round for achievement
+          const defOdId = gs.players[gs.currentDefenderIdx]?.id;
+          if (defOdId) trackSuccessfulRound(data.roomId, defOdId);
           successfulDefense(gs);
           broadcastGameState(data.roomId, gs);
           restartTurnTimer(data.roomId);
@@ -825,6 +828,8 @@ export function initSocketServer(httpServer: HttpServer) {
       if (gameState._autoCompleteDefense) {
         // All attackers have no matching cards — auto-complete defense
         gameState._autoCompleteDefense = false;
+        const defOdId2 = gameState.players[gameState.currentDefenderIdx]?.id;
+        if (defOdId2) trackSuccessfulRound(data.roomId, defOdId2);
         successfulDefense(gameState);
         broadcastGameState(data.roomId, gameState);
         restartTurnTimer(data.roomId);
@@ -1747,6 +1752,8 @@ function startWatchdog(roomId: string) {
           }
           engineFinalizeTake(gs);
         } else {
+          const defOdIdForce = gs.players[gs.currentDefenderIdx]?.id;
+          if (defOdIdForce) trackSuccessfulRound(roomId, defOdIdForce);
           successfulDefense(gs);
         }
       } else {
@@ -1913,6 +1920,8 @@ function handleTimeUp(roomId: string, gameState: GameState) {
         } else {
           // If no one can act and defender is NOT taking, this means
           // all cards are defended and no one can add more — successful defense
+          const defOdIdDeadlock = gameState.players[gameState.currentDefenderIdx]?.id;
+          if (defOdIdDeadlock) trackSuccessfulRound(roomId, defOdIdDeadlock);
           successfulDefense(gameState);
         }
       } else {
@@ -2041,6 +2050,8 @@ function scheduleBotAction(roomId: string) {
         const gs2 = games.get(roomId);
         if (!gs2 || gs2.gamePhase === 'finished') return;
         if (gs2.trickCount !== savedTrickCount) return;
+        const defOdIdBot = gs2.players[gs2.currentDefenderIdx]?.id;
+        if (defOdIdBot) trackSuccessfulRound(roomId, defOdIdBot);
         successfulDefense(gs2);
         broadcastGameState(roomId, gs2);
         restartTurnTimer(roomId);
@@ -2051,6 +2062,8 @@ function scheduleBotAction(roomId: string) {
 
     if (gs._autoCompleteDefense) {
       gs._autoCompleteDefense = false;
+      const defOdIdBotAuto = gs.players[gs.currentDefenderIdx]?.id;
+      if (defOdIdBotAuto) trackSuccessfulRound(roomId, defOdIdBotAuto);
       successfulDefense(gs);
       broadcastGameState(roomId, gs);
       restartTurnTimer(roomId);
