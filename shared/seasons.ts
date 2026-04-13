@@ -36,6 +36,13 @@ export interface SeasonTheme {
   emoji: string;
 }
 
+/** Per-season override for a specific rank's reward */
+export interface SeasonRankRewardOverride {
+  rankKey: string;
+  avatarId?: string | null;
+  frameId?: string | null;
+}
+
 export interface SeasonInfo {
   /** 0-indexed season number within the 12-season cycle (0–11) */
   index: number;
@@ -48,6 +55,8 @@ export interface SeasonInfo {
   nameEn: string;
   /** Visual theme for the Season page */
   theme: SeasonTheme;
+  /** Per-season overrides for rank rewards (avatar/frame). Overrides SEASON_REWARD_DEFS for this season only. */
+  rankRewardOverrides?: SeasonRankRewardOverride[];
 }
 
 /**
@@ -180,6 +189,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-purple-400',
       emoji: '💜',
     },
+    // Season 7 unique rewards: Zircon rank gets the Neon Paw animated avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'neon_paw' },
+    ],
   },
   {
     index: 7,
@@ -461,4 +474,19 @@ export const SEASON_REWARD_DEFS: SeasonRewardDef[] = [
 
 export function getSeasonRewardDef(rankKey: string): SeasonRewardDef {
   return SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey) ?? SEASON_REWARD_DEFS[0];
+}
+
+/**
+ * Get the reward definition for a specific rank in a specific season.
+ * Applies per-season overrides (rankRewardOverrides) on top of SEASON_REWARD_DEFS.
+ */
+export function getSeasonRewardDefForSeason(rankKey: string, seasonInfo: SeasonInfo): SeasonRewardDef {
+  const base = getSeasonRewardDef(rankKey);
+  const override = seasonInfo.rankRewardOverrides?.find(o => o.rankKey === rankKey);
+  if (!override) return base;
+  return {
+    ...base,
+    ...(override.avatarId !== undefined ? { avatarId: override.avatarId } : {}),
+    ...(override.frameId !== undefined ? { frameId: override.frameId } : {}),
+  };
 }

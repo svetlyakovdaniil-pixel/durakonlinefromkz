@@ -1,7 +1,7 @@
 import { getDb } from "./db";
 import { seasonRatings, seasonRewards, playerProfiles, notifications } from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
-import { getCurrentSeasonKey, getSeasonRank, getSeasonRewardDef } from "../shared/seasons";
+import { getCurrentSeasonKey, getSeasonRank, getSeasonRewardDef, getSeasonRewardDefForSeason, getSeasonInfo } from "../shared/seasons";
 
 // ─── Season Rating Helpers ────────────────────────────────────────────────────
 
@@ -123,10 +123,13 @@ export async function processSeasonEnd(seasonKey: string) {
     .where(eq(seasonRatings.seasonKey, seasonKey));
 
   let processed = 0;
+  const seasonInfo = getSeasonInfo(seasonKey);
 
   for (const participant of participants) {
     const rank = getSeasonRank(participant.seasonRating);
-    const rewardDef = getSeasonRewardDef(rank.key);
+    const rewardDef = seasonInfo
+      ? getSeasonRewardDefForSeason(rank.key, seasonInfo)
+      : getSeasonRewardDef(rank.key);
 
     // Check if reward already processed
     const existing = await db

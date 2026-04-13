@@ -2679,3 +2679,9 @@
 ## Batch 54 — Баг: тестовый сезон не отображается в Season.tsx
 - [x] SeasonTestTab: при выборе сезона сохранять seasonKey в localStorage ('admin_test_season'), при сбросе — удалять
 - [x] Season.tsx: читать testSeasonKey из localStorage (если нет URL-параметра), реагировать на изменения через storage event
+
+## Batch 55 — Аватарка Циркон (Неоновая эра)
+- [x] Загрузить 11.jpg на CDN через manus-upload-file --webdev
+- [x] Создать компонент NeonPawAvatar.tsx с вращающимися орбитальными дугами (CSS @keyframes)
+- [x] Зарегистрировать аватарку в shared/avatars.ts
+- [x] Привязать аватарку к рангу Циркон в сезоне Неоновая эра (shared/seasons.ts)

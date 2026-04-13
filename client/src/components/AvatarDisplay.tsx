@@ -2,6 +2,7 @@ import { KhanAvatar } from './KhanAvatar';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
+import { NeonPawAvatar } from './NeonPawAvatar';
 import { getAvatarUrl } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
@@ -37,6 +38,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   if (avatarId === 'great_khan') {
     return <GreatKhanAvatar size={size} className={className} />;
+  }
+
+  if (avatarId === 'neon_paw') {
+    return <NeonPawAvatar size={size} className={className} />;
   }
 
   return (
