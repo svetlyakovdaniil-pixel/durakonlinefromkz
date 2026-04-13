@@ -210,8 +210,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : locale === 'en' ? 'No frame' : 'Без рамки'}</span>
                 {!equippedFrame && <Check className="w-4 h-4 text-green-400 ml-auto" />}
               </button>
-              {/* Regular owned frames */}
-              {AVATAR_FRAMES.filter(f => ownedFrames.includes(f.id) && !(f as any).premiumOnly).map(frame => (
+              {/* Regular owned frames (excludes premiumOnly and seasonOnly) */}
+              {AVATAR_FRAMES.filter(f => ownedFrames.includes(f.id) && !(f as any).premiumOnly && !(f as any).seasonOnly).map(frame => (
                 <button
                   key={frame.id}
                   onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
