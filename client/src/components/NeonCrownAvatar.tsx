@@ -39,13 +39,19 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
   // BUT the avatar circle clips the image. The circle has radius = size/2.
   // The image is rendered as objectFit:cover inside the circle, so coordinates
   // map 1:1 from image % to container %. We just need to place dots at those %.
+  // Diamond positions measured from screenshot analysis:
+  // Screenshot bright clusters: left=(105,155), center=(239,79), right=(362,155)
+  // Avatar circle in screenshot: x=75-415, y=65-405 (340x340px)
+  // Relative to circle: left=(8.8%, 26.5%), center=(48.2%, 4.1%), right=(84.4%, 26.5%)
+  // The dots appeared higher than diamonds due to large size (12% = 24px at 200px).
+  // Fix: reduce dot size to 7% and add +3% to topPct so center of dot aligns with diamond center.
   const diamonds = [
-    { leftPct: 0.093, topPct: 0.278 },  // left diamond
-    { leftPct: 0.479, topPct: 0.059 },  // center diamond (top peak)
-    { leftPct: 0.835, topPct: 0.278 },  // right diamond
+    { leftPct: 0.088, topPct: 0.295 },  // left diamond (26.5% + offset for dot center)
+    { leftPct: 0.482, topPct: 0.075 },  // center diamond (4.1% + offset)
+    { leftPct: 0.844, topPct: 0.295 },  // right diamond
   ];
 
-  const dotSize = Math.max(3, size * 0.12);
+  const dotSize = Math.max(2, size * 0.07);
 
   return (
     <div
