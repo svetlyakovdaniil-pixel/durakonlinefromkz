@@ -141,7 +141,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Неон Мысық',
     nameEn: 'Neon Cat',
     url: 'neon_cat', // special: rendered by NeonCatAvatar component
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_cat_amber-3iaxam7C5jZmTr6VeA4aeA.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // rank ID — Amber rank in Season 7 (Neon Era)

@@ -2718,3 +2718,8 @@
 - [x] Добавить neon_cat в AvatarDisplay.tsx
 - [x] Добавить neon_cat в getAvatarAccentColors() в shared/avatars.ts
 - [x] Привязать neon_cat к рангу Янтарь (golden_horde_warrior) в rankRewardOverrides сезона Неоновая эра
+
+## Batch 60 — Переделка аватарки Янтарь (Неоновая эра)
+- [x] Сгенерировать более отличающееся изображение кота (другая поза/форма, но неоновый стиль)
+- [x] Обновить NeonCatAvatar.tsx: новое изображение + анимация "весь кот светится → свет кота гаснет → остаются только очки"
+- [x] Обновить previewUrl в shared/avatars.ts
