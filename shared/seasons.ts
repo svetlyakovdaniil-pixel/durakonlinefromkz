@@ -195,10 +195,10 @@ export const SEASONS: SeasonInfo[] = [
     },
     // Season 7 unique rewards:
     // Zircon (sky_eagle) → Neon Paw animated avatar
-    // Ruby (winged_horse) → Neon Dino animated avatar
+    // Ruby (steppe_khan) → Neon Dino animated avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'neon_paw' },
-      { rankKey: 'winged_horse', avatarId: 'neon_dino' },
+      { rankKey: 'steppe_khan', avatarId: 'neon_dino' },
     ],
   },
   {

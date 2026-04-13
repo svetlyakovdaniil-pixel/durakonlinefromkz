@@ -493,7 +493,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       : null;
 
                     const isAnimated = baseAvatarId
-                      ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw'].includes(baseAvatarId)
+                      ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw', 'neon_dino'].includes(baseAvatarId)
                       : false;
 
                     return (
