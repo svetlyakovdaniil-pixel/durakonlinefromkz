@@ -86,7 +86,7 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
         <div style={{ position: 'absolute', inset: 0, background: '#050a14' }} />
         {/* Crown image — colour cycle applied directly so the ring-contour shifts colour */}
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_obsidian-3s7gu4bnxW94srxC2sGYmd.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_centered_9f006052.webp"
           alt="Обсидиан"
           style={{
             position: 'absolute',
