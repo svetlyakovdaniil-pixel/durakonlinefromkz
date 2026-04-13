@@ -1,16 +1,17 @@
 /**
  * SeasonTestTab — Admin tool for testing season reward mechanics.
- * Allows setting test ratings, simulating season end, and rolling back.
+ * Allows selecting any season (2025-Q1 … 2027-Q4), setting test ratings,
+ * simulating season end, and rolling back.
  */
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   FlaskConical, Trophy, RotateCcw, Play, ChevronRight,
-  CheckCircle2, AlertCircle, Users, Star, Coins, RefreshCw,
+  CheckCircle2, AlertCircle, Users, Star, Coins, RefreshCw, Calendar,
 } from "lucide-react";
-import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank } from "@shared/seasons";
+import { SEASON_BASE_YEAR, SEASON_RANKS, SEASON_REWARD_DEFS, SEASONS, getSeasonInfo, getSeasonBounds, getSeasonRank, getCurrentSeasonKey } from "@shared/seasons";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 function formatNum(n: number | null | undefined) {
@@ -26,14 +27,46 @@ const RANK_PRESETS = SEASON_RANKS.map(r => ({
   rewardDef: SEASON_REWARD_DEFS.find(d => d.rankKey === r.key),
 }));
 
+/** Build the list of all 36 season keys: 2025-Q1 … 2027-Q4 */
+function buildAllSeasonKeys(): { key: string; label: string; isCurrent: boolean }[] {
+  const current = getCurrentSeasonKey();
+  const keys: { key: string; label: string; isCurrent: boolean }[] = [];
+  for (let year = SEASON_BASE_YEAR; year < SEASON_BASE_YEAR + 3; year++) {
+    for (let q = 1; q <= 4; q++) {
+      const key = `${year}-Q${q}`;
+      const info = getSeasonInfo(key);
+      const bounds = getSeasonBounds(key);
+      const startStr = bounds.start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+      const endStr = bounds.end.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" });
+      keys.push({
+        key,
+        label: `${key} — ${info.nameRu} (${startStr} – ${endStr})`,
+        isCurrent: key === current,
+      });
+    }
+  }
+  return keys;
+}
+
 // ─── component ───────────────────────────────────────────────────────────────
 export function SeasonTestTab() {
+  const allSeasonKeys = useMemo(() => buildAllSeasonKeys(), []);
+  const currentKey = useMemo(() => getCurrentSeasonKey(), []);
+
+  const [selectedSeasonKey, setSelectedSeasonKey] = useState<string>(currentKey);
   const [customRating, setCustomRating] = useState<string>("15000");
   const [step, setStep] = useState<"idle" | "rated" | "simulated" | "rolled_back">("idle");
 
-  const { data, refetch, isLoading } = trpc.season.testGetAdminProfiles.useQuery(undefined, {
-    refetchOnWindowFocus: false,
-  });
+  // Reset step when season changes
+  const handleSeasonChange = (key: string) => {
+    setSelectedSeasonKey(key);
+    setStep("idle");
+  };
+
+  const { data, refetch, isLoading } = trpc.season.testGetAdminProfiles.useQuery(
+    { seasonKey: selectedSeasonKey },
+    { refetchOnWindowFocus: false },
+  );
 
   const setRatings = trpc.season.testSetAdminRatings.useMutation({
     onSuccess: (res) => {
@@ -65,7 +98,7 @@ export function SeasonTestTab() {
   const isBusy = setRatings.isPending || simulate.isPending || rollback.isPending;
 
   const handleSetRating = (rating: number) => {
-    setRatings.mutate({ rating });
+    setRatings.mutate({ rating, seasonKey: selectedSeasonKey });
   };
 
   const handleCustomRating = () => {
@@ -76,6 +109,10 @@ export function SeasonTestTab() {
     }
     handleSetRating(n);
   };
+
+  const selectedInfo = useMemo(() => getSeasonInfo(selectedSeasonKey), [selectedSeasonKey]);
+  const selectedBounds = useMemo(() => getSeasonBounds(selectedSeasonKey), [selectedSeasonKey]);
+  const isCurrentSeason = selectedSeasonKey === currentKey;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -90,6 +127,58 @@ export function SeasonTestTab() {
             Инструменты для тестирования механики сезона. Работает только с admin/gm аккаунтами.
           </p>
         </div>
+      </div>
+
+      {/* Season selector */}
+      <div className="bg-gray-900/60 border border-amber-800/40 rounded-xl p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-amber-400" />
+          <span className="text-sm font-semibold text-amber-100">Выбор сезона</span>
+          {isCurrentSeason && (
+            <span className="px-2 py-0.5 rounded-full bg-green-900/40 border border-green-700/40 text-green-400 text-xs font-medium">
+              Текущий
+            </span>
+          )}
+        </div>
+
+        <select
+          value={selectedSeasonKey}
+          onChange={e => handleSeasonChange(e.target.value)}
+          className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-amber-600 cursor-pointer"
+        >
+          {allSeasonKeys.map(s => (
+            <option key={s.key} value={s.key}>
+              {s.isCurrent ? `★ ${s.label}` : s.label}
+            </option>
+          ))}
+        </select>
+
+        {/* Selected season info card */}
+        <div className="grid grid-cols-3 gap-3 text-xs">
+          <div className="bg-gray-800/60 rounded-lg p-2.5">
+            <div className="text-gray-500 mb-1">Сезон</div>
+            <div className="font-bold text-amber-300">{selectedSeasonKey}</div>
+          </div>
+          <div className="bg-gray-800/60 rounded-lg p-2.5">
+            <div className="text-gray-500 mb-1">Название</div>
+            <div className="font-medium text-gray-200 truncate">{selectedInfo.nameRu}</div>
+          </div>
+          <div className="bg-gray-800/60 rounded-lg p-2.5">
+            <div className="text-gray-500 mb-1">Период</div>
+            <div className="font-medium text-gray-300">
+              {selectedBounds.start.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
+              {" – "}
+              {selectedBounds.end.toLocaleDateString("ru-RU", { day: "numeric", month: "short", year: "numeric" })}
+            </div>
+          </div>
+        </div>
+
+        {!isCurrentSeason && (
+          <div className="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-900/20 border border-amber-800/30 rounded-lg px-3 py-2">
+            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+            Вы тестируете не текущий сезон. Все операции будут применены к сезону <strong>{selectedSeasonKey}</strong>.
+          </div>
+        )}
       </div>
 
       {/* Step indicator */}
@@ -125,7 +214,10 @@ export function SeasonTestTab() {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Star className="w-4 h-4 text-amber-400" />
-              <span className="text-sm font-semibold text-amber-100">Текущий сезон: {data.seasonKey}</span>
+              <span className="text-sm font-semibold text-amber-100">
+                Данные сезона: <span className="text-amber-300">{data.seasonKey}</span>
+                {" — "}<span className="text-gray-300">{selectedInfo.nameRu}</span>
+              </span>
             </div>
             <Button variant="ghost" size="sm" onClick={() => refetch()} disabled={isLoading} className="text-gray-400 h-7 px-2">
               <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
@@ -190,7 +282,7 @@ export function SeasonTestTab() {
           <span className="text-sm font-semibold text-gray-200">Установить рейтинг сезона</span>
         </div>
         <p className="text-xs text-gray-400">
-          Установит указанный рейтинг всем admin/gm игрокам в текущем сезоне. Это позволит протестировать конкретный ранг и его награды.
+          Установит указанный рейтинг всем admin/gm игрокам в сезоне <strong className="text-amber-400">{selectedSeasonKey}</strong>. Это позволит протестировать конкретный ранг и его награды.
         </p>
 
         {/* Rank presets */}
@@ -257,13 +349,13 @@ export function SeasonTestTab() {
           <span className="text-sm font-semibold text-gray-200">Симулировать конец сезона</span>
         </div>
         <p className="text-xs text-gray-400">
-          Запустит <code className="bg-gray-800 px-1 rounded text-amber-300">processSeasonEnd</code> для текущего сезона:
+          Запустит <code className="bg-gray-800 px-1 rounded text-amber-300">processSeasonEnd</code> для сезона <strong className="text-amber-400">{selectedSeasonKey}</strong>:
           создаст записи наград, зачислит шаныраки/тенге на балансы и отправит уведомления.
           После этого зайдите в игру и проверьте уведомление в колоколе.
         </p>
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => simulate.mutate()}
+            onClick={() => simulate.mutate({ seasonKey: selectedSeasonKey })}
             disabled={isBusy || step === "idle"}
             className="bg-green-800 hover:bg-green-700 text-white gap-2"
           >
@@ -289,12 +381,12 @@ export function SeasonTestTab() {
           <span className="text-sm font-semibold text-gray-200">Откатить тестовые данные</span>
         </div>
         <p className="text-xs text-gray-400">
-          Удалит season_rewards и season_ratings за текущий сезон для всех admin/gm игроков,
+          Удалит season_rewards и season_ratings за сезон <strong className="text-amber-400">{selectedSeasonKey}</strong> для всех admin/gm игроков,
           вернёт зачисленные балансы и удалит уведомления о наградах.
         </p>
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => rollback.mutate()}
+            onClick={() => rollback.mutate({ seasonKey: selectedSeasonKey })}
             disabled={isBusy || step !== "simulated"}
             variant="outline"
             className="border-red-800 text-red-400 hover:bg-red-900/20 hover:text-red-300 gap-2"
@@ -318,6 +410,7 @@ export function SeasonTestTab() {
         <div className="space-y-1">
           <div className="font-semibold">Как тестировать:</div>
           <ol className="list-decimal list-inside space-y-1 text-blue-400">
+            <li>Выберите нужный сезон из выпадающего списка выше</li>
             <li>Выберите ранг или введите произвольный рейтинг → нажмите «Установить»</li>
             <li>Откройте игру в другой вкладке и убедитесь, что ранг отображается корректно в разделе «Сезон»</li>
             <li>Вернитесь сюда → нажмите «Запустить конец сезона»</li>

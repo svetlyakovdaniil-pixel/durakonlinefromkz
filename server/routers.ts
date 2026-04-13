@@ -1485,12 +1485,14 @@ export const appRouter = router({
     // ─── Season Test Tools (admin only) ────────────────────────────────────────
 
     /** Admin test: get all admin/gm profiles with their current season ratings */
-    testGetAdminProfiles: adminProcedure.query(async () => {
+    testGetAdminProfiles: adminProcedure
+      .input(z.object({ seasonKey: z.string().optional() }))
+      .query(async ({ input }) => {
       const db = await (await import('./db')).getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const { users, playerProfiles, seasonRatings, seasonRewards } = await import('../drizzle/schema');
       const { eq, sql, and, inArray } = await import('drizzle-orm');
-      const seasonKey = getCurrentSeasonKey();
+      const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
 
       const adminUsers = await db
         .select({
@@ -1523,13 +1525,13 @@ export const appRouter = router({
 
     /** Admin test: set season rating for all admin/gm users to a specific value */
     testSetAdminRatings: adminProcedure
-      .input(z.object({ rating: z.number().min(0).max(99999) }))
+      .input(z.object({ rating: z.number().min(0).max(99999), seasonKey: z.string().optional() }))
       .mutation(async ({ input }) => {
         const db = await (await import('./db')).getDb();
         if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
         const { users, playerProfiles, seasonRatings } = await import('../drizzle/schema');
         const { eq, sql, and, inArray } = await import('drizzle-orm');
-        const seasonKey = getCurrentSeasonKey();
+        const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
 
         // Get all admin/gm profiles
         const adminProfiles = await db
@@ -1566,21 +1568,25 @@ export const appRouter = router({
       }),
 
     /** Admin test: simulate season end — create rewards + notifications + credit balances */
-    testSimulateSeasonEnd: adminProcedure.mutation(async () => {
+    testSimulateSeasonEnd: adminProcedure
+      .input(z.object({ seasonKey: z.string().optional() }))
+      .mutation(async ({ input }) => {
       const db = await (await import('./db')).getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
-      const seasonKey = getCurrentSeasonKey();
+      const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
       const result = await processSeasonEnd(seasonKey);
       return { ...result, seasonKey };
     }),
 
     /** Admin test: rollback — delete season_rewards + season_ratings + subtract credited balances + delete notifications */
-    testRollbackSeason: adminProcedure.mutation(async () => {
+    testRollbackSeason: adminProcedure
+      .input(z.object({ seasonKey: z.string().optional() }))
+      .mutation(async ({ input }) => {
       const db = await (await import('./db')).getDb();
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const { users, playerProfiles, seasonRatings, seasonRewards, notifications } = await import('../drizzle/schema');
       const { eq, sql, and, inArray } = await import('drizzle-orm');
-      const seasonKey = getCurrentSeasonKey();
+      const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
 
       // Get all admin/gm profiles
       const adminProfiles = await db
