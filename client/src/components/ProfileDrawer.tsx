@@ -191,7 +191,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             </FrameWrapper>
             <div className="text-amber-100 text-sm">
               {equippedFrame
-                ? (() => { const f = AVATAR_FRAMES.find(f => f.id === equippedFrame); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : f?.name) || equippedFrame; })()
+                ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : f?.name) || equippedFrame; })()
                 : (locale === 'kk' ? 'Жақтау жоқ' : locale === 'en' ? 'No frame' : 'Без рамки')}
             </div>
           </div>
@@ -278,14 +278,20 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                   </div>
                 )
               ))}
-              {/* Season-only frames (great_khan) — shown locked unless owned */}
-              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly).map(frame => (
-                ownedFrames.includes(frame.id) ? (
+              {/* Season-only frames — shown locked unless owned (supports season-suffixed IDs like obsidian_neon_2026Q3) */}
+              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly).map(frame => {
+                // Find owned ID: exact match OR season-suffixed match (e.g. 'obsidian_neon_2026Q3')
+                const ownedId = ownedFrames.find(id => id === frame.id || id.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
+                const isOwned = !!ownedId;
+                // Use the actual owned ID (with suffix) for equip, fallback to base ID
+                const equipId = ownedId ?? frame.id;
+                const isEquipped = equippedFrame === equipId || (equippedFrame && equippedFrame.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
+                return isOwned ? (
                   <button
                     key={frame.id}
-                    onClick={() => equipFrameMutation.mutate({ frameId: frame.id })}
+                    onClick={() => equipFrameMutation.mutate({ frameId: equipId })}
                     className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
-                      equippedFrame === frame.id ? 'bg-yellow-700/30 border border-yellow-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-yellow-600/25'
+                      isEquipped ? 'bg-yellow-700/30 border border-yellow-500/40' : 'bg-[#0f2035]/60 hover:bg-[#0f2035]/80 border border-yellow-600/25'
                     }`}
                   >
                     <FrameWrapper frameId={frame.id} size={40}>
@@ -301,7 +307,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
                       </div>
                     </div>
-                    {equippedFrame === frame.id && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}
+                    {isEquipped && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}
                   </button>
                 ) : (
                   <div
@@ -326,8 +332,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                       <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.15)" stroke="rgba(218,165,32,0.5)" />
                     </svg>
                   </div>
-                )
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -26,7 +26,10 @@ export function FrameWrapper({
     return <div className={className}>{children}</div>;
   }
 
-  switch (frameId) {
+  // Strip season suffix (e.g. 'obsidian_neon_2026Q3' → 'obsidian_neon')
+  const baseFrameId = frameId.replace(/_\d{4}Q[1-4]$/, '');
+
+  switch (baseFrameId) {
     case 'fire':
       return <FireFrame size={size} active={true} className={className}>{children}</FireFrame>;
     case 'neon':
@@ -50,7 +53,9 @@ export function FrameWrapper({
  * Renders the appropriate icon for a given frame type.
  */
 export function FrameIcon({ frameId, className = 'w-5 h-5' }: { frameId: string; className?: string }) {
-  switch (frameId) {
+  // Strip season suffix
+  const baseId = frameId.replace(/_\d{4}Q[1-4]$/, '');
+  switch (baseId) {
     case 'fire':
       return <Flame className={`${className} text-orange-400`} />;
     case 'neon':

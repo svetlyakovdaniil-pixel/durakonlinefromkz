@@ -617,16 +617,20 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Season-only frames (e.g. great_khan) can only be equipped if owned.
         // getOwnedFrames expects profileId (not userId), so we look up the profile first.
-        const SEASON_ONLY_FRAMES = ['great_khan'];
-        if (input.frameId && SEASON_ONLY_FRAMES.includes(input.frameId)) {
-          const profile = await getProfileByUserId(ctx.user.id);
-          if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
-          const owned = await getOwnedFrames(profile.id);
-          if (!owned.includes(input.frameId)) {
-            throw new TRPCError({
-              code: 'FORBIDDEN',
-              message: 'This frame can only be equipped after earning the Obsidian rank at season end.',
-            });
+        const SEASON_ONLY_BASE_FRAMES = ['great_khan', 'obsidian_neon'];
+        if (input.frameId) {
+          // Strip season suffix to get base frame ID (e.g. 'obsidian_neon_2026Q3' → 'obsidian_neon')
+          const baseFrameId = input.frameId.replace(/_\d{4}Q[1-4]$/, '');
+          if (SEASON_ONLY_BASE_FRAMES.includes(baseFrameId)) {
+            const profile = await getProfileByUserId(ctx.user.id);
+            if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+            const owned = await getOwnedFrames(profile.id);
+            if (!owned.includes(input.frameId)) {
+              throw new TRPCError({
+                code: 'FORBIDDEN',
+                message: 'This frame can only be equipped after earning the Obsidian rank at season end.',
+              });
+            }
           }
         }
         const result = await equipFrame(ctx.user.id, input.frameId);

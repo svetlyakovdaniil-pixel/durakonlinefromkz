@@ -13,6 +13,7 @@ import { LightningFrame } from './LightningFrame';
 import { IceFrame } from './IceFrame';
 import { PremiumFrame } from './PremiumFrame';
 import { GreatKhanFrame } from './GreatKhanFrame';
+import { ObsidianNeonFrame } from './ObsidianNeonFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -115,6 +116,25 @@ export const AVATAR_FRAMES = [
     bgGradient: 'from-yellow-900 to-amber-950',
     seasonOnly: true,
   },
+  {
+    id: 'obsidian_neon',
+    name: 'Обсидиан — Неоновая эра',
+    nameKk: 'Обсидиан — Неон Дәуірі',
+    nameEn: 'Obsidian — Neon Era',
+    description: 'Двойная орбита: два кольца вращаются в противоположные стороны. Награда за ранг Обсидиан в сезоне Неоновая эра.',
+    descriptionKk: 'Қос орбита: екі сақина қарама-қарсы бағытта айналады. Неон Дәуірі маусымындағы Обсидиан дәрежесі үшін сыйлық.',
+    descriptionEn: 'Dual orbit: two rings rotating in opposite directions. Reward for Obsidian rank in the Neon Era season.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(0,212,255,0.9)" />
+        <circle cx="12" cy="12" r="6" stroke="rgba(0,80,255,0.85)" />
+      </svg>
+    ),
+    iconColor: 'text-cyan-400',
+    bgGradient: 'from-cyan-900 to-blue-950',
+    seasonOnly: true,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -132,6 +152,8 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <PremiumFrame size={size} active={true}>{children}</PremiumFrame>;
     case 'great_khan':
       return <GreatKhanFrame size={size} active={true}>{children}</GreatKhanFrame>;
+    case 'obsidian_neon':
+      return <ObsidianNeonFrame size={size} active={true}>{children}</ObsidianNeonFrame>;
     default:
       return <>{children}</>;
   }

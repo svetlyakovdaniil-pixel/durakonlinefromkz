@@ -7,6 +7,7 @@ import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRewardDefForSeason, type Sea
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
+import { ObsidianNeonFrame } from '@/components/ObsidianNeonFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
@@ -204,7 +205,7 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Frame */}
+            {/* Frame — great_khan (legacy) */}
             {reward.frameId === 'great_khan' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -226,6 +227,32 @@ function RewardPopup({
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
                     {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame — obsidian_neon (Dual Orbit, Season 7) */}
+            {reward.frameId === 'obsidian_neon' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(0,80,255,0.08)', border: '1px solid rgba(0,212,255,0.25)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianNeonFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-cyan-900 to-blue-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-cyan-400">
+                        <circle cx="12" cy="12" r="7" stroke="rgba(0,212,255,0.9)" />
+                        <circle cx="12" cy="12" r="4" stroke="rgba(0,80,255,0.85)" />
+                      </svg>
+                    </div>
+                  </ObsidianNeonFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(0,212,255,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан — Неон Дәуірі' : locale === 'en' ? 'Obsidian — Neon Era' : 'Обсидиан — Неоновая эра'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(0,180,255,0.50)' }}>
+                    {locale === 'kk' ? 'Қос орбиталы эксклюзивті жақтау' : locale === 'en' ? 'Exclusive dual-orbit animated frame' : 'Эксклюзивная рамка с двойной орбитой'}
                   </div>
                 </div>
               </div>
@@ -487,7 +514,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                           );
                         })()}
-                        {/* Frame reward */}
+                        {/* Frame reward — great_khan (legacy) */}
                         {rewardDef.frameId === 'great_khan' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -501,6 +528,24 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                             <span>
                               {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — obsidian_neon (Dual Orbit, Season 7) */}
+                        {rewardDef.frameId === 'obsidian_neon' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianNeonFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-cyan-900 to-blue-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-cyan-400">
+                                    <circle cx="12" cy="12" r="7" stroke="rgba(0,212,255,0.9)" />
+                                    <circle cx="12" cy="12" r="4" stroke="rgba(0,80,255,0.85)" />
+                                  </svg>
+                                </div>
+                              </ObsidianNeonFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан — Неон Дәуірі' : locale === 'en' ? 'Obsidian — Neon Era' : 'Обсидиан — Неоновая эра'}</span>
                             </span>
                           </div>
                         )}
