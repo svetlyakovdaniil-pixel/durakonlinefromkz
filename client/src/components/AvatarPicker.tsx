@@ -7,6 +7,8 @@ import { trpc } from '@/lib/trpc';
 import { SkyEagleAvatar } from './SkyEagleAvatar';
 import { KhanAvatar } from './KhanAvatar';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
+import { DivingEagleAvatar } from './DivingEagleAvatar';
+import { GreatKhanAvatar } from './GreatKhanAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -51,6 +53,10 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
               <KhanAvatar size={96} />
             ) : selected === 'golden_horde' ? (
               <GoldenHordeAvatar size={96} />
+            ) : selected === 'diving_eagle' ? (
+              <DivingEagleAvatar size={96} />
+            ) : selected === 'great_khan' ? (
+              <GreatKhanAvatar size={96} />
             ) : (
               <img
                 src={getAvatarUrl(selected)}
@@ -91,6 +97,14 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                 ) : avatar.id === 'golden_horde' ? (
                   <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
                     <GoldenHordeAvatar size={60} className="w-full h-full" />
+                  </div>
+                ) : avatar.id === 'diving_eagle' ? (
+                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
+                    <DivingEagleAvatar size={60} className="w-full h-full" />
+                  </div>
+                ) : avatar.id === 'great_khan' ? (
+                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
+                    <GreatKhanAvatar size={60} className="w-full h-full" />
                   </div>
                 ) : (
                   <img

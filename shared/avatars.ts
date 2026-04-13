@@ -103,6 +103,26 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // rank ID from SEASON_RANKS
   },
+  {
+    id: 'diving_eagle',
+    name: 'Пикирующий Орёл',
+    nameKk: 'Шүйілетін Бүркіт',
+    nameEn: 'Diving Eagle',
+    url: 'diving_eagle', // special: rendered by DivingEagleAvatar component
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // rank ID from SEASON_RANKS
+  },
+  {
+    id: 'great_khan',
+    name: 'Великий Хан',
+    nameKk: 'Ұлы Хан',
+    nameEn: 'Great Khan',
+    url: 'great_khan', // special: rendered by GreatKhanAvatar component
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan', // rank ID from SEASON_RANKS
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
@@ -110,8 +130,8 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 // Bot-only avatar ID (players cannot select this)
 export const BOT_AVATAR_ID = 'bot';
 
-/** Animated avatar IDs that use Canvas components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['sky_eagle', 'khan', 'golden_horde'] as const;
+/** Animated avatar IDs that use SVG+CSS components instead of img tags */
+export const ANIMATED_AVATAR_IDS = ['sky_eagle', 'khan', 'golden_horde', 'diving_eagle', 'great_khan'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
