@@ -1353,6 +1353,164 @@ export const appRouter = router({
       if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
       return getUnclaimedSeasonRewards(profile.id);
     }),
+
+    // ─── Season Test Tools (admin only) ────────────────────────────────────────
+
+    /** Admin test: get all admin/gm profiles with their current season ratings */
+    testGetAdminProfiles: adminProcedure.query(async () => {
+      const db = await (await import('./db')).getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { users, playerProfiles, seasonRatings, seasonRewards } = await import('../drizzle/schema');
+      const { eq, sql, and, inArray } = await import('drizzle-orm');
+      const seasonKey = getCurrentSeasonKey();
+
+      const adminUsers = await db
+        .select({
+          userId: users.id,
+          role: users.role,
+          profileId: playerProfiles.id,
+          gameId: playerProfiles.gameId,
+          displayName: playerProfiles.displayName,
+          balanceShanyrak: playerProfiles.balanceShanyrak,
+          balanceTenge: playerProfiles.balanceTenge,
+          seasonRating: sql<number>`COALESCE(${seasonRatings.seasonRating}, 0)`,
+          hasReward: sql<number>`CASE WHEN ${seasonRewards.id} IS NOT NULL THEN 1 ELSE 0 END`,
+          rewardRankKey: seasonRewards.rankKey,
+          rewardClaimed: seasonRewards.claimed,
+        })
+        .from(users)
+        .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+        .leftJoin(seasonRatings, and(
+          eq(seasonRatings.profileId, playerProfiles.id),
+          eq(seasonRatings.seasonKey, seasonKey),
+        ))
+        .leftJoin(seasonRewards, and(
+          eq(seasonRewards.profileId, playerProfiles.id),
+          eq(seasonRewards.seasonKey, seasonKey),
+        ))
+        .where(inArray(users.role, ['admin', 'gm']));
+
+      return { profiles: adminUsers, seasonKey };
+    }),
+
+    /** Admin test: set season rating for all admin/gm users to a specific value */
+    testSetAdminRatings: adminProcedure
+      .input(z.object({ rating: z.number().min(0).max(99999) }))
+      .mutation(async ({ input }) => {
+        const db = await (await import('./db')).getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        const { users, playerProfiles, seasonRatings } = await import('../drizzle/schema');
+        const { eq, sql, and, inArray } = await import('drizzle-orm');
+        const seasonKey = getCurrentSeasonKey();
+
+        // Get all admin/gm profiles
+        const adminProfiles = await db
+          .select({ profileId: playerProfiles.id, displayName: playerProfiles.displayName })
+          .from(users)
+          .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+          .where(inArray(users.role, ['admin', 'gm']));
+
+        for (const p of adminProfiles) {
+          // Upsert season rating
+          const existing = await db
+            .select({ id: seasonRatings.id })
+            .from(seasonRatings)
+            .where(and(eq(seasonRatings.profileId, p.profileId), eq(seasonRatings.seasonKey, seasonKey)))
+            .limit(1);
+
+          if (existing.length > 0) {
+            await db.update(seasonRatings)
+              .set({ seasonRating: input.rating, gamesPlayed: 50, wins: 30, losses: 10 })
+              .where(and(eq(seasonRatings.profileId, p.profileId), eq(seasonRatings.seasonKey, seasonKey)));
+          } else {
+            await db.insert(seasonRatings).values({
+              profileId: p.profileId,
+              seasonKey,
+              seasonRating: input.rating,
+              gamesPlayed: 50,
+              wins: 30,
+              losses: 10,
+            });
+          }
+        }
+
+        return { updated: adminProfiles.length, rating: input.rating, seasonKey };
+      }),
+
+    /** Admin test: simulate season end — create rewards + notifications + credit balances */
+    testSimulateSeasonEnd: adminProcedure.mutation(async () => {
+      const db = await (await import('./db')).getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const seasonKey = getCurrentSeasonKey();
+      const result = await processSeasonEnd(seasonKey);
+      return { ...result, seasonKey };
+    }),
+
+    /** Admin test: rollback — delete season_rewards + season_ratings + subtract credited balances + delete notifications */
+    testRollbackSeason: adminProcedure.mutation(async () => {
+      const db = await (await import('./db')).getDb();
+      if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+      const { users, playerProfiles, seasonRatings, seasonRewards, notifications } = await import('../drizzle/schema');
+      const { eq, sql, and, inArray } = await import('drizzle-orm');
+      const seasonKey = getCurrentSeasonKey();
+
+      // Get all admin/gm profiles
+      const adminProfiles = await db
+        .select({ profileId: playerProfiles.id, displayName: playerProfiles.displayName })
+        .from(users)
+        .innerJoin(playerProfiles, eq(playerProfiles.userId, users.id))
+        .where(inArray(users.role, ['admin', 'gm']));
+
+      let rolledBack = 0;
+      for (const p of adminProfiles) {
+        // Get reward to know how much to subtract
+        const rewards = await db
+          .select()
+          .from(seasonRewards)
+          .where(and(eq(seasonRewards.profileId, p.profileId), eq(seasonRewards.seasonKey, seasonKey)))
+          .limit(1);
+
+        if (rewards.length > 0) {
+          const reward = rewards[0];
+          // Subtract credited balances
+          if (reward.shanyraksAwarded > 0) {
+            await db.update(playerProfiles)
+              .set({ balanceShanyrak: sql`GREATEST(0, ${playerProfiles.balanceShanyrak} - ${reward.shanyraksAwarded})` })
+              .where(eq(playerProfiles.id, p.profileId));
+          }
+          if (reward.tengeAwarded > 0) {
+            await db.update(playerProfiles)
+              .set({ balanceTenge: sql`GREATEST(0, ${playerProfiles.balanceTenge} - ${reward.tengeAwarded})` })
+              .where(eq(playerProfiles.id, p.profileId));
+          }
+          // Delete reward record
+          await db.delete(seasonRewards)
+            .where(and(eq(seasonRewards.profileId, p.profileId), eq(seasonRewards.seasonKey, seasonKey)));
+          rolledBack++;
+        }
+
+        // Delete season rating
+        await db.delete(seasonRatings)
+          .where(and(eq(seasonRatings.profileId, p.profileId), eq(seasonRatings.seasonKey, seasonKey)));
+
+        // Delete season_reward notifications for this season
+        const allNotifs = await db
+          .select({ id: notifications.id, data: notifications.data })
+          .from(notifications)
+          .where(and(eq(notifications.profileId, p.profileId), eq(notifications.type, 'season_reward')));
+
+        for (const n of allNotifs) {
+          try {
+            const d = JSON.parse(n.data ?? '{}');
+            if (d.seasonKey === seasonKey) {
+              await db.delete(notifications).where(eq(notifications.id, n.id));
+            }
+          } catch {}
+        }
+      }
+
+      return { rolledBack, seasonKey };
+    }),
   }),
 });
 

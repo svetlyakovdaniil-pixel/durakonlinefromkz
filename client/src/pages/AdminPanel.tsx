@@ -9,7 +9,7 @@ import {
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
   ShoppingCart, Bell, Send, Filter, Menu, X, Flag,
-  MessageSquare, AlertCircle,
+  MessageSquare, AlertCircle, FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,9 @@ import { toast } from "sonner";
 import { TABLE_STYLES } from "@shared/cardAssets";
 import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
+import { SeasonTestTab } from "@/components/SeasonTestTab";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -118,6 +119,7 @@ export default function AdminPanel() {
     { id: "notifications", label: "Рассылки", icon: Bell, adminOnly: true },
     { id: "moderation", label: "Модерация", icon: Flag },
     { id: "contact", label: "Сообщения", icon: MessageSquare, adminOnly: true },
+    { id: "season_test", label: "Тест сезона", icon: FlaskConical, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -203,6 +205,7 @@ export default function AdminPanel() {
         {tab === "notifications" && isAdmin && <MassNotificationsTab />}
         {tab === "moderation" && (isAdmin || isGM) && <ModerationTab />}
         {tab === "contact" && isAdmin && <ContactMessagesTab />}
+        {tab === "season_test" && isAdmin && <SeasonTestTab />}
       </div>
     </div>
   );
