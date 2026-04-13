@@ -1,5 +1,4 @@
-import { useRef, useEffect } from "react";
-import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
+import React from "react";
 
 interface IceFrameProps {
   size: number;
@@ -8,206 +7,154 @@ interface IceFrameProps {
   className?: string;
 }
 
-interface IceShard {
-  angle: number;
-  length: number;
-  width: number;
-  offset: number;
-  rotSpeed: number;
-  phase: number;
-}
-
-interface Snowflake {
-  angle: number;
-  dist: number;
-  speed: number;
-  size: number;
-  phase: number;
-  drift: number;
-}
-
 /**
- * IceFrame — animated ice/frost effect around a circular avatar.
- * Performance: uses global AnimationScheduler (single RAF loop shared across all Canvas components).
+ * IceFrame — CSS-only animated ice/frost effect around a circular avatar.
+ * Uses conic-gradient + box-shadow pulsing for GPU-accelerated 60fps animation.
+ * No Canvas, no JS animation loop.
  */
 export function IceFrame({ size, children, active = true, className = "" }: IceFrameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scheduleIdRef = useRef<number>(0);
-
-  const padding = Math.round(size * 0.35);
-  const canvasSize = size + padding * 2;
-  const centerX = canvasSize / 2;
-  const centerY = canvasSize / 2;
-  const radius = size / 2;
-
-  useEffect(() => {
-    if (!active) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvasSize * dpr;
-    canvas.height = canvasSize * dpr;
-    ctx.scale(dpr, dpr);
-
-    const shards: IceShard[] = [];
-    for (let i = 0; i < 16; i++) {
-      shards.push({
-        angle: (i / 16) * Math.PI * 2 + (Math.random() - 0.5) * 0.2,
-        length: 8 + Math.random() * 16,
-        width: 1.5 + Math.random() * 3,
-        offset: radius + 1 + Math.random() * 3,
-        rotSpeed: (Math.random() - 0.5) * 0.002,
-        phase: Math.random() * Math.PI * 2,
-      });
-    }
-
-    const snowflakes: Snowflake[] = [];
-    for (let i = 0; i < 25; i++) {
-      snowflakes.push({
-        angle: Math.random() * Math.PI * 2,
-        dist: radius + 5 + Math.random() * 20,
-        speed: 0.003 + Math.random() * 0.008,
-        size: 1 + Math.random() * 2.5,
-        phase: Math.random() * Math.PI * 2,
-        drift: (Math.random() - 0.5) * 0.3,
-      });
-    }
-
-    let time = 0;
-
-    const drawSnowflakeShape = (x: number, y: number, sz: number, alpha: number) => {
-      ctx.save();
-      ctx.translate(x, y);
-      ctx.strokeStyle = `rgba(200, 230, 255, ${alpha})`;
-      ctx.lineWidth = 0.5;
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(Math.cos(a) * sz, Math.sin(a) * sz);
-        ctx.stroke();
-        const bx = Math.cos(a) * sz * 0.6;
-        const by = Math.sin(a) * sz * 0.6;
-        const ba1 = a + 0.5;
-        const ba2 = a - 0.5;
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.lineTo(bx + Math.cos(ba1) * sz * 0.3, by + Math.sin(ba1) * sz * 0.3);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(bx, by);
-        ctx.lineTo(bx + Math.cos(ba2) * sz * 0.3, by + Math.sin(ba2) * sz * 0.3);
-        ctx.stroke();
-      }
-      ctx.restore();
-    };
-
-    scheduleIdRef.current = scheduleAnimation((_timestamp: number) => {
-      time += 0.02;
-
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      const mistPulse = 0.15 + 0.1 * Math.sin(time * 1.5);
-      const mistGrad = ctx.createRadialGradient(centerX, centerY, radius - 5, centerX, centerY, radius + 25);
-      mistGrad.addColorStop(0, `rgba(150, 200, 255, 0)`);
-      mistGrad.addColorStop(0.5, `rgba(150, 200, 255, ${mistPulse})`);
-      mistGrad.addColorStop(1, `rgba(100, 160, 255, 0)`);
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 25, 0, Math.PI * 2);
-      ctx.fillStyle = mistGrad;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(150, 210, 255, 0.7)`;
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = "rgba(100, 180, 255, 0.6)";
-      ctx.shadowBlur = 10;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(200, 230, 255, 0.3)`;
-      ctx.lineWidth = 5;
-      ctx.stroke();
-
-      for (const shard of shards) {
-        shard.angle += shard.rotSpeed;
-        const shimmer = 0.4 + 0.4 * Math.sin(time * 3 + shard.phase);
-        const sx = centerX + Math.cos(shard.angle) * shard.offset;
-        const sy = centerY + Math.sin(shard.angle) * shard.offset;
-        const ex = centerX + Math.cos(shard.angle) * (shard.offset + shard.length);
-        const ey = centerY + Math.sin(shard.angle) * (shard.offset + shard.length);
-
-        const perpAngle = shard.angle + Math.PI / 2;
-        const hw = shard.width / 2;
-
-        ctx.beginPath();
-        ctx.moveTo(sx + Math.cos(perpAngle) * hw, sy + Math.sin(perpAngle) * hw);
-        ctx.lineTo(ex, ey);
-        ctx.lineTo(sx - Math.cos(perpAngle) * hw, sy - Math.sin(perpAngle) * hw);
-        ctx.closePath();
-
-        const shardGrad = ctx.createLinearGradient(sx, sy, ex, ey);
-        shardGrad.addColorStop(0, `rgba(180, 220, 255, ${shimmer * 0.6})`);
-        shardGrad.addColorStop(0.5, `rgba(200, 240, 255, ${shimmer * 0.8})`);
-        shardGrad.addColorStop(1, `rgba(150, 200, 255, ${shimmer * 0.2})`);
-        ctx.fillStyle = shardGrad;
-        ctx.fill();
-
-        ctx.strokeStyle = `rgba(200, 230, 255, ${shimmer * 0.5})`;
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-      }
-
-      for (const sf of snowflakes) {
-        sf.angle += sf.speed;
-        const wobble = Math.sin(time * 2 + sf.phase) * 3;
-        const px = centerX + Math.cos(sf.angle) * (sf.dist + wobble);
-        const py = centerY + Math.sin(sf.angle) * (sf.dist + wobble + sf.drift * time * 10);
-        const alpha = 0.3 + 0.4 * Math.sin(time * 2.5 + sf.phase);
-
-        drawSnowflakeShape(px, py, sf.size, alpha);
-
-        const sfGrad = ctx.createRadialGradient(px, py, 0, px, py, sf.size * 2);
-        sfGrad.addColorStop(0, `rgba(180, 220, 255, ${alpha * 0.3})`);
-        sfGrad.addColorStop(1, `rgba(150, 200, 255, 0)`);
-        ctx.beginPath();
-        ctx.arc(px, py, sf.size * 2, 0, Math.PI * 2);
-        ctx.fillStyle = sfGrad;
-        ctx.fill();
-      }
-    });
-
-    return () => {
-      cancelAnimation(scheduleIdRef.current);
-    };
-  }, [active, canvasSize, centerX, centerY, radius]);
-
   if (!active) {
     return <div className={className}>{children}</div>;
   }
 
+  const padding = Math.round(size * 0.22);
+  const outerSize = size + padding * 2;
+  const uniqueId = `ice-${size}`;
+
   return (
-    <div className={`relative ${className}`} style={{ width: canvasSize, height: canvasSize }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0, left: 0,
-          width: canvasSize, height: canvasSize,
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ position: "absolute", top: padding, left: padding, width: size, height: size }}>
-        {children}
+    <>
+      <style>{`
+        @keyframes ice-rotate {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes ice-rotate-slow {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        @keyframes ice-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 6px 2px rgba(150,210,255,0.7),
+              0 0 14px 5px rgba(100,180,255,0.45),
+              0 0 26px 8px rgba(80,150,255,0.25);
+          }
+          50% {
+            box-shadow:
+              0 0 10px 4px rgba(180,230,255,0.85),
+              0 0 20px 7px rgba(130,200,255,0.55),
+              0 0 36px 12px rgba(100,170,255,0.3);
+          }
+        }
+        @keyframes ice-border-shimmer {
+          0%, 100% { border-color: rgba(150,210,255,0.85); box-shadow: 0 0 6px 1px rgba(150,210,255,0.5); }
+          50%       { border-color: rgba(200,240,255,0.95); box-shadow: 0 0 10px 3px rgba(200,240,255,0.7); }
+        }
+        .${uniqueId}-glow {
+          border-radius: 50%;
+          animation: ice-pulse 2.2s ease-in-out infinite;
+        }
+        .${uniqueId}-conic1 {
+          border-radius: 50%;
+          background: conic-gradient(
+            rgba(150,210,255,0) 0deg,
+            rgba(200,240,255,0.8) 30deg,
+            rgba(100,180,255,0.6) 60deg,
+            rgba(220,245,255,0.9) 90deg,
+            rgba(150,210,255,0.5) 120deg,
+            rgba(200,235,255,0.8) 150deg,
+            rgba(100,170,255,0.6) 180deg,
+            rgba(210,240,255,0.9) 210deg,
+            rgba(150,200,255,0.5) 240deg,
+            rgba(190,230,255,0.8) 270deg,
+            rgba(120,190,255,0.6) 300deg,
+            rgba(200,240,255,0.85) 330deg,
+            rgba(150,210,255,0) 360deg
+          );
+          animation: ice-rotate 8s linear infinite;
+          filter: blur(${Math.round(size * 0.05)}px);
+        }
+        .${uniqueId}-conic2 {
+          border-radius: 50%;
+          background: conic-gradient(
+            rgba(200,240,255,0) 0deg,
+            rgba(150,220,255,0.5) 45deg,
+            rgba(220,245,255,0.7) 90deg,
+            rgba(100,180,255,0.4) 135deg,
+            rgba(200,240,255,0.6) 180deg,
+            rgba(150,210,255,0.5) 225deg,
+            rgba(220,245,255,0.7) 270deg,
+            rgba(100,180,255,0.4) 315deg,
+            rgba(200,240,255,0) 360deg
+          );
+          animation: ice-rotate-slow 12s linear infinite;
+          filter: blur(${Math.round(size * 0.03)}px);
+        }
+        .${uniqueId}-border {
+          border-radius: 50%;
+          border: 2.5px solid rgba(150,210,255,0.85);
+          animation: ice-border-shimmer 2.2s ease-in-out infinite;
+        }
+      `}</style>
+
+      <div
+        className={`relative flex items-center justify-center ${className}`}
+        style={{ width: outerSize, height: outerSize }}
+      >
+        {/* Outer glow */}
+        <div
+          className={`${uniqueId}-glow`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            zIndex: 0,
+          }}
+        />
+
+        {/* Rotating ice conic layer 1 */}
+        <div
+          className={`${uniqueId}-conic1`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.12),
+            zIndex: 1,
+          }}
+        />
+
+        {/* Rotating ice conic layer 2 */}
+        <div
+          className={`${uniqueId}-conic2`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            zIndex: 2,
+          }}
+        />
+
+        {/* Ice border ring */}
+        <div
+          className={`${uniqueId}-border`}
+          style={{
+            position: "absolute",
+            inset: padding - 2,
+            zIndex: 4,
+          }}
+        />
+
+        {/* Avatar content */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding,
+            borderRadius: "50%",
+            overflow: "hidden",
+            zIndex: 5,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

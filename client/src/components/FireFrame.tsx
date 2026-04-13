@@ -1,240 +1,176 @@
-import { useRef, useEffect, useCallback } from "react";
-import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
+import React from "react";
 
 interface FireFrameProps {
-  /** Size of the avatar area in pixels */
   size: number;
-  /** Children (avatar image) rendered inside the frame */
   children: React.ReactNode;
-  /** Whether the fire animation is active */
   active?: boolean;
-  /** Optional className for the wrapper */
   className?: string;
 }
 
-interface Particle {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  size: number;
-  /** Angle on the circle where this particle spawns */
-  angle: number;
-}
-
 /**
- * FireFrame — renders a realistic animated fire effect around a circular avatar.
- * Uses Canvas 2D with a particle system for smooth 60fps animation.
- * The fire burns outward from a golden ring border around the avatar.
- *
- * Performance: uses global AnimationScheduler (single RAF loop shared across all Canvas components).
+ * FireFrame — CSS-only animated fire effect around a circular avatar.
+ * Uses conic-gradient rotation + box-shadow pulsing for GPU-accelerated 60fps animation.
+ * No Canvas, no JS animation loop.
  */
 export function FireFrame({ size, children, active = true, className = "" }: FireFrameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const particlesRef = useRef<Particle[]>([]);
-  const scheduleIdRef = useRef<number>(0);
-
-  // The canvas needs extra space around the avatar for the fire effect
-  const padding = Math.round(size * 0.35);
-  const canvasSize = size + padding * 2;
-  const centerX = canvasSize / 2;
-  const centerY = canvasSize / 2;
-  const radius = size / 2;
-
-  const createParticle = useCallback((): Particle => {
-    const angle = Math.random() * Math.PI * 2;
-    const spawnRadius = radius + (Math.random() - 0.5) * 4;
-    const x = centerX + Math.cos(angle) * spawnRadius;
-    const y = centerY + Math.sin(angle) * spawnRadius;
-
-    const outwardSpeed = 0.3 + Math.random() * 0.8;
-    const upwardBias = -0.5 - Math.random() * 1.2;
-    const vx = Math.cos(angle) * outwardSpeed + (Math.random() - 0.5) * 0.3;
-    const vy = Math.sin(angle) * outwardSpeed + upwardBias;
-    const maxLife = 20 + Math.random() * 35;
-
-    return { x, y, vx, vy, life: maxLife, maxLife, size: 2 + Math.random() * 4, angle };
-  }, [centerX, centerY, radius]);
-
-  const createEmber = useCallback((): Particle => {
-    const angle = Math.random() * Math.PI * 2;
-    const spawnRadius = radius + Math.random() * 8;
-    const x = centerX + Math.cos(angle) * spawnRadius;
-    const y = centerY + Math.sin(angle) * spawnRadius;
-
-    return {
-      x, y,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: -1.5 - Math.random() * 2.5,
-      life: 30 + Math.random() * 40,
-      maxLife: 30 + Math.random() * 40,
-      size: 0.5 + Math.random() * 1.5,
-      angle,
-    };
-  }, [centerX, centerY, radius]);
-
-  useEffect(() => {
-    if (!active) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvasSize * dpr;
-    canvas.height = canvasSize * dpr;
-    ctx.scale(dpr, dpr);
-
-    const particles = particlesRef.current;
-
-    // Initialize with some particles
-    for (let i = 0; i < 80; i++) {
-      const p = createParticle();
-      p.life = Math.random() * p.maxLife;
-      particles.push(p);
-    }
-
-    // Gradient cache
-    const gradCache = new Map<string, CanvasGradient>();
-    const getGradient = (px: number, py: number, gradSize: number, r: number, g: number, b: number, a: number): CanvasGradient => {
-      const qx = Math.round(px / 4) * 4;
-      const qy = Math.round(py / 4) * 4;
-      const qr = Math.round(r / 32) * 32;
-      const qg = Math.round(g / 32) * 32;
-      const qb = Math.round(b / 32) * 32;
-      const qa = Math.round(a * 4) / 4;
-      const qs = Math.round(gradSize * 2) / 2;
-      const key = `${qx},${qy},${qs},${qr},${qg},${qb},${qa}`;
-      let grad = gradCache.get(key);
-      if (!grad) {
-        grad = ctx.createRadialGradient(px, py, 0, px, py, gradSize);
-        grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a * 0.6})`);
-        grad.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${a * 0.3})`);
-        grad.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
-        gradCache.set(key, grad);
-        if (gradCache.size > 200) {
-          const firstKey = gradCache.keys().next().value;
-          if (firstKey !== undefined) gradCache.delete(firstKey);
-        }
-      }
-      return grad;
-    };
-
-    // Register with global scheduler — no own RAF loop
-    scheduleIdRef.current = scheduleAnimation((_timestamp: number) => {
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      // Spawn new particles
-      const spawnCount = 3 + Math.floor(Math.random() * 3);
-      for (let i = 0; i < spawnCount; i++) {
-        particles.push(createParticle());
-      }
-      if (Math.random() < 0.4) {
-        particles.push(createEmber());
-      }
-
-      // Update and draw particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.life -= 1;
-
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy -= 0.02;
-        p.vx += (Math.random() - 0.5) * 0.1;
-
-        const lifeRatio = p.life / p.maxLife;
-
-        let r: number, g: number, b: number, a: number;
-        if (lifeRatio > 0.7) {
-          const t = (lifeRatio - 0.7) / 0.3;
-          r = 255; g = Math.floor(200 + t * 55); b = Math.floor(50 + t * 150); a = 0.8 + t * 0.2;
-        } else if (lifeRatio > 0.4) {
-          const t = (lifeRatio - 0.4) / 0.3;
-          r = 255; g = Math.floor(80 + t * 120); b = Math.floor(10 + t * 40); a = 0.6 + t * 0.2;
-        } else if (lifeRatio > 0.15) {
-          const t = (lifeRatio - 0.15) / 0.25;
-          r = Math.floor(180 + t * 75); g = Math.floor(20 + t * 60); b = 5; a = 0.3 + t * 0.3;
-        } else {
-          const t = lifeRatio / 0.15;
-          r = Math.floor(80 + t * 100); g = Math.floor(t * 20); b = 0; a = t * 0.3;
-        }
-
-        const currentSize = p.size * (0.3 + lifeRatio * 0.7);
-
-        const gradient = getGradient(p.x, p.y, currentSize * 2.5, r, g, b, a);
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, currentSize * 2.5, 0, Math.PI * 2);
-        ctx.fillStyle = gradient;
-        ctx.fill();
-
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, currentSize * 0.6, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
-        ctx.fill();
-      }
-
-      // Golden ring border
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(218, 165, 32, 0.7)";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 1, 0, Math.PI * 2);
-      ctx.strokeStyle = "rgba(255, 200, 50, 0.3)";
-      ctx.lineWidth = 5;
-      ctx.stroke();
-    });
-
-    return () => {
-      cancelAnimation(scheduleIdRef.current);
-      particlesRef.current = [];
-      gradCache.clear();
-    };
-  }, [active, canvasSize, centerX, centerY, radius, createParticle, createEmber]);
-
   if (!active) {
     return <div className={className}>{children}</div>;
   }
 
+  const padding = Math.round(size * 0.22);
+  const outerSize = size + padding * 2;
+  const uniqueId = `fire-${size}`;
+
   return (
-    <div
-      className={`relative ${className}`}
-      style={{ width: canvasSize, height: canvasSize }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0,
-          left: 0,
-          width: canvasSize,
-          height: canvasSize,
-          pointerEvents: "none",
-        }}
-      />
+    <>
+      <style>{`
+        @keyframes fire-rotate {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes fire-rotate-reverse {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        @keyframes fire-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 6px 2px rgba(255,100,0,0.7),
+              0 0 14px 4px rgba(255,60,0,0.5),
+              0 0 26px 8px rgba(200,30,0,0.3);
+          }
+          33% {
+            box-shadow:
+              0 0 8px 3px rgba(255,160,0,0.8),
+              0 0 18px 6px rgba(255,80,0,0.6),
+              0 0 32px 10px rgba(220,40,0,0.35);
+          }
+          66% {
+            box-shadow:
+              0 0 5px 2px rgba(255,50,0,0.75),
+              0 0 12px 4px rgba(200,20,0,0.55),
+              0 0 22px 7px rgba(150,10,0,0.3);
+          }
+        }
+        @keyframes fire-ember-orbit {
+          0%   { transform: rotate(0deg) translateX(var(--ember-r)) rotate(0deg); opacity: 0; }
+          10%  { opacity: 1; }
+          80%  { opacity: 0.8; }
+          100% { transform: rotate(360deg) translateX(var(--ember-r)) rotate(-360deg); opacity: 0; }
+        }
+        @keyframes fire-ember-flicker {
+          0%, 100% { transform: scale(1); opacity: 0.9; }
+          50%       { transform: scale(0.5); opacity: 0.4; }
+        }
+        .${uniqueId}-ring {
+          border-radius: 50%;
+          animation: fire-pulse 1.4s ease-in-out infinite;
+        }
+        .${uniqueId}-conic1 {
+          border-radius: 50%;
+          background: conic-gradient(
+            rgba(255,200,0,0.0) 0deg,
+            rgba(255,120,0,0.9) 40deg,
+            rgba(255,60,0,1.0) 80deg,
+            rgba(200,20,0,0.8) 120deg,
+            rgba(255,80,0,0.6) 160deg,
+            rgba(255,180,0,0.9) 200deg,
+            rgba(255,60,0,1.0) 240deg,
+            rgba(180,10,0,0.7) 280deg,
+            rgba(255,140,0,0.8) 320deg,
+            rgba(255,200,0,0.0) 360deg
+          );
+          animation: fire-rotate 2.2s linear infinite;
+          filter: blur(${Math.round(size * 0.055)}px);
+        }
+        .${uniqueId}-conic2 {
+          border-radius: 50%;
+          background: conic-gradient(
+            rgba(255,80,0,0.0) 0deg,
+            rgba(255,200,50,0.8) 60deg,
+            rgba(255,100,0,0.9) 120deg,
+            rgba(200,30,0,0.6) 180deg,
+            rgba(255,160,0,0.85) 240deg,
+            rgba(255,50,0,0.7) 300deg,
+            rgba(255,80,0,0.0) 360deg
+          );
+          animation: fire-rotate-reverse 1.7s linear infinite;
+          filter: blur(${Math.round(size * 0.04)}px);
+        }
+      `}</style>
+
       <div
-        style={{
-          position: "absolute",
-          top: padding,
-          left: padding,
-          width: size,
-          height: size,
-        }}
+        className={`relative flex items-center justify-center ${className}`}
+        style={{ width: outerSize, height: outerSize }}
       >
-        {children}
+        {/* Outer glow ring */}
+        <div
+          className={`${uniqueId}-ring`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            zIndex: 0,
+          }}
+        />
+
+        {/* Rotating fire conic layer 1 */}
+        <div
+          className={`${uniqueId}-conic1`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.12),
+            zIndex: 1,
+          }}
+        />
+
+        {/* Rotating fire conic layer 2 (counter-rotate) */}
+        <div
+          className={`${uniqueId}-conic2`}
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            zIndex: 2,
+          }}
+        />
+
+        {/* Mask to clip fire to ring shape — inner cutout */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding,
+            borderRadius: "50%",
+            background: "transparent",
+            boxShadow: `0 0 0 ${outerSize}px transparent`,
+            zIndex: 3,
+          }}
+        />
+
+        {/* Golden border ring */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - 2,
+            borderRadius: "50%",
+            border: "2.5px solid rgba(218,165,32,0.85)",
+            boxShadow: "0 0 6px 1px rgba(255,200,50,0.4)",
+            zIndex: 4,
+          }}
+        />
+
+        {/* Avatar content */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding,
+            borderRadius: "50%",
+            overflow: "hidden",
+            zIndex: 5,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

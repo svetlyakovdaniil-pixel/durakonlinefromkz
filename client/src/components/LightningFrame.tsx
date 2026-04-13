@@ -1,5 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
-import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
+import React from "react";
 
 interface LightningFrameProps {
   size: number;
@@ -8,222 +7,183 @@ interface LightningFrameProps {
   className?: string;
 }
 
-interface LightningBolt {
-  points: { x: number; y: number }[];
-  life: number;
-  maxLife: number;
-  alpha: number;
-  width: number;
-}
-
-interface Spark {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  maxLife: number;
-  size: number;
-}
-
 /**
- * LightningFrame — animated lightning bolts around a circular avatar.
- * Performance: uses global AnimationScheduler (single RAF loop shared across all Canvas components).
+ * LightningFrame — CSS-only animated lightning effect around a circular avatar.
+ * Uses conic-gradient rotation + rapid box-shadow flicker for GPU-accelerated 60fps animation.
+ * No Canvas, no JS animation loop.
  */
 export function LightningFrame({ size, children, active = true, className = "" }: LightningFrameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scheduleIdRef = useRef<number>(0);
-  const boltsRef = useRef<LightningBolt[]>([]);
-  const sparksRef = useRef<Spark[]>([]);
-
-  const padding = Math.round(size * 0.35);
-  const canvasSize = size + padding * 2;
-  const centerX = canvasSize / 2;
-  const centerY = canvasSize / 2;
-  const radius = size / 2;
-
-  const generateBolt = useCallback((): LightningBolt => {
-    const startAngle = Math.random() * Math.PI * 2;
-    const arcLength = 0.3 + Math.random() * 1.2;
-    const endAngle = startAngle + (Math.random() > 0.5 ? arcLength : -arcLength);
-
-    const points: { x: number; y: number }[] = [];
-    const segments = 8 + Math.floor(Math.random() * 8);
-    const boltRadius = radius + 3 + Math.random() * 10;
-
-    for (let i = 0; i <= segments; i++) {
-      const t = i / segments;
-      const angle = startAngle + (endAngle - startAngle) * t;
-      const jitter = i === 0 || i === segments ? 0 : (Math.random() - 0.5) * 12;
-      const r = boltRadius + jitter;
-      points.push({
-        x: centerX + Math.cos(angle) * r,
-        y: centerY + Math.sin(angle) * r,
-      });
-    }
-
-    return {
-      points,
-      life: 8 + Math.floor(Math.random() * 12),
-      maxLife: 8 + Math.floor(Math.random() * 12),
-      alpha: 0.7 + Math.random() * 0.3,
-      width: 1 + Math.random() * 2,
-    };
-  }, [centerX, centerY, radius]);
-
-  const generateSpark = useCallback((x: number, y: number): Spark => {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = 0.5 + Math.random() * 2;
-    return {
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      life: 10 + Math.random() * 15,
-      maxLife: 10 + Math.random() * 15,
-      size: 0.5 + Math.random() * 1.5,
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!active) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvasSize * dpr;
-    canvas.height = canvasSize * dpr;
-    ctx.scale(dpr, dpr);
-
-    const bolts = boltsRef.current;
-    const sparks = sparksRef.current;
-    let time = 0;
-
-    scheduleIdRef.current = scheduleAnimation((_timestamp: number) => {
-      time += 1;
-
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      const pulse = 0.3 + 0.3 * Math.sin(time * 0.1);
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(100, 180, 255, ${pulse})`;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = "rgba(100, 180, 255, 0.8)";
-      ctx.shadowBlur = 15;
-      ctx.stroke();
-      ctx.shadowBlur = 0;
-
-      if (Math.random() < 0.15) {
-        bolts.push(generateBolt());
-        const bolt = bolts[bolts.length - 1];
-        const startPt = bolt.points[0];
-        for (let s = 0; s < 3; s++) {
-          sparks.push(generateSpark(startPt.x, startPt.y));
-        }
-      }
-
-      for (let i = bolts.length - 1; i >= 0; i--) {
-        const bolt = bolts[i];
-        bolt.life -= 1;
-        if (bolt.life <= 0) {
-          bolts.splice(i, 1);
-          continue;
-        }
-
-        const lifeRatio = bolt.life / bolt.maxLife;
-        const alpha = bolt.alpha * lifeRatio;
-
-        ctx.beginPath();
-        ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-        for (let j = 1; j < bolt.points.length; j++) {
-          ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
-        }
-        ctx.strokeStyle = `rgba(180, 220, 255, ${alpha})`;
-        ctx.lineWidth = bolt.width;
-        ctx.shadowColor = `rgba(100, 180, 255, ${alpha})`;
-        ctx.shadowBlur = 10;
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(bolt.points[0].x, bolt.points[0].y);
-        for (let j = 1; j < bolt.points.length; j++) {
-          ctx.lineTo(bolt.points[j].x, bolt.points[j].y);
-        }
-        ctx.strokeStyle = `rgba(220, 240, 255, ${alpha * 0.8})`;
-        ctx.lineWidth = bolt.width * 0.4;
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-
-        if (bolt.life > 2) {
-          for (let j = 1; j < bolt.points.length - 1; j++) {
-            bolt.points[j].x += (Math.random() - 0.5) * 2;
-            bolt.points[j].y += (Math.random() - 0.5) * 2;
-          }
-        }
-      }
-
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const s = sparks[i];
-        s.life -= 1;
-        if (s.life <= 0) {
-          sparks.splice(i, 1);
-          continue;
-        }
-        s.x += s.vx;
-        s.y += s.vy;
-        s.vx *= 0.95;
-        s.vy *= 0.95;
-
-        const lifeRatio = s.life / s.maxLife;
-        const grad = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.size * 3);
-        grad.addColorStop(0, `rgba(200, 230, 255, ${lifeRatio * 0.8})`);
-        grad.addColorStop(0.5, `rgba(100, 180, 255, ${lifeRatio * 0.4})`);
-        grad.addColorStop(1, `rgba(50, 100, 255, 0)`);
-
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.size * 3, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-      }
-
-      if (Math.random() < 0.3) {
-        const angle = Math.random() * Math.PI * 2;
-        const dist = radius + 2 + Math.random() * 15;
-        const px = centerX + Math.cos(angle) * dist;
-        const py = centerY + Math.sin(angle) * dist;
-        sparks.push(generateSpark(px, py));
-      }
-    });
-
-    return () => {
-      cancelAnimation(scheduleIdRef.current);
-      boltsRef.current = [];
-      sparksRef.current = [];
-    };
-  }, [active, canvasSize, centerX, centerY, radius, generateBolt, generateSpark]);
-
   if (!active) {
     return <div className={className}>{children}</div>;
   }
 
+  const padding = Math.round(size * 0.22);
+  const outerSize = size + padding * 2;
+  const uniqueId = `lightning-${size}`;
+
   return (
-    <div className={`relative ${className}`} style={{ width: canvasSize, height: canvasSize }}>
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: "absolute",
-          top: 0, left: 0,
-          width: canvasSize, height: canvasSize,
-          pointerEvents: "none",
-        }}
-      />
-      <div style={{ position: "absolute", top: padding, left: padding, width: size, height: size }}>
-        {children}
+    <>
+      <style>{`
+        @keyframes ${uniqueId}-rotate {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes ${uniqueId}-rotate-fast {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        @keyframes ${uniqueId}-flicker {
+          0%   {
+            box-shadow:
+              0 0 6px 2px rgba(180,180,255,0.6),
+              0 0 14px 4px rgba(120,120,255,0.4),
+              0 0 26px 8px rgba(80,80,200,0.2);
+          }
+          8%   {
+            box-shadow:
+              0 0 12px 5px rgba(255,255,255,0.95),
+              0 0 24px 8px rgba(200,200,255,0.8),
+              0 0 40px 14px rgba(150,150,255,0.5);
+          }
+          12%  {
+            box-shadow:
+              0 0 4px 1px rgba(150,150,255,0.5),
+              0 0 10px 3px rgba(100,100,200,0.3),
+              0 0 18px 5px rgba(60,60,180,0.15);
+          }
+          20%  {
+            box-shadow:
+              0 0 10px 4px rgba(220,220,255,0.85),
+              0 0 20px 7px rgba(180,180,255,0.6),
+              0 0 34px 11px rgba(120,120,255,0.35);
+          }
+          25%  {
+            box-shadow:
+              0 0 5px 2px rgba(160,160,255,0.55),
+              0 0 12px 4px rgba(110,110,220,0.35),
+              0 0 20px 6px rgba(70,70,200,0.18);
+          }
+          55%  {
+            box-shadow:
+              0 0 14px 6px rgba(255,255,255,0.9),
+              0 0 28px 10px rgba(210,210,255,0.7),
+              0 0 44px 15px rgba(160,160,255,0.45);
+          }
+          60%  {
+            box-shadow:
+              0 0 5px 2px rgba(150,150,255,0.5),
+              0 0 11px 3px rgba(100,100,210,0.3),
+              0 0 19px 5px rgba(60,60,180,0.15);
+          }
+          80%  {
+            box-shadow:
+              0 0 8px 3px rgba(200,200,255,0.7),
+              0 0 18px 6px rgba(150,150,255,0.5),
+              0 0 30px 10px rgba(100,100,220,0.28);
+          }
+          100% {
+            box-shadow:
+              0 0 6px 2px rgba(180,180,255,0.6),
+              0 0 14px 4px rgba(120,120,255,0.4),
+              0 0 26px 8px rgba(80,80,200,0.2);
+          }
+        }
+        @keyframes ${uniqueId}-border-flash {
+          0%, 100% { border-color: rgba(160,160,255,0.8); box-shadow: 0 0 5px 1px rgba(160,160,255,0.5); }
+          8%        { border-color: rgba(255,255,255,0.98); box-shadow: 0 0 12px 3px rgba(255,255,255,0.9); }
+          12%       { border-color: rgba(140,140,255,0.7); box-shadow: 0 0 4px 1px rgba(140,140,255,0.4); }
+          55%       { border-color: rgba(255,255,255,0.95); box-shadow: 0 0 14px 4px rgba(255,255,255,0.85); }
+          60%       { border-color: rgba(140,140,255,0.7); box-shadow: 0 0 4px 1px rgba(140,140,255,0.4); }
+        }
+      `}</style>
+
+      <div
+        className={`relative flex items-center justify-center ${className}`}
+        style={{ width: outerSize, height: outerSize }}
+      >
+        {/* Outer glow / flicker */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            borderRadius: "50%",
+            animation: `${uniqueId}-flicker 1.8s ease-in-out infinite`,
+            zIndex: 0,
+          }}
+        />
+
+        {/* Rotating lightning conic layer 1 */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.12),
+            borderRadius: "50%",
+            background: `conic-gradient(
+              rgba(180,180,255,0) 0deg,
+              rgba(255,255,255,0.9) 20deg,
+              rgba(180,180,255,0.7) 40deg,
+              rgba(100,100,220,0.4) 80deg,
+              rgba(255,255,255,0.85) 120deg,
+              rgba(160,160,255,0.6) 160deg,
+              rgba(80,80,200,0.3) 200deg,
+              rgba(255,255,255,0.9) 240deg,
+              rgba(180,180,255,0.7) 280deg,
+              rgba(100,100,220,0.4) 320deg,
+              rgba(180,180,255,0) 360deg
+            )`,
+            animation: `${uniqueId}-rotate 1.2s linear infinite`,
+            filter: `blur(${Math.round(size * 0.045)}px)`,
+            zIndex: 1,
+          }}
+        />
+
+        {/* Rotating lightning conic layer 2 */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            borderRadius: "50%",
+            background: `conic-gradient(
+              rgba(255,255,255,0) 0deg,
+              rgba(200,200,255,0.6) 60deg,
+              rgba(255,255,255,0.8) 120deg,
+              rgba(150,150,255,0.5) 180deg,
+              rgba(255,255,255,0.7) 240deg,
+              rgba(180,180,255,0.5) 300deg,
+              rgba(255,255,255,0) 360deg
+            )`,
+            animation: `${uniqueId}-rotate-fast 0.8s linear infinite`,
+            filter: `blur(${Math.round(size * 0.03)}px)`,
+            zIndex: 2,
+          }}
+        />
+
+        {/* Lightning border ring */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - 2,
+            borderRadius: "50%",
+            border: "2.5px solid rgba(160,160,255,0.85)",
+            animation: `${uniqueId}-border-flash 1.8s ease-in-out infinite`,
+            zIndex: 4,
+          }}
+        />
+
+        {/* Avatar content */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding,
+            borderRadius: "50%",
+            overflow: "hidden",
+            zIndex: 5,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 

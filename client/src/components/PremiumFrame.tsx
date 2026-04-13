@@ -1,5 +1,4 @@
-import { useRef, useEffect, useCallback } from 'react';
-import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
+import React from "react";
 
 interface PremiumFrameProps {
   size: number;
@@ -8,264 +7,193 @@ interface PremiumFrameProps {
   className?: string;
 }
 
-interface Coin {
-  x: number;
-  y: number;
-  vy: number;
-  vx: number;
-  radius: number;
-  rotation: number;
-  rotSpeed: number;
-  life: number;
-  maxLife: number;
-  squish: number;
-  squishDir: number;
-  spawnAngle: number;
-  shimmer: number;
-}
-
 /**
- * PremiumFrame — animated gold coins falling around a circular avatar.
- * Performance: uses global AnimationScheduler (single RAF loop shared across all Canvas components).
+ * PremiumFrame — CSS-only animated gold/premium effect around a circular avatar.
+ * Uses conic-gradient rotation + box-shadow pulsing + falling coin pseudo-elements.
+ * No Canvas, no JS animation loop. GPU-accelerated 60fps.
  */
-export function PremiumFrame({ size, children, active = true, className = '' }: PremiumFrameProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const coinsRef = useRef<Coin[]>([]);
-  const scheduleIdRef = useRef<number>(0);
-  const timeRef = useRef<number>(0);
-
-  const padding = Math.round(size * 0.38);
-  const canvasSize = size + padding * 2;
-  const cx = canvasSize / 2;
-  const cy = canvasSize / 2;
-  const avatarRadius = size / 2;
-
-  const createCoin = useCallback((): Coin => {
-    const spawnAngle = (-Math.PI * 0.9) + Math.random() * Math.PI * 0.8;
-    const spawnRadius = avatarRadius + 4 + Math.random() * 8;
-    const x = cx + Math.cos(spawnAngle) * spawnRadius;
-    const y = cy + Math.sin(spawnAngle) * spawnRadius;
-    const coinRadius = 2.5 + Math.random() * 2.5;
-    const maxLife = 60 + Math.random() * 60;
-
-    return {
-      x, y,
-      vx: (Math.random() - 0.5) * 0.6,
-      vy: 0.4 + Math.random() * 1.2,
-      radius: coinRadius,
-      rotation: Math.random() * Math.PI * 2,
-      rotSpeed: (Math.random() - 0.5) * 0.18,
-      life: maxLife,
-      maxLife,
-      squish: 1.0,
-      squishDir: 1,
-      spawnAngle,
-      shimmer: Math.random(),
-    };
-  }, [cx, cy, avatarRadius]);
-
-  useEffect(() => {
-    if (!active) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = canvasSize * dpr;
-    canvas.height = canvasSize * dpr;
-    ctx.scale(dpr, dpr);
-
-    const coins = coinsRef.current;
-
-    for (let i = 0; i < 18; i++) {
-      const c = createCoin();
-      c.life = Math.random() * c.maxLife;
-      coins.push(c);
-    }
-
-    const drawCoin = (c: Coin, alpha: number) => {
-      const squishFactor = 0.55 + 0.45 * Math.abs(Math.sin(c.rotation * 2));
-
-      ctx.save();
-      ctx.translate(c.x, c.y);
-      ctx.rotate(c.rotation);
-      ctx.scale(squishFactor, 1);
-
-      const grad = ctx.createRadialGradient(-c.radius * 0.3, -c.radius * 0.3, 0, 0, 0, c.radius);
-      const shimmerVal = 0.5 + 0.5 * Math.sin(timeRef.current * 0.05 + c.shimmer * 10);
-      const bright = Math.floor(220 + shimmerVal * 35);
-      grad.addColorStop(0, `rgba(${bright}, ${Math.floor(bright * 0.88)}, 80, ${alpha})`);
-      grad.addColorStop(0.5, `rgba(200, 160, 40, ${alpha})`);
-      grad.addColorStop(1, `rgba(140, 100, 10, ${alpha * 0.8})`);
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, c.radius, c.radius, 0, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.ellipse(0, 0, c.radius, c.radius, 0, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 220, 100, ${alpha * 0.7})`;
-      ctx.lineWidth = 0.8;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.ellipse(-c.radius * 0.25, -c.radius * 0.25, c.radius * 0.35, c.radius * 0.25, -0.5, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255, 245, 180, ${alpha * shimmerVal * 0.6})`;
-      ctx.fill();
-
-      ctx.restore();
-    };
-
-    const drawHeap = (t: number) => {
-      const heapCy = cy + avatarRadius + padding * 0.35;
-      const heapW = avatarRadius * 0.85;
-      const heapH = padding * 0.28;
-
-      const glowGrad = ctx.createRadialGradient(cx, heapCy, 0, cx, heapCy, heapW * 1.1);
-      const glowPulse = 0.25 + 0.15 * Math.sin(t * 0.04);
-      glowGrad.addColorStop(0, `rgba(255, 200, 50, ${glowPulse})`);
-      glowGrad.addColorStop(0.6, `rgba(200, 150, 20, ${glowPulse * 0.5})`);
-      glowGrad.addColorStop(1, 'rgba(200, 150, 20, 0)');
-      ctx.beginPath();
-      ctx.ellipse(cx, heapCy, heapW * 1.1, heapH * 1.8, 0, 0, Math.PI * 2);
-      ctx.fillStyle = glowGrad;
-      ctx.fill();
-
-      const heapGrad = ctx.createLinearGradient(cx - heapW, heapCy - heapH, cx + heapW, heapCy + heapH);
-      heapGrad.addColorStop(0, 'rgba(180, 130, 20, 0.9)');
-      heapGrad.addColorStop(0.4, 'rgba(230, 185, 50, 0.95)');
-      heapGrad.addColorStop(0.7, 'rgba(200, 155, 30, 0.9)');
-      heapGrad.addColorStop(1, 'rgba(140, 100, 10, 0.85)');
-      ctx.beginPath();
-      ctx.ellipse(cx, heapCy, heapW, heapH, 0, 0, Math.PI * 2);
-      ctx.fillStyle = heapGrad;
-      ctx.fill();
-
-      for (let i = 0; i < 7; i++) {
-        const angle = (i / 7) * Math.PI + Math.PI * 0.05;
-        const hx = cx + Math.cos(angle) * heapW * 0.75;
-        const hy = heapCy + Math.sin(angle) * heapH * 0.55 - heapH * 0.15;
-        const shimmer = 0.4 + 0.6 * Math.abs(Math.sin(t * 0.06 + i * 1.3));
-        const r = 2.2 + Math.random() * 0.5;
-
-        const cg = ctx.createRadialGradient(hx - r * 0.3, hy - r * 0.3, 0, hx, hy, r);
-        const bright = Math.floor(200 + shimmer * 55);
-        cg.addColorStop(0, `rgba(${bright}, ${Math.floor(bright * 0.9)}, 100, 0.95)`);
-        cg.addColorStop(1, `rgba(160, 120, 20, 0.7)`);
-
-        ctx.beginPath();
-        ctx.ellipse(hx, hy, r, r * 0.65, 0.3, 0, Math.PI * 2);
-        ctx.fillStyle = cg;
-        ctx.fill();
-
-        if (shimmer > 0.7) {
-          ctx.beginPath();
-          ctx.ellipse(hx - r * 0.2, hy - r * 0.2, r * 0.4, r * 0.3, -0.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 245, 180, ${(shimmer - 0.7) * 1.5})`;
-          ctx.fill();
-        }
-      }
-
-      const topGrad = ctx.createLinearGradient(cx - heapW * 0.5, heapCy - heapH, cx + heapW * 0.5, heapCy);
-      topGrad.addColorStop(0, `rgba(255, 240, 140, ${0.3 + 0.2 * Math.sin(t * 0.05)})`);
-      topGrad.addColorStop(1, 'rgba(255, 240, 140, 0)');
-      ctx.beginPath();
-      ctx.ellipse(cx, heapCy - heapH * 0.1, heapW * 0.7, heapH * 0.5, 0, 0, Math.PI * 2);
-      ctx.fillStyle = topGrad;
-      ctx.fill();
-    };
-
-    scheduleIdRef.current = scheduleAnimation((_timestamp: number) => {
-      timeRef.current += 1;
-      const t = timeRef.current;
-
-      ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-      if (Math.random() < 0.35) {
-        coins.push(createCoin());
-      }
-
-      for (let i = coins.length - 1; i >= 0; i--) {
-        const c = coins[i];
-        c.life -= 1;
-
-        if (c.life <= 0) {
-          coins.splice(i, 1);
-          continue;
-        }
-
-        c.x += c.vx;
-        c.y += c.vy;
-        c.vy += 0.035;
-        c.vx *= 0.99;
-        c.rotation += c.rotSpeed;
-        c.shimmer += 0.02;
-
-        const lifeRatio = c.life / c.maxLife;
-        let alpha = 1;
-        if (lifeRatio > 0.85) alpha = (1 - lifeRatio) / 0.15;
-        else if (lifeRatio < 0.2) alpha = lifeRatio / 0.2;
-
-        drawCoin(c, alpha);
-      }
-
-      drawHeap(t);
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, avatarRadius + 1.5, 0, Math.PI * 2);
-      const ringPulse = 0.6 + 0.3 * Math.sin(t * 0.06);
-      ctx.strokeStyle = `rgba(218, 165, 32, ${ringPulse})`;
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-
-      ctx.beginPath();
-      ctx.arc(cx, cy, avatarRadius + 1.5, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255, 215, 80, ${ringPulse * 0.4})`;
-      ctx.lineWidth = 5;
-      ctx.stroke();
-    });
-
-    return () => {
-      cancelAnimation(scheduleIdRef.current);
-      coinsRef.current = [];
-    };
-  }, [active, canvasSize, cx, cy, avatarRadius, padding, createCoin]);
-
+export function PremiumFrame({ size, children, active = true, className = "" }: PremiumFrameProps) {
   if (!active) {
     return <div className={className}>{children}</div>;
   }
 
+  const padding = Math.round(size * 0.22);
+  const outerSize = size + padding * 2;
+  const uniqueId = `premium-${size}`;
+
+  // Generate coin positions for CSS pseudo-elements
+  const coins = [
+    { delay: "0s",    dur: "2.4s", left: "18%",  size: "6px" },
+    { delay: "0.3s",  dur: "2.8s", left: "35%",  size: "5px" },
+    { delay: "0.7s",  dur: "2.2s", left: "55%",  size: "7px" },
+    { delay: "1.1s",  dur: "3.0s", left: "72%",  size: "5px" },
+    { delay: "1.5s",  dur: "2.6s", left: "85%",  size: "6px" },
+    { delay: "0.5s",  dur: "2.9s", left: "10%",  size: "5px" },
+    { delay: "1.8s",  dur: "2.3s", left: "45%",  size: "6px" },
+    { delay: "2.1s",  dur: "2.7s", left: "62%",  size: "5px" },
+  ];
+
   return (
-    <div
-      className={`relative ${className}`}
-      style={{ width: canvasSize, height: canvasSize }}
-    >
-      <canvas
-        ref={canvasRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: canvasSize,
-          height: canvasSize,
-          pointerEvents: 'none',
-        }}
-      />
+    <>
+      <style>{`
+        @keyframes ${uniqueId}-rotate {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes ${uniqueId}-rotate-reverse {
+          0%   { transform: rotate(0deg); }
+          100% { transform: rotate(-360deg); }
+        }
+        @keyframes ${uniqueId}-glow-pulse {
+          0%, 100% {
+            box-shadow:
+              0 0 8px 3px rgba(218,165,32,0.7),
+              0 0 18px 6px rgba(255,200,50,0.45),
+              0 0 32px 10px rgba(200,150,20,0.25);
+          }
+          50% {
+            box-shadow:
+              0 0 12px 5px rgba(255,215,80,0.85),
+              0 0 26px 9px rgba(255,200,50,0.6),
+              0 0 44px 14px rgba(218,165,32,0.35);
+          }
+        }
+        @keyframes ${uniqueId}-border-shimmer {
+          0%, 100% { border-color: rgba(218,165,32,0.9); box-shadow: 0 0 6px 1px rgba(218,165,32,0.6); }
+          25%       { border-color: rgba(255,240,100,0.95); box-shadow: 0 0 10px 3px rgba(255,240,100,0.75); }
+          50%       { border-color: rgba(255,215,80,0.9); box-shadow: 0 0 8px 2px rgba(255,215,80,0.65); }
+          75%       { border-color: rgba(240,200,60,0.95); box-shadow: 0 0 10px 3px rgba(240,200,60,0.75); }
+        }
+        @keyframes ${uniqueId}-coin-fall {
+          0%   { transform: translateY(-8px) rotate(0deg) scaleX(1); opacity: 0; }
+          10%  { opacity: 1; }
+          40%  { transform: translateY(30%) rotate(180deg) scaleX(0.3); }
+          60%  { transform: translateY(55%) rotate(300deg) scaleX(0.9); }
+          80%  { transform: translateY(75%) rotate(420deg) scaleX(0.4); opacity: 0.8; }
+          100% { transform: translateY(100%) rotate(540deg) scaleX(1); opacity: 0; }
+        }
+        ${coins.map((c, i) => `
+          .${uniqueId}-coin-${i} {
+            position: absolute;
+            top: 0;
+            left: ${c.left};
+            width: ${c.size};
+            height: ${c.size};
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #fff9a0, #ffd700 40%, #b8860b 80%, #8b6914);
+            box-shadow: 0 0 3px 1px rgba(255,215,0,0.6);
+            animation: ${uniqueId}-coin-fall ${c.dur} ${c.delay} ease-in infinite;
+            z-index: 3;
+            pointer-events: none;
+          }
+        `).join("")}
+      `}</style>
+
       <div
-        style={{
-          position: 'absolute',
-          top: padding,
-          left: padding,
-          width: size,
-          height: size,
-        }}
+        className={`relative flex items-center justify-center ${className}`}
+        style={{ width: outerSize, height: outerSize }}
       >
-        {children}
+        {/* Outer golden glow */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            borderRadius: "50%",
+            animation: `${uniqueId}-glow-pulse 2.4s ease-in-out infinite`,
+            zIndex: 0,
+          }}
+        />
+
+        {/* Rotating golden conic layer 1 */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.12),
+            borderRadius: "50%",
+            background: `conic-gradient(
+              rgba(218,165,32,0) 0deg,
+              rgba(255,240,100,0.9) 30deg,
+              rgba(218,165,32,0.7) 60deg,
+              rgba(255,215,80,0.85) 90deg,
+              rgba(180,130,20,0.5) 130deg,
+              rgba(255,240,100,0.9) 170deg,
+              rgba(218,165,32,0.7) 210deg,
+              rgba(255,215,80,0.85) 250deg,
+              rgba(180,130,20,0.5) 290deg,
+              rgba(255,240,100,0.9) 330deg,
+              rgba(218,165,32,0) 360deg
+            )`,
+            animation: `${uniqueId}-rotate 4s linear infinite`,
+            filter: `blur(${Math.round(size * 0.05)}px)`,
+            zIndex: 1,
+          }}
+        />
+
+        {/* Rotating golden conic layer 2 — counter-rotate for sparkle */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.08),
+            borderRadius: "50%",
+            background: `conic-gradient(
+              rgba(255,240,100,0) 0deg,
+              rgba(255,215,80,0.6) 45deg,
+              rgba(218,165,32,0.4) 90deg,
+              rgba(255,240,100,0.7) 135deg,
+              rgba(180,130,20,0.3) 180deg,
+              rgba(255,215,80,0.6) 225deg,
+              rgba(218,165,32,0.4) 270deg,
+              rgba(255,240,100,0.7) 315deg,
+              rgba(255,240,100,0) 360deg
+            )`,
+            animation: `${uniqueId}-rotate-reverse 3s linear infinite`,
+            filter: `blur(${Math.round(size * 0.03)}px)`,
+            zIndex: 2,
+          }}
+        />
+
+        {/* Falling coins */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - Math.round(size * 0.05),
+            borderRadius: "50%",
+            overflow: "hidden",
+            zIndex: 3,
+            pointerEvents: "none",
+          }}
+        >
+          {coins.map((_, i) => (
+            <div key={i} className={`${uniqueId}-coin-${i}`} />
+          ))}
+        </div>
+
+        {/* Gold border ring */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding - 2,
+            borderRadius: "50%",
+            border: "2.5px solid rgba(218,165,32,0.9)",
+            animation: `${uniqueId}-border-shimmer 2.4s ease-in-out infinite`,
+            zIndex: 4,
+          }}
+        />
+
+        {/* Avatar content */}
+        <div
+          style={{
+            position: "absolute",
+            inset: padding,
+            borderRadius: "50%",
+            overflow: "hidden",
+            zIndex: 5,
+          }}
+        >
+          {children}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
