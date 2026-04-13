@@ -459,7 +459,7 @@ export type InsertUserDailyQuest = typeof userDailyQuests.$inferInsert;
 
 /**
  * Season ratings — tracks each player's seasonal rating per season.
- * seasonKey format: "YYYY-MM" (e.g. "2026-04" for April 2026)
+ * seasonKey format: "YYYY-QN" (e.g. "2026-Q1" for Q1 Jan–Mar 2026)
  * Rating resets to 0 at the start of each new season.
  * No premium bonus applied to season rating changes.
  */
@@ -467,7 +467,7 @@ export const seasonRatings = mysqlTable("season_ratings", {
   id: int("id").autoincrement().primaryKey(),
   /** Player profile ID (playerProfiles.id) */
   profileId: int("profileId").notNull(),
-  /** Season key in "YYYY-MM" format */
+  /** Season key in "YYYY-QN" format (e.g. "2026-Q1") */
   seasonKey: varchar("seasonKey", { length: 7 }).notNull(),
   /** Current season rating (starts at 0, can go negative but floored at 0) */
   seasonRating: int("seasonRating").default(0).notNull(),
@@ -492,7 +492,7 @@ export const seasonRewards = mysqlTable("season_rewards", {
   id: int("id").autoincrement().primaryKey(),
   /** Player profile ID (playerProfiles.id) */
   profileId: int("profileId").notNull(),
-  /** Season key in "YYYY-MM" format */
+  /** Season key in "YYYY-QN" format (e.g. "2026-Q1") */
   seasonKey: varchar("seasonKey", { length: 7 }).notNull(),
   /** Final season rating at end of season */
   finalRating: int("finalRating").notNull(),

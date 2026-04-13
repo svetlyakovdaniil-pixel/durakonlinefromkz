@@ -1,52 +1,174 @@
 /**
  * Season system constants.
- * 12 seasons per year, each lasting exactly one calendar month.
- * Season key format: "YYYY-MM"
+ * 12 seasons total (4 per year × 3 years), each lasting one calendar quarter.
+ * Season key format: "YYYY-QN" (e.g. "2026-Q1" for Q1 of 2026)
+ *
+ * Quarter boundaries:
+ *   Q1: Jan 1  – Mar 31
+ *   Q2: Apr 1  – Jun 30
+ *   Q3: Jul 1  – Sep 30
+ *   Q4: Oct 1  – Dec 31
+ *
+ * The 12 named seasons cycle every 3 years starting from SEASON_BASE_YEAR.
+ * Season index = ((year - SEASON_BASE_YEAR) * 4 + (quarter - 1)) % 12
  */
 
+/** The first year of the 12-season cycle. */
+export const SEASON_BASE_YEAR = 2025;
+
 export interface SeasonInfo {
-  /** 0-indexed month (0 = January, 11 = December) */
-  month: number;
+  /** 0-indexed season number within the 12-season cycle (0–11) */
+  index: number;
+  /** Quarter number 1–4 */
+  quarter: number;
   nameRu: string;
   nameKk: string;
   nameEn: string;
 }
 
+/**
+ * 12 named seasons in order.
+ * index 0 = Q1 Year 1, index 3 = Q4 Year 1, index 4 = Q1 Year 2, etc.
+ */
 export const SEASONS: SeasonInfo[] = [
-  { month: 0,  nameRu: 'Сезон Золотого Барана',     nameKk: 'Алтын Қошқар Маусымы',     nameEn: 'Season of the Golden Ram' },
-  { month: 1,  nameRu: 'Сезон Крылатого Коня',      nameKk: 'Қанатты Ат Маусымы',        nameEn: 'Season of the Winged Horse' },
-  { month: 2,  nameRu: 'Сезон Небесного Орла',      nameKk: 'Аспан Бүркіті Маусымы',     nameEn: 'Season of the Sky Eagle' },
-  { month: 3,  nameRu: 'Сезон Горного Воина',       nameKk: 'Тау Жауынгері Маусымы',     nameEn: 'Season of the Mountain Warrior' },
-  { month: 4,  nameRu: 'Сезон Хана Степи',          nameKk: 'Дала Ханы Маусымы',         nameEn: 'Season of the Steppe Khan' },
-  { month: 5,  nameRu: 'Сезон Мифической Птицы',    nameKk: 'Аңыз Құс Маусымы',         nameEn: 'Season of the Mythical Bird' },
-  { month: 6,  nameRu: 'Сезон Семи Соколов',        nameKk: 'Жеті Сұңқар Маусымы',      nameEn: 'Season of the Seven Falcons' },
-  { month: 7,  nameRu: 'Сезон Золотой Орды',        nameKk: 'Алтын Орда Маусымы',        nameEn: 'Season of the Golden Horde' },
-  { month: 8,  nameRu: 'Сезон Стального Воина',     nameKk: 'Болат Жауынгер Маусымы',    nameEn: 'Season of the Steel Warrior' },
-  { month: 9,  nameRu: 'Сезон Пламенного Коня',     nameKk: 'Жалынды Ат Маусымы',        nameEn: 'Season of the Flame Horse' },
-  { month: 10, nameRu: 'Сезон Легендарного Орла',   nameKk: 'Аңыз Бүркіт Маусымы',      nameEn: 'Season of the Legendary Eagle' },
-  { month: 11, nameRu: 'Сезон Владыки Степи',       nameKk: 'Дала Билеушісі Маусымы',    nameEn: 'Season of the Steppe Ruler' },
+  {
+    index: 0,
+    quarter: 1,
+    nameRu: 'Казахский колорит',
+    nameKk: 'Қазақ Колориті',
+    nameEn: 'Kazakh Colors',
+  },
+  {
+    index: 1,
+    quarter: 2,
+    nameRu: 'Египетские боги',
+    nameKk: 'Мысыр Құдайлары',
+    nameEn: 'Egyptian Gods',
+  },
+  {
+    index: 2,
+    quarter: 3,
+    nameRu: 'Неоновая эра',
+    nameKk: 'Неон Дәуірі',
+    nameEn: 'Neon Era',
+  },
+  {
+    index: 3,
+    quarter: 4,
+    nameRu: 'Скандинавские боги',
+    nameKk: 'Скандинавия Құдайлары',
+    nameEn: 'Norse Gods',
+  },
+  {
+    index: 4,
+    quarter: 1,
+    nameRu: 'Космическая одиссея',
+    nameKk: 'Ғарыштық Одиссея',
+    nameEn: 'Space Odyssey',
+  },
+  {
+    index: 5,
+    quarter: 2,
+    nameRu: 'Подводный мир',
+    nameKk: 'Су Асты Әлемі',
+    nameEn: 'Underwater World',
+  },
+  {
+    index: 6,
+    quarter: 3,
+    nameRu: 'Апокалипсис',
+    nameKk: 'Апокалипсис',
+    nameEn: 'Apocalypse',
+  },
+  {
+    index: 7,
+    quarter: 4,
+    nameRu: 'Пиратские острова',
+    nameKk: 'Пираттар Аралдары',
+    nameEn: 'Pirate Islands',
+  },
+  {
+    index: 8,
+    quarter: 1,
+    nameRu: 'Японские мотивы',
+    nameKk: 'Жапон Мотивтері',
+    nameEn: 'Japanese Motifs',
+  },
+  {
+    index: 9,
+    quarter: 2,
+    nameRu: 'Киберпанк',
+    nameKk: 'Киберпанк',
+    nameEn: 'Cyberpunk',
+  },
+  {
+    index: 10,
+    quarter: 3,
+    nameRu: 'Хип-хоп 90-х',
+    nameKk: '90-шы жылдар хип-хопы',
+    nameEn: '90s Hip-Hop',
+  },
+  {
+    index: 11,
+    quarter: 4,
+    nameRu: 'Ангелы и Демоны',
+    nameKk: 'Періштелер мен Шайтандар',
+    nameEn: 'Angels and Demons',
+  },
 ];
 
-/** Get the current season key "YYYY-MM" */
+/**
+ * Get the current season key in "YYYY-QN" format.
+ * Example: "2026-Q1" for January–March 2026.
+ */
 export function getCurrentSeasonKey(): string {
   const now = new Date();
   const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  return `${year}-${month}`;
+  const quarter = Math.floor(now.getUTCMonth() / 3) + 1;
+  return `${year}-Q${quarter}`;
 }
 
-/** Get season info for a given key "YYYY-MM" */
+/**
+ * Parse a season key "YYYY-QN" into year and quarter.
+ * Falls back to current season on invalid input.
+ */
+export function parseSeasonKey(seasonKey: string): { year: number; quarter: number } {
+  const match = seasonKey.match(/^(\d{4})-Q([1-4])$/);
+  if (match) {
+    return { year: parseInt(match[1], 10), quarter: parseInt(match[2], 10) };
+  }
+  // Fallback: current season
+  const now = new Date();
+  return {
+    year: now.getUTCFullYear(),
+    quarter: Math.floor(now.getUTCMonth() / 3) + 1,
+  };
+}
+
+/**
+ * Get season info for a given key "YYYY-QN".
+ * The season name cycles through the 12 named seasons based on
+ * how many quarters have passed since SEASON_BASE_YEAR Q1.
+ */
 export function getSeasonInfo(seasonKey: string): SeasonInfo {
-  const month = parseInt(seasonKey.split('-')[1], 10) - 1;
-  return SEASONS[month] ?? SEASONS[0];
+  const { year, quarter } = parseSeasonKey(seasonKey);
+  const totalQuarters = (year - SEASON_BASE_YEAR) * 4 + (quarter - 1);
+  const index = ((totalQuarters % 12) + 12) % 12; // always 0-11, handles negative years
+  return SEASONS[index];
 }
 
-/** Get season start/end timestamps (UTC) for a given key "YYYY-MM" */
+/**
+ * Get season start/end timestamps (UTC) for a given key "YYYY-QN".
+ * Q1: Jan 1 – Mar 31, Q2: Apr 1 – Jun 30, Q3: Jul 1 – Sep 30, Q4: Oct 1 – Dec 31
+ */
 export function getSeasonBounds(seasonKey: string): { start: Date; end: Date } {
-  const [year, month] = seasonKey.split('-').map(Number);
-  const start = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
-  // Last day of month: day 0 of next month = last day of current month
-  const end = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
+  const { year, quarter } = parseSeasonKey(seasonKey);
+  // Quarter start months (0-indexed): Q1=0, Q2=3, Q3=6, Q4=9
+  const startMonth = (quarter - 1) * 3;
+  const endMonth = startMonth + 2;
+  const start = new Date(Date.UTC(year, startMonth, 1, 0, 0, 0, 0));
+  // Last day of endMonth: day 0 of (endMonth+1) = last day of endMonth
+  const end = new Date(Date.UTC(year, endMonth + 1, 0, 23, 59, 59, 999));
   return { start, end };
 }
 
@@ -143,7 +265,7 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameEn: 'Great Khan',
     minRating: 10001,
     maxRating: Infinity,
-    color: '#b8860b', // dark gold (more gold than black)
+    color: '#b8860b', // dark gold
     animated: true,
   },
 ];
