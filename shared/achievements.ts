@@ -581,7 +581,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 1000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🪨',
+    icon: '🔘',
   },
   {
     key: 'season_mountain_ram',
@@ -633,7 +633,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 5000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🔵',
+    icon: '🟠',
   },
   {
     key: 'season_steppe_khan',
