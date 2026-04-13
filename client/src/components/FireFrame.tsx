@@ -106,8 +106,8 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
 
     const particles = particlesRef.current;
 
-    // Initialize with some particles (reduced for mobile performance)
-    for (let i = 0; i < 40; i++) {
+    // Initialize with some particles
+    for (let i = 0; i < 80; i++) {
       const p = createParticle();
       p.life = Math.random() * p.maxLife; // stagger initial lifetimes
       particles.push(p);
@@ -126,13 +126,13 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
 
         ctx.clearRect(0, 0, canvasSize, canvasSize);
 
-        // Spawn new particles (reduced count for mobile performance)
-        const spawnCount = 2 + Math.floor(Math.random() * 2);
+        // Spawn new particles
+        const spawnCount = 3 + Math.floor(Math.random() * 3);
         for (let i = 0; i < spawnCount; i++) {
           particles.push(createParticle());
         }
         // Spawn embers (sparks flying up)
-        if (Math.random() < 0.25) {
+        if (Math.random() < 0.4) {
           particles.push(createEmber());
         }
 
@@ -188,18 +188,23 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
             a = t * 0.3;
           }
 
-          // Draw particle — simplified (no radial gradient per particle for mobile perf)
+          // Draw particle with glow
           const currentSize = p.size * (0.3 + lifeRatio * 0.7);
 
-          // Single filled circle (fast)
+          // Glow layer
+          const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, currentSize * 2.5);
+          gradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${a * 0.6})`);
+          gradient.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${a * 0.3})`);
+          gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+
           ctx.beginPath();
-          ctx.arc(p.x, p.y, currentSize * 1.5, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a * 0.7})`;
+          ctx.arc(p.x, p.y, currentSize * 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = gradient;
           ctx.fill();
 
           // Core bright spot
           ctx.beginPath();
-          ctx.arc(p.x, p.y, currentSize * 0.5, 0, Math.PI * 2);
+          ctx.arc(p.x, p.y, currentSize * 0.6, 0, Math.PI * 2);
           ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a})`;
           ctx.fill();
         }
