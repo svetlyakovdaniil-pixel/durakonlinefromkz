@@ -603,6 +603,19 @@ export const appRouter = router({
     equipFrame: protectedProcedure
       .input(z.object({ frameId: z.string().nullable() }))
       .mutation(async ({ ctx, input }) => {
+        // Season-only frames (e.g. great_khan) can only be equipped if owned
+        // The db.equipFrame already checks ownedFrames, but we add an explicit
+        // guard here to return a clear error for season-only frames.
+        const SEASON_ONLY_FRAMES = ['great_khan'];
+        if (input.frameId && SEASON_ONLY_FRAMES.includes(input.frameId)) {
+          const owned = await getOwnedFrames(ctx.user.id);
+          if (!owned.includes(input.frameId)) {
+            throw new TRPCError({
+              code: 'FORBIDDEN',
+              message: 'This frame can only be equipped after earning the Great Khan rank at season end.',
+            });
+          }
+        }
         const result = await equipFrame(ctx.user.id, input.frameId);
         return result;
       }),
