@@ -1465,8 +1465,10 @@ onClick={() => setShowTengeTopUp(true)}
                   <span className="text-sm">{t('lobby.noNotifications')}</span>
                 </div>
               ) : (
-                notifList.map(n => (
-                  <div key={n.id} className={`px-4 py-3 flex items-start gap-3 ${!n.isRead ? 'bg-amber-900/10' : ''}`}>
+                notifList.map(n => {
+                  const isUnclaimedSeasonReward = n.type === 'season_reward' && !n.data?.claimed;
+                  return (
+                  <div key={n.id} className={`px-4 py-3 flex items-start gap-3 relative ${isUnclaimedSeasonReward ? 'bg-amber-900/20 border-l-2 border-red-500/60' : !n.isRead ? 'bg-amber-900/10' : ''}`}>
                     <div className="flex-1">
                       {n.type === 'friend_request' && (
                         <>
@@ -1654,14 +1656,21 @@ onClick={() => setShowTengeTopUp(true)}
                         {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <button
-                      className="text-amber-200/30 hover:text-red-400 transition-colors p-1 shrink-0"
-                      onClick={() => handleDeleteNotif(n.id)}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
+                    {/* Hide delete button for unclaimed season rewards */}
+                    {!isUnclaimedSeasonReward && (
+                      <button
+                        className="text-amber-200/30 hover:text-red-400 transition-colors p-1 shrink-0"
+                        onClick={() => handleDeleteNotif(n.id)}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    )}
+                    {isUnclaimedSeasonReward && (
+                      <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shrink-0 mt-1" />
+                    )}
                   </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
