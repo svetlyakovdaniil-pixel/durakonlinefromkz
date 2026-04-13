@@ -7,6 +7,7 @@ import { SEASON_RANKS, SEASON_REWARD_DEFS } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { SkyEagleAvatar } from '@/components/SkyEagleAvatar';
+import { KhanAvatar } from '@/components/KhanAvatar';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -38,22 +39,35 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
 }
 
 /** Full-screen avatar preview modal */
-function AvatarPreviewModal({ avatarId, onClose }: { avatarId: string; onClose: () => void }) {
+function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; locale: string; onClose: () => void }) {
+  const avatarNames: Record<string, { ru: string; kk: string; en: string }> = {
+    sky_eagle: { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт', en: 'Sky Eagle' },
+    khan: { ru: 'Хан Степи', kk: 'Дала Ханы', en: 'Steppe Khan' },
+  };
+  const names = avatarNames[avatarId] ?? { ru: avatarId, kk: avatarId, en: avatarId };
+  const displayName = locale === 'kk' ? names.kk : locale === 'en' ? names.en : names.ru;
+  const borderColor = avatarId === 'khan' ? '#f97316' : '#f59e0b';
+  const shadowColor = avatarId === 'khan' ? 'rgba(249,115,22,0.3)' : 'rgba(245,158,11,0.3)';
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative flex flex-col items-center gap-4">
-        <div className="w-64 h-64 rounded-full overflow-hidden border-4 border-amber-500 shadow-2xl shadow-amber-500/30">
+        <div
+          className="w-64 h-64 rounded-full overflow-hidden"
+          style={{ border: `4px solid ${borderColor}`, boxShadow: `0 0 40px ${shadowColor}` }}
+        >
           {avatarId === 'sky_eagle' ? (
             <SkyEagleAvatar size={256} />
+          ) : avatarId === 'khan' ? (
+            <KhanAvatar size={256} />
           ) : null}
         </div>
-        <div className="text-amber-200 font-bold text-lg">Небесный Орёл</div>
+        <div className="font-bold text-lg" style={{ color: borderColor }}>{displayName}</div>
         <button
           onClick={onClose}
           className="mt-2 px-6 py-2 rounded-xl bg-amber-700/60 hover:bg-amber-600/80 text-amber-100 text-sm font-medium transition-colors"
         >
-          <X className="w-4 h-4 inline mr-1" />Закрыть
+          <X className="w-4 h-4 inline mr-1" />{locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
         </button>
       </div>
     </div>
@@ -80,7 +94,7 @@ function RewardPopup({
   return (
     <>
       {avatarPreview && (
-        <AvatarPreviewModal avatarId={avatarPreview} onClose={() => setAvatarPreview(null)} />
+        <AvatarPreviewModal avatarId={avatarPreview} locale={locale} onClose={() => setAvatarPreview(null)} />
       )}
       <div className="fixed inset-0 z-[60] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
@@ -153,8 +167,30 @@ function RewardPopup({
               </div>
             )}
 
+            {/* Avatar — khan: show animated preview */}
+            {reward.avatarId === 'khan' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-orange-500/10 transition-colors"
+                style={{ background: 'rgba(251,146,60,0.06)' }}
+                onClick={() => setAvatarPreview('khan')}
+              >
+                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-500/50 flex-shrink-0">
+                  <KhanAvatar size={48} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-orange-300 font-semibold text-sm">
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Дала Ханы' : locale === 'en' ? 'Steppe Khan' : 'Хан Степи'}
+                  </div>
+                  <div className="text-orange-400/60 text-xs flex items-center gap-1 mt-0.5">
+                    <ZoomIn className="w-3 h-3" />
+                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Avatar — other (coming soon) */}
-            {reward.avatarId && reward.avatarId !== 'sky_eagle' && (
+            {reward.avatarId && reward.avatarId !== 'sky_eagle' && reward.avatarId !== 'khan' && (
               <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(251,191,36,0.06)' }}>
                 <span className="text-lg">🖼</span>
                 <div>

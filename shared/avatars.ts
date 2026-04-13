@@ -83,12 +83,30 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID from SEASON_RANKS
   },
+  {
+    id: 'khan',
+    name: 'Хан Степи',
+    nameKk: 'Дала Ханы',
+    nameEn: 'Steppe Khan',
+    url: 'khan', // special: rendered by KhanAvatar component
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // rank ID from SEASON_RANKS
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';
 
 // Bot-only avatar ID (players cannot select this)
 export const BOT_AVATAR_ID = 'bot';
+
+/** Animated avatar IDs that use Canvas components instead of img tags */
+export const ANIMATED_AVATAR_IDS = ['sky_eagle', 'khan'] as const;
+export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
+
+export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
+  return ANIMATED_AVATAR_IDS.includes(avatarId as AnimatedAvatarId);
+}
 
 export function getAvatarUrl(avatarId: string | null | undefined): string {
   const found = AVATAR_OPTIONS.find(a => a.id === avatarId);

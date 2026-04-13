@@ -1,4 +1,5 @@
 import { SkyEagleAvatar } from './SkyEagleAvatar';
+import { KhanAvatar } from './KhanAvatar';
 import { getAvatarUrl } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
@@ -10,17 +11,17 @@ interface AvatarDisplayProps {
 
 /**
  * Universal avatar renderer.
- * - For 'sky_eagle': renders the animated Canvas component
+ * - For 'sky_eagle': renders the animated SkyEagleAvatar Canvas component
+ * - For 'khan': renders the animated KhanAvatar Canvas component
  * - For all others: renders a standard <img> tag
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
   if (avatarId === 'sky_eagle') {
-    return (
-      <SkyEagleAvatar
-        size={size}
-        className={className}
-      />
-    );
+    return <SkyEagleAvatar size={size} className={className} />;
+  }
+
+  if (avatarId === 'khan') {
+    return <KhanAvatar size={size} className={className} />;
   }
 
   return (

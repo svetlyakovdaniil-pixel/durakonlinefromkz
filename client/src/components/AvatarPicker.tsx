@@ -5,6 +5,7 @@ import { Check, X, Lock, Trophy } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
 import { SkyEagleAvatar } from './SkyEagleAvatar';
+import { KhanAvatar } from './KhanAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -45,6 +46,8 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
           <div className="w-24 h-24 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
             {selected === 'sky_eagle' ? (
               <SkyEagleAvatar size={96} />
+            ) : selected === 'khan' ? (
+              <KhanAvatar size={96} />
             ) : (
               <img
                 src={getAvatarUrl(selected)}
@@ -74,9 +77,13 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                       : 'border-amber-700/30 hover:border-amber-600/50 hover:scale-102'
                 }`}
               >
-                {isSkyEagle ? (
+                {avatar.id === 'sky_eagle' ? (
                   <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
                     <SkyEagleAvatar size={60} className="w-full h-full" />
+                  </div>
+                ) : avatar.id === 'khan' ? (
+                  <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
+                    <KhanAvatar size={60} className="w-full h-full" />
                   </div>
                 ) : (
                   <img
@@ -102,7 +109,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                     )}
                   </div>
                 )}
-                {avatar.premium && !locked && !isSkyEagle && (
+                {avatar.premium && !locked && !avatar.seasonReward && (
                   <div className="absolute top-0 right-0 bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-[7px] font-bold px-1 py-0.5 rounded-bl-md">
                     PRO
                   </div>
