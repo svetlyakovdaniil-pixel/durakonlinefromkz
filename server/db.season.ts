@@ -284,6 +284,14 @@ export async function claimSeasonReward(
     }
   }
 
+  // Trigger collector achievements if avatar/frame/deck was granted
+  if (rewardDef.avatarId || rewardDef.frameId || (rewardDef as any).deckId) {
+    try {
+      const { processCollectorAchievements } = await import('./achievementsTriggers');
+      await processCollectorAchievements(profileId);
+    } catch (_) {}
+  }
+
   // Delete the season_reward notification so it disappears after claiming
   await db.delete(notifications).where(and(
     eq(notifications.profileId, profileId),

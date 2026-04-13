@@ -2638,3 +2638,6 @@
 - [x] Добавить определения 34 достижений в achievementDefinitions.ts
 - [x] Триггеры: premium (1-5), daily quests (6-8), achievements count (9-12), frames/decks/playlists/avatars (13-16)
 - [x] Триггеры: сезонные ранги (17-24), bot games (25-28), рейтинг топ-3 (29-31), обучение (32-34)
+
+## Batch 46 — Collector достижения за сезонные награды
+- [x] claimSeasonReward: вызывать processCollectorAchievements при получении аватарки/рамки/колоды как сезонной награды
