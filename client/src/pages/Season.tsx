@@ -11,6 +11,7 @@ import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
 import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
 import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
 import { NeonPawAvatar } from '@/components/NeonPawAvatar';
+import { NeonDinoAvatar } from '@/components/NeonDinoAvatar';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
@@ -50,6 +51,7 @@ function AnimatedAvatarComponent({ baseId, size }: { baseId: string; size: numbe
   if (baseId === 'golden_horde') return <GoldenHordeAvatar size={size} />;
   if (baseId === 'great_khan') return <GreatKhanAvatar size={size} />;
   if (baseId === 'neon_paw') return <NeonPawAvatar size={size} />;
+  if (baseId === 'neon_dino') return <NeonDinoAvatar size={size} />;
   return null;
 }
 
@@ -73,12 +75,14 @@ function AvatarPreviewModal({
     baseId === 'golden_horde' ? '#eab308' :
     baseId === 'great_khan'   ? '#b8860b' :
     baseId === 'neon_paw'     ? '#a855f7' :
+    baseId === 'neon_dino'    ? '#ff00c8' :
     '#f59e0b';
   const shadowColor =
     baseId === 'khan'         ? 'rgba(249,115,22,0.3)' :
     baseId === 'golden_horde' ? 'rgba(234,179,8,0.3)' :
     baseId === 'great_khan'   ? 'rgba(184,134,11,0.4)' :
     baseId === 'neon_paw'     ? 'rgba(168,85,247,0.4)' :
+    baseId === 'neon_dino'    ? 'rgba(255,0,200,0.4)' :
     'rgba(245,158,11,0.3)';
 
   return (
@@ -145,7 +149,7 @@ function RewardPopup({
     : null;
 
   const isAnimated = baseAvatarId
-    ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw'].includes(baseAvatarId)
+    ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw', 'neon_dino'].includes(baseAvatarId)
     : false;
 
   // Avatar accent color
@@ -154,6 +158,7 @@ function RewardPopup({
     baseAvatarId === 'golden_horde' ? { bg: 'rgba(234,179,8,0.06)', border: 'border-yellow-500/50', text: 'text-yellow-300', hover: 'hover:bg-yellow-500/10' } :
     baseAvatarId === 'great_khan'   ? { bg: 'rgba(184,134,11,0.08)', border: 'border-yellow-600/60', text: 'text-yellow-300', hover: 'hover:bg-yellow-900/20' } :
     baseAvatarId === 'neon_paw'     ? { bg: 'rgba(168,85,247,0.08)', border: 'border-purple-500/50', text: 'text-purple-300', hover: 'hover:bg-purple-500/10' } :
+    baseAvatarId === 'neon_dino'    ? { bg: 'rgba(255,0,200,0.08)', border: 'border-pink-500/50', text: 'text-pink-300', hover: 'hover:bg-pink-500/10' } :
     { bg: 'rgba(251,191,36,0.06)', border: 'border-amber-500/50', text: 'text-amber-300', hover: 'hover:bg-amber-500/10' };
 
   return (
