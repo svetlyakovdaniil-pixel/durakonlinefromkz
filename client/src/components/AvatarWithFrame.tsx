@@ -5,6 +5,7 @@ import { LightningFrame } from './LightningFrame';
 import { IceFrame } from './IceFrame';
 import { PremiumFrame } from './PremiumFrame';
 import { GreatKhanFrame } from './GreatKhanFrame';
+import { ObsidianNeonFrame } from './ObsidianNeonFrame';
 
 /**
  * Renders the correct animated frame component around children based on frameId.
@@ -38,6 +39,8 @@ export function FrameWrapper({
       return <PremiumFrame size={size} active={true} className={className}>{children}</PremiumFrame>;
     case 'great_khan':
       return <GreatKhanFrame size={size} active={true} className={className}>{children}</GreatKhanFrame>;
+    case 'obsidian_neon':
+      return <ObsidianNeonFrame size={size} active={true} className={className}>{children}</ObsidianNeonFrame>;
     default:
       return <div className={className}>{children}</div>;
   }
@@ -68,6 +71,13 @@ export function FrameIcon({ frameId, className = 'w-5 h-5' }: { frameId: string;
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`${className} text-yellow-400`}>
           <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.3)" stroke="rgba(218,165,32,0.9)" />
           <circle cx="12" cy="12" r="2" fill="rgba(255,215,0,0.8)" />
+        </svg>
+      );
+    case 'obsidian_neon':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-cyan-400`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(0,212,255,0.9)" />
+          <circle cx="12" cy="12" r="6" stroke="rgba(0,80,255,0.85)" />
         </svg>
       );
     default:
