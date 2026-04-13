@@ -53,14 +53,26 @@ export function SeasonTestTab() {
   const allSeasonKeys = useMemo(() => buildAllSeasonKeys(), []);
   const currentKey = useMemo(() => getCurrentSeasonKey(), []);
 
-  const [selectedSeasonKey, setSelectedSeasonKey] = useState<string>(currentKey);
+  const [selectedSeasonKey, setSelectedSeasonKey] = useState<string>(() => {
+    // Restore last test season from localStorage (admin convenience)
+    try { return localStorage.getItem('admin_test_season') ?? currentKey; } catch { return currentKey; }
+  });
   const [customRating, setCustomRating] = useState<string>("15000");
   const [step, setStep] = useState<"idle" | "rated" | "simulated" | "rolled_back">("idle");
 
-  // Reset step when season changes
+  // Reset step when season changes and persist to localStorage
   const handleSeasonChange = (key: string) => {
     setSelectedSeasonKey(key);
     setStep("idle");
+    try {
+      if (key === currentKey) {
+        localStorage.removeItem('admin_test_season');
+      } else {
+        localStorage.setItem('admin_test_season', key);
+      }
+      // Notify other tabs/components
+      window.dispatchEvent(new StorageEvent('storage', { key: 'admin_test_season', newValue: key === currentKey ? null : key }));
+    } catch { /* ignore */ }
   };
 
   const { data, refetch, isLoading } = trpc.season.testGetAdminProfiles.useQuery(

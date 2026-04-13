@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
@@ -291,11 +291,24 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
 
-  // Support ?testSeason=YYYY-QN URL parameter for admin preview
-  const testSeasonKey = useMemo(() => {
+  // Support admin test season: read from localStorage (set by SeasonTestTab) or URL param
+  const getAdminTestSeason = () => {
     if (typeof window === 'undefined') return undefined;
-    const params = new URLSearchParams(window.location.search);
-    return params.get('testSeason') ?? undefined;
+    const urlParam = new URLSearchParams(window.location.search).get('testSeason');
+    if (urlParam) return urlParam;
+    try { return localStorage.getItem('admin_test_season') ?? undefined; } catch { return undefined; }
+  };
+  const [testSeasonKey, setTestSeasonKey] = useState<string | undefined>(getAdminTestSeason);
+
+  // Listen for changes from SeasonTestTab (same tab via StorageEvent)
+  useEffect(() => {
+    const handler = (e: StorageEvent) => {
+      if (e.key === 'admin_test_season') {
+        setTestSeasonKey(e.newValue ?? undefined);
+      }
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
   }, []);
 
   const { data: seasonData } = trpc.season.current.useQuery(

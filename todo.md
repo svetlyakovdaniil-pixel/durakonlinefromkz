@@ -2676,3 +2676,6 @@
 ## Batch 53 — Season N в наградах + баг тестового сезона
 - [x] Season.tsx: добавить «Season N» к названиям аватарок, рамок, колод в блоке наград за ранг
 - [x] Баг: season.current должен принимать опциональный параметр seasonKey (для тестового режима), Season.tsx — передавать его из URL/состояния
+## Batch 54 — Баг: тестовый сезон не отображается в Season.tsx
+- [x] SeasonTestTab: при выборе сезона сохранять seasonKey в localStorage ('admin_test_season'), при сбросе — удалять
+- [x] Season.tsx: читать testSeasonKey из localStorage (если нет URL-параметра), реагировать на изменения через storage event
