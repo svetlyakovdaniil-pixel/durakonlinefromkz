@@ -172,8 +172,8 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-        {/* Panel */}
-        <div className="relative w-full sm:max-w-lg max-h-[92dvh] flex flex-col rounded-t-2xl sm:rounded-2xl overflow-hidden"
+        {/* Panel — full screen on mobile, modal on sm+ */}
+        <div className="relative w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col sm:rounded-2xl overflow-hidden"
           style={{ background: 'linear-gradient(160deg, #0d1b2a 0%, #0a1628 50%, #0d1b2a 100%)', border: '1px solid rgba(251,191,36,0.2)' }}>
 
           {/* Header */}
@@ -431,6 +431,17 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 })}
               </div>
             )}
+          </div>{/* end scrollable content */}
+
+          {/* Close button at bottom — always visible */}
+          <div className="shrink-0 px-5 py-4 border-t border-amber-700/20">
+            <button
+              onClick={onClose}
+              className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+              style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
+            >
+              {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+            </button>
           </div>
         </div>
       </div>

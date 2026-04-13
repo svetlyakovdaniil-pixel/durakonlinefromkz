@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { getSeasonRank } from '../../../shared/seasons';
 
 interface DiamondRankIconProps {
@@ -10,11 +10,13 @@ interface DiamondRankIconProps {
 
 /**
  * Diamond-shaped rank icon that changes color based on the player's season rating.
- * The "Великий хан" rank (black diamond) has an animated gold shimmer.
+ * The "Великий хан" rank has an animated gold shimmer via CSS animation.
  */
 export function DiamondRankIcon({ seasonRating, size = 14, className = '', showTooltip = false }: DiamondRankIconProps) {
   const rank = getSeasonRank(seasonRating);
   const isGreatKhan = rank.key === 'great_khan';
+  // Unique IDs per instance to avoid gradient conflicts when multiple icons exist
+  const uid = useId().replace(/:/g, '');
 
   const diamondStyle: React.CSSProperties = {
     width: size,
@@ -31,63 +33,54 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
       viewBox="0 0 16 16"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
-      style={{ display: 'block' }}
-      className={`season-diamond-great-khan ${className}`}
+      style={{ display: 'block', overflow: 'visible' }}
+      className={className}
     >
       <defs>
-        <linearGradient id="greatKhanGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#1a1a2e" />
-          <stop offset="40%" stopColor="#111827" />
-          <stop offset="60%" stopColor="#1f2937" />
-          <stop offset="100%" stopColor="#0f172a" />
+        {/* Static dark-gold base gradient */}
+        <linearGradient id={`gkBase-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#2a1a00" />
+          <stop offset="40%" stopColor="#1a1000" />
+          <stop offset="70%" stopColor="#3d2800" />
+          <stop offset="100%" stopColor="#0f0a00" />
         </linearGradient>
-        <linearGradient id="greatKhanShimmer" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="rgba(234,179,8,0)" />
-          <stop offset="40%" stopColor="rgba(234,179,8,0)" />
-          <stop offset="50%" stopColor="rgba(234,179,8,0.7)" />
-          <stop offset="60%" stopColor="rgba(234,179,8,0)" />
-          <stop offset="100%" stopColor="rgba(234,179,8,0)" />
-          <animateTransform
-            attributeName="gradientTransform"
-            type="translate"
-            from="-1 0"
-            to="2 0"
-            dur="2s"
-            repeatCount="indefinite"
-          />
-        </linearGradient>
-        <linearGradient id="greatKhanBorder" x1="0%" y1="0%" x2="100%" y2="100%">
+        {/* Gold border gradient */}
+        <linearGradient id={`gkBorder-${uid}`} x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stopColor="#92400e" />
           <stop offset="50%" stopColor="#fbbf24" />
           <stop offset="100%" stopColor="#92400e" />
-          <animateTransform
-            attributeName="gradientTransform"
-            type="translate"
-            from="-1 0"
-            to="2 0"
-            dur="2s"
-            repeatCount="indefinite"
-          />
+        </linearGradient>
+        {/* Shimmer overlay — animated via CSS on the <polygon> */}
+        <linearGradient id={`gkShimmer-${uid}`} x1="-100%" y1="0%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="rgba(251,191,36,0)" />
+          <stop offset="40%" stopColor="rgba(251,191,36,0)" />
+          <stop offset="50%" stopColor="rgba(251,191,36,0.75)" />
+          <stop offset="60%" stopColor="rgba(251,191,36,0)" />
+          <stop offset="100%" stopColor="rgba(251,191,36,0)" />
         </linearGradient>
       </defs>
-      {/* Diamond shape: top point, right, bottom, left */}
+
+      {/* Base diamond */}
       <polygon
         points="8,1 15,8 8,15 1,8"
-        fill="url(#greatKhanGradient)"
-        stroke="url(#greatKhanBorder)"
+        fill={`url(#gkBase-${uid})`}
+        stroke={`url(#gkBorder-${uid})`}
         strokeWidth="1"
       />
-      {/* Shimmer overlay */}
+
+      {/* Shimmer overlay — CSS animation moves it across */}
       <polygon
         points="8,1 15,8 8,15 1,8"
-        fill="url(#greatKhanShimmer)"
-        opacity="0.8"
+        fill={`url(#gkShimmer-${uid})`}
+        opacity="0.9"
+        className="great-khan-shimmer"
       />
-      {/* Inner highlight */}
+
+      {/* Inner gold outline */}
       <polygon
         points="8,3 13,8 8,13 3,8"
         fill="none"
-        stroke="rgba(234,179,8,0.2)"
+        stroke="rgba(251,191,36,0.3)"
         strokeWidth="0.5"
       />
     </svg>
@@ -128,7 +121,7 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
         title={rank.nameRu}
         className="cursor-help"
       >
-        {diamondContent(diamondStyle, svgContent)}
+        {svgContent}
       </span>
     );
   }
@@ -138,10 +131,6 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
       {svgContent}
     </span>
   );
-}
-
-function diamondContent(_style: React.CSSProperties, content: React.ReactNode) {
-  return content;
 }
 
 /** Lightweight version for use in game/room player lists */

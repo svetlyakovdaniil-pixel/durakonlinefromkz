@@ -216,8 +216,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: seasonData } = trpc.season.current.useQuery(undefined, { refetchInterval: 120000 });
   const mySeasonRating = seasonData?.seasonRating ?? 0;
 
-  // Online friends count
-  const onlineFriendsCount = onlineFriendIds.length;
+  // Friends list — used to filter online players to only actual friends
+  const { data: friendsList = [] } = trpc.friends.list.useQuery(undefined, { refetchInterval: 60000 });
+  const friendGameIds = new Set(friendsList.map((f: { gameId: number }) => f.gameId));
+  // Online friends count: intersection of online players and actual friends
+  const onlineFriendsCount = onlineFriendIds.filter(id => friendGameIds.has(id)).length;
   const { data: notifList = [], refetch: refetchNotifs } = trpc.notifications.list.useQuery(undefined, { enabled: notifOpen });
   const markAllRead = trpc.notifications.markAllRead.useMutation();
   const deleteNotif = trpc.notifications.delete.useMutation();

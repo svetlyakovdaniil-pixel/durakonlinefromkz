@@ -84,7 +84,7 @@ export function NeonFrame({ size, children, active = true, className = "" }: Neo
         const pulse = 0.5 + 0.5 * Math.sin(time * 2);
         const glowAlpha = 0.15 + pulse * 0.15;
 
-        // Draw multiple glow rings
+        // Draw multiple glow rings (no shadowBlur — too expensive on mobile)
         for (let i = 3; i >= 0; i--) {
           const ringRadius = radius + 2 + i * 4;
           const colorShift = (time + i * 0.5) % (Math.PI * 2);
@@ -95,11 +95,8 @@ export function NeonFrame({ size, children, active = true, className = "" }: Neo
           ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
           ctx.strokeStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${glowAlpha * (1 - i * 0.2)})`;
           ctx.lineWidth = 6 - i;
-          ctx.shadowColor = `rgba(${c.r}, ${c.g}, ${c.b}, 0.8)`;
-          ctx.shadowBlur = 15 - i * 3;
           ctx.stroke();
         }
-        ctx.shadowBlur = 0;
 
         // Main neon ring — color cycling
         const mainColorPhase = time * 0.8;
@@ -114,10 +111,7 @@ export function NeonFrame({ size, children, active = true, className = "" }: Neo
         ctx.arc(centerX, centerY, radius + 2, 0, Math.PI * 2);
         ctx.strokeStyle = `rgba(${mr}, ${mg}, ${mb}, 0.9)`;
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = `rgba(${mr}, ${mg}, ${mb}, 1)`;
-        ctx.shadowBlur = 20;
         ctx.stroke();
-        ctx.shadowBlur = 0;
 
         // Floating glow particles orbiting
         for (const p of glowParticles) {
@@ -128,14 +122,10 @@ export function NeonFrame({ size, children, active = true, className = "" }: Neo
           const c = neonColors[p.colorIdx];
           const pAlpha = 0.4 + 0.4 * Math.sin(time * 4 + p.phase);
 
-          const grad = ctx.createRadialGradient(px, py, 0, px, py, p.size * 3);
-          grad.addColorStop(0, `rgba(${c.r}, ${c.g}, ${c.b}, ${pAlpha})`);
-          grad.addColorStop(0.5, `rgba(${c.r}, ${c.g}, ${c.b}, ${pAlpha * 0.4})`);
-          grad.addColorStop(1, `rgba(${c.r}, ${c.g}, ${c.b}, 0)`);
-
+          // Simple circle fill (no radial gradient — too expensive on mobile)
           ctx.beginPath();
-          ctx.arc(px, py, p.size * 3, 0, Math.PI * 2);
-          ctx.fillStyle = grad;
+          ctx.arc(px, py, p.size * 2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(${c.r}, ${c.g}, ${c.b}, ${pAlpha * 0.6})`;
           ctx.fill();
         }
       }
