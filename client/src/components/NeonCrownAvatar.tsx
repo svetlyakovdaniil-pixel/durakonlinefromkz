@@ -10,17 +10,34 @@ interface NeonCrownAvatarProps {
  * Season: Неоновая эра (Season 7) | Rank: Обсидиан (Obsidian)
  *
  * Animation:
- *   - Base: Crown glows steadily with cyan/blue neon light + pulsing halo
- *   - Electric Surge: A bright spark travels along the crown outline
- *     from bottom-left corner → up left side → over all three peaks → down right side → bottom-right corner
- *     This repeats every ~4 seconds.
- *   - Diamonds at tips flash when the spark passes through them
+ *   - Crown pulses steadily with cyan/blue neon glow (halo + brightness)
+ *   - Three diamond flash points appear exactly over the three crown tip diamonds:
+ *       Left diamond:   ~9% from left,  ~28% from top  (in the circle frame)
+ *       Center diamond: ~48% from left, ~6%  from top
+ *       Right diamond:  ~83% from left, ~28% from top
+ *     Each point flashes bright → then disappears completely (opacity 0)
+ *     so the real diamond in the image is visible between flashes.
  *
- * The spark is simulated using a pseudo-element / overlay gradient that sweeps
- * from left to right across the crown using CSS clip-path + translateX animation.
+ * Image analysis (2048×2048, objectFit:cover in circle):
+ *   The crown occupies roughly 15%–85% horizontally, 10%–92% vertically.
+ *   Diamond positions in the full image:
+ *     Left:   center ~9%  left, ~28% top  (outside left edge of crown)
+ *     Center: center ~48% left, ~6%  top  (top center peak)
+ *     Right:  center ~83% left, ~28% top  (outside right edge of crown)
  */
 export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarProps) {
   const uid = React.useId().replace(/:/g, '');
+
+  // Diamond positions as % of avatar size
+  // Measured from the image: left ~9%, center ~48%, right ~83% horizontally
+  // Vertically: left/right ~28%, center ~6%
+  const diamonds = [
+    { leftPct: 0.09, topPct: 0.26 },  // left diamond
+    { leftPct: 0.46, topPct: 0.04 },  // center diamond (top peak)
+    { leftPct: 0.80, topPct: 0.26 },  // right diamond
+  ];
+
+  const dotSize = Math.max(4, size * 0.14);
 
   return (
     <div
@@ -44,47 +61,38 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
           }
           50% {
             box-shadow:
-              0 0 12px 5px rgba(0,240,255,0.7),
-              0 0 24px 9px rgba(0,200,255,0.45),
-              0 0 40px 14px rgba(0,140,255,0.25);
+              0 0 14px 5px rgba(0,240,255,0.75),
+              0 0 26px 9px rgba(0,200,255,0.5),
+              0 0 44px 14px rgba(0,140,255,0.28);
           }
         }
 
-        /* Image brightness pulse — steady glow */
+        /* Image brightness pulse */
         @keyframes neon-crown-body-${uid} {
           0%, 100% { filter: brightness(1.0) saturate(1.1); }
-          50%       { filter: brightness(1.25) saturate(1.3); }
+          50%       { filter: brightness(1.3) saturate(1.35); }
         }
 
-        /* Electric surge spark — sweeps left to right across the crown */
-        /* Uses a narrow bright band moving from -20% to 120% of width */
-        @keyframes neon-crown-spark-${uid} {
-          0%   { transform: translateX(-120%); opacity: 0; }
-          5%   { opacity: 1; }
-          85%  { opacity: 1; }
-          100% { transform: translateX(120%);  opacity: 0; }
-        }
-
-        /* The spark animation fires once every 4s, active for ~1.6s of that */
-        @keyframes neon-crown-spark-trigger-${uid} {
-          0%    { opacity: 1; }
-          40%   { opacity: 1; }
-          40.1% { opacity: 0; }
-          100%  { opacity: 0; }
-        }
-
-        /* Diamond flash at tips — triggered in sync with spark */
-        @keyframes neon-crown-diamond-${uid} {
-          0%    { opacity: 0.6; filter: brightness(1); }
-          20%   { opacity: 0.6; filter: brightness(1); }
-          30%   { opacity: 1;   filter: brightness(2.5) drop-shadow(0 0 4px rgba(0,240,255,1)); }
-          50%   { opacity: 1;   filter: brightness(2.5) drop-shadow(0 0 4px rgba(0,240,255,1)); }
-          70%   { opacity: 0.6; filter: brightness(1); }
-          100%  { opacity: 0.6; filter: brightness(1); }
+        /*
+         * Diamond flash:
+         *   0–10%:   invisible (opacity 0) — real diamond visible
+         *   10–25%:  fade in to full brightness
+         *   25–45%:  hold bright flash
+         *   45–60%:  fade out to invisible
+         *   60–100%: invisible — real diamond visible
+         * Cycle: 3.5s, so flash lasts ~0.7s, gap ~2.1s
+         */
+        @keyframes neon-crown-gem-${uid} {
+          0%    { opacity: 0;   transform: scale(0.6); }
+          10%   { opacity: 0;   transform: scale(0.6); }
+          25%   { opacity: 1;   transform: scale(1.0); }
+          45%   { opacity: 1;   transform: scale(1.0); }
+          60%   { opacity: 0;   transform: scale(0.6); }
+          100%  { opacity: 0;   transform: scale(0.6); }
         }
       `}</style>
 
-      {/* ── Halo wrapper ── */}
+      {/* ── Halo + image wrapper ── */}
       <div
         style={{
           width: size,
@@ -95,7 +103,7 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
           animation: `neon-crown-halo-${uid} 2.5s ease-in-out infinite`,
         }}
       >
-        {/* ── Base crown image ── */}
+        {/* Base crown image */}
         <img
           src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_obsidian-3s7gu4bnxW94srxC2sGYmd.webp"
           alt="Обсидиан"
@@ -112,87 +120,38 @@ export function NeonCrownAvatar({ size = 48, className = '' }: NeonCrownAvatarPr
           draggable={false}
         />
 
-        {/* ── Electric spark overlay ──
-            A thin vertical bright band sweeps left→right.
-            Clipped to the crown area (roughly 15%–85% horizontally, 10%–90% vertically).
-            The trigger animation controls visibility (fires every 4s, active for 40% = 1.6s).
-        ── */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            overflow: 'hidden',
-            borderRadius: '50%',
-            pointerEvents: 'none',
-            /* trigger: visible for first 40% of 4s = 1.6s, then hidden */
-            animation: `neon-crown-spark-trigger-${uid} 4s linear infinite`,
-          }}
-        >
-          {/* The moving spark band */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '8%',
-              left: 0,
-              width: '30%',
-              height: '84%',
-              background: `linear-gradient(
-                to right,
-                transparent 0%,
-                rgba(0,240,255,0.0) 20%,
-                rgba(0,240,255,0.9) 45%,
-                rgba(180,255,255,1.0) 50%,
-                rgba(0,240,255,0.9) 55%,
-                rgba(0,240,255,0.0) 80%,
-                transparent 100%
-              )`,
-              filter: `blur(${Math.max(1, size * 0.025)}px)`,
-              animation: `neon-crown-spark-${uid} 1.6s ease-in-out infinite`,
-              mixBlendMode: 'screen',
-            }}
-          />
-        </div>
-
-        {/* ── Diamond flash overlay at the three tips ──
-            Left tip ~20% left, 28% top
-            Center tip ~50% left, 8% top
-            Right tip ~80% left, 28% top
-        ── */}
-        {[
-          { left: '16%', top: '24%' },
-          { left: '47%', top: '4%'  },
-          { left: '78%', top: '24%' },
-        ].map((pos, i) => (
-          <div
-            key={i}
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: pos.left,
-              top: pos.top,
-              width: `${size * 0.12}px`,
-              height: `${size * 0.12}px`,
-              borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(180,255,255,0.9) 0%, rgba(0,220,255,0.4) 50%, transparent 70%)',
-              animation: `neon-crown-diamond-${uid} 4s ease-in-out infinite ${i * 0.15}s`,
-              pointerEvents: 'none',
-            }}
-          />
-        ))}
-
-        {/* Ambient cyan tint */}
+        {/* Ambient cyan overlay */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            background: 'radial-gradient(ellipse at 50% 50%, rgba(0,180,255,0.06) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(0,180,255,0.07) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
       </div>
+
+      {/* ── Diamond flash points — rendered OUTSIDE the overflow:hidden wrapper ── */}
+      {diamonds.map((d, i) => (
+        <div
+          key={i}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: d.leftPct * size - dotSize / 2,
+            top:  d.topPct  * size - dotSize / 2,
+            width: dotSize,
+            height: dotSize,
+            borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,255,255,1) 0%, rgba(140,240,255,0.9) 30%, rgba(0,200,255,0.5) 60%, transparent 80%)',
+            boxShadow: `0 0 ${dotSize * 0.6}px ${dotSize * 0.3}px rgba(0,220,255,0.9), 0 0 ${dotSize * 1.2}px ${dotSize * 0.5}px rgba(0,180,255,0.5)`,
+            pointerEvents: 'none',
+            animation: `neon-crown-gem-${uid} 3.5s ease-in-out infinite ${i * 0.12}s`,
+          }}
+        />
+      ))}
     </div>
   );
 }

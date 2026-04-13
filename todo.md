@@ -2733,3 +2733,9 @@
 - [x] Зарегистрировать neon_crown в shared/avatars.ts (animated, seasonReward, previewUrl, getAvatarAccentColors)
 - [x] Добавить neon_crown в AvatarDisplay.tsx
 - [x] Привязать neon_crown к рангу Обсидиан (great_khan) в rankRewardOverrides сезона Неоновая эра
+
+## Batch 63 — Исправление анимации NeonCrownAvatar
+- [x] Убрать полосу Electric Surge (translateX sweep)
+- [x] Оставить пульсацию короны (halo + brightness)
+- [x] Три точки вспышки точно над бриллиантами (9%/26%, 46%/4%, 80%/26%)
+- [x] После вспышки точки полностью исчезают (opacity: 0), бриллианты видны
