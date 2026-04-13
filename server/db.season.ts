@@ -60,29 +60,34 @@ export async function applySeasonRatingChange(
     .where(and(eq(seasonRatings.profileId, profileId), eq(seasonRatings.seasonKey, key)));
 }
 
-/** Get season leaderboard for a given season key (top N players, including 0-rating) */
+/** Get season leaderboard for a given season key (all players, including those with 0 rating) */
 export async function getSeasonLeaderboard(seasonKey: string, limit = 100) {
   const db = await getDb();
   if (!db) return [];
 
-  // All players who have a season_ratings row for this season (including 0 rating)
+  // LEFT JOIN: all registered players, with season rating defaulting to 0 if no record
   const rows = await db
     .select({
-      profileId: seasonRatings.profileId,
-      seasonRating: seasonRatings.seasonRating,
-      gamesPlayed: seasonRatings.gamesPlayed,
-      wins: seasonRatings.wins,
-      losses: seasonRatings.losses,
+      profileId: playerProfiles.id,
+      seasonRating: sql<number>`COALESCE(${seasonRatings.seasonRating}, 0)`,
+      gamesPlayed: sql<number>`COALESCE(${seasonRatings.gamesPlayed}, 0)`,
+      wins: sql<number>`COALESCE(${seasonRatings.wins}, 0)`,
+      losses: sql<number>`COALESCE(${seasonRatings.losses}, 0)`,
       displayName: playerProfiles.displayName,
       gameId: playerProfiles.gameId,
       avatarId: playerProfiles.avatarId,
       avatarUrl: playerProfiles.avatarUrl,
       equippedFrame: playerProfiles.equippedFrame,
     })
-    .from(seasonRatings)
-    .innerJoin(playerProfiles, eq(seasonRatings.profileId, playerProfiles.id))
-    .where(eq(seasonRatings.seasonKey, seasonKey))
-    .orderBy(desc(seasonRatings.seasonRating), playerProfiles.gameId)
+    .from(playerProfiles)
+    .leftJoin(
+      seasonRatings,
+      and(
+        eq(seasonRatings.profileId, playerProfiles.id),
+        eq(seasonRatings.seasonKey, seasonKey),
+      ),
+    )
+    .orderBy(desc(sql`COALESCE(${seasonRatings.seasonRating}, 0)`), playerProfiles.gameId)
     .limit(limit);
 
   return rows;

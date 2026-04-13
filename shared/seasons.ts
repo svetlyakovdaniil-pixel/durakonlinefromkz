@@ -143,7 +143,7 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameEn: 'Great Khan',
     minRating: 10001,
     maxRating: Infinity,
-    color: '#111827', // near-black with gold shimmer
+    color: '#b8860b', // dark gold (more gold than black)
     animated: true,
   },
 ];
