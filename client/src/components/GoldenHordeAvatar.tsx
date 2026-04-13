@@ -8,14 +8,20 @@ interface GoldenHordeAvatarProps {
 /**
  * GoldenHordeAvatar — AI-generated photorealistic Golden Horde warrior.
  * CSS effects:
- *   - Fire background BEHIND the warrior photo (same conic-gradient technique as FireFrame)
- *   - Warrior image sits on top with mix-blend-mode to stay fully visible
+ *   - Blood-red fire animation fills the background (where the photo is dark/black)
+ *   - Warrior photo sits on top with mix-blend-mode: multiply so the warrior
+ *     himself is unaffected — only the dark background areas show the fire
  *   - Golden rim pulse border
+ *
+ * Technique: the photo background is originally dark grey/black.
+ * mix-blend-mode: multiply on the photo means:
+ *   - Dark pixels (background) → become transparent → fire shows through
+ *   - Light pixels (warrior face, armour) → stay fully opaque and unaffected
  * No Canvas, no JS loop — pure CSS @keyframes.
  */
 export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvatarProps) {
-  const blurPx = Math.max(3, Math.round(size * 0.07));
-  const blurPx2 = Math.max(2, Math.round(size * 0.045));
+  const blurPx  = Math.max(3, Math.round(size * 0.08));
+  const blurPx2 = Math.max(2, Math.round(size * 0.05));
 
   return (
     <div
@@ -28,8 +34,8 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         position: 'relative',
         display: 'block',
         flexShrink: 0,
-        // Dark base so fire colours pop
-        background: '#0a0000',
+        // White base — multiply blend needs a bright base to show photo correctly
+        background: '#ffffff',
       }}
     >
       <style>{`
@@ -44,21 +50,21 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         @keyframes gh-fire-pulse {
           0%, 100% {
             box-shadow:
-              0 0 ${Math.max(4, blurPx)}px ${Math.max(2, blurPx / 2)}px rgba(255,100,0,0.9),
-              0 0 ${Math.max(10, blurPx * 2.5)}px ${Math.max(4, blurPx)}px rgba(255,60,0,0.7),
-              0 0 ${Math.max(18, blurPx * 4)}px ${Math.max(6, blurPx * 2)}px rgba(200,30,0,0.45);
+              0 0 ${Math.max(4, blurPx)}px ${Math.max(2, blurPx / 2)}px rgba(180,0,0,0.9),
+              0 0 ${Math.max(10, blurPx * 2.5)}px ${Math.max(4, blurPx)}px rgba(140,0,0,0.7),
+              0 0 ${Math.max(18, blurPx * 4)}px ${Math.max(6, blurPx * 2)}px rgba(100,0,0,0.45);
           }
           33% {
             box-shadow:
-              0 0 ${Math.max(6, blurPx * 1.4)}px ${Math.max(3, blurPx * 0.8)}px rgba(255,180,0,1.0),
-              0 0 ${Math.max(14, blurPx * 3)}px ${Math.max(5, blurPx * 1.5)}px rgba(255,90,0,0.8),
-              0 0 ${Math.max(24, blurPx * 5)}px ${Math.max(8, blurPx * 2.5)}px rgba(220,40,0,0.5);
+              0 0 ${Math.max(6, blurPx * 1.4)}px ${Math.max(3, blurPx * 0.8)}px rgba(220,0,0,1.0),
+              0 0 ${Math.max(14, blurPx * 3)}px ${Math.max(5, blurPx * 1.5)}px rgba(180,0,0,0.8),
+              0 0 ${Math.max(24, blurPx * 5)}px ${Math.max(8, blurPx * 2.5)}px rgba(120,0,0,0.5);
           }
           66% {
             box-shadow:
-              0 0 ${Math.max(3, blurPx * 0.9)}px ${Math.max(1, blurPx * 0.5)}px rgba(255,50,0,0.95),
-              0 0 ${Math.max(8, blurPx * 2)}px ${Math.max(3, blurPx)}px rgba(200,20,0,0.75),
-              0 0 ${Math.max(14, blurPx * 3.2)}px ${Math.max(5, blurPx * 1.6)}px rgba(150,10,0,0.45);
+              0 0 ${Math.max(3, blurPx * 0.9)}px ${Math.max(1, blurPx * 0.5)}px rgba(160,0,0,0.95),
+              0 0 ${Math.max(8, blurPx * 2)}px ${Math.max(3, blurPx)}px rgba(120,0,0,0.75),
+              0 0 ${Math.max(14, blurPx * 3.2)}px ${Math.max(5, blurPx * 1.6)}px rgba(80,0,0,0.45);
           }
         }
         @keyframes gh-rim-pulse {
@@ -67,7 +73,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         }
       `}</style>
 
-      {/* ── Fire background layer 1 — large conic fills the whole circle ── */}
+      {/* ── Fire background layer 1 — large blood-red conic ── */}
       <div
         aria-hidden="true"
         style={{
@@ -75,16 +81,16 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           inset: -Math.round(size * 0.15),
           borderRadius: '50%',
           background: `conic-gradient(
-            rgba(255,200,0,0.0) 0deg,
-            rgba(255,120,0,0.95) 40deg,
-            rgba(255,60,0,1.0)  80deg,
-            rgba(200,20,0,0.85) 120deg,
-            rgba(255,80,0,0.65) 160deg,
-            rgba(255,180,0,0.95) 200deg,
-            rgba(255,60,0,1.0)  240deg,
-            rgba(180,10,0,0.75) 280deg,
-            rgba(255,140,0,0.85) 320deg,
-            rgba(255,200,0,0.0) 360deg
+            rgba(80,0,0,0.0)   0deg,
+            rgba(180,0,0,0.95) 40deg,
+            rgba(220,0,0,1.0)  80deg,
+            rgba(140,0,0,0.85) 120deg,
+            rgba(200,10,0,0.7) 160deg,
+            rgba(160,0,0,0.95) 200deg,
+            rgba(220,0,0,1.0)  240deg,
+            rgba(120,0,0,0.8)  280deg,
+            rgba(180,0,0,0.9)  320deg,
+            rgba(80,0,0,0.0)   360deg
           )`,
           animation: 'gh-fire-rotate 2.2s linear infinite',
           filter: `blur(${blurPx}px)`,
@@ -92,7 +98,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         }}
       />
 
-      {/* ── Fire background layer 2 — counter-rotate, slightly smaller ── */}
+      {/* ── Fire background layer 2 — counter-rotate, darker crimson ── */}
       <div
         aria-hidden="true"
         style={{
@@ -100,13 +106,13 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           inset: -Math.round(size * 0.08),
           borderRadius: '50%',
           background: `conic-gradient(
-            rgba(255,80,0,0.0)   0deg,
-            rgba(255,200,50,0.85) 60deg,
-            rgba(255,100,0,0.95) 120deg,
-            rgba(200,30,0,0.65)  180deg,
-            rgba(255,160,0,0.9)  240deg,
-            rgba(255,50,0,0.75)  300deg,
-            rgba(255,80,0,0.0)   360deg
+            rgba(60,0,0,0.0)   0deg,
+            rgba(200,0,20,0.9) 60deg,
+            rgba(160,0,0,0.95) 120deg,
+            rgba(100,0,0,0.65) 180deg,
+            rgba(190,0,10,0.9) 240deg,
+            rgba(140,0,0,0.75) 300deg,
+            rgba(60,0,0,0.0)   360deg
           )`,
           animation: 'gh-fire-rotate-rev 1.7s linear infinite',
           filter: `blur(${blurPx2}px)`,
@@ -114,7 +120,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
         }}
       />
 
-      {/* ── Outer glow pulse ring ── */}
+      {/* ── Glow pulse ring ── */}
       <div
         aria-hidden="true"
         style={{
@@ -123,23 +129,11 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           borderRadius: '50%',
           animation: 'gh-fire-pulse 1.4s ease-in-out infinite',
           zIndex: 2,
-        }}
-      />
-
-      {/* ── Dark radial overlay to dim fire in center so warrior stays visible ── */}
-      <div
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 50%, rgba(0,0,0,0.0) 100%)',
-          zIndex: 3,
           pointerEvents: 'none',
         }}
       />
 
-      {/* ── Warrior photo on top — fully visible ── */}
+      {/* ── Warrior photo — multiply blend: dark bg becomes transparent, warrior stays ── */}
       <img
         src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/golden_horde_warrior_avatar-oJWWxe5DCcpxB9nbWMET8o.webp"
         alt="Воин Золотой Орды"
@@ -151,24 +145,22 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           objectFit: 'cover',
           objectPosition: 'center 10%',
           display: 'block',
-          zIndex: 4,
-          // mix-blend-mode: lighten keeps the warrior visible while letting fire
-          // show through the dark background areas of the photo
-          mixBlendMode: 'lighten',
+          zIndex: 3,
+          mixBlendMode: 'multiply',
         }}
         draggable={false}
       />
 
-      {/* ── Dark vignette on top of everything ── */}
+      {/* ── Dark vignette ── */}
       <div
         aria-hidden="true"
         style={{
           position: 'absolute',
           inset: 0,
           borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.55) 100%)',
+          background: 'radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,0.5) 100%)',
           pointerEvents: 'none',
-          zIndex: 5,
+          zIndex: 4,
         }}
       />
 
@@ -183,7 +175,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
           animation: 'gh-rim-pulse 1.8s ease-in-out infinite',
           pointerEvents: 'none',
           boxSizing: 'border-box',
-          zIndex: 6,
+          zIndex: 5,
         }}
       />
     </div>
