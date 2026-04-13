@@ -1,5 +1,4 @@
-import { useRef, useEffect } from "react";
-import { scheduleAnimation, cancelAnimation } from "@/lib/animationScheduler";
+import React from "react";
 
 interface KhanAvatarProps {
   size?: number;
@@ -7,550 +6,278 @@ interface KhanAvatarProps {
 }
 
 /**
- * Animated avatar: Steppe Khan warrior wielding a sword.
- * The warrior swings his sword in a looping arc animation.
+ * KhanAvatar — SVG+CSS animated avatar.
+ * Steppe Khan warrior swings a sword with sparks flying.
  * Background: warm steppe sunset (orange/amber gradient).
- * Rendered entirely on Canvas for smooth 60fps animation.
+ * No Canvas, no JS animation loop. GPU-accelerated via CSS @keyframes + SVG animate.
  */
 export function KhanAvatar({ size = 48, className = "" }: KhanAvatarProps) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const scheduleIdRef = useRef<number>(0);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d", { alpha: false });
-    if (!ctx) return;
-
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const S = size * dpr;
-    canvas.width = S;
-    canvas.height = S;
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-
-    const R = S / 2;
-    const cx = R;
-    const cy = R;
-
-    // Sword swing particles (sparks)
-    type Spark = {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      alpha: number;
-      life: number;
-      maxLife: number;
-      radius: number;
-    };
-    const sparks: Spark[] = [];
-
-    let t = 0;
-    let lastFrameTime = 0;
-    const frameInterval = 1000 / 60;
-
-    function drawBackground() {
-      if (!ctx) return;
-      // Steppe sunset gradient
-      const bg = ctx.createLinearGradient(0, 0, 0, S);
-      bg.addColorStop(0, "#1a0a00");
-      bg.addColorStop(0.35, "#5c1a00");
-      bg.addColorStop(0.65, "#c45200");
-      bg.addColorStop(1, "#3d1000");
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-      ctx.fillStyle = bg;
-      ctx.fillRect(0, 0, S, S);
-
-      // Horizon glow
-      const glow = ctx.createRadialGradient(cx, S * 0.72, 0, cx, S * 0.72, R * 0.9);
-      glow.addColorStop(0, "rgba(255,140,0,0.35)");
-      glow.addColorStop(0.5, "rgba(255,80,0,0.12)");
-      glow.addColorStop(1, "rgba(0,0,0,0)");
-      ctx.fillStyle = glow;
-      ctx.fillRect(0, 0, S, S);
-
-      ctx.restore();
-    }
-
-    function drawStars() {
-      if (!ctx) return;
-      const starPositions = [
-        [0.12, 0.08], [0.8, 0.06], [0.55, 0.12], [0.35, 0.18],
-        [0.9, 0.22], [0.06, 0.3], [0.7, 0.28],
-      ];
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-      starPositions.forEach(([sx, sy]) => {
-        const alpha = 0.35 + 0.25 * Math.sin(t * 0.04 + sx * 12);
-        ctx.beginPath();
-        ctx.arc(sx * S, sy * S, 0.7 * dpr, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,220,150,${alpha})`;
-        ctx.fill();
-      });
-      ctx.restore();
-    }
-
-    function drawGround() {
-      if (!ctx) return;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-
-      // Ground / steppe
-      const ground = ctx.createLinearGradient(0, S * 0.75, 0, S);
-      ground.addColorStop(0, "#2a1200");
-      ground.addColorStop(1, "#0d0500");
-      ctx.fillStyle = ground;
-      ctx.fillRect(0, S * 0.75, S, S * 0.25);
-
-      ctx.restore();
-    }
-
-    function spawnSparks(sx: number, sy: number, intensity: number) {
-      if (intensity < 0.3) return;
-      const count = Math.floor(intensity * 3);
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = (1.5 + Math.random() * 2.5) * dpr;
-        sparks.push({
-          x: sx + (Math.random() - 0.5) * 4 * dpr,
-          y: sy + (Math.random() - 0.5) * 4 * dpr,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 1.5 * dpr,
-          alpha: 0.9,
-          life: 0,
-          maxLife: 10 + Math.random() * 8,
-          radius: (0.8 + Math.random() * 1.4) * dpr,
-        });
-      }
-    }
-
-    function updateSparks() {
-      for (let i = sparks.length - 1; i >= 0; i--) {
-        const p = sparks[i];
-        p.life++;
-        p.x += p.vx;
-        p.y += p.vy;
-        p.vy += 0.15 * dpr; // gravity
-        p.alpha = 0.9 * (1 - p.life / p.maxLife);
-        if (p.life >= p.maxLife) sparks.splice(i, 1);
-      }
-    }
-
-    function drawSparks() {
-      if (!ctx) return;
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-      sparks.forEach((p) => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,200,50,${p.alpha})`;
-        ctx.fill();
-      });
-      ctx.restore();
-    }
-
-    /**
-     * Draw the Khan warrior.
-     * Warrior is centered at (wx, wy).
-     * swordAngle: angle of the sword arm (radians from vertical).
-     */
-    function drawWarrior(wx: number, wy: number, sc: number, swordAngle: number) {
-      if (!ctx) return;
-      ctx.save();
-      ctx.translate(wx, wy);
-      ctx.scale(sc, sc);
-
-      const d = dpr;
-
-      // ── Shadow ──────────────────────────────────────────────────────────────
-      ctx.save();
-      ctx.globalAlpha = 0.3;
-      ctx.beginPath();
-      ctx.ellipse(0, 28 * d, 14 * d, 4 * d, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "#000";
-      ctx.fill();
-      ctx.restore();
-
-      // ── Legs ────────────────────────────────────────────────────────────────
-      // Left leg
-      ctx.beginPath();
-      ctx.moveTo(-4 * d, 8 * d);
-      ctx.lineTo(-6 * d, 26 * d);
-      ctx.lineTo(-2 * d, 26 * d);
-      ctx.lineTo(-1 * d, 8 * d);
-      ctx.closePath();
-      ctx.fillStyle = "#5a3010";
-      ctx.fill();
-
-      // Right leg
-      ctx.beginPath();
-      ctx.moveTo(4 * d, 8 * d);
-      ctx.lineTo(6 * d, 26 * d);
-      ctx.lineTo(2 * d, 26 * d);
-      ctx.lineTo(1 * d, 8 * d);
-      ctx.closePath();
-      ctx.fillStyle = "#5a3010";
-      ctx.fill();
-
-      // Boots
-      ctx.fillStyle = "#2a1500";
-      ctx.beginPath();
-      ctx.roundRect(-7 * d, 23 * d, 5 * d, 5 * d, 1 * d);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.roundRect(2 * d, 23 * d, 5 * d, 5 * d, 1 * d);
-      ctx.fill();
-
-      // ── Robe / Armor body ────────────────────────────────────────────────────
-      // Main robe
-      const robeGrad = ctx.createLinearGradient(-10 * d, -8 * d, 10 * d, 10 * d);
-      robeGrad.addColorStop(0, "#8b1a00");
-      robeGrad.addColorStop(0.5, "#c42800");
-      robeGrad.addColorStop(1, "#6b1000");
-      ctx.beginPath();
-      ctx.moveTo(-9 * d, -8 * d);
-      ctx.lineTo(-10 * d, 10 * d);
-      ctx.lineTo(10 * d, 10 * d);
-      ctx.lineTo(9 * d, -8 * d);
-      ctx.closePath();
-      ctx.fillStyle = robeGrad;
-      ctx.fill();
-
-      // Gold trim on robe
-      ctx.strokeStyle = "#ffd700";
-      ctx.lineWidth = 0.8 * d;
-      ctx.beginPath();
-      ctx.moveTo(-9 * d, -8 * d);
-      ctx.lineTo(-10 * d, 10 * d);
-      ctx.moveTo(9 * d, -8 * d);
-      ctx.lineTo(10 * d, 10 * d);
-      ctx.stroke();
-
-      // Belt
-      ctx.fillStyle = "#ffd700";
-      ctx.beginPath();
-      ctx.rect(-10 * d, 4 * d, 20 * d, 2.5 * d);
-      ctx.fill();
-
-      // ── Left arm (shield arm, static) ───────────────────────────────────────
-      ctx.save();
-      ctx.translate(-9 * d, -5 * d);
-      // Upper arm
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(-5 * d, 8 * d);
-      ctx.lineTo(-3 * d, 8 * d);
-      ctx.lineTo(2 * d, 0);
-      ctx.closePath();
-      ctx.fillStyle = "#8b1a00";
-      ctx.fill();
-      // Shield
-      ctx.save();
-      ctx.translate(-6 * d, 10 * d);
-      const shieldGrad = ctx.createLinearGradient(-5 * d, -6 * d, 5 * d, 6 * d);
-      shieldGrad.addColorStop(0, "#b8860b");
-      shieldGrad.addColorStop(0.5, "#ffd700");
-      shieldGrad.addColorStop(1, "#8b6914");
-      ctx.beginPath();
-      ctx.moveTo(0, -7 * d);
-      ctx.lineTo(5 * d, -2 * d);
-      ctx.lineTo(5 * d, 4 * d);
-      ctx.lineTo(0, 7 * d);
-      ctx.lineTo(-5 * d, 4 * d);
-      ctx.lineTo(-5 * d, -2 * d);
-      ctx.closePath();
-      ctx.fillStyle = shieldGrad;
-      ctx.fill();
-      ctx.strokeStyle = "#8b6914";
-      ctx.lineWidth = 0.7 * d;
-      ctx.stroke();
-      // Shield emblem (star)
-      ctx.fillStyle = "#8b1a00";
-      ctx.beginPath();
-      ctx.arc(0, 0, 2 * d, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-      ctx.restore();
-
-      // ── Right arm (sword arm, animated) ─────────────────────────────────────
-      ctx.save();
-      ctx.translate(9 * d, -6 * d);
-      ctx.rotate(swordAngle);
-
-      // Upper arm
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(4 * d, 10 * d);
-      ctx.lineTo(6 * d, 10 * d);
-      ctx.lineTo(2 * d, 0);
-      ctx.closePath();
-      ctx.fillStyle = "#8b1a00";
-      ctx.fill();
-
-      // Forearm
-      ctx.beginPath();
-      ctx.moveTo(4 * d, 10 * d);
-      ctx.lineTo(6 * d, 20 * d);
-      ctx.lineTo(8 * d, 20 * d);
-      ctx.lineTo(6 * d, 10 * d);
-      ctx.closePath();
-      ctx.fillStyle = "#7a1500";
-      ctx.fill();
-
-      // Hand
-      ctx.beginPath();
-      ctx.arc(7 * d, 21 * d, 3 * d, 0, Math.PI * 2);
-      ctx.fillStyle = "#c8956c";
-      ctx.fill();
-
-      // ── Sword ────────────────────────────────────────────────────────────────
-      ctx.save();
-      ctx.translate(7 * d, 21 * d);
-
-      // Sword handle
-      ctx.fillStyle = "#5a3010";
-      ctx.beginPath();
-      ctx.rect(-1.5 * d, 0, 3 * d, 8 * d);
-      ctx.fill();
-
-      // Guard (cross-guard)
-      ctx.fillStyle = "#ffd700";
-      ctx.beginPath();
-      ctx.rect(-5 * d, 7 * d, 10 * d, 2.5 * d);
-      ctx.fill();
-
-      // Blade
-      const bladeGrad = ctx.createLinearGradient(-1.5 * d, 9 * d, 1.5 * d, 38 * d);
-      bladeGrad.addColorStop(0, "#ffffff");
-      bladeGrad.addColorStop(0.3, "#e8e8e8");
-      bladeGrad.addColorStop(0.7, "#b0b0b0");
-      bladeGrad.addColorStop(1, "#888888");
-      ctx.beginPath();
-      ctx.moveTo(-1.5 * d, 9 * d);
-      ctx.lineTo(1.5 * d, 9 * d);
-      ctx.lineTo(0.5 * d, 38 * d);
-      ctx.lineTo(-0.5 * d, 38 * d);
-      ctx.closePath();
-      ctx.fillStyle = bladeGrad;
-      ctx.fill();
-
-      // Blade shine
-      ctx.save();
-      ctx.globalAlpha = 0.5 + 0.3 * Math.sin(t * 0.1);
-      ctx.strokeStyle = "rgba(255,255,255,0.8)";
-      ctx.lineWidth = 0.5 * d;
-      ctx.beginPath();
-      ctx.moveTo(-0.5 * d, 10 * d);
-      ctx.lineTo(-0.3 * d, 36 * d);
-      ctx.stroke();
-      ctx.restore();
-
-      ctx.restore(); // sword
-      ctx.restore(); // sword arm
-
-      // ── Neck ────────────────────────────────────────────────────────────────
-      ctx.fillStyle = "#c8956c";
-      ctx.beginPath();
-      ctx.rect(-3 * d, -14 * d, 6 * d, 8 * d);
-      ctx.fill();
-
-      // ── Head ────────────────────────────────────────────────────────────────
-      // Face
-      const faceGrad = ctx.createRadialGradient(-1 * d, -20 * d, 1 * d, 0, -20 * d, 9 * d);
-      faceGrad.addColorStop(0, "#d4a574");
-      faceGrad.addColorStop(0.7, "#c8956c");
-      faceGrad.addColorStop(1, "#a0724a");
-      ctx.beginPath();
-      ctx.ellipse(0, -20 * d, 8 * d, 9 * d, 0, 0, Math.PI * 2);
-      ctx.fillStyle = faceGrad;
-      ctx.fill();
-
-      // Eyes
-      ctx.fillStyle = "#1a0800";
-      ctx.beginPath();
-      ctx.ellipse(-3 * d, -21 * d, 1.5 * d, 1.2 * d, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.ellipse(3 * d, -21 * d, 1.5 * d, 1.2 * d, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Eye shine
-      ctx.fillStyle = "rgba(255,255,255,0.6)";
-      ctx.beginPath();
-      ctx.arc(-2.5 * d, -22 * d, 0.5 * d, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(3.5 * d, -22 * d, 0.5 * d, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Mustache
-      ctx.strokeStyle = "#3a1a00";
-      ctx.lineWidth = 0.8 * d;
-      ctx.beginPath();
-      ctx.moveTo(-4 * d, -17 * d);
-      ctx.quadraticCurveTo(-2 * d, -15 * d, 0, -17 * d);
-      ctx.moveTo(0, -17 * d);
-      ctx.quadraticCurveTo(2 * d, -15 * d, 4 * d, -17 * d);
-      ctx.stroke();
-
-      // ── Helmet ───────────────────────────────────────────────────────────────
-      // Helmet base
-      const helmetGrad = ctx.createLinearGradient(-8 * d, -32 * d, 8 * d, -22 * d);
-      helmetGrad.addColorStop(0, "#b8860b");
-      helmetGrad.addColorStop(0.4, "#ffd700");
-      helmetGrad.addColorStop(0.7, "#daa520");
-      helmetGrad.addColorStop(1, "#8b6914");
-      ctx.beginPath();
-      ctx.moveTo(-8 * d, -22 * d);
-      ctx.lineTo(-9 * d, -27 * d);
-      ctx.quadraticCurveTo(-7 * d, -35 * d, 0, -36 * d);
-      ctx.quadraticCurveTo(7 * d, -35 * d, 9 * d, -27 * d);
-      ctx.lineTo(8 * d, -22 * d);
-      ctx.closePath();
-      ctx.fillStyle = helmetGrad;
-      ctx.fill();
-      ctx.strokeStyle = "#8b6914";
-      ctx.lineWidth = 0.7 * d;
-      ctx.stroke();
-
-      // Helmet spike
-      ctx.fillStyle = "#ffd700";
-      ctx.beginPath();
-      ctx.moveTo(-1.5 * d, -35 * d);
-      ctx.lineTo(1.5 * d, -35 * d);
-      ctx.lineTo(0, -42 * d);
-      ctx.closePath();
-      ctx.fill();
-
-      // Helmet cheek guards
-      ctx.fillStyle = "#b8860b";
-      ctx.beginPath();
-      ctx.moveTo(-9 * d, -27 * d);
-      ctx.lineTo(-10 * d, -22 * d);
-      ctx.lineTo(-8 * d, -22 * d);
-      ctx.lineTo(-8 * d, -27 * d);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(9 * d, -27 * d);
-      ctx.lineTo(10 * d, -22 * d);
-      ctx.lineTo(8 * d, -22 * d);
-      ctx.lineTo(8 * d, -27 * d);
-      ctx.closePath();
-      ctx.fill();
-
-      // Helmet decoration line
-      ctx.strokeStyle = "#ffd700";
-      ctx.lineWidth = 0.6 * d;
-      ctx.beginPath();
-      ctx.moveTo(-8 * d, -26 * d);
-      ctx.lineTo(8 * d, -26 * d);
-      ctx.stroke();
-
-      ctx.restore(); // warrior translate
-    }
-
-    function drawBorder() {
-      if (!ctx) return;
-      const borderAlpha = 0.7 + 0.3 * Math.sin(t * 0.05);
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R - 1.5 * dpr, 0, Math.PI * 2);
-      ctx.strokeStyle = `rgba(255,165,0,${borderAlpha})`;
-      ctx.lineWidth = 2.5 * dpr;
-      ctx.stroke();
-      ctx.restore();
-    }
-
-    scheduleIdRef.current = scheduleAnimation(function frame(timestamp: number) {
-      if (timestamp - lastFrameTime < frameInterval * 0.8) {
-        return;
-      }
-      lastFrameTime = timestamp;
-      t++;
-      if (!ctx) return;
-
-      // With alpha:false we fill background instead of clearRect
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, S, S);
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.clip();
-
-      drawBackground();
-      drawStars();
-      drawGround();
-
-      // Warrior position: centered, slightly below center
-      const wx = cx;
-      const wy = cy + R * 0.12;
-      const sc = (S / 160); // scale relative to canvas size
-
-      // Sword swing animation:
-      // Phase 1 (0→π): swing down-forward (raise → strike)
-      // Phase 2 (π→2π): return to raised position
-      const swingCycle = (t * 0.04) % (Math.PI * 2);
-      // swordAngle: arm rotation. 0 = arm pointing down.
-      // Swing from -1.1 (raised back) to +0.9 (forward strike)
-      let swordAngle: number;
-      let swingSpeed: number;
-
-      if (swingCycle < Math.PI) {
-        // Forward swing (fast)
-        const p = swingCycle / Math.PI;
-        swordAngle = -1.1 + p * 2.0; // -1.1 → +0.9
-        swingSpeed = Math.abs(Math.cos(swingCycle)); // speed peaks at mid-swing
-      } else {
-        // Return (slow)
-        const p = (swingCycle - Math.PI) / Math.PI;
-        swordAngle = 0.9 - p * 2.0; // +0.9 → -1.1
-        swingSpeed = 0;
-      }
-
-      // Spawn sparks at sword tip when swinging forward fast
-      if (swingCycle < Math.PI * 0.7 && swingSpeed > 0.5) {
-        // Estimate sword tip position in world coords
-        const armX = wx + (9 * dpr * sc);
-        const armY = wy + (-6 * dpr * sc);
-        const swordTipDist = (21 + 38) * dpr * sc; // hand + blade length
-        const totalAngle = swordAngle;
-        const tipX = armX + Math.sin(totalAngle) * swordTipDist;
-        const tipY = armY + Math.cos(totalAngle) * swordTipDist;
-        spawnSparks(tipX, tipY, swingSpeed);
-      }
-
-      updateSparks();
-      drawSparks();
-      drawWarrior(wx, wy, sc, swordAngle);
-
-      ctx.restore();
-      drawBorder();
-
-    });
-
-    return () => {
-      cancelAnimation(scheduleIdRef.current);
-    };
-  }, [size]);
+  const id = `khan-${size}`;
 
   return (
-    <canvas
-      ref={canvasRef}
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 100 100"
       className={`rounded-full ${className}`}
-      style={{ borderRadius: "50%", display: "block" }}
-    />
+      style={{ borderRadius: "50%", display: "block", overflow: "hidden" }}
+    >
+      <defs>
+        {/* Sunset background gradient */}
+        <linearGradient id={`${id}-bg`} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#1a0a00" />
+          <stop offset="35%" stopColor="#5c1a00" />
+          <stop offset="65%" stopColor="#c45200" />
+          <stop offset="100%" stopColor="#3d1000" />
+        </linearGradient>
+
+        {/* Horizon glow */}
+        <radialGradient id={`${id}-horizon`} cx="50%" cy="72%" r="55%">
+          <stop offset="0%" stopColor="rgba(255,140,0,0.4)" />
+          <stop offset="50%" stopColor="rgba(255,80,0,0.15)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+        </radialGradient>
+
+        {/* Warrior body gradient */}
+        <linearGradient id={`${id}-armor`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8b2500" />
+          <stop offset="50%" stopColor="#cc3300" />
+          <stop offset="100%" stopColor="#6b1a00" />
+        </linearGradient>
+
+        {/* Helmet gradient */}
+        <linearGradient id={`${id}-helmet`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#ffd700" />
+          <stop offset="50%" stopColor="#ffb300" />
+          <stop offset="100%" stopColor="#cc8800" />
+        </linearGradient>
+
+        {/* Sword gradient */}
+        <linearGradient id={`${id}-sword`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#e8e8f0" />
+          <stop offset="40%" stopColor="#ffffff" />
+          <stop offset="100%" stopColor="#a0a0b0" />
+        </linearGradient>
+
+        {/* Spark glow */}
+        <radialGradient id={`${id}-spark`} cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="1" />
+          <stop offset="40%" stopColor="#ffcc00" stopOpacity="0.8" />
+          <stop offset="100%" stopColor="#ff6600" stopOpacity="0" />
+        </radialGradient>
+
+        <clipPath id={`${id}-clip`}>
+          <circle cx="50" cy="50" r="50" />
+        </clipPath>
+
+        <filter id={`${id}-glow`} x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="1.2" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+
+        <filter id={`${id}-sword-glow`} x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="blur" />
+          <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+
+        <style>{`
+          @keyframes ${id}-sword-swing {
+            0%   { transform: rotate(-50deg); }
+            35%  { transform: rotate(40deg); }
+            55%  { transform: rotate(45deg); }
+            75%  { transform: rotate(-55deg); }
+            100% { transform: rotate(-50deg); }
+          }
+          @keyframes ${id}-spark-1 {
+            0%   { opacity: 0; transform: translate(0,0) scale(1); }
+            10%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(12px,-8px) scale(0.1); }
+          }
+          @keyframes ${id}-spark-2 {
+            0%   { opacity: 0; transform: translate(0,0) scale(1); }
+            15%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-8px,-14px) scale(0.1); }
+          }
+          @keyframes ${id}-spark-3 {
+            0%   { opacity: 0; transform: translate(0,0) scale(1); }
+            20%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(16px,4px) scale(0.1); }
+          }
+          @keyframes ${id}-spark-4 {
+            0%   { opacity: 0; transform: translate(0,0) scale(1); }
+            12%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(-14px,6px) scale(0.1); }
+          }
+          @keyframes ${id}-spark-5 {
+            0%   { opacity: 0; transform: translate(0,0) scale(1); }
+            18%  { opacity: 1; }
+            100% { opacity: 0; transform: translate(6px,-18px) scale(0.1); }
+          }
+          @keyframes ${id}-body-breathe {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-1px); }
+          }
+          @keyframes ${id}-border-pulse {
+            0%, 100% { stroke-opacity: 0.75; }
+            50%       { stroke-opacity: 1.0; }
+          }
+          @keyframes ${id}-star-twinkle {
+            0%, 100% { opacity: 0.3; }
+            50%       { opacity: 0.9; }
+          }
+          @keyframes ${id}-horizon-pulse {
+            0%, 100% { opacity: 0.7; }
+            50%       { opacity: 1.0; }
+          }
+          .${id}-sword-arm {
+            transform-origin: 50px 62px;
+            animation: ${id}-sword-swing 1.8s ease-in-out infinite;
+          }
+          .${id}-body-group {
+            animation: ${id}-body-breathe 2.4s ease-in-out infinite;
+          }
+        `}</style>
+      </defs>
+
+      {/* Background */}
+      <circle cx="50" cy="50" r="50" fill={`url(#${id}-bg)`} />
+
+      <g clipPath={`url(#${id}-clip)`}>
+        {/* Horizon glow */}
+        <ellipse
+          cx="50" cy="72" rx="55" ry="35"
+          fill={`url(#${id}-horizon)`}
+          style={{ animation: `${id}-horizon-pulse 3s ease-in-out infinite` }}
+        />
+
+        {/* Stars */}
+        {[
+          [15, 10, 0.0], [80, 8, 0.8], [60, 15, 1.3], [35, 20, 0.4],
+          [88, 25, 1.0], [8, 35, 0.6],
+        ].map(([sx, sy, delay], i) => (
+          <circle
+            key={i}
+            cx={sx}
+            cy={sy}
+            r="0.7"
+            fill="rgba(255,220,150,0.7)"
+            style={{
+              animation: `${id}-star-twinkle ${2 + (i % 3) * 0.6}s ${delay}s ease-in-out infinite`,
+            }}
+          />
+        ))}
+
+        {/* Ground / horizon line */}
+        <rect x="0" y="78" width="100" height="22" fill="#2a0800" opacity="0.7" />
+        <line x1="0" y1="78" x2="100" y2="78" stroke="#ff6600" strokeWidth="0.8" strokeOpacity="0.5" />
+
+        {/* Warrior body group (breathes slightly) */}
+        <g className={`${id}-body-group`}>
+          {/* Legs */}
+          <rect x="43" y="74" width="6" height="12" rx="2" fill="#4a1500" />
+          <rect x="51" y="74" width="6" height="12" rx="2" fill="#3d1000" />
+
+          {/* Torso / armor */}
+          <rect x="38" y="52" width="24" height="24" rx="4" fill={`url(#${id}-armor)`} />
+
+          {/* Armor details */}
+          <line x1="50" y1="52" x2="50" y2="76" stroke="#ff4400" strokeWidth="1" strokeOpacity="0.5" />
+          <line x1="38" y1="62" x2="62" y2="62" stroke="#ff4400" strokeWidth="0.8" strokeOpacity="0.4" />
+
+          {/* Shoulder pads */}
+          <ellipse cx="38" cy="55" rx="5" ry="4" fill="#ffd700" />
+          <ellipse cx="62" cy="55" rx="5" ry="4" fill="#ffd700" />
+
+          {/* Left arm (static) */}
+          <rect x="28" y="54" width="10" height="5" rx="2" fill="#cc3300" />
+
+          {/* Shield on left arm */}
+          <ellipse cx="24" cy="58" rx="7" ry="9" fill="#8b2500" stroke="#ffd700" strokeWidth="1.5" />
+          <circle cx="24" cy="58" r="3" fill="#ffd700" opacity="0.7" />
+
+          {/* Neck */}
+          <rect x="46" y="44" width="8" height="10" rx="2" fill="#8b4513" />
+
+          {/* Head */}
+          <ellipse cx="50" cy="38" rx="12" ry="13" fill="#c68642" />
+
+          {/* Helmet */}
+          <path
+            d="M 38,38 Q 38,22 50,20 Q 62,22 62,38 L 60,40 Q 50,36 40,40 Z"
+            fill={`url(#${id}-helmet)`}
+          />
+          {/* Helmet crest */}
+          <path
+            d="M 50,20 Q 52,14 50,10 Q 48,14 50,20"
+            fill="#ffd700" strokeWidth="0.5"
+          />
+          {/* Helmet visor */}
+          <rect x="40" y="36" width="20" height="4" rx="1" fill="#cc8800" opacity="0.8" />
+
+          {/* Face */}
+          {/* Eyes */}
+          <ellipse cx="45" cy="38" rx="2.5" ry="2" fill="#1a0a00" />
+          <ellipse cx="55" cy="38" rx="2.5" ry="2" fill="#1a0a00" />
+          <circle cx="44.5" cy="37.5" r="0.8" fill="rgba(255,255,255,0.4)" />
+          <circle cx="54.5" cy="37.5" r="0.8" fill="rgba(255,255,255,0.4)" />
+
+          {/* Mustache */}
+          <path d="M 44,43 Q 47,45 50,43 Q 53,45 56,43" stroke="#3d1000" strokeWidth="1.5" fill="none" strokeLinecap="round" />
+        </g>
+
+        {/* Sword arm — rotates from shoulder */}
+        <g className={`${id}-sword-arm`}>
+          {/* Right arm */}
+          <rect x="62" y="52" width="12" height="5" rx="2" fill="#cc3300" />
+
+          {/* Sword handle */}
+          <rect x="72" y="48" width="4" height="10" rx="1" fill="#8b4513" />
+          {/* Guard */}
+          <rect x="69" y="55" width="10" height="3" rx="1" fill="#ffd700" />
+          {/* Blade */}
+          <path
+            d="M 74,48 L 76,48 L 92,20 L 90,18 Z"
+            fill={`url(#${id}-sword)`}
+            filter={`url(#${id}-sword-glow)`}
+          />
+          {/* Blade edge highlight */}
+          <line x1="74" y1="48" x2="91" y2="19" stroke="rgba(255,255,255,0.6)" strokeWidth="0.8" />
+        </g>
+
+        {/* Sparks — appear at sword tip position during swing */}
+        <g filter={`url(#${id}-glow)`}>
+          {[
+            { x: 72, y: 28, delay: "0s",    dur: "1.8s", anim: `${id}-spark-1` },
+            { x: 68, y: 24, delay: "0.1s",  dur: "1.8s", anim: `${id}-spark-2` },
+            { x: 76, y: 30, delay: "0.05s", dur: "1.8s", anim: `${id}-spark-3` },
+            { x: 70, y: 32, delay: "0.15s", dur: "1.8s", anim: `${id}-spark-4` },
+            { x: 74, y: 22, delay: "0.08s", dur: "1.8s", anim: `${id}-spark-5` },
+          ].map((s, i) => (
+            <circle
+              key={i}
+              cx={s.x}
+              cy={s.y}
+              r="2.5"
+              fill={`url(#${id}-spark)`}
+              style={{
+                animation: `${s.anim} ${s.dur} ${s.delay} ease-out infinite`,
+              }}
+            />
+          ))}
+        </g>
+      </g>
+
+      {/* Golden border */}
+      <circle
+        cx="50" cy="50" r="48"
+        fill="none"
+        stroke="#ffd700"
+        strokeWidth="2.5"
+        strokeOpacity="0.8"
+        style={{ animation: `${id}-border-pulse 2s ease-in-out infinite` }}
+      />
+    </svg>
   );
 }
+
+export default KhanAvatar;
