@@ -218,6 +218,38 @@ export function getBaseAvatarId(avatarId: string | null | undefined): string {
 }
 
 /**
+ * Get accent colors for an avatar (for UI theming in Season page, etc.).
+ * Returns border color, shadow color, and Tailwind accent classes.
+ */
+export function getAvatarAccentColors(avatarId: string | null | undefined): {
+  borderColor: string;
+  shadowColor: string;
+  bgClass: string;
+  borderClass: string;
+  textClass: string;
+  hoverClass: string;
+} {
+  const baseId = getBaseAvatarId(avatarId);
+  switch (baseId) {
+    case 'khan':
+      return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(251,146,60,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
+    case 'golden_horde':
+      return { borderColor: '#eab308', shadowColor: 'rgba(234,179,8,0.3)', bgClass: 'rgba(234,179,8,0.06)', borderClass: 'border-yellow-500/50', textClass: 'text-yellow-300', hoverClass: 'hover:bg-yellow-500/10' };
+    case 'great_khan':
+      return { borderColor: '#b8860b', shadowColor: 'rgba(184,134,11,0.4)', bgClass: 'rgba(184,134,11,0.08)', borderClass: 'border-yellow-600/60', textClass: 'text-yellow-300', hoverClass: 'hover:bg-yellow-900/20' };
+    case 'neon_paw':
+      return { borderColor: '#a855f7', shadowColor: 'rgba(168,85,247,0.4)', bgClass: 'rgba(168,85,247,0.08)', borderClass: 'border-purple-500/50', textClass: 'text-purple-300', hoverClass: 'hover:bg-purple-500/10' };
+    case 'neon_dino':
+      return { borderColor: '#ff00c8', shadowColor: 'rgba(255,0,200,0.4)', bgClass: 'rgba(255,0,200,0.08)', borderClass: 'border-pink-500/50', textClass: 'text-pink-300', hoverClass: 'hover:bg-pink-500/10' };
+    case 'diving_eagle':
+    case 'sky_eagle':
+      return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
+    default:
+      return { borderColor: '#f59e0b', shadowColor: 'rgba(245,158,11,0.3)', bgClass: 'rgba(251,191,36,0.06)', borderClass: 'border-amber-500/50', textClass: 'text-amber-300', hoverClass: 'hover:bg-amber-500/10' };
+  }
+}
+
+/**
  * Check if an avatar ID is a per-season variant (has season suffix).
  * Example: isSeasonSuffixedAvatar('diving_eagle_2026Q2') → true
  * Example: isSeasonSuffixedAvatar('wolf') → false

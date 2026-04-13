@@ -2705,3 +2705,8 @@
 - [x] Зарегистрировать NeonDino в shared/avatars.ts (seasonReward, animated)
 - [x] Привязать NeonDino к рангу Рубин в сезоне Неоновая эра (rankRewardOverrides)
 - [x] Обновить NeonPawAvatar.tsx — изменить исходник, сохранить анимацию
+
+## Batch 58 — Рефактор: единый источник анимированных аватарок
+- [x] Season.tsx: заменить все хардкод-списки isAnimated на isCanvasAvatar() из shared/avatars.ts
+- [x] Season.tsx: AnimatedAvatarComponent заменить на AvatarDisplay (уже поддерживает все аватарки)
+- [x] Season.tsx: цвета акцента/рамки вынести в getAvatarAccentColors() в shared/avatars.ts

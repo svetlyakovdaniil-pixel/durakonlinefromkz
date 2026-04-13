@@ -2,16 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
-import { getBaseAvatarId, getSeasonAvatarId, getAvatarDisplayName } from '../../../shared/avatars';
+import { getBaseAvatarId, getSeasonAvatarId, getAvatarDisplayName, isCanvasAvatar, getAvatarAccentColors } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRewardDefForSeason, type SeasonTheme } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
-import { KhanAvatar } from '@/components/KhanAvatar';
-import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
-import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
-import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
-import { NeonPawAvatar } from '@/components/NeonPawAvatar';
-import { NeonDinoAvatar } from '@/components/NeonDinoAvatar';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
@@ -44,17 +38,6 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
   );
 }
 
-/** Render an animated avatar component by base ID */
-function AnimatedAvatarComponent({ baseId, size }: { baseId: string; size: number }) {
-  if (baseId === 'sky_eagle' || baseId === 'diving_eagle') return <DivingEagleAvatar size={size} />;
-  if (baseId === 'khan') return <KhanAvatar size={size} />;
-  if (baseId === 'golden_horde') return <GoldenHordeAvatar size={size} />;
-  if (baseId === 'great_khan') return <GreatKhanAvatar size={size} />;
-  if (baseId === 'neon_paw') return <NeonPawAvatar size={size} />;
-  if (baseId === 'neon_dino') return <NeonDinoAvatar size={size} />;
-  return null;
-}
-
 /** Full-screen avatar preview modal */
 function AvatarPreviewModal({
   avatarId,
@@ -67,23 +50,9 @@ function AvatarPreviewModal({
   seasonNumber?: number;
   onClose: () => void;
 }) {
-  const baseId = getBaseAvatarId(avatarId);
   const displayName = getAvatarDisplayName(avatarId, locale as 'ru' | 'kk' | 'en', seasonNumber);
 
-  const borderColor =
-    baseId === 'khan'         ? '#f97316' :
-    baseId === 'golden_horde' ? '#eab308' :
-    baseId === 'great_khan'   ? '#b8860b' :
-    baseId === 'neon_paw'     ? '#a855f7' :
-    baseId === 'neon_dino'    ? '#ff00c8' :
-    '#f59e0b';
-  const shadowColor =
-    baseId === 'khan'         ? 'rgba(249,115,22,0.3)' :
-    baseId === 'golden_horde' ? 'rgba(234,179,8,0.3)' :
-    baseId === 'great_khan'   ? 'rgba(184,134,11,0.4)' :
-    baseId === 'neon_paw'     ? 'rgba(168,85,247,0.4)' :
-    baseId === 'neon_dino'    ? 'rgba(255,0,200,0.4)' :
-    'rgba(245,158,11,0.3)';
+  const { borderColor, shadowColor } = getAvatarAccentColors(avatarId);
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
@@ -93,7 +62,7 @@ function AvatarPreviewModal({
           className="w-64 h-64 rounded-full overflow-hidden"
           style={{ border: `4px solid ${borderColor}`, boxShadow: `0 0 40px ${shadowColor}` }}
         >
-          <AnimatedAvatarComponent baseId={baseId} size={256} />
+          <AvatarDisplay avatarId={avatarId} size={256} />
         </div>
         <div className="font-bold text-lg" style={{ color: borderColor }}>{displayName}</div>
         <button
@@ -148,18 +117,11 @@ function RewardPopup({
     ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber)
     : null;
 
-  const isAnimated = baseAvatarId
-    ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw', 'neon_dino'].includes(baseAvatarId)
-    : false;
+  const isAnimated = isCanvasAvatar(seasonAvatarId);
 
   // Avatar accent color
-  const avatarAccent =
-    baseAvatarId === 'khan'         ? { bg: 'rgba(251,146,60,0.06)', border: 'border-orange-500/50', text: 'text-orange-300', hover: 'hover:bg-orange-500/10' } :
-    baseAvatarId === 'golden_horde' ? { bg: 'rgba(234,179,8,0.06)', border: 'border-yellow-500/50', text: 'text-yellow-300', hover: 'hover:bg-yellow-500/10' } :
-    baseAvatarId === 'great_khan'   ? { bg: 'rgba(184,134,11,0.08)', border: 'border-yellow-600/60', text: 'text-yellow-300', hover: 'hover:bg-yellow-900/20' } :
-    baseAvatarId === 'neon_paw'     ? { bg: 'rgba(168,85,247,0.08)', border: 'border-purple-500/50', text: 'text-purple-300', hover: 'hover:bg-purple-500/10' } :
-    baseAvatarId === 'neon_dino'    ? { bg: 'rgba(255,0,200,0.08)', border: 'border-pink-500/50', text: 'text-pink-300', hover: 'hover:bg-pink-500/10' } :
-    { bg: 'rgba(251,191,36,0.06)', border: 'border-amber-500/50', text: 'text-amber-300', hover: 'hover:bg-amber-500/10' };
+  const _ac = getAvatarAccentColors(seasonAvatarId);
+  const avatarAccent = { bg: _ac.bgClass, border: _ac.borderClass, text: _ac.textClass, hover: _ac.hoverClass };
 
   return (
     <>
@@ -228,7 +190,7 @@ function RewardPopup({
                 onClick={() => setAvatarPreview(seasonAvatarId)}
               >
                 <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${avatarAccent.border} flex-shrink-0`}>
-                  {baseAvatarId && <AnimatedAvatarComponent baseId={baseAvatarId} size={48} />}
+                  <AvatarDisplay avatarId={seasonAvatarId} size={48} />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className={`${avatarAccent.text} font-semibold text-sm`}>
@@ -492,9 +454,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber ?? undefined)
                       : null;
 
-                    const isAnimated = baseAvatarId
-                      ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw', 'neon_dino'].includes(baseAvatarId)
-                      : false;
+                    const isAnimated = isCanvasAvatar(seasonAvatarId);
 
                     return (
                       <div className="text-amber-100 text-sm space-y-1.5">
@@ -518,7 +478,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               onClick={isAnimated ? () => setRewardPopupKey(currentRank.key) : undefined}
                             >
                               <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 flex-shrink-0 bg-black/30">
-                                {baseAvatarId ? <AnimatedAvatarComponent baseId={baseAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
+                                {seasonAvatarId ? <AvatarDisplay avatarId={seasonAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
                               </div>
                               <span>
                                 {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarDisplayName}</span>
