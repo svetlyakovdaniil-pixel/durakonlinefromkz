@@ -2660,3 +2660,10 @@
 - [x] shared/seasons.ts: обновить nameRu/nameKk/nameEn для всех 8 рангов
 - [x] achievementsDb.ts / achievements.ts: обновить упоминания старых названий рангов
 - [x] Клиентские компоненты: обновить хардкод-упоминания старых названий рангов
+
+## Batch 51 — Цветовые темы сезонов + номера + иконки рангов
+- [x] shared/seasons.ts: добавить поле theme (цвета bg/accent/text) для каждого из 12 сезонов
+- [x] shared/seasons.ts: добавить поле seasonNumber (1-12) в SeasonInfo
+- [x] Season.tsx: применять тему сезона к фону, акцентам, заголовкам страницы
+- [x] Season.tsx: отображать номер сезона в формате "Season N" рядом с названием
+- [x] shared/achievements.ts: обновить иконки рангов на камни (🌙💚💙💜🔵❤️🟡🖤)

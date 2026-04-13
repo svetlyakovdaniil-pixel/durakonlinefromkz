@@ -581,7 +581,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 1000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🐇',
+    icon: '🪨',
   },
   {
     key: 'season_mountain_ram',
@@ -594,7 +594,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 2000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🐏',
+    icon: '💚',
   },
   {
     key: 'season_golden_falcon',
@@ -607,7 +607,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 3000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🦅',
+    icon: '💙',
   },
   {
     key: 'season_winged_horse',
@@ -620,7 +620,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 4000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🐎',
+    icon: '💜',
   },
   {
     key: 'season_sky_eagle',
@@ -633,7 +633,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 5000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🦅',
+    icon: '🔵',
   },
   {
     key: 'season_steppe_khan',
@@ -646,7 +646,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 10000 },
     maxProgress: 1,
     category: 'season',
-    icon: '🏹',
+    icon: '❤️',
   },
   {
     key: 'season_golden_horde',
@@ -659,7 +659,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 25000 },
     maxProgress: 1,
     category: 'season',
-    icon: '⚔️',
+    icon: '🟡',
   },
   {
     key: 'season_great_khan',
@@ -672,7 +672,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     reward: { shanyrak: 50000 },
     maxProgress: 1,
     category: 'season',
-    icon: '👑',
+    icon: '🖤',
   },
 
   // ============================================================

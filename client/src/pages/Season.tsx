@@ -3,7 +3,7 @@ import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { getAvatarUrl, getAvatarOption, AVATAR_OPTIONS } from '../../../shared/avatars';
-import { SEASON_RANKS, SEASON_REWARD_DEFS } from '../../../shared/seasons';
+import { SEASON_RANKS, SEASON_REWARD_DEFS, type SeasonTheme } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { KhanAvatar } from '@/components/KhanAvatar';
@@ -304,9 +304,21 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const endDate = seasonData?.endDate ? new Date(seasonData.endDate) : null;
   const timeLeft = endDate ? formatTimeLeft(endDate) : '—';
 
-  const seasonName = seasonData?.seasonInfo
-    ? (locale === 'kk' ? seasonData.seasonInfo.nameKk : locale === 'en' ? seasonData.seasonInfo.nameEn : seasonData.seasonInfo.nameRu)
+  const seasonInfo = seasonData?.seasonInfo;
+  const seasonName = seasonInfo
+    ? (locale === 'kk' ? seasonInfo.nameKk : locale === 'en' ? seasonInfo.nameEn : seasonInfo.nameRu)
     : '—';
+  const seasonNumber = seasonInfo?.seasonNumber ?? null;
+  const theme: SeasonTheme = seasonInfo?.theme ?? {
+    accent: '#f59e0b',
+    accentSecondary: '#d97706',
+    bgFrom: '#0d1b2a',
+    bgTo: '#0a1628',
+    border: 'rgba(251,191,36,0.2)',
+    tabActive: '#f59e0b',
+    iconClass: 'text-amber-400',
+    emoji: '🎴',
+  };
 
   const currentRank = seasonData?.rank;
   const nextRank = currentRank
@@ -323,32 +335,37 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
 
         {/* Panel — full screen on mobile, modal on sm+ */}
         <div className="relative w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col sm:rounded-2xl overflow-hidden"
-          style={{ background: 'linear-gradient(160deg, #0d1b2a 0%, #0a1628 50%, #0d1b2a 100%)', border: '1px solid rgba(251,191,36,0.2)' }}>
+          style={{ background: `linear-gradient(160deg, ${theme.bgFrom} 0%, ${theme.bgTo} 50%, ${theme.bgFrom} 100%)`, border: `1px solid ${theme.border}` }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4 border-b border-amber-700/20">
+          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
             <div className="flex items-center gap-2">
-              <Flame className="w-5 h-5 text-orange-400" />
-              <span className="font-bold text-amber-100 text-lg">
+              <span className="text-xl">{theme.emoji}</span>
+              <span className="font-bold text-white text-lg">
                 {locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон'}
               </span>
             </div>
-            <button onClick={onClose} className="text-amber-200/50 hover:text-amber-100 transition-colors p-1">
+            <button onClick={onClose} className="text-white/50 hover:text-white transition-colors p-1">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Season name + timer */}
-          <div className="px-5 py-4 text-center border-b border-amber-700/10">
-            <div className="text-amber-400 font-bold text-xl mb-1">{seasonName}</div>
-            <div className="flex items-center justify-center gap-2 text-amber-200/60 text-sm">
+          <div className="px-5 py-4 text-center" style={{ borderBottom: `1px solid ${theme.border}40` }}>
+            {seasonNumber && (
+              <div className="text-xs font-semibold tracking-widest uppercase mb-1" style={{ color: `${theme.accent}80` }}>
+                Season {seasonNumber}
+              </div>
+            )}
+            <div className="font-bold text-xl mb-1" style={{ color: theme.accent }}>{seasonName}</div>
+            <div className="flex items-center justify-center gap-2 text-sm" style={{ color: `${theme.accent}80` }}>
               <Clock className="w-4 h-4" />
               <span>
                 {locale === 'kk' ? 'Аяқталуға дейін:' : locale === 'en' ? 'Ends in:' : 'До конца:'} {timeLeft}
               </span>
             </div>
             {/* Premium note */}
-            <div className="mt-2 text-xs text-amber-200/40 italic">
+            <div className="mt-2 text-xs italic" style={{ color: `${theme.accent}50` }}>
               {locale === 'kk'
                 ? '★ Премиум сезондық рейтингке бонус бермейді'
                 : locale === 'en'
@@ -358,12 +375,16 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-amber-700/20">
+          <div className="flex" style={{ borderBottom: `1px solid ${theme.border}` }}>
             {(['info', 'leaderboard', 'ranks'] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 text-sm font-medium transition-colors ${activeTab === tab ? 'text-amber-300 border-b-2 border-amber-400' : 'text-amber-200/50 hover:text-amber-200'}`}
+                className="flex-1 py-2.5 text-sm font-medium transition-colors"
+                style={activeTab === tab
+                  ? { color: theme.tabActive, borderBottom: `2px solid ${theme.tabActive}` }
+                  : { color: 'rgba(255,255,255,0.4)' }
+                }
               >
                 {tab === 'info'
                   ? (locale === 'kk' ? 'Менің рейтингім' : locale === 'en' ? 'My Rating' : 'Мой рейтинг')

@@ -16,14 +16,38 @@
 /** The first year of the 12-season cycle. */
 export const SEASON_BASE_YEAR = 2025;
 
+/** Color theme for a season — used to style the Season page */
+export interface SeasonTheme {
+  /** Primary accent color (hex) */
+  accent: string;
+  /** Secondary accent color (hex) */
+  accentSecondary: string;
+  /** Background gradient start (CSS color) */
+  bgFrom: string;
+  /** Background gradient end (CSS color) */
+  bgTo: string;
+  /** Border color (CSS color with opacity) */
+  border: string;
+  /** Tab active indicator color */
+  tabActive: string;
+  /** Header icon color class (Tailwind) */
+  iconClass: string;
+  /** Emoji icon for the season */
+  emoji: string;
+}
+
 export interface SeasonInfo {
   /** 0-indexed season number within the 12-season cycle (0–11) */
   index: number;
+  /** 1-indexed season number for display (1–12) */
+  seasonNumber: number;
   /** Quarter number 1–4 */
   quarter: number;
   nameRu: string;
   nameKk: string;
   nameEn: string;
+  /** Visual theme for the Season page */
+  theme: SeasonTheme;
 }
 
 /**
@@ -33,87 +57,219 @@ export interface SeasonInfo {
 export const SEASONS: SeasonInfo[] = [
   {
     index: 0,
+    seasonNumber: 1,
     quarter: 1,
     nameRu: 'Подводный мир',
     nameKk: 'Су Асты Әлемі',
     nameEn: 'Underwater World',
+    theme: {
+      accent: '#06b6d4',
+      accentSecondary: '#0891b2',
+      bgFrom: '#031a2e',
+      bgTo: '#042a3e',
+      border: 'rgba(6,182,212,0.25)',
+      tabActive: '#06b6d4',
+      iconClass: 'text-cyan-400',
+      emoji: '🌊',
+    },
   },
   {
     index: 1,
+    seasonNumber: 2,
     quarter: 2,
     nameRu: 'Египетские боги',
     nameKk: 'Мысыр Құдайлары',
     nameEn: 'Egyptian Gods',
+    theme: {
+      accent: '#f59e0b',
+      accentSecondary: '#d97706',
+      bgFrom: '#1c1200',
+      bgTo: '#2a1a00',
+      border: 'rgba(245,158,11,0.25)',
+      tabActive: '#f59e0b',
+      iconClass: 'text-amber-400',
+      emoji: '⚱️',
+    },
   },
   {
     index: 2,
+    seasonNumber: 3,
     quarter: 3,
     nameRu: 'Неоновая эра',
     nameKk: 'Неон Дәуірі',
     nameEn: 'Neon Era',
+    theme: {
+      accent: '#a855f7',
+      accentSecondary: '#ec4899',
+      bgFrom: '#0d0020',
+      bgTo: '#1a0030',
+      border: 'rgba(168,85,247,0.25)',
+      tabActive: '#a855f7',
+      iconClass: 'text-purple-400',
+      emoji: '💜',
+    },
   },
   {
     index: 3,
+    seasonNumber: 4,
     quarter: 4,
     nameRu: 'Скандинавские боги',
     nameKk: 'Скандинавия Құдайлары',
     nameEn: 'Norse Gods',
+    theme: {
+      accent: '#94a3b8',
+      accentSecondary: '#64748b',
+      bgFrom: '#0a1020',
+      bgTo: '#111827',
+      border: 'rgba(148,163,184,0.25)',
+      tabActive: '#94a3b8',
+      iconClass: 'text-slate-300',
+      emoji: '⚡',
+    },
   },
   {
     index: 4,
+    seasonNumber: 5,
     quarter: 1,
     nameRu: 'Космическая одиссея',
     nameKk: 'Ғарыштық Одиссея',
     nameEn: 'Space Odyssey',
+    theme: {
+      accent: '#6366f1',
+      accentSecondary: '#4f46e5',
+      bgFrom: '#020010',
+      bgTo: '#0a0020',
+      border: 'rgba(99,102,241,0.25)',
+      tabActive: '#6366f1',
+      iconClass: 'text-indigo-400',
+      emoji: '🚀',
+    },
   },
   {
     index: 5,
+    seasonNumber: 6,
     quarter: 2,
     nameRu: 'Казахский колорит',
     nameKk: 'Қазақ Колориті',
     nameEn: 'Kazakh Colors',
+    theme: {
+      accent: '#f59e0b',
+      accentSecondary: '#dc2626',
+      bgFrom: '#1a0e00',
+      bgTo: '#200800',
+      border: 'rgba(245,158,11,0.30)',
+      tabActive: '#f59e0b',
+      iconClass: 'text-amber-400',
+      emoji: '🏇',
+    },
   },
   {
     index: 6,
+    seasonNumber: 7,
     quarter: 3,
     nameRu: 'Апокалипсис',
     nameKk: 'Апокалипсис',
     nameEn: 'Apocalypse',
+    theme: {
+      accent: '#ef4444',
+      accentSecondary: '#f97316',
+      bgFrom: '#1a0000',
+      bgTo: '#200500',
+      border: 'rgba(239,68,68,0.25)',
+      tabActive: '#ef4444',
+      iconClass: 'text-red-400',
+      emoji: '🔥',
+    },
   },
   {
     index: 7,
+    seasonNumber: 8,
     quarter: 4,
     nameRu: 'Пиратские острова',
     nameKk: 'Пираттар Аралдары',
     nameEn: 'Pirate Islands',
+    theme: {
+      accent: '#78716c',
+      accentSecondary: '#0ea5e9',
+      bgFrom: '#0a0e12',
+      bgTo: '#0f1a20',
+      border: 'rgba(120,113,108,0.25)',
+      tabActive: '#78716c',
+      iconClass: 'text-stone-400',
+      emoji: '🏴‍☠️',
+    },
   },
   {
     index: 8,
+    seasonNumber: 9,
     quarter: 1,
     nameRu: 'Японские мотивы',
     nameKk: 'Жапон Мотивтері',
     nameEn: 'Japanese Motifs',
+    theme: {
+      accent: '#f472b6',
+      accentSecondary: '#ec4899',
+      bgFrom: '#1a0010',
+      bgTo: '#200018',
+      border: 'rgba(244,114,182,0.25)',
+      tabActive: '#f472b6',
+      iconClass: 'text-pink-400',
+      emoji: '🌸',
+    },
   },
   {
     index: 9,
+    seasonNumber: 10,
     quarter: 2,
     nameRu: 'Киберпанк',
     nameKk: 'Киберпанк',
     nameEn: 'Cyberpunk',
+    theme: {
+      accent: '#22c55e',
+      accentSecondary: '#84cc16',
+      bgFrom: '#001a08',
+      bgTo: '#002010',
+      border: 'rgba(34,197,94,0.25)',
+      tabActive: '#22c55e',
+      iconClass: 'text-green-400',
+      emoji: '🤖',
+    },
   },
   {
     index: 10,
+    seasonNumber: 11,
     quarter: 3,
     nameRu: 'Хип-хоп 90-х',
     nameKk: '90-шы жылдар хип-хопы',
     nameEn: '90s Hip-Hop',
+    theme: {
+      accent: '#fb923c',
+      accentSecondary: '#facc15',
+      bgFrom: '#1a0800',
+      bgTo: '#200e00',
+      border: 'rgba(251,146,60,0.25)',
+      tabActive: '#fb923c',
+      iconClass: 'text-orange-400',
+      emoji: '🎤',
+    },
   },
   {
     index: 11,
+    seasonNumber: 12,
     quarter: 4,
     nameRu: 'Ангелы и Демоны',
     nameKk: 'Періштелер мен Шайтандар',
     nameEn: 'Angels and Demons',
+    theme: {
+      accent: '#e2e8f0',
+      accentSecondary: '#7c3aed',
+      bgFrom: '#080808',
+      bgTo: '#100010',
+      border: 'rgba(226,232,240,0.20)',
+      tabActive: '#e2e8f0',
+      iconClass: 'text-slate-200',
+      emoji: '😇',
+    },
   },
 ];
 
