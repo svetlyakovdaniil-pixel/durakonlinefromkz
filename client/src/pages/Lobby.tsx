@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
-import { getAvatarUrl, AVATAR_OPTIONS } from '../../../shared/avatars';
+import { getAvatarUrl, AVATAR_OPTIONS, getBaseAvatarId, getAvatarDisplayName } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank, getSeasonInfo } from '../../../shared/seasons';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
@@ -1563,6 +1563,9 @@ onClick={() => setShowTengeTopUp(true)}
                         const isClaimed = !!(n.data?.claimed);
                         const seasonNumber = seasonKey ? getSeasonInfo(seasonKey)?.seasonNumber : undefined;
                         const seasonLabel = seasonNumber ? ` Season ${seasonNumber}` : '';
+                        // Per-season avatarId stored in notification.data (already suffixed, e.g. 'neon_paw_2026Q3')
+                        const notifAvatarId = (n.data?.avatarId as string | undefined) ?? rewardDef?.avatarId;
+                        const notifFrameId = (n.data?.frameId as string | undefined) ?? rewardDef?.frameId;
                         return (
                           <>
                             {/* Header */}
@@ -1606,23 +1609,21 @@ onClick={() => setShowTengeTopUp(true)}
                                     +{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
                                   </div>
                                 )}
-                                {rewardDef.avatarId && (() => {
-                                  const avatarOpt = AVATAR_OPTIONS.find(a => a.id === rewardDef.avatarId);
-                                  const avatarName = avatarOpt
-                                    ? (locale === 'kk' ? (avatarOpt.nameKk ?? avatarOpt.name) : locale === 'en' ? (avatarOpt.nameEn ?? avatarOpt.name) : avatarOpt.name)
-                                    : rewardDef.avatarId;
+                                {notifAvatarId && (() => {
+                                  // Use per-season avatarId from notification (already suffixed, e.g. 'neon_paw_2026Q3')
+                                  const avatarName = getAvatarDisplayName(notifAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber);
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                      <AvatarDisplay avatarId={rewardDef.avatarId} size={16} className="rounded-full" />
-                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}{seasonLabel}</span>
+                                      <AvatarDisplay avatarId={notifAvatarId} size={16} className="rounded-full" />
+                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}</span>
                                     </div>
                                   );
                                 })()}
-                                {rewardDef.frameId && (() => {
-                                  const frameOpt = AVATAR_FRAMES.find(f => f.id === rewardDef.frameId);
+                                {notifFrameId && (() => {
+                                  const frameOpt = AVATAR_FRAMES.find(f => f.id === notifFrameId || notifFrameId?.startsWith(f.id + '_'));
                                   const frameName = frameOpt
                                     ? (locale === 'kk' ? (frameOpt as any).nameKk ?? frameOpt.name : locale === 'en' ? (frameOpt as any).nameEn ?? frameOpt.name : frameOpt.name)
-                                    : rewardDef.frameId;
+                                    : notifFrameId;
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <span className="text-amber-400">🛡️</span>

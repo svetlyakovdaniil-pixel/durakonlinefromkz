@@ -2,14 +2,15 @@ import { useState, useMemo, useEffect } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
-import { getAvatarUrl, getAvatarOption, AVATAR_OPTIONS } from '../../../shared/avatars';
-import { SEASON_RANKS, SEASON_REWARD_DEFS, type SeasonTheme } from '../../../shared/seasons';
+import { getBaseAvatarId, getSeasonAvatarId, getAvatarDisplayName } from '../../../shared/avatars';
+import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRewardDefForSeason, type SeasonTheme } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { KhanAvatar } from '@/components/KhanAvatar';
 import { GoldenHordeAvatar } from '@/components/GoldenHordeAvatar';
 import { DivingEagleAvatar } from '@/components/DivingEagleAvatar';
 import { GreatKhanAvatar } from '@/components/GreatKhanAvatar';
+import { NeonPawAvatar } from '@/components/NeonPawAvatar';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
@@ -42,27 +43,44 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
   );
 }
 
+/** Render an animated avatar component by base ID */
+function AnimatedAvatarComponent({ baseId, size }: { baseId: string; size: number }) {
+  if (baseId === 'sky_eagle' || baseId === 'diving_eagle') return <DivingEagleAvatar size={size} />;
+  if (baseId === 'khan') return <KhanAvatar size={size} />;
+  if (baseId === 'golden_horde') return <GoldenHordeAvatar size={size} />;
+  if (baseId === 'great_khan') return <GreatKhanAvatar size={size} />;
+  if (baseId === 'neon_paw') return <NeonPawAvatar size={size} />;
+  return null;
+}
+
 /** Full-screen avatar preview modal */
-function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; locale: string; onClose: () => void }) {
-  const avatarNames: Record<string, { ru: string; kk: string; en: string }> = {
-    sky_eagle:    { ru: 'Циркон', kk: 'Циркон',  en: 'Zircon' },
-    diving_eagle: { ru: 'Циркон', kk: 'Циркон',  en: 'Zircon' },
-    khan:         { ru: 'Рубин',    kk: 'Рубин',         en: 'Ruby' },
-    golden_horde: { ru: 'Янтарь',  kk: 'Янтар',        en: 'Amber' },
-    great_khan:   { ru: 'Обсидиан',   kk: 'Обсидиан',              en: 'Obsidian' },
-  };
-  const names = avatarNames[avatarId] ?? { ru: avatarId, kk: avatarId, en: avatarId };
-  const displayName = locale === 'kk' ? names.kk : locale === 'en' ? names.en : names.ru;
+function AvatarPreviewModal({
+  avatarId,
+  locale,
+  seasonNumber,
+  onClose,
+}: {
+  avatarId: string;
+  locale: string;
+  seasonNumber?: number;
+  onClose: () => void;
+}) {
+  const baseId = getBaseAvatarId(avatarId);
+  const displayName = getAvatarDisplayName(avatarId, locale as 'ru' | 'kk' | 'en', seasonNumber);
+
   const borderColor =
-    avatarId === 'khan'         ? '#f97316' :
-    avatarId === 'golden_horde' ? '#eab308' :
-    avatarId === 'great_khan'   ? '#b8860b' :
+    baseId === 'khan'         ? '#f97316' :
+    baseId === 'golden_horde' ? '#eab308' :
+    baseId === 'great_khan'   ? '#b8860b' :
+    baseId === 'neon_paw'     ? '#a855f7' :
     '#f59e0b';
   const shadowColor =
-    avatarId === 'khan'         ? 'rgba(249,115,22,0.3)' :
-    avatarId === 'golden_horde' ? 'rgba(234,179,8,0.3)' :
-    avatarId === 'great_khan'   ? 'rgba(184,134,11,0.4)' :
+    baseId === 'khan'         ? 'rgba(249,115,22,0.3)' :
+    baseId === 'golden_horde' ? 'rgba(234,179,8,0.3)' :
+    baseId === 'great_khan'   ? 'rgba(184,134,11,0.4)' :
+    baseId === 'neon_paw'     ? 'rgba(168,85,247,0.4)' :
     'rgba(245,158,11,0.3)';
+
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
@@ -71,15 +89,7 @@ function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; l
           className="w-64 h-64 rounded-full overflow-hidden"
           style={{ border: `4px solid ${borderColor}`, boxShadow: `0 0 40px ${shadowColor}` }}
         >
-          {(avatarId === 'sky_eagle' || avatarId === 'diving_eagle') ? (
-            <DivingEagleAvatar size={256} />
-          ) : avatarId === 'khan' ? (
-            <KhanAvatar size={256} />
-          ) : avatarId === 'golden_horde' ? (
-            <GoldenHordeAvatar size={256} />
-          ) : avatarId === 'great_khan' ? (
-            <GreatKhanAvatar size={256} />
-          ) : null}
+          <AnimatedAvatarComponent baseId={baseId} size={256} />
         </div>
         <div className="font-bold text-lg" style={{ color: borderColor }}>{displayName}</div>
         <button
@@ -93,27 +103,68 @@ function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; l
   );
 }
 
-/** Reward popup for a single rank */
+/** Reward popup for a single rank — uses per-season avatarId */
 function RewardPopup({
   rankKey,
+  seasonKey,
+  seasonNumber,
   locale,
   onClose,
 }: {
   rankKey: string;
+  seasonKey?: string;
+  seasonNumber?: number;
   locale: string;
   onClose: () => void;
 }) {
   const rank = SEASON_RANKS.find(r => r.key === rankKey);
-  const reward = SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey);
   const [avatarPreview, setAvatarPreview] = useLocalState<string | null>(null);
-  if (!rank || !reward) return null;
+  if (!rank) return null;
+
+  // Use per-season reward def if seasonInfo is available
+  const { data: seasonData } = trpc.season.current.useQuery(
+    { seasonKey },
+    { enabled: !!seasonKey }
+  );
+  const seasonInfo = seasonData?.seasonInfo;
+  const reward = seasonInfo
+    ? getSeasonRewardDefForSeason(rankKey, seasonInfo)
+    : SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey);
+
+  if (!reward) return null;
 
   const rankName = locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu;
+
+  // Build per-season avatar ID for display
+  const seasonAvatarId = reward.avatarId && seasonKey
+    ? getSeasonAvatarId(reward.avatarId, seasonKey)
+    : reward.avatarId;
+  const baseAvatarId = seasonAvatarId ? getBaseAvatarId(seasonAvatarId) : null;
+  const avatarDisplayName = seasonAvatarId
+    ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber)
+    : null;
+
+  const isAnimated = baseAvatarId
+    ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw'].includes(baseAvatarId)
+    : false;
+
+  // Avatar accent color
+  const avatarAccent =
+    baseAvatarId === 'khan'         ? { bg: 'rgba(251,146,60,0.06)', border: 'border-orange-500/50', text: 'text-orange-300', hover: 'hover:bg-orange-500/10' } :
+    baseAvatarId === 'golden_horde' ? { bg: 'rgba(234,179,8,0.06)', border: 'border-yellow-500/50', text: 'text-yellow-300', hover: 'hover:bg-yellow-500/10' } :
+    baseAvatarId === 'great_khan'   ? { bg: 'rgba(184,134,11,0.08)', border: 'border-yellow-600/60', text: 'text-yellow-300', hover: 'hover:bg-yellow-900/20' } :
+    baseAvatarId === 'neon_paw'     ? { bg: 'rgba(168,85,247,0.08)', border: 'border-purple-500/50', text: 'text-purple-300', hover: 'hover:bg-purple-500/10' } :
+    { bg: 'rgba(251,191,36,0.06)', border: 'border-amber-500/50', text: 'text-amber-300', hover: 'hover:bg-amber-500/10' };
 
   return (
     <>
       {avatarPreview && (
-        <AvatarPreviewModal avatarId={avatarPreview} locale={locale} onClose={() => setAvatarPreview(null)} />
+        <AvatarPreviewModal
+          avatarId={avatarPreview}
+          locale={locale}
+          seasonNumber={seasonNumber}
+          onClose={() => setAvatarPreview(null)}
+        />
       )}
       <div className="fixed inset-0 z-[60] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
@@ -164,87 +215,21 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Avatar — diving_eagle / sky_eagle (legacy): show animated preview */}
-            {(reward.avatarId === 'diving_eagle' || reward.avatarId === 'sky_eagle') && (
+            {/* Avatar — animated preview */}
+            {seasonAvatarId && isAnimated && (
               <div
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-amber-500/10 transition-colors"
-                style={{ background: 'rgba(251,191,36,0.06)' }}
-                onClick={() => setAvatarPreview('diving_eagle')}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-colors ${avatarAccent.hover}`}
+                style={{ background: avatarAccent.bg }}
+                onClick={() => setAvatarPreview(seasonAvatarId)}
               >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-amber-500/50 flex-shrink-0">
-                  <DivingEagleAvatar size={48} />
+                <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${avatarAccent.border} flex-shrink-0`}>
+                  {baseAvatarId && <AnimatedAvatarComponent baseId={baseAvatarId} size={48} />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-amber-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}
+                  <div className={`${avatarAccent.text} font-semibold text-sm`}>
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
                   </div>
-                  <div className="text-amber-400/60 text-xs flex items-center gap-1 mt-0.5">
-                    <ZoomIn className="w-3 h-3" />
-                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Avatar — khan: show animated preview */}
-            {reward.avatarId === 'khan' && (
-              <div
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-orange-500/10 transition-colors"
-                style={{ background: 'rgba(251,146,60,0.06)' }}
-                onClick={() => setAvatarPreview('khan')}
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-500/50 flex-shrink-0">
-                  <KhanAvatar size={48} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-orange-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}
-                  </div>
-                  <div className="text-orange-400/60 text-xs flex items-center gap-1 mt-0.5">
-                    <ZoomIn className="w-3 h-3" />
-                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Avatar — golden_horde: show animated preview */}
-            {reward.avatarId === 'golden_horde' && (
-              <div
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-yellow-500/10 transition-colors"
-                style={{ background: 'rgba(234,179,8,0.06)' }}
-                onClick={() => setAvatarPreview('golden_horde')}
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-500/50 flex-shrink-0">
-                  <GoldenHordeAvatar size={48} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}
-                  </div>
-                  <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
-                    <ZoomIn className="w-3 h-3" />
-                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Avatar — great_khan: show animated preview */}
-            {reward.avatarId === 'great_khan' && (
-              <div
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer hover:bg-yellow-900/20 transition-colors"
-                style={{ background: 'rgba(184,134,11,0.08)' }}
-                onClick={() => setAvatarPreview('great_khan')}
-              >
-                <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-yellow-600/60 flex-shrink-0">
-                  <GreatKhanAvatar size={48} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}
-                  </div>
-                  <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
+                  <div className={`${avatarAccent.text} opacity-60 text-xs flex items-center gap-1 mt-0.5`}>
                     <ZoomIn className="w-3 h-3" />
                     {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
                   </div>
@@ -270,7 +255,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
                     {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
@@ -347,6 +332,9 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const nextRank = currentRank
     ? SEASON_RANKS.find(r => r.minRating > (seasonData?.seasonRating ?? 0))
     : null;
+
+  // Active season key (test or real)
+  const activeSeasonKey = testSeasonKey ?? seasonData?.seasonKey;
 
   if (!open) return null;
 
@@ -477,19 +465,32 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   ))}
                 </div>
 
-                {/* Season end reward preview */}
+                {/* Season end reward preview — uses per-season avatarId */}
                 <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
                   <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
                     <Trophy className="w-4 h-4" />
                     <span>{locale === 'kk' ? 'Маусым соңындағы сыйақы' : locale === 'en' ? 'End of season reward' : 'Награда за сезон'}</span>
                   </div>
                   {currentRank && (() => {
-                    const rewardDef = SEASON_REWARD_DEFS.find(r => r.rankKey === currentRank.key);
+                    // Use per-season reward def
+                    const rewardDef = seasonInfo
+                      ? getSeasonRewardDefForSeason(currentRank.key, seasonInfo)
+                      : SEASON_REWARD_DEFS.find(r => r.rankKey === currentRank.key);
                     if (!rewardDef) return null;
-                    const avatarOpt = rewardDef.avatarId ? getAvatarOption(rewardDef.avatarId) : null;
-                    const avatarName = avatarOpt
-                      ? (locale === 'kk' ? (avatarOpt.nameKk ?? avatarOpt.name) : locale === 'en' ? (avatarOpt.nameEn ?? avatarOpt.name) : avatarOpt.name)
+
+                    // Build per-season avatar ID
+                    const seasonAvatarId = rewardDef.avatarId && activeSeasonKey
+                      ? getSeasonAvatarId(rewardDef.avatarId, activeSeasonKey)
                       : rewardDef.avatarId;
+                    const baseAvatarId = seasonAvatarId ? getBaseAvatarId(seasonAvatarId) : null;
+                    const avatarDisplayName = seasonAvatarId
+                      ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber ?? undefined)
+                      : null;
+
+                    const isAnimated = baseAvatarId
+                      ? ['sky_eagle', 'diving_eagle', 'khan', 'golden_horde', 'great_khan', 'neon_paw'].includes(baseAvatarId)
+                      : false;
+
                     return (
                       <div className="text-amber-100 text-sm space-y-1.5">
                         {/* Shanyraks */}
@@ -504,30 +505,24 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             <span>+{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</span>
                           </div>
                         )}
-                        {/* Avatar */}
-                        {rewardDef.avatarId && (() => {
-                          const aid = rewardDef.avatarId;
-                          const isAnimated = aid === 'sky_eagle' || aid === 'diving_eagle' || aid === 'khan' || aid === 'golden_horde' || aid === 'great_khan';
+                        {/* Avatar — per-season */}
+                        {seasonAvatarId && (() => {
                           return (
                             <div
                               className={`flex items-center gap-2 ${isAnimated ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                               onClick={isAnimated ? () => setRewardPopupKey(currentRank.key) : undefined}
                             >
                               <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 flex-shrink-0 bg-black/30">
-                                {(aid === 'sky_eagle' || aid === 'diving_eagle') ? <DivingEagleAvatar size={32} /> :
-                                 aid === 'khan' ? <KhanAvatar size={32} /> :
-                                 aid === 'golden_horde' ? <GoldenHordeAvatar size={32} /> :
-                                 aid === 'great_khan' ? <GreatKhanAvatar size={32} /> :
-                                 <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
+                                {baseAvatarId ? <AnimatedAvatarComponent baseId={baseAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
                               </div>
                               <span>
-                                {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarName}</span>
+                                {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarDisplayName}</span>
                               </span>
                               {isAnimated && <ZoomIn className="w-3 h-3 text-amber-400/60 flex-shrink-0" />}
                             </div>
                           );
                         })()}
-                        {/* Frame reward — great_khan */}
+                        {/* Frame reward */}
                         {rewardDef.frameId === 'great_khan' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -540,7 +535,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </GreatKhanFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}</span>
                             </span>
                           </div>
                         )}
@@ -696,6 +691,8 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
       {rewardPopupKey && (
         <RewardPopup
           rankKey={rewardPopupKey}
+          seasonKey={activeSeasonKey}
+          seasonNumber={seasonNumber ?? undefined}
           locale={locale}
           onClose={() => setRewardPopupKey(null)}
         />

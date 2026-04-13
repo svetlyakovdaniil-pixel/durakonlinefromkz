@@ -2685,3 +2685,16 @@
 - [x] Создать компонент NeonPawAvatar.tsx с вращающимися орбитальными дугами (CSS @keyframes)
 - [x] Зарегистрировать аватарку в shared/avatars.ts
 - [x] Привязать аватарку к рангу Циркон в сезоне Неоновая эра (shared/seasons.ts)
+
+## Batch 56 — Per-season аватарки (полная система)
+- [x] shared/avatars.ts: добавить getBaseAvatarId(avatarId) — убирает суффикс сезона для рендеринга
+- [x] shared/avatars.ts: добавить getSeasonAvatarId(baseId, seasonKey) — формирует ID с суффиксом
+- [x] AvatarDisplay.tsx: поддержка суффиксированных ID (neon_paw_2026Q3 → NeonPawAvatar)
+- [x] AvatarPicker.tsx: показывать owned per-season аватарки из ownedAvatars (суффиксированные ID)
+- [x] db.season.ts claimSeasonReward: использовать getSeasonRewardDefForSeason + суффиксированный avatarId
+- [x] db.season.ts processSeasonEnd: уведомление содержит суффиксированный avatarId
+- [x] Season.tsx (Мой рейтинг): показывать аватарку текущего сезона через getSeasonRewardDefForSeason
+- [x] Season.tsx (Ranks tab): RewardPopup использует per-season avatarId
+- [x] Lobby.tsx: в уведомлении конца сезона использовать avatarId из notification.data (уже суффиксированный)
+- [x] FriendsDrawer.tsx: заменить img+getAvatarUrl на AvatarDisplay
+- [x] GameTable.tsx: заменить img+getAvatarUrl на AvatarDisplay (2 места)

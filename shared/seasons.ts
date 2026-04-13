@@ -159,7 +159,7 @@ export const SEASONS: SeasonInfo[] = [
     seasonNumber: 6,
     quarter: 2,
     nameRu: 'Казахский колорит',
-    nameKk: 'Қазақ Колориті',
+    nameKk: 'Қазақ Колоріті',
     nameEn: 'Kazakh Colors',
     theme: {
       accent: '#f59e0b',
@@ -171,6 +171,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-amber-400',
       emoji: '🏇',
     },
+    // Season 6 unique rewards: Zircon rank gets the Diving Eagle animated avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'diving_eagle' },
+    ],
   },
   {
     index: 6,

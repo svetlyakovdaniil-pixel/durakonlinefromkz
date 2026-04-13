@@ -1,7 +1,8 @@
-import { getDb } from "./db";
+import { getDb } from './db';
 import { seasonRatings, seasonRewards, playerProfiles, notifications } from "../drizzle/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { getCurrentSeasonKey, getSeasonRank, getSeasonRewardDef, getSeasonRewardDefForSeason, getSeasonInfo } from "../shared/seasons";
+import { getSeasonAvatarId } from "../shared/avatars";
 
 // ─── Season Rating Helpers ────────────────────────────────────────────────────
 
@@ -111,6 +112,9 @@ export async function getPlayerSeasonRating(profileId: number, seasonKey?: strin
 /**
  * Process end-of-season rewards for all players who participated.
  * Called by the cron job at the end of each month.
+ *
+ * Per-season avatar IDs: avatarId is stored with a season suffix (e.g. 'diving_eagle_2026Q2')
+ * so each season's reward is a distinct item in the player's collection.
  */
 export async function processSeasonEnd(seasonKey: string) {
   const db = await getDb();
@@ -130,6 +134,14 @@ export async function processSeasonEnd(seasonKey: string) {
     const rewardDef = seasonInfo
       ? getSeasonRewardDefForSeason(rank.key, seasonInfo)
       : getSeasonRewardDef(rank.key);
+
+    // Build per-season avatar/frame IDs (suffixed with season key)
+    const seasonAvatarId = rewardDef.avatarId
+      ? getSeasonAvatarId(rewardDef.avatarId, seasonKey)
+      : null;
+    const seasonFrameId = rewardDef.frameId
+      ? getSeasonAvatarId(rewardDef.frameId, seasonKey)
+      : null;
 
     // Check if reward already processed
     const existing = await db
@@ -180,7 +192,7 @@ export async function processSeasonEnd(seasonKey: string) {
       await processSeasonRankAchievements(participant.profileId, rank.key);
     } catch (e) { /* non-blocking */ }
 
-    // Send in-app notification
+    // Send in-app notification — avatarId is the per-season suffixed ID
     await db.insert(notifications).values({
       profileId: participant.profileId,
       type: 'season_reward',
@@ -193,8 +205,9 @@ export async function processSeasonEnd(seasonKey: string) {
         seasonRating: participant.seasonRating,
         shanyraks: rewardDef.shanyraks,
         tenge: rewardDef.tenge,
-        avatarId: rewardDef.avatarId,
-        frameId: rewardDef.frameId,
+        // Per-season suffixed IDs (e.g. 'diving_eagle_2026Q2', 'neon_paw_2026Q3')
+        avatarId: seasonAvatarId,
+        frameId: seasonFrameId,
         claimed: false,
       }),
       isRead: false,
@@ -223,6 +236,9 @@ export async function getUnclaimedSeasonRewards(profileId: number) {
 /**
  * Claim a season reward: mark as claimed, grant avatar/frame ownership, delete the notification.
  * Returns { success, reason? }
+ *
+ * The avatar/frame IDs granted are per-season suffixed (e.g. 'diving_eagle_2026Q2')
+ * so each season's reward is a distinct item in the player's collection.
  */
 export async function claimSeasonReward(
   profileId: number,
@@ -244,15 +260,27 @@ export async function claimSeasonReward(
 
   if (!reward) return { success: false, reason: 'not_found' };
 
-  const rewardDef = getSeasonRewardDef(reward.rankKey);
+  // Get the season-specific reward definition (applies rankRewardOverrides)
+  const seasonInfo = getSeasonInfo(seasonKey);
+  const rewardDef = seasonInfo
+    ? getSeasonRewardDefForSeason(reward.rankKey, seasonInfo)
+    : getSeasonRewardDef(reward.rankKey);
+
+  // Build per-season avatar/frame IDs
+  const seasonAvatarId = rewardDef.avatarId
+    ? getSeasonAvatarId(rewardDef.avatarId, seasonKey)
+    : null;
+  const seasonFrameId = rewardDef.frameId
+    ? getSeasonAvatarId(rewardDef.frameId, seasonKey)
+    : null;
 
   // Mark as claimed
   await db.update(seasonRewards)
     .set({ claimed: true })
     .where(eq(seasonRewards.id, reward.id));
 
-  // Grant avatar ownership (if any)
-  if (rewardDef.avatarId) {
+  // Grant per-season avatar ownership (if any)
+  if (seasonAvatarId) {
     const [profile] = await db
       .select({ ownedAvatars: playerProfiles.ownedAvatars })
       .from(playerProfiles)
@@ -260,8 +288,8 @@ export async function claimSeasonReward(
       .limit(1);
     if (profile) {
       const owned: string[] = profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [];
-      if (!owned.includes(rewardDef.avatarId)) {
-        owned.push(rewardDef.avatarId);
+      if (!owned.includes(seasonAvatarId)) {
+        owned.push(seasonAvatarId);
         await db.update(playerProfiles)
           .set({ ownedAvatars: JSON.stringify(owned) })
           .where(eq(playerProfiles.id, profileId));
@@ -269,8 +297,8 @@ export async function claimSeasonReward(
     }
   }
 
-  // Grant frame ownership (if any)
-  if (rewardDef.frameId) {
+  // Grant per-season frame ownership (if any)
+  if (seasonFrameId) {
     const [profile] = await db
       .select({ ownedFrames: playerProfiles.ownedFrames })
       .from(playerProfiles)
@@ -278,8 +306,8 @@ export async function claimSeasonReward(
       .limit(1);
     if (profile) {
       const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
-      if (!owned.includes(rewardDef.frameId)) {
-        owned.push(rewardDef.frameId);
+      if (!owned.includes(seasonFrameId)) {
+        owned.push(seasonFrameId);
         await db.update(playerProfiles)
           .set({ ownedFrames: JSON.stringify(owned) })
           .where(eq(playerProfiles.id, profileId));
@@ -287,8 +315,8 @@ export async function claimSeasonReward(
     }
   }
 
-  // Trigger collector achievements if avatar/frame/deck was granted
-  if (rewardDef.avatarId || rewardDef.frameId || (rewardDef as any).deckId) {
+  // Trigger collector achievements if avatar/frame was granted
+  if (seasonAvatarId || seasonFrameId) {
     try {
       const { processCollectorAchievements } = await import('./achievementsTriggers');
       await processCollectorAchievements(profileId);

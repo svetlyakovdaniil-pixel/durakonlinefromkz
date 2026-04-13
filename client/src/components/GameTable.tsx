@@ -11,6 +11,7 @@ import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Tr
 import { useSoundContext } from '@/contexts/SoundContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
+import { AvatarDisplay } from './AvatarDisplay';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
@@ -1405,12 +1406,13 @@ export default function GameTable({
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                       disabled={p.isBot || !p.gameId}
                     >
-                      <FrameWrapper frameId={p.equippedFrame} size={manyOpponents ? 32 : 40}>
-                        <img
-                          src={getAvatarUrl(p.avatarId)}
-                          alt={p.name}
-                          className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'} object-cover`}
-                        />
+                       <FrameWrapper frameId={p.equippedFrame} size={manyOpponents ? 32 : 40}>
+                         <AvatarDisplay
+                           avatarId={p.avatarId}
+                           size={manyOpponents ? 32 : 40}
+                           alt={p.name}
+                           className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
+                         />
                       </FrameWrapper>
                     </button>
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
@@ -2196,10 +2198,11 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
           <div className="flex flex-col items-center gap-3">
             {/* Avatar & Name */}
             <FrameWrapper frameId={profile.equippedFrame} size={64}>
-              <img
-                src={getAvatarUrl(profile.avatarId)}
+              <AvatarDisplay
+                avatarId={profile.avatarId}
+                size={64}
                 alt={profile.displayName || 'Player'}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60 object-cover"
+                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60"
               />
             </FrameWrapper>
             <div className="text-center">

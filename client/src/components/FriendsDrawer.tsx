@@ -10,7 +10,7 @@ import {
   Clock, Check, X, Loader2,
   Eye, ArrowLeft, Send,
 } from 'lucide-react';
-import { getAvatarUrl } from '../../../shared/avatars';
+import { AvatarDisplay } from './AvatarDisplay';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import { TrendingUp, Swords, Crown, Shield, Hash } from 'lucide-react';
@@ -71,7 +71,7 @@ function FriendProfileView({
         <div className="flex justify-center mb-3">
           <FrameWrapper frameId={(profile as any).equippedFrame} size={64}>
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-500/60">
-              <img src={getAvatarUrl(profile.avatarId)} alt="Avatar" className="w-full h-full object-cover" />
+              <AvatarDisplay avatarId={profile.avatarId} size={64} alt="Avatar" />
             </div>
           </FrameWrapper>
         </div>

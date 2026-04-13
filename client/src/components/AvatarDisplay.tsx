@@ -3,7 +3,7 @@ import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonPawAvatar } from './NeonPawAvatar';
-import { getAvatarUrl } from '../../../shared/avatars';
+import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 
 interface AvatarDisplayProps {
   avatarId?: string | null;
@@ -14,33 +14,38 @@ interface AvatarDisplayProps {
 
 /**
  * Universal avatar renderer.
- * - For animated avatars (khan, golden_horde, diving_eagle, great_khan): renders SVG+CSS component
+ * - Supports season-suffixed IDs (e.g. 'neon_paw_2026Q3', 'diving_eagle_2026Q2')
+ *   by stripping the suffix and rendering the base animated component.
+ * - For animated avatars (khan, golden_horde, diving_eagle, great_khan, neon_paw): renders SVG+CSS component
  * - For all others: renders a standard <img> tag
  * Note: legacy 'sky_eagle' avatarId is treated as 'diving_eagle' for backwards compatibility
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
+  // Strip season suffix to get the base component ID
+  const baseId = getBaseAvatarId(avatarId);
+
   // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
-  if (avatarId === 'sky_eagle') {
+  if (baseId === 'sky_eagle') {
     return <DivingEagleAvatar size={size} className={className} />;
   }
 
-  if (avatarId === 'khan') {
+  if (baseId === 'khan') {
     return <KhanAvatar size={size} className={className} />;
   }
 
-  if (avatarId === 'golden_horde') {
+  if (baseId === 'golden_horde') {
     return <GoldenHordeAvatar size={size} className={className} />;
   }
 
-  if (avatarId === 'diving_eagle') {
+  if (baseId === 'diving_eagle') {
     return <DivingEagleAvatar size={size} className={className} />;
   }
 
-  if (avatarId === 'great_khan') {
+  if (baseId === 'great_khan') {
     return <GreatKhanAvatar size={size} className={className} />;
   }
 
-  if (avatarId === 'neon_paw') {
+  if (baseId === 'neon_paw') {
     return <NeonPawAvatar size={size} className={className} />;
   }
 
