@@ -50,7 +50,7 @@ export function GreatKhanAvatar({ size = 48, className = '' }: GreatKhanAvatarPr
       {/* Base photorealistic image */}
       <img
         src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/great_khan_avatar-N9ykdAF9YU7urTnqCdUiJa.webp"
-        alt="Великий Хан"
+        alt="Обсидиан"
         style={{
           width: '100%',
           height: '100%',

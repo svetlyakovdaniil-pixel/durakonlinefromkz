@@ -49,7 +49,7 @@ export function DivingEagleAvatar({ size = 48, className = '' }: DivingEagleAvat
       {/* Base photorealistic image */}
       <img
         src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/diving_eagle_avatar-mETA3RPC2znnKVf6a8Nzyx.webp"
-        alt="Небесный Орёл"
+        alt="Циркон"
         style={{
           width: '100%',
           height: '100%',

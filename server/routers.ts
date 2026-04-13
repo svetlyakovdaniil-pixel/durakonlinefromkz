@@ -625,7 +625,7 @@ export const appRouter = router({
           if (!owned.includes(input.frameId)) {
             throw new TRPCError({
               code: 'FORBIDDEN',
-              message: 'This frame can only be equipped after earning the Great Khan rank at season end.',
+              message: 'This frame can only be equipped after earning the Obsidian rank at season end.',
             });
           }
         }

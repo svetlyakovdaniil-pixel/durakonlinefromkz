@@ -570,7 +570,7 @@ export async function processSeasonRankAchievements(profileId: number, rankId: s
     await incrementAchievementProgress(profileId, achievementId, 0, 1).catch(() => {});
   }
 
-  // Also award "Великий хан" if they reached great_khan
+  // Also award "Обсидиан" if they reached great_khan
   if (rankId === 'great_khan') {
     await incrementAchievementProgress(profileId, 'great_khan_achievement', 0, 1).catch(() => {});
   }

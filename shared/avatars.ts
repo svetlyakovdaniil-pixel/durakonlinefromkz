@@ -75,9 +75,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'khan',
-    name: 'Хан Степи',
-    nameKk: 'Дала Ханы',
-    nameEn: 'Steppe Khan',
+    name: 'Рубин',
+    nameKk: 'Рубин',
+    nameEn: 'Ruby',
     url: 'khan', // special: rendered by KhanAvatar component
     animated: true,
     seasonReward: true,
@@ -85,9 +85,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'golden_horde',
-    name: 'Золотая Орда',
-    nameKk: 'Алтын Орда',
-    nameEn: 'Golden Horde',
+    name: 'Янтарь',
+    nameKk: 'Янтар',
+    nameEn: 'Amber',
     url: 'golden_horde', // special: rendered by GoldenHordeAvatar component
     animated: true,
     seasonReward: true,
@@ -95,9 +95,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'diving_eagle',
-    name: 'Небесный Орёл',
-    nameKk: 'Аспан Бүркіт',
-    nameEn: 'Sky Eagle',
+    name: 'Циркон',
+    nameKk: 'Циркон',
+    nameEn: 'Zircon',
     url: 'diving_eagle', // special: rendered by DivingEagleAvatar component
     animated: true,
     seasonReward: true,
@@ -105,9 +105,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'great_khan',
-    name: 'Великий Хан',
-    nameKk: 'Ұлы Хан',
-    nameEn: 'Great Khan',
+    name: 'Обсидиан',
+    nameKk: 'Обсидиан',
+    nameEn: 'Obsidian',
     url: 'great_khan', // special: rendered by GreatKhanAvatar component
     animated: true,
     seasonReward: true,

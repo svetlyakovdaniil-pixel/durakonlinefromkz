@@ -98,12 +98,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'great_khan',
-    name: 'Великий Хан',
-    nameKk: 'Ұлы Хан',
-    nameEn: 'Great Khan',
-    description: 'Эксклюзивная рамка для победителей сезона с рангом Великий Хан.',
-    descriptionKk: 'Маусымда Ұлы Хан дәрежесіне жеткен жеңімпаздарға арналған эксклюзивті жақтау.',
-    descriptionEn: 'Exclusive frame for season winners who reach the Great Khan rank.',
+    name: 'Обсидиан',
+    nameKk: 'Обсидиан',
+    nameEn: 'Obsidian',
+    description: 'Эксклюзивная рамка для победителей сезона с рангом Обсидиан.',
+    descriptionKk: 'Маусымда Обсидиан дәрежесіне жеткен жеңімпаздарға арналған эксклюзивті жақтау.',
+    descriptionEn: 'Exclusive frame for season winners who reach the Obsidian rank.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-yellow-400">
@@ -525,7 +525,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/60">
                                 <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.2)" stroke="rgba(218,165,32,0.6)" />
                               </svg>
-                              <span>{locale === 'kk' ? 'Маусымда Ұлы Хан дәрежесін алу қажет' : locale === 'en' ? 'Earn Great Khan rank at season end' : 'Получите ранг Великий Хан в конце сезона'}</span>
+                              <span>{locale === 'kk' ? 'Маусымда Обсидиан дәрежесін алу қажет' : locale === 'en' ? 'Earn Obsidian rank at season end' : 'Получите ранг Обсидиан в конце сезона'}</span>
                             </div>
                           )
                         ) : isPremiumFrame ? (

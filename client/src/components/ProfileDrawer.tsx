@@ -320,7 +320,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                         <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300/60 border border-amber-500/20">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
                       </div>
-                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Маусымда Ұлы Хан дәрежесін алыңыз' : locale === 'en' ? 'Earn Great Khan rank at season end' : 'Получите ранг Великий Хан'}</span>
+                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Маусымда Обсидиан дәрежесін алыңыз' : locale === 'en' ? 'Earn Obsidian rank at season end' : 'Получите ранг Обсидиан'}</span>
                     </div>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/50 ml-auto flex-shrink-0">
                       <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.15)" stroke="rgba(218,165,32,0.5)" />

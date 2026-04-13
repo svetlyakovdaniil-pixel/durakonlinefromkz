@@ -190,9 +190,9 @@ export interface SeasonRank {
 export const SEASON_RANKS: SeasonRank[] = [
   {
     key: 'steppe_hare',
-    nameRu: 'Степной заяц',
-    nameKk: 'Дала Қояны',
-    nameEn: 'Steppe Hare',
+    nameRu: 'Лунный камень',
+    nameKk: 'Ай Тасы',
+    nameEn: 'Moonstone',
     minRating: 0,
     maxRating: 200,
     color: '#9ca3af', // gray-400
@@ -200,9 +200,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'mountain_ram',
-    nameRu: 'Горный баран',
-    nameKk: 'Тау Қошқары',
-    nameEn: 'Mountain Ram',
+    nameRu: 'Изумруд',
+    nameKk: 'Зумруд',
+    nameEn: 'Emerald',
     minRating: 201,
     maxRating: 500,
     color: '#22c55e', // green-500
@@ -210,9 +210,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'golden_falcon',
-    nameRu: 'Золотой сокол',
-    nameKk: 'Алтын Сұңқар',
-    nameEn: 'Golden Falcon',
+    nameRu: 'Сапфир',
+    nameKk: 'Сапфир',
+    nameEn: 'Sapphire',
     minRating: 501,
     maxRating: 800,
     color: '#3b82f6', // blue-500
@@ -220,9 +220,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'winged_horse',
-    nameRu: 'Крылатый конь',
-    nameKk: 'Қанатты Ат',
-    nameEn: 'Winged Horse',
+    nameRu: 'Аметист',
+    nameKk: 'Аметист',
+    nameEn: 'Amethyst',
     minRating: 801,
     maxRating: 1200,
     color: '#a855f7', // purple-500
@@ -230,9 +230,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'sky_eagle',
-    nameRu: 'Небесный орел',
-    nameKk: 'Аспан Бүркіті',
-    nameEn: 'Sky Eagle',
+    nameRu: 'Циркон',
+    nameKk: 'Циркон',
+    nameEn: 'Zircon',
     minRating: 1201,
     maxRating: 2000,
     color: '#f97316', // orange-500
@@ -240,9 +240,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'steppe_khan',
-    nameRu: 'Хан степи',
-    nameKk: 'Дала Ханы',
-    nameEn: 'Steppe Khan',
+    nameRu: 'Рубин',
+    nameKk: 'Рубин',
+    nameEn: 'Ruby',
     minRating: 2001,
     maxRating: 4000,
     color: '#ef4444', // red-500
@@ -250,9 +250,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'golden_horde_warrior',
-    nameRu: 'Воин золотой орды',
-    nameKk: 'Алтын Орда Жауынгері',
-    nameEn: 'Golden Horde Warrior',
+    nameRu: 'Янтарь',
+    nameKk: 'Янтар',
+    nameEn: 'Amber',
     minRating: 4001,
     maxRating: 10000,
     color: '#eab308', // yellow-500 (gold)
@@ -260,9 +260,9 @@ export const SEASON_RANKS: SeasonRank[] = [
   },
   {
     key: 'great_khan',
-    nameRu: 'Великий хан',
-    nameKk: 'Ұлы Хан',
-    nameEn: 'Great Khan',
+    nameRu: 'Обсидиан',
+    nameKk: 'Обсидиан',
+    nameEn: 'Obsidian',
     minRating: 10001,
     maxRating: Infinity,
     color: '#b8860b', // dark gold

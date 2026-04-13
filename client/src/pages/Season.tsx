@@ -45,11 +45,11 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
 /** Full-screen avatar preview modal */
 function AvatarPreviewModal({ avatarId, locale, onClose }: { avatarId: string; locale: string; onClose: () => void }) {
   const avatarNames: Record<string, { ru: string; kk: string; en: string }> = {
-    sky_eagle:    { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт',  en: 'Sky Eagle' },
-    diving_eagle: { ru: 'Небесный Орёл', kk: 'Аспан Бүркіт',  en: 'Sky Eagle' },
-    khan:         { ru: 'Хан Степи',    kk: 'Дала Ханы',         en: 'Steppe Khan' },
-    golden_horde: { ru: 'Золотая Орда',  kk: 'Алтын Орда',        en: 'Golden Horde' },
-    great_khan:   { ru: 'Великий Хан',   kk: 'Ұлы Хан',              en: 'Great Khan' },
+    sky_eagle:    { ru: 'Циркон', kk: 'Циркон',  en: 'Zircon' },
+    diving_eagle: { ru: 'Циркон', kk: 'Циркон',  en: 'Zircon' },
+    khan:         { ru: 'Рубин',    kk: 'Рубин',         en: 'Ruby' },
+    golden_horde: { ru: 'Янтарь',  kk: 'Янтар',        en: 'Amber' },
+    great_khan:   { ru: 'Обсидиан',   kk: 'Обсидиан',              en: 'Obsidian' },
   };
   const names = avatarNames[avatarId] ?? { ru: avatarId, kk: avatarId, en: avatarId };
   const displayName = locale === 'kk' ? names.kk : locale === 'en' ? names.en : names.ru;
@@ -176,7 +176,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-amber-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Аспан Бүркіт' : locale === 'en' ? 'Sky Eagle' : 'Небесный Орёл'}
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}
                   </div>
                   <div className="text-amber-400/60 text-xs flex items-center gap-1 mt-0.5">
                     <ZoomIn className="w-3 h-3" />
@@ -198,7 +198,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-orange-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Дала Ханы' : locale === 'en' ? 'Steppe Khan' : 'Хан Степи'}
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}
                   </div>
                   <div className="text-orange-400/60 text-xs flex items-center gap-1 mt-0.5">
                     <ZoomIn className="w-3 h-3" />
@@ -220,7 +220,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Алтын Орда' : locale === 'en' ? 'Golden Horde' : 'Золотая Орда'}
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}
                   </div>
                   <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
                     <ZoomIn className="w-3 h-3" />
@@ -242,7 +242,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}
                   </div>
                   <div className="text-yellow-400/60 text-xs flex items-center gap-1 mt-0.5">
                     <ZoomIn className="w-3 h-3" />
@@ -270,7 +270,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
                     {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
@@ -496,7 +496,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </GreatKhanFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Ұлы Хан' : locale === 'en' ? 'Great Khan' : 'Великий Хан'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}</span>
                             </span>
                           </div>
                         )}
