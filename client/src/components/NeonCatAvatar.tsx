@@ -14,8 +14,27 @@ interface NeonCatAvatarProps {
  *   Phase 2 (40–60%): Cat body fades out, glasses remain lit
  *   Phase 3 (60–85%): Only glasses glow (golden), cat body is dim/dark
  *   Phase 4 (85–100%): Cat body fades back in → loop
+ *
+ * Image analysis (2048×2048 source, cropped to circle):
+ *   The cat occupies roughly the center 75% of the image.
+ *   Glasses area in the source image:
+ *     - Left lens center:  ~38% from left, ~38% from top
+ *     - Right lens center: ~62% from left, ~38% from top
+ *     - Each lens diameter: ~18% of image width
+ *   After objectFit:cover in a circle, the image is scaled so the cat fills the circle.
+ *   The cat body starts at ~10% from top and ends at ~95% from top.
+ *   Glasses sit at roughly 32–48% from top of the visible circle.
  */
 export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps) {
+  // Lens dimensions in % of the avatar size
+  // Left lens: center at ~38% left, ~38% top; diameter ~18%
+  // Right lens: center at ~62% left, ~38% top; diameter ~18%
+  const lensDiameter = size * 0.19;
+  const lensTop = size * 0.30;        // top edge of lens = center(38%) - radius(9%) = 29%
+  const leftLensLeft = size * 0.285;  // left edge = center(38%) - radius(9%) = 29%
+  const rightLensLeft = size * 0.525; // left edge = center(62%) - radius(9%) = 53%
+  const borderW = Math.max(1.5, size * 0.035);
+
   return (
     <div
       className={className}
@@ -32,9 +51,9 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
         @keyframes neon-cat-halo {
           0%   { box-shadow: 0 0 10px 3px rgba(255,80,0,0.55),  0 0 22px 7px rgba(255,160,0,0.3); }
           35%  { box-shadow: 0 0 14px 5px rgba(255,80,0,0.65),  0 0 28px 9px rgba(255,160,0,0.4); }
-          55%  { box-shadow: 0 0  4px 1px rgba(255,80,0,0.15),  0 0  8px 2px rgba(255,160,0,0.1); }
-          75%  { box-shadow: 0 0  8px 3px rgba(255,200,0,0.45), 0 0 18px 6px rgba(255,220,0,0.25); }
-          90%  { box-shadow: 0 0  4px 1px rgba(255,80,0,0.15),  0 0  8px 2px rgba(255,160,0,0.1); }
+          55%  { box-shadow: 0 0  4px 1px rgba(255,80,0,0.1),   0 0  8px 2px rgba(255,160,0,0.08); }
+          75%  { box-shadow: 0 0  8px 3px rgba(255,200,0,0.4),  0 0 18px 6px rgba(255,220,0,0.2); }
+          90%  { box-shadow: 0 0  4px 1px rgba(255,80,0,0.1),   0 0  8px 2px rgba(255,160,0,0.08); }
           100% { box-shadow: 0 0 10px 3px rgba(255,80,0,0.55),  0 0 22px 7px rgba(255,160,0,0.3); }
         }
 
@@ -42,26 +61,26 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
         @keyframes neon-cat-body {
           0%   { opacity: 1;    filter: brightness(1.15) saturate(1.2); }
           35%  { opacity: 1;    filter: brightness(1.2)  saturate(1.3); }
-          55%  { opacity: 0.18; filter: brightness(0.5)  saturate(0.5); }
-          75%  { opacity: 0.12; filter: brightness(0.4)  saturate(0.3); }
-          90%  { opacity: 0.18; filter: brightness(0.5)  saturate(0.5); }
+          55%  { opacity: 0.15; filter: brightness(0.4)  saturate(0.4); }
+          75%  { opacity: 0.1;  filter: brightness(0.3)  saturate(0.3); }
+          90%  { opacity: 0.15; filter: brightness(0.4)  saturate(0.4); }
           100% { opacity: 1;    filter: brightness(1.15) saturate(1.2); }
         }
 
-        /* Glasses overlay: hidden when cat is fully lit, glows when cat dims */
+        /* Glasses overlay visibility */
         @keyframes neon-cat-glasses {
           0%   { opacity: 0; }
           35%  { opacity: 0; }
-          55%  { opacity: 1; }
-          75%  { opacity: 1; }
-          90%  { opacity: 0.6; }
+          50%  { opacity: 1; }
+          80%  { opacity: 1; }
+          92%  { opacity: 0; }
           100% { opacity: 0; }
         }
 
-        /* Glasses glow pulse while cat is dark */
-        @keyframes neon-cat-glasses-pulse {
-          0%, 100% { filter: brightness(1.2) drop-shadow(0 0 6px rgba(255,220,0,0.9)) drop-shadow(0 0 12px rgba(255,180,0,0.6)); }
-          50%       { filter: brightness(1.5) drop-shadow(0 0 10px rgba(255,240,0,1.0)) drop-shadow(0 0 20px rgba(255,200,0,0.8)); }
+        /* Glasses pulse while cat is dark */
+        @keyframes neon-cat-lens-pulse {
+          0%, 100% { box-shadow: 0 0 4px 2px rgba(255,210,0,0.7), inset 0 0 4px rgba(255,220,0,0.2); }
+          50%       { box-shadow: 0 0 8px 4px rgba(255,230,0,1.0), inset 0 0 6px rgba(255,240,0,0.4); }
         }
       `}</style>
 
@@ -76,7 +95,7 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
           animation: 'neon-cat-halo 5s ease-in-out infinite',
         }}
       >
-        {/* ── Base image (full cat) — fades during glasses-only phase ── */}
+        {/* ── Base image — fades during glasses-only phase ── */}
         <img
           src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp"
           alt="Янтарь"
@@ -93,66 +112,54 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
           draggable={false}
         />
 
-        {/* ── Glasses-only overlay — golden glow, visible only when cat dims ── */}
-        {/* Positioned to cover the glasses area (~30-55% from top) */}
+        {/* ── Glasses overlay — two circles exactly over the glasses on the image ── */}
         <div
           aria-hidden="true"
           style={{
             position: 'absolute',
             inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
             animation: 'neon-cat-glasses 5s ease-in-out infinite',
             pointerEvents: 'none',
           }}
         >
-          {/* Glasses glow — two golden circles representing round sunglasses */}
+          {/* Left lens */}
           <div
             style={{
               position: 'absolute',
-              top: '28%',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: `${size * 0.62}px`,
-              height: `${size * 0.22}px`,
-              animation: 'neon-cat-glasses-pulse 1.2s ease-in-out infinite',
+              left: leftLensLeft,
+              top: lensTop,
+              width: lensDiameter,
+              height: lensDiameter,
+              borderRadius: '50%',
+              border: `${borderW}px solid rgba(255,210,0,0.95)`,
+              animation: 'neon-cat-lens-pulse 1.1s ease-in-out infinite',
             }}
-          >
-            {/* Left lens */}
-            <div style={{
+          />
+          {/* Right lens */}
+          <div
+            style={{
               position: 'absolute',
-              left: '4%',
-              top: '0',
-              width: `${size * 0.26}px`,
-              height: `${size * 0.22}px`,
+              left: rightLensLeft,
+              top: lensTop,
+              width: lensDiameter,
+              height: lensDiameter,
               borderRadius: '50%',
-              border: `${Math.max(2, size * 0.045)}px solid rgba(255,210,0,0.95)`,
-              boxShadow: `0 0 ${size * 0.12}px ${size * 0.06}px rgba(255,200,0,0.8), inset 0 0 ${size * 0.08}px rgba(255,220,0,0.3)`,
-            }} />
-            {/* Right lens */}
-            <div style={{
+              border: `${borderW}px solid rgba(255,210,0,0.95)`,
+              animation: 'neon-cat-lens-pulse 1.1s ease-in-out infinite 0.1s',
+            }}
+          />
+          {/* Bridge between lenses */}
+          <div
+            style={{
               position: 'absolute',
-              right: '4%',
-              top: '0',
-              width: `${size * 0.26}px`,
-              height: `${size * 0.22}px`,
-              borderRadius: '50%',
-              border: `${Math.max(2, size * 0.045)}px solid rgba(255,210,0,0.95)`,
-              boxShadow: `0 0 ${size * 0.12}px ${size * 0.06}px rgba(255,200,0,0.8), inset 0 0 ${size * 0.08}px rgba(255,220,0,0.3)`,
-            }} />
-            {/* Bridge between lenses */}
-            <div style={{
-              position: 'absolute',
-              left: '50%',
-              top: '45%',
-              transform: 'translateX(-50%)',
-              width: `${size * 0.1}px`,
-              height: `${Math.max(1, size * 0.025)}px`,
-              background: 'rgba(255,210,0,0.8)',
-              boxShadow: `0 0 ${size * 0.06}px rgba(255,200,0,0.6)`,
-            }} />
-          </div>
+              left: leftLensLeft + lensDiameter,
+              top: lensTop + lensDiameter * 0.42,
+              width: rightLensLeft - (leftLensLeft + lensDiameter),
+              height: Math.max(1.5, size * 0.025),
+              background: 'rgba(255,210,0,0.85)',
+              boxShadow: `0 0 ${size * 0.04}px rgba(255,200,0,0.6)`,
+            }}
+          />
         </div>
 
         {/* Ambient overlay */}
@@ -162,7 +169,7 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
             position: 'absolute',
             inset: 0,
             borderRadius: '50%',
-            background: 'radial-gradient(ellipse at 50% 40%, rgba(255,100,0,0.1) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse at 50% 40%, rgba(255,100,0,0.08) 0%, transparent 70%)',
             pointerEvents: 'none',
           }}
         />
