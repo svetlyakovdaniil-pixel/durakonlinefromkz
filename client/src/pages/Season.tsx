@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
-import { getAvatarUrl } from '../../../shared/avatars';
+import { getAvatarUrl, getAvatarOption, AVATAR_OPTIONS } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
@@ -408,11 +408,46 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   {currentRank && (() => {
                     const rewardDef = SEASON_REWARD_DEFS.find(r => r.rankKey === currentRank.key);
                     if (!rewardDef) return null;
+                    const avatarOpt = rewardDef.avatarId ? getAvatarOption(rewardDef.avatarId) : null;
+                    const avatarName = avatarOpt
+                      ? (locale === 'kk' ? (avatarOpt.nameKk ?? avatarOpt.name) : locale === 'en' ? (avatarOpt.nameEn ?? avatarOpt.name) : avatarOpt.name)
+                      : rewardDef.avatarId;
                     return (
-                      <div className="text-amber-100 text-sm space-y-1">
-                        <div>⊛ {rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : 'шаныраков'}</div>
-                        {rewardDef.tenge > 0 && <div>💎 {rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</div>}
-                        {rewardDef.avatarId && <div>🖼 {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {rewardDef.avatarId}</div>}
+                      <div className="text-amber-100 text-sm space-y-1.5">
+                        {/* Shanyraks */}
+                        <div className="flex items-center gap-2">
+                          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                          <span>+{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}</span>
+                        </div>
+                        {/* Tenge */}
+                        {rewardDef.tenge > 0 && (
+                          <div className="flex items-center gap-2">
+                            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                            <span>+{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</span>
+                          </div>
+                        )}
+                        {/* Avatar */}
+                        {rewardDef.avatarId && (() => {
+                          const aid = rewardDef.avatarId;
+                          const isAnimated = aid === 'sky_eagle' || aid === 'khan' || aid === 'golden_horde';
+                          return (
+                            <div
+                              className={`flex items-center gap-2 ${isAnimated ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
+                              onClick={isAnimated ? () => setRewardPopupKey(currentRank.key) : undefined}
+                            >
+                              <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 flex-shrink-0 bg-black/30">
+                                {aid === 'sky_eagle' ? <SkyEagleAvatar size={32} /> :
+                                 aid === 'khan' ? <KhanAvatar size={32} /> :
+                                 aid === 'golden_horde' ? <GoldenHordeAvatar size={32} /> :
+                                 <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
+                              </div>
+                              <span>
+                                {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarName}</span>
+                              </span>
+                              {isAnimated && <ZoomIn className="w-3 h-3 text-amber-400/60 flex-shrink-0" />}
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })()}

@@ -51,12 +51,14 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
           <stop offset="100%" stopColor="#92400e" />
         </linearGradient>
         {/* Shimmer overlay — animated via CSS on the <polygon> */}
-        <linearGradient id={`gkShimmer-${uid}`} x1="-100%" y1="0%" x2="0%" y2="0%">
-          <stop offset="0%" stopColor="rgba(251,191,36,0)" />
-          <stop offset="40%" stopColor="rgba(251,191,36,0)" />
-          <stop offset="50%" stopColor="rgba(251,191,36,0.75)" />
-          <stop offset="60%" stopColor="rgba(251,191,36,0)" />
-          <stop offset="100%" stopColor="rgba(251,191,36,0)" />
+        <linearGradient id={`gkShimmer-${uid}`} x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="35%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="45%" stopColor="rgba(255,220,80,0.9)" />
+          <stop offset="50%" stopColor="rgba(255,255,200,1)" />
+          <stop offset="55%" stopColor="rgba(255,220,80,0.9)" />
+          <stop offset="65%" stopColor="rgba(255,255,255,0)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0)" />
         </linearGradient>
       </defs>
 
@@ -68,11 +70,20 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
         strokeWidth="1"
       />
 
-      {/* Shimmer overlay — CSS animation moves it across */}
+      {/* Pulsing outer glow ring */}
+      <polygon
+        points="8,0 16,8 8,16 0,8"
+        fill="none"
+        stroke="rgba(251,191,36,0.5)"
+        strokeWidth="1"
+        className="great-khan-glow"
+      />
+
+      {/* Shimmer overlay — animated via CSS on the <polygon> */}
       <polygon
         points="8,1 15,8 8,15 1,8"
         fill={`url(#gkShimmer-${uid})`}
-        opacity="0.9"
+        opacity="1"
         className="great-khan-shimmer"
       />
 
@@ -80,10 +91,9 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
       <polygon
         points="8,3 13,8 8,13 3,8"
         fill="none"
-        stroke="rgba(251,191,36,0.3)"
-        strokeWidth="0.5"
-      />
-    </svg>
+        stroke="rgba(251,191,36,0.5)"
+        strokeWidth="0.8"
+      /> </svg>
   ) : (
     <svg
       width={size}

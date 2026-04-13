@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
+import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank } from '../../../shared/seasons';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -226,6 +227,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const markAllRead = trpc.notifications.markAllRead.useMutation();
   const deleteNotif = trpc.notifications.delete.useMutation();
   const deleteAllNotifs = trpc.notifications.deleteAll.useMutation();
+  const claimSeasonReward = trpc.season.claimReward.useMutation();
 
   // Shop / Owned decks & tables
   const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
@@ -237,7 +239,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
-  const utils = trpc.useUtils();
+  const utils = trpc.useUtils(); // used for cache invalidation
 
   const handleOpenNotifications = () => {
     setNotifOpen(!notifOpen);
@@ -1551,6 +1553,103 @@ onClick={() => setShowTengeTopUp(true)}
                           </p>
                         </>
                       )}
+                      {n.type === 'season_reward' && (() => {
+                        const seasonKey = n.data?.seasonKey as string | undefined;
+                        const rankKey = n.data?.rankKey as string | undefined;
+                        const rank = rankKey ? SEASON_RANKS.find(r => r.key === rankKey) : null;
+                        const rewardDef = rankKey ? SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey) : null;
+                        const isClaimed = !!(n.data?.claimed);
+                        return (
+                          <>
+                            {/* Header */}
+                            <div className="flex items-center gap-2 mb-2">
+                              <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
+                              <span className="text-amber-100 text-sm font-semibold">
+                                {locale === 'kk' ? 'Маусым аяқталды' : locale === 'en' ? 'Season ended' : 'Сезон завершён'}
+                              </span>
+                            </div>
+                            {/* Rank */}
+                            {rank && (
+                              <div className="mb-1.5">
+                                <span className="text-amber-200/60 text-xs">
+                                  {locale === 'kk' ? 'Сіздің рангіңіз: ' : locale === 'en' ? 'Your rank: ' : 'Ваш ранг: '}
+                                </span>
+                                <span className="text-sm font-bold" style={{ color: rank.color }}>
+                                  {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
+                                </span>
+                              </div>
+                            )}
+                            {/* Rating */}
+                            {n.data?.seasonRating !== undefined && (
+                              <div className="text-amber-200/60 text-xs mb-1.5">
+                                {locale === 'kk' ? 'Рейтинг: ' : locale === 'en' ? 'Rating: ' : 'Рейтинг: '}
+                                <span className="text-amber-200/90 font-mono">{n.data.seasonRating}</span>
+                              </div>
+                            )}
+                            {/* Rewards */}
+                            {rewardDef && (
+                              <div className="space-y-1 mb-2.5 rounded-lg p-2" style={{ background: 'rgba(234,179,8,0.07)', border: '1px solid rgba(234,179,8,0.15)' }}>
+                                <div className="text-amber-300/80 text-xs font-medium mb-1">
+                                  {locale === 'kk' ? 'Нағыздар:' : locale === 'en' ? 'Rewards:' : 'Награды:'}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4 object-contain" />
+                                  +{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
+                                </div>
+                                {rewardDef.tenge > 0 && (
+                                  <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-4 h-4 object-contain" />
+                                    +{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
+                                  </div>
+                                )}
+                                {rewardDef.avatarId && (
+                                  <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                    <AvatarDisplay avatarId={rewardDef.avatarId} size={16} className="rounded-full" />
+                                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{rewardDef.avatarId}</span>
+                                  </div>
+                                )}
+                                {rewardDef.frameId && (
+                                  <div className="flex items-center gap-1.5 text-xs text-amber-100">
+                                    <span className="text-amber-400">🛡️</span>
+                                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{rewardDef.frameId}</span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {/* Claim button */}
+                            {!isClaimed && seasonKey && (
+                              <button
+                                disabled={claimSeasonReward.isPending}
+                                onClick={async () => {
+                                  try {
+                                    await claimSeasonReward.mutateAsync({ seasonKey });
+                                    // Mark as claimed in local data
+                                    if (n.data) n.data.claimed = true;
+                                    await refetchNotifs();
+                                    utils.notifications.unreadCount.invalidate();
+                                    utils.season.unclaimedRewards.invalidate();
+                                    toast.success(locale === 'kk' ? 'Нағыздар алынды!' : locale === 'en' ? 'Rewards claimed!' : 'Награды получены!');
+                                  } catch {
+                                    toast.error(locale === 'kk' ? 'Қате орын кесті' : locale === 'en' ? 'Error claiming rewards' : 'Ошибка получения наград');
+                                  }
+                                }}
+                                className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all"
+                                style={{ background: 'linear-gradient(90deg, #b8860b, #fbbf24, #b8860b)', color: '#1a0a00' }}
+                              >
+                                {claimSeasonReward.isPending
+                                  ? (locale === 'kk' ? 'Жүктелуде...' : locale === 'en' ? 'Claiming...' : 'Получение...')
+                                  : (locale === 'kk' ? 'Алу' : locale === 'en' ? 'Claim' : 'Получить')}
+                              </button>
+                            )}
+                            {isClaimed && (
+                              <div className="text-green-400/80 text-xs flex items-center gap-1">
+                                <Check className="w-3 h-3" />
+                                {locale === 'kk' ? 'Алынды' : locale === 'en' ? 'Claimed' : 'Получено'}
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
                       <span className="text-amber-200/30 text-[10px] mt-1 block">
                         {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>

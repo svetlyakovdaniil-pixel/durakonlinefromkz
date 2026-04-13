@@ -239,7 +239,7 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
   return (
     <div
       className={`relative ${className}`}
-      style={{ width: canvasSize, height: '105px' }}
+      style={{ width: canvasSize, height: canvasSize }}
     >
       {/* Fire canvas behind the avatar */}
       <canvas

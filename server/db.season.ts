@@ -179,8 +179,14 @@ export async function processSeasonEnd(seasonKey: string) {
         seasonKey,
         rankKey: rank.key,
         rankNameRu: rank.nameRu,
+        rankNameKk: rank.nameKk,
+        rankNameEn: rank.nameEn,
+        seasonRating: participant.seasonRating,
         shanyraks: rewardDef.shanyraks,
         tenge: rewardDef.tenge,
+        avatarId: rewardDef.avatarId,
+        frameId: rewardDef.frameId,
+        claimed: false,
       }),
       isRead: false,
     });
@@ -203,4 +209,81 @@ export async function getUnclaimedSeasonRewards(profileId: number) {
       eq(seasonRewards.claimed, false),
     ))
     .orderBy(desc(seasonRewards.createdAt));
+}
+
+/**
+ * Claim a season reward: mark as claimed, grant avatar/frame ownership, delete the notification.
+ * Returns { success, reason? }
+ */
+export async function claimSeasonReward(
+  profileId: number,
+  seasonKey: string,
+): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  // Find unclaimed reward
+  const [reward] = await db
+    .select()
+    .from(seasonRewards)
+    .where(and(
+      eq(seasonRewards.profileId, profileId),
+      eq(seasonRewards.seasonKey, seasonKey),
+      eq(seasonRewards.claimed, false),
+    ))
+    .limit(1);
+
+  if (!reward) return { success: false, reason: 'not_found' };
+
+  const rewardDef = getSeasonRewardDef(reward.rankKey);
+
+  // Mark as claimed
+  await db.update(seasonRewards)
+    .set({ claimed: true })
+    .where(eq(seasonRewards.id, reward.id));
+
+  // Grant avatar ownership (if any)
+  if (rewardDef.avatarId) {
+    const [profile] = await db
+      .select({ ownedAvatars: playerProfiles.ownedAvatars })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.id, profileId))
+      .limit(1);
+    if (profile) {
+      const owned: string[] = profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [];
+      if (!owned.includes(rewardDef.avatarId)) {
+        owned.push(rewardDef.avatarId);
+        await db.update(playerProfiles)
+          .set({ ownedAvatars: JSON.stringify(owned) })
+          .where(eq(playerProfiles.id, profileId));
+      }
+    }
+  }
+
+  // Grant frame ownership (if any)
+  if (rewardDef.frameId) {
+    const [profile] = await db
+      .select({ ownedFrames: playerProfiles.ownedFrames })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.id, profileId))
+      .limit(1);
+    if (profile) {
+      const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+      if (!owned.includes(rewardDef.frameId)) {
+        owned.push(rewardDef.frameId);
+        await db.update(playerProfiles)
+          .set({ ownedFrames: JSON.stringify(owned) })
+          .where(eq(playerProfiles.id, profileId));
+      }
+    }
+  }
+
+  // Delete the season_reward notification so it disappears after claiming
+  await db.delete(notifications).where(and(
+    eq(notifications.profileId, profileId),
+    eq(notifications.type, 'season_reward'),
+    sql`JSON_UNQUOTE(JSON_EXTRACT(${notifications.data}, '$.seasonKey')) = ${seasonKey}`,
+  ));
+
+  return { success: true };
 }

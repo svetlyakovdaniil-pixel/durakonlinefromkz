@@ -87,7 +87,7 @@ import {
   getShanyraqLeaderboard,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
-import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards } from "./db.season";
+import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
 import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
 import { processDonatorAchievement } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
@@ -330,6 +330,30 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) return { success: false };
+        // Block deletion of unclaimed season_reward notifications
+        const db = await (await import('./db')).getDb();
+        if (db) {
+          const { notifications: notifTable } = await import('../drizzle/schema');
+          const { eq, and } = await import('drizzle-orm');
+          const [notif] = await db.select().from(notifTable)
+            .where(and(eq(notifTable.id, input.notificationId), eq(notifTable.profileId, profile.id)))
+            .limit(1);
+          if (notif?.type === 'season_reward') {
+            // Check if the reward has been claimed
+            const { seasonRewards } = await import('../drizzle/schema');
+            const data = notif.data ? JSON.parse(notif.data) : {};
+            const seasonKey = data.seasonKey;
+            if (seasonKey) {
+              const [reward] = await db.select({ claimed: seasonRewards.claimed })
+                .from(seasonRewards)
+                .where(and(eq(seasonRewards.profileId, profile.id), eq(seasonRewards.seasonKey, seasonKey)))
+                .limit(1);
+              if (!reward || !reward.claimed) {
+                return { success: false, blocked: true };
+              }
+            }
+          }
+        }
         const ok = await deleteNotification(input.notificationId, profile.id);
         return { success: ok };
       }),
@@ -338,6 +362,37 @@ export const appRouter = router({
     deleteAll: protectedProcedure.mutation(async ({ ctx }) => {
       const profile = await getProfileByUserId(ctx.user.id);
       if (!profile) return { success: false };
+      // Delete all except unclaimed season_reward notifications
+      const db = await (await import('./db')).getDb();
+      if (db) {
+        const { notifications: notifTable, seasonRewards } = await import('../drizzle/schema');
+        const { eq, and, ne, inArray } = await import('drizzle-orm');
+        // Find unclaimed season_reward notification IDs to exclude
+        const seasonNotifs = await db.select({ id: notifTable.id, data: notifTable.data })
+          .from(notifTable)
+          .where(and(eq(notifTable.profileId, profile.id), eq(notifTable.type, 'season_reward')));
+        const blockedIds: number[] = [];
+        for (const sn of seasonNotifs) {
+          const data = sn.data ? JSON.parse(sn.data) : {};
+          if (data.seasonKey) {
+            const [reward] = await db.select({ claimed: seasonRewards.claimed })
+              .from(seasonRewards)
+              .where(and(eq(seasonRewards.profileId, profile.id), eq(seasonRewards.seasonKey, data.seasonKey)))
+              .limit(1);
+            if (!reward || !reward.claimed) blockedIds.push(sn.id);
+          }
+        }
+        if (blockedIds.length > 0) {
+          // Delete all except blocked
+          const allNotifs = await db.select({ id: notifTable.id })
+            .from(notifTable).where(eq(notifTable.profileId, profile.id));
+          const toDelete = allNotifs.map(n => n.id).filter(id => !blockedIds.includes(id));
+          if (toDelete.length > 0) {
+            await db.delete(notifTable).where(inArray(notifTable.id, toDelete));
+          }
+          return { success: true };
+        }
+      }
       const ok = await deleteAllNotifications(profile.id);
       return { success: ok };
     }),
@@ -1353,6 +1408,17 @@ export const appRouter = router({
       if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
       return getUnclaimedSeasonRewards(profile.id);
     }),
+
+    /** Claim a season reward — grants avatar/frame ownership, marks claimed, deletes notification */
+    claimReward: protectedProcedure
+      .input(z.object({ seasonKey: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const result = await claimSeasonReward(profile.id, input.seasonKey);
+        if (!result.success) throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason });
+        return { success: true };
+      }),
 
     // ─── Season Test Tools (admin only) ────────────────────────────────────────
 
