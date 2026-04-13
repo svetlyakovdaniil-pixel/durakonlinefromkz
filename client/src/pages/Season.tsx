@@ -291,13 +291,23 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
 
-  const { data: seasonData } = trpc.season.current.useQuery(undefined, {
-    enabled: !!user && open,
-    refetchInterval: 60000,
-  });
+  // Support ?testSeason=YYYY-QN URL parameter for admin preview
+  const testSeasonKey = useMemo(() => {
+    if (typeof window === 'undefined') return undefined;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('testSeason') ?? undefined;
+  }, []);
+
+  const { data: seasonData } = trpc.season.current.useQuery(
+    { seasonKey: testSeasonKey },
+    {
+      enabled: !!user && open,
+      refetchInterval: 60000,
+    }
+  );
 
   const { data: leaderboardData } = trpc.season.leaderboard.useQuery(
-    { seasonKey: undefined },
+    { seasonKey: testSeasonKey },
     { enabled: open && activeTab === 'leaderboard', refetchInterval: 30000 }
   );
 

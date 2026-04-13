@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl, AVATAR_OPTIONS } from '../../../shared/avatars';
-import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank } from '../../../shared/seasons';
+import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank, getSeasonInfo } from '../../../shared/seasons';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
@@ -215,7 +215,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const isPremium = premiumStatus?.isPremium ?? false;
 
   // Season rating for rank icon
-  const { data: seasonData } = trpc.season.current.useQuery(undefined, { refetchInterval: 120000 });
+  const { data: seasonData } = trpc.season.current.useQuery({}, { refetchInterval: 120000 });
   const mySeasonRating = seasonData?.seasonRating ?? 0;
 
   // Friends list — used to filter online players to only actual friends
@@ -1561,6 +1561,8 @@ onClick={() => setShowTengeTopUp(true)}
                         const rank = rankKey ? SEASON_RANKS.find(r => r.key === rankKey) : null;
                         const rewardDef = rankKey ? SEASON_REWARD_DEFS.find(r => r.rankKey === rankKey) : null;
                         const isClaimed = !!(n.data?.claimed);
+                        const seasonNumber = seasonKey ? getSeasonInfo(seasonKey)?.seasonNumber : undefined;
+                        const seasonLabel = seasonNumber ? ` Season ${seasonNumber}` : '';
                         return (
                           <>
                             {/* Header */}
@@ -1612,7 +1614,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <AvatarDisplay avatarId={rewardDef.avatarId} size={16} className="rounded-full" />
-                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}</span>
+                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}{seasonLabel}</span>
                                     </div>
                                   );
                                 })()}
@@ -1624,7 +1626,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <span className="text-amber-400">🛡️</span>
-                                      {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{frameName}</span>
+                                      {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{frameName}{seasonLabel}</span>
                                     </div>
                                   );
                                 })()}

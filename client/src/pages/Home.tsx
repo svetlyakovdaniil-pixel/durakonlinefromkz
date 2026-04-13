@@ -40,7 +40,7 @@ export default function Home() {
   const registeredRef = useRef(false);
 
   // Season rating for rank icon in room
-  const { data: homeSeasonData } = trpc.season.current.useQuery(undefined, {
+  const { data: homeSeasonData } = trpc.season.current.useQuery({}, {
     enabled: !!profile,
     refetchInterval: 120000,
   });

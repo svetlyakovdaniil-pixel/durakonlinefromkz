@@ -1420,27 +1420,29 @@ export const appRouter = router({
   // ============================================================
   season: router({
     /** Get current season info + player's season rating */
-    current: protectedProcedure.query(async ({ ctx }) => {
-      const profile = await getProfileByUserId(ctx.user.id);
-      if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
-      const seasonKey = getCurrentSeasonKey();
-      const seasonInfo = getSeasonInfo(seasonKey);
-      const bounds = getSeasonBounds(seasonKey);
-      const seasonRating = await getPlayerSeasonRating(profile.id, seasonKey);
-      const rank = getSeasonRank(seasonRating?.seasonRating ?? 0);
-      return {
-        seasonKey,
-        seasonInfo,
-        startDate: bounds.start,
-        endDate: bounds.end,
-        seasonRating: seasonRating?.seasonRating ?? 0,
-        gamesPlayed: seasonRating?.gamesPlayed ?? 0,
-        wins: seasonRating?.wins ?? 0,
-        losses: seasonRating?.losses ?? 0,
-        rank,
-        allRanks: SEASON_RANKS,
-      };
-    }),
+    current: protectedProcedure
+      .input(z.object({ seasonKey: z.string().optional() }))
+      .query(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
+        const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
+        const seasonInfo = getSeasonInfo(seasonKey);
+        const bounds = getSeasonBounds(seasonKey);
+        const seasonRating = await getPlayerSeasonRating(profile.id, seasonKey);
+        const rank = getSeasonRank(seasonRating?.seasonRating ?? 0);
+        return {
+          seasonKey,
+          seasonInfo,
+          startDate: bounds.start,
+          endDate: bounds.end,
+          seasonRating: seasonRating?.seasonRating ?? 0,
+          gamesPlayed: seasonRating?.gamesPlayed ?? 0,
+          wins: seasonRating?.wins ?? 0,
+          losses: seasonRating?.losses ?? 0,
+          rank,
+          allRanks: SEASON_RANKS,
+        };
+      }),
 
     /** Get season leaderboard */
     leaderboard: publicProcedure
