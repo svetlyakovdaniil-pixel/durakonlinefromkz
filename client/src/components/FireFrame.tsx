@@ -29,7 +29,6 @@ interface Particle {
  * The fire burns outward from a golden ring border around the avatar.
  *
  * Performance optimisations (no quality loss):
- *  - alpha:false context — skips per-pixel alpha compositing on GPU
  *  - DPR capped at 2 — prevents 9× pixel overdraw on iPhone Pro (DPR=3)
  *  - Gradient cache — reuses CanvasGradient objects by quantised color key
  *  - Fixed height = canvasSize (was hardcoded 105px)
@@ -101,8 +100,7 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    // alpha:false — tells GPU to skip alpha compositing (big win on mobile)
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     // Cap DPR at 2: iPhone Pro has DPR=3 → 9× pixels vs DPR=1.
@@ -162,9 +160,7 @@ export function FireFrame({ size, children, active = true, className = "" }: Fir
       if (delta >= frameInterval * 0.8) {
         lastTime = timestamp;
 
-        // With alpha:false we must fill background instead of clearRect
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
 
         // Spawn new particles
         const spawnCount = 3 + Math.floor(Math.random() * 3);

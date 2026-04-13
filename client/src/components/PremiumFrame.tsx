@@ -78,7 +78,7 @@ export function PremiumFrame({ size, children, active = true, className = '' }: 
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext('2d', { alpha: false });
+    const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -211,8 +211,7 @@ export function PremiumFrame({ size, children, active = true, className = '' }: 
         timeRef.current += 1;
         const t = timeRef.current;
 
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
 
         // Spawn new falling coins
         if (Math.random() < 0.35) {

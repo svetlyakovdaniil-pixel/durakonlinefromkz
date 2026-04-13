@@ -91,7 +91,7 @@ export function LightningFrame({ size, children, active = true, className = "" }
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -113,8 +113,7 @@ export function LightningFrame({ size, children, active = true, className = "" }
         lastTime = timestamp;
         time += 1;
 
-        ctx.fillStyle = "#000";
-        ctx.fillRect(0, 0, canvasSize, canvasSize);
+        ctx.clearRect(0, 0, canvasSize, canvasSize);
 
         // Electric glow ring
         const pulse = 0.3 + 0.3 * Math.sin(time * 0.1);
