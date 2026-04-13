@@ -415,13 +415,16 @@ export async function recordGameResult(data: {
       .limit(1);
     if (profileRow) {
       ratingChangesMap[profileRow.id] = ratingChange;
-      // Apply season rating change (no premium bonus — use base ratingChange from table)
-      const baseRatingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
-      try {
-        const { applySeasonRatingChange } = await import('./db.season');
-        await applySeasonRatingChange(profileRow.id, baseRatingChange, isWinner, isLoser);
-      } catch (e) {
-        console.error('[Season] Failed to apply season rating change:', e);
+      // Apply season rating change only for human games (<=33.4% bots)
+      // Bot games do NOT count towards seasonal rating
+      if (!isBotGame) {
+        const baseRatingChange = ratingTable[idx] ?? ratingTable[ratingTable.length - 1];
+        try {
+          const { applySeasonRatingChange } = await import('./db.season');
+          await applySeasonRatingChange(profileRow.id, baseRatingChange, isWinner, isLoser);
+        } catch (e) {
+          console.error('[Season] Failed to apply season rating change:', e);
+        }
       }
     }
 
@@ -546,15 +549,25 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
   const db = await getDb();
   if (!db) return [];
 
+  // playersJson stores gameId values, not profileId.
+  // First, look up the gameId for this profileId.
+  const [profileRow] = await db.select({ gameId: playerProfiles.gameId })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  const playerGameId = profileRow?.gameId ?? -1;
+
   const records = await db.select().from(gameHistory).where(
-    sql`JSON_CONTAINS(${gameHistory.playersJson}, CAST(${profileId} AS JSON))`
+    sql`JSON_CONTAINS(${gameHistory.playersJson}, CAST(${playerGameId} AS JSON))`
   ).orderBy(desc(gameHistory.createdAt)).limit(limit);
 
   // Enrich each record with place and rating delta
   return records.map(record => {
+    // playerIds contains gameId values (sorted by finish place)
     const playerIds = JSON.parse(record.playersJson || '[]') as number[];
-    const place = playerIds.indexOf(profileId) + 1;
-    const isLoser = profileId === record.loserId;
+    const place = playerIds.indexOf(playerGameId) + 1;
+    // loserId in gameHistory stores gameId value
+    const isLoser = playerGameId === record.loserId;
 
     // Use 33.4% bot threshold to determine which table to use
     const botRatio = record.totalPlayersInRoom > 0 ? record.botCount / record.totalPlayersInRoom : 0;
