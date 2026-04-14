@@ -2745,3 +2745,26 @@
 
 ## Batch 65 — Исправление координат бриллиантов NeonCrownAvatar (v3)
 - [x] Уменьшил размер точек 12%→07%, сместил topPct вниз на 3% для центрировки точки на бриллианте
+
+## Batch 61 — Редактор аватарок: кнопка "Применить" и выпадающий список
+
+- [x] Добавить выпадающий список для выбора любой аватарки в AvatarEditorTab
+- [x] Кнопка "Применить" сохраняет offsetX/offsetY/imgScale прямо в shared/avatars.ts через tRPC
+- [x] Кнопка "Сбросить" возвращает значения к сохранённым в shared/avatars.ts
+- [x] Превью в реальном времени при изменении слайдеров
+- [x] Применить финальные координаты neon_crown: offsetX: 2, offsetY: 2.5, imgScale: 1.12
+
+## Batch 62 — Рамки Неоновой эры: Рубин, Янтарь, Циркон
+
+- [x] Создать RubyNeonFrame (Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового)
+- [x] Создать AmberNeonFrame (Солнечная вспышка: два золотых кольца вращаются в одну сторону)
+- [x] Создать ZirconNeonFrame (Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу)
+- [x] Добавить новые рамки в AvatarWithFrame.tsx (FrameWrapper + FrameIcon)
+- [x] Добавить новые рамки в ShopModal.tsx (AVATAR_FRAMES + FramePreview)
+- [x] Добавить новые рамки в Season.tsx (RewardPopup + превью награды)
+- [x] Добавить ruby_neon, amber_neon, zircon_neon в SEASON_ONLY_BASE_FRAMES в routers.ts
+
+## Batch 63 — Аватарки Неоновой эры: поддержка neon_cat и neon_crown в пикере
+
+- [x] Добавить NeonCatAvatar и NeonCrownAvatar в AnimatedAvatar в AvatarPicker.tsx
+- [x] Добавить neon_dino, neon_cat, neon_crown в isSelectedAnimated в AvatarPicker.tsx

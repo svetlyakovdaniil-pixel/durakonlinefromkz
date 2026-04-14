@@ -162,9 +162,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan',
-    offsetX: 0.5,
-    offsetY: 1,
-    imgScale: 1.15,
+    offsetX: 2,
+    offsetY: 2.5,
+    imgScale: 1.12,
   },
 ];
 

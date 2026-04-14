@@ -17,6 +17,8 @@ import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
+import { NeonCatAvatar } from './NeonCatAvatar';
+import { NeonCrownAvatar } from './NeonCrownAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -33,6 +35,11 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'great_khan') return <GreatKhanAvatar size={size} />;
   if (baseId === 'neon_paw') return <NeonPawAvatar size={size} />;
   if (baseId === 'neon_dino') return <NeonDinoAvatar size={size} />;
+  if (baseId === 'neon_cat') return <NeonCatAvatar size={size} />;
+  if (baseId === 'neon_crown') {
+    const opt = AVATAR_OPTIONS.find(a => a.id === 'neon_crown');
+    return <NeonCrownAvatar size={size} offsetX={opt?.offsetX} offsetY={opt?.offsetY} imgScale={opt?.imgScale} />;
+  }
   return null;
 }
 
@@ -113,7 +120,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   const isLocked = (avatarId: string) => !canSelectAvatar(avatarId);
 
   const selectedBaseId = getBaseAvatarId(selected);
-  const isSelectedAnimated = ['khan', 'golden_horde', 'diving_eagle', 'sky_eagle', 'great_khan', 'neon_paw'].includes(selectedBaseId);
+  const isSelectedAnimated = ['khan', 'golden_horde', 'diving_eagle', 'sky_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown'].includes(selectedBaseId);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">

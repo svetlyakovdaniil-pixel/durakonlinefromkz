@@ -8,6 +8,9 @@ import { useTranslation } from '@/i18n';
 import { X, Flame, Trophy, Clock, Gift, ZoomIn } from 'lucide-react';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { ObsidianNeonFrame } from '@/components/ObsidianNeonFrame';
+import { RubyNeonFrame } from '@/components/RubyNeonFrame';
+import { AmberNeonFrame } from '@/components/AmberNeonFrame';
+import { ZirconNeonFrame } from '@/components/ZirconNeonFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
@@ -227,6 +230,84 @@ function RewardPopup({
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
                     {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame — ruby_neon (Crimson Flash, Season 7) */}
+            {reward.frameId === 'ruby_neon' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(220,0,60,0.08)', border: '1px solid rgba(220,0,60,0.25)' }}
+              >
+                <div className="flex-shrink-0">
+                  <RubyNeonFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-red-900 to-rose-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-red-400">
+                        <circle cx="12" cy="12" r="7" stroke="rgba(220,0,60,0.9)" />
+                        <circle cx="12" cy="12" r="4" stroke="rgba(255,80,160,0.75)" strokeDasharray="3 2" />
+                      </svg>
+                    </div>
+                  </RubyNeonFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(220,0,60,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Рубин — Неон Дәуірі' : locale === 'en' ? 'Ruby — Neon Era' : 'Рубин — Неоновая эра'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,160,0.50)' }}>
+                    {locale === 'kk' ? 'Алқызыл жарқыл жақтауы' : locale === 'en' ? 'Exclusive crimson flash frame' : 'Эксклюзивная рамка с алой вспышкой'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame — amber_neon (Solar Flare, Season 7) */}
+            {reward.frameId === 'amber_neon' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)' }}
+              >
+                <div className="flex-shrink-0">
+                  <AmberNeonFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-amber-900 to-orange-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-amber-400">
+                        <circle cx="12" cy="12" r="7" stroke="rgba(245,158,11,0.9)" />
+                        <circle cx="12" cy="12" r="4" stroke="rgba(251,146,60,0.8)" />
+                      </svg>
+                    </div>
+                  </AmberNeonFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(245,158,11,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Янтар — Неон Дәуірі' : locale === 'en' ? 'Amber — Neon Era' : 'Янтарь — Неоновая эра'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(251,146,60,0.50)' }}>
+                    {locale === 'kk' ? 'Күн жарқылы жақтауы' : locale === 'en' ? 'Exclusive solar flare frame' : 'Эксклюзивная рамка с солнечной вспышкой'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame — zircon_neon (Comet Trail, Season 7) */}
+            {reward.frameId === 'zircon_neon' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(168,85,247,0.25)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ZirconNeonFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-orange-900 to-purple-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-orange-400">
+                        <circle cx="12" cy="12" r="7" stroke="rgba(249,115,22,0.9)" />
+                        <circle cx="12" cy="12" r="4" stroke="rgba(168,85,247,0.85)" />
+                      </svg>
+                    </div>
+                  </ZirconNeonFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(249,115,22,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Циркон — Неон Дәуірі' : locale === 'en' ? 'Zircon — Neon Era' : 'Циркон — Неоновая эра'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(168,85,247,0.50)' }}>
+                    {locale === 'kk' ? 'Комета құйрығы жақтауы' : locale === 'en' ? 'Exclusive comet trail frame' : 'Эксклюзивная рамка с хвостом кометы'}
                   </div>
                 </div>
               </div>
@@ -528,6 +609,57 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                             <span>
                               {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — ruby_neon (Crimson Flash, Season 7) */}
+                        {rewardDef.frameId === 'ruby_neon' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <RubyNeonFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-red-900 to-rose-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-red-400">
+                                    <circle cx="12" cy="12" r="7" stroke="rgba(220,0,60,0.9)" />
+                                  </svg>
+                                </div>
+                              </RubyNeonFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,0,60,0.95)' }} className="font-medium">{locale === 'kk' ? 'Рубин — Неон Дәуірі' : locale === 'en' ? 'Ruby — Neon Era' : 'Рубин — Неоновая эра'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — amber_neon (Solar Flare, Season 7) */}
+                        {rewardDef.frameId === 'amber_neon' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <AmberNeonFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-amber-900 to-orange-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-amber-400">
+                                    <circle cx="12" cy="12" r="7" stroke="rgba(245,158,11,0.9)" />
+                                  </svg>
+                                </div>
+                              </AmberNeonFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(245,158,11,0.95)' }} className="font-medium">{locale === 'kk' ? 'Янтар — Неон Дәуірі' : locale === 'en' ? 'Amber — Neon Era' : 'Янтарь — Неоновая эра'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — zircon_neon (Comet Trail, Season 7) */}
+                        {rewardDef.frameId === 'zircon_neon' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ZirconNeonFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-orange-900 to-purple-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 text-orange-400">
+                                    <circle cx="12" cy="12" r="7" stroke="rgba(249,115,22,0.9)" />
+                                  </svg>
+                                </div>
+                              </ZirconNeonFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(249,115,22,0.95)' }} className="font-medium">{locale === 'kk' ? 'Циркон — Неон Дәуірі' : locale === 'en' ? 'Zircon — Neon Era' : 'Циркон — Неоновая эра'}</span>
                             </span>
                           </div>
                         )}

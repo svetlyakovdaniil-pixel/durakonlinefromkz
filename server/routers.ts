@@ -617,7 +617,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Season-only frames (e.g. great_khan) can only be equipped if owned.
         // getOwnedFrames expects profileId (not userId), so we look up the profile first.
-        const SEASON_ONLY_BASE_FRAMES = ['great_khan', 'obsidian_neon'];
+        const SEASON_ONLY_BASE_FRAMES = ['great_khan', 'obsidian_neon', 'ruby_neon', 'amber_neon', 'zircon_neon'];
         if (input.frameId) {
           // Strip season suffix to get base frame ID (e.g. 'obsidian_neon_2026Q3' → 'obsidian_neon')
           const baseFrameId = input.frameId.replace(/_\d{4}Q[1-4]$/, '');
@@ -1044,6 +1044,48 @@ export const appRouter = router({
           });
         }
         return result;
+      }),
+
+    saveAvatarOffsets: adminProcedure
+      .input(z.object({
+        avatarId: z.string().min(1),
+        offsetX: z.number(),
+        offsetY: z.number(),
+        imgScale: z.number(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const fs = await import('fs');
+        const path = await import('path');
+        const filePath = path.resolve(process.cwd(), 'shared/avatars.ts');
+        let content = fs.readFileSync(filePath, 'utf-8');
+        // Find the avatar entry and update its offset values
+        // Pattern: id: 'avatarId', ... offsetX: X, offsetY: Y, imgScale: S
+        const idPattern = new RegExp(
+          `(id:\\s*'${input.avatarId}'[^}]*?)(offsetX:\\s*[\\d.-]+,\\s*\\n\\s*offsetY:\\s*[\\d.-]+,\\s*\\n\\s*imgScale:\\s*[\\d.-]+,)`,
+          's'
+        );
+        const replacement = `$1offsetX: ${input.offsetX},\n    offsetY: ${input.offsetY},\n    imgScale: ${input.imgScale},`;
+        if (idPattern.test(content)) {
+          content = content.replace(idPattern, replacement);
+        } else {
+          // If no existing offset fields, add them before the closing }
+          const entryPattern = new RegExp(
+            `(id:\\s*'${input.avatarId}'[^}]*?)(\\n  },)`,
+            's'
+          );
+          content = content.replace(
+            entryPattern,
+            `$1\n    offsetX: ${input.offsetX},\n    offsetY: ${input.offsetY},\n    imgScale: ${input.imgScale},$2`
+          );
+        }
+        fs.writeFileSync(filePath, content, 'utf-8');
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'update_avatar_offsets',
+          details: { avatarId: input.avatarId, offsetX: input.offsetX, offsetY: input.offsetY, imgScale: input.imgScale },
+        });
+        return { success: true };
       }),
   }),
 

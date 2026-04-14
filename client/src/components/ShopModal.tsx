@@ -14,6 +14,9 @@ import { IceFrame } from './IceFrame';
 import { PremiumFrame } from './PremiumFrame';
 import { GreatKhanFrame } from './GreatKhanFrame';
 import { ObsidianNeonFrame } from './ObsidianNeonFrame';
+import { RubyNeonFrame } from './RubyNeonFrame';
+import { AmberNeonFrame } from './AmberNeonFrame';
+import { ZirconNeonFrame } from './ZirconNeonFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -135,6 +138,63 @@ export const AVATAR_FRAMES = [
     bgGradient: 'from-cyan-900 to-blue-950',
     seasonOnly: true,
   },
+  {
+    id: 'ruby_neon',
+    name: 'Рубин — Неоновая эра',
+    nameKk: 'Рубин — Неон Дәуірі',
+    nameEn: 'Ruby — Neon Era',
+    description: 'Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового. Награда за ранг Рубин в сезоне Неоновая эра.',
+    descriptionKk: 'Алқызыл жарқыл: сақина қою қызылдан ашық қызғылтқа дейін зарядталады. Неон Дәуірі маусымындағы Рубин дәрежесі үшін сыйлық.',
+    descriptionEn: 'Crimson flash: ring charges from deep red to hot pink. Reward for Ruby rank in the Neon Era season.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-red-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(220,0,60,0.9)" />
+        <circle cx="12" cy="12" r="6" stroke="rgba(255,80,160,0.75)" strokeDasharray="4 2" />
+      </svg>
+    ),
+    iconColor: 'text-red-400',
+    bgGradient: 'from-red-900 to-rose-950',
+    seasonOnly: true,
+  },
+  {
+    id: 'amber_neon',
+    name: 'Янтарь — Неоновая эра',
+    nameKk: 'Янтар — Неон Дәуірі',
+    nameEn: 'Amber — Neon Era',
+    description: 'Солнечная вспышка: два золотых кольца вращаются в одну сторону. Награда за ранг Янтарь в сезоне Неоновая эра.',
+    descriptionKk: 'Күн жарқылы: екі алтын сақина бір бағытта айналады. Неон Дәуірі маусымындағы Янтар дәрежесі үшін сыйлық.',
+    descriptionEn: 'Solar flare: two golden rings rotating in the same direction. Reward for Amber rank in the Neon Era season.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-amber-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(245,158,11,0.9)" />
+        <circle cx="12" cy="12" r="6" stroke="rgba(251,146,60,0.8)" />
+      </svg>
+    ),
+    iconColor: 'text-amber-400',
+    bgGradient: 'from-amber-900 to-orange-950',
+    seasonOnly: true,
+  },
+  {
+    id: 'zircon_neon',
+    name: 'Циркон — Неоновая эра',
+    nameKk: 'Циркон — Неон Дәуірі',
+    nameEn: 'Zircon — Neon Era',
+    description: 'Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу. Награда за ранг Циркон в сезоне Неоновая эра.',
+    descriptionKk: 'Комета құйрығы: қызғылт сары сақина мен күлгін доға бір-біріне қарсы айналады. Неон Дәуірі маусымындағы Циркон дәрежесі үшін сыйлық.',
+    descriptionEn: 'Comet trail: orange ring and purple arc rotating toward each other. Reward for Zircon rank in the Neon Era season.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-orange-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(249,115,22,0.9)" />
+        <circle cx="12" cy="12" r="6" stroke="rgba(168,85,247,0.85)" />
+      </svg>
+    ),
+    iconColor: 'text-orange-400',
+    bgGradient: 'from-orange-900 to-purple-950',
+    seasonOnly: true,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -154,6 +214,12 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <GreatKhanFrame size={size} active={true}>{children}</GreatKhanFrame>;
     case 'obsidian_neon':
       return <ObsidianNeonFrame size={size} active={true}>{children}</ObsidianNeonFrame>;
+    case 'ruby_neon':
+      return <RubyNeonFrame size={size} active={true}>{children}</RubyNeonFrame>;
+    case 'amber_neon':
+      return <AmberNeonFrame size={size} active={true}>{children}</AmberNeonFrame>;
+    case 'zircon_neon':
+      return <ZirconNeonFrame size={size} active={true}>{children}</ZirconNeonFrame>;
     default:
       return <>{children}</>;
   }

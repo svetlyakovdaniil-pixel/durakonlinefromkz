@@ -6,6 +6,9 @@ import { IceFrame } from './IceFrame';
 import { PremiumFrame } from './PremiumFrame';
 import { GreatKhanFrame } from './GreatKhanFrame';
 import { ObsidianNeonFrame } from './ObsidianNeonFrame';
+import { RubyNeonFrame } from './RubyNeonFrame';
+import { AmberNeonFrame } from './AmberNeonFrame';
+import { ZirconNeonFrame } from './ZirconNeonFrame';
 
 /**
  * Renders the correct animated frame component around children based on frameId.
@@ -44,6 +47,12 @@ export function FrameWrapper({
       return <GreatKhanFrame size={size} active={true} className={className}>{children}</GreatKhanFrame>;
     case 'obsidian_neon':
       return <ObsidianNeonFrame size={size} active={true} className={className}>{children}</ObsidianNeonFrame>;
+    case 'ruby_neon':
+      return <RubyNeonFrame size={size} active={true} className={className}>{children}</RubyNeonFrame>;
+    case 'amber_neon':
+      return <AmberNeonFrame size={size} active={true} className={className}>{children}</AmberNeonFrame>;
+    case 'zircon_neon':
+      return <ZirconNeonFrame size={size} active={true} className={className}>{children}</ZirconNeonFrame>;
     default:
       return <div className={className}>{children}</div>;
   }
@@ -83,6 +92,27 @@ export function FrameIcon({ frameId, className = 'w-5 h-5' }: { frameId: string;
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-cyan-400`}>
           <circle cx="12" cy="12" r="9" stroke="rgba(0,212,255,0.9)" />
           <circle cx="12" cy="12" r="6" stroke="rgba(0,80,255,0.85)" />
+        </svg>
+      );
+    case 'ruby_neon':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-red-400`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(220,0,60,0.9)" />
+          <circle cx="12" cy="12" r="6" stroke="rgba(255,80,160,0.75)" strokeDasharray="4 2" />
+        </svg>
+      );
+    case 'amber_neon':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-amber-400`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(245,158,11,0.9)" />
+          <circle cx="12" cy="12" r="6" stroke="rgba(251,146,60,0.8)" />
+        </svg>
+      );
+    case 'zircon_neon':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-orange-400`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(249,115,22,0.9)" />
+          <circle cx="12" cy="12" r="6" stroke="rgba(168,85,247,0.85)" />
         </svg>
       );
     default:

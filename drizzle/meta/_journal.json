@@ -302,6 +302,13 @@
       "when": 1776109942732,
       "tag": "0042_wise_wolfsbane",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "5",
+      "when": 1776158187522,
+      "tag": "0043_faulty_energizer",
+      "breakpoints": true
     }
   ]
 }
