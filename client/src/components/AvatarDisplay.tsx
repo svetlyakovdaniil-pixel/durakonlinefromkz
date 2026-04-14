@@ -28,6 +28,14 @@ import { AmberSpaceAvatar } from './AmberSpaceAvatar';
 import { AmberCyberpunkAvatar } from './AmberCyberpunkAvatar';
 import { AmberHiphopAvatar } from './AmberHiphopAvatar';
 import { AmberAngelsDemonsAvatar } from './AmberAngelsDemonsAvatar';
+import { ObsidianUnderwaterAvatar } from './ObsidianUnderwaterAvatar';
+import { ObsidianEgyptianAvatar } from './ObsidianEgyptianAvatar';
+import { ObsidianPirateAvatar } from './ObsidianPirateAvatar';
+import { ObsidianNorseAvatar } from './ObsidianNorseAvatar';
+import { ObsidianSpaceAvatar } from './ObsidianSpaceAvatar';
+import { ObsidianCyberpunkAvatar } from './ObsidianCyberpunkAvatar';
+import { ObsidianHiphopAvatar } from './ObsidianHiphopAvatar';
+import { ObsidianAngelsDemonsAvatar } from './ObsidianAngelsDemonsAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -159,6 +167,30 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'amber_angels_demons') {
       return <AmberAngelsDemonsAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_underwater_world') {
+      return <ObsidianUnderwaterAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_egyptian_gods') {
+      return <ObsidianEgyptianAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_pirate_islands') {
+      return <ObsidianPirateAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_norse_gods') {
+      return <ObsidianNorseAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_space_odyssey') {
+      return <ObsidianSpaceAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_cyberpunk') {
+      return <ObsidianCyberpunkAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_hiphop_90s') {
+      return <ObsidianHiphopAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_angels_demons') {
+      return <ObsidianAngelsDemonsAvatar size={size} />;
     }
     // Image-based avatar
     return (
