@@ -84,6 +84,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 1 unique rewards: Zircon rank gets Abyss Jellyfish avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'underwater_jellyfish' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_underwater_world' },
     ],
   },
   {
@@ -106,6 +107,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 2 unique rewards: Zircon rank gets Anubis avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'anubis_god' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_egyptian_gods' },
     ],
   },
   {
@@ -128,6 +130,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 3 unique rewards: Zircon rank gets Pirate Captain avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'pirate_captain' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_pirate_islands' },
     ],
   },
   {
@@ -150,6 +153,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 4 unique rewards: Zircon rank gets Norse God avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'norse_warrior' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_norse_gods' },
     ],
   },
   {
@@ -172,6 +176,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 5 unique rewards: Zircon rank gets Space Explorer avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'space_explorer' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_space_odyssey' },
     ],
   },
   {
@@ -292,6 +297,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 10 unique rewards: Zircon rank gets Cyberpunk Warrior avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'cyberpunk_warrior' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_cyberpunk' },
     ],
   },
   {
@@ -314,6 +320,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 11 unique rewards: Zircon rank gets Hip-Hop Legend avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'hiphop_legend' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_hiphop_90s' },
     ],
   },
   {
@@ -336,6 +343,7 @@ export const SEASONS: SeasonInfo[] = [
     // Season 12 unique rewards: Zircon rank gets Angel & Demon avatar
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'angel_demon' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_angels_demons' },
     ],
   },
 ];

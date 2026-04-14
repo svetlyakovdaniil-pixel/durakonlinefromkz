@@ -341,6 +341,110 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'sky_eagle', // Zircon rank
     seasonNumber: 12,
   },
+  // Season 1 — Подводный мир (Ruby / steppe_khan)
+  {
+    id: 'ruby_underwater_world',
+    name: 'Повелитель глубин',
+    nameKk: 'Тереңдік билеушісі',
+    nameEn: 'Ruler of the Deep',
+    url: 'ruby_underwater_world',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_underwater_world_83a8b445.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 1,
+  },
+  // Season 2 — Египетские боги (Ruby / steppe_khan)
+  {
+    id: 'ruby_egyptian_gods',
+    name: 'Хранитель пирамид',
+    nameKk: 'Пирамида сақшысы',
+    nameEn: 'Guardian of Pyramids',
+    url: 'ruby_egyptian_gods',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_egyptian_gods_52ceb9b8.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 2,
+  },
+  // Season 3 — Пиратские острова (Ruby / steppe_khan)
+  {
+    id: 'ruby_pirate_islands',
+    name: 'Грозный пират',
+    nameKk: 'Қорқынышты пират',
+    nameEn: 'Fearsome Pirate',
+    url: 'ruby_pirate_islands',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_pirate_islands_acbbbc77.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 3,
+  },
+  // Season 4 — Скандинавские боги (Ruby / steppe_khan)
+  {
+    id: 'ruby_norse_gods',
+    name: 'Воин Одина',
+    nameKk: 'Один жауынгері',
+    nameEn: 'Odin\'s Warrior',
+    url: 'ruby_norse_gods',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_norse_gods_0fa3c331.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 4,
+  },
+  // Season 5 — Космическая одиссея (Ruby / steppe_khan)
+  {
+    id: 'ruby_space_odyssey',
+    name: 'Звёздный страж',
+    nameKk: 'Жұлдыз сақшысы',
+    nameEn: 'Star Guardian',
+    url: 'ruby_space_odyssey',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_space_odyssey_f080fce1.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 5,
+  },
+  // Season 10 — Киберпанк (Ruby / steppe_khan)
+  {
+    id: 'ruby_cyberpunk',
+    name: 'Кибер-хакер',
+    nameKk: 'Кибер-хакер',
+    nameEn: 'Cyber Hacker',
+    url: 'ruby_cyberpunk',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_cyberpunk_ee56c332.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 10,
+  },
+  // Season 11 — Хип-хоп 90-х (Ruby / steppe_khan)
+  {
+    id: 'ruby_hiphop_90s',
+    name: 'Легенда улиц',
+    nameKk: 'Көше легендасы',
+    nameEn: 'Street Legend',
+    url: 'ruby_hiphop_90s',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_hiphop_90s_bde0fc3c.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 11,
+  },
+  // Season 12 — Ангелы и Демоны (Ruby / steppe_khan)
+  {
+    id: 'ruby_angels_demons',
+    name: 'Страж двух миров',
+    nameKk: 'Екі дүние сақшысы',
+    nameEn: 'Guardian of Two Worlds',
+    url: 'ruby_angels_demons',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_angels_demons_dc4a2a91.png',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 12,
+  },
   {
     id: 'neon_crown',
     name: 'Неоновая корона',
