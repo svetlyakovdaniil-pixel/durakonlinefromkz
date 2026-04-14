@@ -1,19 +1,33 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import mysql from "mysql2/promise";
 import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
-let _db: ReturnType<typeof drizzle> | null = null;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _db: any | null = null;
+let _pool: mysql.Pool | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+// Lazily create the drizzle instance with a connection pool so local tooling can run without a DB.
+// Using a pool (not a single connection) prevents ECONNRESET errors when the DB closes idle connections.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _pool = mysql.createPool({
+        uri: process.env.DATABASE_URL,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0,
+        enableKeepAlive: true,
+        keepAliveInitialDelay: 30000,
+      });
+      _db = drizzle(_pool);
+      console.log("[Database] Connection pool created");
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
+      _pool = null;
     }
   }
   return _db;
