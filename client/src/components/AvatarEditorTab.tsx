@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { NeonCrownAvatar } from "./NeonCrownAvatar";
 import { NeonPawAvatar } from "./NeonPawAvatar";
 import { NeonDinoAvatar } from "./NeonDinoAvatar";
@@ -42,52 +42,72 @@ function PreviewAvatar({
   offsetY: number;
   imgScale: number;
 }) {
+  // Wrapper that applies CSS transform to any avatar content
+  // offsetX/offsetY are percentages of the avatar size
+  const translateX = (offsetX / 100) * size;
+  const translateY = (offsetY / 100) * size;
+
+  function withTransform(content: React.ReactNode) {
+    return (
+      <div
+        style={{
+          width: size,
+          height: size,
+          borderRadius: '50%',
+          overflow: 'hidden',
+          background: '#1a1a2e',
+          flexShrink: 0,
+          position: 'relative',
+        }}
+      >
+        <div
+          style={{
+            transform: `translate(${translateX}px, ${translateY}px) scale(${imgScale})`,
+            transformOrigin: 'center center',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          {content}
+        </div>
+      </div>
+    );
+  }
+
   switch (avatarId) {
     case 'neon_crown':
+      // neon_crown has its own internal offset system — pass directly
       return <NeonCrownAvatar size={size} offsetX={offsetX} offsetY={offsetY} imgScale={imgScale} />;
     case 'neon_paw':
-      return <NeonPawAvatar size={size} />;
+      return withTransform(<NeonPawAvatar size={size} />);
     case 'neon_dino':
-      return <NeonDinoAvatar size={size} />;
+      return withTransform(<NeonDinoAvatar size={size} />);
     case 'neon_cat':
-      return <NeonCatAvatar size={size} />;
+      return withTransform(<NeonCatAvatar size={size} />);
     case 'great_khan':
-      return <GreatKhanAvatar size={size} />;
+      return withTransform(<GreatKhanAvatar size={size} />);
     case 'khan':
-      return <KhanAvatar size={size} />;
+      return withTransform(<KhanAvatar size={size} />);
     case 'golden_horde':
-      return <GoldenHordeAvatar size={size} />;
+      return withTransform(<GoldenHordeAvatar size={size} />);
     case 'diving_eagle':
-      return <DivingEagleAvatar size={size} />;
+      return withTransform(<DivingEagleAvatar size={size} />);
     case 'toxic_storm':
-      return <ToxicStormAvatar size={size} />;
+      return withTransform(<ToxicStormAvatar size={size} />);
     default: {
       // Image-based avatar — apply offsets via CSS transform
       const opt = AVATAR_OPTIONS.find(a => a.id === avatarId);
       const url = opt?.url ?? '';
-      return (
-        <div
+      return withTransform(
+        <img
+          src={url}
+          alt={avatarId}
           style={{
-            width: size,
-            height: size,
-            borderRadius: '50%',
-            overflow: 'hidden',
-            background: '#1a1a2e',
-            flexShrink: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
           }}
-        >
-          <img
-            src={url}
-            alt={avatarId}
-            style={{
-              width: `${imgScale * 100}%`,
-              height: `${imgScale * 100}%`,
-              objectFit: 'cover',
-              marginLeft: `${offsetX - (imgScale - 1) * 50}%`,
-              marginTop: `${offsetY - (imgScale - 1) * 50}%`,
-            }}
-          />
-        </div>
+        />
       );
     }
   }
