@@ -195,6 +195,17 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
   },
   {
+    id: 'amaterasu_ruby',
+    name: 'Аматэрасу',
+    nameKk: 'Аматэрасу',
+    nameEn: 'Amaterasu',
+    url: 'amaterasu_ruby', // special: rendered by AmaterasuAvatar component
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan', // Ruby rank
+  },
+  {
     id: 'japanese_motifs_zircon',
     name: 'Японский пейзаж',
     nameKk: 'Жапон пейзажы',
@@ -225,7 +236,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
@@ -338,6 +349,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#f59e0b', shadowColor: 'rgba(245,158,11,0.5)', bgClass: 'rgba(245,158,11,0.10)', borderClass: 'border-amber-500/60', textClass: 'text-amber-300', hoverClass: 'hover:bg-amber-500/10' };
     case 'nuclear_mushroom':
       return { borderColor: '#ff4500', shadowColor: 'rgba(255,69,0,0.6)', bgClass: 'rgba(255,69,0,0.10)', borderClass: 'border-orange-600/60', textClass: 'text-orange-400', hoverClass: 'hover:bg-orange-600/10' };
+    case 'amaterasu_ruby':
+      return { borderColor: '#FF6B00', shadowColor: 'rgba(255,107,0,0.5)', bgClass: 'rgba(255,107,0,0.08)', borderClass: 'border-orange-500/60', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
     case 'japanese_motifs_zircon':
       return { borderColor: '#cc0000', shadowColor: 'rgba(204,0,0,0.4)', bgClass: 'rgba(204,0,0,0.06)', borderClass: 'border-red-600/50', textClass: 'text-red-300', hoverClass: 'hover:bg-red-600/10' };
     case 'diving_eagle':

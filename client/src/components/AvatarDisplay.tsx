@@ -9,6 +9,7 @@ import { NeonCrownAvatar } from './NeonCrownAvatar';
 import { ToxicStormAvatar } from './ToxicStormAvatar';
 import { GasMaskAvatar } from './GasMaskAvatar';
 import { NuclearMushroomAvatar } from './NuclearMushroomAvatar';
+import { AmaterasuAvatar } from './avatars/AmaterasuAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -83,6 +84,9 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'nuclear_mushroom') {
       return <NuclearMushroomAvatar size={size} />;
+    }
+    if (baseId === 'amaterasu_ruby') {
+      return <AmaterasuAvatar size={size} />;
     }
     // Image-based avatar
     return (

@@ -23,6 +23,7 @@ import { NeonCrownAvatar } from './NeonCrownAvatar';
 import { ToxicStormAvatar } from './ToxicStormAvatar';
 import { GasMaskAvatar } from './GasMaskAvatar';
 import { NuclearMushroomAvatar } from './NuclearMushroomAvatar';
+import { AmaterasuAvatar } from './avatars/AmaterasuAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -48,6 +49,7 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'toxic_storm') return <ToxicStormAvatar size={size} />;
   if (baseId === 'gasmask_amber') return <GasMaskAvatar size={size} />;
   if (baseId === 'nuclear_mushroom') return <NuclearMushroomAvatar size={size} />;
+  if (baseId === 'amaterasu_ruby') return <AmaterasuAvatar size={size} />;
   return null;
 }
 
