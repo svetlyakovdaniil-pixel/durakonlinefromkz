@@ -19,70 +19,104 @@ interface AvatarDisplayProps {
 
 /**
  * Universal avatar renderer.
- * - Supports season-suffixed IDs (e.g. 'neon_paw_2026Q3', 'diving_eagle_2026Q2')
- *   by stripping the suffix and rendering the base animated component.
- * - For animated avatars (khan, golden_horde, diving_eagle, great_khan, neon_paw): renders SVG+CSS component
- * - For neon_crown: reads offsetX/offsetY/imgScale from DB (via useAvatarOffsets) — admin-controlled globally
- * - For all others: renders a standard <img> tag
- * Note: legacy 'sky_eagle' avatarId is treated as 'diving_eagle' for backwards compatibility
+ *
+ * Architecture:
+ * - Strips season suffix (e.g. 'neon_paw_2026Q3' → 'neon_paw') via getBaseAvatarId
+ * - Reads offsetX/offsetY/imgScale from DB for ANY avatarId (admin-controlled globally)
+ * - Wraps all avatar content in a clipping container + inner transform div
+ * - neon_crown uses its own internal offset system (passed as props) for backwards compat
+ *
+ * This means: admin changes in AvatarEditorTab propagate to ALL places that use AvatarDisplay:
+ * lobby, profile, game table, season rewards, avatar picker preview.
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
-  // Strip season suffix to get the base component ID
   const baseId = getBaseAvatarId(avatarId);
-
-  // Load DB offsets (cached, shared across all instances via React Query)
   const { getOffsets } = useAvatarOffsets();
 
-  // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
-  if (baseId === 'sky_eagle') {
-    return <DivingEagleAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'khan') {
-    return <KhanAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'golden_horde') {
-    return <GoldenHordeAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'diving_eagle') {
-    return <DivingEagleAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'great_khan') {
-    return <GreatKhanAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'neon_paw') {
-    return <NeonPawAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'neon_dino') {
-    return <NeonDinoAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'neon_cat') {
-    return <NeonCatAvatar size={size} className={className} />;
-  }
-
-  if (baseId === 'toxic_storm') {
-    return <ToxicStormAvatar size={size} className={className} />;
-  }
-
+  // For neon_crown: use its own internal offset system (legacy, keeps existing behaviour)
   if (baseId === 'neon_crown') {
     const { offsetX, offsetY, imgScale } = getOffsets('neon_crown');
     return <NeonCrownAvatar size={size} className={className} offsetX={offsetX} offsetY={offsetY} imgScale={imgScale} />;
   }
 
+  // Read offsets from DB for this avatar (falls back to static defaults if not set)
+  const { offsetX, offsetY, imgScale } = getOffsets(baseId ?? '');
+
+  // Convert percentage offsets to pixel values
+  const translateX = (offsetX / 100) * size;
+  const translateY = (offsetY / 100) * size;
+
+  // Render the raw avatar content (no clipping, no transform yet)
+  function renderContent() {
+    // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
+    if (baseId === 'sky_eagle') {
+      return <DivingEagleAvatar size={size} />;
+    }
+    if (baseId === 'khan') {
+      return <KhanAvatar size={size} />;
+    }
+    if (baseId === 'golden_horde') {
+      return <GoldenHordeAvatar size={size} />;
+    }
+    if (baseId === 'diving_eagle') {
+      return <DivingEagleAvatar size={size} />;
+    }
+    if (baseId === 'great_khan') {
+      return <GreatKhanAvatar size={size} />;
+    }
+    if (baseId === 'neon_paw') {
+      return <NeonPawAvatar size={size} />;
+    }
+    if (baseId === 'neon_dino') {
+      return <NeonDinoAvatar size={size} />;
+    }
+    if (baseId === 'neon_cat') {
+      return <NeonCatAvatar size={size} />;
+    }
+    if (baseId === 'toxic_storm') {
+      return <ToxicStormAvatar size={size} />;
+    }
+    // Image-based avatar
+    return (
+      <img
+        src={getAvatarUrl(avatarId)}
+        alt={alt}
+        width={size}
+        height={size}
+        style={{ width: size, height: size, objectFit: 'cover', display: 'block' }}
+      />
+    );
+  }
+
+  // If no transform needed (all defaults), skip the wrapper for performance
+  const hasTransform = offsetX !== 0 || offsetY !== 0 || imgScale !== 1;
+
+  if (!hasTransform) {
+    return (
+      <div
+        className={`rounded-full overflow-hidden flex-shrink-0 ${className}`}
+        style={{ width: size, height: size }}
+      >
+        {renderContent()}
+      </div>
+    );
+  }
+
   return (
-    <img
-      src={getAvatarUrl(avatarId)}
-      alt={alt}
-      width={size}
-      height={size}
-      className={`rounded-full object-cover ${className}`}
-      style={{ width: size, height: size }}
-    />
+    <div
+      className={`rounded-full overflow-hidden flex-shrink-0 ${className}`}
+      style={{ width: size, height: size, position: 'relative' }}
+    >
+      <div
+        style={{
+          transform: `translate(${translateX}px, ${translateY}px) scale(${imgScale})`,
+          transformOrigin: 'center center',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        {renderContent()}
+      </div>
+    </div>
   );
 }
