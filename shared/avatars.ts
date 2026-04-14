@@ -445,6 +445,110 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'steppe_khan', // Ruby rank
     seasonNumber: 12,
   },
+  // Season 1 — Подводный мир (Amber / golden_horde_warrior)
+  {
+    id: 'amber_underwater_world',
+    name: 'Морской владыка',
+    nameKk: 'Теңіз иесі',
+    nameEn: 'Sea Lord',
+    url: 'amber_underwater_world',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world-UTHmnH2i5peYVsvoor5U2u.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 1,
+  },
+  // Season 2 — Египетские боги (Amber / golden_horde_warrior)
+  {
+    id: 'amber_egyptian_gods',
+    name: 'Фараон богов',
+    nameKk: 'Құдайлар Перғауыны',
+    nameEn: 'Pharaoh of Gods',
+    url: 'amber_egyptian_gods',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods-m73Z2Cf2zgEoiG6Yo8CsZp.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 2,
+  },
+  // Season 3 — Пиратские острова (Amber / golden_horde_warrior)
+  {
+    id: 'amber_pirate_islands',
+    name: 'Золотой капитан',
+    nameKk: 'Алтын капитан',
+    nameEn: 'Golden Captain',
+    url: 'amber_pirate_islands',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_pirate_islands-CyCZP2XLoQQwXGY2AsYqyj.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 3,
+  },
+  // Season 4 — Скандинавские боги (Amber / golden_horde_warrior)
+  {
+    id: 'amber_norse_gods',
+    name: 'Повелитель рун',
+    nameKk: 'Рун иесі',
+    nameEn: 'Rune Master',
+    url: 'amber_norse_gods',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_norse_gods-Ro9n64YcqCR8f3mAM9iv8Y.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 4,
+  },
+  // Season 5 — Космическая одиссея (Amber / golden_horde_warrior)
+  {
+    id: 'amber_space_odyssey',
+    name: 'Космический командор',
+    nameKk: 'Ғарыш командирі',
+    nameEn: 'Space Commander',
+    url: 'amber_space_odyssey',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_space_odyssey-BnfKGYugMhFJy652kVVFqN.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 5,
+  },
+  // Season 10 — Киберпанк (Amber / golden_horde_warrior)
+  {
+    id: 'amber_cyberpunk',
+    name: 'Кибер-элита',
+    nameKk: 'Кибер-элита',
+    nameEn: 'Cyber Elite',
+    url: 'amber_cyberpunk',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk-Fmxkr6z8XcvbGGZypnDF2Y.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 10,
+  },
+  // Season 11 — Хип-хоп 90-х (Amber / golden_horde_warrior)
+  {
+    id: 'amber_hiphop_90s',
+    name: 'Золотой MC',
+    nameKk: 'Алтын MC',
+    nameEn: 'Golden MC',
+    url: 'amber_hiphop_90s',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s-2cmTh3gYUTLxP9ktRmFCjR.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 11,
+  },
+  // Season 12 — Ангелы и Демоны (Amber / golden_horde_warrior)
+  {
+    id: 'amber_angels_demons',
+    name: 'Хранитель баланса',
+    nameKk: 'Тепе-теңдік сақшысы',
+    nameEn: 'Balance Keeper',
+    url: 'amber_angels_demons',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons-JWRA77tCCCMB8RAshdaovk.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 12,
+  },
   {
     id: 'neon_crown',
     name: 'Неоновая корона',

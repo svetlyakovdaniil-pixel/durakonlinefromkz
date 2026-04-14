@@ -20,6 +20,14 @@ import { RubySpaceAvatar } from './RubySpaceAvatar';
 import { RubyCyberpunkAvatar } from './RubyCyberpunkAvatar';
 import { RubyHiphopAvatar } from './RubyHiphopAvatar';
 import { RubyAngelsDemonsAvatar } from './RubyAngelsDemonsAvatar';
+import { AmberUnderwaterAvatar } from './AmberUnderwaterAvatar';
+import { AmberEgyptianAvatar } from './AmberEgyptianAvatar';
+import { AmberPirateAvatar } from './AmberPirateAvatar';
+import { AmberNorseAvatar } from './AmberNorseAvatar';
+import { AmberSpaceAvatar } from './AmberSpaceAvatar';
+import { AmberCyberpunkAvatar } from './AmberCyberpunkAvatar';
+import { AmberHiphopAvatar } from './AmberHiphopAvatar';
+import { AmberAngelsDemonsAvatar } from './AmberAngelsDemonsAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -127,6 +135,30 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'ruby_angels_demons') {
       return <RubyAngelsDemonsAvatar size={size} />;
+    }
+    if (baseId === 'amber_underwater_world') {
+      return <AmberUnderwaterAvatar size={size} />;
+    }
+    if (baseId === 'amber_egyptian_gods') {
+      return <AmberEgyptianAvatar size={size} />;
+    }
+    if (baseId === 'amber_pirate_islands') {
+      return <AmberPirateAvatar size={size} />;
+    }
+    if (baseId === 'amber_norse_gods') {
+      return <AmberNorseAvatar size={size} />;
+    }
+    if (baseId === 'amber_space_odyssey') {
+      return <AmberSpaceAvatar size={size} />;
+    }
+    if (baseId === 'amber_cyberpunk') {
+      return <AmberCyberpunkAvatar size={size} />;
+    }
+    if (baseId === 'amber_hiphop_90s') {
+      return <AmberHiphopAvatar size={size} />;
+    }
+    if (baseId === 'amber_angels_demons') {
+      return <AmberAngelsDemonsAvatar size={size} />;
     }
     // Image-based avatar
     return (
