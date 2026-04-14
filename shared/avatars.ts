@@ -517,7 +517,9 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Кибер-элита',
     nameEn: 'Cyber Elite',
     url: 'amber_cyberpunk',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v2_d0c053f1.png',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v3-eJjZjA2Ys2xcJT5VgJs4F6.webp',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
