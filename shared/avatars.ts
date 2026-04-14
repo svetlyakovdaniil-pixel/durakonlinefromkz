@@ -253,6 +253,94 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'zircon', // Zircon rank
     seasonNumber: 9,
   },
+  // Season 1 — Подводный мир (Zircon)
+  {
+    id: 'underwater_jellyfish',
+    name: 'Медуза бездны',
+    nameKk: 'Тереңдік медузасы',
+    nameEn: 'Abyss Jellyfish',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_underwater_world-oCe3ChkQWpQrq9YoZjPDnd.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 1,
+  },
+  // Season 2 — Египетские боги (Zircon)
+  {
+    id: 'anubis_god',
+    name: 'Анубис',
+    nameKk: 'Анубис',
+    nameEn: 'Anubis',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_egyptian_gods-QgX6A97reWsR5kYtv89KEo.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 2,
+  },
+  // Season 3 — Пиратские острова (Zircon)
+  {
+    id: 'pirate_captain',
+    name: 'Пиратский капитан',
+    nameKk: 'Пират капитаны',
+    nameEn: 'Pirate Captain',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_pirate_islands-MazjDWUxFEetXNUmozCPXp.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 3,
+  },
+  // Season 4 — Скандинавские боги (Zircon)
+  {
+    id: 'norse_warrior',
+    name: 'Скандинавский бог',
+    nameKk: 'Скандинавия Құдайы',
+    nameEn: 'Norse God',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_norse_gods-7mstNcbdxCWQHP2qZEqVws.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 4,
+  },
+  // Season 5 — Космическая одиссея (Zircon)
+  {
+    id: 'space_explorer',
+    name: 'Космический странник',
+    nameKk: 'Ғарыш саяхатшысы',
+    nameEn: 'Space Explorer',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_space_odyssey-m9fwPZ82eoVAaZJjtkHisU.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 5,
+  },
+  // Season 10 — Киберпанк (Zircon)
+  {
+    id: 'cyberpunk_warrior',
+    name: 'Киберпанк воин',
+    nameKk: 'Киберпанк жауынгері',
+    nameEn: 'Cyberpunk Warrior',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_cyberpunk-WoVy5sKCJ5JyjptcjACrCB.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 10,
+  },
+  // Season 11 — Хип-хоп 90-х (Zircon)
+  {
+    id: 'hiphop_legend',
+    name: 'Легенда хип-хопа',
+    nameKk: 'Хип-хоп легендасы',
+    nameEn: 'Hip-Hop Legend',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_hiphop_90s-fpFrZPKBD9JDsSsTgumemU.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 11,
+  },
+  // Season 12 — Ангелы и Демоны (Zircon)
+  {
+    id: 'angel_demon',
+    name: 'Ангел и демон',
+    nameKk: 'Періште мен шайтан',
+    nameEn: 'Angel & Demon',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_angels_demons-awXaXT9p65ykxqqS4S3xJH.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Zircon rank
+    seasonNumber: 12,
+  },
   {
     id: 'neon_crown',
     name: 'Неоновая корона',
