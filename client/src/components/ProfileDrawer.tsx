@@ -198,7 +198,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
           </div>
 
           {showFramePicker && (
-            <div className="mt-3 space-y-2 border-t border-amber-700/20 pt-3">
+            <div className="mt-3 space-y-2 border-t border-amber-700/20 pt-3 max-h-[340px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent">
               <button
                 onClick={() => equipFrameMutation.mutate({ frameId: null })}
                 className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
