@@ -2925,11 +2925,19 @@
 - [x] Исправить проблему авторизации
 
 ## Batch 87 — Иконки ранга во всех сезонах
-- [ ] Изучить DiamondRankIcon и где он рендерится (Lobby, GameTable, ProfileDrawer и т.д.)
-- [ ] Найти как сезон "Казахский колорит" передаёт цвет ранга в иконку
-- [ ] Исправить цвет иконки ранга во всех 12 сезонах — цвет из SEASON_RANKS[seasonKey]
+- [x] Изучить DiamondRankIcon и где он рендерится (Lobby, GameTable, ProfileDrawer и т.д.)
+- [x] Найти как сезон "Казахский колорит" передаёт цвет ранга в иконку
+- [x] Исправить цвет иконки ранга во всех 12 сезонах — цвет из SEASON_RANKS[seasonKey]
 
 ## Batch 87 — Фикс иконок ранга во всех сезонах (тестовый сезон)
 - [x] Найти где клиент отправляет seasonRating в Socket (Lobby.tsx или хук)
 - [x] Исправить: при активном тестовом сезоне отправлять seasonRating из тестового сезона
 - [x] Проверить что socketServer.ts корректно хранит и рассылает обновлённый seasonRating
+
+## Batch 88 — Аватарка Циркон сезон Японские мотивы
+- [x] Добавить japanese_motifs_zircon в AVATAR_OPTIONS (shared/avatars.ts)
+- [x] Добавить getAvatarAccentColors для japanese_motifs_zircon — красный/белый
+- [x] Добавить rankRewardOverride для Циркона в сезоне Японские мотивы (seasons.ts)
+- [x] Добавить japanese_motifs_zircon в AvatarDisplay.tsx (не нужно — статичная)
+- [x] Добавить japanese_motifs_zircon в AvatarPicker.tsx (не нужно — статичная)
+- [x] Добавить japanese_motifs_zircon в AvatarEditorTab.tsx (не нужно — статичная)

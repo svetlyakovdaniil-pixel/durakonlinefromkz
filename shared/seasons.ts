@@ -235,6 +235,9 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Японские мотивы',
     nameKk: 'Жапон Мотивтері',
     nameEn: 'Japanese Motifs',
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'japanese_motifs_zircon' },
+    ],
     theme: {
       accent: '#f472b6',
       accentSecondary: '#ec4899',

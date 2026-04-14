@@ -195,6 +195,15 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
   },
   {
+    id: 'japanese_motifs_zircon',
+    name: 'Японский пейзаж',
+    nameKk: 'Жапон пейзажы',
+    nameEn: 'Japanese Landscape',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/japanese_motifs_zircon-9yWp9rBAaBGVkB4FSmCdKN.webp',
+    seasonReward: true,
+    seasonRankRequired: 'zircon', // Zircon rank
+  },
+  {
     id: 'neon_crown',
     name: 'Неоновая корона',
     nameKk: 'Неон Таж',
@@ -329,6 +338,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#f59e0b', shadowColor: 'rgba(245,158,11,0.5)', bgClass: 'rgba(245,158,11,0.10)', borderClass: 'border-amber-500/60', textClass: 'text-amber-300', hoverClass: 'hover:bg-amber-500/10' };
     case 'nuclear_mushroom':
       return { borderColor: '#ff4500', shadowColor: 'rgba(255,69,0,0.6)', bgClass: 'rgba(255,69,0,0.10)', borderClass: 'border-orange-600/60', textClass: 'text-orange-400', hoverClass: 'hover:bg-orange-600/10' };
+    case 'japanese_motifs_zircon':
+      return { borderColor: '#cc0000', shadowColor: 'rgba(204,0,0,0.4)', bgClass: 'rgba(204,0,0,0.06)', borderClass: 'border-red-600/50', textClass: 'text-red-300', hoverClass: 'hover:bg-red-600/10' };
     case 'diving_eagle':
     case 'sky_eagle':
       return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
