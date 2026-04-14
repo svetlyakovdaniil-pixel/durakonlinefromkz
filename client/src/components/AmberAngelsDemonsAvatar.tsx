@@ -34,7 +34,7 @@ export function AmberAngelsDemonsAvatar({ size = 48, className = '' }: Props) {
         animation: `ad-dual-${uid} 2.5s ease-in-out infinite, ad-breathe-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons-JWRA77tCCCMB8RAshdaovk.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons_v2_b882b3bd.png"
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}

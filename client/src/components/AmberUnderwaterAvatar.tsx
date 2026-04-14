@@ -1,7 +1,7 @@
 import React from 'react';
 interface Props { size?: number; className?: string; }
 /**
- * AmberUnderwaterAvatar — Sea god with golden bioluminescent armor.
+ * AmberUnderwaterAvatar — Golden Poseidon sea god with amber crown.
  * Season: Подводный мир (Season 1) | Rank: Янтарь
  * Animation: golden water ripple pulse + floating bubbles + amber shimmer
  */
@@ -36,7 +36,7 @@ export function AmberUnderwaterAvatar({ size = 48, className = '' }: Props) {
         animation: `aw-ripple-${uid} 2.5s ease-in-out infinite, aw-float-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world-UTHmnH2i5peYVsvoor5U2u.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world_v2_0c6b5664.png"
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}

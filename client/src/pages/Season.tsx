@@ -44,7 +44,7 @@ function ProgressBar({ current, min, max, color }: { current: number; min: numbe
   );
 }
 
-/** Reward popup for a single rank — uses per-season avatarId */
+/** Reward popup for a single rank - uses per-season avatarId */
 function RewardPopup({
   rankKey,
   seasonKey,
@@ -143,7 +143,7 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Avatar — animated preview */}
+            {/* Avatar - animated preview */}
             {seasonAvatarId && isAnimated && (
               <div
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5`}
@@ -159,7 +159,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Avatar — static (non-animated) preview */}
+            {/* Avatar - static (non-animated) preview */}
             {seasonAvatarId && !isAnimated && (
               <div
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5`}
@@ -177,7 +177,7 @@ function RewardPopup({
               </div>
             )}
 
-            {/* Frame — great_khan (legacy) */}
+            {/* Frame - great_khan (legacy) */}
             {reward.frameId === 'great_khan' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -203,7 +203,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — ruby_neon (Crimson Flash, Season 7) */}
+            {/* Frame - ruby_neon (Crimson Flash, Season 7) */}
             {reward.frameId === 'ruby_neon' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -229,7 +229,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — amber_neon (Solar Flare, Season 7) */}
+            {/* Frame - amber_neon (Solar Flare, Season 7) */}
             {reward.frameId === 'amber_neon' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -255,7 +255,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — zircon_neon (Comet Trail, Season 7) */}
+            {/* Frame - zircon_neon (Comet Trail, Season 7) */}
             {reward.frameId === 'zircon_neon' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -281,7 +281,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — obsidian_neon (Dual Orbit, Season 7) */}
+            {/* Frame - obsidian_neon (Dual Orbit, Season 7) */}
             {reward.frameId === 'obsidian_neon' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -307,7 +307,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
+            {/* Frame - oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
             {reward.frameId === 'oni_japanese' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -334,7 +334,7 @@ function RewardPopup({
                 </div>
               </div>
             )}
-            {/* Frame — molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
+            {/* Frame - molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
             {reward.frameId === 'molten_lava' && (
               <div
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5"
@@ -373,7 +373,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
 
-  // Support admin test season: read from DB (season_test_state) — works across page reloads and devices
+  // Support admin test season: read from DB (season_test_state) - works across page reloads and devices
   const { data: testStateData } = trpc.season.activeTestKey.useQuery(undefined, {
     refetchInterval: open ? 5000 : false, // poll every 5s while open
     enabled: open,
@@ -398,12 +398,12 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   );
 
   const endDate = seasonData?.endDate ? new Date(seasonData.endDate) : null;
-  const timeLeft = endDate ? formatTimeLeft(endDate) : '—';
+  const timeLeft = endDate ? formatTimeLeft(endDate) : '-';
 
   const seasonInfo = seasonData?.seasonInfo;
   const seasonName = seasonInfo
     ? (locale === 'kk' ? seasonInfo.nameKk : locale === 'en' ? seasonInfo.nameEn : seasonInfo.nameRu)
-    : '—';
+    : '-';
   const seasonNumber = seasonInfo?.seasonNumber ?? null;
   const theme: SeasonTheme = seasonInfo?.theme ?? {
     accent: '#f59e0b',
@@ -432,7 +432,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
         {/* Backdrop */}
         <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
 
-        {/* Panel — full screen on mobile, modal on sm+ */}
+        {/* Panel - full screen on mobile, modal on sm+ */}
         <div className="relative w-full sm:max-w-lg h-[100dvh] sm:h-auto sm:max-h-[92dvh] flex flex-col sm:rounded-2xl overflow-hidden"
           style={{ background: `linear-gradient(160deg, ${theme.bgFrom} 0%, ${theme.bgTo} 50%, ${theme.bgFrom} 100%)`, border: `1px solid ${theme.border}` }}>
 
@@ -553,7 +553,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   ))}
                 </div>
 
-                {/* Season end reward preview — uses per-season avatarId */}
+                {/* Season end reward preview - uses per-season avatarId */}
                 <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
                   <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
                     <Trophy className="w-4 h-4" />
@@ -591,7 +591,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             <span>+{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</span>
                           </div>
                         )}
-                        {/* Avatar — per-season */}
+                        {/* Avatar - per-season */}
                         {seasonAvatarId && (() => {
                           return (
                             <div
@@ -608,7 +608,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                           );
                         })()}
-                        {/* Frame reward — great_khan (legacy) */}
+                        {/* Frame reward - great_khan (legacy) */}
                         {rewardDef.frameId === 'great_khan' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -625,7 +625,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — ruby_neon (Crimson Flash, Season 7) */}
+                        {/* Frame reward - ruby_neon (Crimson Flash, Season 7) */}
                         {rewardDef.frameId === 'ruby_neon' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -642,7 +642,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — amber_neon (Solar Flare, Season 7) */}
+                        {/* Frame reward - amber_neon (Solar Flare, Season 7) */}
                         {rewardDef.frameId === 'amber_neon' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -659,7 +659,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — zircon_neon (Comet Trail, Season 7) */}
+                        {/* Frame reward - zircon_neon (Comet Trail, Season 7) */}
                         {rewardDef.frameId === 'zircon_neon' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -676,7 +676,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — obsidian_neon (Dual Orbit, Season 7) */}
+                        {/* Frame reward - obsidian_neon (Dual Orbit, Season 7) */}
                         {rewardDef.frameId === 'obsidian_neon' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -694,7 +694,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
+                        {/* Frame reward - oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
                         {rewardDef.frameId === 'oni_japanese' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -713,7 +713,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </span>
                           </div>
                         )}
-                        {/* Frame reward — molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
+                        {/* Frame reward - molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
                         {rewardDef.frameId === 'molten_lava' && (
                           <div className="flex items-center gap-2">
                             <div className="flex-shrink-0">
@@ -866,7 +866,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
             )}
           </div>{/* end scrollable content */}
 
-          {/* Close button at bottom — always visible */}
+          {/* Close button at bottom - always visible */}
           <div className="shrink-0 px-5 py-4 border-t border-amber-700/20">
             <button
               onClick={onClose}

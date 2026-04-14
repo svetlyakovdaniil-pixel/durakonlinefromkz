@@ -40,7 +40,7 @@ export function AmberEgyptianAvatar({ size = 48, className = '' }: Props) {
         animation: `ae-solar-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods-m73Z2Cf2zgEoiG6Yo8CsZp.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods_v2_43e04e99.png"
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', animation: `ae-pulse-${uid} 3s ease-in-out infinite` }}
           draggable={false}

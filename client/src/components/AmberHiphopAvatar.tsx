@@ -31,7 +31,7 @@ export function AmberHiphopAvatar({ size = 48, className = '' }: Props) {
         animation: `ah-beat-${uid} 0.6s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s-2cmTh3gYUTLxP9ktRmFCjR.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s_v2_5310991c.png"
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', animation: `ah-gold-${uid} 2s ease-in-out infinite` }}
           draggable={false}

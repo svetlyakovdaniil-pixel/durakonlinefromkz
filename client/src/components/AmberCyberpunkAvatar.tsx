@@ -27,19 +27,13 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
           0%   { transform: translateY(-100%); opacity: 0.5; }
           100% { transform: translateY(200%); opacity: 0; }
         }
-        @keyframes ac-border-${uid} {
-          0%   { border-color: rgba(245,158,11,0.8); }
-          50%  { border-color: rgba(255,255,255,0.9); }
-          100% { border-color: rgba(245,158,11,0.8); }
-        }
       `}</style>
       <div style={{
-        width: size, height: size, borderRadius: '12%', overflow: 'hidden', position: 'relative',
+        width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative',
         animation: `ac-circuit-${uid} 1.8s ease-in-out infinite, ac-flicker-${uid} 5s ease-in-out infinite`,
-        border: `${Math.max(1, size * 0.04)}px solid rgba(245,158,11,0.8)`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk-Fmxkr6z8XcvbGGZypnDF2Y.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v2_d0c053f1.png"
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}
@@ -52,7 +46,7 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
         }} />
         {/* Circuit overlay */}
         <div aria-hidden="true" style={{
-          position: 'absolute', inset: 0,
+          position: 'absolute', inset: 0, borderRadius: '50%',
           background: 'radial-gradient(circle at 70% 30%, rgba(245,158,11,0.12) 0%, transparent 50%)',
         }} />
       </div>

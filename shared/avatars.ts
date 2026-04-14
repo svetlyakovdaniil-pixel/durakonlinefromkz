@@ -452,7 +452,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Теңіз иесі',
     nameEn: 'Sea Lord',
     url: 'amber_underwater_world',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world-UTHmnH2i5peYVsvoor5U2u.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world_v2_0c6b5664.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -465,7 +465,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Құдайлар Перғауыны',
     nameEn: 'Pharaoh of Gods',
     url: 'amber_egyptian_gods',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods-m73Z2Cf2zgEoiG6Yo8CsZp.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods_v2_43e04e99.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -478,7 +478,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Алтын капитан',
     nameEn: 'Golden Captain',
     url: 'amber_pirate_islands',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_pirate_islands-CyCZP2XLoQQwXGY2AsYqyj.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_pirate_islands_v2_e0aa3599.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -491,7 +491,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Рун иесі',
     nameEn: 'Rune Master',
     url: 'amber_norse_gods',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_norse_gods-Ro9n64YcqCR8f3mAM9iv8Y.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_norse_gods_v2_f21b55c1.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -504,7 +504,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Ғарыш командирі',
     nameEn: 'Space Commander',
     url: 'amber_space_odyssey',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_space_odyssey-BnfKGYugMhFJy652kVVFqN.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_space_odyssey_v2_adde7dfd.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -517,7 +517,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Кибер-элита',
     nameEn: 'Cyber Elite',
     url: 'amber_cyberpunk',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk-Fmxkr6z8XcvbGGZypnDF2Y.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v2_d0c053f1.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -530,7 +530,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Алтын MC',
     nameEn: 'Golden MC',
     url: 'amber_hiphop_90s',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s-2cmTh3gYUTLxP9ktRmFCjR.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s_v2_5310991c.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -543,7 +543,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Тепе-теңдік сақшысы',
     nameEn: 'Balance Keeper',
     url: 'amber_angels_demons',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons-JWRA77tCCCMB8RAshdaovk.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons_v2_b882b3bd.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
