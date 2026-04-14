@@ -1710,7 +1710,7 @@ export async function adminGetPlayerGameHistory(opts: {
 export async function logAdminAction(data: {
   adminId: number;
   adminName: string | null;
-  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets';
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item';
   targetProfileId?: number | null;
   details?: Record<string, unknown>;
 }) {
@@ -2944,4 +2944,86 @@ export async function upsertSeasonTestState(data: {
   await db.insert(seasonTestState)
     .values({ id: 1, ...data })
     .onDuplicateKeyUpdate({ set: data });
+}
+
+/**
+ * Admin: Remove a specific item (avatar or frame) from a player's inventory.
+ * Does NOT refund currency — this is a forced removal for admin/testing purposes.
+ */
+export async function adminRemovePlayerItem(opts: {
+  profileId: number;
+  itemType: 'avatar' | 'frame';
+  itemId: string;
+}): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db
+    .select({
+      ownedAvatars: playerProfiles.ownedAvatars,
+      ownedFrames: playerProfiles.ownedFrames,
+      equippedFrame: playerProfiles.equippedFrame,
+      avatarId: playerProfiles.avatarId,
+    })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, opts.profileId))
+    .limit(1);
+
+  if (!profile) return { success: false, reason: 'player_not_found' };
+
+  const updates: Partial<typeof playerProfiles.$inferInsert> = {};
+
+  if (opts.itemType === 'avatar') {
+    const owned: string[] = profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [];
+    if (!owned.includes(opts.itemId)) return { success: false, reason: 'item_not_owned' };
+    updates.ownedAvatars = JSON.stringify(owned.filter((id: string) => id !== opts.itemId));
+    if (profile.avatarId === opts.itemId) {
+      updates.avatarId = 'wolf'; // reset to default
+    }
+  } else if (opts.itemType === 'frame') {
+    const owned: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+    if (!owned.includes(opts.itemId)) return { success: false, reason: 'item_not_owned' };
+    updates.ownedFrames = JSON.stringify(owned.filter((id: string) => id !== opts.itemId));
+    if (profile.equippedFrame === opts.itemId) {
+      updates.equippedFrame = null;
+    }
+  } else {
+    return { success: false, reason: 'unknown_item_type' };
+  }
+
+  await db.update(playerProfiles).set(updates).where(eq(playerProfiles.id, opts.profileId));
+  return { success: true };
+}
+
+/**
+ * Admin: Get all items (avatars + frames) owned by a player.
+ */
+export async function adminGetPlayerItems(profileId: number): Promise<{
+  avatars: string[];
+  frames: string[];
+  equippedAvatar: string | null;
+  equippedFrame: string | null;
+}> {
+  const db = await getDb();
+  if (!db) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null };
+
+  const [profile] = await db
+    .select({
+      ownedAvatars: playerProfiles.ownedAvatars,
+      ownedFrames: playerProfiles.ownedFrames,
+      avatarId: playerProfiles.avatarId,
+      equippedFrame: playerProfiles.equippedFrame,
+    })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+
+  if (!profile) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null };
+
+  return {
+    avatars: profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [],
+    frames: profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [],
+    equippedAvatar: profile.avatarId ?? null,
+    equippedFrame: profile.equippedFrame ?? null,
+  };
 }

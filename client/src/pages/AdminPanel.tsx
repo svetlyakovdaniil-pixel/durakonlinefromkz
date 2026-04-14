@@ -8,7 +8,7 @@ import {
   DollarSign, ArrowLeft, RefreshCw, LogOut as KickIcon,
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
-  ShoppingCart, Bell, Send, Filter, Menu, X, Flag,
+  ShoppingCart, Bell, Send, Filter, Menu, X, Flag, Package,
   MessageSquare, AlertCircle, FlaskConical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 import { SeasonTestTab } from "@/components/SeasonTestTab";
 import { AvatarEditorTab } from "@/components/AvatarEditorTab";
+import { ProfileItemsSection } from "@/components/ProfileItemsSection";
 
 type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "avatar_editor";
 
@@ -562,7 +563,7 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
    PLAYER PROFILE VIEW (sub-view inside Players tab)
    ================================================================ */
 function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: number; onBack: () => void; isGM?: boolean }) {
-  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games" | "purchases">("info");
+  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games" | "purchases" | "items">("info");
 
   const { data: detail, isLoading, refetch } = trpc.admin.playerDetail.useQuery({ profileId });
 
@@ -599,6 +600,7 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
     { id: "transactions" as const, label: "Транзакции", icon: ArrowLeftRight },
     { id: "games" as const, label: "История игр", icon: Gamepad2 },
     { id: "purchases" as const, label: "Покупки", icon: ShoppingCart },
+    { id: "items" as const, label: "Предметы", icon: Package },
   ];
 
   return (

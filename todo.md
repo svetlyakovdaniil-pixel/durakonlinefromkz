@@ -2941,3 +2941,8 @@
 - [x] Добавить japanese_motifs_zircon в AvatarDisplay.tsx (не нужно — статичная)
 - [x] Добавить japanese_motifs_zircon в AvatarPicker.tsx (не нужно — статичная)
 - [x] Добавить japanese_motifs_zircon в AvatarEditorTab.tsx (не нужно — статичная)
+
+## Аватарки Обсидиан — награды сезонов
+- [x] Установить аватарки Обсидиан как награды в конфиг сезонов S1-S5, S10-S12
+- [x] Добавить backend tRPC процедуру removePlayerItem для удаления предмета у игрока
+- [x] Добавить UI в AdminPanel для удаления предметов (аватарок, рамок) у конкретного игрока

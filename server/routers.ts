@@ -56,6 +56,8 @@ import {
   adminGetPlayerGameHistory,
   adminRevokePlayerPurchase,
   adminGetPlayerPurchases,
+  adminRemovePlayerItem,
+  adminGetPlayerItems,
   logAdminAction,
   getAuditLog,
   adminBanPlayerWithDuration,
@@ -1699,9 +1701,40 @@ export const appRouter = router({
       // Reset persisted test state
       await upsertSeasonTestState({ seasonKey, step: 'rolled_back', isActive: false });
 
-      return { rolledBack, seasonKey };
+       return { rolledBack, seasonKey };
     }),
+
+    /** Get all items (avatars + frames) owned by a player */
+    getPlayerItems: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .query(async ({ input }) => {
+        return adminGetPlayerItems(input.profileId);
+      }),
+
+    /** Remove a specific item (avatar or frame) from a player's inventory without refund */
+    removePlayerItem: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        itemType: z.enum(['avatar', 'frame']),
+        itemId: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminRemovePlayerItem({
+          profileId: input.profileId,
+          itemType: input.itemType,
+          itemId: input.itemId,
+        });
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'remove_item',
+            targetProfileId: input.profileId,
+            details: { itemType: input.itemType, itemId: input.itemId },
+          });
+        }
+        return result;
+      }),
   }),
 });
-
 export type AppRouter = typeof appRouter;
