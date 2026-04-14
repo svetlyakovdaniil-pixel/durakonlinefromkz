@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { registerAvatarDraw } from '@/lib/avatarRafManager';
 
 interface OniMaskAvatarProps {
   size?: number;
@@ -11,7 +12,6 @@ const BASE_IMAGE_URL =
 
 export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -255,17 +255,21 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
       ctx.lineWidth = size * 0.032;
       ctx.stroke();
       ctx.restore();
+    }
 
-      rafRef.current = requestAnimationFrame(draw);
+    let cleanup: (() => void) | null = null;
+
+    function startLoop() {
+      cleanup = registerAvatarDraw(draw);
     }
 
     if (img.complete) {
-      rafRef.current = requestAnimationFrame(draw);
+      startLoop();
     } else {
-      img.onload = () => { rafRef.current = requestAnimationFrame(draw); };
+      img.onload = startLoop;
     }
 
-    return () => { cancelAnimationFrame(rafRef.current); };
+    return () => { if (cleanup) cleanup(); };
   }, [size]);
 
   return (

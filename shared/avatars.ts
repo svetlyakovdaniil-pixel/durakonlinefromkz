@@ -181,7 +181,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp',
     animated: true,
     seasonReward: true,
-    seasonRankRequired: 'obsidian', // Obsidian rank
+    seasonRankRequired: 'great_khan', // Obsidian rank (key: great_khan)
   },
   {
     id: 'gasmask_amber',
@@ -214,7 +214,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian-8U38h2ctQyLXMQ3LasAjNh.webp',
     animated: true,
     seasonReward: true,
-    seasonRankRequired: 'obsidian', // Obsidian rank
+    seasonRankRequired: 'great_khan', // Obsidian rank (key: great_khan)
   },
   {
     id: 'amaterasu_ruby',

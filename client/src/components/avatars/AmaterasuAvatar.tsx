@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { registerAvatarDraw } from '@/lib/avatarRafManager';
 
 interface AmaterasuAvatarProps {
   size?: number;
@@ -10,7 +11,6 @@ const BASE_IMAGE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403
 
 export function AmaterasuAvatar({ size = 64, className = '', style }: AmaterasuAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const timeRef = useRef<number>(0);
 
@@ -256,24 +256,22 @@ export function AmaterasuAvatar({ size = 64, className = '', style }: AmaterasuA
       ctx.stroke();
       ctx.restore();
 
-      rafRef.current = requestAnimationFrame(draw);
     }
 
-    // Start loop (wait for image)
-    function startLoop(ts: number) {
-      rafRef.current = requestAnimationFrame(draw);
+    let cleanupRaf: (() => void) | null = null;
+
+    function startLoop() {
+      cleanupRaf = registerAvatarDraw(draw);
     }
 
     if (img.complete) {
-      rafRef.current = requestAnimationFrame(startLoop);
+      startLoop();
     } else {
-      img.onload = () => {
-        rafRef.current = requestAnimationFrame(startLoop);
-      };
+      img.onload = startLoop;
     }
 
     return () => {
-      cancelAnimationFrame(rafRef.current);
+      if (cleanupRaf) cleanupRaf();
     };
   }, [size]);
 

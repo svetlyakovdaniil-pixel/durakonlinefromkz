@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { registerAvatarDraw } from '@/lib/avatarRafManager';
 
 interface SamuraiAvatarProps {
   size?: number;
@@ -11,7 +12,7 @@ const BASE_IMAGE_URL =
 
 export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const rafRef = useRef<number>(0);
+
   const imgRef = useRef<HTMLImageElement | null>(null);
 
   useEffect(() => {
@@ -264,16 +265,17 @@ export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvata
       ctx.stroke();
       ctx.restore();
 
-      rafRef.current = requestAnimationFrame(draw);
     }
+
+    let cleanupRaf: (() => void) | null = null;
 
     if (img.complete) {
-      rafRef.current = requestAnimationFrame(draw);
+      cleanupRaf = registerAvatarDraw(draw);
     } else {
-      img.onload = () => { rafRef.current = requestAnimationFrame(draw); };
+      img.onload = () => { cleanupRaf = registerAvatarDraw(draw); };
     }
 
-    return () => { cancelAnimationFrame(rafRef.current); };
+    return () => { if (cleanupRaf) cleanupRaf(); };
   }, [size]);
 
   return (
