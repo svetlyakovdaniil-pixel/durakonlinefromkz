@@ -361,7 +361,7 @@ export function AvatarEditorTab() {
 
         {/* ── Sliders (right) ── */}
         <div className="flex-1 space-y-5">
-          <div className={`bg-gray-800/40 rounded-lg p-4 border border-gray-700 space-y-5 ${isComponentAvatar ? 'opacity-60' : ''}`}>
+          <div className="bg-gray-800/40 rounded-lg p-4 border border-gray-700 space-y-5">
 
             {/* offsetX */}
             <div className="space-y-2">

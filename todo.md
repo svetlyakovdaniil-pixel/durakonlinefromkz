@@ -2858,3 +2858,9 @@
 - [x] Обновить useAvatarOffsets хук для поддержки любого avatarId — уже поддерживал
 - [x] Добавить кнопку "Сбросить" (reset к 0, 0, 1) — добавлена отдельная кнопка
 - [x] Проверить что AvatarDisplay корректно применяет offsets для всех аватарок — CSS transform для image-based
+
+## Batch 77 — Исправление багов редактора и AvatarPicker
+
+- [x] Исправить toxic_storm в AvatarPicker — добавлен ToxicStormAvatar в AnimatedAvatar компонент и в isSelectedAnimated список
+- [x] Разблокировать слайдеры и кнопку "Применить" в AdminPanel — убрана opacity-60 для компонентных аватарок
+- [x] CSS transform в PreviewAvatar работает корректно для image-based аватарок; компонентные аватарки показывают предупреждение
