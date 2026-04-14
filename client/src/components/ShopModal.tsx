@@ -18,6 +18,7 @@ import { RubyNeonFrame } from './RubyNeonFrame';
 import { AmberNeonFrame } from './AmberNeonFrame';
 import { ZirconNeonFrame } from './ZirconNeonFrame';
 import { MoltenLavaFrame } from './MoltenLavaFrame';
+import { OniJapaneseFrame } from './OniJapaneseFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -147,7 +148,7 @@ export const AVATAR_FRAMES = [
     description: 'Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового.',
     descriptionKk: 'Алқызыл жарқыл: сақина қою қызылдан ашық қызғылтқа дейін зарядталады.',
     descriptionEn: 'Crimson flash: ring charges from deep red to hot pink.',
-    price: 0,
+    price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-red-400">
         <circle cx="12" cy="12" r="9" stroke="rgba(220,0,60,0.9)" />
@@ -156,7 +157,6 @@ export const AVATAR_FRAMES = [
     ),
     iconColor: 'text-red-400',
     bgGradient: 'from-red-900 to-rose-950',
-    seasonOnly: true,
   },
   {
     id: 'amber_neon',
@@ -166,7 +166,7 @@ export const AVATAR_FRAMES = [
     description: 'Солнечная вспышка: два золотых кольца вращаются в одну сторону.',
     descriptionKk: 'Күн жарқылы: екі алтын сақина бір бағытта айналады.',
     descriptionEn: 'Solar flare: two golden rings rotating in the same direction.',
-    price: 0,
+    price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-amber-400">
         <circle cx="12" cy="12" r="9" stroke="rgba(245,158,11,0.9)" />
@@ -175,7 +175,6 @@ export const AVATAR_FRAMES = [
     ),
     iconColor: 'text-amber-400',
     bgGradient: 'from-amber-900 to-orange-950',
-    seasonOnly: true,
   },
   {
     id: 'zircon_neon',
@@ -185,7 +184,7 @@ export const AVATAR_FRAMES = [
     description: 'Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу.',
     descriptionKk: 'Комета құйрығы: қызғылт сары сақина мен күлгін доға бір-біріне қарсы айналады.',
     descriptionEn: 'Comet trail: orange ring and purple arc rotating toward each other.',
-    price: 0,
+    price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-orange-400">
         <circle cx="12" cy="12" r="9" stroke="rgba(249,115,22,0.9)" />
@@ -194,7 +193,6 @@ export const AVATAR_FRAMES = [
     ),
     iconColor: 'text-orange-400',
     bgGradient: 'from-orange-900 to-purple-950',
-    seasonOnly: true,
   },
   {
     id: 'molten_lava',
@@ -215,6 +213,28 @@ export const AVATAR_FRAMES = [
     ),
     iconColor: 'text-orange-500',
     bgGradient: 'from-red-950 to-orange-950',
+    seasonOnly: true,
+  },
+  {
+    id: 'oni_japanese',
+    name: 'Обсидиан - Season 9',
+    nameKk: 'Обсидиан - Season 9',
+    nameEn: 'Obsidian - Season 9',
+    description: 'Японская рамка Они: красно-золотые узоры, пульсирующие рога демона. Награда за ранг Обсидиан в сезоне 9 «Японские мотивы».',
+    descriptionKk: 'Жапондық Они жақтауы: қызыл-алтын өрнектер, демон мүйіздерінің пульсациясы. 9-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
+    descriptionEn: 'Japanese Oni frame: red-gold patterns, pulsing demon horns. Reward for Obsidian rank in Season 9 «Japanese Motifs».',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-red-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(180,0,0,0.9)" fill="rgba(10,0,0,0.8)" />
+        <path d="M9 7 L9 5 M15 7 L15 5" stroke="rgba(255,180,0,0.9)" strokeWidth="2" strokeLinecap="round" />
+        <circle cx="9" cy="12" r="1.5" fill="rgba(255,50,0,0.9)" />
+        <circle cx="15" cy="12" r="1.5" fill="rgba(255,50,0,0.9)" />
+        <path d="M9 16 Q12 18 15 16" stroke="rgba(255,180,0,0.8)" strokeWidth="1.5" fill="none" />
+      </svg>
+    ),
+    iconColor: 'text-red-400',
+    bgGradient: 'from-red-950 to-amber-950',
     seasonOnly: true,
   },
 ] as const;
@@ -244,6 +264,8 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <ZirconNeonFrame size={size} active={true}>{children}</ZirconNeonFrame>;
     case 'molten_lava':
       return <MoltenLavaFrame size={size} active={true}>{children}</MoltenLavaFrame>;
+    case 'oni_japanese':
+      return <OniJapaneseFrame size={size} active={true}>{children}</OniJapaneseFrame>;
     default:
       return <>{children}</>;
   }
