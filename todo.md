@@ -2777,3 +2777,7 @@
 - [x] Обновить NeonCrownAvatar и AvatarDisplay для чтения offsets из БД через контекст/хук
 - [x] Обновить AvatarEditorTab — загружать текущие значения из БД, кнопка "Применить" пишет в БД
 - [x] Убрать offsetX/offsetY/imgScale из shared/avatars.ts (или оставить как fallback)
+
+## Batch 65 — AvatarPicker: превью neon_crown из БД
+
+- [x] Обновить AvatarPicker — читать offsets из БД через useAvatarOffsets для neon_crown превью

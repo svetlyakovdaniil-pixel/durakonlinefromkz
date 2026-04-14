@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 import {
   AVATAR_OPTIONS,
   getAvatarUrl,
@@ -27,8 +28,9 @@ interface AvatarPickerProps {
   loading?: boolean;
 }
 
-/** Render animated avatar component by base ID */
+/** Render animated avatar component by base ID — reads neon_crown offsets from DB */
 function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
+  const { getOffsets } = useAvatarOffsets();
   if (baseId === 'khan') return <KhanAvatar size={size} />;
   if (baseId === 'golden_horde') return <GoldenHordeAvatar size={size} />;
   if (baseId === 'diving_eagle' || baseId === 'sky_eagle') return <DivingEagleAvatar size={size} />;
@@ -37,8 +39,8 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'neon_dino') return <NeonDinoAvatar size={size} />;
   if (baseId === 'neon_cat') return <NeonCatAvatar size={size} />;
   if (baseId === 'neon_crown') {
-    const opt = AVATAR_OPTIONS.find(a => a.id === 'neon_crown');
-    return <NeonCrownAvatar size={size} offsetX={opt?.offsetX} offsetY={opt?.offsetY} imgScale={opt?.imgScale} />;
+    const { offsetX, offsetY, imgScale } = getOffsets('neon_crown');
+    return <NeonCrownAvatar size={size} offsetX={offsetX} offsetY={offsetY} imgScale={imgScale} />;
   }
   return null;
 }
