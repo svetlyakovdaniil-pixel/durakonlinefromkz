@@ -16,10 +16,9 @@ interface NeonCrownAvatarProps {
  * Season: Неоновая эра (Season 7) | Rank: Обсидиан (Obsidian)
  *
  * Animation:
- *   - The cyan ring-contour that's already part of the image slowly cycles
- *     through colours: cyan → red → blue → cyan via CSS hue-rotate.
- *   - The crown itself stays bright and clearly visible.
- *   - A matching outer glow pulses in sync with the colour shift.
+ *   - The crown image slowly cycles through colours via CSS hue-rotate.
+ *   - A matching outer glow pulses on the outer wrapper (not on img),
+ *     so it stays OUTSIDE the overflow:hidden clip and never overlaps the frame.
  */
 export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offsetY = 0, imgScale = 1 }: NeonCrownAvatarProps) {
   const uid = React.useId().replace(/:/g, '');
@@ -36,42 +35,37 @@ export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offset
       }}
     >
       <style>{`
-        /*
-         * Colour cycle for the ring-contour already in the image:
-         *   0%   → cyan   (hue-rotate 0deg)   — original colour
-         *   33%  → red    (hue-rotate -160deg) — shift toward red/magenta
-         *   66%  → blue   (hue-rotate 60deg)   — shift toward deep blue
-         *   100% → cyan   (hue-rotate 0deg)    — back to original
-         *
-         * brightness stays high so the crown remains vivid.
-         */
-        @keyframes ncrown-color-${uid} {
+        /* Colour cycle for the crown image — filter only, no box-shadow here */
+        @keyframes ncrown-img-${uid} {
+          0%   { filter: brightness(1.2) saturate(1.3) hue-rotate(0deg); }
+          25%  { filter: brightness(1.25) saturate(1.4) hue-rotate(-80deg); }
+          50%  { filter: brightness(1.2) saturate(1.3) hue-rotate(-160deg); }
+          75%  { filter: brightness(1.25) saturate(1.4) hue-rotate(60deg); }
+          100% { filter: brightness(1.2) saturate(1.3) hue-rotate(0deg); }
+        }
+        /* Outer glow on the wrapper div — stays OUTSIDE overflow:hidden clip */
+        @keyframes ncrown-glow-${uid} {
           0%   {
-            filter: brightness(1.2) saturate(1.3) hue-rotate(0deg);
             box-shadow:
               0 0 ${size * 0.14}px ${size * 0.05}px rgba(0,220,255,0.55),
               0 0 ${size * 0.30}px ${size * 0.10}px rgba(0,180,255,0.30);
           }
           25%  {
-            filter: brightness(1.25) saturate(1.4) hue-rotate(-80deg);
             box-shadow:
               0 0 ${size * 0.14}px ${size * 0.05}px rgba(255,60,120,0.55),
               0 0 ${size * 0.30}px ${size * 0.10}px rgba(200,0,80,0.30);
           }
           50%  {
-            filter: brightness(1.2) saturate(1.3) hue-rotate(-160deg);
             box-shadow:
               0 0 ${size * 0.14}px ${size * 0.05}px rgba(255,0,80,0.55),
               0 0 ${size * 0.30}px ${size * 0.10}px rgba(200,0,60,0.30);
           }
           75%  {
-            filter: brightness(1.25) saturate(1.4) hue-rotate(60deg);
             box-shadow:
               0 0 ${size * 0.14}px ${size * 0.05}px rgba(40,80,255,0.55),
               0 0 ${size * 0.30}px ${size * 0.10}px rgba(20,40,220,0.30);
           }
           100% {
-            filter: brightness(1.2) saturate(1.3) hue-rotate(0deg);
             box-shadow:
               0 0 ${size * 0.14}px ${size * 0.05}px rgba(0,220,255,0.55),
               0 0 ${size * 0.30}px ${size * 0.10}px rgba(0,180,255,0.30);
@@ -79,18 +73,31 @@ export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offset
         }
       `}</style>
 
-      {/* Circle clip */}
+      {/* Outer glow wrapper — NOT overflow:hidden so box-shadow is visible but stays BEHIND frame */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '50%',
+          animation: `ncrown-glow-${uid} 4s ease-in-out infinite`,
+          zIndex: 0,
+          pointerEvents: 'none',
+        }}
+      />
+
+      {/* Circle clip — overflow:hidden clips the image only */}
       <div
         style={{
           position: 'absolute',
           inset: 0,
           borderRadius: '50%',
           overflow: 'hidden',
+          zIndex: 1,
         }}
       >
-        {/* Dark background so contain mode looks clean */}
+        {/* Dark background */}
         <div style={{ position: 'absolute', inset: 0, background: '#050a14' }} />
-        {/* Crown image — colour cycle applied directly so the ring-contour shifts colour */}
+        {/* Crown image — colour cycle via filter only */}
         <img
           src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_no_ring-k2gijZGF223aiMcs6ZohLm.webp"
           alt="Обсидиан"
@@ -104,7 +111,7 @@ export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offset
             display: 'block',
             transform: `translate(calc(-50% + ${offsetX}%), calc(-50% + ${offsetY}%)) scale(${imgScale})`,
             transformOrigin: 'center center',
-            animation: `ncrown-color-${uid} 4s ease-in-out infinite`,
+            animation: `ncrown-img-${uid} 4s ease-in-out infinite`,
           }}
           draggable={false}
         />
