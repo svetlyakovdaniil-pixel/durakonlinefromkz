@@ -11,10 +11,12 @@ interface ZirconNeonFrameProps {
  * ZirconNeonFrame — Comet Trail CSS-only animated frame.
  * Season: Неоновая эра (Season 7) | Rank: Циркон (Zircon)
  *
- * Effect: a vibrant orange ring with a counter-rotating purple arc —
- * like a comet trailing sparks. The orange outer ring rotates clockwise
- * while the purple inner arc spins counter-clockwise, creating a
- * dynamic "crossing orbits" effect. Glow pulses between orange and purple.
+ * Effect: two orbital arcs rotate in opposite directions around the avatar
+ * (magenta/purple clockwise + cyan counter-clockwise), plus an outer glow
+ * that pulses between orange and purple.
+ *
+ * The orbital arcs live HERE (not in NeonPawAvatar) so they are always
+ * rendered OUTSIDE the avatar circle and never overlap the avatar image.
  */
 export function ZirconNeonFrame({
   size,
@@ -26,17 +28,22 @@ export function ZirconNeonFrame({
     return <div className={className}>{children}</div>;
   }
 
+  const uid = React.useId().replace(/:/g, '');
   const padding = Math.round(size * 0.22);
   const outerSize = size + padding * 2;
-  const uid = `zircon-neon-${size}`;
   const borderW = Math.max(2, Math.round(size * 0.05));
   const ringGap = Math.max(2, Math.round(size * 0.055));
+
+  // Orbital arc sizing — slightly larger than the avatar+padding area
+  const arcSize = size + padding * 1.6;
+  const arcOffset = (outerSize - arcSize) / 2;
+  const arcBorderW = Math.max(2, size * 0.04);
 
   return (
     <>
       <style>{`
         /* Outer glow pulse — orange ↔ purple */
-        @keyframes ${uid}-glow {
+        @keyframes zf-glow-${uid} {
           0%, 100% {
             box-shadow:
               0 0 ${size * 0.12}px ${size * 0.04}px rgba(249,115,22,0.65),
@@ -51,17 +58,17 @@ export function ZirconNeonFrame({
           }
         }
         /* Outer ring — clockwise, orange */
-        @keyframes ${uid}-arc-cw {
+        @keyframes zf-arc-cw-${uid} {
           from { transform: rotate(0deg); }
           to   { transform: rotate(360deg); }
         }
         /* Inner ring — counter-clockwise, purple */
-        @keyframes ${uid}-arc-ccw {
+        @keyframes zf-arc-ccw-${uid} {
           from { transform: rotate(0deg); }
           to   { transform: rotate(-360deg); }
         }
         /* Outer ring flash — orange */
-        @keyframes ${uid}-ring-outer {
+        @keyframes zf-ring-outer-${uid} {
           0%, 100% {
             border-color: rgba(249,115,22,0.90);
             box-shadow:
@@ -76,7 +83,7 @@ export function ZirconNeonFrame({
           }
         }
         /* Inner ring flash — purple */
-        @keyframes ${uid}-ring-inner {
+        @keyframes zf-ring-inner-${uid} {
           0%, 100% {
             border-color: rgba(168,85,247,0.85);
             box-shadow:
@@ -90,26 +97,36 @@ export function ZirconNeonFrame({
               inset 0 0 ${borderW * 1.5}px rgba(210,140,255,0.38);
           }
         }
+        /* Orbital arc 1 — clockwise, magenta */
+        @keyframes zf-orbit-cw-${uid} {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        /* Orbital arc 2 — counter-clockwise, cyan */
+        @keyframes zf-orbit-ccw-${uid} {
+          from { transform: rotate(180deg); }
+          to   { transform: rotate(-180deg); }
+        }
       `}</style>
 
       <div
         className={`relative flex items-center justify-center ${className}`}
         style={{ width: outerSize, height: outerSize }}
       >
-        {/* Outer glow pulse */}
+        {/* Outer glow pulse — zIndex 0, behind everything */}
         <div
           aria-hidden="true"
           style={{
             position: "absolute",
             inset: padding - Math.round(size * 0.08),
             borderRadius: "50%",
-            animation: `${uid}-glow 3s ease-in-out infinite`,
+            animation: `zf-glow-${uid} 3s ease-in-out infinite`,
             zIndex: 0,
             pointerEvents: "none",
           }}
         />
 
-        {/* Outer ring — orange, clockwise */}
+        {/* Outer ring — orange, clockwise — zIndex 1 */}
         <div
           aria-hidden="true"
           style={{
@@ -117,13 +134,13 @@ export function ZirconNeonFrame({
             inset: padding - Math.round(size * 0.10),
             borderRadius: "50%",
             border: `${borderW}px solid rgba(249,115,22,0.90)`,
-            animation: `${uid}-arc-cw 4s linear infinite, ${uid}-ring-outer 2.6s ease-in-out infinite`,
+            animation: `zf-arc-cw-${uid} 4s linear infinite, zf-ring-outer-${uid} 2.6s ease-in-out infinite`,
             zIndex: 1,
             pointerEvents: "none",
           }}
         />
 
-        {/* Inner ring — purple, counter-clockwise */}
+        {/* Inner ring — purple, counter-clockwise — zIndex 2 */}
         <div
           aria-hidden="true"
           style={{
@@ -131,13 +148,13 @@ export function ZirconNeonFrame({
             inset: padding - Math.round(size * 0.10) + ringGap,
             borderRadius: "50%",
             border: `${borderW}px solid rgba(168,85,247,0.85)`,
-            animation: `${uid}-arc-ccw 2.8s linear infinite, ${uid}-ring-inner 2.6s ease-in-out infinite 0.5s`,
+            animation: `zf-arc-ccw-${uid} 2.8s linear infinite, zf-ring-inner-${uid} 2.6s ease-in-out infinite 0.5s`,
             zIndex: 2,
             pointerEvents: "none",
           }}
         />
 
-        {/* Avatar content */}
+        {/* Avatar content — zIndex 5, above rings */}
         <div
           style={{
             position: "absolute",
@@ -149,6 +166,46 @@ export function ZirconNeonFrame({
         >
           {children}
         </div>
+
+        {/* Orbital arc 1 — magenta, clockwise — zIndex 6, above avatar */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: arcOffset,
+            left: arcOffset,
+            width: arcSize,
+            height: arcSize,
+            borderRadius: "50%",
+            border: `${arcBorderW}px solid transparent`,
+            borderTop: `${arcBorderW}px solid rgba(210,0,255,0.9)`,
+            borderRight: `${arcBorderW}px solid rgba(210,0,255,0.5)`,
+            boxShadow: `0 0 ${size * 0.12}px rgba(210,0,255,0.7), 0 0 ${size * 0.22}px rgba(210,0,255,0.35)`,
+            animation: `zf-orbit-cw-${uid} 3.2s linear infinite`,
+            zIndex: 6,
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* Orbital arc 2 — cyan, counter-clockwise — zIndex 6, above avatar */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            top: arcOffset,
+            left: arcOffset,
+            width: arcSize,
+            height: arcSize,
+            borderRadius: "50%",
+            border: `${arcBorderW}px solid transparent`,
+            borderBottom: `${arcBorderW}px solid rgba(0,200,255,0.9)`,
+            borderLeft: `${arcBorderW}px solid rgba(0,200,255,0.45)`,
+            boxShadow: `0 0 ${size * 0.1}px rgba(0,200,255,0.65), 0 0 ${size * 0.2}px rgba(0,200,255,0.3)`,
+            animation: `zf-orbit-ccw-${uid} 2.4s linear infinite`,
+            zIndex: 6,
+            pointerEvents: "none",
+          }}
+        />
       </div>
     </>
   );
