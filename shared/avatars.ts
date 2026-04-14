@@ -211,7 +211,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Они Маскасы',
     nameEn: 'Oni Mask',
     url: 'oni_mask_obsidian',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian-8U38h2ctQyLXMQ3LasAjNh.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan', // Obsidian rank (key: great_khan)

@@ -7,8 +7,9 @@ interface OniMaskAvatarProps {
   style?: React.CSSProperties;
 }
 
+// v3: transparent background, red-gold mask
 const BASE_IMAGE_URL =
-  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian-8U38h2ctQyLXMQ3LasAjNh.webp';
+  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp';
 
 export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -20,91 +21,95 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = BASE_IMAGE_URL;
-    imgRef.current = img;
+    canvas.width = size;
+    canvas.height = size;
 
     const cx = size / 2;
     const cy = size / 2;
     const R = size / 2;
 
-    // ── Fire particle system ─────────────────────────────────────────────
-    interface FireParticle {
-      x: number;
-      y: number;
-      vx: number;
-      vy: number;
-      size: number;
-      life: number;
-      maxLife: number;
-      hue: number; // 0-40 for red-orange-gold
-    }
+    // Preload image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = BASE_IMAGE_URL;
+    imgRef.current = img;
 
-    const fireParticles: FireParticle[] = [];
-
-    function spawnFire(baseX: number, baseY: number, count = 1) {
-      for (let i = 0; i < count; i++) {
-        fireParticles.push({
-          x: baseX + (Math.random() - 0.5) * size * 0.18,
-          y: baseY,
-          vx: (Math.random() - 0.5) * 0.7,
-          vy: -(0.8 + Math.random() * 1.2),
-          size: (size * 0.025) + Math.random() * (size * 0.03),
-          life: 0,
-          maxLife: 30 + Math.random() * 40,
-          hue: Math.random() * 40, // red to gold
-        });
-      }
-    }
-
-    // Pre-seed
-    for (let i = 0; i < 20; i++) {
-      spawnFire(cx - size * 0.22, cy * 0.3);
-      spawnFire(cx + size * 0.22, cy * 0.3);
-      const p = fireParticles[fireParticles.length - 1];
-      p.life = Math.floor(Math.random() * p.maxLife);
-    }
-
-    // ── Ember sparks ─────────────────────────────────────────────────────
-    interface Ember {
-      x: number; y: number;
+    // ── Smoke particles ─────────────────────────────────────────────────────
+    interface Smoke {
+      x: number; y: number; r: number;
       vx: number; vy: number;
-      size: number;
       life: number; maxLife: number;
+      alpha: number;
     }
+    const smokes: Smoke[] = [];
+    const MAX_SMOKES = 12;
 
-    const embers: Ember[] = [];
-
-    function spawnEmber() {
+    function spawnSmoke() {
       const angle = Math.random() * Math.PI * 2;
       const dist = R * (0.3 + Math.random() * 0.5);
-      embers.push({
-        x: cx + Math.cos(angle) * dist * 0.5,
-        y: cy + Math.sin(angle) * dist * 0.5,
-        vx: Math.cos(angle) * (0.5 + Math.random() * 1.0),
-        vy: Math.sin(angle) * (0.5 + Math.random() * 1.0) - 0.5,
-        size: 0.8 + Math.random() * 1.5,
+      smokes.push({
+        x: cx + Math.cos(angle) * dist,
+        y: cy + Math.sin(angle) * dist,
+        r: size * (0.04 + Math.random() * 0.06),
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -(0.4 + Math.random() * 0.5),
         life: 0,
-        maxLife: 40 + Math.random() * 50,
+        maxLife: 80 + Math.floor(Math.random() * 60),
+        alpha: 0,
       });
     }
 
-    for (let i = 0; i < 10; i++) {
-      spawnEmber();
-      embers[embers.length - 1].life = Math.floor(Math.random() * 30);
+    // Seed initial smokes
+    for (let i = 0; i < MAX_SMOKES; i++) {
+      spawnSmoke();
+      smokes[smokes.length - 1].life = Math.floor(Math.random() * 80);
     }
 
-    let frame = 0;
+    // ── Crack lightning segments ─────────────────────────────────────────────
+    interface CrackSeg { x1: number; y1: number; x2: number; y2: number; }
+    interface Crack {
+      segs: CrackSeg[];
+      life: number; maxLife: number; alpha: number;
+    }
+    const cracks: Crack[] = [];
+
+    function buildCrack(startX: number, startY: number): CrackSeg[] {
+      const segs: CrackSeg[] = [];
+      let x = startX, y = startY;
+      const steps = 4 + Math.floor(Math.random() * 4);
+      const baseAngle = Math.atan2(cy - startY, cx - startX) + (Math.random() - 0.5) * 1.2;
+      for (let i = 0; i < steps; i++) {
+        const a = baseAngle + (Math.random() - 0.5) * 0.8;
+        const len = size * (0.04 + Math.random() * 0.06);
+        const nx = x + Math.cos(a) * len;
+        const ny = y + Math.sin(a) * len;
+        segs.push({ x1: x, y1: y, x2: nx, y2: ny });
+        x = nx; y = ny;
+      }
+      return segs;
+    }
+
+    function spawnCrack() {
+      const angle = Math.random() * Math.PI * 2;
+      const startX = cx + Math.cos(angle) * R * 0.85;
+      const startY = cy + Math.sin(angle) * R * 0.85;
+      cracks.push({
+        segs: buildCrack(startX, startY),
+        life: 0,
+        maxLife: 30 + Math.floor(Math.random() * 20),
+        alpha: 1,
+      });
+    }
+
+    let crackTimer = 0;
 
     function draw(timestamp: number) {
       if (!canvas || !ctx) return;
       const t = timestamp * 0.001;
-      frame++;
 
       ctx.clearRect(0, 0, size, size);
 
-      // ── 1. Black background ───────────────────────────────────────────
+      // ── 1. Black circular background ──────────────────────────────────────
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
@@ -112,155 +117,152 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
       ctx.fill();
       ctx.restore();
 
-      // ── 2. Deep red radial glow (hellfire ambience) ───────────────────
-      const hellPulse = 0.65 + 0.35 * Math.sin(t * 1.1);
-      const hellGrad = ctx.createRadialGradient(cx, cy * 1.1, 0, cx, cy, R * 1.05);
-      hellGrad.addColorStop(0, `rgba(120,0,0,${0.30 * hellPulse})`);
-      hellGrad.addColorStop(0.45, `rgba(80,0,0,${0.20 * hellPulse})`);
-      hellGrad.addColorStop(1, 'rgba(0,0,0,0.0)');
+      // ── 2. Deep red radial glow (hell ambience) ───────────────────────────
+      const hellPulse = 0.5 + 0.5 * Math.sin(t * 0.8);
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.clip();
+      const hellGrad = ctx.createRadialGradient(cx, cy * 1.1, 0, cx, cy, R);
+      hellGrad.addColorStop(0, `rgba(120,0,0,${0.0})`);
+      hellGrad.addColorStop(0.5, `rgba(100,0,0,${0.15 + 0.1 * hellPulse})`);
+      hellGrad.addColorStop(1, `rgba(60,0,0,${0.5 + 0.2 * hellPulse})`);
       ctx.fillStyle = hellGrad;
       ctx.fillRect(0, 0, size, size);
       ctx.restore();
 
-      // ── 3. Draw mask image (multiply blend to keep black bg) ──────────
-      if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
+      // ── 3. Smoke wisps ────────────────────────────────────────────────────
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, Math.PI * 2);
+      ctx.clip();
+
+      for (let i = smokes.length - 1; i >= 0; i--) {
+        const s = smokes[i];
+        s.life++;
+        s.x += s.vx;
+        s.y += s.vy;
+        s.r += 0.15;
+        const progress = s.life / s.maxLife;
+        s.alpha = progress < 0.3
+          ? progress / 0.3 * 0.18
+          : (1 - progress) * 0.18;
+
+        if (s.life >= s.maxLife) {
+          smokes.splice(i, 1);
+          continue;
+        }
+
+        const sg = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r);
+        sg.addColorStop(0, `rgba(180,20,0,${s.alpha})`);
+        sg.addColorStop(1, `rgba(80,0,0,0)`);
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = sg;
+        ctx.fill();
+      }
+
+      // Spawn new smokes
+      if (smokes.length < MAX_SMOKES && Math.random() < 0.15) {
+        spawnSmoke();
+      }
+      ctx.restore();
+
+      // ── 4. Mask image ─────────────────────────────────────────────────────
+      if (img.complete && img.naturalWidth > 0) {
         ctx.save();
         ctx.beginPath();
         ctx.arc(cx, cy, R, 0, Math.PI * 2);
         ctx.clip();
-        // Draw black rect first, then image with multiply to kill white bg
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.drawImage(imgRef.current, size * 0.04, size * 0.02, size * 0.92, size * 0.96);
+        // Slight breathing scale
+        const breathe = 1 + 0.012 * Math.sin(t * 1.2);
+        const drawSize = size * breathe;
+        const offset = (size - drawSize) / 2;
+        ctx.drawImage(img, offset, offset, drawSize, drawSize);
         ctx.restore();
       }
 
-      // ── 4. Eye glow pulses ────────────────────────────────────────────
-      // Left eye approx position
-      const eyeOffsetX = size * 0.155;
-      const eyeOffsetY = size * 0.38;
-      const eyePulse = 0.5 + 0.5 * Math.sin(t * 2.3);
+      // ── 5. Glowing eyes overlay ───────────────────────────────────────────
+      // Eye positions relative to mask (approximate for this art)
+      const eyePulse = 0.6 + 0.4 * Math.sin(t * 3.5);
+      const eyeY = cy - size * 0.06;
+      const eyeLX = cx - size * 0.14;
+      const eyeRX = cx + size * 0.14;
       const eyeR = size * 0.055;
 
-      for (const [ex, ey] of [
-        [cx - eyeOffsetX, eyeOffsetY],
-        [cx + eyeOffsetX, eyeOffsetY],
-      ]) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cx, cy, R, 0, Math.PI * 2);
-        ctx.clip();
-        ctx.globalCompositeOperation = 'screen';
-        const eyeGrad = ctx.createRadialGradient(ex, ey, 0, ex, ey, eyeR * 2.5);
-        eyeGrad.addColorStop(0, `rgba(255,60,0,${0.55 + 0.35 * eyePulse})`);
-        eyeGrad.addColorStop(0.4, `rgba(200,0,0,${0.30 * eyePulse})`);
-        eyeGrad.addColorStop(1, 'rgba(100,0,0,0.0)');
-        ctx.fillStyle = eyeGrad;
-        ctx.beginPath();
-        ctx.arc(ex, ey, eyeR * 2.5, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // ── 5. Horn tip fire ──────────────────────────────────────────────
-      const hornL = { x: cx - size * 0.22, y: size * 0.08 };
-      const hornR = { x: cx + size * 0.22, y: size * 0.08 };
-
-      if (frame % 2 === 0) {
-        spawnFire(hornL.x, hornL.y + size * 0.04);
-        spawnFire(hornR.x, hornR.y + size * 0.04);
-      }
-
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.clip();
-      ctx.globalCompositeOperation = 'screen';
 
-      for (let i = fireParticles.length - 1; i >= 0; i--) {
-        const p = fireParticles[i];
-        p.x += p.vx + Math.sin(t * 3 + i * 0.7) * 0.3;
-        p.y += p.vy;
-        p.vy *= 0.98;
-        p.life++;
-        if (p.life >= p.maxLife) { fireParticles.splice(i, 1); continue; }
-        const progress = p.life / p.maxLife;
-        const alpha = (1 - progress) * 0.85;
-        const curSize = p.size * (1 - progress * 0.6);
-        // Color: start gold, fade to red, then dark
-        const r = 255;
-        const g = Math.floor(180 * (1 - progress) + p.hue * 2);
-        const b = 0;
+      for (const ex of [eyeLX, eyeRX]) {
+        // Outer glow
+        const eg = ctx.createRadialGradient(ex, eyeY, 0, ex, eyeY, eyeR * 2.5);
+        eg.addColorStop(0, `rgba(255,80,0,${0.7 * eyePulse})`);
+        eg.addColorStop(0.4, `rgba(220,30,0,${0.4 * eyePulse})`);
+        eg.addColorStop(1, `rgba(150,0,0,0)`);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, curSize, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.arc(ex, eyeY, eyeR * 2.5, 0, Math.PI * 2);
+        ctx.fillStyle = eg;
         ctx.fill();
       }
       ctx.restore();
 
-      // ── 6. Embers ─────────────────────────────────────────────────────
-      if (frame % 6 === 0 && embers.length < 20) spawnEmber();
+      // ── 6. Crack lightning ────────────────────────────────────────────────
+      crackTimer++;
+      if (crackTimer > 90 + Math.random() * 60) {
+        spawnCrack();
+        if (Math.random() < 0.4) spawnCrack();
+        crackTimer = 0;
+      }
+
       ctx.save();
       ctx.beginPath();
       ctx.arc(cx, cy, R, 0, Math.PI * 2);
       ctx.clip();
-      ctx.globalCompositeOperation = 'screen';
-      for (let i = embers.length - 1; i >= 0; i--) {
-        const e = embers[i];
-        e.x += e.vx;
-        e.y += e.vy;
-        e.vy += 0.02; // slight gravity
-        e.life++;
-        if (e.life >= e.maxLife || e.x < 0 || e.x > size || e.y < 0 || e.y > size) {
-          embers.splice(i, 1); continue;
+
+      for (let i = cracks.length - 1; i >= 0; i--) {
+        const c = cracks[i];
+        c.life++;
+        const progress = c.life / c.maxLife;
+        c.alpha = progress < 0.2 ? progress / 0.2 : 1 - (progress - 0.2) / 0.8;
+        if (c.life >= c.maxLife) { cracks.splice(i, 1); continue; }
+
+        ctx.globalAlpha = c.alpha * 0.85;
+        ctx.strokeStyle = `rgba(255,120,0,1)`;
+        ctx.lineWidth = size * 0.008;
+        ctx.shadowColor = 'rgba(255,80,0,0.9)';
+        ctx.shadowBlur = size * 0.04;
+        ctx.beginPath();
+        for (const seg of c.segs) {
+          ctx.moveTo(seg.x1, seg.y1);
+          ctx.lineTo(seg.x2, seg.y2);
         }
-        const progress = e.life / e.maxLife;
-        const alpha = (1 - progress) * 0.9;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, e.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${Math.floor(100 * (1 - progress))},0,${alpha})`;
-        ctx.fill();
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
       }
       ctx.restore();
 
-      // ── 7. Outer fire rim ─────────────────────────────────────────────
+      // ── 7. Glowing border ring ────────────────────────────────────────────
       ctx.save();
-      ctx.globalCompositeOperation = 'screen';
-      const rimPulse = 0.4 + 0.6 * Math.abs(Math.sin(t * 1.7));
-      const rimGrad = ctx.createRadialGradient(cx, cy, R * 0.72, cx, cy, R);
-      rimGrad.addColorStop(0, 'rgba(150,0,0,0.0)');
-      rimGrad.addColorStop(0.5, `rgba(180,20,0,${0.15 * rimPulse})`);
-      rimGrad.addColorStop(1, `rgba(255,60,0,${0.35 * rimPulse})`);
+      const borderPulse = 0.5 + 0.5 * Math.sin(t * 1.8);
       ctx.beginPath();
-      ctx.arc(cx, cy, R, 0, Math.PI * 2);
-      ctx.fillStyle = rimGrad;
-      ctx.fill();
-      ctx.restore();
-
-      // ── 8. Glowing border ring ────────────────────────────────────────
-      ctx.save();
-      ctx.globalCompositeOperation = 'source-over';
-      const borderPulse = 0.5 + 0.5 * Math.sin(t * 2.0);
-      ctx.beginPath();
-      ctx.arc(cx, cy, R - 0.5, 0, Math.PI * 2);
-      // Gradient stroke: gold to red
+      ctx.arc(cx, cy, R - size * 0.015, 0, Math.PI * 2);
       const strokeGrad = ctx.createLinearGradient(0, 0, size, size);
-      strokeGrad.addColorStop(0, `rgba(212,175,55,${0.7 + 0.3 * borderPulse})`);
-      strokeGrad.addColorStop(0.5, `rgba(200,0,0,${0.8 + 0.2 * borderPulse})`);
-      strokeGrad.addColorStop(1, `rgba(212,175,55,${0.7 + 0.3 * borderPulse})`);
+      strokeGrad.addColorStop(0, `rgba(212,175,55,${0.6 + 0.3 * borderPulse})`);
+      strokeGrad.addColorStop(0.5, `rgba(200,0,0,${0.7 + 0.3 * borderPulse})`);
+      strokeGrad.addColorStop(1, `rgba(212,175,55,${0.6 + 0.3 * borderPulse})`);
       ctx.strokeStyle = strokeGrad;
-      ctx.lineWidth = size * 0.032;
+      ctx.lineWidth = size * 0.028;
       ctx.stroke();
       ctx.restore();
     }
 
-    let cleanup: (() => void) | null = null;
+    let cleanupRaf: (() => void) | null = null;
 
     function startLoop() {
-      cleanup = registerAvatarDraw(draw);
+      cleanupRaf = registerAvatarDraw(draw);
     }
 
     if (img.complete) {
@@ -269,7 +271,7 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
       img.onload = startLoop;
     }
 
-    return () => { if (cleanup) cleanup(); };
+    return () => { if (cleanupRaf) cleanupRaf(); };
   }, [size]);
 
   return (
