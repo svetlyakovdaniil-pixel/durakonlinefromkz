@@ -81,6 +81,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-cyan-400',
       emoji: '🌊',
     },
+    // Season 1 unique rewards: Zircon rank gets Abyss Jellyfish avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'underwater_jellyfish' },
+    ],
   },
   {
     index: 1,
@@ -99,6 +103,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-amber-400',
       emoji: '⚱️',
     },
+    // Season 2 unique rewards: Zircon rank gets Anubis avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'anubis_god' },
+    ],
   },
   {
     index: 2,
@@ -117,6 +125,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-stone-400',
       emoji: '🏴‍☠️',
     },
+    // Season 3 unique rewards: Zircon rank gets Pirate Captain avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'pirate_captain' },
+    ],
   },
   {
     index: 3,
@@ -135,6 +147,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-slate-300',
       emoji: '⚡',
     },
+    // Season 4 unique rewards: Zircon rank gets Norse God avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'norse_warrior' },
+    ],
   },
   {
     index: 4,
@@ -153,6 +169,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-indigo-400',
       emoji: '🚀',
     },
+    // Season 5 unique rewards: Zircon rank gets Space Explorer avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'space_explorer' },
+    ],
   },
   {
     index: 5,
@@ -269,6 +289,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-green-400',
       emoji: '🤖',
     },
+    // Season 10 unique rewards: Zircon rank gets Cyberpunk Warrior avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'cyberpunk_warrior' },
+    ],
   },
   {
     index: 10,
@@ -287,6 +311,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-orange-400',
       emoji: '🎤',
     },
+    // Season 11 unique rewards: Zircon rank gets Hip-Hop Legend avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'hiphop_legend' },
+    ],
   },
   {
     index: 11,
@@ -305,6 +333,10 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-slate-200',
       emoji: '😇',
     },
+    // Season 12 unique rewards: Zircon rank gets Angel & Demon avatar
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'angel_demon' },
+    ],
   },
 ];
 
