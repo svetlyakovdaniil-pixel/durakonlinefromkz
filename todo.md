@@ -2893,3 +2893,14 @@
 - [x] Добавить gasmask_amber в AvatarDisplay.tsx
 - [x] Добавить GasMaskAvatar в AvatarPicker.tsx (AnimatedAvatar switch + isSelectedAnimated)
 - [x] Добавить GasMaskAvatar в AvatarEditorTab.tsx (COMPONENT_AVATAR_IDS + PreviewAvatar switch)
+
+## Batch 82 — Аватарка Обсидиан (Апокалипсис)
+- [x] Сгенерировать изображение ядерного гриба (оригинальный стиль, не копия)
+- [x] Создать NuclearMushroomAvatar.tsx — анимации: пыль у основания, взрыв в шапке, общее свечение
+- [x] Добавить nuclear_mushroom в AVATAR_OPTIONS (shared/avatars.ts)
+- [x] Добавить nuclear_mushroom в ANIMATED_AVATAR_IDS (shared/avatars.ts)
+- [x] Добавить getAvatarAccentColors для nuclear_mushroom — огненный красно-оранжевый
+- [x] Добавить rankRewardOverride для Обсидиана в сезоне Апокалипсис (seasons.ts)
+- [x] Добавить nuclear_mushroom в AvatarDisplay.tsx
+- [x] Добавить NuclearMushroomAvatar в AvatarPicker.tsx
+- [x] Добавить NuclearMushroomAvatar в AvatarEditorTab.tsx
