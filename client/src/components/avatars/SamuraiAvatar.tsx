@@ -21,6 +21,14 @@ export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvata
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // HiDPI / Retina support
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    ctx.scale(dpr, dpr);
+
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = BASE_IMAGE_URL;
@@ -281,10 +289,8 @@ export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvata
   return (
     <canvas
       ref={canvasRef}
-      width={size}
-      height={size}
       className={className}
-      style={{ borderRadius: '50%', display: 'block', ...style }}
+      style={{ borderRadius: '50%', display: 'block', width: size, height: size, ...style }}
     />
   );
 }

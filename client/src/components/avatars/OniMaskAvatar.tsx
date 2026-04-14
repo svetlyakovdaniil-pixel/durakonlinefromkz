@@ -21,8 +21,13 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    canvas.width = size;
-    canvas.height = size;
+    // HiDPI / Retina support
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = size * dpr;
+    canvas.height = size * dpr;
+    canvas.style.width = `${size}px`;
+    canvas.style.height = `${size}px`;
+    ctx.scale(dpr, dpr);
 
     const cx = size / 2;
     const cy = size / 2;
@@ -277,10 +282,8 @@ export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvata
   return (
     <canvas
       ref={canvasRef}
-      width={size}
-      height={size}
       className={className}
-      style={{ borderRadius: '50%', display: 'block', ...style }}
+      style={{ borderRadius: '50%', display: 'block', width: size, height: size, ...style }}
     />
   );
 }

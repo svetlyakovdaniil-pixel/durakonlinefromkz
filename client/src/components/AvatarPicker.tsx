@@ -151,7 +151,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   const isLocked = (avatarId: string) => !canSelectAvatar(avatarId);
 
   const selectedBaseId = getBaseAvatarId(selected);
-  const isSelectedAnimated = ['khan', 'golden_horde', 'diving_eagle', 'sky_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom'].includes(selectedBaseId);
+  const isSelectedAnimated = ['khan', 'golden_horde', 'diving_eagle', 'sky_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian'].includes(selectedBaseId);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
