@@ -149,7 +149,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             </div>
             <button
               onClick={() => setShowAvatarPicker(true)}
-              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-600 hover:bg-amber-500 border-2 border-[#0f2035] flex items-center justify-center transition-colors shadow-md"
+              className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-600 hover:bg-amber-500 border-2 border-[#0f2035] flex items-center justify-center transition-colors shadow-md z-10"
               title={t('profile.changeAvatar')}
             >
               <Camera className="w-3.5 h-3.5 text-white" />

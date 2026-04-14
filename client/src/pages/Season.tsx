@@ -351,25 +351,16 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
 
-  // Support admin test season: read from localStorage (set by SeasonTestTab) or URL param
-  const getAdminTestSeason = () => {
-    if (typeof window === 'undefined') return undefined;
-    const urlParam = new URLSearchParams(window.location.search).get('testSeason');
-    if (urlParam) return urlParam;
-    try { return localStorage.getItem('admin_test_season') ?? undefined; } catch { return undefined; }
-  };
-  const [testSeasonKey, setTestSeasonKey] = useState<string | undefined>(getAdminTestSeason);
-
-  // Listen for changes from SeasonTestTab (same tab via StorageEvent)
-  useEffect(() => {
-    const handler = (e: StorageEvent) => {
-      if (e.key === 'admin_test_season') {
-        setTestSeasonKey(e.newValue ?? undefined);
-      }
-    };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
-  }, []);
+  // Support admin test season: read from DB (season_test_state) — works across page reloads and devices
+  const { data: testStateData } = trpc.season.activeTestKey.useQuery(undefined, {
+    refetchInterval: open ? 5000 : false, // poll every 5s while open
+    enabled: open,
+  });
+  // Also support URL param override for direct linking
+  const urlTestKey = typeof window !== 'undefined'
+    ? (new URLSearchParams(window.location.search).get('testSeason') ?? undefined)
+    : undefined;
+  const testSeasonKey: string | undefined = urlTestKey ?? (testStateData?.testSeasonKey ?? undefined);
 
   const { data: seasonData } = trpc.season.current.useQuery(
     { seasonKey: testSeasonKey },

@@ -1478,6 +1478,14 @@ export const appRouter = router({
         };
       }),
 
+    /** Get active test season key from DB (null if no test active) — public so Season.tsx can read it */
+    activeTestKey: publicProcedure
+      .query(async () => {
+        const state = await getSeasonTestState();
+        if (!state || !state.isActive) return { testSeasonKey: null };
+        return { testSeasonKey: state.seasonKey };
+      }),
+
     /** Get season leaderboard */
     leaderboard: publicProcedure
       .input(z.object({ seasonKey: z.string().optional() }))
