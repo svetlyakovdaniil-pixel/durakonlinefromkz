@@ -7,20 +7,28 @@ import { GreatKhanAvatar } from "./GreatKhanAvatar";
 import { KhanAvatar } from "./KhanAvatar";
 import { GoldenHordeAvatar } from "./GoldenHordeAvatar";
 import { DivingEagleAvatar } from "./DivingEagleAvatar";
+import { ToxicStormAvatar } from "./ToxicStormAvatar";
 import { ObsidianNeonFrame } from "./ObsidianNeonFrame";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Copy, RotateCcw, Camera, Save, CheckCircle } from "lucide-react";
+import { Copy, RotateCcw, Camera, Save, CheckCircle, ZapOff } from "lucide-react";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 import { trpc } from "@/lib/trpc";
 import { useAvatarOffsets } from "@/hooks/useAvatarOffsets";
 
-/** Avatars that support offsetX/offsetY/imgScale adjustment */
-const EDITABLE_AVATARS = AVATAR_OPTIONS.filter(a => a.animated);
+/** All avatars that can be edited (exclude bot) */
+const EDITABLE_AVATARS = AVATAR_OPTIONS.filter(a => a.id !== 'bot');
 
-/** Render an animated avatar by ID with optional offset/scale */
+/** Animated avatar IDs that use component-based rendering */
+const COMPONENT_AVATAR_IDS = ['neon_crown', 'neon_paw', 'neon_dino', 'neon_cat', 'great_khan', 'khan', 'golden_horde', 'diving_eagle', 'toxic_storm'];
+
+/**
+ * Render an avatar by ID with offset/scale applied.
+ * For component-based animated avatars, offsets are passed as props.
+ * For image-based avatars, offsets are applied via CSS transform.
+ */
 function PreviewAvatar({
   avatarId,
   size,
@@ -51,7 +59,12 @@ function PreviewAvatar({
       return <GoldenHordeAvatar size={size} />;
     case 'diving_eagle':
       return <DivingEagleAvatar size={size} />;
-    default:
+    case 'toxic_storm':
+      return <ToxicStormAvatar size={size} />;
+    default: {
+      // Image-based avatar — apply offsets via CSS transform
+      const opt = AVATAR_OPTIONS.find(a => a.id === avatarId);
+      const url = opt?.url ?? '';
       return (
         <div
           style={{
@@ -60,22 +73,30 @@ function PreviewAvatar({
             borderRadius: '50%',
             overflow: 'hidden',
             background: '#1a1a2e',
+            flexShrink: 0,
           }}
         >
           <img
-            src={AVATAR_OPTIONS.find(a => a.id === avatarId)?.url ?? ''}
+            src={url}
             alt={avatarId}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            style={{
+              width: `${imgScale * 100}%`,
+              height: `${imgScale * 100}%`,
+              objectFit: 'cover',
+              marginLeft: `${offsetX - (imgScale - 1) * 50}%`,
+              marginTop: `${offsetY - (imgScale - 1) * 50}%`,
+            }}
           />
         </div>
       );
+    }
   }
 }
 
 /**
  * AvatarEditorTab — Admin tool to visually adjust avatar image position.
- * Preview shows the avatar exactly as it appears in the Profile drawer.
- * "Применить" button saves values to DB via tRPC — applies globally to all players.
+ * Supports ALL avatars in the game (not just neon_crown).
+ * "Применить" saves values to DB via tRPC — applies globally to all players.
  */
 export function AvatarEditorTab() {
   const [selectedAvatarId, setSelectedAvatarId] = useState('neon_crown');
@@ -109,7 +130,7 @@ export function AvatarEditorTab() {
       setSaved(true);
       // Invalidate the public cache so all clients get updated values
       utils.avatarOffsets.getAll.invalidate();
-      toast.success("✅ Сохранено в базе данных! Изменения применены для всех игроков.");
+      toast.success("✅ Сохранено! Изменения применены для всех игроков.");
       setTimeout(() => setSaved(false), 3000);
     },
     onError: (err) => {
@@ -119,11 +140,18 @@ export function AvatarEditorTab() {
 
   function handleAvatarChange(newId: string) {
     setSelectedAvatarId(newId);
-    // useEffect will sync sliders from DB/static values
     setSaved(false);
   }
 
   function handleReset() {
+    // Reset to 0, 0, 1 (factory defaults — removes any DB override)
+    setOffsetX(0);
+    setOffsetY(0);
+    setImgScale(1);
+    setSaved(false);
+  }
+
+  function handleResetToDb() {
     // Reset to current DB/static values (discard unsaved slider changes)
     const vals = getOffsets(selectedAvatarId);
     setOffsetX(vals.offsetX);
@@ -148,35 +176,60 @@ export function AvatarEditorTab() {
     });
   }
 
-  const supportsOffset = selectedAvatarId === 'neon_crown';
+  // Check if this avatar uses component-based rendering (offsets only work for image-based or neon_crown)
+  const isComponentAvatar = COMPONENT_AVATAR_IDS.includes(selectedAvatarId) && selectedAvatarId !== 'neon_crown';
+  const hasDbOverride = dbOffsets.some(o => o.avatarId === selectedAvatarId);
 
   return (
     <div className="p-4 max-w-3xl space-y-6">
       <div>
         <h2 className="text-xl font-bold text-amber-100 mb-1">Редактор аватарок</h2>
         <p className="text-sm text-gray-400">
-          Подгоните изображение под круглую рамку. Нажмите <strong className="text-amber-300">«Применить»</strong> чтобы сохранить прямо в код.
+          Подгоните изображение под круглую рамку. Нажмите <strong className="text-amber-300">«Применить»</strong> чтобы сохранить в базу данных — изменения применятся для всех игроков.
         </p>
       </div>
 
       {/* Avatar selector */}
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-200">Выберите аватарку</label>
-        <Select value={selectedAvatarId} onValueChange={handleAvatarChange}>
-          <SelectTrigger className="w-full max-w-xs bg-gray-800 border-gray-600 text-gray-100">
-            <SelectValue placeholder="Выберите аватарку" />
-          </SelectTrigger>
-          <SelectContent className="bg-gray-800 border-gray-600">
-            {EDITABLE_AVATARS.map(a => (
-              <SelectItem key={a.id} value={a.id} className="text-gray-100 focus:bg-gray-700">
-                {a.name} ({a.id})
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {!supportsOffset && (
-          <p className="text-xs text-amber-400">
-            ⚠️ Эта аватарка не поддерживает настройку смещения (offsetX/offsetY/imgScale не применяются). Только neon_crown поддерживает эти параметры.
+        <div className="flex items-center gap-3">
+          <Select value={selectedAvatarId} onValueChange={handleAvatarChange}>
+            <SelectTrigger className="w-full max-w-sm bg-gray-800 border-gray-600 text-gray-100">
+              <SelectValue placeholder="Выберите аватарку" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-800 border-gray-600 max-h-72">
+              {/* Animated avatars group */}
+              <div className="px-2 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wide">Анимированные</div>
+              {EDITABLE_AVATARS.filter(a => a.animated).map(a => (
+                <SelectItem key={a.id} value={a.id} className="text-gray-100 focus:bg-gray-700">
+                  <span className="flex items-center gap-2">
+                    <span className="text-purple-400">✦</span>
+                    {a.name} <span className="text-gray-500 text-xs">({a.id})</span>
+                  </span>
+                </SelectItem>
+              ))}
+              {/* Static avatars group */}
+              <div className="px-2 py-1 text-xs text-gray-500 font-semibold uppercase tracking-wide mt-1">Статичные</div>
+              {EDITABLE_AVATARS.filter(a => !a.animated).map(a => (
+                <SelectItem key={a.id} value={a.id} className="text-gray-100 focus:bg-gray-700">
+                  {a.name} <span className="text-gray-500 text-xs">({a.id})</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* DB override indicator */}
+          {hasDbOverride && (
+            <span className="text-xs bg-amber-900/40 text-amber-300 border border-amber-700/40 px-2 py-1 rounded-md whitespace-nowrap">
+              📦 Есть в БД
+            </span>
+          )}
+        </div>
+
+        {isComponentAvatar && (
+          <p className="text-xs text-blue-400 flex items-center gap-1.5">
+            <ZapOff className="w-3 h-3" />
+            Эта аватарка анимирована через компонент — смещение X/Y/Scale не влияет на её отображение. Можно сохранить значения в БД для будущего использования.
           </p>
         )}
       </div>
@@ -277,11 +330,38 @@ export function AvatarEditorTab() {
               <div className="text-xs text-gray-500">ID 1</div>
             </div>
           </div>
+
+          {/* Small size preview */}
+          <div className="text-xs text-gray-400 mt-4 mb-2">Мини (32px — в чате/игре)</div>
+          <div className="flex items-center gap-2 bg-[#0d1117] rounded-lg p-3 border border-gray-800">
+            <PreviewAvatar
+              avatarId={selectedAvatarId}
+              size={32}
+              offsetX={offsetX}
+              offsetY={offsetY}
+              imgScale={imgScale}
+            />
+            <PreviewAvatar
+              avatarId={selectedAvatarId}
+              size={24}
+              offsetX={offsetX}
+              offsetY={offsetY}
+              imgScale={imgScale}
+            />
+            <PreviewAvatar
+              avatarId={selectedAvatarId}
+              size={16}
+              offsetX={offsetX}
+              offsetY={offsetY}
+              imgScale={imgScale}
+            />
+            <span className="text-xs text-gray-500 ml-1">32 / 24 / 16px</span>
+          </div>
         </div>
 
         {/* ── Sliders (right) ── */}
         <div className="flex-1 space-y-5">
-          <div className={`bg-gray-800/40 rounded-lg p-4 border border-gray-700 space-y-5 ${!supportsOffset ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className={`bg-gray-800/40 rounded-lg p-4 border border-gray-700 space-y-5 ${isComponentAvatar ? 'opacity-60' : ''}`}>
 
             {/* offsetX */}
             <div className="space-y-2">
@@ -313,9 +393,9 @@ export function AvatarEditorTab() {
                 <label className="text-sm font-medium text-gray-200">Масштаб</label>
                 <span className="text-sm font-mono text-amber-300 w-16 text-right">×{imgScale.toFixed(2)}</span>
               </div>
-              <Slider min={0.5} max={1.5} step={0.01} value={[imgScale]} onValueChange={([v]) => { setImgScale(v); setSaved(false); }} />
+              <Slider min={0.5} max={2.0} step={0.01} value={[imgScale]} onValueChange={([v]) => { setImgScale(v); setSaved(false); }} />
               <div className="flex justify-between text-xs text-gray-500">
-                <span>×0.5 меньше</span><span>×1.0</span><span>×1.5 больше</span>
+                <span>×0.5 меньше</span><span>×1.0</span><span>×2.0 больше</span>
               </div>
             </div>
           </div>
@@ -334,7 +414,7 @@ imgScale: ${imgScale},`}
           <div className="flex gap-3 flex-wrap">
             <Button
               onClick={handleApply}
-              disabled={saveOffsets.isPending || saved || !supportsOffset}
+              disabled={saveOffsets.isPending || saved}
               className={`gap-2 font-semibold ${saved ? 'bg-green-600 hover:bg-green-600' : 'bg-amber-600 hover:bg-amber-500'} text-white`}
             >
               {saved ? (
@@ -349,14 +429,23 @@ imgScale: ${imgScale},`}
               <Copy className="w-4 h-4" />
               Скопировать
             </Button>
-            <Button onClick={handleReset} variant="outline" className="gap-2 text-gray-300 border-gray-600">
+            <Button onClick={handleResetToDb} variant="outline" className="gap-2 text-gray-300 border-gray-600" title="Вернуть к значениям из БД">
               <RotateCcw className="w-4 h-4" />
-              Сбросить
+              Отменить
+            </Button>
+            <Button
+              onClick={handleReset}
+              variant="outline"
+              className="gap-2 text-red-400 border-red-900/50 hover:bg-red-900/20"
+              title="Сбросить к 0, 0, 1"
+            >
+              <ZapOff className="w-4 h-4" />
+              Сбросить (0,0,1)
             </Button>
           </div>
 
           <p className="text-xs text-gray-500">
-            «Применить» сохраняет значения прямо в <code className="text-green-400">shared/avatars.ts</code>. Сервер перезагрузится автоматически через tsx watch.
+            «Применить» сохраняет значения в базу данных. Изменения применяются глобально для всех игроков без перезагрузки сервера.
           </p>
         </div>
       </div>

@@ -2848,3 +2848,13 @@
 - [x] Проверить место 2: Сезон → Ранги (попап Рубина) — работает (isAnimated=true, блок с ZoomIn и превью)
 - [x] Проверить место 3: AvatarPicker — работает (суффиксированный ID из ownedAvatars через AvatarDisplay)
 - [x] Проверить место 4: Уведомления — работает (notifAvatarId через AvatarDisplay)
+
+## Batch 76 — Редактор аватарок: поддержка всех аватарок
+
+- [x] Изучить текущую реализацию AvatarEditorTab в AdminPanel
+- [x] Изучить серверные процедуры getAvatarOffsets/setAvatarOffsets в routers.ts — уже поддерживают любой avatarId
+- [x] Расширить UI — добавить выпадающий список выбора аватарки (все AVATAR_OPTIONS)
+- [x] Убедиться что сервер хранит offsets по avatarId (не только neon_crown) — подтверждено
+- [x] Обновить useAvatarOffsets хук для поддержки любого avatarId — уже поддерживал
+- [x] Добавить кнопку "Сбросить" (reset к 0, 0, 1) — добавлена отдельная кнопка
+- [x] Проверить что AvatarDisplay корректно применяет offsets для всех аватарок — CSS transform для image-based
