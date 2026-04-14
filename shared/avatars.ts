@@ -173,6 +173,17 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'steppe_khan', // Ruby rank
   },
   {
+    id: 'gasmask_amber',
+    name: 'Выживший',
+    nameKk: 'Тіршілік иесі',
+    nameEn: 'Survivor',
+    url: 'gasmask_amber', // special: rendered by GasMaskAvatar component
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/gasmask_avatar-nsq2WhNPXn8BwEayozZWdW.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior', // Amber rank
+  },
+  {
     id: 'neon_crown',
     name: 'Неоновая корона',
     nameKk: 'Неон Таж',
@@ -194,7 +205,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
@@ -303,6 +314,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#ef4444', shadowColor: 'rgba(239,68,68,0.4)', bgClass: 'rgba(239,68,68,0.08)', borderClass: 'border-red-500/50', textClass: 'text-red-300', hoverClass: 'hover:bg-red-500/10' };
     case 'toxic_storm':
       return { borderColor: '#39ff14', shadowColor: 'rgba(57,255,20,0.4)', bgClass: 'rgba(57,255,20,0.08)', borderClass: 'border-green-400/50', textClass: 'text-green-300', hoverClass: 'hover:bg-green-500/10' };
+    case 'gasmask_amber':
+      return { borderColor: '#f59e0b', shadowColor: 'rgba(245,158,11,0.5)', bgClass: 'rgba(245,158,11,0.10)', borderClass: 'border-amber-500/60', textClass: 'text-amber-300', hoverClass: 'hover:bg-amber-500/10' };
     case 'diving_eagle':
     case 'sky_eagle':
       return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };

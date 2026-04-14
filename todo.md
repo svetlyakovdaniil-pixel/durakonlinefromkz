@@ -2883,3 +2883,13 @@
 - [x] Найти блок рендера превью аватарки в Season.tsx (попап Награда → клик на аватарку)
 - [x] Заменить кастомный рендер на AvatarDisplay с тем же avatarId и большим size
 - [x] Убедиться что аватарка в попапе выглядит идентично лобби — убран двойной overflow:hidden, AvatarDisplay сам управляет формой
+
+## Batch 81 — Аватарка Янтарь (Апокалипсис)
+- [x] Создать GasMaskAvatar.tsx — анимированная аватарка с пульсирующим отражением огня в линзах
+- [x] Добавить gasmask_amber в AVATAR_OPTIONS (shared/avatars.ts)
+- [x] Добавить gasmask_amber в ANIMATED_AVATAR_IDS (shared/avatars.ts)
+- [x] Добавить getAvatarAccentColors для gasmask_amber — янтарный/оранжевый
+- [x] Добавить rankRewardOverride для Янтаря в сезоне Апокалипсис (seasons.ts)
+- [x] Добавить gasmask_amber в AvatarDisplay.tsx
+- [x] Добавить GasMaskAvatar в AvatarPicker.tsx (AnimatedAvatar switch + isSelectedAnimated)
+- [x] Добавить GasMaskAvatar в AvatarEditorTab.tsx (COMPONENT_AVATAR_IDS + PreviewAvatar switch)

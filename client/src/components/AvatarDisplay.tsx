@@ -7,6 +7,7 @@ import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
 import { NeonCrownAvatar } from './NeonCrownAvatar';
 import { ToxicStormAvatar } from './ToxicStormAvatar';
+import { GasMaskAvatar } from './GasMaskAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -75,6 +76,9 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'toxic_storm') {
       return <ToxicStormAvatar size={size} />;
+    }
+    if (baseId === 'gasmask_amber') {
+      return <GasMaskAvatar size={size} />;
     }
     // Image-based avatar
     return (
