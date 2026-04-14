@@ -2915,3 +2915,7 @@
 - [x] Добавить rankRewardOverride frameId для Обсидиана в сезоне Апокалипсис
 - [x] Добавить MoltenLavaFrame в FrameDisplay/ShopModal/Season.tsx
 - [x] Добавить MoltenLavaFrame в Lobby.tsx (профиль игрока)
+
+## Batch 85 — Фикс отображения рамки в наградах сезона- [x] Найти где рендеряются награды в Season.tsx (RewardPopup/RankRewardCard)
+- [x] Добавить отображение frameId в блок наград (аналогично avatarId)
+- [x] Проверить что рамка видна в "Мой рейтинг" и в попапе "Ранги"

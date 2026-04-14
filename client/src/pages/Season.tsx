@@ -11,6 +11,7 @@ import { ObsidianNeonFrame } from '@/components/ObsidianNeonFrame';
 import { RubyNeonFrame } from '@/components/RubyNeonFrame';
 import { AmberNeonFrame } from '@/components/AmberNeonFrame';
 import { ZirconNeonFrame } from '@/components/ZirconNeonFrame';
+import { MoltenLavaFrame } from '@/components/MoltenLavaFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
@@ -360,6 +361,32 @@ function RewardPopup({
                 </div>
               </div>
             )}
+            {/* Frame — molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
+            {reward.frameId === 'molten_lava' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(200,40,0,0.08)', border: '1px solid rgba(255,80,0,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <MoltenLavaFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-gradient-to-br from-red-950 to-orange-950 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 text-orange-500">
+                        <circle cx="12" cy="12" r="7" stroke="rgba(30,10,5,0.9)" fill="rgba(10,5,5,0.8)" />
+                        <path d="M7 10 Q9 8 11 11 Q13 14 15 10 Q17 7 19 9" stroke="rgba(255,100,10,0.9)" strokeWidth="1.5" fill="none" />
+                      </svg>
+                    </div>
+                  </MoltenLavaFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(255,100,10,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 8}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,0,0.50)' }}>
+                    {locale === 'kk' ? 'Балқыған лава жақтауы' : locale === 'en' ? 'Exclusive molten lava frame' : 'Эксклюзивная рамка с расплавленной лавой'}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -691,6 +718,24 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                             <span>
                               {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">Obsidian - Season 7</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — molten_lava (Molten Obsidian, Season 8 Apocalypse) */}
+                        {rewardDef.frameId === 'molten_lava' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <MoltenLavaFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-gradient-to-br from-red-950 to-orange-950 flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-3.5 h-3.5 text-orange-500">
+                                    <circle cx="12" cy="12" r="7" stroke="rgba(30,10,5,0.9)" fill="rgba(10,5,5,0.8)" />
+                                    <path d="M7 10 Q9 8 11 11 Q13 14 15 10 Q17 7 19 9" stroke="rgba(255,100,10,0.9)" strokeWidth="1.5" fill="none" />
+                                  </svg>
+                                </div>
+                              </MoltenLavaFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(255,100,10,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 8}</span>
                             </span>
                           </div>
                         )}
