@@ -86,7 +86,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'underwater_jellyfish' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_underwater_world' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_underwater_world' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_underwater_world' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_underwater_world', frameId: 'obsidian_underwater' },
     ],
   },
   {
@@ -111,7 +111,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'anubis_god' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_egyptian_gods' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_egyptian_gods' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_egyptian_gods' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_egyptian_gods', frameId: 'obsidian_egyptian' },
     ],
   },
   {
@@ -136,7 +136,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'pirate_captain' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_pirate_islands' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_pirate_islands' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_pirate_islands' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_pirate_islands', frameId: 'obsidian_pirate' },
     ],
   },
   {
@@ -161,7 +161,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'norse_warrior' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_norse_gods' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_norse_gods' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_norse_gods' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_norse_gods', frameId: 'obsidian_norse' },
     ],
   },
   {
@@ -186,7 +186,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'space_explorer' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_space_odyssey' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_space_odyssey' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_space_odyssey' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_space_odyssey', frameId: 'obsidian_space' },
     ],
   },
   {
@@ -309,7 +309,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'cyberpunk_warrior' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_cyberpunk' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_cyberpunk' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_cyberpunk' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_cyberpunk', frameId: 'obsidian_cyberpunk' },
     ],
   },
   {
@@ -334,7 +334,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'hiphop_legend' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_hiphop_90s' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_hiphop_90s' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_hiphop_90s' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_hiphop_90s', frameId: 'obsidian_hiphop' },
     ],
   },
   {
@@ -359,7 +359,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'angel_demon' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_angels_demons' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_angels_demons' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_angels_demons' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_angels_demons', frameId: 'obsidian_angels_demons' },
     ],
   },
 ];

@@ -20,6 +20,14 @@ import { AmberNeonFrame } from './AmberNeonFrame';
 import { ZirconNeonFrame } from './ZirconNeonFrame';
 import { MoltenLavaFrame } from './MoltenLavaFrame';
 import { OniJapaneseFrame } from './OniJapaneseFrame';
+import { ObsidianUnderwaterFrame } from './ObsidianUnderwaterFrame';
+import { ObsidianEgyptianFrame } from './ObsidianEgyptianFrame';
+import { ObsidianPirateFrame } from './ObsidianPirateFrame';
+import { ObsidianNorseFrame } from './ObsidianNorseFrame';
+import { ObsidianSpaceFrame } from './ObsidianSpaceFrame';
+import { ObsidianCyberpunkFrame } from './ObsidianCyberpunkFrame';
+import { ObsidianHiphopFrame } from './ObsidianHiphopFrame';
+import { ObsidianAngelsDemonsFrame } from './ObsidianAngelsDemonsFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -242,6 +250,179 @@ export const AVATAR_FRAMES = [
     seasonOnly: true,
     seasonNumber: 9,
   },
+  {
+    id: 'obsidian_underwater',
+    name: 'Обсидиан - Season 1',
+    nameKk: 'Обсидиан - Season 1',
+    nameEn: 'Obsidian - Season 1',
+    description: 'Бездна океана: биолюминесцентные щупальца и тёмные воды. Награда за ранг Обсидиан в сезоне 1.',
+    descriptionKk: 'Мұхит түбі: биолюминесцентті жыланбалықтар. 1-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Ocean abyss: bioluminescent tentacles. Reward for Obsidian rank in Season 1.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-teal-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(0,200,180,0.9)" strokeWidth="1.5" fill="rgba(0,20,30,0.8)" />
+        <path d="M6 12 Q9 8 12 12 Q15 16 18 12" stroke="rgba(0,200,180,0.85)" strokeWidth="1.2" fill="none" />
+        <circle cx="8" cy="10" r="1" fill="rgba(100,255,240,0.9)" />
+        <circle cx="16" cy="14" r="1" fill="rgba(100,255,240,0.9)" />
+      </svg>
+    ),
+    iconColor: 'text-teal-400',
+    bgGradient: 'from-teal-950 to-cyan-950',
+    seasonOnly: true,
+    seasonNumber: 1,
+  },
+  {
+    id: 'obsidian_egyptian',
+    name: 'Обсидиан - Season 2',
+    nameKk: 'Обсидиан - Season 2',
+    nameEn: 'Obsidian - Season 2',
+    description: 'Тёмная магия фараонов: золотые иероглифы. Награда за ранг Обсидиан в сезоне 2.',
+    descriptionKk: 'Фараондардың қара сиқыры. 2-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Dark pharaoh magic: golden hieroglyphs. Reward for Obsidian rank in Season 2.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-amber-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(200,160,0,0.9)" strokeWidth="1.5" fill="rgba(20,10,0,0.8)" />
+        <ellipse cx="12" cy="10" rx="4" ry="2.5" fill="none" stroke="rgba(255,200,0,0.85)" strokeWidth="1" />
+        <circle cx="12" cy="10" r="1.2" fill="rgba(255,180,0,0.95)" />
+      </svg>
+    ),
+    iconColor: 'text-amber-400',
+    bgGradient: 'from-amber-950 to-yellow-950',
+    seasonOnly: true,
+    seasonNumber: 2,
+  },
+  {
+    id: 'obsidian_pirate',
+    name: 'Обсидиан - Season 3',
+    nameKk: 'Обсидиан - Season 3',
+    nameEn: 'Obsidian - Season 3',
+    description: 'Призрачный шторм: молнии и череп. Награда за ранг Обсидиан в сезоне 3.',
+    descriptionKk: 'Елес дауылы: найзағайлар мен бас сүйек. 3-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Ghost storm: lightning and skull. Reward for Obsidian rank in Season 3.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-blue-300">
+        <circle cx="12" cy="12" r="9" stroke="rgba(0,80,200,0.9)" strokeWidth="1.5" fill="rgba(0,5,20,0.8)" />
+        <circle cx="12" cy="10" r="3" fill="none" stroke="rgba(180,220,255,0.85)" strokeWidth="1" />
+        <circle cx="10" cy="9.5" r="0.8" fill="rgba(180,220,255,0.9)" />
+        <circle cx="14" cy="9.5" r="0.8" fill="rgba(180,220,255,0.9)" />
+      </svg>
+    ),
+    iconColor: 'text-blue-300',
+    bgGradient: 'from-blue-950 to-indigo-950',
+    seasonOnly: true,
+    seasonNumber: 3,
+  },
+  {
+    id: 'obsidian_norse',
+    name: 'Обсидиан - Season 4',
+    nameKk: 'Обсидиан - Season 4',
+    nameEn: 'Obsidian - Season 4',
+    description: 'Руны Иггдрасиля: аврора и молот Тора. Награда за ранг Обсидиан в сезоне 4.',
+    descriptionKk: 'Иггдрасиль рундары. 4-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Yggdrasil runes: aurora and Mjolnir. Reward for Obsidian rank in Season 4.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(140,60,220,0.9)" strokeWidth="1.5" fill="rgba(10,0,20,0.8)" />
+        <rect x="9" y="5" width="6" height="5" rx="1" fill="rgba(180,100,255,0.85)" />
+        <rect x="11" y="10" width="2" height="7" rx="0.5" fill="rgba(140,80,220,0.8)" />
+        <rect x="8" y="13" width="8" height="1.5" rx="0.5" fill="rgba(100,60,180,0.75)" />
+      </svg>
+    ),
+    iconColor: 'text-purple-400',
+    bgGradient: 'from-purple-950 to-violet-950',
+    seasonOnly: true,
+    seasonNumber: 4,
+  },
+  {
+    id: 'obsidian_space',
+    name: 'Обсидиан - Season 5',
+    nameKk: 'Обсидиан - Season 5',
+    nameEn: 'Obsidian - Season 5',
+    description: 'Чёрная дыра: галактическая спираль и сверхнова. Награда за ранг Обсидиан в сезоне 5.',
+    descriptionKk: 'Қара тесік: галактикалық спираль. 5-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Black hole: galactic spiral and supernova. Reward for Obsidian rank in Season 5.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-300">
+        <circle cx="12" cy="12" r="9" stroke="rgba(100,0,200,0.9)" strokeWidth="1.5" fill="rgba(5,0,15,0.8)" />
+        <circle cx="12" cy="12" r="3" fill="rgba(60,0,120,0.9)" stroke="rgba(200,100,255,0.8)" strokeWidth="0.8" />
+        <circle cx="7" cy="8" r="0.8" fill="rgba(200,150,255,0.9)" />
+        <circle cx="17" cy="9" r="0.6" fill="rgba(150,200,255,0.9)" />
+      </svg>
+    ),
+    iconColor: 'text-purple-300',
+    bgGradient: 'from-purple-950 to-indigo-950',
+    seasonOnly: true,
+    seasonNumber: 5,
+  },
+  {
+    id: 'obsidian_cyberpunk',
+    name: 'Обсидиан - Season 10',
+    nameKk: 'Обсидиан - Season 10',
+    nameEn: 'Obsidian - Season 10',
+    description: 'Void circuit: неоновый глитч и матричный дождь. Награда за ранг Обсидиан в сезоне 10.',
+    descriptionKk: 'Void circuit: неон глитч пен матрица. 10-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Void circuit: neon glitch and matrix rain. Reward for Obsidian rank in Season 10.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-green-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(0,255,180,0.9)" strokeWidth="1.5" fill="rgba(0,10,8,0.8)" />
+        <rect x="8" y="8" width="8" height="8" rx="1" fill="none" stroke="rgba(0,255,180,0.7)" strokeWidth="0.8" />
+        <rect x="10" y="10" width="4" height="4" rx="0.5" fill="rgba(255,0,180,0.6)" stroke="rgba(255,0,180,0.8)" strokeWidth="0.5" />
+      </svg>
+    ),
+    iconColor: 'text-green-400',
+    bgGradient: 'from-green-950 to-cyan-950',
+    seasonOnly: true,
+    seasonNumber: 10,
+  },
+  {
+    id: 'obsidian_hiphop',
+    name: 'Обсидиан - Season 11',
+    nameKk: 'Обсидиан - Season 11',
+    nameEn: 'Obsidian - Season 11',
+    description: 'Золотая цепь: винил и beat wave. Награда за ранг Обсидиан в сезоне 11.',
+    descriptionKk: 'Алтын тізбек: винил ойықтары. 11-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Gold chain: vinyl grooves and beat wave. Reward for Obsidian rank in Season 11.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-yellow-400">
+        <circle cx="12" cy="12" r="9" stroke="rgba(200,150,0,0.9)" strokeWidth="1.5" fill="rgba(10,5,0,0.8)" />
+        <circle cx="12" cy="12" r="4" fill="none" stroke="rgba(255,200,0,0.7)" strokeWidth="0.8" strokeDasharray="2 1" />
+        <circle cx="12" cy="12" r="1.5" fill="rgba(255,220,0,0.9)" />
+      </svg>
+    ),
+    iconColor: 'text-yellow-400',
+    bgGradient: 'from-yellow-950 to-amber-950',
+    seasonOnly: true,
+    seasonNumber: 11,
+  },
+  {
+    id: 'obsidian_angels_demons',
+    name: 'Обсидиан - Season 12',
+    nameKk: 'Обсидиан - Season 12',
+    nameEn: 'Obsidian - Season 12',
+    description: 'Двойственность: крылья ангела и адский огонь. Награда за ранг Обсидиан в сезоне 12.',
+    descriptionKk: 'Қосарлылық: періште қанаттары мен тозақ оты. 12-маусымдағы Обсидиан дәрежесі.',
+    descriptionEn: 'Duality: angel wings and hellfire. Reward for Obsidian rank in Season 12.',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-300">
+        <circle cx="12" cy="12" r="9" stroke="rgba(180,120,255,0.9)" strokeWidth="1.5" fill="rgba(10,0,15,0.8)" />
+        <path d="M12 4 Q8 7 6 12" stroke="rgba(255,220,100,0.8)" strokeWidth="1" fill="none" />
+        <path d="M12 4 Q16 7 18 12" stroke="rgba(220,0,60,0.8)" strokeWidth="1" fill="none" />
+        <ellipse cx="12" cy="4" rx="3" ry="1" fill="none" stroke="rgba(255,220,100,0.7)" strokeWidth="0.8" />
+      </svg>
+    ),
+    iconColor: 'text-purple-300',
+    bgGradient: 'from-purple-950 to-red-950',
+    seasonOnly: true,
+    seasonNumber: 12,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -271,6 +452,22 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <MoltenLavaFrame size={size} active={true}>{children}</MoltenLavaFrame>;
     case 'oni_japanese':
       return <OniJapaneseFrame size={size} active={true}>{children}</OniJapaneseFrame>;
+    case 'obsidian_underwater':
+      return <ObsidianUnderwaterFrame size={size} active={true}>{children}</ObsidianUnderwaterFrame>;
+    case 'obsidian_egyptian':
+      return <ObsidianEgyptianFrame size={size} active={true}>{children}</ObsidianEgyptianFrame>;
+    case 'obsidian_pirate':
+      return <ObsidianPirateFrame size={size} active={true}>{children}</ObsidianPirateFrame>;
+    case 'obsidian_norse':
+      return <ObsidianNorseFrame size={size} active={true}>{children}</ObsidianNorseFrame>;
+    case 'obsidian_space':
+      return <ObsidianSpaceFrame size={size} active={true}>{children}</ObsidianSpaceFrame>;
+    case 'obsidian_cyberpunk':
+      return <ObsidianCyberpunkFrame size={size} active={true}>{children}</ObsidianCyberpunkFrame>;
+    case 'obsidian_hiphop':
+      return <ObsidianHiphopFrame size={size} active={true}>{children}</ObsidianHiphopFrame>;
+    case 'obsidian_angels_demons':
+      return <ObsidianAngelsDemonsFrame size={size} active={true}>{children}</ObsidianAngelsDemonsFrame>;
     default:
       return <>{children}</>;
   }

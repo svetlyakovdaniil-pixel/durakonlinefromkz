@@ -2946,3 +2946,9 @@
 - [x] Установить аватарки Обсидиан как награды в конфиг сезонов S1-S5, S10-S12
 - [x] Добавить backend tRPC процедуру removePlayerItem для удаления предмета у игрока
 - [x] Добавить UI в AdminPanel для удаления предметов (аватарок, рамок) у конкретного игрока
+
+## Аватарки Обсидиан S6-S9
+- [ ] Сгенерировать аватарки Обсидиан для S6 (Казахский колорит), S7 (Неоновая эра), S8 (Постапокалипсис), S9 (Японские мотивы)
+- [ ] Создать компоненты ObsidianKazakhAvatar, ObsidianNeonAvatar, ObsidianPostApocAvatar, ObsidianJapaneseAvatar
+- [ ] Зарегистрировать в AvatarDisplay.tsx и shared/avatars.ts
+- [ ] Добавить в награды сезонов S6-S9 в seasons.ts (rankRewardOverrides для great_khan)
