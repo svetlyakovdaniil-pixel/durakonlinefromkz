@@ -157,7 +157,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     name: 'Апокалипсис',
     nameKk: 'Апокалипсис',
     nameEn: 'Apocalypse City',
-    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/apocalypse_city_avatar-Yo5n7ytzZLCNyJ8DJfaDt9.webp',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/apocalypse_city_v2-PCAEbAXE4wSCa8FzWXjFSi.webp',
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // Циркон rank
   },
@@ -193,8 +193,11 @@ export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
 export function getAvatarUrl(avatarId: string | null | undefined): string {
   const baseId = getBaseAvatarId(avatarId);
   const found = AVATAR_OPTIONS.find(a => a.id === baseId);
-  // Season reward avatars use a special component, not a URL
-  if (found?.seasonReward) return AVATAR_OPTIONS.find(a => a.id === 'wolf')?.url || AVATAR_OPTIONS[0].url;
+  // Season reward avatars that use a special animated component (url is a component key, not a real URL)
+  // return wolf as fallback. Static season reward avatars (url starts with http) return their real URL.
+  if (found?.seasonReward && found.url && !found.url.startsWith('http')) {
+    return AVATAR_OPTIONS.find(a => a.id === 'wolf')?.url || AVATAR_OPTIONS[0].url;
+  }
   return found?.url || AVATAR_OPTIONS[0].url;
 }
 

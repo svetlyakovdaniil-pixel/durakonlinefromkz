@@ -208,6 +208,28 @@ function RewardPopup({
               </div>
             )}
 
+            {/* Avatar — static (non-animated) preview */}
+            {seasonAvatarId && !isAnimated && (
+              <div
+                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 cursor-pointer transition-colors ${avatarAccent.hover}`}
+                style={{ background: avatarAccent.bg }}
+                onClick={() => setAvatarPreview(seasonAvatarId)}
+              >
+                <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${avatarAccent.border} flex-shrink-0`}>
+                  <AvatarDisplay avatarId={seasonAvatarId} size={48} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className={`${avatarAccent.text} font-semibold text-sm`}>
+                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
+                  </div>
+                  <div className={`${avatarAccent.text} opacity-60 text-xs flex items-center gap-1 mt-0.5`}>
+                    <ZoomIn className="w-3 h-3" />
+                    {locale === 'kk' ? 'Үлкейту үшін басыңыз' : locale === 'en' ? 'Tap to preview' : 'Нажмите для просмотра'}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Frame — great_khan (legacy) */}
             {reward.frameId === 'great_khan' && (
               <div
