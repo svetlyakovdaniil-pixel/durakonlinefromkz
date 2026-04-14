@@ -2836,3 +2836,15 @@
 - [x] Проверить место 2: Страница Сезон → Ранги — исправлено (добавлен блок для !isAnimated в RewardPopup)
 - [x] Проверить место 3: AvatarPicker — работает (суффиксированный ID из ownedAvatars показывается через img src=url)
 - [x] Проверить место 4: Уведомления — работает (notifAvatarId из n.data?.avatarId, AvatarDisplay без проверки isAnimated)
+
+## Batch 75 — Аватарка ToxicStorm для ранга Рубин сезона Апокалипсис
+
+- [x] Сгенерировать изображение токсичного грозового облака (оригинальная композиция, не копия)
+- [x] Создать ToxicStormAvatar.tsx с CSS-анимацией молний/вспышек внутри облака
+- [x] Добавить toxic_storm в shared/avatars.ts (ANIMATED_AVATAR_IDS, AVATAR_OPTIONS)
+- [x] Добавить в AvatarDisplay.tsx (baseId === 'toxic_storm')
+- [x] Добавить в shared/seasons.ts как награду за ранг Рубин сезона Апокалипсис
+- [x] Проверить место 1: Сезон → Мой рейтинг — работает (AvatarDisplay без проверки isAnimated)
+- [x] Проверить место 2: Сезон → Ранги (попап Рубина) — работает (isAnimated=true, блок с ZoomIn и превью)
+- [x] Проверить место 3: AvatarPicker — работает (суффиксированный ID из ownedAvatars через AvatarDisplay)
+- [x] Проверить место 4: Уведомления — работает (notifAvatarId через AvatarDisplay)

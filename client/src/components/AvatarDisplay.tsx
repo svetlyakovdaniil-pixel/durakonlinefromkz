@@ -6,6 +6,7 @@ import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
 import { NeonCrownAvatar } from './NeonCrownAvatar';
+import { ToxicStormAvatar } from './ToxicStormAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -63,6 +64,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   if (baseId === 'neon_cat') {
     return <NeonCatAvatar size={size} className={className} />;
+  }
+
+  if (baseId === 'toxic_storm') {
+    return <ToxicStormAvatar size={size} className={className} />;
   }
 
   if (baseId === 'neon_crown') {

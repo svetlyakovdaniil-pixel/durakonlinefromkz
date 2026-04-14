@@ -213,6 +213,7 @@ export const SEASONS: SeasonInfo[] = [
     nameEn: 'Apocalypse',
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
+      { rankKey: 'steppe_khan', avatarId: 'toxic_storm' },
     ],
     theme: {
       accent: '#ef4444',
