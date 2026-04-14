@@ -309,6 +309,13 @@
       "when": 1776158187522,
       "tag": "0043_faulty_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "5",
+      "when": 1776161322559,
+      "tag": "0044_sudden_starbolt",
+      "breakpoints": true
     }
   ]
 }

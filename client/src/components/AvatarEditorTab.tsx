@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { NeonCrownAvatar } from "./NeonCrownAvatar";
 import { NeonPawAvatar } from "./NeonPawAvatar";
 import { NeonDinoAvatar } from "./NeonDinoAvatar";
@@ -15,6 +15,7 @@ import { toast } from "sonner";
 import { Copy, RotateCcw, Camera, Save, CheckCircle } from "lucide-react";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 import { trpc } from "@/lib/trpc";
+import { useAvatarOffsets } from "@/hooks/useAvatarOffsets";
 
 /** Avatars that support offsetX/offsetY/imgScale adjustment */
 const EDITABLE_AVATARS = AVATAR_OPTIONS.filter(a => a.animated);
@@ -74,7 +75,7 @@ function PreviewAvatar({
 /**
  * AvatarEditorTab — Admin tool to visually adjust avatar image position.
  * Preview shows the avatar exactly as it appears in the Profile drawer.
- * "Применить" button saves values directly to shared/avatars.ts via tRPC.
+ * "Применить" button saves values to DB via tRPC — applies globally to all players.
  */
 export function AvatarEditorTab() {
   const [selectedAvatarId, setSelectedAvatarId] = useState('neon_crown');
@@ -84,15 +85,31 @@ export function AvatarEditorTab() {
     [selectedAvatarId],
   );
 
-  const [offsetX, setOffsetX] = useState(selectedOpt?.offsetX ?? 0);
-  const [offsetY, setOffsetY] = useState(selectedOpt?.offsetY ?? 0);
-  const [imgScale, setImgScale] = useState(selectedOpt?.imgScale ?? 1);
+  // Load current values from DB (takes priority over static defaults)
+  const { getOffsets, dbOffsets } = useAvatarOffsets();
+  const utils = trpc.useUtils();
+
+  const [offsetX, setOffsetX] = useState(0);
+  const [offsetY, setOffsetY] = useState(0);
+  const [imgScale, setImgScale] = useState(1);
   const [saved, setSaved] = useState(false);
+
+  // When DB offsets load or avatar changes — sync sliders to current DB/static values
+  useEffect(() => {
+    const vals = getOffsets(selectedAvatarId);
+    setOffsetX(vals.offsetX);
+    setOffsetY(vals.offsetY);
+    setImgScale(vals.imgScale);
+    setSaved(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAvatarId, dbOffsets]);
 
   const saveOffsets = trpc.admin.saveAvatarOffsets.useMutation({
     onSuccess: () => {
       setSaved(true);
-      toast.success("Сохранено в shared/avatars.ts! Сервер перезагрузится автоматически.");
+      // Invalidate the public cache so all clients get updated values
+      utils.avatarOffsets.getAll.invalidate();
+      toast.success("✅ Сохранено в базе данных! Изменения применены для всех игроков.");
       setTimeout(() => setSaved(false), 3000);
     },
     onError: (err) => {
@@ -102,17 +119,16 @@ export function AvatarEditorTab() {
 
   function handleAvatarChange(newId: string) {
     setSelectedAvatarId(newId);
-    const opt = AVATAR_OPTIONS.find(a => a.id === newId);
-    setOffsetX(opt?.offsetX ?? 0);
-    setOffsetY(opt?.offsetY ?? 0);
-    setImgScale(opt?.imgScale ?? 1);
+    // useEffect will sync sliders from DB/static values
     setSaved(false);
   }
 
   function handleReset() {
-    setOffsetX(selectedOpt?.offsetX ?? 0);
-    setOffsetY(selectedOpt?.offsetY ?? 0);
-    setImgScale(selectedOpt?.imgScale ?? 1);
+    // Reset to current DB/static values (discard unsaved slider changes)
+    const vals = getOffsets(selectedAvatarId);
+    setOffsetX(vals.offsetX);
+    setOffsetY(vals.offsetY);
+    setImgScale(vals.imgScale);
     setSaved(false);
   }
 

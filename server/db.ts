@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -2871,7 +2871,6 @@ export async function adminGetPlayerPurchases(profileId: number) {
 export async function getTotalTengeSpentByProfile(profileId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-
   const [row] = await db.select({
     total: sql<number>`COALESCE(SUM(ABS(${transactions.amount})), 0)`,
   })
@@ -2882,6 +2881,30 @@ export async function getTotalTengeSpentByProfile(profileId: number): Promise<nu
       sql`${transactions.amount} < 0`,
       sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
     ));
-
   return Number(row?.total ?? 0);
+}
+
+// ============================================================
+// AVATAR OFFSETS helpers
+// ============================================================
+
+/** Get all avatar offset overrides from DB */
+export async function getAllAvatarOffsets(): Promise<AvatarOffset[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(avatarOffsets);
+}
+
+/** Upsert avatar offset override for a specific avatar */
+export async function upsertAvatarOffset(
+  avatarId: string,
+  offsetX: number,
+  offsetY: number,
+  imgScale: number,
+): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(avatarOffsets)
+    .values({ avatarId, offsetX, offsetY, imgScale })
+    .onDuplicateKeyUpdate({ set: { offsetX, offsetY, imgScale } });
 }

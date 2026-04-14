@@ -6,7 +6,8 @@ import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
 import { NeonCrownAvatar } from './NeonCrownAvatar';
-import { getAvatarUrl, getBaseAvatarId, AVATAR_OPTIONS } from '../../../shared/avatars';
+import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
+import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
 interface AvatarDisplayProps {
   avatarId?: string | null;
@@ -20,12 +21,16 @@ interface AvatarDisplayProps {
  * - Supports season-suffixed IDs (e.g. 'neon_paw_2026Q3', 'diving_eagle_2026Q2')
  *   by stripping the suffix and rendering the base animated component.
  * - For animated avatars (khan, golden_horde, diving_eagle, great_khan, neon_paw): renders SVG+CSS component
+ * - For neon_crown: reads offsetX/offsetY/imgScale from DB (via useAvatarOffsets) — admin-controlled globally
  * - For all others: renders a standard <img> tag
  * Note: legacy 'sky_eagle' avatarId is treated as 'diving_eagle' for backwards compatibility
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
   // Strip season suffix to get the base component ID
   const baseId = getBaseAvatarId(avatarId);
+
+  // Load DB offsets (cached, shared across all instances via React Query)
+  const { getOffsets } = useAvatarOffsets();
 
   // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
   if (baseId === 'sky_eagle') {
@@ -61,8 +66,8 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
   }
 
   if (baseId === 'neon_crown') {
-    const opt = AVATAR_OPTIONS.find(a => a.id === 'neon_crown');
-    return <NeonCrownAvatar size={size} className={className} offsetX={opt?.offsetX ?? 0} offsetY={opt?.offsetY ?? 0} imgScale={opt?.imgScale ?? 1} />;
+    const { offsetX, offsetY, imgScale } = getOffsets('neon_crown');
+    return <NeonCrownAvatar size={size} className={className} offsetX={offsetX} offsetY={offsetY} imgScale={imgScale} />;
   }
 
   return (

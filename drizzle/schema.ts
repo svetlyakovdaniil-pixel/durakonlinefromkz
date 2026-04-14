@@ -512,3 +512,22 @@ export const seasonRewards = mysqlTable("season_rewards", {
 
 export type SeasonReward = typeof seasonRewards.$inferSelect;
 export type InsertSeasonReward = typeof seasonRewards.$inferInsert;
+
+/**
+ * Avatar offsets — admin-controlled per-avatar image position overrides.
+ * Stored in DB so changes apply globally to all players without redeployment.
+ */
+export const avatarOffsets = mysqlTable("avatar_offsets", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Avatar base ID (e.g. 'neon_crown') */
+  avatarId: varchar("avatarId", { length: 64 }).notNull().unique(),
+  /** Horizontal offset in percent (-50 to 50) */
+  offsetX: float("offsetX").default(0).notNull(),
+  /** Vertical offset in percent (-50 to 50) */
+  offsetY: float("offsetY").default(0).notNull(),
+  /** Image scale multiplier (0.5 to 2.0) */
+  imgScale: float("imgScale").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type AvatarOffset = typeof avatarOffsets.$inferSelect;
+export type InsertAvatarOffset = typeof avatarOffsets.$inferInsert;

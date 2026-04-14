@@ -2768,3 +2768,12 @@
 
 - [x] Добавить NeonCatAvatar и NeonCrownAvatar в AnimatedAvatar в AvatarPicker.tsx
 - [x] Добавить neon_dino, neon_cat, neon_crown в isSelectedAnimated в AvatarPicker.tsx
+
+## Batch 64 — Исправить редактор аватарок: хранить offsets в БД
+
+- [x] Создать таблицу avatar_offsets в drizzle/schema.ts (avatarId, offsetX, offsetY, imgScale)
+- [x] Добавить tRPC endpoint admin.saveAvatarOffsets — сохранять в БД вместо записи в файл
+- [x] Добавить tRPC endpoint avatars.getOffsets — публичный, возвращает все overrides из БД
+- [x] Обновить NeonCrownAvatar и AvatarDisplay для чтения offsets из БД через контекст/хук
+- [x] Обновить AvatarEditorTab — загружать текущие значения из БД, кнопка "Применить" пишет в БД
+- [x] Убрать offsetX/offsetY/imgScale из shared/avatars.ts (или оставить как fallback)

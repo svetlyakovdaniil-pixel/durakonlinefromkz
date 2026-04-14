@@ -85,6 +85,8 @@ import {
   getTotalTengeSpentByProfile,
   getWinsLeaderboard,
   getShanyraqLeaderboard,
+  getAllAvatarOffsets,
+  upsertAvatarOffset,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -1054,31 +1056,8 @@ export const appRouter = router({
         imgScale: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const fs = await import('fs');
-        const path = await import('path');
-        const filePath = path.resolve(process.cwd(), 'shared/avatars.ts');
-        let content = fs.readFileSync(filePath, 'utf-8');
-        // Find the avatar entry and update its offset values
-        // Pattern: id: 'avatarId', ... offsetX: X, offsetY: Y, imgScale: S
-        const idPattern = new RegExp(
-          `(id:\\s*'${input.avatarId}'[^}]*?)(offsetX:\\s*[\\d.-]+,\\s*\\n\\s*offsetY:\\s*[\\d.-]+,\\s*\\n\\s*imgScale:\\s*[\\d.-]+,)`,
-          's'
-        );
-        const replacement = `$1offsetX: ${input.offsetX},\n    offsetY: ${input.offsetY},\n    imgScale: ${input.imgScale},`;
-        if (idPattern.test(content)) {
-          content = content.replace(idPattern, replacement);
-        } else {
-          // If no existing offset fields, add them before the closing }
-          const entryPattern = new RegExp(
-            `(id:\\s*'${input.avatarId}'[^}]*?)(\\n  },)`,
-            's'
-          );
-          content = content.replace(
-            entryPattern,
-            `$1\n    offsetX: ${input.offsetX},\n    offsetY: ${input.offsetY},\n    imgScale: ${input.imgScale},$2`
-          );
-        }
-        fs.writeFileSync(filePath, content, 'utf-8');
+        // Save to DB — applies globally to all players without redeployment
+        await upsertAvatarOffset(input.avatarId, input.offsetX, input.offsetY, input.imgScale);
         await logAdminAction({
           adminId: ctx.user.id,
           adminName: ctx.user.name ?? null,
@@ -1087,6 +1066,13 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+  }),
+
+  // ── Public: Avatar offsets (for frontend to get DB overrides) ──
+  avatarOffsets: router({
+    getAll: publicProcedure.query(async () => {
+      return getAllAvatarOffsets();
+    }),
   }),
 
   // ── Public: Shop prices (for frontend to get overrides) ──
