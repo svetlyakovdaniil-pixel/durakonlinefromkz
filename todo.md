@@ -2907,3 +2907,11 @@
 
 ## Batch 83 — Переработка анимации NuclearMushroomAvatar
 - [x] Переписать NuclearMushroomAvatar.tsx — кинематографичные анимации через SVG-фильтры, Canvas-like CSS, частицы
+
+## Batch 84 — Рамка Обсидиан (Апокалипсис)
+- [x] Изучить структуру существующих рамок (ObsidianNeonFrame, AmberNeonFrame)
+- [x] Создать MoltenLavaFrame.tsx — Canvas 2D: трещины с лавой, капли, пульсирующий жар
+- [x] Добавить molten_lava в AVATAR_FRAMES (shared/avatars.ts или frames.ts)
+- [x] Добавить rankRewardOverride frameId для Обсидиана в сезоне Апокалипсис
+- [x] Добавить MoltenLavaFrame в FrameDisplay/ShopModal/Season.tsx
+- [x] Добавить MoltenLavaFrame в Lobby.tsx (профиль игрока)

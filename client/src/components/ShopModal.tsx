@@ -17,6 +17,7 @@ import { ObsidianNeonFrame } from './ObsidianNeonFrame';
 import { RubyNeonFrame } from './RubyNeonFrame';
 import { AmberNeonFrame } from './AmberNeonFrame';
 import { ZirconNeonFrame } from './ZirconNeonFrame';
+import { MoltenLavaFrame } from './MoltenLavaFrame';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -195,6 +196,27 @@ export const AVATAR_FRAMES = [
     bgGradient: 'from-orange-900 to-purple-950',
     seasonOnly: true,
   },
+  {
+    id: 'molten_lava',
+    name: 'Обсидиан - Season 8',
+    nameKk: 'Обсидиан - Season 8',
+    nameEn: 'Obsidian - Season 8',
+    description: 'Расплавленная лава: трещины в обсидиане светятся расплавленным огнём. Награда за ранг Обсидиан в сезоне 8 «Апокалипсис».',
+    descriptionKk: 'Балқыған лава: обсидиандағы жарықтар балқыған отпен жарық етеді. 8-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
+    descriptionEn: 'Molten lava: cracks in obsidian glow with liquid fire. Reward for Obsidian rank in Season 8 «Apocalypse».',
+    price: 0,
+    icon: () => (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-orange-500">
+        <circle cx="12" cy="12" r="9" stroke="rgba(30,10,5,0.9)" fill="rgba(10,5,5,0.8)" />
+        <path d="M6 10 Q8 8 10 11 Q12 14 14 10 Q16 6 18 9" stroke="rgba(255,100,10,0.9)" strokeWidth="1.5" fill="none" />
+        <path d="M5 14 Q7 12 9 15 Q11 18 13 14 Q15 10 17 13" stroke="rgba(255,60,0,0.7)" strokeWidth="1" fill="none" />
+        <circle cx="12" cy="12" r="3" fill="rgba(255,80,0,0.3)" stroke="rgba(255,120,20,0.6)" strokeWidth="1" />
+      </svg>
+    ),
+    iconColor: 'text-orange-500',
+    bgGradient: 'from-red-950 to-orange-950',
+    seasonOnly: true,
+  },
 ] as const;
 
 /** Renders the correct frame component for a given frame id */
@@ -220,6 +242,8 @@ function FramePreview({ frameId, size, children }: { frameId: string; size: numb
       return <AmberNeonFrame size={size} active={true}>{children}</AmberNeonFrame>;
     case 'zircon_neon':
       return <ZirconNeonFrame size={size} active={true}>{children}</ZirconNeonFrame>;
+    case 'molten_lava':
+      return <MoltenLavaFrame size={size} active={true}>{children}</MoltenLavaFrame>;
     default:
       return <>{children}</>;
   }

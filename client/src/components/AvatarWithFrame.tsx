@@ -9,6 +9,7 @@ import { ObsidianNeonFrame } from './ObsidianNeonFrame';
 import { RubyNeonFrame } from './RubyNeonFrame';
 import { AmberNeonFrame } from './AmberNeonFrame';
 import { ZirconNeonFrame } from './ZirconNeonFrame';
+import { MoltenLavaFrame } from './MoltenLavaFrame';
 
 /**
  * Renders the correct animated frame component around children based on frameId.
@@ -53,6 +54,8 @@ export function FrameWrapper({
       return <AmberNeonFrame size={size} active={true} className={className}>{children}</AmberNeonFrame>;
     case 'zircon_neon':
       return <ZirconNeonFrame size={size} active={true} className={className}>{children}</ZirconNeonFrame>;
+    case 'molten_lava':
+      return <MoltenLavaFrame size={size} active={true} className={className}>{children}</MoltenLavaFrame>;
     default:
       return <div className={className}>{children}</div>;
   }
@@ -113,6 +116,14 @@ export function FrameIcon({ frameId, className = 'w-5 h-5' }: { frameId: string;
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`${className} text-orange-400`}>
           <circle cx="12" cy="12" r="9" stroke="rgba(249,115,22,0.9)" />
           <circle cx="12" cy="12" r="6" stroke="rgba(168,85,247,0.85)" />
+        </svg>
+      );
+    case 'molten_lava':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className={`${className} text-orange-500`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(30,10,5,0.9)" fill="rgba(10,5,5,0.8)" />
+          <path d="M6 10 Q8 8 10 11 Q12 14 14 10 Q16 6 18 9" stroke="rgba(255,100,10,0.9)" strokeWidth="1.5" fill="none" />
+          <path d="M5 14 Q7 12 9 15 Q11 18 13 14 Q15 10 17 13" stroke="rgba(255,60,0,0.7)" strokeWidth="1" fill="none" />
         </svg>
       );
     default:

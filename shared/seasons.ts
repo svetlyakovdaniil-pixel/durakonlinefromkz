@@ -215,7 +215,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
       { rankKey: 'steppe_khan', avatarId: 'toxic_storm' },
       { rankKey: 'golden_horde_warrior', avatarId: 'gasmask_amber' },
-      { rankKey: 'great_khan', avatarId: 'nuclear_mushroom' },
+      { rankKey: 'great_khan', avatarId: 'nuclear_mushroom', frameId: 'molten_lava' },
     ],
     theme: {
       accent: '#ef4444',
