@@ -11,6 +11,7 @@ import { GasMaskAvatar } from './GasMaskAvatar';
 import { NuclearMushroomAvatar } from './NuclearMushroomAvatar';
 import { AmaterasuAvatar } from './avatars/AmaterasuAvatar';
 import { SamuraiAvatar } from './avatars/SamuraiAvatar';
+import { OniMaskAvatar } from './avatars/OniMaskAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -91,6 +92,9 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'samurai_amber') {
       return <SamuraiAvatar size={size} />;
+    }
+    if (baseId === 'oni_mask_obsidian') {
+      return <OniMaskAvatar size={size} />;
     }
     // Image-based avatar
     return (

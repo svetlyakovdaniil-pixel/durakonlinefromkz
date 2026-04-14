@@ -12,6 +12,7 @@ import { GasMaskAvatar } from "./GasMaskAvatar";
 import { NuclearMushroomAvatar } from "./NuclearMushroomAvatar";
 import { AmaterasuAvatar } from "./avatars/AmaterasuAvatar";
 import { SamuraiAvatar } from "./avatars/SamuraiAvatar";
+import { OniMaskAvatar } from "./avatars/OniMaskAvatar";
 import { ObsidianNeonFrame } from "./ObsidianNeonFrame";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ import { useAvatarOffsets } from "@/hooks/useAvatarOffsets";
 const EDITABLE_AVATARS = AVATAR_OPTIONS.filter(a => a.id !== 'bot');
 
 /** Animated avatar IDs that use component-based rendering */
-const COMPONENT_AVATAR_IDS = ['neon_crown', 'neon_paw', 'neon_dino', 'neon_cat', 'great_khan', 'khan', 'golden_horde', 'diving_eagle', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber'];
+const COMPONENT_AVATAR_IDS = ['neon_crown', 'neon_paw', 'neon_dino', 'neon_cat', 'great_khan', 'khan', 'golden_horde', 'diving_eagle', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian'];
 
 /**
  * Render an avatar by ID with offset/scale applied.
@@ -106,6 +107,8 @@ function PreviewAvatar({
       return withTransform(<AmaterasuAvatar size={size} />);
     case 'samurai_amber':
       return withTransform(<SamuraiAvatar size={size} />);
+    case 'oni_mask_obsidian':
+      return withTransform(<OniMaskAvatar size={size} />);
     default: {
       // Image-based avatar — apply offsets via CSS transform
       const opt = AVATAR_OPTIONS.find(a => a.id === avatarId);

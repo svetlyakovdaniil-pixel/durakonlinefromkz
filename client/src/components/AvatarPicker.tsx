@@ -25,6 +25,7 @@ import { GasMaskAvatar } from './GasMaskAvatar';
 import { NuclearMushroomAvatar } from './NuclearMushroomAvatar';
 import { AmaterasuAvatar } from './avatars/AmaterasuAvatar';
 import { SamuraiAvatar } from './avatars/SamuraiAvatar';
+import { OniMaskAvatar } from './avatars/OniMaskAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -52,6 +53,7 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'nuclear_mushroom') return <NuclearMushroomAvatar size={size} />;
   if (baseId === 'amaterasu_ruby') return <AmaterasuAvatar size={size} />;
   if (baseId === 'samurai_amber') return <SamuraiAvatar size={size} />;
+  if (baseId === 'oni_mask_obsidian') return <OniMaskAvatar size={size} />;
   return null;
 }
 

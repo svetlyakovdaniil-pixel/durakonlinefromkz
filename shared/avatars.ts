@@ -206,6 +206,17 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
   },
   {
+    id: 'oni_mask_obsidian',
+    name: 'Маска Они',
+    nameKk: 'Они Маскасы',
+    nameEn: 'Oni Mask',
+    url: 'oni_mask_obsidian',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian-8U38h2ctQyLXMQ3LasAjNh.webp',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'obsidian', // Obsidian rank
+  },
+  {
     id: 'amaterasu_ruby',
     name: 'Аматэрасу',
     nameKk: 'Аматэрасу',
@@ -247,7 +258,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
@@ -362,6 +373,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#ff4500', shadowColor: 'rgba(255,69,0,0.6)', bgClass: 'rgba(255,69,0,0.10)', borderClass: 'border-orange-600/60', textClass: 'text-orange-400', hoverClass: 'hover:bg-orange-600/10' };
     case 'samurai_amber':
       return { borderColor: '#CC0000', shadowColor: 'rgba(200,0,0,0.5)', bgClass: 'rgba(200,0,0,0.08)', borderClass: 'border-red-600/60', textClass: 'text-red-300', hoverClass: 'hover:bg-red-600/10' };
+    case 'oni_mask_obsidian':
+      return { borderColor: '#D4AF37', shadowColor: 'rgba(212,175,55,0.6)', bgClass: 'rgba(212,175,55,0.08)', borderClass: 'border-yellow-600/60', textClass: 'text-yellow-400', hoverClass: 'hover:bg-yellow-600/10' };
     case 'amaterasu_ruby':
       return { borderColor: '#FF6B00', shadowColor: 'rgba(255,107,0,0.5)', bgClass: 'rgba(255,107,0,0.08)', borderClass: 'border-orange-500/60', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
     case 'japanese_motifs_zircon':

@@ -238,6 +238,7 @@ export const SEASONS: SeasonInfo[] = [
     rankRewardOverrides: [
       { rankKey: 'steppe_khan', avatarId: 'amaterasu_ruby' },
       { rankKey: 'golden_horde_warrior', avatarId: 'samurai_amber' },
+      { rankKey: 'obsidian', avatarId: 'oni_mask_obsidian' },
       { rankKey: 'sky_eagle', avatarId: 'japanese_motifs_zircon' },
     ],
     theme: {
