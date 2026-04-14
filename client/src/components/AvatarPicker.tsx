@@ -100,9 +100,26 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         };
       });
 
-    // Merge: static items first, then seasonal items not already represented
-    // (static items include base IDs; seasonal items have unique suffixed IDs)
-    return [...staticItems, ...seasonalItems];
+    // Collect all base IDs that have at least one owned seasonal variant
+    const ownedSeasonalBaseIds = new Set(
+      ownedAvatars
+        .filter(id => isSeasonSuffixedAvatar(id))
+        .map(id => getBaseAvatarId(id))
+    );
+
+    // Filter out static items whose base ID is covered by an owned seasonal variant
+    // This removes the locked duplicate (e.g. base 'diving_eagle') when
+    // the player already owns 'diving_eagle_2026Q2'
+    const filteredStaticItems = staticItems.filter(item => {
+      if (item.isSeasonReward && ownedSeasonalBaseIds.has(item.id)) {
+        // Hide the base locked version — seasonal version will show instead
+        return false;
+      }
+      return true;
+    });
+
+    // Merge: filtered static items first, then seasonal items
+    return [...filteredStaticItems, ...seasonalItems];
   }, [ownedAvatars, locale]);
 
   const canSelectAvatar = (avatarId: string) => {

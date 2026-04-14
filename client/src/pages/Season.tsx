@@ -226,7 +226,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` - Season ${seasonNumber}` : ''}
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
                     {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
@@ -330,7 +330,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(0,212,255,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан — Неон Дәуірі' : locale === 'en' ? 'Obsidian — Neon Era' : 'Обсидиан — Неоновая эра'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: Obsidian - Season 7
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(0,180,255,0.50)' }}>
                     {locale === 'kk' ? 'Қос орбиталы эксклюзивті жақтау' : locale === 'en' ? 'Exclusive dual-orbit animated frame' : 'Эксклюзивная рамка с двойной орбитой'}
@@ -599,7 +599,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </GreatKhanFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` Season ${seasonNumber}` : ''}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` - Season ${seasonNumber}` : ''}</span>
                             </span>
                           </div>
                         )}
@@ -668,7 +668,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан — Неон Дәуірі' : locale === 'en' ? 'Obsidian — Neon Era' : 'Обсидиан — Неоновая эра'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">Obsidian - Season 7</span>
                             </span>
                           </div>
                         )}

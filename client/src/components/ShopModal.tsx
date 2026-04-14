@@ -102,12 +102,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'great_khan',
-    name: 'Обсидиан',
-    nameKk: 'Обсидиан',
-    nameEn: 'Obsidian',
-    description: 'Эксклюзивная рамка для победителей сезона с рангом Обсидиан.',
-    descriptionKk: 'Маусымда Обсидиан дәрежесіне жеткен жеңімпаздарға арналған эксклюзивті жақтау.',
-    descriptionEn: 'Exclusive frame for season winners who reach the Obsidian rank.',
+    name: 'Обсидиан - Season 6',
+    nameKk: 'Обсидиан - Season 6',
+    nameEn: 'Obsidian - Season 6',
+    description: 'Награда за ранг Обсидиан в сезоне 6 «Казахский колорит».',
+    descriptionKk: '6-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
+    descriptionEn: 'Reward for Obsidian rank in Season 6 «Kazakh Colorit».',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-yellow-400">
@@ -121,12 +121,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'obsidian_neon',
-    name: 'Обсидиан — Неоновая эра',
-    nameKk: 'Обсидиан — Неон Дәуірі',
-    nameEn: 'Obsidian — Neon Era',
-    description: 'Двойная орбита: два кольца вращаются в противоположные стороны. Награда за ранг Обсидиан в сезоне Неоновая эра.',
-    descriptionKk: 'Қос орбита: екі сақина қарама-қарсы бағытта айналады. Неон Дәуірі маусымындағы Обсидиан дәрежесі үшін сыйлық.',
-    descriptionEn: 'Dual orbit: two rings rotating in opposite directions. Reward for Obsidian rank in the Neon Era season.',
+    name: 'Обсидиан - Season 7',
+    nameKk: 'Обсидиан - Season 7',
+    nameEn: 'Obsidian - Season 7',
+    description: 'Двойная орбита: два кольца вращаются в противоположные стороны. Награда за ранг Обсидиан в сезоне 7 «Неоновая эра».',
+    descriptionKk: 'Қос орбита: екі сақина қарама-қарсы бағытта айналады. 7-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
+    descriptionEn: 'Dual orbit: two rings rotating in opposite directions. Reward for Obsidian rank in Season 7 «Neon Era».',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
