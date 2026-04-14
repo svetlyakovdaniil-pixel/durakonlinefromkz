@@ -237,6 +237,7 @@ export const SEASONS: SeasonInfo[] = [
     nameEn: 'Japanese Motifs',
     rankRewardOverrides: [
       { rankKey: 'steppe_khan', avatarId: 'amaterasu_ruby' },
+      { rankKey: 'golden_horde_warrior', avatarId: 'samurai_amber' },
       { rankKey: 'sky_eagle', avatarId: 'japanese_motifs_zircon' },
     ],
     theme: {
