@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface NuclearMushroomAvatarProps {
   size?: number;
@@ -6,241 +6,341 @@ interface NuclearMushroomAvatarProps {
 }
 
 /**
- * NuclearMushroomAvatar — animated nuclear mushroom cloud avatar for Apocalypse Season, Obsidian rank.
+ * NuclearMushroomAvatar v2 — cinematic nuclear explosion avatar.
  *
- * Animation layers (all CSS, no canvas):
- * 1. BASE DUST RING  — wide elliptical dust cloud at the bottom slowly expands & fades outward
- * 2. SHOCKWAVE RING  — thin bright ring pulses outward from the base every ~3s
- * 3. MUSHROOM CAP PULSE — the top cap brightens/dims with an orange-white glow
- * 4. INNER FIREBALL  — small intense white-hot core in the cap flickers rapidly
- * 5. OUTER FIRE HALO — large soft orange halo around the whole cap breathes slowly
- * 6. STEM HEAT SHIMMER — subtle vertical distortion on the stem column
- * 7. AMBIENT GLOW    — overall warm orange vignette that pulses with the explosion
- * 8. RADIATION SPARKS — 4 tiny bright particles that drift upward from the cap
+ * Technique: Canvas 2D animation loop — no CSS keyframes, fully procedural.
+ *
+ * Effects:
+ *  - Shockwave ring: expands from ground zero, fades with motion blur
+ *  - Ground dust: wide elliptical cloud that billows outward
+ *  - Stem column: animated turbulent smoke rising from ground
+ *  - Mushroom cap: organic pulsing fire cloud with turbulence
+ *  - Inner fireball: white-hot core with rapid flicker
+ *  - Ember particles: dozens of glowing embers drifting upward
+ *  - Radiation halo: slow-breathing outer glow around the cap
+ *  - Heat distortion: subtle shimmer on the stem
  */
 export function NuclearMushroomAvatar({ size = 48, className = '' }: NuclearMushroomAvatarProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+  const rafRef = useRef<number>(0);
+  const startRef = useRef<number>(0);
+
   const imgUrl =
     'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp';
 
-  const s = size;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const W = size;
+    const H = size;
+    canvas.width = W;
+    canvas.height = H;
+
+    // Pre-load the base image
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = imgUrl;
+    imgRef.current = img;
+
+    // ── Particle system ──────────────────────────────────────────────
+    interface Particle {
+      x: number; y: number;
+      vx: number; vy: number;
+      life: number; maxLife: number;
+      r: number;
+      type: 'ember' | 'ash' | 'spark';
+    }
+
+    const particles: Particle[] = [];
+
+    function spawnEmber() {
+      // Embers spawn around the cap (top 40% of image)
+      const angle = Math.random() * Math.PI * 2;
+      const dist = (0.15 + Math.random() * 0.18) * W;
+      const cx = W * 0.5 + Math.cos(angle) * dist * 0.6;
+      const cy = H * 0.28 + Math.sin(angle) * dist * 0.35;
+      particles.push({
+        x: cx, y: cy,
+        vx: (Math.random() - 0.5) * 0.6,
+        vy: -(0.3 + Math.random() * 0.7),
+        life: 1,
+        maxLife: 60 + Math.random() * 80,
+        r: 0.8 + Math.random() * 1.6,
+        type: 'ember',
+      });
+    }
+
+    function spawnAsh() {
+      // Ash spawns from the base dust cloud
+      const x = W * (0.2 + Math.random() * 0.6);
+      const y = H * (0.75 + Math.random() * 0.1);
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 1.2,
+        vy: -(0.1 + Math.random() * 0.3),
+        life: 1,
+        maxLife: 80 + Math.random() * 60,
+        r: 1.0 + Math.random() * 2.0,
+        type: 'ash',
+      });
+    }
+
+    function spawnSpark() {
+      // Bright sparks shoot from the inner fireball
+      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+      const speed = 1.2 + Math.random() * 2.0;
+      particles.push({
+        x: W * 0.5 + (Math.random() - 0.5) * W * 0.12,
+        y: H * 0.22,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        maxLife: 25 + Math.random() * 20,
+        r: 0.6 + Math.random() * 1.0,
+        type: 'spark',
+      });
+    }
+
+    // ── Shockwave state ───────────────────────────────────────────────
+    interface Wave { r: number; opacity: number; }
+    const waves: Wave[] = [];
+    let nextWave = 0;
+
+    // ── Noise helper (simple 1D pseudo-noise) ─────────────────────────
+    function noise(x: number): number {
+      const i = Math.floor(x);
+      const f = x - i;
+      const u = f * f * (3 - 2 * f);
+      const a = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+      const b = Math.sin((i + 1) * 127.1 + 311.7) * 43758.5453;
+      return (a - Math.floor(a)) * (1 - u) + (b - Math.floor(b)) * u;
+    }
+
+    // ── Main render loop ──────────────────────────────────────────────
+    function draw(ts: number) {
+      if (!ctx) return;
+      if (!startRef.current) startRef.current = ts;
+      const t = (ts - startRef.current) / 1000; // seconds
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Clip to circle
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(W / 2, H / 2, W / 2, 0, Math.PI * 2);
+      ctx.clip();
+
+      // ── Draw base image ──
+      if (imgRef.current?.complete) {
+        ctx.drawImage(imgRef.current, 0, 0, W, H);
+      } else {
+        ctx.fillStyle = '#0a0a0a';
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // ── Ground dust billow ──
+      // Two overlapping ellipses that slowly expand and fade
+      const dustPhase = (t * 0.35) % 1;
+      const dustScale = 0.6 + dustPhase * 0.8;
+      const dustAlpha = Math.max(0, 0.55 - dustPhase * 0.55);
+      ctx.save();
+      ctx.globalAlpha = dustAlpha;
+      ctx.globalCompositeOperation = 'screen';
+      const dustGrad = ctx.createRadialGradient(
+        W * 0.5, H * 0.82, 0,
+        W * 0.5, H * 0.82, W * 0.52 * dustScale,
+      );
+      dustGrad.addColorStop(0, 'rgba(200,100,20,0.7)');
+      dustGrad.addColorStop(0.4, 'rgba(140,60,10,0.4)');
+      dustGrad.addColorStop(1, 'rgba(80,30,5,0)');
+      ctx.fillStyle = dustGrad;
+      ctx.beginPath();
+      ctx.ellipse(W * 0.5, H * 0.82, W * 0.52 * dustScale, H * 0.10 * dustScale, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ── Shockwave rings ──
+      if (t > nextWave) {
+        waves.push({ r: W * 0.06, opacity: 0.9 });
+        nextWave = t + 2.2 + Math.random() * 0.8;
+      }
+      for (let i = waves.length - 1; i >= 0; i--) {
+        const w = waves[i];
+        w.r += W * 0.012;
+        w.opacity -= 0.018;
+        if (w.opacity <= 0) { waves.splice(i, 1); continue; }
+        ctx.save();
+        ctx.globalAlpha = w.opacity;
+        ctx.strokeStyle = `rgba(255,180,60,${w.opacity})`;
+        ctx.lineWidth = Math.max(0.5, 2.5 * (1 - w.r / (W * 0.6)));
+        ctx.beginPath();
+        ctx.ellipse(W * 0.5, H * 0.82, w.r, w.r * 0.22, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // ── Organic cap glow — turbulent, breathing ──
+      const capBreath = 0.5 + 0.5 * Math.sin(t * 1.8);
+      const capFlicker = 0.7 + 0.3 * noise(t * 7.3);
+      const capAlpha = (0.35 + 0.30 * capBreath) * capFlicker;
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = capAlpha;
+      const capGrad = ctx.createRadialGradient(
+        W * 0.5, H * 0.30, 0,
+        W * 0.5, H * 0.30, W * 0.42,
+      );
+      capGrad.addColorStop(0, 'rgba(255,240,180,0.9)');
+      capGrad.addColorStop(0.25, 'rgba(255,160,30,0.7)');
+      capGrad.addColorStop(0.55, 'rgba(220,60,5,0.4)');
+      capGrad.addColorStop(1, 'rgba(100,10,0,0)');
+      ctx.fillStyle = capGrad;
+      ctx.beginPath();
+      ctx.ellipse(W * 0.5, H * 0.30, W * 0.42, H * 0.30, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ── Inner fireball — rapid organic flicker ──
+      const fbFlicker = 0.6 + 0.4 * noise(t * 14.1);
+      const fbPulse = 0.5 + 0.5 * Math.sin(t * 4.2 + 1.1);
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = (0.55 + 0.35 * fbPulse) * fbFlicker;
+      const fbGrad = ctx.createRadialGradient(
+        W * 0.5, H * 0.24, 0,
+        W * 0.5, H * 0.24, W * 0.20,
+      );
+      fbGrad.addColorStop(0, 'rgba(255,255,230,1.0)');
+      fbGrad.addColorStop(0.3, 'rgba(255,220,100,0.8)');
+      fbGrad.addColorStop(0.65, 'rgba(255,100,10,0.4)');
+      fbGrad.addColorStop(1, 'rgba(200,30,0,0)');
+      ctx.fillStyle = fbGrad;
+      ctx.beginPath();
+      ctx.arc(W * 0.5, H * 0.24, W * 0.20, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ── Stem heat shimmer ──
+      const shimmer = 0.08 + 0.10 * noise(t * 3.5);
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = shimmer;
+      const stemGrad = ctx.createLinearGradient(W * 0.38, H * 0.45, W * 0.62, H * 0.80);
+      stemGrad.addColorStop(0, 'rgba(255,140,20,0.6)');
+      stemGrad.addColorStop(0.5, 'rgba(200,80,10,0.3)');
+      stemGrad.addColorStop(1, 'rgba(100,30,0,0)');
+      ctx.fillStyle = stemGrad;
+      ctx.beginPath();
+      ctx.ellipse(W * 0.5, H * 0.625, W * 0.12, H * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ── Spawn particles ──
+      if (Math.random() < 0.35) spawnEmber();
+      if (Math.random() < 0.25) spawnAsh();
+      if (Math.random() < 0.12) spawnSpark();
+
+      // ── Draw & update particles ──
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 1 / p.maxLife;
+        if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+        const alpha = p.life * (p.life < 0.3 ? p.life / 0.3 : 1);
+        ctx.save();
+        ctx.globalCompositeOperation = 'screen';
+
+        if (p.type === 'ember') {
+          // Glowing ember — orange-red with soft halo
+          ctx.globalAlpha = alpha * 0.9;
+          const eg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3);
+          eg.addColorStop(0, 'rgba(255,220,80,1)');
+          eg.addColorStop(0.4, 'rgba(255,100,10,0.6)');
+          eg.addColorStop(1, 'rgba(200,30,0,0)');
+          ctx.fillStyle = eg;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r * 3, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (p.type === 'ash') {
+          // Ash — dark brownish, larger, slow
+          ctx.globalAlpha = alpha * 0.4;
+          ctx.fillStyle = `rgba(120,60,20,0.6)`;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Spark — tiny bright white-yellow streak
+          ctx.globalAlpha = alpha * 0.95;
+          ctx.strokeStyle = 'rgba(255,255,180,0.9)';
+          ctx.lineWidth = p.r * 0.8;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p.x - p.vx * 4, p.y - p.vy * 4);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // ── Outer radiation halo ──
+      const haloBreath = 0.5 + 0.5 * Math.sin(t * 0.9 + 0.5);
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ctx.globalAlpha = 0.12 + 0.10 * haloBreath;
+      const haloGrad = ctx.createRadialGradient(W * 0.5, H * 0.38, W * 0.28, W * 0.5, H * 0.38, W * 0.52);
+      haloGrad.addColorStop(0, 'rgba(255,120,20,0)');
+      haloGrad.addColorStop(0.6, 'rgba(255,80,10,0.35)');
+      haloGrad.addColorStop(1, 'rgba(180,30,0,0)');
+      ctx.fillStyle = haloGrad;
+      ctx.beginPath();
+      ctx.arc(W * 0.5, H * 0.38, W * 0.52, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // ── Vignette ──
+      ctx.save();
+      const vigGrad = ctx.createRadialGradient(W * 0.5, H * 0.5, W * 0.3, W * 0.5, H * 0.5, W * 0.52);
+      vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      vigGrad.addColorStop(1, 'rgba(0,0,0,0.45)');
+      ctx.fillStyle = vigGrad;
+      ctx.fillRect(0, 0, W, H);
+      ctx.restore();
+
+      ctx.restore(); // end clip
+
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
+    // Start loop once image is ready (or immediately if cached)
+    if (img.complete) {
+      rafRef.current = requestAnimationFrame(draw);
+    } else {
+      img.onload = () => { rafRef.current = requestAnimationFrame(draw); };
+    }
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, [size]);
 
   return (
-    <div
+    <canvas
+      ref={canvasRef}
+      width={size}
+      height={size}
       className={className}
       style={{
-        width: s,
-        height: s,
-        position: 'relative',
+        width: size,
+        height: size,
         borderRadius: '50%',
-        overflow: 'hidden',
+        display: 'block',
         flexShrink: 0,
       }}
-    >
-      <style>{`
-        /* ── 1. Dust ring expands from base ── */
-        @keyframes nma-dust {
-          0%   { transform: translate(-50%, -50%) scale(0.7);  opacity: 0.55; }
-          60%  { transform: translate(-50%, -50%) scale(1.35); opacity: 0.30; }
-          100% { transform: translate(-50%, -50%) scale(1.70); opacity: 0; }
-        }
-        /* ── 2. Shockwave ring ── */
-        @keyframes nma-shockwave {
-          0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.80; border-width: 3px; }
-          70%  { transform: translate(-50%, -50%) scale(1.6); opacity: 0.20; border-width: 1px; }
-          100% { transform: translate(-50%, -50%) scale(2.0); opacity: 0;    border-width: 0px; }
-        }
-        /* ── 3. Cap pulse (orange-white glow) ── */
-        @keyframes nma-cap-pulse {
-          0%,100% { opacity: 0.45; transform: translate(-50%, -50%) scale(1.00); }
-          25%     { opacity: 0.75; transform: translate(-50%, -50%) scale(1.08); }
-          55%     { opacity: 0.35; transform: translate(-50%, -50%) scale(0.96); }
-          80%     { opacity: 0.65; transform: translate(-50%, -50%) scale(1.05); }
-        }
-        /* ── 4. Inner fireball flicker ── */
-        @keyframes nma-fireball {
-          0%,100% { opacity: 0.55; transform: translate(-50%, -50%) scale(1.0); }
-          10%     { opacity: 0.90; transform: translate(-50%, -50%) scale(1.15); }
-          20%     { opacity: 0.50; transform: translate(-50%, -50%) scale(0.95); }
-          35%     { opacity: 0.95; transform: translate(-50%, -50%) scale(1.20); }
-          50%     { opacity: 0.45; transform: translate(-50%, -50%) scale(0.90); }
-          70%     { opacity: 0.85; transform: translate(-50%, -50%) scale(1.12); }
-          85%     { opacity: 0.40; transform: translate(-50%, -50%) scale(0.92); }
-        }
-        /* ── 5. Outer fire halo breathes ── */
-        @keyframes nma-halo {
-          0%,100% { opacity: 0.20; transform: translate(-50%, -50%) scale(1.00); }
-          40%     { opacity: 0.45; transform: translate(-50%, -50%) scale(1.10); }
-          70%     { opacity: 0.15; transform: translate(-50%, -50%) scale(0.95); }
-        }
-        /* ── 6. Ambient warm vignette ── */
-        @keyframes nma-ambient {
-          0%,100% { opacity: 0.18; }
-          35%     { opacity: 0.38; }
-          65%     { opacity: 0.12; }
-        }
-        /* ── 7. Radiation spark drift ── */
-        @keyframes nma-spark-a {
-          0%   { transform: translate(0px, 0px);   opacity: 0.9; }
-          100% { transform: translate(-8px, -18px); opacity: 0; }
-        }
-        @keyframes nma-spark-b {
-          0%   { transform: translate(0px, 0px);   opacity: 0.8; }
-          100% { transform: translate(10px, -22px); opacity: 0; }
-        }
-        @keyframes nma-spark-c {
-          0%   { transform: translate(0px, 0px);   opacity: 0.7; }
-          100% { transform: translate(-4px, -20px); opacity: 0; }
-        }
-        @keyframes nma-spark-d {
-          0%   { transform: translate(0px, 0px);   opacity: 0.85; }
-          100% { transform: translate(6px, -16px);  opacity: 0; }
-        }
-        /* ── 8. Stem shimmer ── */
-        @keyframes nma-stem {
-          0%,100% { opacity: 0.08; }
-          50%     { opacity: 0.22; }
-        }
-      `}</style>
-
-      {/* ── Base image ── */}
-      <img
-        src={imgUrl}
-        alt="Nuclear Mushroom"
-        style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%', display: 'block' }}
-      />
-
-      {/* ── Layer 1: Dust ring at base (~80% from top) ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '82%',
-          width: '90%',
-          height: '18%',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at center, rgba(180,100,20,0.55) 0%, rgba(120,60,10,0.30) 50%, transparent 75%)',
-          animation: 'nma-dust 2.8s ease-out infinite',
-          pointerEvents: 'none',
-          mixBlendMode: 'screen',
-        }}
-      />
-
-      {/* ── Layer 2: Shockwave ring ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '82%',
-          width: '70%',
-          height: '12%',
-          borderRadius: '50%',
-          border: '3px solid rgba(255,160,40,0.85)',
-          background: 'transparent',
-          animation: 'nma-shockwave 2.8s ease-out infinite 0.4s',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 3: Cap orange-white glow ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '28%',
-          width: '72%',
-          height: '46%',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 55%, rgba(255,200,60,0.70) 0%, rgba(255,100,10,0.45) 40%, rgba(200,40,0,0.20) 65%, transparent 80%)',
-          animation: 'nma-cap-pulse 2.4s ease-in-out infinite',
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 4: Inner fireball (white-hot core) ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '24%',
-          width: '38%',
-          height: '28%',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 60%, rgba(255,255,220,0.95) 0%, rgba(255,230,100,0.70) 35%, rgba(255,140,20,0.40) 60%, transparent 80%)',
-          animation: 'nma-fireball 1.6s ease-in-out infinite',
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 5: Outer fire halo ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '50%',
-          top: '22%',
-          width: '90%',
-          height: '58%',
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse at 50% 50%, rgba(255,120,20,0.35) 0%, rgba(200,60,0,0.18) 50%, transparent 75%)',
-          animation: 'nma-halo 3.6s ease-in-out infinite',
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 6: Stem heat shimmer ── */}
-      <div
-        style={{
-          position: 'absolute',
-          left: '38%',
-          top: '45%',
-          width: '24%',
-          height: '36%',
-          borderRadius: '40%',
-          background: 'linear-gradient(to bottom, rgba(255,120,20,0.18) 0%, rgba(180,60,10,0.10) 60%, transparent 100%)',
-          animation: 'nma-stem 2.2s ease-in-out infinite',
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 7: Ambient warm vignette ── */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '50%',
-          background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(255,100,20,0.25) 0%, transparent 65%)',
-          animation: 'nma-ambient 3.0s ease-in-out infinite',
-          mixBlendMode: 'screen',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* ── Layer 8: Radiation sparks (4 particles drifting up from cap) ── */}
-      {[
-        { left: '38%', top: '18%', anim: 'nma-spark-a', delay: '0s',    color: 'rgba(255,240,120,0.9)', r: 2.5 },
-        { left: '58%', top: '16%', anim: 'nma-spark-b', delay: '0.7s',  color: 'rgba(255,200,80,0.85)', r: 2 },
-        { left: '46%', top: '14%', anim: 'nma-spark-c', delay: '1.3s',  color: 'rgba(255,255,180,0.8)', r: 1.8 },
-        { left: '52%', top: '20%', anim: 'nma-spark-d', delay: '1.9s',  color: 'rgba(255,180,60,0.9)',  r: 2.2 },
-      ].map((sp, i) => (
-        <div
-          key={i}
-          style={{
-            position: 'absolute',
-            left: sp.left,
-            top: sp.top,
-            width: `${sp.r * 2}px`,
-            height: `${sp.r * 2}px`,
-            borderRadius: '50%',
-            background: sp.color,
-            boxShadow: `0 0 ${sp.r * 3}px ${sp.color}`,
-            animation: `${sp.anim} 2.0s ease-out infinite ${sp.delay}`,
-            pointerEvents: 'none',
-          }}
-        />
-      ))}
-    </div>
+    />
   );
 }

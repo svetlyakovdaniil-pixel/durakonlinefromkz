@@ -2904,3 +2904,6 @@
 - [x] Добавить nuclear_mushroom в AvatarDisplay.tsx
 - [x] Добавить NuclearMushroomAvatar в AvatarPicker.tsx
 - [x] Добавить NuclearMushroomAvatar в AvatarEditorTab.tsx
+
+## Batch 83 — Переработка анимации NuclearMushroomAvatar
+- [x] Переписать NuclearMushroomAvatar.tsx — кинематографичные анимации через SVG-фильтры, Canvas-like CSS, частицы
