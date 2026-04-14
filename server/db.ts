@@ -1,6 +1,6 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -2907,4 +2907,27 @@ export async function upsertAvatarOffset(
   await db.insert(avatarOffsets)
     .values({ avatarId, offsetX, offsetY, imgScale })
     .onDuplicateKeyUpdate({ set: { offsetX, offsetY, imgScale } });
+}
+
+// ─── Season Test State ───────────────────────────────────────────────────────────────────────────────────
+
+/** Get the current season test state (singleton row id=1) */
+export async function getSeasonTestState(): Promise<SeasonTestState | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(seasonTestState).where(eq(seasonTestState.id, 1)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** Upsert the season test state singleton */
+export async function upsertSeasonTestState(data: {
+  seasonKey: string;
+  step: string;
+  isActive: boolean;
+}): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(seasonTestState)
+    .values({ id: 1, ...data })
+    .onDuplicateKeyUpdate({ set: data });
 }

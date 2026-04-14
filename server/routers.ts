@@ -87,6 +87,8 @@ import {
   getShanyraqLeaderboard,
   getAllAvatarOffsets,
   upsertAvatarOffset,
+  getSeasonTestState,
+  upsertSeasonTestState,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -1601,6 +1603,13 @@ export const appRouter = router({
         return { updated: adminProfiles.length, rating: input.rating, seasonKey };
       }),
 
+    /** Get the persisted season test state from DB */
+    testGetState: adminProcedure
+      .query(async () => {
+        const state = await getSeasonTestState();
+        return state ?? { seasonKey: getCurrentSeasonKey(), step: 'idle', isActive: false };
+      }),
+
     /** Admin test: simulate season end — create rewards + notifications + credit balances */
     testSimulateSeasonEnd: adminProcedure
       .input(z.object({ seasonKey: z.string().optional() }))
@@ -1609,6 +1618,8 @@ export const appRouter = router({
       if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
       const seasonKey = input.seasonKey ?? getCurrentSeasonKey();
       const result = await processSeasonEnd(seasonKey);
+      // Persist state to DB so it survives page reloads
+      await upsertSeasonTestState({ seasonKey, step: 'simulated', isActive: true });
       return { ...result, seasonKey };
     }),
 
@@ -1676,6 +1687,9 @@ export const appRouter = router({
           } catch {}
         }
       }
+
+      // Reset persisted test state
+      await upsertSeasonTestState({ seasonKey, step: 'rolled_back', isActive: false });
 
       return { rolledBack, seasonKey };
     }),

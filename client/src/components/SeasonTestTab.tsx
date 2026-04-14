@@ -2,14 +2,18 @@
  * SeasonTestTab — Admin tool for testing season reward mechanics.
  * Allows selecting any season (2025-Q1 … 2027-Q4), setting test ratings,
  * simulating season end, and rolling back.
+ *
+ * State is persisted in DB (season_test_state) so it survives page reloads.
+ * "Откатить всё" button is active whenever isActive=true in DB.
  */
 import { trpc } from "@/lib/trpc";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import {
   FlaskConical, Trophy, RotateCcw, Play, ChevronRight,
   CheckCircle2, AlertCircle, Users, Star, Coins, RefreshCw, Calendar,
+  ShieldAlert,
 } from "lucide-react";
 import { SEASON_BASE_YEAR, SEASON_RANKS, SEASON_REWARD_DEFS, SEASONS, getSeasonInfo, getSeasonBounds, getSeasonRank, getCurrentSeasonKey } from "@shared/seasons";
 
@@ -52,27 +56,32 @@ function buildAllSeasonKeys(): { key: string; label: string; isCurrent: boolean 
 export function SeasonTestTab() {
   const allSeasonKeys = useMemo(() => buildAllSeasonKeys(), []);
   const currentKey = useMemo(() => getCurrentSeasonKey(), []);
+  const utils = trpc.useUtils();
 
-  const [selectedSeasonKey, setSelectedSeasonKey] = useState<string>(() => {
-    // Restore last test season from localStorage (admin convenience)
-    try { return localStorage.getItem('admin_test_season') ?? currentKey; } catch { return currentKey; }
+  // Load persisted state from DB
+  const { data: dbState, isLoading: dbStateLoading } = trpc.season.testGetState.useQuery(undefined, {
+    refetchOnWindowFocus: false,
   });
+
+  const [selectedSeasonKey, setSelectedSeasonKey] = useState<string>(currentKey);
   const [customRating, setCustomRating] = useState<string>("15000");
   const [step, setStep] = useState<"idle" | "rated" | "simulated" | "rolled_back">("idle");
 
-  // Reset step when season changes and persist to localStorage
+  // Sync local state from DB on load
+  useEffect(() => {
+    if (dbState) {
+      setSelectedSeasonKey(dbState.seasonKey);
+      setStep(dbState.step as "idle" | "rated" | "simulated" | "rolled_back");
+    }
+  }, [dbState]);
+
+  // Reset step when season changes
   const handleSeasonChange = (key: string) => {
     setSelectedSeasonKey(key);
-    setStep("idle");
-    try {
-      if (key === currentKey) {
-        localStorage.removeItem('admin_test_season');
-      } else {
-        localStorage.setItem('admin_test_season', key);
-      }
-      // Notify other tabs/components
-      window.dispatchEvent(new StorageEvent('storage', { key: 'admin_test_season', newValue: key === currentKey ? null : key }));
-    } catch { /* ignore */ }
+    // Only reset step if no active test is running
+    if (!dbState?.isActive) {
+      setStep("idle");
+    }
   };
 
   const { data, refetch, isLoading } = trpc.season.testGetAdminProfiles.useQuery(
@@ -93,6 +102,7 @@ export function SeasonTestTab() {
     onSuccess: (res) => {
       toast.success(`✓ Конец сезона симулирован: обработано ${res.processed} игроков (${res.seasonKey})`);
       setStep("simulated");
+      utils.season.testGetState.invalidate();
       refetch();
     },
     onError: (e) => toast.error(`Ошибка: ${e.message}`),
@@ -102,12 +112,18 @@ export function SeasonTestTab() {
     onSuccess: (res) => {
       toast.success(`✓ Откат выполнен: сброшено ${res.rolledBack} наград (${res.seasonKey})`);
       setStep("rolled_back");
+      utils.season.testGetState.invalidate();
       refetch();
     },
     onError: (e) => toast.error(`Ошибка: ${e.message}`),
   });
 
   const isBusy = setRatings.isPending || simulate.isPending || rollback.isPending;
+
+  // The rollback button is active if:
+  // 1. DB says isActive=true (test was simulated and not yet rolled back), OR
+  // 2. Local step is "simulated"
+  const canRollback = (dbState?.isActive === true) || step === "simulated";
 
   const handleSetRating = (rating: number) => {
     setRatings.mutate({ rating, seasonKey: selectedSeasonKey });
@@ -140,6 +156,18 @@ export function SeasonTestTab() {
           </p>
         </div>
       </div>
+
+      {/* Active test warning banner */}
+      {dbState?.isActive && (
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-red-950/40 border border-red-800/50 text-sm text-red-300">
+          <ShieldAlert className="w-5 h-5 shrink-0 text-red-400" />
+          <div>
+            <span className="font-semibold text-red-200">Тест активен</span>
+            {" — "}сезон <strong className="text-amber-300">{dbState.seasonKey}</strong> был симулирован.
+            Нажмите <strong>"Откатить всё"</strong> ниже, чтобы сбросить тестовые данные.
+          </div>
+        </div>
+      )}
 
       {/* Season selector */}
       <div className="bg-gray-900/60 border border-amber-800/40 rounded-xl p-4 space-y-3">
@@ -246,33 +274,32 @@ export function SeasonTestTab() {
                   <th className="text-left py-2 px-2 text-gray-500 font-medium">Ранг</th>
                   <th className="text-right py-2 px-2 text-gray-500 font-medium">Шаныраки</th>
                   <th className="text-right py-2 px-2 text-gray-500 font-medium">Тенге</th>
-                  <th className="text-center py-2 px-2 text-gray-500 font-medium">Награда</th>
+                  <th className="text-left py-2 px-2 text-gray-500 font-medium">Награда</th>
                 </tr>
               </thead>
               <tbody>
-                {data.profiles.map((p) => {
+                {data.profiles.map(p => {
                   const rank = getSeasonRank(p.seasonRating);
                   return (
-                    <tr key={p.profileId} className="border-b border-gray-800/50 hover:bg-gray-800/20">
+                    <tr key={p.profileId} className="border-b border-gray-800/50 hover:bg-gray-800/30">
                       <td className="py-2 px-2 text-gray-200 font-medium">{p.displayName ?? `#${p.gameId}`}</td>
                       <td className="py-2 px-2">
-                        <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${
-                          p.role === "admin" ? "bg-red-900/40 text-red-300" : "bg-blue-900/40 text-blue-300"
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          p.role === 'admin' ? 'bg-red-900/40 text-red-300' : 'bg-blue-900/40 text-blue-300'
                         }`}>{p.role}</span>
                       </td>
                       <td className="py-2 px-2 text-right font-mono text-amber-300">{formatNum(p.seasonRating)}</td>
                       <td className="py-2 px-2">
                         <span className="font-medium" style={{ color: rank.color }}>{rank.nameRu}</span>
                       </td>
-                      <td className="py-2 px-2 text-right text-purple-300">{formatNum(p.balanceShanyrak)}</td>
+                      <td className="py-2 px-2 text-right text-cyan-300">{formatNum(p.balanceShanyrak)}</td>
                       <td className="py-2 px-2 text-right text-yellow-300">{formatNum(p.balanceTenge)}</td>
-                      <td className="py-2 px-2 text-center">
+                      <td className="py-2 px-2">
                         {p.hasReward ? (
-                          <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs ${
-                            p.rewardClaimed ? "bg-green-900/30 text-green-400" : "bg-amber-900/30 text-amber-400"
-                          }`}>
+                          <span className="flex items-center gap-1 text-green-400">
                             <CheckCircle2 className="w-3 h-3" />
-                            {p.rewardClaimed ? "Получена" : "Ожидает"}
+                            {p.rewardRankKey}
+                            {p.rewardClaimed ? " (получена)" : " (не получена)"}
                           </span>
                         ) : (
                           <span className="text-gray-600">—</span>
@@ -287,92 +314,76 @@ export function SeasonTestTab() {
         </div>
       )}
 
-      {/* Step 1: Set rating */}
-      <div className="bg-gray-900/60 border border-gray-800 rounded-xl p-4 space-y-4">
+      {/* Step 1: Set ratings */}
+      <div className="bg-gray-900/60 border border-amber-800/40 rounded-xl p-4 space-y-3">
         <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 rounded-full bg-amber-900/40 border border-amber-700/40 flex items-center justify-center text-xs font-bold text-amber-400">1</div>
-          <span className="text-sm font-semibold text-gray-200">Установить рейтинг сезона</span>
+          <span className="text-sm font-semibold text-gray-200">Установить тестовый рейтинг</span>
         </div>
         <p className="text-xs text-gray-400">
-          Установит указанный рейтинг всем admin/gm игрокам в сезоне <strong className="text-amber-400">{selectedSeasonKey}</strong>. Это позволит протестировать конкретный ранг и его награды.
+          Установит рейтинг сезона <strong className="text-amber-400">{selectedSeasonKey}</strong> для всех admin/gm игроков.
+          Используйте пресеты рангов или введите своё значение.
         </p>
 
         {/* Rank presets */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          {RANK_PRESETS.map(preset => {
-            const reward = preset.rewardDef;
-            return (
-              <button
-                key={preset.key}
-                onClick={() => handleSetRating(preset.rating)}
-                disabled={isBusy}
-                className="text-left p-2.5 rounded-lg border border-gray-700/60 hover:border-gray-600 bg-gray-800/40 hover:bg-gray-800/70 transition-all disabled:opacity-50 group"
-              >
-                <div className="font-medium text-xs mb-1 truncate" style={{ color: preset.color }}>
-                  {preset.nameRu}
-                </div>
-                <div className="text-xs text-gray-400 font-mono">{formatNum(preset.rating)} очков</div>
-                {reward && (
-                  <div className="text-xs text-gray-500 mt-1">
-                    {formatNum(reward.shanyraks)} ш.
-                    {reward.tenge > 0 && ` + ${reward.tenge}₸`}
-                    {reward.avatarId && <span className="text-amber-600"> + 🎭</span>}
-                  </div>
-                )}
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap gap-2">
+          {RANK_PRESETS.map(r => (
+            <button
+              key={r.key}
+              onClick={() => handleSetRating(r.rating)}
+              disabled={isBusy}
+              className="px-2.5 py-1.5 rounded-lg border text-xs font-medium transition-colors hover:opacity-80 disabled:opacity-50"
+              style={{ borderColor: r.color + '60', color: r.color, backgroundColor: r.color + '15' }}
+            >
+              {r.nameRu} ({formatNum(r.rating)})
+            </button>
+          ))}
         </div>
 
-        {/* Custom rating input */}
+        {/* Custom rating */}
         <div className="flex gap-2">
-          <div className="relative flex-1">
-            <input
-              type="number"
-              min={0}
-              max={99999}
-              value={customRating}
-              onChange={e => setCustomRating(e.target.value)}
-              placeholder="Произвольный рейтинг"
-              className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-amber-600 font-mono"
-            />
-            {customRating && !isNaN(parseInt(customRating)) && (
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium" style={{ color: getSeasonRank(parseInt(customRating)).color }}>
-                {getSeasonRank(parseInt(customRating)).nameRu}
-              </div>
-            )}
-          </div>
+          <input
+            type="number"
+            value={customRating}
+            onChange={e => setCustomRating(e.target.value)}
+            placeholder="Свой рейтинг"
+            min={0}
+            max={99999}
+            className="flex-1 bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-amber-600"
+          />
           <Button
             onClick={handleCustomRating}
             disabled={isBusy}
-            className="bg-amber-700 hover:bg-amber-600 text-white shrink-0"
+            className="bg-amber-800 hover:bg-amber-700 text-white gap-2 text-sm"
           >
-            {setRatings.isPending ? <RefreshCw className="w-4 h-4 animate-spin" /> : "Установить"}
+            {setRatings.isPending
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Установка...</>
+              : <><Users className="w-4 h-4" /> Установить</>
+            }
           </Button>
         </div>
       </div>
 
       {/* Step 2: Simulate season end */}
       <div className={`bg-gray-900/60 border rounded-xl p-4 space-y-3 transition-colors ${
-        step === "idle" ? "border-gray-800 opacity-60" : "border-gray-700"
+        step === "idle" ? "border-gray-800 opacity-70" : "border-amber-800/40"
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 rounded-full bg-amber-900/40 border border-amber-700/40 flex items-center justify-center text-xs font-bold text-amber-400">2</div>
-          <span className="text-sm font-semibold text-gray-200">Симулировать конец сезона</span>
+          <span className="text-sm font-semibold text-gray-200">Запустить конец сезона</span>
         </div>
         <p className="text-xs text-gray-400">
           Запустит <code className="bg-gray-800 px-1 rounded text-amber-300">processSeasonEnd</code> для сезона <strong className="text-amber-400">{selectedSeasonKey}</strong>:
-          создаст записи наград, зачислит шаныраки/тенге на балансы и отправит уведомления.
-          После этого зайдите в игру и проверьте уведомление в колоколе.
+          создаст season_rewards, начислит шаныраки/тенге, отправит уведомления.
         </p>
         <div className="flex items-center gap-3">
           <Button
             onClick={() => simulate.mutate({ seasonKey: selectedSeasonKey })}
             disabled={isBusy || step === "idle"}
-            className="bg-green-800 hover:bg-green-700 text-white gap-2"
+            className="bg-amber-700 hover:bg-amber-600 text-white gap-2"
           >
             {simulate.isPending
-              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Обработка...</>
+              ? <><RefreshCw className="w-4 h-4 animate-spin" /> Симуляция...</>
               : <><Play className="w-4 h-4" /> Запустить конец сезона</>
             }
           </Button>
@@ -386,20 +397,25 @@ export function SeasonTestTab() {
 
       {/* Step 3: Rollback */}
       <div className={`bg-gray-900/60 border rounded-xl p-4 space-y-3 transition-colors ${
-        step !== "simulated" ? "border-gray-800 opacity-60" : "border-red-900/50"
+        !canRollback ? "border-gray-800 opacity-60" : "border-red-900/50"
       }`}>
         <div className="flex items-center gap-2 mb-1">
           <div className="w-6 h-6 rounded-full bg-red-900/40 border border-red-700/40 flex items-center justify-center text-xs font-bold text-red-400">3</div>
           <span className="text-sm font-semibold text-gray-200">Откатить тестовые данные</span>
+          {dbState?.isActive && (
+            <span className="px-2 py-0.5 rounded-full bg-red-900/40 border border-red-700/40 text-red-300 text-xs font-bold animate-pulse">
+              АКТИВЕН
+            </span>
+          )}
         </div>
         <p className="text-xs text-gray-400">
-          Удалит season_rewards и season_ratings за сезон <strong className="text-amber-400">{selectedSeasonKey}</strong> для всех admin/gm игроков,
+          Удалит season_rewards и season_ratings за сезон <strong className="text-amber-400">{dbState?.isActive ? dbState.seasonKey : selectedSeasonKey}</strong> для всех admin/gm игроков,
           вернёт зачисленные балансы и удалит уведомления о наградах.
         </p>
         <div className="flex items-center gap-3">
           <Button
-            onClick={() => rollback.mutate({ seasonKey: selectedSeasonKey })}
-            disabled={isBusy || step !== "simulated"}
+            onClick={() => rollback.mutate({ seasonKey: dbState?.isActive ? dbState.seasonKey : selectedSeasonKey })}
+            disabled={isBusy || !canRollback}
             variant="outline"
             className="border-red-800 text-red-400 hover:bg-red-900/20 hover:text-red-300 gap-2"
           >
@@ -418,18 +434,10 @@ export function SeasonTestTab() {
 
       {/* Info box */}
       <div className="flex gap-3 p-3 rounded-xl bg-blue-950/30 border border-blue-900/40 text-xs text-blue-300">
-        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-blue-400" />
         <div className="space-y-1">
-          <div className="font-semibold">Как тестировать:</div>
-          <ol className="list-decimal list-inside space-y-1 text-blue-400">
-            <li>Выберите нужный сезон из выпадающего списка выше</li>
-            <li>Выберите ранг или введите произвольный рейтинг → нажмите «Установить»</li>
-            <li>Откройте игру в другой вкладке и убедитесь, что ранг отображается корректно в разделе «Сезон»</li>
-            <li>Вернитесь сюда → нажмите «Запустить конец сезона»</li>
-            <li>В игре откройте уведомления (колокол) — должно появиться уведомление о награде</li>
-            <li>Проверьте popup с наградой, аватарку, баланс шаныраков</li>
-            <li>После тестирования нажмите «Откатить всё»</li>
-          </ol>
+          <p><strong className="text-blue-200">Состояние теста сохраняется в БД</strong> — кнопка "Откатить всё" остаётся активной после обновления страницы, пока тест не будет откатан.</p>
+          <p>Все операции применяются только к игрокам с ролью <code className="bg-blue-900/30 px-1 rounded">admin</code> или <code className="bg-blue-900/30 px-1 rounded">gm</code>.</p>
         </div>
       </div>
     </div>

@@ -531,3 +531,20 @@ export const avatarOffsets = mysqlTable("avatar_offsets", {
 });
 export type AvatarOffset = typeof avatarOffsets.$inferSelect;
 export type InsertAvatarOffset = typeof avatarOffsets.$inferInsert;
+
+/**
+ * Season test state — persists the admin’s active test season across page reloads.
+ * Only one row exists (id = 1). isActive=true means a test is in progress.
+ */
+export const seasonTestState = mysqlTable("season_test_state", {
+  id: int("id").primaryKey().default(1),
+  /** The season key being tested, e.g. '2026-Q3' */
+  seasonKey: varchar("seasonKey", { length: 16 }).notNull(),
+  /** Current step in the test flow */
+  step: varchar("step", { length: 32 }).notNull().default('idle'), // idle | rated | simulated | rolled_back
+  /** Whether a test is currently active (simulate was run, rollback not yet done) */
+  isActive: boolean("isActive").notNull().default(false),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SeasonTestState = typeof seasonTestState.$inferSelect;
+export type InsertSeasonTestState = typeof seasonTestState.$inferInsert;
