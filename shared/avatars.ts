@@ -200,7 +200,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Самурай',
     nameEn: 'Samurai',
     url: 'samurai_amber',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/samurai_amber-hDio3ysifSWtxJiVhaAeGd.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
