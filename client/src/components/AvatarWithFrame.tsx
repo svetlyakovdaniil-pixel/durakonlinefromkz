@@ -10,6 +10,7 @@ import { RubyNeonFrame } from './RubyNeonFrame';
 import { AmberNeonFrame } from './AmberNeonFrame';
 import { ZirconNeonFrame } from './ZirconNeonFrame';
 import { MoltenLavaFrame } from './MoltenLavaFrame';
+import { OniJapaneseFrame } from './OniJapaneseFrame';
 
 /**
  * Renders the correct animated frame component around children based on frameId.
@@ -56,6 +57,8 @@ export function FrameWrapper({
       return <ZirconNeonFrame size={size} active={true} className={className}>{children}</ZirconNeonFrame>;
     case 'molten_lava':
       return <MoltenLavaFrame size={size} active={true} className={className}>{children}</MoltenLavaFrame>;
+    case 'oni_japanese':
+      return <OniJapaneseFrame size={size} active={true} className={className}>{children}</OniJapaneseFrame>;
     default:
       return <div className={className}>{children}</div>;
   }
@@ -124,6 +127,16 @@ export function FrameIcon({ frameId, className = 'w-5 h-5' }: { frameId: string;
           <circle cx="12" cy="12" r="9" stroke="rgba(30,10,5,0.9)" fill="rgba(10,5,5,0.8)" />
           <path d="M6 10 Q8 8 10 11 Q12 14 14 10 Q16 6 18 9" stroke="rgba(255,100,10,0.9)" strokeWidth="1.5" fill="none" />
           <path d="M5 14 Q7 12 9 15 Q11 18 13 14 Q15 10 17 13" stroke="rgba(255,60,0,0.7)" strokeWidth="1" fill="none" />
+        </svg>
+      );
+    case 'oni_japanese':
+      return (
+        <svg viewBox="0 0 24 24" fill="none" className={`${className} text-red-500`}>
+          <circle cx="12" cy="12" r="9" stroke="rgba(180,20,0,0.9)" strokeWidth="1.5" fill="rgba(10,0,0,0.8)" />
+          <path d="M9 7 Q10 4 12 6 Q14 4 15 7" fill="rgba(212,140,0,0.9)" />
+          <ellipse cx="9.5" cy="11" rx="1.5" ry="1" fill="rgba(255,80,0,0.9)" />
+          <ellipse cx="14.5" cy="11" rx="1.5" ry="1" fill="rgba(255,80,0,0.9)" />
+          <path d="M9 15 Q12 17 15 15" stroke="rgba(212,140,0,0.8)" strokeWidth="1" fill="none" />
         </svg>
       );
     default:
