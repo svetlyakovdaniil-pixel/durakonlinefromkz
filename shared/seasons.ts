@@ -320,6 +320,14 @@ export function getCurrentSeasonKey(): string {
 }
 
 /**
+ * Get the current season number (1–12, cycling).
+ * Useful for filtering season-locked content.
+ */
+export function getCurrentSeasonNumber(): number {
+  return getSeasonInfo(getCurrentSeasonKey()).seasonNumber;
+}
+
+/**
  * Parse a season key "YYYY-QN" into year and quarter.
  * Falls back to current season on invalid input.
  */

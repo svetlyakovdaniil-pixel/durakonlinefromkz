@@ -17,6 +17,8 @@ export interface AvatarOption {
   seasonReward?: boolean;
   /** Minimum season rank ID required to unlock this avatar */
   seasonRankRequired?: string;
+  /** Season number this avatar belongs to (1–12). Used to hide future season avatars. */
+  seasonNumber?: number;
   /** Image position offset X in percent (-50 to 50), default 0 */
   offsetX?: number;
   /** Image position offset Y in percent (-50 to 50), default 0 */
@@ -88,6 +90,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'steppe_khan', // rank ID from SEASON_RANKS
+    seasonNumber: 6,
   },
   {
     id: 'golden_horde',
@@ -98,6 +101,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // rank ID from SEASON_RANKS
+    seasonNumber: 6,
   },
   {
     id: 'diving_eagle',
@@ -108,6 +112,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID from SEASON_RANKS
+    seasonNumber: 6,
   },
   {
     id: 'neon_paw',
@@ -119,6 +124,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID — Zircon rank in Season 7 (Neon Era)
+    seasonNumber: 7,
   },
   {
     id: 'great_khan',
@@ -129,6 +135,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan', // rank ID from SEASON_RANKS
+    seasonNumber: 6,
   },
   {
     id: 'neon_dino',
@@ -140,6 +147,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'steppe_khan', // rank ID — Ruby rank in Season 7 (Neon Era)
+    seasonNumber: 7,
   },
   {
     id: 'neon_cat',
@@ -151,6 +159,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // rank ID — Amber rank in Season 7 (Neon Era)
+    seasonNumber: 7,
   },
   {
     id: 'apocalypse_city',
@@ -160,6 +169,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/apocalypse_city_v2-PCAEbAXE4wSCa8FzWXjFSi.webp',
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // Циркон rank
+    seasonNumber: 8,
   },
   {
     id: 'toxic_storm',
@@ -171,6 +181,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 8,
   },
   {
     id: 'nuclear_mushroom',
@@ -182,6 +193,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan', // Obsidian rank (key: great_khan)
+    seasonNumber: 8,
   },
   {
     id: 'gasmask_amber',
@@ -193,6 +205,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 8,
   },
   {
     id: 'samurai_amber',
@@ -204,6 +217,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
+    seasonNumber: 9,
   },
   {
     id: 'oni_mask_obsidian',
@@ -215,6 +229,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan', // Obsidian rank (key: great_khan)
+    seasonNumber: 9,
   },
   {
     id: 'amaterasu_ruby',
@@ -226,6 +241,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'steppe_khan', // Ruby rank
+    seasonNumber: 9,
   },
   {
     id: 'japanese_motifs_zircon',
@@ -235,6 +251,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/japanese_motifs_zircon_v2-FV7CyG9fH7ddeJbNMZU2zQ.webp',
     seasonReward: true,
     seasonRankRequired: 'zircon', // Zircon rank
+    seasonNumber: 9,
   },
   {
     id: 'neon_crown',
@@ -246,6 +263,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan',
+    seasonNumber: 7,
     offsetX: -2.5,
     offsetY: -3,
     imgScale: 0.55,

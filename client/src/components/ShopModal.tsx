@@ -6,6 +6,7 @@ import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Pl
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_URL, CARD_IMAGES, CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
+import { getCurrentSeasonNumber } from '../../../shared/seasons';
 import { AVATAR_OPTIONS, type AvatarOption } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
 import { NeonFrame } from './NeonFrame';
@@ -120,6 +121,7 @@ export const AVATAR_FRAMES = [
     iconColor: 'text-yellow-400',
     bgGradient: 'from-yellow-900 to-amber-950',
     seasonOnly: true,
+    seasonNumber: 6,
   },
   {
     id: 'obsidian_neon',
@@ -139,6 +141,7 @@ export const AVATAR_FRAMES = [
     iconColor: 'text-cyan-400',
     bgGradient: 'from-cyan-900 to-blue-950',
     seasonOnly: true,
+    seasonNumber: 7,
   },
   {
     id: 'ruby_neon',
@@ -214,6 +217,7 @@ export const AVATAR_FRAMES = [
     iconColor: 'text-orange-500',
     bgGradient: 'from-red-950 to-orange-950',
     seasonOnly: true,
+    seasonNumber: 8,
   },
   {
     id: 'oni_japanese',
@@ -236,6 +240,7 @@ export const AVATAR_FRAMES = [
     iconColor: 'text-red-400',
     bgGradient: 'from-red-950 to-amber-950',
     seasonOnly: true,
+    seasonNumber: 9,
   },
 ] as const;
 
@@ -652,7 +657,13 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
 
           {activeTab === 'frames' && (
             <div className="space-y-4">
-              {AVATAR_FRAMES.filter(frame => isItemAvailable('frame', frame.id)).map(frame => {
+              {AVATAR_FRAMES.filter(frame => {
+                // Hide season-only frames that belong to future seasons
+                if ((frame as any).seasonOnly && (frame as any).seasonNumber) {
+                  return (frame as any).seasonNumber <= getCurrentSeasonNumber();
+                }
+                return isItemAvailable('frame', frame.id);
+              }).filter(frame => isItemAvailable('frame', frame.id)).map(frame => {
                 const isPremiumFrame = (frame as any).premiumOnly === true;
                 const isSeasonFrame = (frame as any).seasonOnly === true;
                 const isOwned = ownedFrames.includes(frame.id) || (isPremiumFrame && isPremium);

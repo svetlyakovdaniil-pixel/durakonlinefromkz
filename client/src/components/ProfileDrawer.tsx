@@ -18,6 +18,7 @@ import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper, FrameIcon } from './AvatarWithFrame';
 import { AVATAR_FRAMES } from './ShopModal';
+import { getCurrentSeasonNumber } from '../../../shared/seasons';
 
 interface ProfileDrawerProps {
   /** Current user's profile data */
@@ -279,7 +280,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 )
               ))}
               {/* Season-only frames — shown locked unless owned (supports season-suffixed IDs like obsidian_neon_2026Q3) */}
-              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly).map(frame => {
+              {/* Only show frames for current season or past seasons */}
+              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly && (!(f as any).seasonNumber || (f as any).seasonNumber <= getCurrentSeasonNumber())).map(frame => {
                 // Find owned ID: exact match OR season-suffixed match (e.g. 'obsidian_neon_2026Q3')
                 const ownedId = ownedFrames.find(id => id === frame.id || id.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
                 const isOwned = !!ownedId;

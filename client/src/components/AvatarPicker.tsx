@@ -7,7 +7,7 @@ import {
   isSeasonSuffixedAvatar,
   getAvatarDisplayName,
 } from '../../../shared/avatars';
-import { getSeasonInfo } from '../../../shared/seasons';
+import { getSeasonInfo, getCurrentSeasonNumber } from '../../../shared/seasons';
 import { Button } from '@/components/ui/button';
 import { Check, X, Lock, Trophy } from 'lucide-react';
 import { useTranslation } from '@/i18n';
@@ -76,8 +76,14 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   // 1. Static catalog (minus bot)
   // 2. Per-season owned avatars (suffixed IDs not in static catalog)
   const allAvatarItems = useMemo(() => {
-    // Static catalog items (excluding bot)
-    const staticItems = AVATAR_OPTIONS.filter(a => a.id !== 'bot').map(a => ({
+    const currentSeasonNum = getCurrentSeasonNumber();
+    // Static catalog items (excluding bot, excluding future-season rewards)
+    const staticItems = AVATAR_OPTIONS.filter(a => {
+      if (a.id === 'bot') return false;
+      // Hide season reward avatars that belong to future seasons
+      if (a.seasonReward && a.seasonNumber && a.seasonNumber > currentSeasonNum) return false;
+      return true;
+    }).map(a => ({
       id: a.id,
       name: a.name,
       baseId: a.id,
@@ -272,7 +278,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
 
         {/* Season reward hint */}
         {ownedAvatars.filter(id => isSeasonSuffixedAvatar(id)).length === 0 &&
-          AVATAR_OPTIONS.filter(a => a.seasonReward && !ownedAvatars.includes(a.id)).length > 0 && (
+          AVATAR_OPTIONS.filter(a => a.seasonReward && !ownedAvatars.includes(a.id) && (!a.seasonNumber || a.seasonNumber <= getCurrentSeasonNumber())).length > 0 && (
           <p className="text-xs text-amber-400/70 text-center">
             🏆 {t('avatarPicker.seasonRewardHint')}
           </p>
