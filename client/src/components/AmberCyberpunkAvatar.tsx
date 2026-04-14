@@ -9,21 +9,19 @@ interface Props { size?: number; className?: string; }
 export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
   const uid = React.useId().replace(/:/g, '');
   // offsetX=-2.5%, offsetY=-2.5% applied via objectPosition
-  const offsetX = -2.5;
-  const offsetY = -2.5;
-  const posX = 50 + offsetX;
-  const posY = 50 + offsetY;
+  const posX = 50 + (-2.5);
+  const posY = 50 + (-2.5);
   return (
     <div className={className} style={{ width: size, height: size, position: 'relative', display: 'inline-block', flexShrink: 0 }}>
       <style>{`
-        @keyframes acv3-circuit-${uid} {
+        @keyframes acv4-circuit-${uid} {
           0%   { box-shadow: 0 0 6px 2px rgba(245,158,11,0.7), 0 0 14px 5px rgba(245,158,11,0.35), 0 0 26px 10px rgba(251,191,36,0.15); }
           25%  { box-shadow: 0 0 12px 5px rgba(245,158,11,1), 0 0 22px 9px rgba(245,158,11,0.55), 0 0 40px 16px rgba(251,191,36,0.3); }
           50%  { box-shadow: 0 0 8px 3px rgba(245,158,11,0.8), 0 0 18px 7px rgba(245,158,11,0.4), 0 0 32px 13px rgba(251,191,36,0.2); }
           75%  { box-shadow: 0 0 16px 7px rgba(255,200,0,0.9), 0 0 28px 12px rgba(245,158,11,0.6), 0 0 48px 20px rgba(251,191,36,0.35); }
           100% { box-shadow: 0 0 6px 2px rgba(245,158,11,0.7), 0 0 14px 5px rgba(245,158,11,0.35), 0 0 26px 10px rgba(251,191,36,0.15); }
         }
-        @keyframes acv3-flicker-${uid} {
+        @keyframes acv4-flicker-${uid} {
           0%, 100% { opacity: 1; }
           88%       { opacity: 1; }
           89%       { opacity: 0.3; }
@@ -33,41 +31,27 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
           97%       { opacity: 0.5; }
           98%       { opacity: 1; }
         }
-        @keyframes acv3-scan-${uid} {
+        @keyframes acv4-scan-${uid} {
           0%   { transform: translateY(-${size * 1.2}px); opacity: 0.6; }
           80%  { opacity: 0.6; }
           100% { transform: translateY(${size * 1.2}px); opacity: 0; }
         }
-        @keyframes acv3-eye-${uid} {
+        @keyframes acv4-eye-${uid} {
           0%, 100% { opacity: 0.4; transform: scale(1); }
           50%       { opacity: 1; transform: scale(1.3); }
         }
-        @keyframes acv3-rain-${uid} {
+        @keyframes acv4-rain-${uid} {
           0%   { transform: translateY(-${size * 0.3}px); opacity: 0.8; }
           100% { transform: translateY(${size * 0.5}px); opacity: 0; }
         }
-        @keyframes acv3-border-pulse-${uid} {
-          0%, 100% { border-color: rgba(245,158,11,0.9); }
-          50%       { border-color: rgba(255,220,50,1); }
-        }
       `}</style>
-
-      {/* Outer ring border */}
-      <div aria-hidden="true" style={{
-        position: 'absolute',
-        inset: -Math.max(1, size * 0.03),
-        borderRadius: '50%',
-        border: `${Math.max(1, size * 0.03)}px solid rgba(245,158,11,0.9)`,
-        animation: `acv3-border-pulse-${uid} 1.5s ease-in-out infinite`,
-        pointerEvents: 'none',
-      }} />
 
       <div style={{
         width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative',
-        animation: `acv3-circuit-${uid} 2s ease-in-out infinite, acv3-flicker-${uid} 6s ease-in-out infinite`,
+        animation: `acv4-circuit-${uid} 2s ease-in-out infinite, acv4-flicker-${uid} 6s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v3-eJjZjA2Ys2xcJT5VgJs4F6.webp"
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v4-52jR9jKRMgjhsCZXjNstx8.webp"
           alt="Янтарь Киберпанк"
           style={{
             width: '100%', height: '100%',
@@ -83,7 +67,7 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
           position: 'absolute', left: 0, right: 0,
           height: size * 0.12,
           background: 'linear-gradient(to bottom, transparent, rgba(245,158,11,0.35), transparent)',
-          animation: `acv3-scan-${uid} 2.2s linear infinite`,
+          animation: `acv4-scan-${uid} 2.2s linear infinite`,
         }} />
 
         {/* Circuit overlay — amber glow from bottom-left */}
@@ -100,7 +84,7 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(255,220,0,0.95), rgba(245,158,11,0.5))',
           boxShadow: `0 0 ${size * 0.08}px ${size * 0.05}px rgba(255,200,0,0.8)`,
-          animation: `acv3-eye-${uid} 1.8s ease-in-out infinite`,
+          animation: `acv4-eye-${uid} 1.8s ease-in-out infinite`,
         }} />
       </div>
 
@@ -118,7 +102,7 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
           height: size * 0.18,
           background: 'linear-gradient(to bottom, rgba(245,158,11,0.9), transparent)',
           borderRadius: 2,
-          animation: `acv3-rain-${uid} ${p.dur} linear ${p.delay} infinite`,
+          animation: `acv4-rain-${uid} ${p.dur} linear ${p.delay} infinite`,
         }} />
       ))}
     </div>
