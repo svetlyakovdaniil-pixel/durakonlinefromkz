@@ -199,7 +199,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     name: 'Японский пейзаж',
     nameKk: 'Жапон пейзажы',
     nameEn: 'Japanese Landscape',
-    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/japanese_motifs_zircon-9yWp9rBAaBGVkB4FSmCdKN.webp',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/japanese_motifs_zircon_v2-FV7CyG9fH7ddeJbNMZU2zQ.webp',
     seasonReward: true,
     seasonRankRequired: 'zircon', // Zircon rank
   },
