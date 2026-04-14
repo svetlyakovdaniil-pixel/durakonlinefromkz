@@ -13,6 +13,14 @@ import { AmberNeonFrame } from '@/components/AmberNeonFrame';
 import { ZirconNeonFrame } from '@/components/ZirconNeonFrame';
 import { MoltenLavaFrame } from '@/components/MoltenLavaFrame';
 import { OniJapaneseFrame } from '@/components/OniJapaneseFrame';
+import { ObsidianUnderwaterFrame } from '@/components/ObsidianUnderwaterFrame';
+import { ObsidianEgyptianFrame } from '@/components/ObsidianEgyptianFrame';
+import { ObsidianPirateFrame } from '@/components/ObsidianPirateFrame';
+import { ObsidianNorseFrame } from '@/components/ObsidianNorseFrame';
+import { ObsidianSpaceFrame } from '@/components/ObsidianSpaceFrame';
+import { ObsidianCyberpunkFrame } from '@/components/ObsidianCyberpunkFrame';
+import { ObsidianHiphopFrame } from '@/components/ObsidianHiphopFrame';
+import { ObsidianAngelsDemonsFrame } from '@/components/ObsidianAngelsDemonsFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
@@ -356,6 +364,191 @@ function RewardPopup({
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,0,0.50)' }}>
                     {locale === 'kk' ? 'Балқыған лава жақтауы' : locale === 'en' ? 'Exclusive molten lava frame' : 'Эксклюзивная рамка с расплавленной лавой'}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Frame - obsidian_underwater */}
+            {reward.frameId === 'obsidian_underwater' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(0,200,180,0.08)', border: '1px solid rgba(0,200,180,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianUnderwaterFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(0,30,40,0.9)" stroke="rgba(0,200,180,0.8)" strokeWidth="1.5"/><path d="M6 12 Q9 8 12 12 Q15 16 18 12" stroke="rgba(0,255,220,0.9)" strokeWidth="1.2" fill="none"/></svg>
+                    </div>
+                  </ObsidianUnderwaterFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(0,200,180,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 1' : locale === 'en' ? 'Obsidian - Season 1' : 'Обсидиан - Season 1'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(0,200,180,0.50)' }}>
+                    {locale === 'kk' ? 'Мұхит түбі: биолюминесцентті жыланбалықтар' : locale === 'en' ? 'Ocean abyss: bioluminescent tentacles' : 'Бездна океана: биолюминесцентные щупальца'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_egyptian */}
+            {reward.frameId === 'obsidian_egyptian' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(200,160,0,0.08)', border: '1px solid rgba(200,160,0,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianEgyptianFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(20,10,0,0.9)" stroke="rgba(200,160,0,0.8)" strokeWidth="1.5"/><ellipse cx="12" cy="10" rx="4" ry="2.5" fill="none" stroke="rgba(255,200,0,0.85)" strokeWidth="1"/><circle cx="12" cy="10" r="1.2" fill="rgba(255,180,0,0.95)"/></svg>
+                    </div>
+                  </ObsidianEgyptianFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(200,160,0,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 2' : locale === 'en' ? 'Obsidian - Season 2' : 'Обсидиан - Season 2'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(200,160,0,0.50)' }}>
+                    {locale === 'kk' ? 'Фараондардың қара сиқыры' : locale === 'en' ? 'Dark pharaoh magic: golden hieroglyphs' : 'Тёмная магия фараонов: золотые иероглифы'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_pirate */}
+            {reward.frameId === 'obsidian_pirate' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(100,150,255,0.08)', border: '1px solid rgba(100,150,255,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianPirateFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(0,5,20,0.9)" stroke="rgba(100,150,255,0.8)" strokeWidth="1.5"/><circle cx="12" cy="10" r="3" fill="none" stroke="rgba(180,220,255,0.85)" strokeWidth="1"/><circle cx="10" cy="9.5" r="0.8" fill="rgba(180,220,255,0.9)"/><circle cx="14" cy="9.5" r="0.8" fill="rgba(180,220,255,0.9)"/></svg>
+                    </div>
+                  </ObsidianPirateFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(100,150,255,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 3' : locale === 'en' ? 'Obsidian - Season 3' : 'Обсидиан - Season 3'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(100,150,255,0.50)' }}>
+                    {locale === 'kk' ? 'Елес дауылы: найзағайлар мен бас сүйек' : locale === 'en' ? 'Ghost storm: lightning and skull' : 'Призрачный шторм: молнии и череп'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_norse */}
+            {reward.frameId === 'obsidian_norse' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(140,60,220,0.08)', border: '1px solid rgba(140,60,220,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianNorseFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(10,0,20,0.9)" stroke="rgba(140,60,220,0.8)" strokeWidth="1.5"/><rect x="9" y="5" width="6" height="5" rx="1" fill="rgba(180,100,255,0.85)"/><rect x="11" y="10" width="2" height="7" rx="0.5" fill="rgba(140,80,220,0.8)"/></svg>
+                    </div>
+                  </ObsidianNorseFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(140,60,220,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 4' : locale === 'en' ? 'Obsidian - Season 4' : 'Обсидиан - Season 4'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(140,60,220,0.50)' }}>
+                    {locale === 'kk' ? 'Иггдрасиль рундары' : locale === 'en' ? 'Yggdrasil runes: aurora and Mjolnir' : 'Руны Иггдрасиля: аврора и молот Тора'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_space */}
+            {reward.frameId === 'obsidian_space' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(100,0,200,0.08)', border: '1px solid rgba(100,0,200,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianSpaceFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(5,0,15,0.9)" stroke="rgba(100,0,200,0.8)" strokeWidth="1.5"/><circle cx="12" cy="12" r="3" fill="rgba(60,0,120,0.9)" stroke="rgba(200,100,255,0.8)" strokeWidth="0.8"/></svg>
+                    </div>
+                  </ObsidianSpaceFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(100,0,200,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 5' : locale === 'en' ? 'Obsidian - Season 5' : 'Обсидиан - Season 5'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(100,0,200,0.50)' }}>
+                    {locale === 'kk' ? 'Қара тесік: галактикалық спираль' : locale === 'en' ? 'Black hole: galactic spiral' : 'Чёрная дыра: галактическая спираль'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_cyberpunk */}
+            {reward.frameId === 'obsidian_cyberpunk' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(0,255,180,0.08)', border: '1px solid rgba(0,255,180,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianCyberpunkFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(0,10,8,0.9)" stroke="rgba(0,255,180,0.8)" strokeWidth="1.5"/><rect x="8" y="8" width="8" height="8" rx="1" fill="none" stroke="rgba(0,255,180,0.7)" strokeWidth="0.8"/><rect x="10" y="10" width="4" height="4" rx="0.5" fill="rgba(255,0,180,0.6)" stroke="rgba(255,0,180,0.8)" strokeWidth="0.5"/></svg>
+                    </div>
+                  </ObsidianCyberpunkFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(0,255,180,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 10' : locale === 'en' ? 'Obsidian - Season 10' : 'Обсидиан - Season 10'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(0,255,180,0.50)' }}>
+                    {locale === 'kk' ? 'Void circuit: неон глитч пен матрица' : locale === 'en' ? 'Void circuit: neon glitch and matrix rain' : 'Void circuit: неоновый глитч и матричный дождь'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_hiphop */}
+            {reward.frameId === 'obsidian_hiphop' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(200,150,0,0.08)', border: '1px solid rgba(200,150,0,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianHiphopFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(10,5,0,0.9)" stroke="rgba(200,150,0,0.8)" strokeWidth="1.5"/><circle cx="12" cy="12" r="4" fill="none" stroke="rgba(255,200,0,0.7)" strokeWidth="0.8" strokeDasharray="2 1"/><circle cx="12" cy="12" r="1.5" fill="rgba(255,220,0,0.9)"/></svg>
+                    </div>
+                  </ObsidianHiphopFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(200,150,0,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 11' : locale === 'en' ? 'Obsidian - Season 11' : 'Обсидиан - Season 11'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(200,150,0,0.50)' }}>
+                    {locale === 'kk' ? 'Алтын тізбек: винил ойықтары' : locale === 'en' ? 'Gold chain: vinyl grooves and beat wave' : 'Золотая цепь: виниловые бороздки и beat wave'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame - obsidian_angels_demons */}
+            {reward.frameId === 'obsidian_angels_demons' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(180,120,255,0.08)', border: '1px solid rgba(180,120,255,0.30)' }}
+              >
+                <div className="flex-shrink-0">
+                  <ObsidianAngelsDemonsFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="12" cy="12" r="8" fill="rgba(10,0,15,0.9)" stroke="rgba(180,120,255,0.8)" strokeWidth="1.5"/><path d="M12 4 Q8 7 6 12" stroke="rgba(255,220,100,0.8)" strokeWidth="1" fill="none"/><path d="M12 4 Q16 7 18 12" stroke="rgba(220,0,60,0.8)" strokeWidth="1" fill="none"/></svg>
+                    </div>
+                  </ObsidianAngelsDemonsFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(180,120,255,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 12' : locale === 'en' ? 'Obsidian - Season 12' : 'Обсидиан - Season 12'}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(180,120,255,0.50)' }}>
+                    {locale === 'kk' ? 'Қосарлылық: периште қанаттары мен тозақ оты' : locale === 'en' ? 'Duality: angel wings and hellfire' : 'Двойственность: крылья ангела и адский огонь'}
                   </div>
                 </div>
               </div>
@@ -728,6 +921,127 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                             <span>
                               {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(255,100,10,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 8}</span>
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Frame reward - obsidian_underwater */}
+                        {rewardDef.frameId === 'obsidian_underwater' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianUnderwaterFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(0,200,180,0.3)" stroke="rgba(0,200,180,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianUnderwaterFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,200,180,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 1' : locale === 'en' ? 'Obsidian - Season 1' : 'Обсидиан - Season 1'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_egyptian */}
+                        {rewardDef.frameId === 'obsidian_egyptian' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianEgyptianFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(200,160,0,0.3)" stroke="rgba(200,160,0,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianEgyptianFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(200,160,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 2' : locale === 'en' ? 'Obsidian - Season 2' : 'Обсидиан - Season 2'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_pirate */}
+                        {rewardDef.frameId === 'obsidian_pirate' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianPirateFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(100,150,255,0.3)" stroke="rgba(100,150,255,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianPirateFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(100,150,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 3' : locale === 'en' ? 'Obsidian - Season 3' : 'Обсидиан - Season 3'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_norse */}
+                        {rewardDef.frameId === 'obsidian_norse' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianNorseFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(140,60,220,0.3)" stroke="rgba(140,60,220,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianNorseFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(140,60,220,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 4' : locale === 'en' ? 'Obsidian - Season 4' : 'Обсидиан - Season 4'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_space */}
+                        {rewardDef.frameId === 'obsidian_space' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianSpaceFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(100,0,200,0.3)" stroke="rgba(100,0,200,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianSpaceFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(100,0,200,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 5' : locale === 'en' ? 'Obsidian - Season 5' : 'Обсидиан - Season 5'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_cyberpunk */}
+                        {rewardDef.frameId === 'obsidian_cyberpunk' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianCyberpunkFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(0,255,180,0.3)" stroke="rgba(0,255,180,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianCyberpunkFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,255,180,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 10' : locale === 'en' ? 'Obsidian - Season 10' : 'Обсидиан - Season 10'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_hiphop */}
+                        {rewardDef.frameId === 'obsidian_hiphop' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianHiphopFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(200,150,0,0.3)" stroke="rgba(200,150,0,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianHiphopFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(200,150,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 11' : locale === 'en' ? 'Obsidian - Season 11' : 'Обсидиан - Season 11'}</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward - obsidian_angels_demons */}
+                        {rewardDef.frameId === 'obsidian_angels_demons' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <ObsidianAngelsDemonsFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden flex items-center justify-center" style={{ background: 'rgba(5,5,15,0.9)' }}>
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5"><circle cx="12" cy="12" r="8" fill="rgba(180,120,255,0.3)" stroke="rgba(180,120,255,0.8)" strokeWidth="1.5"/></svg>
+                                </div>
+                              </ObsidianAngelsDemonsFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(180,120,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 12' : locale === 'en' ? 'Obsidian - Season 12' : 'Обсидиан - Season 12'}</span>
                             </span>
                           </div>
                         )}
