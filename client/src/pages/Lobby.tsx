@@ -214,8 +214,15 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: premiumStatus } = trpc.premium.status.useQuery(undefined, { refetchInterval: 60000 });
   const isPremium = premiumStatus?.isPremium ?? false;
 
-  // Season rating for rank icon
-  const { data: seasonData } = trpc.season.current.useQuery({}, { refetchInterval: 120000 });
+  // Active test season key (null if no test active) — needed for correct rank icon
+  const { data: activeTestData } = trpc.season.activeTestKey.useQuery(undefined, { refetchInterval: 10000 });
+  const activeTestSeasonKey = activeTestData?.testSeasonKey ?? null;
+
+  // Season rating for rank icon — use test season key if active
+  const { data: seasonData } = trpc.season.current.useQuery(
+    { seasonKey: activeTestSeasonKey ?? undefined },
+    { refetchInterval: 15000 }
+  );
   const mySeasonRating = seasonData?.seasonRating ?? 0;
 
   // Friends list — used to filter online players to only actual friends

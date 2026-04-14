@@ -39,24 +39,42 @@ export default function Home() {
   const { setMusicEnabled } = useSettings();
   const registeredRef = useRef(false);
 
-  // Season rating for rank icon in room
-  const { data: homeSeasonData } = trpc.season.current.useQuery({}, {
-    enabled: !!profile,
-    refetchInterval: 120000,
+  // Active test season key (null if no test active) — poll frequently so rank icon updates quickly
+  const { data: activeTestData } = trpc.season.activeTestKey.useQuery(undefined, {
+    refetchInterval: 10000, // 10s — fast enough to pick up AdminPanel changes
   });
+  const activeTestSeasonKey = activeTestData?.testSeasonKey ?? null;
+
+  // Season rating for rank icon in room — use test season key if active
+  const { data: homeSeasonData } = trpc.season.current.useQuery(
+    { seasonKey: activeTestSeasonKey ?? undefined },
+    {
+      enabled: !!profile,
+      refetchInterval: 15000, // 15s — re-fetch when test season changes
+    }
+  );
   const homeSeasonRating = homeSeasonData?.seasonRating ?? 0;
 
-  // Register profile with socket when profile loads
+  // Track last registered season rating to re-register when it changes
+  const lastRegisteredRatingRef = useRef<number | null>(null);
+
+  // Register profile with socket when profile loads, or when seasonRating changes
   useEffect(() => {
-    if (profile && connected && !registeredRef.current) {
+    if (!profile || !connected) return;
+    const needsRegister = !registeredRef.current || lastRegisteredRatingRef.current !== homeSeasonRating;
+    if (needsRegister) {
       registerProfile(profile.gameId, profile.displayName || t('landing.player'), profile.avatarId || undefined, (profile as any).equippedFrame || null, (profile as any).isPremium === true, homeSeasonRating);
       registeredRef.current = true;
+      lastRegisteredRatingRef.current = homeSeasonRating;
     }
   }, [profile, connected, registerProfile, homeSeasonRating]);
 
   // Reset registration flag on disconnect
   useEffect(() => {
-    if (!connected) registeredRef.current = false;
+    if (!connected) {
+      registeredRef.current = false;
+      lastRegisteredRatingRef.current = null;
+    }
   }, [connected]);
 
   // --- Playlist switching: when entering a room with a playlistId, fetch tracks and switch music ---

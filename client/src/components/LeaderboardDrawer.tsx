@@ -48,7 +48,9 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
     enabled: open,
   });
 
-  const seasonKey = getCurrentSeasonKey();
+  // Use active test season key if available, otherwise current real season
+  const { data: activeTestKeyData } = trpc.season.activeTestKey.useQuery(undefined, { refetchInterval: 30000 });
+  const seasonKey = activeTestKeyData?.testSeasonKey ?? getCurrentSeasonKey();
   const seasonQuery = trpc.season.leaderboard.useQuery({ seasonKey }, {
     staleTime: 15_000,
     refetchInterval: open && activeTab === 'season' ? 30_000 : false,
