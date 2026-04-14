@@ -27,7 +27,7 @@ const CLASSIC_DECK_BACK = CARD_BACK_URL;
 const CLASSIC_KING_SPADES = CARD_IMAGES['K-spades'];
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
-const CUSTOM_DECK_PRICE = 60;
+const CLASSIC_DECK_PRICE = 25; // Батыры великой степи — платная колода
 
 /** Available avatar frames for purchase */
 export const AVATAR_FRAMES = [
@@ -333,9 +333,9 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     return true;
   };
 
-  const customDeckPrice = getPrice('deck', 'custom', CUSTOM_DECK_PRICE);
-  const isCustomOwned = ownedDecks.includes('custom');
-  const canAfford = currentTenge >= customDeckPrice;
+  const classicDeckPrice = getPrice('deck', 'classic', CLASSIC_DECK_PRICE);
+  const isClassicOwned = ownedDecks.includes('classic');
+  const canAffordClassic = currentTenge >= classicDeckPrice;
 
   // Preview audio functions
   const stopPreview = useCallback(() => {
@@ -549,21 +549,61 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         {/* Content */}
         <div className="p-5 max-h-[50vh] overflow-y-auto">
           {activeTab === 'decks' && (
-            <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2 shrink-0">
-                  <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
-                    <img src={CLASSIC_DECK_BACK} alt="Deck back" className="w-full h-full object-cover" />
+            <div className="space-y-4">
+              {/* Товарищ Мырза — бесплатная колода */}
+              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
+                      <img src={CUSTOM_DECK_BACK} alt="Deck back" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
+                      <img src={KING_SPADES} alt="King of Spades" className="w-full h-full object-cover" />
+                    </div>
                   </div>
-                  <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
-                    <img src={CLASSIC_KING_SPADES} alt="King of Spades" className="w-full h-full object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.customDeck')}</h3>
+                    <p className="text-amber-200/50 text-xs mb-3">{t('shop.customDeckDesc')}</p>
+                    <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                      <Check className="w-4 h-4" /><span>{t('shop.free')}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.default')}</h3>
-                  <p className="text-amber-200/50 text-xs mb-3">{t('shop.customDeckDesc')}</p>
-                  <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
-                    <Check className="w-4 h-4" /><span>{t('shop.free')}</span>
+              </div>
+              {/* Батыры великой степи — платная колода */}
+              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
+                      <img src={CLASSIC_DECK_BACK} alt="Deck back" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
+                      <img src={CLASSIC_KING_SPADES} alt="King of Spades" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-amber-100 font-bold text-sm mb-1">{t('shop.default')}</h3>
+                    <p className="text-amber-200/50 text-xs mb-3">{t('shop.batyrDeckDesc')}</p>
+                    {isClassicOwned ? (
+                      <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                        <Check className="w-4 h-4" /><span>{t('shop.purchased')}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <Button
+                          className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
+                          onClick={() => setConfirmPurchase({ type: 'deck', id: 'classic', name: t('shop.default'), price: classicDeckPrice })}
+                          disabled={purchasing || !canAffordClassic}
+                        >
+                          {purchasing ? '...' : t('shop.buy')}
+                        </Button>
+                        <div className="flex items-center gap-1">
+                          <span className="text-amber-100 font-bold text-base">{classicDeckPrice}</span>
+                          <img src={TENGE_ICON} alt="T" className="w-7 h-7 rounded-full object-cover aspect-square" />
+                        </div>
+                      </div>
+                    )}
+                    {!isClassicOwned && !canAffordClassic && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                   </div>
                 </div>
               </div>

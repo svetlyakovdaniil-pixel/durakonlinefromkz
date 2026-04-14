@@ -76,7 +76,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [withBots, setWithBots] = useState(false);
   const [botCount, setBotCount] = useState(3);
   const [turnTimer, setTurnTimer] = useState(30);
-  const [deckStyle, setDeckStyle] = useState<DeckStyle>('custom');
+  const [deckStyle, setDeckStyle] = useState<DeckStyle>('custom'); // Товарищ Мырза — бесплатная по умолчанию
   const [tableStyle, setTableStyle] = useState<TableStyle>('classic');
   const [betAmountIdx, setBetAmountIdx] = useState(0); // index into BET_AMOUNTS
   const [isPrivate, setIsPrivate] = useState(false);
@@ -238,7 +238,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
 
   // Shop / Owned decks & tables
   const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
-  const isCustomDeckOwned = ownedDecks.includes('custom');
+  // Товарищ Мырза ('custom') — бесплатная для всех
+  // Батыры великой степи ('classic') — платная, нужно купить
+  const isClassicDeckOwned = ownedDecks.includes('classic');
   const { data: ownedTables = [] } = trpc.shop.ownedTables.useQuery();
   const isDarkTableOwned = ownedTables.includes('dark_kazakh');
   const isNeonTableOwned = ownedTables.includes('neon');
@@ -830,22 +832,22 @@ onClick={() => setShowTengeTopUp(true)}
                   <div className="min-w-0">
                     <Label className="text-amber-200/70 text-sm">{t('lobby.deckStyle')}</Label>
                     <Select value={deckStyle} onValueChange={(v) => {
-                      if (v === 'custom' && !isCustomDeckOwned) return;
+                      if (v === 'classic' && !isClassicDeckOwned) return;
                       setDeckStyle(v as DeckStyle);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                        <SelectItem value="classic" className="text-amber-100">{t('lobby.deckClassic')}</SelectItem>
+                        <SelectItem value="custom" className="text-amber-100">{t('lobby.deckCustom')}</SelectItem>
                         <SelectItem
-                          value="custom"
-                          className={isCustomDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
-                          disabled={!isCustomDeckOwned}
+                          value="classic"
+                          className={isClassicDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isClassicDeckOwned}
                         >
                           <span className="flex items-center gap-1.5">
-                            {!isCustomDeckOwned && <Lock className="w-3 h-3" />}
-                            {t('lobby.deckCustom')}
+                            {!isClassicDeckOwned && <Lock className="w-3 h-3" />}
+                            {t('lobby.deckClassic')}
                           </span>
                         </SelectItem>
                       </SelectContent>

@@ -3,9 +3,13 @@ import { describe, it, expect } from 'vitest';
 /**
  * Shop / Deck Ownership logic tests.
  * Tests the business rules for deck purchases without hitting the DB.
+ *
+ * Deck model:
+ *   - 'custom'  = "Товарищ Мырза"  — FREE, available to all players by default
+ *   - 'classic' = "Батыры великой степи" — PAID (25 tenge), must be purchased
  */
 
-const CUSTOM_DECK_PRICE = 60;
+const CLASSIC_DECK_PRICE = 25; // Батыры великой степи — платная колода
 
 interface PlayerProfile {
   id: number;
@@ -59,8 +63,8 @@ describe('Shop - Deck Ownership', () => {
   });
 
   it('should parse valid ownedDecks JSON', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["custom"]' };
-    expect(parseOwnedDecks(profile)).toEqual(['custom']);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["classic"]' };
+    expect(parseOwnedDecks(profile)).toEqual(['classic']);
   });
 
   it('should parse invalid JSON as empty array', () => {
@@ -69,48 +73,48 @@ describe('Shop - Deck Ownership', () => {
   });
 
   it('should parse multiple decks', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["custom","premium"]' };
-    expect(parseOwnedDecks(profile)).toEqual(['custom', 'premium']);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["classic","premium"]' };
+    expect(parseOwnedDecks(profile)).toEqual(['classic', 'premium']);
   });
 });
 
-describe('Shop - Purchase Validation', () => {
-  it('should allow purchase with sufficient balance', () => {
+describe('Shop - Purchase Validation (classic deck = Батыры, 25 tenge)', () => {
+  it('should allow purchase of classic deck with sufficient balance', () => {
     const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: null };
-    const result = canPurchaseDeck(profile, 'custom', CUSTOM_DECK_PRICE);
+    const result = canPurchaseDeck(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.canBuy).toBe(true);
   });
 
   it('should reject purchase with insufficient balance', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 30, ownedDecks: null };
-    const result = canPurchaseDeck(profile, 'custom', CUSTOM_DECK_PRICE);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 10, ownedDecks: null };
+    const result = canPurchaseDeck(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.canBuy).toBe(false);
     expect(result.reason).toBe('insufficient_tenge');
   });
 
   it('should reject purchase if already owned', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["custom"]' };
-    const result = canPurchaseDeck(profile, 'custom', CUSTOM_DECK_PRICE);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["classic"]' };
+    const result = canPurchaseDeck(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.canBuy).toBe(false);
     expect(result.reason).toBe('already_owned');
   });
 
   it('should allow purchase of different deck even if one is owned', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["custom"]' };
+    const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: '["classic"]' };
     const result = canPurchaseDeck(profile, 'premium', 80);
     expect(result.canBuy).toBe(true);
   });
 
-  it('should reject purchase with exact balance boundary (below)', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 59, ownedDecks: null };
-    const result = canPurchaseDeck(profile, 'custom', CUSTOM_DECK_PRICE);
+  it('should reject purchase with balance one below price (boundary)', () => {
+    const profile: PlayerProfile = { id: 1, balanceTenge: 24, ownedDecks: null };
+    const result = canPurchaseDeck(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.canBuy).toBe(false);
     expect(result.reason).toBe('insufficient_tenge');
   });
 
   it('should allow purchase with exact balance', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 60, ownedDecks: null };
-    const result = canPurchaseDeck(profile, 'custom', CUSTOM_DECK_PRICE);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 25, ownedDecks: null };
+    const result = canPurchaseDeck(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.canBuy).toBe(true);
   });
 });
@@ -118,70 +122,76 @@ describe('Shop - Purchase Validation', () => {
 describe('Shop - Purchase Simulation', () => {
   it('should deduct tenge and add deck on successful purchase', () => {
     const profile: PlayerProfile = { id: 1, balanceTenge: 100, ownedDecks: null };
-    const result = simulatePurchase(profile, 'custom', CUSTOM_DECK_PRICE);
+    const result = simulatePurchase(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.success).toBe(true);
-    expect(result.newTenge).toBe(40);
-    expect(result.newOwnedDecks).toEqual(['custom']);
+    expect(result.newTenge).toBe(75);
+    expect(result.newOwnedDecks).toEqual(['classic']);
   });
 
   it('should add to existing decks', () => {
     const profile: PlayerProfile = { id: 1, balanceTenge: 200, ownedDecks: '["basic"]' };
-    const result = simulatePurchase(profile, 'custom', CUSTOM_DECK_PRICE);
+    const result = simulatePurchase(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.success).toBe(true);
-    expect(result.newTenge).toBe(140);
-    expect(result.newOwnedDecks).toEqual(['basic', 'custom']);
+    expect(result.newTenge).toBe(175);
+    expect(result.newOwnedDecks).toEqual(['basic', 'classic']);
   });
 
   it('should fail if already owned', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 200, ownedDecks: '["custom"]' };
-    const result = simulatePurchase(profile, 'custom', CUSTOM_DECK_PRICE);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 200, ownedDecks: '["classic"]' };
+    const result = simulatePurchase(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.success).toBe(false);
     expect(result.reason).toBe('already_owned');
   });
 
   it('should fail if insufficient balance', () => {
     const profile: PlayerProfile = { id: 1, balanceTenge: 10, ownedDecks: null };
-    const result = simulatePurchase(profile, 'custom', CUSTOM_DECK_PRICE);
+    const result = simulatePurchase(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.success).toBe(false);
     expect(result.reason).toBe('insufficient_tenge');
   });
 
   it('should leave balance at 0 when buying with exact amount', () => {
-    const profile: PlayerProfile = { id: 1, balanceTenge: 60, ownedDecks: null };
-    const result = simulatePurchase(profile, 'custom', CUSTOM_DECK_PRICE);
+    const profile: PlayerProfile = { id: 1, balanceTenge: 25, ownedDecks: null };
+    const result = simulatePurchase(profile, 'classic', CLASSIC_DECK_PRICE);
     expect(result.success).toBe(true);
     expect(result.newTenge).toBe(0);
-    expect(result.newOwnedDecks).toEqual(['custom']);
+    expect(result.newOwnedDecks).toEqual(['classic']);
   });
 });
 
 describe('Shop - Deck Selection Gating', () => {
-  it('should allow classic deck for all players', () => {
+  it('should allow custom deck (Товарищ Мырза) for all players — it is free', () => {
     const ownedDecks: string[] = [];
-    const canSelectClassic = true; // classic is always available
-    expect(canSelectClassic).toBe(true);
-  });
-
-  it('should block custom deck if not owned', () => {
-    const ownedDecks: string[] = [];
-    const canSelectCustom = ownedDecks.includes('custom');
-    expect(canSelectCustom).toBe(false);
-  });
-
-  it('should allow custom deck if owned', () => {
-    const ownedDecks = ['custom'];
-    const canSelectCustom = ownedDecks.includes('custom');
+    // custom is always free — no ownership check needed
+    const canSelectCustom = true;
     expect(canSelectCustom).toBe(true);
   });
 
-  it('should reset deck selection to classic if custom not owned', () => {
+  it('should block classic deck (Батыры) if not owned', () => {
     const ownedDecks: string[] = [];
-    let selectedDeck = 'custom';
-    // Gating logic: if custom not owned, force classic
-    if (selectedDeck === 'custom' && !ownedDecks.includes('custom')) {
-      selectedDeck = 'classic';
+    const canSelectClassic = ownedDecks.includes('classic');
+    expect(canSelectClassic).toBe(false);
+  });
+
+  it('should allow classic deck if owned', () => {
+    const ownedDecks = ['classic'];
+    const canSelectClassic = ownedDecks.includes('classic');
+    expect(canSelectClassic).toBe(true);
+  });
+
+  it('should reset deck selection to custom if classic not owned', () => {
+    const ownedDecks: string[] = [];
+    let selectedDeck = 'classic';
+    // Gating logic: if classic not owned, force custom (free default)
+    if (selectedDeck === 'classic' && !ownedDecks.includes('classic')) {
+      selectedDeck = 'custom';
     }
-    expect(selectedDeck).toBe('classic');
+    expect(selectedDeck).toBe('custom');
+  });
+
+  it('default deck selection should be custom (Товарищ Мырза)', () => {
+    const defaultDeck = 'custom';
+    expect(defaultDeck).toBe('custom');
   });
 });
 
