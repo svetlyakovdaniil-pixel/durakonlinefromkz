@@ -63,7 +63,7 @@ function AvatarPreviewModal({
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <div className="relative flex flex-col items-center gap-4">
         <div
-          className="w-64 h-64 rounded-full overflow-hidden"
+          className="rounded-full"
           style={{ border: `4px solid ${borderColor}`, boxShadow: `0 0 40px ${shadowColor}` }}
         >
           <AvatarDisplay avatarId={avatarId} size={256} />
