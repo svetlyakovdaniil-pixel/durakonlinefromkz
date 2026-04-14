@@ -252,7 +252,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(220,0,60,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Рубин — Неон Дәуірі' : locale === 'en' ? 'Ruby — Neon Era' : 'Рубин — Неоновая эра'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,160,0.50)' }}>
                     {locale === 'kk' ? 'Алқызыл жарқыл жақтауы' : locale === 'en' ? 'Exclusive crimson flash frame' : 'Эксклюзивная рамка с алой вспышкой'}
@@ -278,7 +278,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(245,158,11,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Янтар — Неон Дәуірі' : locale === 'en' ? 'Amber — Neon Era' : 'Янтарь — Неоновая эра'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(251,146,60,0.50)' }}>
                     {locale === 'kk' ? 'Күн жарқылы жақтауы' : locale === 'en' ? 'Exclusive solar flare frame' : 'Эксклюзивная рамка с солнечной вспышкой'}
@@ -304,7 +304,7 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(249,115,22,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Циркон — Неон Дәуірі' : locale === 'en' ? 'Zircon — Neon Era' : 'Циркон — Неоновая эра'}
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(168,85,247,0.50)' }}>
                     {locale === 'kk' ? 'Комета құйрығы жақтауы' : locale === 'en' ? 'Exclusive comet trail frame' : 'Эксклюзивная рамка с хвостом кометы'}
@@ -625,7 +625,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </RubyNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,0,60,0.95)' }} className="font-medium">{locale === 'kk' ? 'Рубин — Неон Дәуірі' : locale === 'en' ? 'Ruby — Neon Era' : 'Рубин — Неоновая эра'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,0,60,0.95)' }} className="font-medium">{locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}</span>
                             </span>
                           </div>
                         )}
@@ -642,7 +642,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </AmberNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(245,158,11,0.95)' }} className="font-medium">{locale === 'kk' ? 'Янтар — Неон Дәуірі' : locale === 'en' ? 'Amber — Neon Era' : 'Янтарь — Неоновая эра'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(245,158,11,0.95)' }} className="font-medium">{locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}</span>
                             </span>
                           </div>
                         )}
@@ -659,7 +659,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ZirconNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(249,115,22,0.95)' }} className="font-medium">{locale === 'kk' ? 'Циркон — Неон Дәуірі' : locale === 'en' ? 'Zircon — Neon Era' : 'Циркон — Неоновая эра'}</span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(249,115,22,0.95)' }} className="font-medium">{locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}</span>
                             </span>
                           </div>
                         )}

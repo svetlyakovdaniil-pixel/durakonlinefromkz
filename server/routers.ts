@@ -621,7 +621,7 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         // Season-only frames (e.g. great_khan) can only be equipped if owned.
         // getOwnedFrames expects profileId (not userId), so we look up the profile first.
-        const SEASON_ONLY_BASE_FRAMES = ['great_khan', 'obsidian_neon', 'ruby_neon', 'amber_neon', 'zircon_neon'];
+        const SEASON_ONLY_BASE_FRAMES = ['great_khan', 'obsidian_neon'];
         if (input.frameId) {
           // Strip season suffix to get base frame ID (e.g. 'obsidian_neon_2026Q3' → 'obsidian_neon')
           const baseFrameId = input.frameId.replace(/_\d{4}Q[1-4]$/, '');

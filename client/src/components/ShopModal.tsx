@@ -140,12 +140,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'ruby_neon',
-    name: 'Рубин — Неоновая эра',
-    nameKk: 'Рубин — Неон Дәуірі',
-    nameEn: 'Ruby — Neon Era',
-    description: 'Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового. Награда за ранг Рубин в сезоне Неоновая эра.',
-    descriptionKk: 'Алқызыл жарқыл: сақина қою қызылдан ашық қызғылтқа дейін зарядталады. Неон Дәуірі маусымындағы Рубин дәрежесі үшін сыйлық.',
-    descriptionEn: 'Crimson flash: ring charges from deep red to hot pink. Reward for Ruby rank in the Neon Era season.',
+    name: 'Рубин',
+    nameKk: 'Рубин',
+    nameEn: 'Ruby',
+    description: 'Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового.',
+    descriptionKk: 'Алқызыл жарқыл: сақина қою қызылдан ашық қызғылтқа дейін зарядталады.',
+    descriptionEn: 'Crimson flash: ring charges from deep red to hot pink.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-red-400">
@@ -159,12 +159,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'amber_neon',
-    name: 'Янтарь — Неоновая эра',
-    nameKk: 'Янтар — Неон Дәуірі',
-    nameEn: 'Amber — Neon Era',
-    description: 'Солнечная вспышка: два золотых кольца вращаются в одну сторону. Награда за ранг Янтарь в сезоне Неоновая эра.',
-    descriptionKk: 'Күн жарқылы: екі алтын сақина бір бағытта айналады. Неон Дәуірі маусымындағы Янтар дәрежесі үшін сыйлық.',
-    descriptionEn: 'Solar flare: two golden rings rotating in the same direction. Reward for Amber rank in the Neon Era season.',
+    name: 'Янтарь',
+    nameKk: 'Янтар',
+    nameEn: 'Amber',
+    description: 'Солнечная вспышка: два золотых кольца вращаются в одну сторону.',
+    descriptionKk: 'Күн жарқылы: екі алтын сақина бір бағытта айналады.',
+    descriptionEn: 'Solar flare: two golden rings rotating in the same direction.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-amber-400">
@@ -178,12 +178,12 @@ export const AVATAR_FRAMES = [
   },
   {
     id: 'zircon_neon',
-    name: 'Циркон — Неоновая эра',
-    nameKk: 'Циркон — Неон Дәуірі',
-    nameEn: 'Zircon — Neon Era',
-    description: 'Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу. Награда за ранг Циркон в сезоне Неоновая эра.',
-    descriptionKk: 'Комета құйрығы: қызғылт сары сақина мен күлгін доға бір-біріне қарсы айналады. Неон Дәуірі маусымындағы Циркон дәрежесі үшін сыйлық.',
-    descriptionEn: 'Comet trail: orange ring and purple arc rotating toward each other. Reward for Zircon rank in the Neon Era season.',
+    name: 'Циркон',
+    nameKk: 'Циркон',
+    nameEn: 'Zircon',
+    description: 'Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу.',
+    descriptionKk: 'Комета құйрығы: қызғылт сары сақина мен күлгін доға бір-біріне қарсы айналады.',
+    descriptionEn: 'Comet trail: orange ring and purple arc rotating toward each other.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-orange-400">

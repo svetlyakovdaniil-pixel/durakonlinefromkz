@@ -2788,3 +2788,10 @@
 - [x] Добавить таблицу season_test_state в БД для хранения состояния теста сезона
 - [x] Обновить AdminPanel — читать/писать состояние теста из БД, кнопка "Откатить" активна пока тест запущен
 - [x] Убрать круглый контур у NeonCrownAvatar
+
+## Batch 67 — Убрать сезонную привязку рамок ruby_neon/amber_neon/zircon_neon
+
+- [x] Убрать ruby_neon, amber_neon, zircon_neon из SEASON_ONLY_BASE_FRAMES в routers.ts
+- [x] Убрать эти рамки из rankRewardOverrides сезона Неоновая эра в seasons.ts (не были добавлены)
+- [x] Убрать упоминание "Неоновая эра" из названий рамок в Season.tsx и ShopModal.tsx
+- [x] Рамки остаются в ShopModal и AvatarWithFrame — без изменений
