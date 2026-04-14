@@ -12,6 +12,7 @@ import { RubyNeonFrame } from '@/components/RubyNeonFrame';
 import { AmberNeonFrame } from '@/components/AmberNeonFrame';
 import { ZirconNeonFrame } from '@/components/ZirconNeonFrame';
 import { MoltenLavaFrame } from '@/components/MoltenLavaFrame';
+import { OniJapaneseFrame } from '@/components/OniJapaneseFrame';
 import { AvatarDisplay } from '@/components/AvatarDisplay';
 import { useState as useLocalState } from 'react';
 
@@ -357,6 +358,33 @@ function RewardPopup({
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(0,180,255,0.50)' }}>
                     {locale === 'kk' ? 'Қос орбиталы эксклюзивті жақтау' : locale === 'en' ? 'Exclusive dual-orbit animated frame' : 'Эксклюзивная рамка с двойной орбитой'}
+                  </div>
+                </div>
+              </div>
+            )}
+            {/* Frame — oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
+            {reward.frameId === 'oni_japanese' && (
+              <div
+                className="flex items-center gap-3 rounded-lg px-3 py-2.5"
+                style={{ background: 'rgba(180,0,0,0.08)', border: '1px solid rgba(200,30,0,0.35)' }}
+              >
+                <div className="flex-shrink-0">
+                  <OniJapaneseFrame size={40} active={true}>
+                    <div className="w-[40px] h-[40px] rounded-full overflow-hidden bg-black flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+                        <circle cx="12" cy="12" r="8" fill="rgba(180,0,0,0.6)" />
+                        <circle cx="9" cy="11" r="1.5" fill="rgba(255,80,0,0.9)" />
+                        <circle cx="15" cy="11" r="1.5" fill="rgba(255,80,0,0.9)" />
+                      </svg>
+                    </div>
+                  </OniJapaneseFrame>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-semibold text-sm" style={{ color: 'rgba(220,50,0,0.95)' }}>
+                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 9}
+                  </div>
+                  <div className="text-xs mt-0.5" style={{ color: 'rgba(200,80,0,0.50)' }}>
+                    {locale === 'kk' ? 'Жапон Они жақтауы' : locale === 'en' ? 'Exclusive Japanese Oni frame' : 'Эксклюзивная японская рамка Они'}
                   </div>
                 </div>
               </div>
@@ -718,6 +746,25 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                             </div>
                             <span>
                               {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">Obsidian - Season 7</span>
+                            </span>
+                          </div>
+                        )}
+                        {/* Frame reward — oni_japanese (Oni Mask, Season 9 Japanese Motifs) */}
+                        {rewardDef.frameId === 'oni_japanese' && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-shrink-0">
+                              <OniJapaneseFrame size={28} active={true}>
+                                <div className="w-[28px] h-[28px] rounded-full overflow-hidden bg-black flex items-center justify-center">
+                                  <svg viewBox="0 0 24 24" fill="none" className="w-3.5 h-3.5">
+                                    <circle cx="12" cy="12" r="8" fill="rgba(180,0,0,0.6)" />
+                                    <circle cx="9" cy="11" r="1.5" fill="rgba(255,80,0,0.9)" />
+                                    <circle cx="15" cy="11" r="1.5" fill="rgba(255,80,0,0.9)" />
+                                  </svg>
+                                </div>
+                              </OniJapaneseFrame>
+                            </div>
+                            <span>
+                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,50,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 9}</span>
                             </span>
                           </div>
                         )}
