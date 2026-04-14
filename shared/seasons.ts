@@ -211,6 +211,9 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Апокалипсис',
     nameKk: 'Апокалипсис',
     nameEn: 'Apocalypse',
+    rankRewardOverrides: [
+      { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
+    ],
     theme: {
       accent: '#ef4444',
       accentSecondary: '#f97316',

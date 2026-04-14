@@ -153,6 +153,15 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     seasonRankRequired: 'golden_horde_warrior', // rank ID — Amber rank in Season 7 (Neon Era)
   },
   {
+    id: 'apocalypse_city',
+    name: 'Апокалипсис',
+    nameKk: 'Апокалипсис',
+    nameEn: 'Apocalypse City',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/apocalypse_city_avatar-Yo5n7ytzZLCNyJ8DJfaDt9.webp',
+    seasonReward: true,
+    seasonRankRequired: 'sky_eagle', // Циркон rank
+  },
+  {
     id: 'neon_crown',
     name: 'Неоновая корона',
     nameKk: 'Неон Таж',
@@ -276,6 +285,8 @@ export function getAvatarAccentColors(avatarId: string | null | undefined): {
       return { borderColor: '#ff6600', shadowColor: 'rgba(255,120,0,0.4)', bgClass: 'rgba(255,120,0,0.08)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
     case 'neon_crown':
       return { borderColor: '#00dcff', shadowColor: 'rgba(0,220,255,0.4)', bgClass: 'rgba(0,220,255,0.08)', borderClass: 'border-cyan-400/50', textClass: 'text-cyan-300', hoverClass: 'hover:bg-cyan-500/10' };
+    case 'apocalypse_city':
+      return { borderColor: '#ef4444', shadowColor: 'rgba(239,68,68,0.4)', bgClass: 'rgba(239,68,68,0.08)', borderClass: 'border-red-500/50', textClass: 'text-red-300', hoverClass: 'hover:bg-red-500/10' };
     case 'diving_eagle':
     case 'sky_eagle':
       return { borderColor: '#f97316', shadowColor: 'rgba(249,115,22,0.3)', bgClass: 'rgba(249,115,22,0.06)', borderClass: 'border-orange-500/50', textClass: 'text-orange-300', hoverClass: 'hover:bg-orange-500/10' };
