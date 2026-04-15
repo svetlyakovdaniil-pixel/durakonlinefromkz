@@ -96,7 +96,7 @@ import {
   activateReferralCode,
   getReferralStats,
 } from "./db";
-import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces } from "./achievementsDb";
+import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces, retroactiveRecalcAllAchievements } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
 import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
 import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
@@ -1145,6 +1145,25 @@ export const appRouter = router({
           action: 'give_item',
           targetProfileId: input.profileId,
           details: { note: `Force-recalculated many_faces achievement: progress=${result.progress}, unlocked=${result.unlocked}, justUnlocked=${result.justUnlocked}` },
+        });
+        return result;
+      }),
+    /**
+     * Retroactively recalculate ALL static-data achievements for ALL players.
+     * Useful after fixing bugs in achievement logic.
+     * Admin-only. This operation may take a while for large player bases.
+     */
+    retroactiveRecalcAll: adminProcedure
+      .mutation(async ({ ctx }) => {
+        const result = await retroactiveRecalcAllAchievements();
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'give_item',
+          targetProfileId: null,
+          details: {
+            note: `Retroactive achievement recalc: ${result.processedPlayers}/${result.totalPlayers} players, ${result.totalRecalculated} recalculated, ${result.totalNewlyUnlocked} newly unlocked, ${result.errors} errors`,
+          },
         });
         return result;
       }),
