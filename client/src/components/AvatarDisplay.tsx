@@ -1,8 +1,6 @@
 import { KhanAvatar } from './KhanAvatar';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
-import { DivingEagleAvatar } from './DivingEagleAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
-import { NeonPawAvatar } from './NeonPawAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
 import { NeonCatAvatar } from './NeonCatAvatar';
 import { NeonCrownAvatar } from './NeonCrownAvatar';
@@ -89,24 +87,14 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   // Render the raw avatar content (no clipping, no transform yet)
   function renderContent() {
-    // Backwards compatibility: old sky_eagle users see the new diving_eagle avatar
-    if (baseId === 'sky_eagle') {
-      return <DivingEagleAvatar size={size} />;
-    }
     if (baseId === 'khan') {
       return <KhanAvatar size={size} />;
     }
     if (baseId === 'golden_horde') {
       return <GoldenHordeAvatar size={size} />;
     }
-    if (baseId === 'diving_eagle') {
-      return <DivingEagleAvatar size={size} />;
-    }
     if (baseId === 'great_khan') {
       return <GreatKhanAvatar size={size} />;
-    }
-    if (baseId === 'neon_paw') {
-      return <NeonPawAvatar size={size} />;
     }
     if (baseId === 'neon_dino') {
       return <NeonDinoAvatar size={size} />;

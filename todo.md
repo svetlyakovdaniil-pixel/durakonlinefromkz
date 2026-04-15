@@ -2948,9 +2948,9 @@
 - [x] Добавить UI в AdminPanel для удаления предметов (аватарок, рамок) у конкретного игрока
 
 ## Аватарки Обсидиан S6-S9
-- [ ] Сгенерировать аватарки Обсидиан для S6 (Казахский колорит), S7 (Неоновая эра), S8 (Постапокалипсис), S9 (Японские мотивы)
-- [ ] Создать компоненты ObsidianKazakhAvatar, ObsidianNeonAvatar, ObsidianPostApocAvatar, ObsidianJapaneseAvatar
-- [ ] Зарегистрировать в AvatarDisplay.tsx и shared/avatars.ts
-- [ ] Добавить в награды сезонов S6-S9 в seasons.ts (rankRewardOverrides для great_khan)
+- [x] Сгенерировать аватарки Обсидиан для S6 (Казахский колорит), S7 (Неоновая эра), S8 (Постапокалипсис), S9 (Японские мотивы)
+- [x] Создать компоненты ObsidianKazakhAvatar, ObsidianNeonEraAvatar, ObsidianApocalypseAvatar, ObsidianJapaneseAvatar
+- [x] Зарегистрировать в AvatarDisplay.tsx и shared/avatars.ts
+- [x] Добавить в награды сезонов S6-S9 в seasons.ts (rankRewardOverrides для great_khan)
 - [x] Убрать скролл из выбора рамки аватарки в профиле игрока (вернуть старый вид)
 - [x] Исправить отображение рамок 10–12 сезона в выборе рамки профиля игрока

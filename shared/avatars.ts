@@ -105,23 +105,20 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'diving_eagle',
-    name: 'Циркон',
-    nameKk: 'Циркон',
-    nameEn: 'Zircon',
-    url: 'diving_eagle', // special: rendered by DivingEagleAvatar component
-    animated: true,
+    name: 'Беркут степей',
+    nameKk: 'Дала бүркіті',
+    nameEn: 'Steppe Eagle',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_kazakh_s6-D6TwZfEa5H9yauccNCb6G8.webp',
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID from SEASON_RANKS
     seasonNumber: 6,
   },
   {
     id: 'neon_paw',
-    name: 'Неоновая лапа',
-    nameKk: 'Неон Табан',
-    nameEn: 'Neon Paw',
-    url: 'neon_paw', // special: rendered by NeonPawAvatar component
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp',
-    animated: true,
+    name: 'Кибер-волк',
+    nameKk: 'Кибер қасқыр',
+    nameEn: 'Cyber Wolf',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_neon_era_s7-JpdjrjrWH8jv3RJmLRUukG.webp',
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // rank ID — Zircon rank in Season 7 (Neon Era)
     seasonNumber: 7,
@@ -163,10 +160,10 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'apocalypse_city',
-    name: 'Апокалипсис',
-    nameKk: 'Апокалипсис',
-    nameEn: 'Apocalypse City',
-    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/apocalypse_city_v2-PCAEbAXE4wSCa8FzWXjFSi.webp',
+    name: 'Выживший',
+    nameKk: 'Тіршілік еткен',
+    nameEn: 'Survivor',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_apocalypse_s8-mX7QoLXFqTx273Bn5WwJjA.webp',
     seasonReward: true,
     seasonRankRequired: 'sky_eagle', // Циркон rank
     seasonNumber: 8,
@@ -245,12 +242,12 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
   },
   {
     id: 'japanese_motifs_zircon',
-    name: 'Японский пейзаж',
-    nameKk: 'Жапон пейзажы',
-    nameEn: 'Japanese Landscape',
-    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/japanese_motifs_zircon_v2-FV7CyG9fH7ddeJbNMZU2zQ.webp',
+    name: 'Кицунэ',
+    nameKk: 'Кицунэ',
+    nameEn: 'Kitsune',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/zircon_japanese_s9-fETuS5Sokkh8MuW2cmwvAe.webp',
     seasonReward: true,
-    seasonRankRequired: 'zircon', // Zircon rank
+    seasonRankRequired: 'sky_eagle', // Zircon rank
     seasonNumber: 9,
   },
   // Season 1 — Подводный мир (Zircon)
@@ -885,7 +882,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian', 'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese', 'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese', 'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'great_khan', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian', 'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese', 'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese', 'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {
