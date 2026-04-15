@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { getLoginUrl } from "@/const";
 import { Loader2, Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
-import { signInWithPopup } from "firebase/auth";
-import { auth as firebaseAuth, googleProvider } from "@/lib/firebase";
+
 
 export default function Register() {
   const { t } = useTranslation();
@@ -86,41 +85,12 @@ export default function Register() {
   const handleGoogleSignIn = async () => {
     setError("");
     setGoogleLoading(true);
-    try {
-      // Open Google Sign-In popup via Firebase
-      const result = await signInWithPopup(firebaseAuth, googleProvider);
-      // Get the ID token
-      const idToken = await result.user.getIdToken();
-
-      // Send to our server for verification and session creation
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          idToken,
-          referralCode: referralCode.trim().toUpperCase() || undefined,
-        }),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        setError(t("auth.googleError"));
-        return;
-      }
-
-      // Success — reload to pick up the session cookie
-      window.location.href = "/";
-    } catch (err: any) {
-      // User closed the popup — not an error
-      if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled-popup-request") {
-        setGoogleLoading(false);
-        return;
-      }
-      console.error("[GoogleAuth] Sign-in failed:", err);
-      setError(t("auth.googleError"));
-    } finally {
-      setGoogleLoading(false);
-    }
+    // Use server-side OAuth redirect flow (avoids COOP popup issues)
+    const origin = window.location.origin;
+    const ref = referralCode.trim().toUpperCase();
+    const params = new URLSearchParams({ origin });
+    if (ref) params.set("referralCode", ref);
+    window.location.href = `/api/auth/google/init?${params.toString()}`;
   };
 
   const handleAppleSignIn = async () => {
