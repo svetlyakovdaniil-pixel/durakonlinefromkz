@@ -29,7 +29,16 @@ async function verifyGoogleIdToken(idToken: string): Promise<{
   const payload = await response.json();
 
   // Verify the audience matches our Firebase project
-  if (payload.aud !== "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com") {
+  // Firebase ID tokens can have either the Web Client ID or the Firebase App ID as audience
+  const ALLOWED_AUDIENCES = [
+    "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com", // Web Client ID
+    "1:825855589810:web:2fb22aff27ea310abcf8ab", // Firebase App ID
+  ];
+  console.log("[GoogleAuth] Token aud:", payload.aud, "| azp:", payload.azp, "| iss:", payload.iss);
+  const audMatch = ALLOWED_AUDIENCES.includes(payload.aud);
+  const azpMatch = ALLOWED_AUDIENCES.includes(payload.azp);
+  if (!audMatch && !azpMatch) {
+    console.error("[GoogleAuth] Audience mismatch. Got aud:", payload.aud, "azp:", payload.azp);
     throw new Error("Token audience mismatch");
   }
 
