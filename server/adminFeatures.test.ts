@@ -79,6 +79,22 @@ vi.mock("./db", () => ({
   upsertShopPriceOverride: vi.fn(),
 }));
 
+// Mock achievementsDb
+vi.mock("./achievementsDb", () => ({
+  getAchievementsForProfile: vi.fn().mockResolvedValue([]),
+  incrementAchievementProgress: vi.fn().mockResolvedValue(undefined),
+  claimAchievementReward: vi.fn().mockResolvedValue({ success: false }),
+  getUnclaimedAchievementCount: vi.fn().mockResolvedValue(0),
+  forceRecalculateManyFaces: vi.fn().mockResolvedValue({ progress: 0, unlocked: false, justUnlocked: false }),
+  retroactiveRecalcAllAchievements: vi.fn().mockResolvedValue({
+    totalPlayers: 5,
+    processedPlayers: 5,
+    totalRecalculated: 12,
+    totalNewlyUnlocked: 3,
+    errors: 0,
+  }),
+}));
+
 // Mock socketServer
 vi.mock("./socketServer", () => ({
   emitNotificationToProfile: vi.fn(),
@@ -723,5 +739,34 @@ describe("admin.globalStats with admin deductions", () => {
     expect(result!.adminAddedShanyrak).toBe(5000);
     expect(result!.adminAddedTenge).toBe(25);
     expect(result!.totalShanyrak).toBe(500000);
+  });
+});
+
+/* ================================================================
+   8. RETROACTIVE ACHIEVEMENT RECALCULATION
+   ================================================================ */
+describe("admin.retroactiveRecalcAll", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("calls retroactiveRecalcAllAchievements and logs the action", async () => {
+    const caller = appRouter.createCaller(createAdminContext());
+    const result = await caller.admin.retroactiveRecalcAll();
+    expect(result).toMatchObject({
+      totalPlayers: expect.any(Number),
+      processedPlayers: expect.any(Number),
+      totalRecalculated: expect.any(Number),
+      totalNewlyUnlocked: expect.any(Number),
+      errors: expect.any(Number),
+    });
+    // logAdminAction should have been called
+    const { logAdminAction } = await import("./db");
+    expect(vi.mocked(logAdminAction)).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "give_item" })
+    );
+  });
+
+  it("rejects non-admin access", async () => {
+    const caller = appRouter.createCaller(createUserContext());
+    await expect(caller.admin.retroactiveRecalcAll()).rejects.toThrow();
   });
 });

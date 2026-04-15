@@ -3095,3 +3095,8 @@
 - [x] Добавить durakonlinefromkz.vip в Google Cloud OAuth Authorized JavaScript origins
 - [x] Добавить https://durakonlinefromkz.vip/api/auth/google/callback в Authorized redirect URIs
 - [x] Создать новый Google Client Secret и добавить в env (GOOGLE_CLIENT_SECRET)
+
+## Batch 102 — Ретроактивный пересчёт достижений + чистка
+- [x] Добавить server: retroactiveRecalcAllAchievements — пересчёт всех достижений для всех игроков
+- [x] Добавить AdminPanel: вкладка "Инструменты" с кнопкой глобального пересчёта достижений
+- [x] Почистить неиспользуемые файлы и проверить ошибки — мусора нет, TS 0 ошибок, 520 тестов

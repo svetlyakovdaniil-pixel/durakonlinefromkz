@@ -9,7 +9,7 @@ import {
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
   ShoppingCart, Bell, Send, Filter, Menu, X, Flag, Package,
-  MessageSquare, AlertCircle, FlaskConical, RotateCcw,
+  MessageSquare, AlertCircle, FlaskConical, RotateCcw, Wrench, CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ import { SeasonTestTab } from "@/components/SeasonTestTab";
 import { AvatarEditorTab } from "@/components/AvatarEditorTab";
 import { ProfileItemsSection } from "@/components/ProfileItemsSection";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "avatar_editor";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "avatar_editor" | "tools";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -123,6 +123,7 @@ export default function AdminPanel() {
     { id: "contact", label: "Сообщения", icon: MessageSquare, adminOnly: true },
     { id: "season_test", label: "Тест сезона", icon: FlaskConical, adminOnly: true },
     { id: "avatar_editor", label: "Редактор аватарок", icon: Crown, adminOnly: true },
+    { id: "tools", label: "Инструменты", icon: Wrench, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
 
@@ -210,6 +211,7 @@ export default function AdminPanel() {
         {tab === "contact" && isAdmin && <ContactMessagesTab />}
         {tab === "season_test" && isAdmin && <SeasonTestTab />}
         {tab === "avatar_editor" && isAdmin && <AvatarEditorTab />}
+        {tab === "tools" && isAdmin && <ToolsTab />}
       </div>
     </div>
   );
@@ -2687,6 +2689,144 @@ function ContactMessagesTab() {
               className="bg-amber-600 hover:bg-amber-700 text-white"
             >
               {updateMut.isPending ? 'Сохранение...' : 'Сохранить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ================================================================
+   TOOLS TAB — Admin instruments for maintenance tasks
+   ================================================================ */
+function ToolsTab() {
+  const utils = trpc.useUtils();
+
+  // Retroactive achievement recalculation
+  const [recalcResult, setRecalcResult] = useState<{
+    totalPlayers: number;
+    processedPlayers: number;
+    totalRecalculated: number;
+    totalNewlyUnlocked: number;
+    errors: number;
+  } | null>(null);
+  const [showRecalcConfirm, setShowRecalcConfirm] = useState(false);
+
+  const retroactiveRecalcMutation = trpc.admin.retroactiveRecalcAll.useMutation({
+    onSuccess: (result) => {
+      setRecalcResult(result);
+      setShowRecalcConfirm(false);
+      toast.success(
+        `Пересчёт завершён: ${result.processedPlayers}/${result.totalPlayers} игроков, ` +
+        `${result.totalRecalculated} пересчитано, ${result.totalNewlyUnlocked} разблокировано` +
+        (result.errors > 0 ? `, ${result.errors} ошибок` : '')
+      );
+      // Invalidate admin queries in case they show achievement counts
+      utils.admin.players.invalidate();
+    },
+    onError: (e) => toast.error(`Ошибка: ${e.message}`),
+  });
+
+  return (
+    <div className="space-y-6 max-w-2xl">
+      <div className="flex items-center gap-3 mb-2">
+        <Wrench className="w-6 h-6 text-amber-400" />
+        <h2 className="text-xl font-bold text-amber-100">Инструменты администратора</h2>
+      </div>
+      <p className="text-sm text-gray-400">
+        Служебные операции для исправления данных после обновлений логики.
+        Используйте осторожно — операции могут занять время при большом количестве игроков.
+      </p>
+
+      {/* Retroactive achievement recalculation */}
+      <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 p-5 space-y-4">
+        <div className="flex items-start gap-3">
+          <RotateCcw className="w-5 h-5 text-amber-400 mt-0.5 shrink-0" />
+          <div>
+            <h3 className="font-semibold text-amber-200">Ретроактивный пересчёт достижений</h3>
+            <p className="text-sm text-amber-200/70 mt-1">
+              Пересчитывает все достижения, которые можно вычислить из текущих данных БД,
+              для <strong>всех игроков</strong>. Полезно после исправления багов в логике достижений.
+            </p>
+            <div className="mt-2 text-xs text-gray-500 space-y-0.5">
+              <p>✅ Пересчитываются: игры, рейтинг, боты, коллекции, донат, премиум, туториал, квесты, рефералы, сезоны, лидерборд</p>
+              <p>⏭️ Пропускаются: уже разблокированные достижения (прогресс не уменьшается)</p>
+              <p>❌ Не пересчитываются: достижения реального времени (first_trump, batyr_recruit, clean_win и т.д.)</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Result display */}
+        {recalcResult && (
+          <div className="rounded-lg border border-green-800/40 bg-green-950/20 p-3 space-y-1">
+            <div className="flex items-center gap-2 text-green-400 font-semibold text-sm">
+              <CheckCheck className="w-4 h-4" />
+              Пересчёт завершён
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-gray-300 mt-1">
+              <span className="text-gray-500">Игроков обработано:</span>
+              <span>{recalcResult.processedPlayers} / {recalcResult.totalPlayers}</span>
+              <span className="text-gray-500">Записей обновлено:</span>
+              <span>{recalcResult.totalRecalculated}</span>
+              <span className="text-gray-500">Новых разблокировок:</span>
+              <span className={recalcResult.totalNewlyUnlocked > 0 ? "text-amber-300 font-semibold" : ""}>{recalcResult.totalNewlyUnlocked}</span>
+              {recalcResult.errors > 0 && (
+                <>
+                  <span className="text-red-400">Ошибок:</span>
+                  <span className="text-red-400">{recalcResult.errors}</span>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        <Button
+          onClick={() => setShowRecalcConfirm(true)}
+          disabled={retroactiveRecalcMutation.isPending}
+          className="w-full bg-amber-700 hover:bg-amber-600 text-white font-semibold"
+        >
+          {retroactiveRecalcMutation.isPending ? (
+            <><RotateCcw className="w-4 h-4 mr-2 animate-spin" /> Пересчитываем всех игроков...</>
+          ) : (
+            <><RotateCcw className="w-4 h-4 mr-2" /> Запустить ретроактивный пересчёт</>
+          )}
+        </Button>
+      </div>
+
+      {/* Confirmation dialog */}
+      <Dialog open={showRecalcConfirm} onOpenChange={setShowRecalcConfirm}>
+        <DialogContent className="bg-gray-900 border-amber-800 text-gray-100 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-amber-400 flex items-center gap-2">
+              <RotateCcw className="w-5 h-5" />
+              Подтвердите пересчёт
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-gray-300">
+              Будет запущен ретроактивный пересчёт достижений для <strong>всех игроков</strong>.
+            </p>
+            <div className="rounded-lg bg-amber-950/30 border border-amber-800/40 p-3 text-xs text-amber-200/80 space-y-1">
+              <p>• Операция безопасна — прогресс только увеличивается, никогда не уменьшается</p>
+              <p>• Уже разблокированные достижения не затрагиваются</p>
+              <p>• При большом количестве игроков может занять 10–30 секунд</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowRecalcConfirm(false)}
+              className="border-gray-700 text-gray-300"
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={() => retroactiveRecalcMutation.mutate()}
+              disabled={retroactiveRecalcMutation.isPending}
+              className="bg-amber-700 hover:bg-amber-600 text-white"
+            >
+              {retroactiveRecalcMutation.isPending ? 'Выполняется...' : 'Запустить'}
             </Button>
           </DialogFooter>
         </DialogContent>
