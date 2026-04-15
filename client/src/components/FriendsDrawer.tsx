@@ -8,12 +8,13 @@ import { toast } from 'sonner';
 import {
   Users, UserPlus, UserCheck, UserX,
   Clock, Check, X, Loader2,
-  Eye, ArrowLeft, Send,
+  Eye, ArrowLeft, Send, Gift,
 } from 'lucide-react';
 import { AvatarDisplay } from './AvatarDisplay';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import { TrendingUp, Swords, Crown, Shield, Hash } from 'lucide-react';
+import ReferralPanel from './ReferralPanel';
 
 // ============================================================
 // Friend Profile View (inline, replaces friends list)
@@ -145,6 +146,7 @@ function FriendsContent({
 }) {
   const [addGameId, setAddGameId] = useState('');
   const [viewingFriendGameId, setViewingFriendGameId] = useState<number | null>(null);
+  const [showReferral, setShowReferral] = useState(false);
   const utils = trpc.useUtils();
   const { t } = useTranslation();
 
@@ -214,8 +216,29 @@ function FriendsContent({
     );
   }
 
+  if (showReferral) {
+    return <ReferralPanel onBack={() => setShowReferral(false)} />;
+  }
+
   return (
     <div className="space-y-4 mt-3">
+      {/* Invite friend button */}
+      <button
+        onClick={() => setShowReferral(true)}
+        className="w-full flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl font-bold text-white
+          bg-gradient-to-r from-red-700 to-red-500 hover:from-red-600 hover:to-red-400
+          border border-red-400/40 shadow-[0_0_16px_2px_rgba(239,68,68,0.35)]
+          transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]
+          animate-pulse-slow relative overflow-hidden group"
+        style={{ animationDuration: '2.5s' }}
+      >
+        {/* Shimmer */}
+        <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+        <Gift className="w-5 h-5 text-red-200 shrink-0" />
+        <span className="text-sm tracking-wide">{t('referral.inviteButton')}</span>
+        <Gift className="w-4 h-4 text-red-200/60 shrink-0" />
+      </button>
+
       {/* Add friend */}
       <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
         <div className="text-amber-200/60 text-xs mb-2 flex items-center gap-1">

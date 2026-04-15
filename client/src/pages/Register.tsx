@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { getLoginUrl } from "@/const";
-import { Loader2, Mail, Lock, User, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, User, ArrowLeft, Gift } from "lucide-react";
 import { signInWithPopup } from "firebase/auth";
 import { auth as firebaseAuth, googleProvider } from "@/lib/firebase";
 
@@ -15,6 +15,7 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
@@ -50,6 +51,7 @@ export default function Register() {
           name: trimmedName,
           email: email.trim(),
           password,
+          referralCode: referralCode.trim().toUpperCase() || undefined,
         }),
         credentials: "include",
       });
@@ -93,7 +95,10 @@ export default function Register() {
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({
+          idToken,
+          referralCode: referralCode.trim().toUpperCase() || undefined,
+        }),
         credentials: "include",
       });
 
@@ -201,6 +206,30 @@ export default function Register() {
                   disabled={isAnyLoading}
                 />
               </div>
+            </div>
+
+            {/* Referral code field */}
+            <div className="space-y-2">
+              <Label className="text-amber-200/80 text-sm flex items-center gap-1.5">
+                <Gift className="w-3.5 h-3.5 text-amber-400/70" />
+                {t("auth.referralCode")}
+                <span className="text-amber-200/40 text-xs font-normal ml-1">({t("auth.optional")})</span>
+              </Label>
+              <div className="relative">
+                <Gift className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-amber-400/50" />
+                <Input
+                  type="text"
+                  placeholder={t("auth.referralCodePlaceholder")}
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  maxLength={8}
+                  className="pl-10 bg-[#0f2035]/80 border-amber-700/30 text-amber-100 placeholder:text-amber-200/30 focus:border-amber-500/50 focus:ring-amber-500/20 tracking-widest font-mono uppercase"
+                  disabled={isAnyLoading}
+                />
+              </div>
+              <p className="text-amber-200/40 text-xs">
+                {t("auth.referralCodeHint")}
+              </p>
             </div>
 
             <Button

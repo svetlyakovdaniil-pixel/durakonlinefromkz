@@ -684,6 +684,17 @@ export const kk = {
     link: 'Құпиялылық саясаты',
   },
   // Auth
+  referral: {
+    title: 'Дос шақыру',
+    description: 'Кодыңызды бөлісіңіз. Кодыңыз арқылы тіркелген әрбір сізге сыйлық әкеледі!',
+    progressTitle: 'Сыйықтар прогрессі',
+    invited: 'шақырылды',
+    yourCode: 'Шақыру кодыңыз',
+    codeCopied: 'Код көшірілді!',
+    newPlayerBonus: 'Кодыңызды енгізген жаңа ойыншы алады:',
+    inviteButton: 'Дос шақыру',
+  },
+
   auth: {
     login: 'Кіру',
     register: 'Тіркелу',
@@ -710,5 +721,9 @@ export const kk = {
     googleError: 'Google арқылы кіру қатесі',
     apple: 'Apple',
     appleError: 'Apple арқылы кіру қатесі',
+    referralCode: 'Шақыру коды',
+    referralCodePlaceholder: 'Мысалы: AB3C7XYZ',
+    referralCodeHint: 'Достың кодын енгізіңіз және 10 000 шаңырақ + 25 теңге алыңыз',
+    optional: 'міндетті емес',
   },
 };

@@ -685,6 +685,17 @@ export const ru = {
     link: 'Политика конфиденциальности',
   },
   // Auth
+  referral: {
+    title: 'Пригласи друга',
+    description: 'Поделись своим кодом. Каждый, кто зарегистрируется по вашему коду, принесёт вам награду!',
+    progressTitle: 'Прогресс наград',
+    invited: 'приглашено',
+    yourCode: 'Ваш пригласительный код',
+    codeCopied: 'Код скопирован!',
+    newPlayerBonus: 'Новый игрок, введший ваш код, получает:',
+    inviteButton: 'Пригласи друга',
+  },
+
   auth: {
     login: 'Вход',
     register: 'Регистрация',
@@ -711,5 +722,9 @@ export const ru = {
     googleError: 'Ошибка входа через Google',
     apple: 'Apple',
     appleError: 'Ошибка входа через Apple',
+    referralCode: 'Код приглашения',
+    referralCodePlaceholder: 'Например: AB3C7XYZ',
+    referralCodeHint: 'Введите код друга и получите 10 000 шаныраков + 25 тенге',
+    optional: 'необязательно',
   },
 };

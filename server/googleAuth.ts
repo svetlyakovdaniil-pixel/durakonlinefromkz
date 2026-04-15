@@ -105,6 +105,19 @@ export function registerGoogleAuthRoutes(app: Express) {
           lastSignedIn: new Date(),
         });
 
+        // Get user and create profile (needed for referral activation)
+        const newUser = await db.getUserByOpenId(openId);
+        if (newUser) {
+          const profile = await db.getOrCreateProfile(newUser.id, truncatedName);
+          // Activate referral code if provided (non-fatal)
+          const referralCode = req.body.referralCode;
+          if (referralCode && typeof referralCode === 'string' && referralCode.trim().length > 0 && profile) {
+            await db.activateReferralCode(profile.id, referralCode.trim().toUpperCase()).catch(err => {
+              console.warn('[GoogleAuth] Referral activation failed (non-fatal):', err);
+            });
+          }
+        }
+
         // Create session token and set cookie
         const sessionToken = await sdk.createSessionToken(openId, {
           name: truncatedName,

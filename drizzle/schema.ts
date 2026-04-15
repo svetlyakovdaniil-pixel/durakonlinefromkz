@@ -96,6 +96,10 @@ export const playerProfiles = mysqlTable("player_profiles", {
   bannedAt: timestamp("bannedAt"),
   /** When the ban expires (null = permanent) */
   bannedUntil: timestamp("bannedUntil"),
+  /** Unique 8-character referral code for this player */
+  referralCode: varchar("referralCode", { length: 8 }).unique(),
+  /** Level of referral rewards already claimed (0=none, 1=1 invite, 2=5 invites, 3=15 invites, 4=50 invites) */
+  referralRewardLevel: int("referralRewardLevel").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -548,3 +552,19 @@ export const seasonTestState = mysqlTable("season_test_state", {
 });
 export type SeasonTestState = typeof seasonTestState.$inferSelect;
 export type InsertSeasonTestState = typeof seasonTestState.$inferInsert;
+
+/**
+ * Referrals — tracks who invited whom.
+ * When a new player enters a referral code, a row is created here.
+ */
+export const referrals = mysqlTable("referrals", {
+  id: int("id").autoincrement().primaryKey(),
+  /** The player who shared their code (playerProfiles.id) */
+  referrerId: int("referrerId").notNull(),
+  /** The new player who used the code (playerProfiles.id) */
+  referredId: int("referredId").notNull().unique(),
+  /** When the referral was activated */
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type Referral = typeof referrals.$inferSelect;
+export type InsertReferral = typeof referrals.$inferInsert;

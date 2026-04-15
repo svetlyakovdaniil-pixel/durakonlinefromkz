@@ -1291,10 +1291,10 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   </p>
                   <p className="text-amber-200/60 text-xs italic">
                     {locale === 'kk'
-                      ? 'Мысалы: егер сіз Беркұт ранғына жетсеңіз, тек Беркұт сыйағын аласыз. Барлық рангтардың сыйақтары берілмейді.'
+                      ? 'Мысалы: егер сіз Рубин ранғына жетсеңіз, тек Рубин сыйағын аласыз. Барлық рангтардың сыйақтары берілмейді.'
                       : locale === 'en'
-                        ? 'Example: if you reach Berkut rank, you only get the Berkut reward. Rewards for lower ranks are not given.'
-                        : 'Пример: если вы достигли ранга Беркут, вы получаете только награду Беркута. Награды за все нижестоящие ранги не выдаются.'}
+                        ? 'Example: if you reach Ruby rank, you only get the Ruby reward. Rewards for lower ranks are not given.'
+                        : 'Пример: если вы достигли ранга Рубин, вы получаете только награду Рубина. Награды за все нижестоящие ранги не выдаются.'}
                   </p>
                 </div>
               </div>

@@ -92,6 +92,9 @@ import {
   upsertAvatarOffset,
   getSeasonTestState,
   upsertSeasonTestState,
+  getOrCreateReferralCode,
+  activateReferralCode,
+  getReferralStats,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -1773,12 +1776,34 @@ export const appRouter = router({
         }
       }
 
-      // Reset persisted test state
+        // Reset persisted test state
       await upsertSeasonTestState({ seasonKey, step: 'rolled_back', isActive: false });
-
        return { rolledBack, seasonKey };
     }),
+  }),
 
+  // ============================================================
+  // REFERRAL SYSTEM
+  // ============================================================
+  referral: router({
+    /** Get or generate a referral code for the current player, plus stats */
+    myCode: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND' });
+      const code = await getOrCreateReferralCode(profile.id);
+      const stats = await getReferralStats(profile.id);
+      return { code, totalReferrals: stats.totalReferrals, rewardLevel: stats.rewardLevel };
+    }),
+
+    /** Activate a referral code (new player uses someone else's code) */
+    activate: protectedProcedure
+      .input(z.object({ code: z.string().min(6).max(10) }))
+      .mutation(async ({ ctx, input }) => {
+        const profile = await getProfileByUserId(ctx.user.id);
+        if (!profile) throw new TRPCError({ code: 'NOT_FOUND' });
+        const result = await activateReferralCode(profile.id, input.code);
+        return result;
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

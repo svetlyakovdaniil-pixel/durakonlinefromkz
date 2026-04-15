@@ -683,9 +683,20 @@ export const en = {
     link: 'Privacy Policy',
   },
 
-  // Auth
+  // Referral
+  referral: {
+    title: 'Invite a Friend',
+    description: 'Share your code. Everyone who registers with your code brings you a reward!',
+    progressTitle: 'Reward Progress',
+    invited: 'invited',
+    yourCode: 'Your Referral Code',
+    codeCopied: 'Code copied!',
+    newPlayerBonus: 'New player who uses your code gets:',
+    inviteButton: 'Invite a Friend',
+  },
+
   auth: {
-    login: 'Login',
+    login: 'Log in',
     register: 'Register',
     email: 'Email',
     emailPlaceholder: 'your@email.com',
@@ -710,6 +721,10 @@ export const en = {
     googleError: 'Google sign-in error',
     apple: 'Apple',
     appleError: 'Apple sign-in error',
+    referralCode: 'Referral Code',
+    referralCodePlaceholder: 'e.g. AB3C7XYZ',
+    referralCodeHint: 'Enter a friend\'s code and get 10,000 shanyrak + 25 tenge',
+    optional: 'optional',
   },
 
   // Contact admin

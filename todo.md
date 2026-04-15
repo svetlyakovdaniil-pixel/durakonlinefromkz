@@ -3029,3 +3029,33 @@
 - [x] FrameWrapper (AvatarWithFrame.tsx): useSettings() + передаёт animationsEnabled как active во все рамки
 - [x] AvatarDisplay.tsx: useSettings() + CSS-блокировка анимаций через .avatar-anim-wrapper
 - [x] DiamondRankIcon.tsx: useSettings() + условная анимация shimmer/border-pulse для ранга Великий хан
+
+## Batch 94 — Правила сезона, рамки, реферальная система (апрель 2026)
+- [ ] Season.tsx: в разделе "Как выдаются награды?" заменить Беркут на Рубин (RU/KK/EN)
+- [ ] Магазин: переименовать рамки Рубин/Янтарь/Циркон на стилевые названия (не связанные с камнями)
+- [ ] БД: добавить поле referralCode (8 символов, уникальный) в таблицу users
+- [ ] БД: добавить таблицу referrals (referrerId, referredId, rewardClaimed, createdAt)
+- [ ] БД: добавить поле referralRewardLevel (0-4) в таблицу users для трекинга полученных наград
+- [ ] Сервер: генерировать referralCode при создании пользователя
+- [ ] Сервер: endpoint для применения реферального кода (activateReferral)
+- [ ] Сервер: выдача наград при достижении 1/5/15/50 приглашений
+- [ ] Сервер: endpoint для получения реферальной статистики (getMyReferrals)
+- [ ] Регистрация: добавить необязательное поле "Код приглашения" при первом входе
+- [ ] FriendsDrawer: кнопка "Пригласи друга" (красная, анимированная) с иконкой подарка
+- [ ] FriendsDrawer: модальное окно с кодом, полосой наград (1/5/15/50) и иконками наград
+- [ ] Полоса наград: числа 1/5/15/50 чередуются сверху/снизу, иконки шаныраков и тенге
+
+## Batch 94 — Правила сезона, рамки, реферальная система (апрель 2026)
+- [x] Season.tsx: Беркут → Рубин в примере "Как выдаются награды?" (RU/KK/EN)
+- [x] ShopModal.tsx: рамки Рубин→Алый всплеск, Янтарь→Солнечная орбита, Циркон→Хвост кометы
+- [x] schema.ts: добавлены поля referralCode (varchar 8, unique) и referralRewardLevel (int) в player_profiles; новая таблица referrals
+- [x] db.ts: хелперы getOrCreateReferralCode, activateReferralCode (с наградами 1/5/15/50 приглашений), getReferralStats
+- [x] routers.ts: referral.myCode (query) и referral.activate (mutation)
+- [x] Register.tsx: поле "Код приглашения" (необязательное) при регистрации через email
+- [x] emailAuth.ts: обработка referralCode при регистрации
+- [x] googleAuth.ts: обработка referralCode при первом входе через Google
+- [x] ReferralPanel.tsx: компонент с полосой наград (1/5/15/50), кодом игрока, кнопкой копирования
+- [x] FriendsDrawer.tsx: анимированная красная кнопка "Пригласи друга" с иконкой Gift, открывает ReferralPanel
+- [x] i18n (ru/kk/en): переводы для referral.* и auth.referralCode*
+- [x] index.css: animate-pulse-slow для кнопки реферала
+- [x] 0 TypeScript ошибок

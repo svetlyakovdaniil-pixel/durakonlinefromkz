@@ -90,6 +90,17 @@ export function registerEmailAuthRoutes(app: Express) {
         passwordHash,
       });
 
+      // Create player profile (needed to activate referral code)
+      const profile = await db.getOrCreateProfile(user.id, trimmedName);
+
+      // Activate referral code if provided (non-fatal)
+      const referralCode = req.body.referralCode;
+      if (referralCode && typeof referralCode === 'string' && referralCode.trim().length > 0 && profile) {
+        await db.activateReferralCode(profile.id, referralCode.trim().toUpperCase()).catch(err => {
+          console.warn('[EmailAuth] Referral activation failed (non-fatal):', err);
+        });
+      }
+
       // Create session token and set cookie
       const sessionToken = await sdk.createSessionToken(openId, {
         name: trimmedName,

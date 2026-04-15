@@ -1,7 +1,7 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -3190,4 +3190,205 @@ export async function adminResetPlayerAccount(profileId: number): Promise<{ succ
   await db.delete(seasonRatings).where(eq(seasonRatings.profileId, profileId));
 
   return { success: true };
+}
+
+// ============================================================
+// REFERRAL helpers
+// ============================================================
+
+/** Generate a unique 8-character alphanumeric referral code */
+function generateReferralCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I to avoid confusion
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return code;
+}
+
+/**
+ * Get or generate a referral code for a player profile.
+ * If the profile already has a code, return it. Otherwise generate a unique one.
+ */
+export async function getOrCreateReferralCode(profileId: number): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [profile] = await db.select({ referralCode: playerProfiles.referralCode })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+
+  if (!profile) return null;
+  if (profile.referralCode) return profile.referralCode;
+
+  // Generate a unique code
+  let code: string;
+  let attempts = 0;
+  do {
+    code = generateReferralCode();
+    const [existing] = await db.select({ id: playerProfiles.id })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.referralCode, code))
+      .limit(1);
+    if (!existing) break;
+    attempts++;
+  } while (attempts < 10);
+
+  await db.update(playerProfiles)
+    .set({ referralCode: code! })
+    .where(eq(playerProfiles.id, profileId));
+
+  return code!;
+}
+
+/**
+ * Activate a referral code for a new player.
+ * - Finds the referrer by code
+ * - Creates a referral record
+ * - Rewards the new player (10000 shanyraks + 25 tenge)
+ * - Checks if referrer crossed a milestone and rewards them
+ * Returns: 'ok' | 'not_found' | 'already_used' | 'self_referral'
+ */
+export async function activateReferralCode(
+  newProfileId: number,
+  code: string
+): Promise<{ result: 'ok' | 'not_found' | 'already_used' | 'self_referral'; referrerName?: string }> {
+  const db = await getDb();
+  if (!db) return { result: 'not_found' };
+
+  // Check if new player already used a referral code
+  const [existingReferral] = await db.select().from(referrals)
+    .where(eq(referrals.referredId, newProfileId))
+    .limit(1);
+  if (existingReferral) return { result: 'already_used' };
+
+  // Find referrer by code
+  const [referrer] = await db.select({
+    id: playerProfiles.id,
+    displayName: playerProfiles.displayName,
+    balanceShanyrak: playerProfiles.balanceShanyrak,
+    balanceTenge: playerProfiles.balanceTenge,
+    referralRewardLevel: playerProfiles.referralRewardLevel,
+  })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.referralCode, code.toUpperCase()))
+    .limit(1);
+
+  if (!referrer) return { result: 'not_found' };
+  if (referrer.id === newProfileId) return { result: 'self_referral' };
+
+  // Create referral record
+  await db.insert(referrals).values({ referrerId: referrer.id, referredId: newProfileId });
+
+  // Reward the new player: 10000 shanyraks + 25 tenge
+  const [newPlayer] = await db.select({ balanceShanyrak: playerProfiles.balanceShanyrak, balanceTenge: playerProfiles.balanceTenge })
+    .from(playerProfiles).where(eq(playerProfiles.id, newProfileId)).limit(1);
+  if (newPlayer) {
+    const newShanyrak = newPlayer.balanceShanyrak + 10000;
+    const newTenge = newPlayer.balanceTenge + 25;
+    await db.update(playerProfiles)
+      .set({ balanceShanyrak: newShanyrak, balanceTenge: newTenge })
+      .where(eq(playerProfiles.id, newProfileId));
+    await db.insert(transactions).values({
+      profileId: newProfileId,
+      type: 'free_topup',
+      amount: 10000,
+      currency: 'shanyrak',
+      description: 'Бонус за использование реферального кода',
+      balanceAfter: newShanyrak,
+    });
+    await db.insert(transactions).values({
+      profileId: newProfileId,
+      type: 'free_topup',
+      amount: 25,
+      currency: 'tenge',
+      description: 'Бонус за использование реферального кода',
+      balanceAfter: newTenge,
+    });
+  }
+
+  // Count total referrals for referrer
+  const [countRow] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(referrals)
+    .where(eq(referrals.referrerId, referrer.id));
+  const totalReferrals = Number(countRow?.count ?? 0);
+
+  // Milestone rewards: 1, 5, 15, 50
+  const MILESTONES = [
+    { count: 1, level: 1, shanyraks: 5000, tenge: 5 },
+    { count: 5, level: 2, shanyraks: 20000, tenge: 15 },
+    { count: 15, level: 3, shanyraks: 40000, tenge: 50 },
+    { count: 50, level: 4, shanyraks: 200000, tenge: 100 },
+  ];
+
+  const currentLevel = referrer.referralRewardLevel ?? 0;
+  const newMilestones = MILESTONES.filter(m => m.level > currentLevel && totalReferrals >= m.count);
+
+  if (newMilestones.length > 0) {
+    let totalShanyraks = referrer.balanceShanyrak;
+    let totalTenge = referrer.balanceTenge;
+    let newLevel = currentLevel;
+
+    for (const milestone of newMilestones) {
+      totalShanyraks += milestone.shanyraks;
+      totalTenge += milestone.tenge;
+      newLevel = Math.max(newLevel, milestone.level);
+
+      await db.insert(transactions).values({
+        profileId: referrer.id,
+        type: 'free_topup',
+        amount: milestone.shanyraks,
+        currency: 'shanyrak',
+        description: `Реферальная награда: ${milestone.count} приглашений`,
+        balanceAfter: totalShanyraks,
+      });
+      await db.insert(transactions).values({
+        profileId: referrer.id,
+        type: 'free_topup',
+        amount: milestone.tenge,
+        currency: 'tenge',
+        description: `Реферальная награда: ${milestone.count} приглашений`,
+        balanceAfter: totalTenge,
+      });
+    }
+
+    await db.update(playerProfiles)
+      .set({ balanceShanyrak: totalShanyraks, balanceTenge: totalTenge, referralRewardLevel: newLevel })
+      .where(eq(playerProfiles.id, referrer.id));
+  }
+
+  return { result: 'ok', referrerName: referrer.displayName ?? undefined };
+}
+
+/**
+ * Get referral stats for a player: total referrals, current level, code.
+ */
+export async function getReferralStats(profileId: number): Promise<{
+  code: string | null;
+  totalReferrals: number;
+  rewardLevel: number;
+}> {
+  const db = await getDb();
+  if (!db) return { code: null, totalReferrals: 0, rewardLevel: 0 };
+
+  const [profile] = await db.select({
+    referralCode: playerProfiles.referralCode,
+    referralRewardLevel: playerProfiles.referralRewardLevel,
+  })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+
+  if (!profile) return { code: null, totalReferrals: 0, rewardLevel: 0 };
+
+  const [countRow] = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(referrals)
+    .where(eq(referrals.referrerId, profileId));
+
+  return {
+    code: profile.referralCode ?? null,
+    totalReferrals: Number(countRow?.count ?? 0),
+    rewardLevel: profile.referralRewardLevel ?? 0,
+  };
 }
