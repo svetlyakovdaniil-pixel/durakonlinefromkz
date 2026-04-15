@@ -3080,3 +3080,12 @@
 - [x] VIP аватарка добавлена в AvatarDisplay как animated (id: vip_referral)
 - [x] В превью магазина убрана кнопка "Купить за 0 тенге" — показывается "Награда за 50 приглашений"
 - [x] 0 TypeScript ошибок
+
+## Batch 100 — Sign in with Apple (апрель 2026)
+- [x] Создан App ID com.durakonlinefromkz.app в Apple Developer (Team ID: CMP7AQ6386)
+- [x] Создан Service ID com.durakonlinefromkz.web с доменом durakonlinefromkz.vip и Return URL
+- [x] Создан Key ID SHTMB76CNK с поддержкой Sign in with Apple
+- [x] Создан server/appleAuth.ts: генерация client_secret JWT, обмен кода на токены, верификация id_token через JWKS
+- [x] Маршруты GET /api/auth/apple/init и POST /api/auth/apple/callback зарегистрированы в _core/index.ts
+- [x] Кнопка Apple добавлена в Login.tsx и Register.tsx
+- [x] 0 TypeScript ошибок, 520/520 тестов прошли
