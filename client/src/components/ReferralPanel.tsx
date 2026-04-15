@@ -7,6 +7,7 @@ import { useTranslation } from '@/i18n';
 
 const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
+const VIP_AVATAR_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
 
 // Milestones: count, level, shanyrak, tenge
 // above=true → цифра в кружке снизу линии, награда сверху линии
@@ -34,6 +35,7 @@ function MilestoneNode({ milestone, totalReferrals, rewardLevel }: MilestoneNode
   const claimed = rewardLevel >= milestone.level;
   const reached = totalReferrals >= milestone.count;
   const above = milestone.above; // true = кружок снизу, награда сверху
+  const isLast = milestone.count === 50; // последний milestone — показываем VIP аватарку
 
   const rewardBlock = (
     <div className="flex flex-col items-center gap-0.5">
@@ -70,14 +72,14 @@ function MilestoneNode({ milestone, totalReferrals, rewardLevel }: MilestoneNode
   );
 
   if (above) {
-    // кружок снизу линии → награда сверху линии (mb-0 чтобы не заезжать на линию)
+    // кружок снизу линии → награда сверху линии
     return (
       <div className="flex flex-col items-center" style={{ flex: 1 }}>
         {/* Награда сверху — не заезжает на линию */}
         <div className="flex flex-col items-center mb-1" style={{ minHeight: 44 }}>
           {rewardBlock}
         </div>
-        {/* Кружок — будет ниже линии (линия проходит через середину flex-контейнера) */}
+        {/* Кружок — будет ниже линии */}
         {dot}
         {/* Пустое место снизу для выравнивания */}
         <div style={{ minHeight: 44 }} />
@@ -85,10 +87,21 @@ function MilestoneNode({ milestone, totalReferrals, rewardLevel }: MilestoneNode
     );
   } else {
     // кружок сверху линии → награда снизу линии
+    // Для milestone 50: VIP аватарка размещается в верхней зоне (над кружком)
     return (
       <div className="flex flex-col items-center" style={{ flex: 1 }}>
-        {/* Пустое место сверху для выравнивания */}
-        <div style={{ minHeight: 44 }} />
+        {/* Верхняя зона: для milestone 50 — VIP аватарка, иначе пусто */}
+        <div className="flex flex-col items-center justify-end" style={{ minHeight: 44 }}>
+          {isLast && (
+            <div className={`w-8 h-8 rounded-full overflow-hidden border-2 mb-0.5 ${
+              rewardLevel >= milestone.level
+                ? 'border-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
+                : 'border-amber-600/40'
+            }`}>
+              <img src={VIP_AVATAR_URL} alt="VIP" className="w-full h-full object-cover" />
+            </div>
+          )}
+        </div>
         {/* Кружок — будет выше линии */}
         {dot}
         {/* Награда снизу — не заезжает на линию */}
@@ -188,6 +201,9 @@ export default function ReferralPanel({ onBack }: ReferralPanelProps) {
             />
           ))}
         </div>
+
+        {/* VIP avatar preview above the 50 milestone circle */}
+        {/* Rendered separately for precise positioning */}
       </div>
 
       {/* Referral code */}

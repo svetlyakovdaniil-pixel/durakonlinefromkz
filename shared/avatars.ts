@@ -911,6 +911,15 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     premium: true,
     price: 25,
   },
+  {
+    id: 'vip_referral',
+    name: 'VIP',
+    nameKk: 'VIP',
+    nameEn: 'VIP',
+    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp',
+    premium: true,
+    // No price — awarded exclusively via referral (50 invites). Not for sale.
+  },
 ];
 
 export const DEFAULT_AVATAR_ID = 'wolf';

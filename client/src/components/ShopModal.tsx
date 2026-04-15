@@ -982,6 +982,13 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                             <Check className="w-4 h-4" /><span>{t('shop.purchased')}</span>
                           </div>
+                        ) : avatar.price === undefined ? (
+                          // No price — referral reward only
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-amber-400/80 font-medium">
+                              🎁 {locale === 'kk' ? '50 достық шақыру арқылы алыңыз' : locale === 'en' ? 'Invite 50 friends to unlock' : 'Награда за 50 приглашений'}
+                            </span>
+                          </div>
                         ) : (
                           <div className="flex items-center gap-3">
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
@@ -997,7 +1004,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             </div>
                           </div>
                         )}
-                        {!isOwned && !canAffordAvatar && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
+                        {!isOwned && avatar.price !== undefined && !canAffordAvatar && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                       </div>
                     </div>
                   </div>
