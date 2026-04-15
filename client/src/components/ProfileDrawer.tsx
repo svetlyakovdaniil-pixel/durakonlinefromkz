@@ -198,7 +198,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
           </div>
 
           {showFramePicker && (
-            <div className="mt-3 space-y-2 border-t border-amber-700/20 pt-3 max-h-[340px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent">
+            <div className="mt-3 space-y-2 border-t border-amber-700/20 pt-3">
               <button
                 onClick={() => equipFrameMutation.mutate({ frameId: null })}
                 className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
@@ -281,7 +281,14 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
               ))}
               {/* Season-only frames — shown locked unless owned (supports season-suffixed IDs like obsidian_neon_2026Q3) */}
               {/* Only show frames for current season or past seasons */}
-              {AVATAR_FRAMES.filter(f => (f as any).seasonOnly && (!(f as any).seasonNumber || (f as any).seasonNumber <= getCurrentSeasonNumber())).map(frame => {
+              {AVATAR_FRAMES.filter(f => {
+                if (!(f as any).seasonOnly) return false;
+                // Always show if player already owns it (regardless of future season number)
+                const alreadyOwned = ownedFrames.some(id => id === f.id || id.replace(/_\d{4}Q[1-4]$/, '') === f.id);
+                if (alreadyOwned) return true;
+                // Otherwise only show current and past seasons (hide future seasons)
+                return !(f as any).seasonNumber || (f as any).seasonNumber <= getCurrentSeasonNumber();
+              }).map(frame => {
                 // Find owned ID: exact match OR season-suffixed match (e.g. 'obsidian_neon_2026Q3')
                 const ownedId = ownedFrames.find(id => id === frame.id || id.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
                 const isOwned = !!ownedId;

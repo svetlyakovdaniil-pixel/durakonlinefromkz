@@ -2952,3 +2952,5 @@
 - [ ] Создать компоненты ObsidianKazakhAvatar, ObsidianNeonAvatar, ObsidianPostApocAvatar, ObsidianJapaneseAvatar
 - [ ] Зарегистрировать в AvatarDisplay.tsx и shared/avatars.ts
 - [ ] Добавить в награды сезонов S6-S9 в seasons.ts (rankRewardOverrides для great_khan)
+- [x] Убрать скролл из выбора рамки аватарки в профиле игрока (вернуть старый вид)
+- [x] Исправить отображение рамок 10–12 сезона в выборе рамки профиля игрока
