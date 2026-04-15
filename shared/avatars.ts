@@ -453,6 +453,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Sea Lord',
     url: 'amber_underwater_world',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_underwater_world_v2_0c6b5664.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -466,6 +468,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Pharaoh of Gods',
     url: 'amber_egyptian_gods',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_egyptian_gods_v2_43e04e99.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -479,6 +483,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Golden Captain',
     url: 'amber_pirate_islands',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_pirate_islands_v2_e0aa3599.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -492,6 +498,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Rune Master',
     url: 'amber_norse_gods',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_norse_gods_v2_f21b55c1.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -505,6 +513,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Space Commander',
     url: 'amber_space_odyssey',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_space_odyssey_v2_adde7dfd.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -533,6 +543,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Golden MC',
     url: 'amber_hiphop_90s',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_hiphop_90s_v2_5310991c.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank
@@ -546,6 +558,8 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameEn: 'Balance Keeper',
     url: 'amber_angels_demons',
     previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_angels_demons_v2_b882b3bd.png',
+    offsetX: -2.5,
+    offsetY: -2.5,
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'golden_horde_warrior', // Amber rank

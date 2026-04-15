@@ -1,7 +1,7 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -2857,25 +2857,12 @@ export async function adminRevokePlayerPurchase(opts: {
 export async function adminGetPlayerPurchases(profileId: number) {
   const db = await getDb();
   if (!db) return [];
-
+  // Return ALL transactions for this player so admins can see the full history
+  // No limit — admins need to see the complete transaction history
   const rows = await db.select().from(transactions)
-    .where(and(
-      eq(transactions.profileId, profileId),
-      sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
-    ))
-    .orderBy(desc(transactions.createdAt))
-    .limit(200);
-
-  // Separate purchases (negative amount) from refunds (positive amount with [ADMIN REFUND] prefix)
-  const purchases = rows.filter(r => r.amount < 0);
-  const refundedDescs = new Set(
-    rows
-      .filter(r => r.amount > 0 && r.description?.startsWith('[ADMIN REFUND] '))
-      .map(r => r.description!.replace('[ADMIN REFUND] ', ''))
-  );
-
-  // Only return purchases that have NOT been refunded
-  return purchases.filter(p => !refundedDescs.has(p.description ?? ''));
+    .where(eq(transactions.profileId, profileId))
+    .orderBy(desc(transactions.createdAt));
+  return rows;
 }
 
 /**
@@ -2997,16 +2984,17 @@ export async function adminRemovePlayerItem(opts: {
 
 /**
  * Admin: Get all items (avatars + frames) owned by a player.
+ * Includes items from ownedAvatars/ownedFrames AND pending season rewards (not yet claimed).
  */
 export async function adminGetPlayerItems(profileId: number): Promise<{
   avatars: string[];
   frames: string[];
   equippedAvatar: string | null;
   equippedFrame: string | null;
+  pendingSeasonRewards: Array<{ seasonKey: string; rankKey: string; avatarId: string | null; frameId: string | null; claimed: boolean }>;
 }> {
   const db = await getDb();
-  if (!db) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null };
-
+  if (!db) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null, pendingSeasonRewards: [] };
   const [profile] = await db
     .select({
       ownedAvatars: playerProfiles.ownedAvatars,
@@ -3017,13 +3005,80 @@ export async function adminGetPlayerItems(profileId: number): Promise<{
     .from(playerProfiles)
     .where(eq(playerProfiles.id, profileId))
     .limit(1);
+  if (!profile) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null, pendingSeasonRewards: [] };
 
-  if (!profile) return { avatars: [], frames: [], equippedAvatar: null, equippedFrame: null };
+  // Also get season rewards (to show items from unclaimed rewards)
+  const { getSeasonAvatarId, AVATAR_OPTIONS } = await import('../shared/avatars');
+  const { getSeasonInfo, getSeasonRewardDefForSeason, getSeasonRewardDef } = await import('../shared/seasons');
+  const allSeasonRewards = await db
+    .select()
+    .from(seasonRewards)
+    .where(eq(seasonRewards.profileId, profileId));
+
+  const pendingSeasonRewards: Array<{ seasonKey: string; rankKey: string; avatarId: string | null; frameId: string | null; claimed: boolean }> = allSeasonRewards.map(r => {
+    const seasonInfo = getSeasonInfo(r.seasonKey);
+    const rewardDef = seasonInfo
+      ? getSeasonRewardDefForSeason(r.rankKey, seasonInfo)
+      : getSeasonRewardDef(r.rankKey);
+    const avatarId = rewardDef.avatarId ? getSeasonAvatarId(rewardDef.avatarId, r.seasonKey) : null;
+    const frameId = rewardDef.frameId ? getSeasonAvatarId(rewardDef.frameId, r.seasonKey) : null;
+    return { seasonKey: r.seasonKey, rankKey: r.rankKey, avatarId, frameId, claimed: r.claimed };
+  });
+
+  // Also scan ownedAvatars/ownedFrames for season-suffixed items not covered by seasonRewards records.
+  // This handles cases where items were granted without a seasonRewards DB record (e.g. manual grants, old code).
+  const ownedAvatarsList: string[] = profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [];
+  const ownedFramesList: string[] = profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [];
+
+  // Build sets of avatarIds/frameIds already covered by seasonRewards
+  const coveredAvatarIds = new Set<string>(pendingSeasonRewards.map(r => r.avatarId ?? '').filter(Boolean));
+  const coveredFrameIds = new Set<string>(pendingSeasonRewards.map(r => r.frameId ?? '').filter(Boolean));
+
+  // Season suffix pattern: _YYYYQN (e.g. _2026Q2)
+  const SEASON_SUFFIX_RE = /^(.+)_(\d{4}Q[1-4])$/;
+
+  for (const avatarId of ownedAvatarsList) {
+    if (coveredAvatarIds.has(avatarId)) continue;
+    const match = avatarId.match(SEASON_SUFFIX_RE);
+    if (!match) continue;
+    const baseId = match[1];
+    const seasonSuffix = match[2];
+    // Only include if it's a known season reward avatar
+    const avatarDef = AVATAR_OPTIONS.find(a => a.id === baseId);
+    if (!avatarDef?.seasonReward) continue;
+    // Reconstruct seasonKey from suffix (e.g. '2026Q2' → '2026-Q2')
+    const seasonKey = seasonSuffix.replace(/(\d{4})(Q[1-4])/, '$1-$2');
+    pendingSeasonRewards.push({
+      seasonKey,
+      rankKey: avatarDef.seasonRankRequired ?? 'unknown',
+      avatarId,
+      frameId: null,
+      claimed: true,
+    });
+    coveredAvatarIds.add(avatarId);
+  }
+
+  for (const frameId of ownedFramesList) {
+    if (coveredFrameIds.has(frameId)) continue;
+    const match = frameId.match(SEASON_SUFFIX_RE);
+    if (!match) continue;
+    const seasonSuffix = match[2];
+    const seasonKey = seasonSuffix.replace(/(\d{4})(Q[1-4])/, '$1-$2');
+    pendingSeasonRewards.push({
+      seasonKey,
+      rankKey: 'unknown',
+      avatarId: null,
+      frameId,
+      claimed: true,
+    });
+    coveredFrameIds.add(frameId);
+  }
 
   return {
-    avatars: profile.ownedAvatars ? JSON.parse(profile.ownedAvatars) : [],
-    frames: profile.ownedFrames ? JSON.parse(profile.ownedFrames) : [],
+    avatars: ownedAvatarsList,
+    frames: ownedFramesList,
     equippedAvatar: profile.avatarId ?? null,
     equippedFrame: profile.equippedFrame ?? null,
+    pendingSeasonRewards,
   };
 }

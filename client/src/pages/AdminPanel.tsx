@@ -1053,20 +1053,47 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
     },
   });
 
-  const getItemLabel = (desc: string) => {
+  const getItemLabel = (desc: string, type?: string) => {
     if (desc.startsWith('Покупка колоды:')) return { icon: '🃏', label: desc.replace('Покупка колоды: ', '') };
     if (desc.startsWith('Покупка стола:')) return { icon: '🎯', label: desc.replace('Покупка стола: ', '') };
     if (desc.startsWith('Покупка рамки:')) return { icon: '🖼️', label: desc.replace('Покупка рамки: ', '') };
     if (desc.startsWith('Покупка аватара:')) return { icon: '👤', label: desc.replace('Покупка аватара: ', '') };
     if (desc.startsWith('Purchased playlist #')) return { icon: '🎵', label: `Плейлист #${desc.replace('Purchased playlist #', '')}` };
     if (desc.startsWith('Premium subscription')) return { icon: '👑', label: 'Premium подписка' };
-    return { icon: '🛒', label: desc };
+    // Other transaction types
+    if (type === 'game_reward' || desc.includes('Game reward') || desc.includes('game reward')) return { icon: '🎮', label: desc || 'Награда за игру' };
+    if (type === 'game_entry') return { icon: '🎲', label: desc || 'Вход в игру' };
+    if (type === 'achievement_reward') return { icon: '🏆', label: desc || 'Награда за достижение' };
+    if (type === 'daily_quest_reward') return { icon: '📋', label: desc || 'Ежедневное задание' };
+    if (type === 'tutorial_reward') return { icon: '📚', label: desc || 'Обучение' };
+    if (type === 'free_topup') return { icon: '🎁', label: desc || 'Бесплатное пополнение' };
+    if (type === 'buy_shanyrak') return { icon: '🏠', label: desc || 'Покупка шаныраков' };
+    if (type === 'buy_tenge') return { icon: '₸', label: desc || 'Покупка тенге' };
+    return { icon: '🛒', label: desc || type || 'Транзакция' };
+  };
+
+  const isRevocable = (type: string) => type === 'shop_purchase' || type === 'premium_purchase';
+
+  const getTypeLabel = (type: string) => {
+    const map: Record<string, string> = {
+      shop_purchase: 'Покупка',
+      premium_purchase: 'Премиум',
+      game_reward: 'Награда',
+      game_entry: 'Игра',
+      achievement_reward: 'Достижение',
+      daily_quest_reward: 'Задание',
+      tutorial_reward: 'Обучение',
+      free_topup: 'Бонус',
+      buy_shanyrak: 'Пополнение',
+      buy_tenge: 'Пополнение',
+    };
+    return map[type] ?? type;
   };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-500">Покупки игрока (можно отменить)</span>
+        <span className="text-sm text-gray-500">История транзакций игрока</span>
         <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
           <RefreshCw className="w-3.5 h-3.5" />
         </Button>
@@ -1084,24 +1111,29 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
           {purchases
             .filter((p: any) => !revokedIds.has(p.id))
             .map((p: any) => {
-            const { icon, label } = getItemLabel(p.description ?? '');
+            const { icon, label } = getItemLabel(p.description ?? '', p.type);
             const isBeingRevoked = revokeMutation.isPending && confirmRevoke?.id === p.id;
+            const canRevoke = isRevocable(p.type);
+            const amountColor = p.amount > 0 ? 'text-green-400' : 'text-red-400';
             return (
               <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg bg-gray-900/40 border border-gray-800 hover:border-gray-700 transition-all ${isBeingRevoked ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-3 min-w-0">
                   <span className="text-xl shrink-0">{icon}</span>
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-200 truncate">{label}</div>
+                    <div className="flex items-center gap-2">
+                      <div className="text-sm font-medium text-gray-200 truncate">{label}</div>
+                      <span className="shrink-0 text-xs px-1.5 py-0.5 rounded bg-gray-800 text-gray-400">{getTypeLabel(p.type)}</span>
+                    </div>
                     <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                       <span>{formatDate(p.createdAt)}</span>
                       <span>•</span>
-                      <span className={p.currency === 'shanyrak' ? 'text-amber-400' : 'text-green-400'}>
-                        {Math.abs(p.amount)} {p.currency === 'shanyrak' ? '🏠 шаныраков' : '₸ тенге'}
+                      <span className={p.currency === 'shanyrak' ? 'text-amber-400' : amountColor}>
+                        {p.amount > 0 ? '+' : ''}{p.amount} {p.currency === 'shanyrak' ? '🏠 шаныраков' : '₸ тенге'}
                       </span>
                     </div>
                   </div>
                 </div>
-                {!isBeingRevoked && (
+                {!isBeingRevoked && canRevoke && (
                   <Button
                     variant="outline"
                     size="sm"
