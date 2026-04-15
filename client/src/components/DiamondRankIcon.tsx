@@ -1,5 +1,6 @@
 import React from 'react';
 import { getSeasonRank } from '../../../shared/seasons';
+import { useSettings } from '@/contexts/SettingsContext';
 
 interface DiamondRankIconProps {
   seasonRating: number;
@@ -15,6 +16,8 @@ interface DiamondRankIconProps {
 export function DiamondRankIcon({ seasonRating, size = 14, className = '', showTooltip = false }: DiamondRankIconProps) {
   const rank = getSeasonRank(seasonRating);
   const isGreatKhan = rank.key === 'great_khan';
+  const { settings } = useSettings();
+  const animationsEnabled = settings.animationsEnabled;
 
   const diamondStyle: React.CSSProperties = {
     width: size,
@@ -36,10 +39,10 @@ export function DiamondRankIcon({ seasonRating, size = 14, className = '', showT
           50%       { opacity: 1; }
         }
         .gk-diamond-shimmer {
-          animation: gk-shimmer 2s linear infinite;
+          animation: ${animationsEnabled ? 'gk-shimmer 2s linear infinite' : 'none'};
         }
         .gk-diamond-border {
-          animation: gk-border-pulse 2s ease-in-out infinite;
+          animation: ${animationsEnabled ? 'gk-border-pulse 2s ease-in-out infinite' : 'none'};
         }
       `}</style>
       <svg

@@ -19,10 +19,12 @@ import { ObsidianSpaceFrame } from './ObsidianSpaceFrame';
 import { ObsidianCyberpunkFrame } from './ObsidianCyberpunkFrame';
 import { ObsidianHiphopFrame } from './ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from './ObsidianAngelsDemonsFrame';
+import { useSettings } from '@/contexts/SettingsContext';
 
 /**
  * Renders the correct animated frame component around children based on frameId.
  * If frameId is null/undefined, renders children without a frame.
+ * Respects the animationsEnabled setting — when disabled, frames render as static.
  */
 export function FrameWrapper({
   frameId,
@@ -35,6 +37,9 @@ export function FrameWrapper({
   children: React.ReactNode;
   className?: string;
 }) {
+  const { settings } = useSettings();
+  const animated = settings.animationsEnabled;
+
   if (!frameId) {
     return <div className={className}>{children}</div>;
   }
@@ -44,46 +49,46 @@ export function FrameWrapper({
 
   switch (baseFrameId) {
     case 'fire':
-      return <FireFrame size={size} active={true} className={className}>{children}</FireFrame>;
+      return <FireFrame size={size} active={animated} className={className}>{children}</FireFrame>;
     case 'neon':
-      return <NeonFrame size={size} active={true} className={className}>{children}</NeonFrame>;
+      return <NeonFrame size={size} active={animated} className={className}>{children}</NeonFrame>;
     case 'lightning':
-      return <LightningFrame size={size} active={true} className={className}>{children}</LightningFrame>;
+      return <LightningFrame size={size} active={animated} className={className}>{children}</LightningFrame>;
     case 'ice':
-      return <IceFrame size={size} active={true} className={className}>{children}</IceFrame>;
+      return <IceFrame size={size} active={animated} className={className}>{children}</IceFrame>;
     case 'premium':
-      return <PremiumFrame size={size} active={true} className={className}>{children}</PremiumFrame>;
+      return <PremiumFrame size={size} active={animated} className={className}>{children}</PremiumFrame>;
     case 'great_khan':
-      return <GreatKhanFrame size={size} active={true} className={className}>{children}</GreatKhanFrame>;
+      return <GreatKhanFrame size={size} active={animated} className={className}>{children}</GreatKhanFrame>;
     case 'obsidian_neon':
-      return <ObsidianNeonFrame size={size} active={true} className={className}>{children}</ObsidianNeonFrame>;
+      return <ObsidianNeonFrame size={size} active={animated} className={className}>{children}</ObsidianNeonFrame>;
     case 'ruby_neon':
-      return <RubyNeonFrame size={size} active={true} className={className}>{children}</RubyNeonFrame>;
+      return <RubyNeonFrame size={size} active={animated} className={className}>{children}</RubyNeonFrame>;
     case 'amber_neon':
-      return <AmberNeonFrame size={size} active={true} className={className}>{children}</AmberNeonFrame>;
+      return <AmberNeonFrame size={size} active={animated} className={className}>{children}</AmberNeonFrame>;
     case 'zircon_neon':
-      return <ZirconNeonFrame size={size} active={true} className={className}>{children}</ZirconNeonFrame>;
+      return <ZirconNeonFrame size={size} active={animated} className={className}>{children}</ZirconNeonFrame>;
     case 'molten_lava':
-      return <MoltenLavaFrame size={size} active={true} className={className}>{children}</MoltenLavaFrame>;
+      return <MoltenLavaFrame size={size} active={animated} className={className}>{children}</MoltenLavaFrame>;
     case 'oni_japanese':
-      return <OniJapaneseFrame size={size} active={true} className={className}>{children}</OniJapaneseFrame>;
+      return <OniJapaneseFrame size={size} active={animated} className={className}>{children}</OniJapaneseFrame>;
     // Season S1-S5, S10-S12 Obsidian frames
     case 'obsidian_underwater':
-      return <ObsidianUnderwaterFrame size={size} active={true} className={className}>{children}</ObsidianUnderwaterFrame>;
+      return <ObsidianUnderwaterFrame size={size} active={animated} className={className}>{children}</ObsidianUnderwaterFrame>;
     case 'obsidian_egyptian':
-      return <ObsidianEgyptianFrame size={size} active={true} className={className}>{children}</ObsidianEgyptianFrame>;
+      return <ObsidianEgyptianFrame size={size} active={animated} className={className}>{children}</ObsidianEgyptianFrame>;
     case 'obsidian_pirate':
-      return <ObsidianPirateFrame size={size} active={true} className={className}>{children}</ObsidianPirateFrame>;
+      return <ObsidianPirateFrame size={size} active={animated} className={className}>{children}</ObsidianPirateFrame>;
     case 'obsidian_norse':
-      return <ObsidianNorseFrame size={size} active={true} className={className}>{children}</ObsidianNorseFrame>;
+      return <ObsidianNorseFrame size={size} active={animated} className={className}>{children}</ObsidianNorseFrame>;
     case 'obsidian_space':
-      return <ObsidianSpaceFrame size={size} active={true} className={className}>{children}</ObsidianSpaceFrame>;
+      return <ObsidianSpaceFrame size={size} active={animated} className={className}>{children}</ObsidianSpaceFrame>;
     case 'obsidian_cyberpunk':
-      return <ObsidianCyberpunkFrame size={size} active={true} className={className}>{children}</ObsidianCyberpunkFrame>;
+      return <ObsidianCyberpunkFrame size={size} active={animated} className={className}>{children}</ObsidianCyberpunkFrame>;
     case 'obsidian_hiphop':
-      return <ObsidianHiphopFrame size={size} active={true} className={className}>{children}</ObsidianHiphopFrame>;
+      return <ObsidianHiphopFrame size={size} active={animated} className={className}>{children}</ObsidianHiphopFrame>;
     case 'obsidian_angels_demons':
-      return <ObsidianAngelsDemonsFrame size={size} active={true} className={className}>{children}</ObsidianAngelsDemonsFrame>;
+      return <ObsidianAngelsDemonsFrame size={size} active={animated} className={className}>{children}</ObsidianAngelsDemonsFrame>;
     default:
       return <div className={className}>{children}</div>;
   }

@@ -1,4 +1,6 @@
+import React from 'react';
 import { KhanAvatar } from './KhanAvatar';
+import { useSettings } from '@/contexts/SettingsContext';
 import { GoldenHordeAvatar } from './GoldenHordeAvatar';
 import { GreatKhanAvatar } from './GreatKhanAvatar';
 import { NeonDinoAvatar } from './NeonDinoAvatar';
@@ -71,6 +73,8 @@ interface AvatarDisplayProps {
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
   const baseId = getBaseAvatarId(avatarId);
   const { getOffsets } = useAvatarOffsets();
+  const { settings } = useSettings();
+  const animationsEnabled = settings.animationsEnabled;
 
   // For neon_crown: use its own internal offset system (legacy, keeps existing behaviour)
   if (baseId === 'neon_crown') {
@@ -263,16 +267,22 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   // If no transform needed (all defaults), skip the wrapper for performance
   const hasTransform = offsetX !== 0 || offsetY !== 0 || imgScale !== 1;
-
   if (!hasTransform) {
     if (isAnimated) {
       // No overflow:hidden — let box-shadow and particles breathe
       return (
         <div
           className={`rounded-full flex-shrink-0 ${className}`}
-          style={{ width: size, height: size }}
+          style={{ width: size, height: size, ...(!animationsEnabled ? { '--animations-disabled': '1' } as React.CSSProperties : {}) }}
         >
-          {renderContent()}
+          {!animationsEnabled ? (
+            <style>{`
+              .avatar-anim-wrapper * { animation: none !important; transition: none !important; }
+            `}</style>
+          ) : null}
+          <div className={!animationsEnabled ? 'avatar-anim-wrapper' : ''}>
+            {renderContent()}
+          </div>
         </div>
       );
     }
@@ -291,7 +301,13 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
       className={`rounded-full ${isAnimated ? '' : 'overflow-hidden'} flex-shrink-0 ${className}`}
       style={{ width: size, height: size, position: 'relative' }}
     >
+      {!animationsEnabled && isAnimated ? (
+        <style>{`
+          .avatar-anim-wrapper * { animation: none !important; transition: none !important; }
+        `}</style>
+      ) : null}
       <div
+        className={!animationsEnabled && isAnimated ? 'avatar-anim-wrapper' : ''}
         style={{
           transform: `translate(${translateX}px, ${translateY}px) scale(${imgScale})`,
           transformOrigin: 'center center',

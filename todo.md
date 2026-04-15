@@ -3023,3 +3023,9 @@
 - [x] Исправить MapIterator ошибку в avatarRafManager.ts (1 ошибка)
 - [x] Исправить implicit any в клиентских файлах: Season.tsx, Lobby.tsx, ProfileDrawer.tsx, LeaderboardDrawer.tsx, FriendsDrawer.tsx, DailyQuestsModal.tsx, SeasonTestTab.tsx, dailyQuestsDb.ts (23 ошибки)
 - [x] Итого: 0 TypeScript ошибок (было 62)
+
+## Batch 93 — animationsEnabled для рамок/аватарок/иконок (апрель 2026)
+- [x] Найти все animate-* классы на рамках, аватарках и иконках
+- [x] FrameWrapper (AvatarWithFrame.tsx): useSettings() + передаёт animationsEnabled как active во все рамки
+- [x] AvatarDisplay.tsx: useSettings() + CSS-блокировка анимаций через .avatar-anim-wrapper
+- [x] DiamondRankIcon.tsx: useSettings() + условная анимация shimmer/border-pulse для ранга Великий хан
