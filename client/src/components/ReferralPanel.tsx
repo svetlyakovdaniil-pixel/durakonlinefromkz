@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { VipReferralAvatar } from './VipReferralAvatar';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -93,12 +94,8 @@ function MilestoneNode({ milestone, totalReferrals, rewardLevel }: MilestoneNode
         {/* Верхняя зона: для milestone 50 — VIP аватарка, иначе пусто */}
         <div className="flex flex-col items-center justify-end" style={{ minHeight: 44 }}>
           {isLast && (
-            <div className={`w-8 h-8 rounded-full overflow-hidden border-2 mb-0.5 ${
-              rewardLevel >= milestone.level
-                ? 'border-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]'
-                : 'border-amber-600/40'
-            }`}>
-              <img src={VIP_AVATAR_URL} alt="VIP" className="w-full h-full object-cover" />
+            <div className="mb-0.5">
+              <VipReferralAvatar size={32} />
             </div>
           )}
         </div>

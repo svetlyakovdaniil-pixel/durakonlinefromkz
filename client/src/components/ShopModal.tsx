@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { VipReferralAvatar } from './VipReferralAvatar';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -1118,9 +1119,15 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
 
               {/* Large avatar image */}
               <div className="flex justify-center mb-4">
-                <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
-                  <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name} className="w-full h-full object-cover" />
-                </div>
+                {previewAvatar.id === 'vip_referral' ? (
+                  <div className="relative" style={{ width: 192, height: 192 }}>
+                    <VipReferralAvatar size={192} />
+                  </div>
+                ) : (
+                  <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
+                    <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name} className="w-full h-full object-cover" />
+                  </div>
+                )}
               </div>
 
               {/* Avatar name */}
