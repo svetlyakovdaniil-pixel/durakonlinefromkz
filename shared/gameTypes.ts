@@ -165,6 +165,8 @@ export interface Room {
   gameState: GameState | null;
   settings: RoomSettings;
   createdAt: number;
+  /** Timestamp when the game actually started (set on startGame event) */
+  gameStartedAt?: number;
   hasActiveGame?: boolean; // true when a game is in progress (set by sanitizeRoom)
   /** IDs of game players who can rejoin (set by sanitizeRoom for lobby) */
   activeGamePlayerIds?: string[];

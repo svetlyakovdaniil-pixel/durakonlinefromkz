@@ -27,6 +27,10 @@ import {
   trackTrumpDefense, trackThrow, trackTransfer, trackCardsTaken, track10Transfer,
   trackTrumpAceUsed, getTrumpAceUsed, trackSuccessfulRound,
   getTrumpDefMap, getTotalDefMap, getThrowMap, getTransferMap, getCardsTakenMap,
+  trackPassCardShown, trackAttack, trackCardsInOneTurn, trackBeatSameRankSuit,
+  trackThrew6ToNonNeighbor, trackStartedTurnWith10, trackWinWhenOpponentHas1Card,
+  getPassCardsShownMap, getAttacksMap, getMaxCardsInOneTurnMap, getBeatSameRankSuitMap,
+  getThrew6ToNonNeighborMap, getStartedTurnWith10Map, getWinWhenOpponentHas1CardMap,
   processGameEndAchievements, processDefenseAchievement, processAttackAchievement,
   processLucky777Achievement, processSpidermanMemeAchievement,
   processFirstBerkutAchievement, processLittleHeroAchievement,
@@ -647,6 +651,8 @@ export function initSocketServer(httpServer: HttpServer) {
       games.set(roomId, gameState);
       room.gameState = gameState;
 
+      // Record game start time for duration calculation
+      room.gameStartedAt = Date.now();
       // Initialize achievement tracking for this game
       initGameTracking(roomId);
 
@@ -762,6 +768,36 @@ export function initSocketServer(httpServer: HttpServer) {
                   }).catch(() => {});
                 }).catch(() => {});
               }).catch(() => {});
+            }
+          }
+          // Track attack (any card played as attacker)
+          if (!isDefender && prePlayCard) {
+            trackAttack(data.roomId, odId);
+            // Track started-turn-with-10 (10 played as first card of attack)
+            if (prePlayBattlefieldLength === 0 && prePlayCard.rank === '10') {
+              trackStartedTurnWith10(data.roomId, odId);
+            }
+            // Track threw-6-to-non-neighbor: 6 played when battlefield has cards (adding to existing attack)
+            // Non-neighbor check: attacker is not the direct neighbor of defender
+            if (prePlayCard.rank === '6' && prePlayBattlefieldLength > 0) {
+              const defIdx = gameState.currentDefenderIdx;
+              const nPlayers = gameState.players.length;
+              const leftNeighborIdx = (defIdx - 1 + nPlayers) % nPlayers;
+              const rightNeighborIdx = (defIdx + 1) % nPlayers;
+              if (playerIdx !== leftNeighborIdx && playerIdx !== rightNeighborIdx) {
+                trackThrew6ToNonNeighbor(data.roomId, odId);
+              }
+            }
+            // Track cards in one turn (count cards on battlefield after play)
+            const cardsOnBattlefield = gameState.battleField.filter(p => !p.defense).length;
+            trackCardsInOneTurn(data.roomId, odId, cardsOnBattlefield);
+          }
+          // Track beat-same-rank-suit defense
+          if (isDefender && prePlayCard) {
+            const targetPair = prePlayBattlefield.find(p => !p.defense);
+            const attackCard = targetPair?.attack;
+            if (attackCard && (prePlayCard.rank === attackCard.rank || prePlayCard.suit === attackCard.suit)) {
+              trackBeatSameRankSuit(data.roomId, odId);
             }
           }
           // Track attack events (10 as lead card = direction reversal)
@@ -909,22 +945,20 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on('showPassThrough', (data) => {
       const gameState = games.get(data.roomId);
       if (!gameState) return;
-
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = showPassThrough(gameState, playerIdx, data.cardId);
       if (error) { socket.emit('error', error); return; }
-
+      // Track pass card shown
+      trackPassCardShown(data.roomId, odId);
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
         gameState.consecutiveTimeouts[odId] = 0;
       }
-
       markProgress(data.roomId);
       restartTurnTimer(data.roomId);
       broadcastGameState(data.roomId, gameState);
       scheduleBotAction(data.roomId);
     });
-
     // Multi-card pass-through: show multiple pass-through cards at once
     socket.on('showPassThroughs', (data: { roomId: string; cardIds: string[] }) => {
       const gameState = games.get(data.roomId);
@@ -2344,6 +2378,14 @@ function broadcastGameState(roomId: string, gameState: GameState) {
       const loserOdId = gameState.loserId || null;
       const winnerProfileId = winnerOdId ? (playerGameIds.get(winnerOdId) ?? null) : null;
       const loserProfileId = loserOdId ? (playerGameIds.get(loserOdId) ?? null) : null;
+      // Track win-when-opponent-has-1-card: for each winner, check if any opponent had 1 card
+      for (const winner of sortedHumanPlayers.filter(p => p.winPlace !== null && p.winPlace !== undefined)) {
+        const opponents = humanPlayers.filter(p => p.id !== winner.id);
+        const anyOpponentHas1Card = opponents.some(p => p.hand.length === 1);
+        if (anyOpponentHas1Card) {
+          trackWinWhenOpponentHas1Card(roomId, winner.id);
+        }
+      }
       if (allPlayerProfileIds.length > 0) {
         // Collect premium gameIds for rating bonus
         const premiumGameIds = sortedHumanPlayers
@@ -2351,13 +2393,14 @@ function broadcastGameState(roomId: string, gameState: GameState) {
           .map(p => playerGameIds.get(p.id))
           .filter((id): id is number => id !== undefined && id > 0);
 
+        const durationSeconds = room?.gameStartedAt ? Math.round((Date.now() - room.gameStartedAt) / 1000) : 0;
         recordGameResult({
           roomId,
           playerCount: humanPlayers.length,
           winnerProfileId,
           loserProfileId,
           allPlayerProfileIds,
-          durationSeconds: 0,
+          durationSeconds,
           hasBots,
           botCount,
           totalPlayersInRoom,
@@ -2400,6 +2443,8 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               }
             }
 
+            const room = rooms.get(roomId);
+            const gameDurationSeconds = room?.gameStartedAt ? Math.round((Date.now() - room.gameStartedAt) / 1000) : 0;
             await processGameEndAchievements({
               roomId,
               playerGameIds,
@@ -2408,7 +2453,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               allHumanOdIds,
               botCount,
               totalPlayersInRoom,
-              durationSeconds: 0,
+              durationSeconds: gameDurationSeconds,
               winnerTookNoCards,
               trumpDefenseCounts: new Map(),
               totalDefenseCounts: new Map(),
@@ -2424,6 +2469,13 @@ function broadcastGameState(roomId: string, gameState: GameState) {
             const transferMap = getTransferMap(roomId);
             const cardsTakenMap = getCardsTakenMap(roomId);
             const trumpAceMap = getTrumpAceUsed(roomId);
+            const passCardsShownMap = getPassCardsShownMap(roomId);
+            const attacksMap = getAttacksMap(roomId);
+            const maxCardsInOneTurnMap = getMaxCardsInOneTurnMap(roomId);
+            const beatSameRankSuitMap = getBeatSameRankSuitMap(roomId);
+            const threw6ToNonNeighborMap = getThrew6ToNonNeighborMap(roomId);
+            const startedTurnWith10Map = getStartedTurnWith10Map(roomId);
+            const winWhenOpponentHas1CardMap = getWinWhenOpponentHas1CardMap(roomId);
             const perPlayerStats = new Map<string, {
               cardsTaken: number; trumpDefenses: number; defenses: number;
               cardsThrown: number; attacks: number; trumpBeats: number;
@@ -2431,6 +2483,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               startedTurnWith10: number; defended777: number; threw6ToNonNeighbor: number;
               beatSameRankSuit: number; spadeKingBeatsTrumpAce: number;
               kingBeatsTrump: number; cardsInOneTurn: number; trumpAceInOneGame: number;
+              winWhenOpponentHas1Card: number;
             }>();
             for (const odId of allHumanOdIds) {
               const trumpAceCount = trumpAceMap.get(odId) ?? 0;
@@ -2439,22 +2492,25 @@ function broadcastGameState(roomId: string, gameState: GameState) {
                 trumpDefenses: trumpDefMap.get(odId) ?? 0,
                 defenses: totalDefMap.get(odId) ?? 0,
                 cardsThrown: throwMap.get(odId) ?? 0,
-                attacks: 0,
+                attacks: attacksMap.get(odId) ?? 0,
                 trumpBeats: trumpDefMap.get(odId) ?? 0,
                 trumpAceUsed: trumpAceCount,
                 transfers: transferMap.get(odId) ?? 0,
-                passCardsShown: 0,
-                startedTurnWith10: 0,
-                defended777: 0,
-                threw6ToNonNeighbor: 0,
-                beatSameRankSuit: 0,
-                spadeKingBeatsTrumpAce: 0,
-                kingBeatsTrump: 0,
-                cardsInOneTurn: 0,
+                passCardsShown: passCardsShownMap.get(odId) ?? 0,
+                startedTurnWith10: startedTurnWith10Map.get(odId) ?? 0,
+                defended777: 0, // tracked via processDefenseAchievement
+                threw6ToNonNeighbor: threw6ToNonNeighborMap.get(odId) ?? 0,
+                beatSameRankSuit: beatSameRankSuitMap.get(odId) ?? 0,
+                spadeKingBeatsTrumpAce: 0, // tracked via processDefenseAchievement
+                kingBeatsTrump: 0, // tracked via processDefenseAchievement
+                cardsInOneTurn: maxCardsInOneTurnMap.get(odId) ?? 0,
                 trumpAceInOneGame: trumpAceCount,
+                winWhenOpponentHas1Card: winWhenOpponentHas1CardMap.get(odId) ?? 0,
               });
             }
 
+            const finalRoom = rooms.get(roomId);
+            const finalDurationSeconds = finalRoom?.gameStartedAt ? Math.round((Date.now() - finalRoom.gameStartedAt) / 1000) : 0;
             await processDailyQuestsAfterGame({
               roomId,
               playerGameIds,
@@ -2463,7 +2519,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               allHumanOdIds,
               botCount,
               totalPlayersInRoom,
-              durationSeconds: 0,
+              durationSeconds: finalDurationSeconds,
               perPlayerStats,
             });
 

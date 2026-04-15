@@ -12,6 +12,7 @@ import { sql } from 'drizzle-orm';
 import { playerProfiles } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
 import { incrementAchievementProgress } from './achievementsDb';
+import { incrementDailyQuestProgress, setDailyQuestProgress } from './dailyQuestsDb';
 import { MAX_BOT_RATIO } from '../shared/achievements';
 
 // ============================================================
@@ -99,6 +100,20 @@ const consecutiveWinStreaks = new Map<string, number>();
 const gameTrumpAceUsed = new Map<string, Map<string, number>>();
 /** Per-game tracking of fully-defended rounds (whole table cleared by defender): roomId -> { odId -> count } */
 const gameSuccessfulRounds = new Map<string, Map<string, number>>();
+/** Per-game tracking of pass cards shown: roomId -> { odId -> count } */
+const gamePassCardsShown = new Map<string, Map<string, number>>();
+/** Per-game tracking of attacks: roomId -> { odId -> count } */
+const gameAttacks = new Map<string, Map<string, number>>();
+/** Per-game tracking of max cards in one turn: roomId -> { odId -> max } */
+const gameMaxCardsInOneTurn = new Map<string, Map<string, number>>();
+/** Per-game tracking of beat-same-rank-suit: roomId -> { odId -> count } */
+const gameBeatSameRankSuit = new Map<string, Map<string, number>>();
+/** Per-game tracking of threw-6-to-non-neighbor: roomId -> { odId -> count } */
+const gameThrew6ToNonNeighbor = new Map<string, Map<string, number>>();
+/** Per-game tracking of started-turn-with-10: roomId -> { odId -> count } */
+const gameStartedTurnWith10 = new Map<string, Map<string, number>>();
+/** Per-game tracking of win-when-opponent-has-1-card: roomId -> { odId -> count } */
+const gameWinWhenOpponentHas1Card = new Map<string, Map<string, number>>();
 
 export function initGameTracking(roomId: string): void {
   gameTrumpDefenses.set(roomId, new Map());
@@ -109,6 +124,13 @@ export function initGameTracking(roomId: string): void {
   game10Transfers.set(roomId, new Map());
   gameTrumpAceUsed.set(roomId, new Map());
   gameSuccessfulRounds.set(roomId, new Map());
+  gamePassCardsShown.set(roomId, new Map());
+  gameAttacks.set(roomId, new Map());
+  gameMaxCardsInOneTurn.set(roomId, new Map());
+  gameBeatSameRankSuit.set(roomId, new Map());
+  gameThrew6ToNonNeighbor.set(roomId, new Map());
+  gameStartedTurnWith10.set(roomId, new Map());
+  gameWinWhenOpponentHas1Card.set(roomId, new Map());
 }
 
 export function cleanupGameTracking(roomId: string): void {
@@ -120,6 +142,13 @@ export function cleanupGameTracking(roomId: string): void {
   game10Transfers.delete(roomId);
   gameTrumpAceUsed.delete(roomId);
   gameSuccessfulRounds.delete(roomId);
+  gamePassCardsShown.delete(roomId);
+  gameAttacks.delete(roomId);
+  gameMaxCardsInOneTurn.delete(roomId);
+  gameBeatSameRankSuit.delete(roomId);
+  gameThrew6ToNonNeighbor.delete(roomId);
+  gameStartedTurnWith10.delete(roomId);
+  gameWinWhenOpponentHas1Card.delete(roomId);
 }
 
 function incMap(map: Map<string, number>, key: string, by = 1): number {
@@ -220,10 +249,74 @@ export function track10Transfer(roomId: string, defenderOdId: string, attackerOd
   return false;
 }
 
+//** Track pass card shown */
+export function trackPassCardShown(roomId: string, odId: string): void {
+  const map = gamePassCardsShown.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Track attack (lead card played) */
+export function trackAttack(roomId: string, odId: string): void {
+  const map = gameAttacks.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Track max cards in one attack turn */
+export function trackCardsInOneTurn(roomId: string, odId: string, count: number): void {
+  const map = gameMaxCardsInOneTurn.get(roomId);
+  if (!map) return;
+  const current = map.get(odId) ?? 0;
+  if (count > current) map.set(odId, count);
+}
+/** Track beat-same-rank-suit defense */
+export function trackBeatSameRankSuit(roomId: string, odId: string): void {
+  const map = gameBeatSameRankSuit.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Track threw-6-to-non-neighbor */
+export function trackThrew6ToNonNeighbor(roomId: string, odId: string): void {
+  const map = gameThrew6ToNonNeighbor.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Track started-turn-with-10 */
+export function trackStartedTurnWith10(roomId: string, odId: string): void {
+  const map = gameStartedTurnWith10.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Track win-when-opponent-has-1-card */
+export function trackWinWhenOpponentHas1Card(roomId: string, odId: string): void {
+  const map = gameWinWhenOpponentHas1Card.get(roomId);
+  if (map) incMap(map, odId);
+}
+/** Get pass cards shown map */
+export function getPassCardsShownMap(roomId: string): Map<string, number> {
+  return gamePassCardsShown.get(roomId) ?? new Map();
+}
+/** Get attacks map */
+export function getAttacksMap(roomId: string): Map<string, number> {
+  return gameAttacks.get(roomId) ?? new Map();
+}
+/** Get max cards in one turn map */
+export function getMaxCardsInOneTurnMap(roomId: string): Map<string, number> {
+  return gameMaxCardsInOneTurn.get(roomId) ?? new Map();
+}
+/** Get beat-same-rank-suit map */
+export function getBeatSameRankSuitMap(roomId: string): Map<string, number> {
+  return gameBeatSameRankSuit.get(roomId) ?? new Map();
+}
+/** Get threw-6-to-non-neighbor map */
+export function getThrew6ToNonNeighborMap(roomId: string): Map<string, number> {
+  return gameThrew6ToNonNeighbor.get(roomId) ?? new Map();
+}
+/** Get started-turn-with-10 map */
+export function getStartedTurnWith10Map(roomId: string): Map<string, number> {
+  return gameStartedTurnWith10.get(roomId) ?? new Map();
+}
+/** Get win-when-opponent-has-1-card map */
+export function getWinWhenOpponentHas1CardMap(roomId: string): Map<string, number> {
+  return gameWinWhenOpponentHas1Card.get(roomId) ?? new Map();
+}
 // ============================================================
 // Profile lookup helper
 // ============================================================
-
 async function getProfileIdByGameId(gameId: number): Promise<number | null> {
   const db = await getDb();
   if (!db) return null;
@@ -305,8 +398,12 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
         const streak = (consecutiveWinStreaks.get(odId) ?? 0) + 1;
         consecutiveWinStreaks.set(odId, streak);
         await incrementAchievementProgress(profileId, 'quick_start', 0, streak);
+        // Daily quest: wins_in_a_row
+        await incrementDailyQuestProgress(profileId, 'wins_in_a_row', 1);
       } else {
         consecutiveWinStreaks.set(odId, 0);
+        // Reset wins_in_a_row daily quest on loss
+        await setDailyQuestProgress(profileId, 'wins_in_a_row', 0);
       }
 
       // Быстрая победа — win in under 10 minutes
@@ -399,11 +496,17 @@ export async function processDefenseAchievement(ctx: {
   // Король пики — beat trump ace with King of Spades
   if (ctx.defenseIsKingOfSpades && ctx.attackIsTrumpAce) {
     await incrementAchievementProgress(ctx.profileId, 'spade_king', 1);
+    // Daily quests: spade_king_beats_trump_ace, king_beats_trump_total
+    await incrementDailyQuestProgress(ctx.profileId, 'spade_king_beats_trump_ace', 1);
+    await incrementDailyQuestProgress(ctx.profileId, 'king_beats_trump_total', 1);
   }
-
   // Король пики vs 777 — beat King of Spades with 777
   if (ctx.defenseIs777 && ctx.attackIsKingOfSpades) {
     await incrementAchievementProgress(ctx.profileId, 'king_vs_777', 1);
+  }
+  // Daily quest: defended_with_777
+  if (ctx.defenseIs777) {
+    await incrementDailyQuestProgress(ctx.profileId, 'defended_with_777', 1);
   }
 }
 

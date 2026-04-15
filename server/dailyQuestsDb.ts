@@ -368,6 +368,7 @@ export async function processDailyQuestsAfterGame(params: {
     kingBeatsTrump: number;
     cardsInOneTurn: number;
     trumpAceInOneGame: number;
+    winWhenOpponentHas1Card: number;
   }>;
 }): Promise<void> {
   const {
@@ -533,6 +534,11 @@ export async function processDailyQuestsAfterGame(params: {
       // perfect_defense_games — if winner took no cards
       if (isWinner && stats.cardsTaken === 0) {
         await incrementDailyQuestProgress(profileId, 'perfect_defense_games', 1);
+      }
+
+      // win_when_opponent_has_1card
+      if (stats.winWhenOpponentHas1Card > 0) {
+        await incrementDailyQuestProgress(profileId, 'win_when_opponent_has_1card', stats.winWhenOpponentHas1Card);
       }
     }
   }

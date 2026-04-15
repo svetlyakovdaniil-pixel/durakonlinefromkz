@@ -467,6 +467,13 @@ export async function recordGameResult(data: {
         losses: isLoser ? sql`${playerProfiles.losses} + 1` : sql`${playerProfiles.losses}`,
         rating: sql`GREATEST(0, ${playerProfiles.rating} + ${ratingChange})`,
       }).where(eq(playerProfiles.gameId, gameId));
+      // Trigger rating_gained daily quest (only for positive rating changes in human games)
+      if (ratingChange > 0 && profileRow) {
+        try {
+          const { incrementDailyQuestProgress } = await import('./dailyQuestsDb');
+          await incrementDailyQuestProgress(profileRow.id, 'rating_gained', ratingChange);
+        } catch (e) { /* non-blocking */ }
+      }
     }
   }
 
@@ -1137,7 +1144,11 @@ export async function creditShanyrakPrize(openId: string, amount: number, roomId
     description: `Награда за ${place}-е место (комната ${roomId})`,
     balanceAfter: newBalance,
   });
-
+  // Trigger shanyrak_won_today daily quest
+  try {
+    const { incrementDailyQuestProgress } = await import('./dailyQuestsDb');
+    await incrementDailyQuestProgress(profile.id, 'shanyrak_won_today', amount);
+  } catch (e) { /* non-blocking */ }
   return newBalance;
 }
 
