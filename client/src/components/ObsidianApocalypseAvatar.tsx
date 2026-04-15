@@ -7,8 +7,8 @@ interface Props { size?: number; className?: string; }
  */
 export function ObsidianApocalypseAvatar({ size = 48, className = '' }: Props) {
   const uid = React.useId().replace(/:/g, '');
-  const cx = size / 2;
-  const cy = size / 2;
+  const posX = 50 + (-2.5);
+  const posY = 50 + (-2.5);
   const r = size / 2;
   return (
     <div className={className} style={{ width: size, height: size, position: 'relative', display: 'inline-block', flexShrink: 0 }}>
@@ -48,80 +48,18 @@ export function ObsidianApocalypseAvatar({ size = 48, className = '' }: Props) {
         }
       `}</style>
       <div style={{ width: size, height: size, position: 'relative', animation: `oap-void-${uid} 1.8s ease-in-out infinite`, borderRadius: '50%' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0, animation: `oap-crack-${uid} 2s ease-in-out infinite` }}>
-          <defs>
-            <clipPath id={`oap-clip-${uid}`}>
-              <circle cx={cx} cy={cy} r={r} />
-            </clipPath>
-            <radialGradient id={`oap-bg-${uid}`} cx="50%" cy="55%" r="65%">
-              <stop offset="0%" stopColor="#1e0838" />
-              <stop offset="50%" stopColor="#0d0420" />
-              <stop offset="100%" stopColor="#030108" />
-            </radialGradient>
-            <radialGradient id={`oap-eye-grad-${uid}`} cx="50%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="#f3e8ff" />
-              <stop offset="40%" stopColor="#a855f7" />
-              <stop offset="100%" stopColor="#6d28d9" />
-            </radialGradient>
-            <radialGradient id={`oap-glow-${uid}`} cx="50%" cy="70%" r="50%">
-              <stop offset="0%" stopColor="rgba(168,85,247,0.3)" />
-              <stop offset="100%" stopColor="rgba(168,85,247,0)" />
-            </radialGradient>
-          </defs>
-          <g clipPath={`url(#oap-clip-${uid})`}>
-            <circle cx={cx} cy={cy} r={r} fill={`url(#oap-bg-${uid})`} />
-            <circle cx={cx} cy={cy * 1.3} r={r * 0.7} fill={`url(#oap-glow-${uid})`} />
-
-            {/* Void cracks */}
-            {[
-              `M ${cx} ${cy} L ${cx - r * 0.28} ${cy - r * 0.48} L ${cx - r * 0.42} ${cy - r * 0.68}`,
-              `M ${cx} ${cy} L ${cx + r * 0.32} ${cy - r * 0.38} L ${cx + r * 0.48} ${cy - r * 0.62}`,
-              `M ${cx} ${cy} L ${cx + r * 0.18} ${cy + r * 0.48} L ${cx + r * 0.3} ${cy + r * 0.68}`,
-              `M ${cx} ${cy} L ${cx - r * 0.38} ${cy + r * 0.32} L ${cx - r * 0.58} ${cy + r * 0.52}`,
-            ].map((d, i) => (
-              <path key={i} d={d} fill="none" stroke="#a855f7" strokeWidth={Math.max(0.5, size * 0.015)} opacity="0.7" />
-            ))}
-
-            {/* Radiation rings */}
-            {Array.from({ length: 3 }).map((_, i) => {
-              const startAngle = (i * 120 - 30) * Math.PI / 180;
-              const endAngle = (i * 120 + 30) * Math.PI / 180;
-              const rOuter = r * 0.38;
-              const rInner = r * 0.14;
-              const x1o = cx + Math.cos(startAngle) * rOuter;
-              const y1o = cy + Math.sin(startAngle) * rOuter;
-              const x2o = cx + Math.cos(endAngle) * rOuter;
-              const y2o = cy + Math.sin(endAngle) * rOuter;
-              const x1i = cx + Math.cos(endAngle) * rInner;
-              const y1i = cy + Math.sin(endAngle) * rInner;
-              const x2i = cx + Math.cos(startAngle) * rInner;
-              const y2i = cy + Math.sin(startAngle) * rInner;
-              return (
-                <path key={i}
-                  d={`M ${x1o} ${y1o} A ${rOuter} ${rOuter} 0 0 1 ${x2o} ${y2o} L ${x1i} ${y1i} A ${rInner} ${rInner} 0 0 0 ${x2i} ${y2i} Z`}
-                  fill="#a855f7" opacity="0.8"
-                />
-              );
-            })}
-
-            {/* Concentric rings */}
-            {[0.55, 0.72].map((s, i) => (
-              <circle key={i} cx={cx} cy={cy} r={r * s} fill="none" stroke="#a855f7" strokeWidth={Math.max(0.5, size * 0.01)} opacity={0.5 - i * 0.1} />
-            ))}
-
-            {/* Center eye */}
-            <circle cx={cx} cy={cy} r={r * 0.2} fill={`url(#oap-eye-grad-${uid})`} style={{ animation: `oap-eye-${uid} 2s ease-in-out infinite` }} />
-            <ellipse cx={cx} cy={cy} rx={r * 0.11} ry={r * 0.08} fill="#0d0420" opacity="0.9" />
-            <circle cx={cx} cy={cy} r={r * 0.055} fill="#f3e8ff" opacity="0.95" />
-
-            {/* Outer border */}
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#a855f7" strokeWidth={Math.max(1.5, size * 0.035)} opacity="0.9" />
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#e9d5ff" strokeWidth={Math.max(0.5, size * 0.01)} opacity="0.5" strokeDasharray={`${size * 0.04} ${size * 0.04}`} />
-
-            {/* Vignette */}
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth={size * 0.07} />
-          </g>
-        </svg>
+        <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0 }}>
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_apocalypse_v2-CiHpHCJJqLiCGWxFqhBDPk.webp"
+            alt="Обсидиан Апокалипсис"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
+            draggable={false}
+          />
+          {/* Purple shimmer sweep */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'linear-gradient(120deg, transparent 30%, rgba(139,92,246,0.3) 45%, rgba(192,132,252,0.5) 55%, transparent 70%)', animation: `oap-crack-${uid} 3.5s ease-in-out infinite` }} />
+          {/* Void vignette */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%, transparent 22%, rgba(20,0,50,0.5) 100%)' }} />
+        </div>
 
         {/* Outer conic */}
         <div aria-hidden="true" style={{

@@ -7,8 +7,8 @@ interface Props { size?: number; className?: string; }
  */
 export function ObsidianJapaneseAvatar({ size = 48, className = '' }: Props) {
   const uid = React.useId().replace(/:/g, '');
-  const cx = size / 2;
-  const cy = size / 2;
+  const posX = 50 + (-2.5);
+  const posY = 50 + (-2.5);
   const r = size / 2;
   return (
     <div className={className} style={{ width: size, height: size, position: 'relative', display: 'inline-block', flexShrink: 0 }}>
@@ -48,85 +48,18 @@ export function ObsidianJapaneseAvatar({ size = 48, className = '' }: Props) {
         }
       `}</style>
       <div style={{ width: size, height: size, position: 'relative', animation: `ojp-void-${uid} 1.8s ease-in-out infinite`, borderRadius: '50%' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0, animation: `ojp-float-${uid} 4s ease-in-out infinite` }}>
-          <defs>
-            <clipPath id={`ojp-clip-${uid}`}>
-              <circle cx={cx} cy={cy} r={r} />
-            </clipPath>
-            <radialGradient id={`ojp-bg-${uid}`} cx="50%" cy="40%" r="65%">
-              <stop offset="0%" stopColor="#1a0830" />
-              <stop offset="55%" stopColor="#0c0418" />
-              <stop offset="100%" stopColor="#030108" />
-            </radialGradient>
-            <radialGradient id={`ojp-eye-grad-${uid}`} cx="40%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="#f3e8ff" />
-              <stop offset="40%" stopColor="#a855f7" />
-              <stop offset="100%" stopColor="#6d28d9" />
-            </radialGradient>
-          </defs>
-          <g clipPath={`url(#ojp-clip-${uid})`}>
-            <circle cx={cx} cy={cy} r={r} fill={`url(#ojp-bg-${uid})`} />
-
-            {/* Moon */}
-            <circle cx={cx * 0.6} cy={cy * 0.5} r={r * 0.2} fill="rgba(168,85,247,0.15)" />
-            <circle cx={cx * 0.6} cy={cy * 0.5} r={r * 0.13} fill="rgba(192,132,252,0.12)" />
-
-            {/* Torii in purple */}
-            {(() => {
-              const gw = size * 0.38;
-              const gh = size * 0.28;
-              const gx = cx - gw / 2;
-              const gy = cy * 0.65;
-              const bw = size * 0.05;
-              return (
-                <g fill="rgba(168,85,247,0.55)">
-                  <rect x={gx - size * 0.025} y={gy} width={gw + size * 0.05} height={bw * 0.5} rx={bw * 0.1} />
-                  <rect x={gx} y={gy + bw * 0.75} width={gw} height={bw * 0.3} rx={bw * 0.1} />
-                  <rect x={gx + size * 0.035} y={gy + bw * 0.75} width={bw} height={gh} rx={bw * 0.2} />
-                  <rect x={gx + gw - size * 0.035 - bw} y={gy + bw * 0.75} width={bw} height={gh} rx={bw * 0.2} />
-                </g>
-              );
-            })()}
-
-            {/* Purple sakura petals */}
-            {[
-              { x: cx * 0.35, y: cy * 0.35 },
-              { x: cx * 1.6, y: cy * 0.45 },
-              { x: cx * 0.28, y: cy * 1.15 },
-              { x: cx * 1.65, y: cy * 1.2 },
-              { x: cx * 0.85, y: cy * 0.22 },
-              { x: cx * 1.18, y: cy * 0.2 },
-            ].map((p, i) => {
-              const ps = size * 0.05;
-              return (
-                <g key={i} transform={`translate(${p.x},${p.y}) rotate(${i * 30})`}>
-                  {Array.from({ length: 5 }).map((_, j) => {
-                    const a = (j * 72 * Math.PI) / 180;
-                    return <ellipse key={j} cx={Math.cos(a) * ps * 0.42} cy={Math.sin(a) * ps * 0.42} rx={ps * 0.3} ry={ps * 0.16} fill="#a855f7" opacity="0.65" transform={`rotate(${j * 72})`} />;
-                  })}
-                  <circle cx={0} cy={0} r={ps * 0.09} fill="#f3e8ff" opacity="0.9" />
-                </g>
-              );
-            })}
-
-            {/* Concentric rings */}
-            {[0.38, 0.6].map((s, i) => (
-              <circle key={i} cx={cx} cy={cy} r={r * s} fill="none" stroke="#a855f7" strokeWidth={Math.max(0.5, size * 0.012)} opacity={0.5 - i * 0.1} />
-            ))}
-
-            {/* Center eye */}
-            <circle cx={cx} cy={cy} r={r * 0.2} fill={`url(#ojp-eye-grad-${uid})`} style={{ animation: `ojp-eye-${uid} 2s ease-in-out infinite` }} />
-            <ellipse cx={cx} cy={cy} rx={r * 0.11} ry={r * 0.08} fill="#0c0418" opacity="0.9" />
-            <circle cx={cx} cy={cy} r={r * 0.055} fill="#f3e8ff" opacity="0.95" />
-
-            {/* Outer border */}
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#a855f7" strokeWidth={Math.max(1.5, size * 0.035)} opacity="0.9" />
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#e9d5ff" strokeWidth={Math.max(0.5, size * 0.01)} opacity="0.5" strokeDasharray={`${size * 0.04} ${size * 0.04}`} />
-
-            {/* Vignette */}
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.5)" strokeWidth={size * 0.07} />
-          </g>
-        </svg>
+        <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0 }}>
+          <img
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2-DZqDWBFJmxUJHJJJBdnvqv.webp"
+            alt="Обсидиан Японские мотивы"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
+            draggable={false}
+          />
+          {/* Ghost shimmer sweep */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'linear-gradient(125deg, transparent 30%, rgba(192,132,252,0.3) 45%, rgba(139,92,246,0.5) 55%, transparent 70%)', animation: `ojp-float-${uid} 3s ease-in-out infinite` }} />
+          {/* Void vignette */}
+          <div aria-hidden="true" style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'radial-gradient(circle at 50% 50%, transparent 22%, rgba(20,0,50,0.5) 100%)' }} />
+        </div>
 
         {/* Outer conic */}
         <div aria-hidden="true" style={{
