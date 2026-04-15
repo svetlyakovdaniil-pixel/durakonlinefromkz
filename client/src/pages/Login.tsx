@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { getLoginUrl } from "@/const";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
-import { signInWithPopup } from "firebase/auth";
+import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
 import { auth as firebaseAuth, googleProvider } from "@/lib/firebase";
 
 export default function Login() {
