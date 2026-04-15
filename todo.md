@@ -2975,3 +2975,4 @@
 - [x] Группа 3: in-memory трекеры в socketServer.ts (passCardsShown, startedTurnWith10, attacks, wins_in_a_row, cardsInOneTurn, beatSameRankSuit, threw6ToNonNeighbor, win_when_opponent_has_1card)
 - [x] Исправить все нерабочие ежедневные задания: durationSeconds, rating_gained, shanyrak_won_today, spadeKingBeatsTrumpAce, kingBeatsTrump, defended777, wins_in_a_row, attacks_total, pass_card_shown, started_turn_with_10, beat_same_rank_suit_15, threw_6_to_non_neighbor, win_when_opponent_has_1card, cardsInOneTurn
 - [x] ObsidianJapaneseAvatar v4: аватарка всегда поверх анимации, кольца/орбы/лепестки снаружи через CSS mask
+- [x] ObsidianJapaneseAvatar v5: переписан по эталону ObsidianKazakh — кольца через border+inset, волны, орбы, лепестки, shimmer+vignette внутри
