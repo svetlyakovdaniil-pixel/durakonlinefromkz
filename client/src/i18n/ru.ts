@@ -105,6 +105,7 @@ export const ru = {
     tableDarkKazakh: 'Ханский Октогон',
     tableNeon: 'Неоновый Нексус',
     tableApocalypse: 'Апокалипсис',
+    tableGalaxy: 'Галактика',
     privateRoom: 'Закрытая комната',
     roomPassword: 'Пароль комнаты',
     enterPassword: 'Введите пароль',

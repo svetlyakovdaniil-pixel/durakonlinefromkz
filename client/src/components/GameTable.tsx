@@ -5,6 +5,7 @@ import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TA
 import PlayingCard from './PlayingCard';
 import DraggableCard from './DraggableCard';
 import { BitoAnimation } from './CardAnimations';
+import GalaxyTableOverlay from './GalaxyTableOverlay';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Trophy, Frown, Home, HandMetal, Eye, LogOut, DoorOpen, ChevronLeft, ChevronRight, Settings, X, UserPlus, Clock, Check, Flag } from 'lucide-react';
@@ -1249,6 +1250,13 @@ export default function GameTable({
     >
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
+
+      {/* Galaxy table animated stars overlay */}
+      {gs.tableStyle === 'galaxy' && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <GalaxyTableOverlay enabled={gameSettings.animationsEnabled} />
+        </div>
+      )}
 
       {/* Bito animation */}
       {showBitoAnim && gameSettings.animationsEnabled && (

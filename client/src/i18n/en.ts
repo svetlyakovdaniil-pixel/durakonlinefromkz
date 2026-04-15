@@ -105,6 +105,7 @@ export const en = {
     tableDarkKazakh: 'Khan\'s Octagon',
     tableNeon: 'Neon Nexus',
     tableApocalypse: 'Apocalypse',
+    tableGalaxy: 'Galaxy',
     privateRoom: 'Private room',
     roomPassword: 'Room password',
     enterPassword: 'Enter password',

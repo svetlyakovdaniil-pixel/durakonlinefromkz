@@ -14,6 +14,7 @@ const mockUpsertUser = vi.fn();
 const mockGetUserByOpenId = vi.fn();
 const mockCreateUserCredential = vi.fn();
 const mockGetUserById = vi.fn();
+const mockGetOrCreateProfile = vi.fn().mockResolvedValue({ id: 'profile-1', userId: 'user-1' });
 
 vi.mock("./db", () => ({
   getCredentialByEmail: (...args: any[]) => mockGetCredentialByEmail(...args),
@@ -21,6 +22,7 @@ vi.mock("./db", () => ({
   getUserByOpenId: (...args: any[]) => mockGetUserByOpenId(...args),
   createUserCredential: (...args: any[]) => mockCreateUserCredential(...args),
   getUserById: (...args: any[]) => mockGetUserById(...args),
+  getOrCreateProfile: (...args: any[]) => mockGetOrCreateProfile(...args),
 }));
 
 // Mock sdk

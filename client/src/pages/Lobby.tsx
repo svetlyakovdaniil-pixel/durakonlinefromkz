@@ -245,6 +245,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const isDarkTableOwned = ownedTables.includes('dark_kazakh');
   const isNeonTableOwned = ownedTables.includes('neon');
   const isApocalypseTableOwned = ownedTables.includes('apocalypse');
+  const isGalaxyTableOwned = ownedTables.includes('galaxy');
   const { data: lobbyPlaylists = [] } = trpc.playlists.list.useQuery();
   const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
@@ -860,6 +861,7 @@ onClick={() => setShowTengeTopUp(true)}
                       if (v === 'dark_kazakh' && !isDarkTableOwned) return;
                       if (v === 'neon' && !isNeonTableOwned) return;
                       if (v === 'apocalypse' && !isApocalypseTableOwned) return;
+      if (v === 'galaxy' && !isGalaxyTableOwned) return;
                       setTableStyle(v as TableStyle);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
@@ -895,6 +897,16 @@ onClick={() => setShowTengeTopUp(true)}
                           <span className="flex items-center gap-1.5">
                             {!isApocalypseTableOwned && <Lock className="w-3 h-3" />}
                             {t('lobby.tableApocalypse')}
+                          </span>
+                        </SelectItem>
+                        <SelectItem
+                          value="galaxy"
+                          className={isGalaxyTableOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isGalaxyTableOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isGalaxyTableOwned && <Lock className="w-3 h-3" />}
+                            {t('lobby.tableGalaxy')}
                           </span>
                         </SelectItem>
                       </SelectContent>

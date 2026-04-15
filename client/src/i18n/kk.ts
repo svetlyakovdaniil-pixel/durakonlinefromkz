@@ -105,6 +105,7 @@ export const kk = {
     tableDarkKazakh: 'Хандық Октогон',
     tableNeon: 'Неондық Нексус',
     tableApocalypse: 'Апокалипсис',
+    tableGalaxy: 'Галактика',
     privateRoom: 'Жабық бөлме',
     roomPassword: 'Бөлме құпиясөзі',
     enterPassword: 'Құпиясөзді енгізіңіз',
