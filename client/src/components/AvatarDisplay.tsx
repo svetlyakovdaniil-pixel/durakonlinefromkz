@@ -36,6 +36,18 @@ import { ObsidianSpaceAvatar } from './ObsidianSpaceAvatar';
 import { ObsidianCyberpunkAvatar } from './ObsidianCyberpunkAvatar';
 import { ObsidianHiphopAvatar } from './ObsidianHiphopAvatar';
 import { ObsidianAngelsDemonsAvatar } from './ObsidianAngelsDemonsAvatar';
+import { RubyKazakhAvatar } from './RubyKazakhAvatar';
+import { RubyNeonEraAvatar } from './RubyNeonEraAvatar';
+import { RubyApocalypseAvatar } from './RubyApocalypseAvatar';
+import { RubyJapaneseNewAvatar } from './RubyJapaneseNewAvatar';
+import { AmberKazakhAvatar } from './AmberKazakhAvatar';
+import { AmberNeonEraAvatar } from './AmberNeonEraAvatar';
+import { AmberApocalypseAvatar } from './AmberApocalypseAvatar';
+import { AmberJapaneseAvatar } from './AmberJapaneseAvatar';
+import { ObsidianKazakhAvatar } from './ObsidianKazakhAvatar';
+import { ObsidianNeonEraAvatar } from './ObsidianNeonEraAvatar';
+import { ObsidianApocalypseAvatar } from './ObsidianApocalypseAvatar';
+import { ObsidianJapaneseAvatar } from './ObsidianJapaneseAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -191,6 +203,45 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     }
     if (baseId === 'obsidian_angels_demons') {
       return <ObsidianAngelsDemonsAvatar size={size} />;
+    }
+    // Season 6–9 Ruby
+    if (baseId === 'ruby_kazakh') {
+      return <RubyKazakhAvatar size={size} />;
+    }
+    if (baseId === 'ruby_neon_era') {
+      return <RubyNeonEraAvatar size={size} />;
+    }
+    if (baseId === 'ruby_apocalypse') {
+      return <RubyApocalypseAvatar size={size} />;
+    }
+    if (baseId === 'ruby_japanese') {
+      return <RubyJapaneseNewAvatar size={size} />;
+    }
+    // Season 6–9 Amber
+    if (baseId === 'amber_kazakh') {
+      return <AmberKazakhAvatar size={size} />;
+    }
+    if (baseId === 'amber_neon_era') {
+      return <AmberNeonEraAvatar size={size} />;
+    }
+    if (baseId === 'amber_apocalypse') {
+      return <AmberApocalypseAvatar size={size} />;
+    }
+    if (baseId === 'amber_japanese') {
+      return <AmberJapaneseAvatar size={size} />;
+    }
+    // Season 6–9 Obsidian
+    if (baseId === 'obsidian_kazakh') {
+      return <ObsidianKazakhAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_neon_era') {
+      return <ObsidianNeonEraAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_apocalypse') {
+      return <ObsidianApocalypseAvatar size={size} />;
+    }
+    if (baseId === 'obsidian_japanese') {
+      return <ObsidianJapaneseAvatar size={size} />;
     }
     // Image-based avatar
     return (

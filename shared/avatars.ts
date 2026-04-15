@@ -688,6 +688,180 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     offsetY: -2.5,
   },
 
+  // ── RUBY RANK (steppe_khan) — Seasons 6–9 ─────────────────────────────────
+  // Season 6 — Казахский колорит (Ruby)
+  {
+    id: 'ruby_kazakh',
+    name: 'Степной рубин',
+    nameKk: 'Дала рубині',
+    nameEn: 'Steppe Ruby',
+    url: 'ruby_kazakh',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan',
+    seasonNumber: 6,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 7 — Неоновая эра (Ruby)
+  {
+    id: 'ruby_neon_era',
+    name: 'Неоновый рубин',
+    nameKk: 'Неон рубині',
+    nameEn: 'Neon Ruby',
+    url: 'ruby_neon_era',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan',
+    seasonNumber: 7,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 8 — Апокалипсис (Ruby)
+  {
+    id: 'ruby_apocalypse',
+    name: 'Рубин апокалипсиса',
+    nameKk: 'Апокалипсис рубині',
+    nameEn: 'Apocalypse Ruby',
+    url: 'ruby_apocalypse',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan',
+    seasonNumber: 8,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 9 — Японские мотивы (Ruby)
+  {
+    id: 'ruby_japanese',
+    name: 'Рубин сакуры',
+    nameKk: 'Сакура рубині',
+    nameEn: 'Sakura Ruby',
+    url: 'ruby_japanese',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'steppe_khan',
+    seasonNumber: 9,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+
+  // ── AMBER RANK (golden_horde_warrior) — Seasons 6–9 ──────────────────────────
+  // Season 6 — Казахский колорит (Amber)
+  {
+    id: 'amber_kazakh',
+    name: 'Степной янтарь',
+    nameKk: 'Дала янтары',
+    nameEn: 'Steppe Amber',
+    url: 'amber_kazakh',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior',
+    seasonNumber: 6,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 7 — Неоновая эра (Amber)
+  {
+    id: 'amber_neon_era',
+    name: 'Неоновый янтарь',
+    nameKk: 'Неон янтары',
+    nameEn: 'Neon Amber',
+    url: 'amber_neon_era',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior',
+    seasonNumber: 7,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 8 — Апокалипсис (Amber)
+  {
+    id: 'amber_apocalypse',
+    name: 'Янтарь апокалипсиса',
+    nameKk: 'Апокалипсис янтары',
+    nameEn: 'Apocalypse Amber',
+    url: 'amber_apocalypse',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior',
+    seasonNumber: 8,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 9 — Японские мотивы (Amber)
+  {
+    id: 'amber_japanese',
+    name: 'Янтарь сакуры',
+    nameKk: 'Сакура янтары',
+    nameEn: 'Sakura Amber',
+    url: 'amber_japanese',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'golden_horde_warrior',
+    seasonNumber: 9,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+
+  // ── OBSIDIAN RANK (great_khan) — Seasons 6–9 ─────────────────────────────────
+  // Season 6 — Казахский колорит (Obsidian)
+  {
+    id: 'obsidian_kazakh',
+    name: 'Степной обсидиан',
+    nameKk: 'Дала обсидианы',
+    nameEn: 'Steppe Obsidian',
+    url: 'obsidian_kazakh',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan',
+    seasonNumber: 6,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 7 — Неоновая эра (Obsidian)
+  {
+    id: 'obsidian_neon_era',
+    name: 'Неоновый обсидиан',
+    nameKk: 'Неон обсидианы',
+    nameEn: 'Neon Obsidian',
+    url: 'obsidian_neon_era',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan',
+    seasonNumber: 7,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 8 — Апокалипсис (Obsidian)
+  {
+    id: 'obsidian_apocalypse',
+    name: 'Обсидиан апокалипсиса',
+    nameKk: 'Апокалипсис обсидианы',
+    nameEn: 'Apocalypse Obsidian',
+    url: 'obsidian_apocalypse',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan',
+    seasonNumber: 8,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+  // Season 9 — Японские мотивы (Obsidian)
+  {
+    id: 'obsidian_japanese',
+    name: 'Обсидиан сакуры',
+    nameKk: 'Сакура обсидианы',
+    nameEn: 'Sakura Obsidian',
+    url: 'obsidian_japanese',
+    animated: true,
+    seasonReward: true,
+    seasonRankRequired: 'great_khan',
+    seasonNumber: 9,
+    offsetX: -2.5,
+    offsetY: -2.5,
+  },
+
   {
     id: 'neon_crown',
     name: 'Неоновая корона',
@@ -711,7 +885,7 @@ export const DEFAULT_AVATAR_ID = 'wolf';
 export const BOT_AVATAR_ID = 'bot';
 
 /** Animated avatar IDs that use SVG+CSS components instead of img tags */
-export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian'] as const;
+export const ANIMATED_AVATAR_IDS = ['khan', 'golden_horde', 'diving_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian', 'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese', 'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese', 'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese'] as const;
 export type AnimatedAvatarId = typeof ANIMATED_AVATAR_IDS[number];
 
 export function isCanvasAvatar(avatarId: string | null | undefined): boolean {

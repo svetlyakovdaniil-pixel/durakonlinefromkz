@@ -206,9 +206,12 @@ export const SEASONS: SeasonInfo[] = [
       iconClass: 'text-amber-400',
       emoji: '🏇',
     },
-    // Season 6 unique rewards: Zircon rank gets the Diving Eagle animated avatar
+    // Season 6 unique rewards
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'diving_eagle' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_kazakh' },
+      { rankKey: 'golden_horde_warrior', avatarId: 'amber_kazakh' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_kazakh' },
     ],
   },
   {
@@ -230,13 +233,14 @@ export const SEASONS: SeasonInfo[] = [
     },
     // Season 7 unique rewards:
     // Zircon (sky_eagle) → Neon Paw animated avatar
-    // Ruby (steppe_khan) → Neon Dino animated avatar
-    // Amber (golden_horde_warrior) → Neon Cat animated avatar
+    // Ruby (steppe_khan) → Neon Ruby (new S6-S9 set)
+    // Amber (golden_horde_warrior) → Neon Amber (new S6-S9 set)
+    // Obsidian (great_khan) → Neon Obsidian (new S6-S9 set)
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'neon_paw' },
-      { rankKey: 'steppe_khan', avatarId: 'neon_dino' },
-      { rankKey: 'golden_horde_warrior', avatarId: 'neon_cat' },
-      { rankKey: 'great_khan', avatarId: 'neon_crown', frameId: 'obsidian_neon' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_neon_era' },
+      { rankKey: 'golden_horde_warrior', avatarId: 'amber_neon_era' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_neon_era', frameId: 'obsidian_neon' },
     ],
   },
   {
@@ -248,9 +252,9 @@ export const SEASONS: SeasonInfo[] = [
     nameEn: 'Apocalypse',
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
-      { rankKey: 'steppe_khan', avatarId: 'toxic_storm' },
-      { rankKey: 'golden_horde_warrior', avatarId: 'gasmask_amber' },
-      { rankKey: 'great_khan', avatarId: 'nuclear_mushroom', frameId: 'molten_lava' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_apocalypse' },
+      { rankKey: 'golden_horde_warrior', avatarId: 'amber_apocalypse' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_apocalypse' },
     ],
     theme: {
       accent: '#ef4444',
@@ -271,10 +275,10 @@ export const SEASONS: SeasonInfo[] = [
     nameKk: 'Жапон Мотивтері',
     nameEn: 'Japanese Motifs',
     rankRewardOverrides: [
-      { rankKey: 'steppe_khan', avatarId: 'amaterasu_ruby' },
-      { rankKey: 'golden_horde_warrior', avatarId: 'samurai_amber' },
-      { rankKey: 'great_khan', avatarId: 'oni_mask_obsidian', frameId: 'oni_japanese' },
       { rankKey: 'sky_eagle', avatarId: 'japanese_motifs_zircon' },
+      { rankKey: 'steppe_khan', avatarId: 'ruby_japanese' },
+      { rankKey: 'golden_horde_warrior', avatarId: 'amber_japanese' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_japanese', frameId: 'oni_japanese' },
     ],
     theme: {
       accent: '#f472b6',
