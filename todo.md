@@ -3089,3 +3089,9 @@
 - [x] Маршруты GET /api/auth/apple/init и POST /api/auth/apple/callback зарегистрированы в _core/index.ts
 - [x] Кнопка Apple добавлена в Login.tsx и Register.tsx
 - [x] 0 TypeScript ошибок, 520/520 тестов прошли
+
+## Batch 101 — Google OAuth настройка
+- [x] Добавить durakonlinefromkz.vip в Firebase Authorized Domains
+- [x] Добавить durakonlinefromkz.vip в Google Cloud OAuth Authorized JavaScript origins
+- [x] Добавить https://durakonlinefromkz.vip/api/auth/google/callback в Authorized redirect URIs
+- [x] Создать новый Google Client Secret и добавить в env (GOOGLE_CLIENT_SECRET)
