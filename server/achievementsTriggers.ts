@@ -607,7 +607,7 @@ export async function processAchievementCountAchievements(profileId: number): Pr
   await incrementAchievementProgress(profileId, 'achievement_lover', 0, Math.min(completedCount, 10)).catch(() => {});
   await incrementAchievementProgress(profileId, 'achievement_expert', 0, Math.min(completedCount, 20)).catch(() => {});
   await incrementAchievementProgress(profileId, 'achievement_master', 0, Math.min(completedCount, 30)).catch(() => {});
-  await incrementAchievementProgress(profileId, 'achievement_legend', 0, Math.min(completedCount, 50)).catch(() => {});
+  await incrementAchievementProgress(profileId, 'achievement_achiever', 0, Math.min(completedCount, 50)).catch(() => {});
 }
 
 // ============================================================
@@ -635,12 +635,12 @@ export async function processCollectorAchievements(profileId: number): Promise<v
   const playlists = JSON.parse(profile.ownedPlaylists ?? '[]') as number[];
   const avatars = JSON.parse(profile.ownedAvatars ?? '[]') as string[];
 
-  // frame_collector: own 3 frames
-  await incrementAchievementProgress(profileId, 'frame_collector', 0, Math.min(frames.length, 3)).catch(() => {});
-  // deck_collector: own 3 decks
-  await incrementAchievementProgress(profileId, 'deck_collector', 0, Math.min(decks.length, 3)).catch(() => {});
-  // playlist_collector: own 3 playlists
-  await incrementAchievementProgress(profileId, 'playlist_collector', 0, Math.min(playlists.length, 3)).catch(() => {});
+  // fashionista: own 3 frames
+  await incrementAchievementProgress(profileId, 'fashionista', 0, Math.min(frames.length, 3)).catch(() => {});
+  // croupier: own 3 decks
+  await incrementAchievementProgress(profileId, 'croupier', 0, Math.min(decks.length, 3)).catch(() => {});
+  // meloman: own 3 playlists
+  await incrementAchievementProgress(profileId, 'meloman', 0, Math.min(playlists.length, 3)).catch(() => {});
   // many_faces: own at least 5 different avatars (excluding classic ones)
   const CLASSIC_AVATAR_IDS = ['wolf', 'eagle', 'bear', 'fox', 'snow-leopard', 'bot'];
   const nonClassicAvatars = avatars.filter((id: string) => !CLASSIC_AVATAR_IDS.includes(id));
@@ -653,31 +653,27 @@ export async function processCollectorAchievements(profileId: number): Promise<v
 // ============================================================
 
 export async function processSeasonRankAchievements(profileId: number, rankId: string): Promise<void> {
-  const rankOrder = ['bronze', 'silver', 'gold', 'platinum', 'diamond', 'master', 'grandmaster', 'great_khan'];
+  // Real rank keys from SEASON_REWARD_DEFS in shared/seasons.ts
+  const rankOrder = ['steppe_hare', 'mountain_ram', 'golden_falcon', 'winged_horse', 'sky_eagle', 'steppe_khan', 'golden_horde_warrior', 'great_khan'];
   const rankIndex = rankOrder.indexOf(rankId);
   if (rankIndex < 0) return;
 
-  // Each rank achievement: set progress to 1 if reached that rank or higher
+  // Map real rankKey → achievement key (from shared/achievements.ts)
   const rankAchievementMap: Record<string, string> = {
-    bronze: 'season_bronze',
-    silver: 'season_silver',
-    gold: 'season_gold',
-    platinum: 'season_platinum',
-    diamond: 'season_diamond',
-    master: 'season_master',
-    grandmaster: 'season_grandmaster',
-    great_khan: 'season_great_khan',
+    steppe_hare:          'season_steppe_hare',
+    mountain_ram:         'season_mountain_ram',
+    golden_falcon:        'season_golden_falcon',
+    winged_horse:         'season_winged_horse',
+    sky_eagle:            'season_sky_eagle',
+    steppe_khan:          'season_steppe_khan',
+    golden_horde_warrior: 'season_golden_horde',
+    great_khan:           'season_great_khan',
   };
 
   // Award achievement for the exact rank reached
   const achievementId = rankAchievementMap[rankId];
   if (achievementId) {
     await incrementAchievementProgress(profileId, achievementId, 0, 1).catch(() => {});
-  }
-
-  // Also award "Обсидиан" if they reached great_khan
-  if (rankId === 'great_khan') {
-    await incrementAchievementProgress(profileId, 'great_khan_achievement', 0, 1).catch(() => {});
   }
 }
 

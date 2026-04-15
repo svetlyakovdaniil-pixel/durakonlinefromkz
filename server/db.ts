@@ -520,6 +520,7 @@ export async function getLeaderboard(limit = 50) {
   if (!db) return [];
 
   return db.select({
+    id: playerProfiles.id,
     gameId: playerProfiles.gameId,
     displayName: playerProfiles.displayName,
     rating: playerProfiles.rating,

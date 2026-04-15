@@ -2462,6 +2462,25 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               transferCounts: new Map(),
             });
 
+            // Process first_berkut achievement: finish with exactly 1 card in hand
+            const botRatioCheck = totalPlayersInRoom > 0 ? botCount / totalPlayersInRoom : 0;
+            if (botRatioCheck < 0.334) {
+              for (const odId of allHumanOdIds) {
+                const playerState = gameState.players.find(p => p.id === odId);
+                if (!playerState) continue;
+                const profileId = playerGameIds.get(odId);
+                if (!profileId) continue;
+                // first_berkut: player finished with exactly 1 card (isOut and had 1 card when they went out)
+                // We check if player is out (won) and had exactly 1 card when they finished
+                if (playerState.isOut && playerState.winPlace !== null) {
+                  processFirstBerkutAchievement({
+                    profileId, handSize: playerState.hand.length,
+                    botCount, totalPlayersInRoom,
+                  }).catch(() => {});
+                }
+              }
+            }
+
             // Build perPlayerStats from in-memory tracking maps
             const trumpDefMap = getTrumpDefMap(roomId);
             const totalDefMap = getTotalDefMap(roomId);
