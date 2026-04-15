@@ -6,8 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { getLoginUrl } from "@/const";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
-import { signInWithPopup, signInWithRedirect, getRedirectResult } from "firebase/auth";
-import { auth as firebaseAuth, googleProvider } from "@/lib/firebase";
+
 
 export default function Login() {
   const { t } = useTranslation();
@@ -63,41 +62,12 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = () => {
     setError("");
     setGoogleLoading(true);
-    try {
-      // Open Google Sign-In popup via Firebase
-      const result = await signInWithPopup(firebaseAuth, googleProvider);
-      // Get the ID token
-      const idToken = await result.user.getIdToken();
-
-      // Send to our server for verification and session creation
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ idToken }),
-        credentials: "include",
-      });
-
-      if (!res.ok) {
-        setError(t("auth.googleError"));
-        return;
-      }
-
-      // Success — reload to pick up the session cookie
-      window.location.href = "/";
-    } catch (err: any) {
-      // User closed the popup — not an error
-      if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled-popup-request") {
-        setGoogleLoading(false);
-        return;
-      }
-      console.error("[GoogleAuth] Sign-in failed:", err);
-      setError(t("auth.googleError"));
-    } finally {
-      setGoogleLoading(false);
-    }
+    // Use server-side OAuth redirect flow (avoids COOP popup issues)
+    const origin = window.location.origin;
+    window.location.href = `/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
   };
 
   const handleAppleSignIn = async () => {

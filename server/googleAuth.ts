@@ -1,96 +1,139 @@
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
-
 import * as db from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
 
+const GOOGLE_CLIENT_ID = "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com";
+const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
+
 /**
- * Verify a Firebase ID token using Google's public keys.
- * We use a lightweight approach: verify the token by calling
- * Google's tokeninfo endpoint, which avoids needing firebase-admin SDK
- * and its heavy dependencies on the server.
+ * Exchange authorization code for tokens using Google OAuth2
  */
-async function verifyGoogleIdToken(idToken: string): Promise<{
-  uid: string;
+async function exchangeCodeForTokens(code: string, redirectUri: string): Promise<{
+  access_token: string;
+  id_token: string;
+}> {
+  const params = new URLSearchParams({
+    code,
+    client_id: GOOGLE_CLIENT_ID,
+    client_secret: GOOGLE_CLIENT_SECRET,
+    redirect_uri: redirectUri,
+    grant_type: "authorization_code",
+  });
+
+  const response = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: params.toString(),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    console.error("[GoogleAuth] Token exchange failed:", err);
+    throw new Error("Failed to exchange code for tokens");
+  }
+
+  return response.json();
+}
+
+/**
+ * Get user info from Google using access token
+ */
+async function getGoogleUserInfo(accessToken: string): Promise<{
+  sub: string;
   email: string | null;
   name: string | null;
   picture: string | null;
 }> {
-  // Use Google's OAuth2 tokeninfo endpoint to verify the token
-  const response = await fetch(
-    `https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`
-  );
+  const response = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
 
   if (!response.ok) {
-    throw new Error("Invalid Google ID token");
+    throw new Error("Failed to get user info from Google");
   }
 
-  const payload = await response.json();
-
-  // Verify the audience matches our Firebase project
-  // Firebase ID tokens can have either the Web Client ID or the Firebase App ID as audience
-  const ALLOWED_AUDIENCES = [
-    "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com", // Web Client ID
-    "1:825855589810:web:2fb22aff27ea310abcf8ab", // Firebase App ID
-  ];
-  console.log("[GoogleAuth] Token aud:", payload.aud, "| azp:", payload.azp, "| iss:", payload.iss);
-  const audMatch = ALLOWED_AUDIENCES.includes(payload.aud);
-  const azpMatch = ALLOWED_AUDIENCES.includes(payload.azp);
-  if (!audMatch && !azpMatch) {
-    console.error("[GoogleAuth] Audience mismatch. Got aud:", payload.aud, "azp:", payload.azp);
-    throw new Error("Token audience mismatch");
-  }
-
+  const data = await response.json();
   return {
-    uid: payload.sub,
-    email: payload.email || null,
-    name: payload.name || null,
-    picture: payload.picture || null,
+    sub: data.sub,
+    email: data.email || null,
+    name: data.name || null,
+    picture: data.picture || null,
   };
 }
 
 export function registerGoogleAuthRoutes(app: Express) {
   /**
-   * POST /api/auth/google
-   * Body: { idToken }
-   * 
-   * Client sends Firebase ID token after Google Sign-In popup.
-   * Server verifies the token, creates/updates user, sets session cookie.
+   * GET /api/auth/google/init
+   * Redirects user to Google OAuth consent screen
    */
-  app.post("/api/auth/google", async (req: Request, res: Response) => {
+  app.get("/api/auth/google/init", (req: Request, res: Response) => {
+    const origin = (req.query.origin as string) || "https://durakonlinefromkz.vip";
+    const referralCode = (req.query.referralCode as string) || "";
+    const redirectUri = `${origin}/api/auth/google/callback`;
+
+    const state = Buffer.from(JSON.stringify({ origin, referralCode })).toString("base64url");
+
+    const params = new URLSearchParams({
+      client_id: GOOGLE_CLIENT_ID,
+      redirect_uri: redirectUri,
+      response_type: "code",
+      scope: "openid email profile",
+      state,
+      access_type: "online",
+      prompt: "select_account",
+    });
+
+    res.redirect(`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`);
+  });
+
+  /**
+   * GET /api/auth/google/callback
+   * Handles the OAuth callback from Google
+   */
+  app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
+    const { code, state, error } = req.query as Record<string, string>;
+
+    // Decode state
+    let origin = "https://durakonlinefromkz.vip";
+    let referralCode = "";
     try {
-      const { idToken } = req.body;
-
-      if (!idToken || typeof idToken !== "string") {
-        res.status(400).json({ error: "missing_token", message: "ID token is required" });
-        return;
+      if (state) {
+        const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
+        origin = decoded.origin || origin;
+        referralCode = decoded.referralCode || "";
       }
+    } catch {
+      console.warn("[GoogleAuth] Failed to decode state");
+    }
 
-      // Verify the Google ID token
-      let googleUser: { uid: string; email: string | null; name: string | null; picture: string | null };
-      try {
-        googleUser = await verifyGoogleIdToken(idToken);
-      } catch (err) {
-        console.error("[GoogleAuth] Token verification failed:", err);
-        res.status(401).json({ error: "invalid_token", message: "Invalid Google token" });
-        return;
-      }
+    if (error) {
+      console.error("[GoogleAuth] OAuth error:", error);
+      return res.redirect(`${origin}/login?error=google_cancelled`);
+    }
 
-      // Use Google UID as the unique identifier
-      const openId = `google_${googleUser.uid}`;
+    if (!code) {
+      return res.redirect(`${origin}/login?error=google_no_code`);
+    }
+
+    try {
+      const redirectUri = `${origin}/api/auth/google/callback`;
+
+      // Exchange code for tokens
+      const tokens = await exchangeCodeForTokens(code, redirectUri);
+
+      // Get user info
+      const googleUser = await getGoogleUserInfo(tokens.access_token);
+
+      const openId = `google_${googleUser.sub}`;
 
       // Check if user already exists
       const existingUser = await db.getUserByOpenId(openId);
 
       if (existingUser) {
-        // Update last signed in
-        await db.upsertUser({
-          openId,
-          lastSignedIn: new Date(),
-        });
+        await db.upsertUser({ openId, lastSignedIn: new Date() });
 
-        // Create session token and set cookie
         const sessionToken = await sdk.createSessionToken(openId, {
           name: existingUser.name || googleUser.name || "",
           expiresInMs: ONE_YEAR_MS,
@@ -98,12 +141,8 @@ export function registerGoogleAuthRoutes(app: Express) {
 
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-        res.status(200).json({ success: true, openId, isNew: false });
       } else {
-        // Create new user
         const displayName = googleUser.name || googleUser.email?.split("@")[0] || "Player";
-        // Truncate name to 12 chars to match our limits
         const truncatedName = displayName.substring(0, 12);
 
         await db.upsertUser({
@@ -114,20 +153,16 @@ export function registerGoogleAuthRoutes(app: Express) {
           lastSignedIn: new Date(),
         });
 
-        // Get user and create profile (needed for referral activation)
         const newUser = await db.getUserByOpenId(openId);
         if (newUser) {
           const profile = await db.getOrCreateProfile(newUser.id, truncatedName);
-          // Activate referral code if provided (non-fatal)
-          const referralCode = req.body.referralCode;
-          if (referralCode && typeof referralCode === 'string' && referralCode.trim().length > 0 && profile) {
+          if (referralCode && referralCode.trim().length > 0 && profile) {
             await db.activateReferralCode(profile.id, referralCode.trim().toUpperCase()).catch(err => {
-              console.warn('[GoogleAuth] Referral activation failed (non-fatal):', err);
+              console.warn("[GoogleAuth] Referral activation failed (non-fatal):", err);
             });
           }
         }
 
-        // Create session token and set cookie
         const sessionToken = await sdk.createSessionToken(openId, {
           name: truncatedName,
           expiresInMs: ONE_YEAR_MS,
@@ -135,12 +170,21 @@ export function registerGoogleAuthRoutes(app: Express) {
 
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-
-        res.status(201).json({ success: true, openId, isNew: true });
       }
-    } catch (error) {
-      console.error("[GoogleAuth] Login failed:", error);
-      res.status(500).json({ error: "server_error", message: "Server error" });
+
+      // Redirect to home after successful login
+      res.redirect(`${origin}/`);
+    } catch (err) {
+      console.error("[GoogleAuth] Callback failed:", err);
+      res.redirect(`${origin}/login?error=google_server_error`);
     }
+  });
+
+  /**
+   * POST /api/auth/google (legacy — kept for backward compatibility)
+   * Body: { idToken }
+   */
+  app.post("/api/auth/google", async (req: Request, res: Response) => {
+    res.status(410).json({ error: "deprecated", message: "Use /api/auth/google/init redirect flow instead" });
   });
 }
