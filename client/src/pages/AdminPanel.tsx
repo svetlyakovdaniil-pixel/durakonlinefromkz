@@ -9,7 +9,7 @@ import {
   Eye, ArrowUpDown, Crown, Clock, Gamepad2, Trophy,
   ChevronDown, ChevronUp, ClipboardList, AlertTriangle,
   ShoppingCart, Bell, Send, Filter, Menu, X, Flag, Package,
-  MessageSquare, AlertCircle, FlaskConical,
+  MessageSquare, AlertCircle, FlaskConical, RotateCcw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -563,7 +563,7 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
    PLAYER PROFILE VIEW (sub-view inside Players tab)
    ================================================================ */
 function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: number; onBack: () => void; isGM?: boolean }) {
-  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games" | "purchases" | "items">("info");
+  const [profileTab, setProfileTab] = useState<"info" | "transactions" | "games" | "purchases" | "reset">("info");
 
   const { data: detail, isLoading, refetch } = trpc.admin.playerDetail.useQuery({ profileId });
 
@@ -600,7 +600,7 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
     { id: "transactions" as const, label: "Транзакции", icon: ArrowLeftRight },
     { id: "games" as const, label: "История игр", icon: Gamepad2 },
     { id: "purchases" as const, label: "Покупки", icon: ShoppingCart },
-    { id: "items" as const, label: "Предметы", icon: Package },
+    { id: "reset" as const, label: "Обнуление", icon: RotateCcw },
   ];
 
   return (
@@ -670,6 +670,7 @@ function PlayerProfileView({ profileId, onBack, isGM = false }: { profileId: num
       {profileTab === "transactions" && <ProfileTransactionsSection profileId={profileId} />}
       {profileTab === "games" && <ProfileGamesSection profileId={profileId} />}
       {profileTab === "purchases" && <ProfilePurchasesSection profileId={profileId} />}
+      {profileTab === "reset" && <ProfileResetSection profileId={profileId} playerName={detail.displayName || `#${detail.gameId}`} />}
     </div>
   );
 }
@@ -1060,32 +1061,14 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
     if (desc.startsWith('Покупка аватара:')) return { icon: '👤', label: desc.replace('Покупка аватара: ', '') };
     if (desc.startsWith('Purchased playlist #')) return { icon: '🎵', label: `Плейлист #${desc.replace('Purchased playlist #', '')}` };
     if (desc.startsWith('Premium subscription')) return { icon: '👑', label: 'Premium подписка' };
-    // Other transaction types
-    if (type === 'game_reward' || desc.includes('Game reward') || desc.includes('game reward')) return { icon: '🎮', label: desc || 'Награда за игру' };
-    if (type === 'game_entry') return { icon: '🎲', label: desc || 'Вход в игру' };
-    if (type === 'achievement_reward') return { icon: '🏆', label: desc || 'Награда за достижение' };
-    if (type === 'daily_quest_reward') return { icon: '📋', label: desc || 'Ежедневное задание' };
-    if (type === 'tutorial_reward') return { icon: '📚', label: desc || 'Обучение' };
-    if (type === 'free_topup') return { icon: '🎁', label: desc || 'Бесплатное пополнение' };
-    if (type === 'buy_shanyrak') return { icon: '🏠', label: desc || 'Покупка шаныраков' };
-    if (type === 'buy_tenge') return { icon: '₸', label: desc || 'Покупка тенге' };
-    return { icon: '🛒', label: desc || type || 'Транзакция' };
+    if (type === 'premium_purchase') return { icon: '👑', label: desc || 'Premium подписка' };
+    return { icon: '🛒', label: desc || 'Покупка' };
   };
-
-  const isRevocable = (type: string) => type === 'shop_purchase' || type === 'premium_purchase';
 
   const getTypeLabel = (type: string) => {
     const map: Record<string, string> = {
-      shop_purchase: 'Покупка',
-      premium_purchase: 'Премиум',
-      game_reward: 'Награда',
-      game_entry: 'Игра',
-      achievement_reward: 'Достижение',
-      daily_quest_reward: 'Задание',
-      tutorial_reward: 'Обучение',
-      free_topup: 'Бонус',
-      buy_shanyrak: 'Пополнение',
-      buy_tenge: 'Пополнение',
+      shop_purchase: 'Магазин',
+      premium_purchase: 'Premium',
     };
     return map[type] ?? type;
   };
@@ -1093,7 +1076,7 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-gray-500">История транзакций игрока</span>
+        <span className="text-sm text-gray-500">Предметы, купленные в магазине (аватары, рамки, колоды, плейлисты, Premium)</span>
         <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300">
           <RefreshCw className="w-3.5 h-3.5" />
         </Button>
@@ -1104,7 +1087,7 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
       ) : !purchases?.length ? (
         <div className="text-center py-8 text-gray-500">
           <ShoppingCart className="w-8 h-8 mx-auto mb-2 opacity-30" />
-          <p>Покупок нет</p>
+          <p>Покупок нет — игрок ничего не покупал</p>
         </div>
       ) : (
         <div className="space-y-2">
@@ -1113,7 +1096,7 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
             .map((p: any) => {
             const { icon, label } = getItemLabel(p.description ?? '', p.type);
             const isBeingRevoked = revokeMutation.isPending && confirmRevoke?.id === p.id;
-            const canRevoke = isRevocable(p.type);
+            const canRevoke = p.type === 'shop_purchase' || p.type === 'premium_purchase';
             const amountColor = p.amount > 0 ? 'text-green-400' : 'text-red-400';
             return (
               <div key={p.id} className={`flex items-center justify-between p-3 rounded-lg bg-gray-900/40 border border-gray-800 hover:border-gray-700 transition-all ${isBeingRevoked ? 'opacity-50' : ''}`}>
@@ -1171,6 +1154,108 @@ function ProfilePurchasesSection({ profileId }: { profileId: number }) {
               className="bg-red-700 hover:bg-red-600 text-white"
             >
               {revokeMutation.isPending ? 'Отмена...' : 'Подтвердить'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+/* ================================================================
+   PROFILE RESET SECTION
+   ================================================================ */
+function ProfileResetSection({ profileId, playerName }: { profileId: number; playerName: string }) {
+  const [showConfirm, setShowConfirm] = useState(false);
+  const utils = trpc.useUtils();
+
+  const resetMutation = trpc.admin.resetPlayerAccount.useMutation({
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`Аккаунт игрока успешно обнулён`);
+        setShowConfirm(false);
+        utils.admin.playerDetail.invalidate({ profileId });
+      } else {
+        toast.error(result.reason ?? 'Ошибка при обнулении');
+      }
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Warning banner */}
+      <div className="rounded-lg border border-red-800/60 bg-red-950/30 p-4 space-y-2">
+        <div className="flex items-center gap-2 text-red-400 font-semibold">
+          <AlertTriangle className="w-5 h-5" />
+          <span>Опасное действие</span>
+        </div>
+        <p className="text-sm text-red-300/80">
+          Полное обнуление аккаунта возвращает игрока к состоянию новой регистрации.
+          Это действие необратимо.
+        </p>
+      </div>
+
+      {/* What will be reset */}
+      <div className="rounded-lg border border-gray-800 bg-gray-900/40 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-gray-300">Что будет сброшено:</h3>
+        <ul className="text-sm text-gray-400 space-y-1.5">
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Аватар → волк (wolf)</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Рейтинг → 1000, статистика игр → 0</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Баланс (тенге и шаныраки) → 0</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Все предметы (аватары, рамки, колоды, столы, плейлисты) → удалены</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Premium подписка → отключена</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Все транзакции → удалены</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Достижения и ежедневные задания → сброшены</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Сезонный рейтинг и награды → удалены</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Уведомления → удалены</li>
+          <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Бан → снят</li>
+        </ul>
+        <p className="text-xs text-gray-600 mt-2">Не трогается: авторизация (имя, email), история игр, друзья, жалобы.</p>
+      </div>
+
+      {/* Reset button */}
+      <Button
+        onClick={() => setShowConfirm(true)}
+        className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold py-3 text-base"
+      >
+        <RotateCcw className="w-5 h-5 mr-2" />
+        Обнулить аккаунт
+      </Button>
+
+      {/* Confirmation dialog */}
+      <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
+        <DialogContent className="bg-gray-900 border-red-800 text-gray-100 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 flex items-center gap-2">
+              <AlertTriangle className="w-5 h-5" />
+              Подтвердите обнуление
+            </DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Вы собираетесь полностью сбросить аккаунт игрока{' '}
+              <span className="font-semibold text-white">{playerName}</span>.
+              Все данные будут удалены безвозвратно.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button
+              variant="outline"
+              onClick={() => setShowConfirm(false)}
+              disabled={resetMutation.isPending}
+              className="border-gray-700 text-gray-300"
+            >
+              Отмена
+            </Button>
+            <Button
+              onClick={() => resetMutation.mutate({ profileId })}
+              disabled={resetMutation.isPending}
+              className="bg-red-700 hover:bg-red-600 text-white"
+            >
+              {resetMutation.isPending ? (
+                <><RotateCcw className="w-4 h-4 mr-2 animate-spin" /> Обнуляем...</>
+              ) : (
+                <><RotateCcw className="w-4 h-4 mr-2" /> Подтвердить обнуление</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

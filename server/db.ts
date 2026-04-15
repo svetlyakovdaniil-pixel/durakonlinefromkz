@@ -1,7 +1,7 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -1710,7 +1710,7 @@ export async function adminGetPlayerGameHistory(opts: {
 export async function logAdminAction(data: {
   adminId: number;
   adminName: string | null;
-  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item';
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account';
   targetProfileId?: number | null;
   details?: Record<string, unknown>;
 }) {
@@ -2857,10 +2857,13 @@ export async function adminRevokePlayerPurchase(opts: {
 export async function adminGetPlayerPurchases(profileId: number) {
   const db = await getDb();
   if (!db) return [];
-  // Return ALL transactions for this player so admins can see the full history
-  // No limit — admins need to see the complete transaction history
+  // Return only real purchases (shop items and premium subscriptions)
+  // Excludes game rewards, daily quests, top-ups, etc.
   const rows = await db.select().from(transactions)
-    .where(eq(transactions.profileId, profileId))
+    .where(and(
+      eq(transactions.profileId, profileId),
+      sql`${transactions.type} IN ('shop_purchase', 'premium_purchase')`,
+    ))
     .orderBy(desc(transactions.createdAt));
   return rows;
 }
@@ -3081,4 +3084,98 @@ export async function adminGetPlayerItems(profileId: number): Promise<{
     equippedFrame: profile.equippedFrame ?? null,
     pendingSeasonRewards,
   };
+}
+
+/**
+ * Admin: Fully reset a player's account to the state of a freshly registered user.
+ *
+ * What gets reset on player_profiles:
+ *   - avatarId → 'wolf'
+ *   - rating → 1000
+ *   - gamesPlayed, wins, losses, botGamesPlayed, botWins, botLosses → 0
+ *   - balanceTenge, balanceShanyrak → 0
+ *   - lastFreeTopup → null
+ *   - ownedDecks, ownedTables, ownedFrames, ownedAvatars, ownedPlaylists → null (empty)
+ *   - activePlaylistId → null
+ *   - equippedFrame → null
+ *   - tutorialCompleted → false
+ *   - tutorialCompletedCount → 0
+ *   - premiumPurchaseCount, premiumConsecutiveMonths → 0
+ *   - lastPremiumPurchaseMonth → null
+ *   - dailyQuestsCompleted → 0
+ *   - isPremium → false
+ *   - premiumExpiresAt → null
+ *   - dailyQuestSwapsUsed → 0
+ *   - lastQuestSwapDate → null
+ *   - isBanned → false (unban as part of full reset)
+ *   - banReason, bannedAt, bannedUntil → null
+ *
+ * Related tables cleared:
+ *   - transactions (all)
+ *   - notifications (all)
+ *   - user_achievements (all)
+ *   - user_daily_quests (all)
+ *   - season_rewards (all)
+ *   - season_ratings (all)
+ *
+ * NOT touched: users table (auth identity), game_history (historical record),
+ *   friendships, player_complaints, admin_audit_log.
+ */
+export async function adminResetPlayerAccount(profileId: number): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'Database not available' };
+
+  const [profile] = await db.select({ id: playerProfiles.id })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return { success: false, reason: 'Player not found' };
+
+  // Reset the profile row to fresh-registration defaults
+  await db.update(playerProfiles)
+    .set({
+      avatarId: 'wolf',
+      rating: 1000,
+      gamesPlayed: 0,
+      wins: 0,
+      losses: 0,
+      botGamesPlayed: 0,
+      botWins: 0,
+      botLosses: 0,
+      balanceTenge: 0,
+      balanceShanyrak: 0,
+      lastFreeTopup: null,
+      ownedDecks: null,
+      ownedTables: null,
+      ownedFrames: null,
+      ownedAvatars: null,
+      ownedPlaylists: null,
+      activePlaylistId: null,
+      equippedFrame: null,
+      tutorialCompleted: false,
+      tutorialCompletedCount: 0,
+      premiumPurchaseCount: 0,
+      premiumConsecutiveMonths: 0,
+      lastPremiumPurchaseMonth: null,
+      dailyQuestsCompleted: 0,
+      isPremium: false,
+      premiumExpiresAt: null,
+      dailyQuestSwapsUsed: 0,
+      lastQuestSwapDate: null,
+      isBanned: false,
+      banReason: null,
+      bannedAt: null,
+      bannedUntil: null,
+    })
+    .where(eq(playerProfiles.id, profileId));
+
+  // Clear related tables
+  await db.delete(transactions).where(eq(transactions.profileId, profileId));
+  await db.delete(notifications).where(eq(notifications.profileId, profileId));
+  await db.delete(userAchievements).where(eq(userAchievements.profileId, profileId));
+  await db.delete(userDailyQuests).where(eq(userDailyQuests.profileId, profileId));
+  await db.delete(seasonRewards).where(eq(seasonRewards.profileId, profileId));
+  await db.delete(seasonRatings).where(eq(seasonRatings.profileId, profileId));
+
+  return { success: true };
 }

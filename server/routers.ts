@@ -58,6 +58,7 @@ import {
   adminGetPlayerPurchases,
   adminRemovePlayerItem,
   adminGetPlayerItems,
+  adminResetPlayerAccount,
   logAdminAction,
   getAuditLog,
   adminBanPlayerWithDuration,
@@ -1054,13 +1055,12 @@ export const appRouter = router({
 
     saveAvatarOffsets: adminProcedure
       .input(z.object({
-        avatarId: z.string().min(1),
+        avatarId: z.string(),
         offsetX: z.number(),
         offsetY: z.number(),
         imgScale: z.number(),
       }))
       .mutation(async ({ ctx, input }) => {
-        // Save to DB — applies globally to all players without redeployment
         await upsertAvatarOffset(input.avatarId, input.offsetX, input.offsetY, input.imgScale);
         await logAdminAction({
           adminId: ctx.user.id,
@@ -1069,6 +1069,59 @@ export const appRouter = router({
           details: { avatarId: input.avatarId, offsetX: input.offsetX, offsetY: input.offsetY, imgScale: input.imgScale },
         });
         return { success: true };
+      }),
+
+    /** Get all items (avatars + frames) owned by a player */
+    getPlayerItems: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .query(async ({ input }) => {
+        return adminGetPlayerItems(input.profileId);
+      }),
+
+    /** Remove a specific item (avatar or frame) from a player's inventory without refund */
+    removePlayerItem: adminProcedure
+      .input(z.object({
+        profileId: z.number(),
+        itemType: z.enum(['avatar', 'frame']),
+        itemId: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminRemovePlayerItem({
+          profileId: input.profileId,
+          itemType: input.itemType,
+          itemId: input.itemId,
+        });
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'remove_item',
+            targetProfileId: input.profileId,
+            details: { itemType: input.itemType, itemId: input.itemId },
+          });
+        }
+        return result;
+      }),
+
+    /**
+     * Fully reset a player account to fresh-registration state.
+     * Clears all balances, owned items, stats, premium, season data, transactions, achievements, daily quests.
+     * Admin-only.
+     */
+    resetPlayerAccount: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminResetPlayerAccount(input.profileId);
+        if (result.success) {
+          await logAdminAction({
+            adminId: ctx.user.id,
+            adminName: ctx.user.name ?? null,
+            action: 'reset_account',
+            targetProfileId: input.profileId,
+            details: { note: 'Full account reset to fresh-registration state' },
+          });
+        }
+        return result;
       }),
   }),
 
@@ -1704,37 +1757,6 @@ export const appRouter = router({
        return { rolledBack, seasonKey };
     }),
 
-    /** Get all items (avatars + frames) owned by a player */
-    getPlayerItems: adminProcedure
-      .input(z.object({ profileId: z.number() }))
-      .query(async ({ input }) => {
-        return adminGetPlayerItems(input.profileId);
-      }),
-
-    /** Remove a specific item (avatar or frame) from a player's inventory without refund */
-    removePlayerItem: adminProcedure
-      .input(z.object({
-        profileId: z.number(),
-        itemType: z.enum(['avatar', 'frame']),
-        itemId: z.string().min(1),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const result = await adminRemovePlayerItem({
-          profileId: input.profileId,
-          itemType: input.itemType,
-          itemId: input.itemId,
-        });
-        if (result.success) {
-          await logAdminAction({
-            adminId: ctx.user.id,
-            adminName: ctx.user.name ?? null,
-            action: 'remove_item',
-            targetProfileId: input.profileId,
-            details: { itemType: input.itemType, itemId: input.itemId },
-          });
-        }
-        return result;
-      }),
   }),
 });
 export type AppRouter = typeof appRouter;

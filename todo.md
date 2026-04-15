@@ -2954,3 +2954,10 @@
 - [x] Добавить в награды сезонов S6-S9 в seasons.ts (rankRewardOverrides для great_khan)
 - [x] Убрать скролл из выбора рамки аватарки в профиле игрока (вернуть старый вид)
 - [x] Исправить отображение рамок 10–12 сезона в выборе рамки профиля игрока
+
+## AdminPanel улучшения (апрель 2026)
+- [x] AdminPanel: Раздел "Покупки" — фильтровать только shop_purchase и premium_purchase транзакции
+- [x] AdminPanel: Переименовать вкладку "Предметы" в "Обнуление"
+- [x] AdminPanel: Реализовать функционал полного сброса аккаунта игрока (только admin)
+- [x] Backend: Добавить процедуру admin.resetPlayerAccount в routers.ts
+- [x] Backend: Добавить функцию adminResetPlayerAccount в server/db.ts
