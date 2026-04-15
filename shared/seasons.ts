@@ -211,7 +211,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'diving_eagle' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_kazakh' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_kazakh' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_kazakh' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_kazakh', frameId: 'great_khan' },
     ],
   },
   {
@@ -254,7 +254,7 @@ export const SEASONS: SeasonInfo[] = [
       { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_apocalypse' },
       { rankKey: 'golden_horde_warrior', avatarId: 'amber_apocalypse' },
-      { rankKey: 'great_khan', avatarId: 'obsidian_apocalypse' },
+      { rankKey: 'great_khan', avatarId: 'obsidian_apocalypse', frameId: 'molten_lava' },
     ],
     theme: {
       accent: '#ef4444',

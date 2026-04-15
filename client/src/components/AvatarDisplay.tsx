@@ -243,10 +243,39 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     );
   }
 
+  // Animated avatars handle their own clipping internally (rounded-full on inner img container)
+  // They must NOT be wrapped in overflow:hidden as that clips box-shadow and orbital particles
+  const ANIMATED_AVATAR_IDS = new Set([
+    'khan', 'golden_horde', 'great_khan', 'neon_dino', 'neon_cat', 'neon_crown',
+    'toxic_storm', 'gasmask_amber', 'nuclear_mushroom',
+    'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian',
+    'ruby_underwater_world', 'ruby_egyptian_gods', 'ruby_pirate_islands', 'ruby_norse_gods',
+    'ruby_space_odyssey', 'ruby_cyberpunk', 'ruby_hiphop_90s', 'ruby_angels_demons',
+    'amber_underwater_world', 'amber_egyptian_gods', 'amber_pirate_islands', 'amber_norse_gods',
+    'amber_space_odyssey', 'amber_cyberpunk', 'amber_hiphop_90s', 'amber_angels_demons',
+    'obsidian_underwater_world', 'obsidian_egyptian_gods', 'obsidian_pirate_islands', 'obsidian_norse_gods',
+    'obsidian_space_odyssey', 'obsidian_cyberpunk', 'obsidian_hiphop_90s', 'obsidian_angels_demons',
+    'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese',
+    'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese',
+    'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese',
+  ]);
+  const isAnimated = ANIMATED_AVATAR_IDS.has(baseId ?? '');
+
   // If no transform needed (all defaults), skip the wrapper for performance
   const hasTransform = offsetX !== 0 || offsetY !== 0 || imgScale !== 1;
 
   if (!hasTransform) {
+    if (isAnimated) {
+      // No overflow:hidden — let box-shadow and particles breathe
+      return (
+        <div
+          className={`rounded-full flex-shrink-0 ${className}`}
+          style={{ width: size, height: size }}
+        >
+          {renderContent()}
+        </div>
+      );
+    }
     return (
       <div
         className={`rounded-full overflow-hidden flex-shrink-0 ${className}`}
@@ -259,7 +288,7 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
 
   return (
     <div
-      className={`rounded-full overflow-hidden flex-shrink-0 ${className}`}
+      className={`rounded-full ${isAnimated ? '' : 'overflow-hidden'} flex-shrink-0 ${className}`}
       style={{ width: size, height: size, position: 'relative' }}
     >
       <div
