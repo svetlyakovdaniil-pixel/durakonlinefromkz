@@ -50,7 +50,7 @@ export function ObsidianJapaneseAvatar({ size = 48, className = '' }: Props) {
       <div style={{ width: size, height: size, position: 'relative', animation: `ojp-void-${uid} 1.8s ease-in-out infinite`, borderRadius: '50%' }}>
         <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0 }}>
           <img
-            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2-DZqDWBFJmxUJHJJJBdnvqv.webp"
+            src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2_0098554b.png"
             alt="Обсидиан Японские мотивы"
             style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
             draggable={false}

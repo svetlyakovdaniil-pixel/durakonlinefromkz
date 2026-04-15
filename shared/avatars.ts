@@ -854,7 +854,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Сакура обсидианы',
     nameEn: 'Sakura Obsidian',
     url: 'obsidian_japanese',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2-DZqDWBFJmxUJHJJJBdnvqv.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2_0098554b.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan',
