@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, MousePointerClick, GripHorizontal, MessageSquare, Shield } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -24,7 +24,7 @@ interface SettingsSheetProps {
 }
 
 export default function SettingsSheet({ onLogout, currentName, onNameChanged, children }: SettingsSheetProps) {
-  const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setCardControlMode } = useSettings();
+  const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
   const sound = useSoundContext();
@@ -311,42 +311,18 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             />
           </label>
 
-          {/* 5. Card control mode */}
-          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2 mb-3">
-              <MousePointerClick className="w-4 h-4 text-amber-400" />
-              {t('settings.cardControl')}
+          {/* 5. Animations */}
+          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
+            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              {t('settings.animations')}
             </span>
-            <div className="flex gap-2">
-              <button
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                  settings.cardControlMode === 'click'
-                    ? 'bg-amber-600/80 text-white border-amber-500/60 shadow-lg'
-                    : 'bg-[#0a1628] text-amber-200/60 border-amber-700/30 hover:bg-[#0a1628]/80 hover:text-amber-200'
-                }`}
-                onClick={() => setCardControlMode('click')}
-              >
-                <MousePointerClick className="w-4 h-4" />
-                {t('settings.clickMode')}
-              </button>
-              <button
-                className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all border ${
-                  settings.cardControlMode === 'drag'
-                    ? 'bg-amber-600/80 text-white border-amber-500/60 shadow-lg'
-                    : 'bg-[#0a1628] text-amber-200/60 border-amber-700/30 hover:bg-[#0a1628]/80 hover:text-amber-200'
-                }`}
-                onClick={() => setCardControlMode('drag')}
-              >
-                <GripHorizontal className="w-4 h-4" />
-                {t('settings.dragMode')}
-              </button>
-            </div>
-            <p className="text-[11px] text-amber-200/40 mt-2">
-              {settings.cardControlMode === 'click'
-                ? t('settings.clickDesc')
-                : t('settings.dragDesc')}
-            </p>
-          </div>
+            <Checkbox
+              checked={settings.animationsEnabled}
+              onCheckedChange={(checked) => setAnimationsEnabled(checked === true)}
+              className="border-amber-700/40 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+            />
+          </label>
 
           {/* 6. Language */}
           <div className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">

@@ -1251,7 +1251,7 @@ export default function GameTable({
       <div className="absolute inset-0 bg-black/40" />
 
       {/* Bito animation */}
-      {showBitoAnim && (
+      {showBitoAnim && gameSettings.animationsEnabled && (
         <BitoAnimation
           cardCount={bitoCardCount}
           deckStyle={gs.deckStyle}
@@ -1367,8 +1367,14 @@ export default function GameTable({
             </Badge>
             {/* Settings button */}
             <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty} isTutorial={isTutorial}>
-              <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1 sm:p-1.5 rounded">
-                <Settings className="w-[18px] h-[18px] sm:w-6 sm:h-6" />
+              <button className={`transition-colors p-1 sm:p-1.5 rounded relative ${isTutorial ? 'text-amber-300 hover:text-amber-200' : 'text-amber-200/50 hover:text-amber-100'}`}>
+                {isTutorial && (
+                  <>
+                    <span className="absolute inset-0 rounded animate-ping bg-amber-400/40 pointer-events-none" />
+                    <span className="absolute inset-0 rounded ring-2 ring-amber-400/70 pointer-events-none" />
+                  </>
+                )}
+                <Settings className="w-[18px] h-[18px] sm:w-6 sm:h-6 relative z-10" />
               </button>
             </GameSettingsSheet>
 
@@ -2099,7 +2105,7 @@ export default function GameTable({
               tutorialGreenIds={tutorialGreenIds}
               tutorialRedIds={tutorialRedIds}
               onCardClick={handleCardClick}
-              onCardDrop={gameSettings.cardControlMode === 'drag' ? handleCardDrop : undefined}
+              onCardDrop={handleCardDrop}
               deckStyle={gs.deckStyle}
             />
           </div>

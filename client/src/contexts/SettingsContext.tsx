@@ -2,14 +2,12 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 
 const STORAGE_KEY = 'kazakh-durak-settings';
 
-export type CardControlMode = 'click' | 'drag';
-
 export interface GameSettings {
   soundEnabled: boolean;
   musicEnabled: boolean;
   vibrationEnabled: boolean;
+  animationsEnabled: boolean;
   language: string;
-  cardControlMode: CardControlMode;
   hasChosenLanguage: boolean;
 }
 
@@ -17,8 +15,8 @@ const DEFAULT_SETTINGS: GameSettings = {
   soundEnabled: true,
   musicEnabled: false,
   vibrationEnabled: true,
+  animationsEnabled: true,
   language: 'ru',
-  cardControlMode: 'click',
   hasChosenLanguage: false,
 };
 
@@ -28,8 +26,8 @@ interface SettingsContextType {
   setSoundEnabled: (v: boolean) => void;
   setMusicEnabled: (v: boolean) => void;
   setVibrationEnabled: (v: boolean) => void;
+  setAnimationsEnabled: (v: boolean) => void;
   setLanguage: (v: string) => void;
-  setCardControlMode: (v: CardControlMode) => void;
   setHasChosenLanguage: (v: boolean) => void;
 }
 
@@ -73,12 +71,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setSoundEnabled = useCallback((v: boolean) => updateSetting('soundEnabled', v), [updateSetting]);
   const setMusicEnabled = useCallback((v: boolean) => updateSetting('musicEnabled', v), [updateSetting]);
   const setVibrationEnabled = useCallback((v: boolean) => updateSetting('vibrationEnabled', v), [updateSetting]);
+  const setAnimationsEnabled = useCallback((v: boolean) => updateSetting('animationsEnabled', v), [updateSetting]);
   const setLanguage = useCallback((v: string) => updateSetting('language', v), [updateSetting]);
-  const setCardControlMode = useCallback((v: CardControlMode) => updateSetting('cardControlMode', v), [updateSetting]);
   const setHasChosenLanguage = useCallback((v: boolean) => updateSetting('hasChosenLanguage', v), [updateSetting]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setLanguage, setCardControlMode, setHasChosenLanguage }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled, setLanguage, setHasChosenLanguage }}>
       {children}
     </SettingsContext.Provider>
   );
