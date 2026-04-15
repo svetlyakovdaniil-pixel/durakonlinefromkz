@@ -34,6 +34,7 @@ import {
   processGameEndAchievements, processDefenseAchievement, processAttackAchievement,
   processLucky777Achievement, processSpidermanMemeAchievement,
   processFirstBerkutAchievement, processLittleHeroAchievement,
+  trackBerkutHandSize, getBerkutHandSize,
 } from './achievementsTriggers';
 import { incrementDailyQuestProgress, setDailyQuestProgress, processDailyQuestsAfterGame } from './dailyQuestsDb';
 import { ACHIEVEMENT_MAP } from '../shared/achievements';
@@ -62,6 +63,7 @@ const forfeitedFromRoom = new Set<string>(); // "odId:roomId" entries
 const lastTrumpPhase = new Map<string, number>(); // roomId -> last known trump phase
 const lastTrumpSuit = new Map<string, string>(); // roomId -> last known trump suit
 const playerGameIds = new Map<string, number>(); // odId -> gameId (for friend invitations)
+const playerProfileIds = new Map<string, number>(); // odId -> profileId (playerProfiles.id) for achievement tracking
 const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-game display)
 const playerEquippedFrames = new Map<string, string>(); // odId -> equippedFrame (for in-game frame display)
 const playerIsPremium = new Map<string, boolean>(); // odId -> isPremium status
@@ -717,6 +719,9 @@ export function initSocketServer(httpServer: HttpServer) {
       const prePlayBattlefield = [...gameState.battleField];
       const prePlayDirection = gameState.direction;
       const prePlayBattlefieldLength = gameState.battleField.length;
+      // Track hand size before this card is played (for first_berkut: finish with 1 card)
+      const prePlayHandSize = gameState.players[playerIdx]?.hand.length ?? 0;
+      trackBerkutHandSize(data.roomId, odId, prePlayHandSize);
 
       if (isDefender && gameState.turnPhase === 'defend' && !gameState.defenderTaking) {
         error = playDefenseCard(gameState, playerIdx, data.cardId, data.targetPairIdx);
@@ -745,27 +750,27 @@ export function initSocketServer(httpServer: HttpServer) {
                 trackTrumpAceUsed(data.roomId, odId);
               }
               // Async achievement checks
-              const isFirstGame = (gameState.players.find(p => p.id === odId)?.winPlace === null);
-              getDb().then(db => {
+              getDb().then(async db => {
                 if (!db) return;
-                db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
-                  const profileId = rows[0]?.id;
-                  if (!profileId) return;
-                  const attackIsKingOfSpades = attackCard.rank === 'K' && attackCard.suit === 'spades';
-                  const attackIsTrumpAce = attackCard.rank === 'A' && attackCard.suit === currentTrump;
-                  const defenseIs777 = prePlayCard.rank === '777';
-                  const defenseIsKingOfSpades = prePlayCard.rank === 'K' && prePlayCard.suit === 'spades';
-                  const defenseIsAceOfSpades = prePlayCard.rank === 'A' && prePlayCard.suit === 'spades';
-                  processDefenseAchievement({
-                    profileId, botCount, totalPlayersInRoom,
-                    isTrumpDefense, attackIsKingOfSpades, defenseIs777,
-                    attackIsTrumpAce, defenseIsKingOfSpades, attackIs777: false,
-                    isFirstGame: false, roomId: data.roomId, odId,
-                  }).catch(() => {});
-                  processLittleHeroAchievement({
-                    profileId, botCount, totalPlayersInRoom,
-                    attackIsKingOfSpades, defenseIsAceOfSpades,
-                  }).catch(() => {});
+                const rows = await db.select({ id: playerProfiles.id, gamesPlayed: playerProfiles.gamesPlayed }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1);
+                const profileId = rows[0]?.id;
+                if (!profileId) return;
+                const isFirstGame = (rows[0]?.gamesPlayed ?? 1) === 0;
+                const attackIsKingOfSpades = attackCard.rank === 'K' && attackCard.suit === 'spades';
+                const attackIsTrumpAce = attackCard.rank === 'A' && attackCard.suit === currentTrump;
+                const attackIs777 = attackCard.rank === '777';
+                const defenseIs777 = prePlayCard.rank === '777';
+                const defenseIsKingOfSpades = prePlayCard.rank === 'K' && prePlayCard.suit === 'spades';
+                const defenseIsAceOfSpades = prePlayCard.rank === 'A' && prePlayCard.suit === 'spades';
+                processDefenseAchievement({
+                  profileId, botCount, totalPlayersInRoom,
+                  isTrumpDefense, attackIsKingOfSpades, defenseIs777,
+                  attackIsTrumpAce, defenseIsKingOfSpades, attackIs777,
+                  isFirstGame, roomId: data.roomId, odId,
+                }).catch(() => {});
+                processLittleHeroAchievement({
+                  profileId, botCount, totalPlayersInRoom,
+                  attackIsKingOfSpades, defenseIsAceOfSpades,
                 }).catch(() => {});
               }).catch(() => {});
             }
@@ -805,7 +810,7 @@ export function initSocketServer(httpServer: HttpServer) {
             // 10 was played as lead card — direction changed
             getDb().then(db => {
               if (!db) return;
-              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
+              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then((rows: { id: number }[]) => {
                 const profileId = rows[0]?.id;
                 if (!profileId) return;
                 processAttackAchievement({
@@ -819,7 +824,7 @@ export function initSocketServer(httpServer: HttpServer) {
           if (!isDefender && prePlayBattlefieldLength === 0 && prePlayCard.rank === '777') {
             getDb().then(db => {
               if (!db) return;
-              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
+              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then((rows: { id: number }[]) => {
                 const profileId = rows[0]?.id;
                 if (!profileId) return;
                 processLucky777Achievement({ profileId, botCount, totalPlayersInRoom }).catch(() => {});
@@ -906,7 +911,7 @@ export function initSocketServer(httpServer: HttpServer) {
             const totalPlayersInRoom = gameState.players.length;
             getDb().then(db => {
               if (!db) return;
-              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
+              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then((rows: { id: number }[]) => {
                 const profileId = rows[0]?.id;
                 if (!profileId) return;
                 processSpidermanMemeAchievement({ profileId, botCount, totalPlayersInRoom }).catch(() => {});
@@ -1057,7 +1062,7 @@ export function initSocketServer(httpServer: HttpServer) {
         if (gameId) {
           getDb().then(db => {
             if (!db) return;
-            db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then(rows => {
+            db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then((rows: { id: number }[]) => {
               const profileId = rows[0]?.id;
               if (!profileId) return;
               processLucky777Achievement({ profileId, botCount, totalPlayersInRoom }).catch(() => {});
@@ -1072,7 +1077,7 @@ export function initSocketServer(httpServer: HttpServer) {
       //   engine properly handles the battlefield (successful defense or pass to next attacker)
       // - No cards on table: just advance the turn
       if (gameState.defenderTaking) {
-        engineFinalizeTake(gameState);
+        trackAndFinalizeTake(roomId, gameState);
       } else if (gameState.battleField.length > 0) {
         // Use engineEndAttack so the battlefield is handled correctly
         engineEndAttack(gameState, playerIdx);
@@ -1330,6 +1335,18 @@ export function initSocketServer(httpServer: HttpServer) {
           }
         }
         dbg(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
+        // Resolve and cache profileId (playerProfiles.id) for achievement tracking
+        getDb().then(db => {
+          if (!db) return;
+          db.select({ id: playerProfiles.id })
+            .from(playerProfiles)
+            .where(eq(playerProfiles.gameId, data.gameId))
+            .limit(1)
+            .then((rows: { id: number }[]) => {
+              if (rows[0]?.id) playerProfileIds.set(odId, rows[0].id);
+            })
+            .catch(() => {});
+        }).catch(() => {});
         // Broadcast online status to friends
         broadcastOnlineFriends(odId);
       }
@@ -1784,7 +1801,7 @@ function startWatchdog(roomId: string) {
               }
             }
           }
-          engineFinalizeTake(gs);
+          trackAndFinalizeTake(roomId, gs);
         } else {
           const defOdIdForce = gs.players[gs.currentDefenderIdx]?.id;
           if (defOdIdForce) trackSuccessfulRound(roomId, defOdIdForce);
@@ -1926,7 +1943,7 @@ function handleTimeUp(roomId: string, gameState: GameState) {
         }
       }
     }
-    engineFinalizeTake(gameState);
+    trackAndFinalizeTake(roomId, gameState);
   } else if (gameState.turnPhase === 'defend') {
     // Defender timed out — defender TAKES cards into hand, attackers can add more
     engineTakeCards(gameState);
@@ -1950,7 +1967,7 @@ function handleTimeUp(roomId: string, gameState: GameState) {
       console.warn(`[Deadlock] No player has actions after timeUp. Force-resolving.`);
       if (gameState.battleField.length > 0) {
         if (gameState.defenderTaking) {
-          engineFinalizeTake(gameState);
+          trackAndFinalizeTake(roomId, gameState);
         } else {
           // If no one can act and defender is NOT taking, this means
           // all cards are defended and no one can add more — successful defense
@@ -2037,7 +2054,7 @@ function scheduleBotAction(roomId: string) {
     if (!botAction) {
       // Bot has no action — force-resolve to prevent freeze
       console.warn(`[Bot] No action for bot ${activeIdx} (${activePlayer.name}). Phase: ${gs.turnPhase}, taking: ${gs.defenderTaking}, bf: ${gs.battleField.length}`);
-      forceResolveStuckState(gs, activeIdx);
+      forceResolveStuckState(roomId, gs, activeIdx);
       botFailCounts.delete(roomId);
       resetTurnTimer(gs);
       restartTurnTimer(roomId);
@@ -2046,7 +2063,7 @@ function scheduleBotAction(roomId: string) {
       return;
     }
 
-    const success = executeBotAction(gs, activeIdx, botAction);
+    const success = executeBotAction(roomId, gs, activeIdx, botAction);
     
     if (!success) {
       // Bot action FAILED — this is the main freeze cause
@@ -2057,7 +2074,7 @@ function scheduleBotAction(roomId: string) {
       if (fails >= MAX_BOT_FAILS) {
         // Too many failures — force-resolve
         console.error(`[Bot] Max failures reached. Force-resolving stuck state.`);
-        forceResolveStuckState(gs, activeIdx);
+        forceResolveStuckState(roomId, gs, activeIdx);
         botFailCounts.delete(roomId);
         resetTurnTimer(gs);
         restartTurnTimer(roomId);
@@ -2115,7 +2132,7 @@ function scheduleBotAction(roomId: string) {
 }
 
 // Force-resolve a stuck game state
-function forceResolveStuckState(gs: GameState, botIdx: number) {
+function forceResolveStuckState(roomId: string, gs: GameState, botIdx: number) {
   const isAttacker = botIdx === gs.currentAttackerIdx;
   const isDefender = botIdx === gs.currentDefenderIdx;
 
@@ -2129,7 +2146,7 @@ function forceResolveStuckState(gs: GameState, botIdx: number) {
         gs.passedAttackers.push(gs.players[botIdx].id);
       }
       if (checkAllAttackersPassed_safe(gs)) {
-        engineFinalizeTake(gs);
+        trackAndFinalizeTake(roomId, gs);
       }
     }
   } else if (isDefender && gs.turnPhase === 'defend') {
@@ -2143,7 +2160,7 @@ function forceResolveStuckState(gs: GameState, botIdx: number) {
         }
       }
     }
-    engineFinalizeTake(gs);
+    trackAndFinalizeTake(roomId, gs);
   } else if (isAttacker && gs.battleField.length > 0) {
     // Attacker with cards on table — end attack
     engineEndAttack(gs, botIdx);
@@ -2161,6 +2178,20 @@ function forceResolveStuckState(gs: GameState, botIdx: number) {
   }
 }
 
+// Helper: track cards taken by defender then finalize take
+function trackAndFinalizeTake(roomId: string, gs: GameState): void {
+  const defenderOdId = gs.players[gs.currentDefenderIdx]?.id;
+  if (defenderOdId && !gs.players[gs.currentDefenderIdx]?.isBot) {
+    // Count all cards on battlefield that will go to defender's hand
+    let cardCount = 0;
+    for (const pair of gs.battleField) {
+      cardCount++; // attack card
+      if (pair.defense) cardCount++; // defense card
+    }
+    if (cardCount > 0) trackCardsTaken(roomId, defenderOdId, cardCount);
+  }
+  engineFinalizeTake(gs);
+}
 // Safe version of checkAllAttackersPassed that matches engine logic
 function checkAllAttackersPassed_safe(gs: GameState): boolean {
   for (let i = 0; i < gs.players.length; i++) {
@@ -2204,7 +2235,7 @@ function scheduleEdgeBotActions(roomId: string) {
         return;
       }
 
-      const success = executeBotAction(gs, i, botAction);
+      const success = executeBotAction(roomId, gs, i, botAction);
       if (!success) {
         // Edge bot action failed — auto-pass instead of getting stuck
         if (!gs.passedAttackers.includes(gs.players[i].id)) {
@@ -2225,7 +2256,7 @@ function scheduleEdgeBotActions(roomId: string) {
   }
 }
 
-function executeBotAction(gs: GameState, botIdx: number, botAction: { action: string; cardId?: string; targetPairIdx?: number }): boolean {
+function executeBotAction(roomId: string, gs: GameState, botIdx: number, botAction: { action: string; cardId?: string; targetPairIdx?: number }): boolean {
   let error: string | null = null;
   switch (botAction.action) {
     case 'playAttack':
@@ -2257,7 +2288,7 @@ function executeBotAction(gs: GameState, botIdx: number, botAction: { action: st
       break;
     case 'skipTurn': {
       if (gs.defenderTaking) {
-        engineFinalizeTake(gs);
+        trackAndFinalizeTake(roomId, gs);
       } else if (gs.battleField.length > 0) {
         error = engineEndAttack(gs, botIdx);
       } else {
@@ -2408,8 +2439,9 @@ function broadcastGameState(roomId: string, gameState: GameState) {
         }).catch(err => console.error('[DB] Failed to record game result:', err));
 
         // Process achievements for all human players
-        // winnerTookNoCards: winner took 0 cards during the game
-        const winnerTookNoCards = true; // conservative default — tracked in achievementsTriggers via gameCardsTaken
+        // winnerTookNoCards: winner took 0 cards during the game (tracked via trackCardsTaken)
+        const cardsTakenMap = getCardsTakenMap(roomId);
+        const winnerTookNoCards = winnerOdId ? (cardsTakenMap.get(winnerOdId) ?? 0) === 0 : false;
         const allHumanOdIds = humanPlayers.map(p => p.id);
 
         // Process achievements + daily quests, then send toast notifications
@@ -2427,19 +2459,19 @@ function broadcastGameState(roomId: string, gameState: GameState) {
             if (db) {
               const dayStart = getMoscowDayStart();
               for (const odId of allHumanOdIds) {
-                const profileId = playerGameIds.get(odId);
+                const profileId = playerProfileIds.get(odId);
                 if (!profileId) continue;
                 const achRows = await db.select({ achievementKey: userAchievementsTable.achievementKey })
                   .from(userAchievementsTable)
                   .where(drizzleEq(userAchievementsTable.profileId, profileId));
-                preAchievements.set(odId, new Set(achRows.filter(r => (r as any).unlocked !== false).map(r => r.achievementKey)));
+                preAchievements.set(odId, new Set(achRows.map((r: { achievementKey: string }) => r.achievementKey)));
                 const questRows = await db.select({ questKey: userDailyQuestsTable.questKey })
                   .from(userDailyQuestsTable)
                   .where(drizzleAnd(
                     drizzleEq(userDailyQuestsTable.profileId, profileId),
                     drizzleEq(userDailyQuestsTable.dayStartTs, dayStart),
                   ));
-                preQuests.set(odId, new Set(questRows.filter(r => (r as any).completed).map(r => r.questKey)));
+                preQuests.set(odId, new Set(questRows.map((r: { questKey: string }) => r.questKey)));
               }
             }
 
@@ -2468,13 +2500,14 @@ function broadcastGameState(roomId: string, gameState: GameState) {
               for (const odId of allHumanOdIds) {
                 const playerState = gameState.players.find(p => p.id === odId);
                 if (!playerState) continue;
-                const profileId = playerGameIds.get(odId);
+                const profileId = playerProfileIds.get(odId);
                 if (!profileId) continue;
-                // first_berkut: player finished with exactly 1 card (isOut and had 1 card when they went out)
-                // We check if player is out (won) and had exactly 1 card when they finished
+                // first_berkut: player finished with exactly 1 card in hand before playing their last card
+                // We use getBerkutHandSize which was tracked before the last card was played
                 if (playerState.isOut && playerState.winPlace !== null) {
+                  const handSizeBeforeLastCard = getBerkutHandSize(roomId, odId);
                   processFirstBerkutAchievement({
-                    profileId, handSize: playerState.hand.length,
+                    profileId, handSize: handSizeBeforeLastCard,
                     botCount, totalPlayersInRoom,
                   }).catch(() => {});
                 }
@@ -2546,7 +2579,7 @@ function broadcastGameState(roomId: string, gameState: GameState) {
             if (db) {
               const dayStart = getMoscowDayStart();
               for (const odId of allHumanOdIds) {
-                const profileId = playerGameIds.get(odId);
+                const profileId = playerProfileIds.get(odId);
                 if (!profileId) continue;
                 const sid = playerSockets.get(odId);
                 if (!sid) continue;

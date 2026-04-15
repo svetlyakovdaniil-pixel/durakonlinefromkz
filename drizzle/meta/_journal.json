@@ -330,6 +330,13 @@
       "when": 1776255114840,
       "tag": "0046_big_tenebrous",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "5",
+      "when": 1776272795335,
+      "tag": "0047_cooing_hulk",
+      "breakpoints": true
     }
   ]
 }

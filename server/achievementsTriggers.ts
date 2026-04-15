@@ -114,6 +114,8 @@ const gameThrew6ToNonNeighbor = new Map<string, Map<string, number>>();
 const gameStartedTurnWith10 = new Map<string, Map<string, number>>();
 /** Per-game tracking of win-when-opponent-has-1-card: roomId -> { odId -> count } */
 const gameWinWhenOpponentHas1Card = new Map<string, Map<string, number>>();
+/** Per-game tracking of hand size when player went out (before last card played): roomId -> { odId -> handSizeBeforeLastCard } */
+const gameBerkutHandSizes = new Map<string, Map<string, number>>();
 
 export function initGameTracking(roomId: string): void {
   gameTrumpDefenses.set(roomId, new Map());
@@ -131,6 +133,7 @@ export function initGameTracking(roomId: string): void {
   gameThrew6ToNonNeighbor.set(roomId, new Map());
   gameStartedTurnWith10.set(roomId, new Map());
   gameWinWhenOpponentHas1Card.set(roomId, new Map());
+  gameBerkutHandSizes.set(roomId, new Map());
 }
 
 export function cleanupGameTracking(roomId: string): void {
@@ -149,6 +152,7 @@ export function cleanupGameTracking(roomId: string): void {
   gameThrew6ToNonNeighbor.delete(roomId);
   gameStartedTurnWith10.delete(roomId);
   gameWinWhenOpponentHas1Card.delete(roomId);
+  gameBerkutHandSizes.delete(roomId);
 }
 
 function incMap(map: Map<string, number>, key: string, by = 1): number {
@@ -228,6 +232,17 @@ export function getThrowMap(roomId: string): Map<string, number> {
 /** Get transfer counts map for a game */
 export function getTransferMap(roomId: string): Map<string, number> {
   return gameTransferCounts.get(roomId) ?? new Map();
+}
+
+/** Track hand size before a player plays their last card (for first_berkut achievement) */
+export function trackBerkutHandSize(roomId: string, odId: string, handSizeBeforePlay: number): void {
+  const map = gameBerkutHandSizes.get(roomId);
+  if (map) map.set(odId, handSizeBeforePlay);
+}
+
+/** Get the tracked hand size before last card for a player */
+export function getBerkutHandSize(roomId: string, odId: string): number {
+  return gameBerkutHandSizes.get(roomId)?.get(odId) ?? 0;
 }
 
 /** Get cards taken map for a game */
@@ -376,15 +391,15 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
       // Степной воин — 100 games
       await incrementAchievementProgress(profileId, 'steppe_warrior', 1);
 
-      // Золотой старт — 200 rating points (check current rating)
+      // Золотой старт — reach 1200 rating points (track progress always)
       const db = await getDb();
       if (db) {
         const [profile] = await db.select({ rating: playerProfiles.rating })
           .from(playerProfiles)
           .where(eq(playerProfiles.id, profileId))
           .limit(1);
-        if (profile && profile.rating >= 1200) {
-          await incrementAchievementProgress(profileId, 'golden_start', 0, profile.rating);
+        if (profile && profile.rating > 0) {
+          await incrementAchievementProgress(profileId, 'golden_start', 0, Math.min(profile.rating, 1200));
         }
       }
 

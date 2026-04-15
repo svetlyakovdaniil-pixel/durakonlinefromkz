@@ -1,0 +1,1 @@
+ALTER TABLE `admin_audit_log` MODIFY COLUMN `action` enum('ban','unban','temp_ban','update_balance','reset_stats','change_role','kick','update_shop_item','create_shop_item','toggle_shop_item','mass_notify','revoke_purchase','update_avatar_offsets','remove_item','reset_account','give_item') NOT NULL;

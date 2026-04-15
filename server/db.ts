@@ -1722,7 +1722,7 @@ export async function adminGetPlayerGameHistory(opts: {
 export async function logAdminAction(data: {
   adminId: number;
   adminName: string | null;
-  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account';
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account' | 'give_item';
   targetProfileId?: number | null;
   details?: Record<string, unknown>;
 }) {
@@ -1915,7 +1915,7 @@ export async function detectSuspiciousTransactions(minAmount: number = 10000) {
     sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
   );
 
-  const profileMap = new Map(profiles.map(p => [p.id, p]));
+  const profileMap = new Map<number, typeof profiles[0]>(profiles.map(p => [p.id, p]));
 
   return rows.map(r => ({
     ...r,
@@ -1962,14 +1962,14 @@ export async function detectRapidBalanceGrowth(thresholdShanyrak: number = 50000
     sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
   );
 
-  const profileMap = new Map(profiles.map(p => [p.id, p]));
+  const profileMap2 = new Map<number, typeof profiles[0]>(profiles.map(p => [p.id, p]));
 
   return rows.map(r => ({
     ...r,
-    gameId: profileMap.get(r.profileId)?.gameId ?? null,
-    displayName: profileMap.get(r.profileId)?.displayName ?? null,
-    balanceShanyrak: profileMap.get(r.profileId)?.balanceShanyrak ?? 0,
-    isBanned: profileMap.get(r.profileId)?.isBanned ?? false,
+    gameId: profileMap2.get(r.profileId)?.gameId ?? null,
+    displayName: profileMap2.get(r.profileId)?.displayName ?? null,
+    balanceShanyrak: profileMap2.get(r.profileId)?.balanceShanyrak ?? 0,
+    isBanned: profileMap2.get(r.profileId)?.isBanned ?? false,
   }));
 }
 

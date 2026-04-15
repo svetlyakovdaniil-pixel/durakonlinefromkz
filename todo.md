@@ -2984,3 +2984,10 @@
 - [x] Ранговые достижения (Лунный камень/Изумруд/Сапфир/Аметист/Циркон/Рубин/Янтарь/Обсидиан): исправлен маппинг рангов bronze/silver/gold → steppe_hare/mountain_ram/golden_falcon/winged_horse/sky_eagle/steppe_khan/golden_horde_warrior/great_khan
 - [x] Достижения №1/2/3 (топ лидерборда): добавлено поле id в getLeaderboard, сравнение p.id === profile.id теперь работает
 - [x] Первый беркут: добавлен вызов processFirstBerkutAchievement в socketServer.ts при финализации игры
+- [x] winnerTookNoCards: исправлено — вычисляется из реальных данных (ранее всегда было true)
+- [x] trackAndFinalizeTake: все вызовы engineFinalizeTake заменены на trackAndFinalizeTake
+- [x] playerProfileIds: корректно заполняется через DB-запрос при регистрации игрока
+- [x] isFirstGame: исправлено — проверяется gamesPlayed === 0 (до инкремента) вместо winPlace === null
+- [x] golden_start: исправлено — прогресс обновляется всегда (не только при >= 1200), cap = 1200
+- [x] TypeScript: добавлен give_item в enum adminAuditLog.action (schema.ts + db.ts + миграция)
+- [x] TypeScript: исправлены TS2339 ошибки в db.ts (detectSuspiciousTransactions, detectRapidBalanceGrowth)
