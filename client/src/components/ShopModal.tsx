@@ -855,9 +855,11 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           {activeTab === 'frames' && (
             <div className="space-y-4">
               {AVATAR_FRAMES.filter(frame => {
-                // Hide season-only frames that belong to future seasons
+                const currentSeason = getCurrentSeasonNumber();
+                // Season-only frames: only show if it's the CURRENT active season
+                // (not past seasons, not future seasons)
                 if ((frame as any).seasonOnly && (frame as any).seasonNumber) {
-                  return (frame as any).seasonNumber <= getCurrentSeasonNumber();
+                  return (frame as any).seasonNumber === currentSeason;
                 }
                 return isItemAvailable('frame', frame.id);
               }).filter(frame => isItemAvailable('frame', frame.id)).map(frame => {

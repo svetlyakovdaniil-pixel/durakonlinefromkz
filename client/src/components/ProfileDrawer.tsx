@@ -279,15 +279,11 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                   </div>
                 )
               ))}
-              {/* Season-only frames — shown locked unless owned (supports season-suffixed IDs like obsidian_neon_2026Q3) */}
-              {/* Only show frames for current season or past seasons */}
+              {/* Season-only frames — only show if player owns them */}
               {AVATAR_FRAMES.filter(f => {
                 if (!(f as any).seasonOnly) return false;
-                // Always show if player already owns it (regardless of future season number)
-                const alreadyOwned = ownedFrames.some(id => id === f.id || id.replace(/_\d{4}Q[1-4]$/, '') === f.id);
-                if (alreadyOwned) return true;
-                // Otherwise only show current and past seasons (hide future seasons)
-                return !(f as any).seasonNumber || (f as any).seasonNumber <= getCurrentSeasonNumber();
+                // Only show if player already owns it
+                return ownedFrames.some(id => id === f.id || id.replace(/_\d{4}Q[1-4]$/, '') === f.id);
               }).map(frame => {
                 // Find owned ID: exact match OR season-suffixed match (e.g. 'obsidian_neon_2026Q3')
                 const ownedId = ownedFrames.find(id => id === frame.id || id.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
@@ -295,7 +291,8 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 // Use the actual owned ID (with suffix) for equip, fallback to base ID
                 const equipId = ownedId ?? frame.id;
                 const isEquipped = equippedFrame === equipId || (equippedFrame && equippedFrame.replace(/_\d{4}Q[1-4]$/, '') === frame.id);
-                return isOwned ? (
+                // Only owned frames are shown (filter above ensures isOwned is always true here)
+                return (
                   <button
                     key={frame.id}
                     onClick={() => equipFrameMutation.mutate({ frameId: equipId })}
@@ -318,29 +315,6 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     </div>
                     {isEquipped && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}
                   </button>
-                ) : (
-                  <div
-                    key={frame.id}
-                    className="w-full flex items-center gap-3 p-2 rounded-lg border border-yellow-600/20 opacity-60 cursor-not-allowed"
-                  >
-                    <FrameWrapper frameId={frame.id} size={40}>
-                      <div className="w-[40px] h-[40px] rounded-full overflow-hidden border-2 border-yellow-700/40">
-                        <div className={`w-full h-full bg-gradient-to-br ${frame.bgGradient} flex items-center justify-center`}>
-                          <FrameIcon frameId={frame.id} />
-                        </div>
-                      </div>
-                    </FrameWrapper>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
-                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300/60 border border-amber-500/20">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
-                      </div>
-                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Маусымда Обсидиан дәрежесін алыңыз' : locale === 'en' ? 'Earn Obsidian rank at season end' : 'Получите ранг Обсидиан'}</span>
-                    </div>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/50 ml-auto flex-shrink-0">
-                      <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.15)" stroke="rgba(218,165,32,0.5)" />
-                    </svg>
-                  </div>
                 );
               })}
             </div>

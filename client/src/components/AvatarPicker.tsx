@@ -72,16 +72,34 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   const [selected, setSelected] = useState(currentAvatarId || 'wolf');
   const { data: ownedAvatars = [] } = trpc.shop.ownedAvatars.useQuery();
 
+  // ── Obsolete base IDs replaced by newer season-specific avatars ─────────────
+  // These old IDs (khan=S6 Ruby, golden_horde=S6 Amber, great_khan=S6 Obsidian)
+  // were replaced by ruby_kazakh, amber_kazakh, obsidian_kazakh respectively.
+  // They should never appear in the picker — only owned seasonal variants should.
+  const OBSOLETE_BASE_IDS = new Set(['khan', 'golden_horde', 'great_khan']);
+
   // ── Build the full list of avatars to show in the grid ──────────────────────
-  // 1. Static catalog (minus bot)
-  // 2. Per-season owned avatars (suffixed IDs not in static catalog)
+  // Rules:
+  // 1. Non-season-reward avatars (wolf, eagle, bear, fox, snow-leopard, premium shop): always show
+  // 2. Season reward avatars (base IDs): only show if owned (ownedAvatars includes the base ID)
+  // 3. Per-season suffixed avatars (e.g. 'diving_eagle_2026Q2'): only show if owned
+  // 4. Obsolete base IDs (khan, golden_horde, great_khan): never show
+  // 5. Bot avatar: never show
   const allAvatarItems = useMemo(() => {
-    const currentSeasonNum = getCurrentSeasonNumber();
-    // Static catalog items (excluding bot, excluding future-season rewards)
+    // Static catalog items — only show if player owns them (for season rewards)
+    // or if they are free/premium-purchased non-season avatars
     const staticItems = AVATAR_OPTIONS.filter(a => {
       if (a.id === 'bot') return false;
-      // Hide season reward avatars that belong to future seasons
-      if (a.seasonReward && a.seasonNumber && a.seasonNumber > currentSeasonNum) return false;
+      // Never show obsolete base IDs replaced by newer season-specific avatars
+      if (OBSOLETE_BASE_IDS.has(a.id)) return false;
+      // Season reward avatars: only show if player owns this base ID
+      if (a.seasonReward) {
+        // If player has a seasonal suffixed variant, the suffixed item will be shown instead
+        // Only show base ID if it's directly owned (not via suffix)
+        return ownedAvatars.includes(a.id);
+      }
+      // Premium shop avatars: show always (locked if not purchased)
+      // Free avatars (wolf, eagle, bear, fox, snow-leopard): always show
       return true;
     }).map(a => ({
       id: a.id,
@@ -118,26 +136,8 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         };
       });
 
-    // Collect all base IDs that have at least one owned seasonal variant
-    const ownedSeasonalBaseIds = new Set(
-      ownedAvatars
-        .filter(id => isSeasonSuffixedAvatar(id))
-        .map(id => getBaseAvatarId(id))
-    );
-
-    // Filter out static items whose base ID is covered by an owned seasonal variant
-    // This removes the locked duplicate (e.g. base 'diving_eagle') when
-    // the player already owns 'diving_eagle_2026Q2'
-    const filteredStaticItems = staticItems.filter(item => {
-      if (item.isSeasonReward && ownedSeasonalBaseIds.has(item.id)) {
-        // Hide the base locked version — seasonal version will show instead
-        return false;
-      }
-      return true;
-    });
-
-    // Merge: filtered static items first, then seasonal items
-    return [...filteredStaticItems, ...seasonalItems];
+    // Merge: static items first, then seasonal items
+    return [...staticItems, ...seasonalItems];
   }, [ownedAvatars, locale]);
 
   const canSelectAvatar = (avatarId: string) => {
@@ -157,7 +157,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
   const isLocked = (avatarId: string) => !canSelectAvatar(avatarId);
 
   const selectedBaseId = getBaseAvatarId(selected);
-  const isSelectedAnimated = ['khan', 'golden_horde', 'diving_eagle', 'sky_eagle', 'great_khan', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian'].includes(selectedBaseId);
+  const isSelectedAnimated = ['diving_eagle', 'sky_eagle', 'neon_paw', 'neon_dino', 'neon_cat', 'neon_crown', 'toxic_storm', 'gasmask_amber', 'nuclear_mushroom', 'amaterasu_ruby', 'samurai_amber', 'oni_mask_obsidian', 'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese', 'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese', 'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese'].includes(selectedBaseId);
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
