@@ -48,6 +48,7 @@ import { ObsidianKazakhAvatar } from './ObsidianKazakhAvatar';
 import { ObsidianNeonEraAvatar } from './ObsidianNeonEraAvatar';
 import { ObsidianApocalypseAvatar } from './ObsidianApocalypseAvatar';
 import { ObsidianJapaneseAvatar } from './ObsidianJapaneseAvatar';
+import { VipReferralAvatar } from './VipReferralAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
 
@@ -235,6 +236,10 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     if (baseId === 'obsidian_japanese') {
       return <ObsidianJapaneseAvatar size={size} />;
     }
+    // VIP Referral avatar
+    if (baseId === 'vip_referral') {
+      return <VipReferralAvatar size={size} />;
+    }
     // Image-based avatar
     return (
       <img
@@ -262,6 +267,7 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     'ruby_kazakh', 'ruby_neon_era', 'ruby_apocalypse', 'ruby_japanese',
     'amber_kazakh', 'amber_neon_era', 'amber_apocalypse', 'amber_japanese',
     'obsidian_kazakh', 'obsidian_neon_era', 'obsidian_apocalypse', 'obsidian_japanese',
+    'vip_referral',
   ]);
   const isAnimated = ANIMATED_AVATAR_IDS.has(baseId ?? '');
 

@@ -1137,6 +1137,17 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   <Check className="w-5 h-5" />
                   <span>{t('shop.purchased')}</span>
                 </div>
+              ) : previewAvatar.price === undefined ? (
+                // No price — referral reward only
+                <div className="flex flex-col items-center gap-2 py-2">
+                  <div className="text-amber-400 text-2xl">🎁</div>
+                  <p className="text-amber-300/80 text-sm font-medium text-center">
+                    {locale === 'kk' ? '50 достық шақыру арқылы алыңыз' : locale === 'en' ? 'Invite 50 friends to unlock' : 'Награда за 50 приглашений'}
+                  </p>
+                  <p className="text-amber-200/40 text-xs text-center">
+                    {locale === 'kk' ? 'Сатып алуға болмайды' : locale === 'en' ? 'Not available for purchase' : 'Недоступно для покупки'}
+                  </p>
+                </div>
               ) : (
                 <div className="flex flex-col items-center gap-3">
                   <div className="flex items-center gap-1.5">
