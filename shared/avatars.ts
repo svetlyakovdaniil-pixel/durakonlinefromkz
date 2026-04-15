@@ -839,7 +839,7 @@ export const AVATAR_OPTIONS: AvatarOption[] = [
     nameKk: 'Апокалипсис обсидианы',
     nameEn: 'Apocalypse Obsidian',
     url: 'obsidian_apocalypse',
-    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_apocalypse_v2-CiHpHCJJqLiCGWxFqhBDPk.webp',
+    previewUrl: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_apocalypse_v2_464c2e3e.png',
     animated: true,
     seasonReward: true,
     seasonRankRequired: 'great_khan',
