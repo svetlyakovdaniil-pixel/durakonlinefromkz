@@ -816,6 +816,62 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     category: 'beginner',
     icon: '🎓',
   },
+
+  // ============================================================
+  // REFERRAL achievements
+  // ============================================================
+  {
+    key: 'referral_1',
+    nameRu: 'Эй, ты!',
+    nameKk: 'Эй, сен!',
+    nameEn: 'Hey, You!',
+    descRu: 'Пригласи 1 друга в игру по реферальному коду',
+    descKk: 'Реферал кодымен 1 досыңды ойынға шақыр',
+    descEn: 'Invite 1 friend to the game via referral code',
+    reward: { shanyrak: 1000 },
+    maxProgress: 1,
+    category: 'social',
+    icon: '👋',
+  },
+  {
+    key: 'referral_5',
+    nameRu: 'Своя компашка',
+    nameKk: 'Өз тобың',
+    nameEn: 'Your Crew',
+    descRu: 'Пригласи 5 друзей в игру по реферальному коду',
+    descKk: 'Реферал кодымен 5 досыңды ойынға шақыр',
+    descEn: 'Invite 5 friends to the game via referral code',
+    reward: { shanyrak: 5000 },
+    maxProgress: 5,
+    category: 'social',
+    icon: '👥',
+  },
+  {
+    key: 'referral_15',
+    nameRu: 'Коммуникатор',
+    nameKk: 'Коммуникатор',
+    nameEn: 'Communicator',
+    descRu: 'Пригласи 15 друзей в игру по реферальному коду',
+    descKk: 'Реферал кодымен 15 досыңды ойынға шақыр',
+    descEn: 'Invite 15 friends to the game via referral code',
+    reward: { shanyrak: 15000 },
+    maxProgress: 15,
+    category: 'social',
+    icon: '📣',
+  },
+  {
+    key: 'referral_50',
+    nameRu: 'VIP-персона',
+    nameKk: 'VIP-тұлға',
+    nameEn: 'VIP Person',
+    descRu: 'Пригласи 50 друзей в игру по реферальному коду',
+    descKk: 'Реферал кодымен 50 досыңды ойынға шақыр',
+    descEn: 'Invite 50 friends to the game via referral code',
+    reward: { shanyrak: 50000 },
+    maxProgress: 50,
+    category: 'social',
+    icon: '🌟',
+  },
 ];
 
 export const ACHIEVEMENT_MAP: Record<string, AchievementDef> = Object.fromEntries(

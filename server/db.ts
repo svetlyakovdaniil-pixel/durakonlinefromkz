@@ -3358,9 +3358,41 @@ export async function activateReferralCode(
       .where(eq(playerProfiles.id, referrer.id));
   }
 
+   // Trigger referral achievements for the referrer
+  // We use direct DB operations to avoid circular dependency with achievementsDb.ts
+  const referralAchievements = [
+    { key: 'referral_1', threshold: 1 },
+    { key: 'referral_5', threshold: 5 },
+    { key: 'referral_15', threshold: 15 },
+    { key: 'referral_50', threshold: 50 },
+  ];
+  for (const ach of referralAchievements) {
+    if (totalReferrals >= ach.threshold) {
+      const def = ACHIEVEMENT_MAP[ach.key];
+      if (!def) continue;
+      const [existing] = await db.select().from(userAchievements)
+        .where(and(eq(userAchievements.profileId, referrer.id), eq(userAchievements.achievementKey, ach.key)))
+        .limit(1);
+      if (existing?.unlocked) continue;
+      const newProgress = Math.min(totalReferrals, def.maxProgress);
+      const justUnlocked = newProgress >= def.maxProgress;
+      if (!existing) {
+        await db.insert(userAchievements).values({
+          profileId: referrer.id,
+          achievementKey: ach.key,
+          progress: newProgress,
+          unlocked: justUnlocked,
+          unlockedAt: justUnlocked ? new Date() : undefined,
+        });
+      } else {
+        await db.update(userAchievements)
+          .set({ progress: newProgress, unlocked: justUnlocked, unlockedAt: justUnlocked ? new Date() : undefined })
+          .where(eq(userAchievements.id, existing.id));
+      }
+    }
+  }
   return { result: 'ok', referrerName: referrer.displayName ?? undefined };
 }
-
 /**
  * Get referral stats for a player: total referrals, current level, code.
  */
