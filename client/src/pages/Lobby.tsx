@@ -1474,7 +1474,7 @@ onClick={() => setShowTengeTopUp(true)}
                   <span className="text-sm">{t('lobby.noNotifications')}</span>
                 </div>
               ) : (
-                notifList.map(n => {
+                notifList.map((n: (typeof notifList)[number]) => {
                   const isUnclaimedSeasonReward = n.type === 'season_reward' && !n.data?.claimed;
                   return (
                   <div key={n.id} className={`px-4 py-3 flex items-start gap-3 relative ${isUnclaimedSeasonReward ? 'bg-amber-900/20 border-l-2 border-red-500/60' : !n.isRead ? 'bg-amber-900/10' : ''}`}>

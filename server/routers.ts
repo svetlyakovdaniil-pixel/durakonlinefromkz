@@ -299,7 +299,7 @@ export const appRouter = router({
         if (now >= cooldownEnd) {
           // Check if we already have an unread cooldown_expired notification after the cooldown ended
           const existingNotifs = await getNotifications(profile.id, 10);
-          const hasCooldownNotif = existingNotifs.some(n => {
+          const hasCooldownNotif = existingNotifs.some((n: typeof existingNotifs[number]) => {
             if (n.type !== 'cooldown_expired') return false;
             // Only consider notifications created after the cooldown end
             return n.createdAt >= cooldownEnd;
@@ -313,7 +313,7 @@ export const appRouter = router({
       }
 
       const rows = await getNotifications(profile.id);
-      return rows.map(r => ({
+      return rows.map((r: typeof rows[number]) => ({
         ...r,
         data: r.data ? JSON.parse(r.data) : null,
       }));
@@ -396,7 +396,7 @@ export const appRouter = router({
           // Delete all except blocked
           const allNotifs = await db.select({ id: notifTable.id })
             .from(notifTable).where(eq(notifTable.profileId, profile.id));
-          const toDelete = allNotifs.map(n => n.id).filter(id => !blockedIds.includes(id));
+          const toDelete = allNotifs.map((n: typeof allNotifs[number]) => n.id).filter((id: number) => !blockedIds.includes(id));
           if (toDelete.length > 0) {
             await db.delete(notifTable).where(inArray(notifTable.id, toDelete));
           }
@@ -505,7 +505,7 @@ export const appRouter = router({
         if (!profile) return [];
         const transactions = await getMyTransactions(profile.id, input?.limit ?? 50);
         if (input?.currency) {
-          return transactions.filter(t => t.currency === input.currency);
+          return transactions.filter((t: typeof transactions[number]) => t.currency === input.currency);
         }
         return transactions;
       }),
@@ -1288,7 +1288,7 @@ export const appRouter = router({
       if (!profile) return [];
       // Default playlists are always owned
       const allPlaylists = await getAllPlaylists();
-      const defaultIds = allPlaylists.filter(p => p.isDefault).map(p => p.id);
+      const defaultIds = allPlaylists.filter((p: typeof allPlaylists[number]) => p.isDefault).map((p: typeof allPlaylists[number]) => p.id);
       const ownedIds = await getOwnedPlaylistIds(profile.id);
       return Array.from(new Set([...defaultIds, ...ownedIds]));
     }),

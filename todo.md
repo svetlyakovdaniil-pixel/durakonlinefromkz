@@ -3016,3 +3016,10 @@
 - [x] Season.tsx: диалог правил — описание механики сезона (как работает, очки, ранги, награды)
 - [x] Season.tsx: в правилах показывать сроки актуального сезона (из данных сервера)
 - [x] Season.tsx: добавить переводы правил на RU/KK/EN в i18n (встроено в компонент)
+
+## Batch 92 — TypeScript ошибки (апрель 2026)
+- [x] Исправить implicit any в server/routers.ts (6 ошибок)
+- [x] Исправить implicit any в server/db.ts (55 ошибок)
+- [x] Исправить MapIterator ошибку в avatarRafManager.ts (1 ошибка)
+- [x] Исправить implicit any в клиентских файлах: Season.tsx, Lobby.tsx, ProfileDrawer.tsx, LeaderboardDrawer.tsx, FriendsDrawer.tsx, DailyQuestsModal.tsx, SeasonTestTab.tsx, dailyQuestsDb.ts (23 ошибки)
+- [x] Итого: 0 TypeScript ошибок (было 62)

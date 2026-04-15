@@ -86,10 +86,10 @@ export async function getOrAssignDailyQuests(profileId: number) {
 /** Get today's quests with definitions merged */
 export async function getTodayQuestsWithDefs(profileId: number) {
   const rows = await getOrAssignDailyQuests(profileId);
-  return rows.map(row => {
+  return rows.map((row: typeof rows[number]) => {
     const def = DAILY_QUEST_MAP[row.questKey];
     return { ...row, def };
-  }).filter(r => !!r.def);
+  }).filter((r: { def: (typeof DAILY_QUEST_MAP)[string] | undefined }) => !!r.def);
 }
 
 /** Increment progress for a specific trackType for a player today */

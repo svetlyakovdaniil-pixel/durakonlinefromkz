@@ -118,7 +118,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               {/* ── Rating tab ── */}
               {activeTab === 'rating' && (
                 <div className="mt-1 space-y-1">
-                  {(ratingQuery.data ?? []).map((player, idx) => {
+                  {(ratingQuery.data ?? []).map((player: NonNullable<typeof ratingQuery.data>[number], idx: number) => {
                     const isMe = player.gameId === myGameId;
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
                     return (
@@ -168,7 +168,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                     <span className="text-center">WR%</span>
                   </div>
                   <div className="space-y-1">
-                    {(winsQuery.data ?? []).map((player, idx) => {
+                    {(winsQuery.data ?? []).map((player: NonNullable<typeof winsQuery.data>[number], idx: number) => {
                       const isMe = player.gameId === myGameId;
                       const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
                       return (
@@ -207,7 +207,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               {/* ── Shanyrak tab ── */}
               {activeTab === 'shanyrak' && (
                 <div className="mt-1 space-y-1">
-                  {(shanyraqQuery.data ?? []).map((player, idx) => {
+                  {(shanyraqQuery.data ?? []).map((player: NonNullable<typeof shanyraqQuery.data>[number], idx: number) => {
                     const isMe = player.gameId === myGameId;
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
                     return (
@@ -246,7 +246,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
               {/* ── Season tab ── */}
               {activeTab === 'season' && (
                 <div className="mt-1 space-y-1">
-                  {(seasonQuery.data?.entries ?? []).map((entry, idx) => {
+                  {(seasonQuery.data?.entries ?? []).map((entry: NonNullable<typeof seasonQuery.data>['entries'][number], idx: number) => {
                     const isTop3 = idx < 3;
                     const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
                     return (

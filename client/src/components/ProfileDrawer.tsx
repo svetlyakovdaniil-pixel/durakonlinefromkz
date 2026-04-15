@@ -642,7 +642,7 @@ function FriendsTab({
             <Clock className="w-3.5 h-3.5" /> {t('profile.incomingRequests')} ({pending.length})
           </div>
           <div className="space-y-1.5">
-            {pending.map(req => (
+            {pending.map((req: (typeof pending)[number]) => (
               <div key={req.friendshipId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
                 <div>
                   <span className="text-amber-100 text-sm font-medium">{req.senderName}</span>
@@ -684,7 +684,7 @@ function FriendsTab({
           </div>
         ) : (
           <div className="space-y-1.5">
-            {friends.map(friend => {
+            {friends.map((friend: (typeof friends)[number]) => {
               const isOnline = onlineFriendIds.includes(friend.gameId);
               return (
                 <div key={friend.profileId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
@@ -777,7 +777,7 @@ function TransactionHistoryTab() {
 
   return (
     <div className="mt-3 space-y-1.5">
-      {data.map((tx) => {
+      {data.map((tx: (typeof data)[number]) => {
         const isPositive = tx.amount > 0;
         const currencyIcon = tx.currency === 'tenge' ? (
           <Coins className="w-3.5 h-3.5 text-amber-400" />
@@ -937,7 +937,7 @@ function LeaderboardTab({ myGameId }: { myGameId?: number }) {
   return (
     <div className="mt-3">
       <div className="space-y-1">
-        {data.map((player, idx) => {
+        {data.map((player: (typeof data)[number], idx: number) => {
           const isMe = player.gameId === myGameId;
           const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null;
           return (

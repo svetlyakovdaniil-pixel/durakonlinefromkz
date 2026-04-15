@@ -124,9 +124,9 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     return rank(a) - rank(b);
   });
 
-  const completedCount = quests.filter(q => q.completed).length;
+  const completedCount = quests.filter((q: (typeof quests)[number]) => q.completed).length;
   const totalCount = quests.length;
-  const unclaimedCount = quests.filter(q => q.completed && !q.claimed).length;
+  const unclaimedCount = quests.filter((q: (typeof quests)[number]) => q.completed && !q.claimed).length;
 
   return (
     <div

@@ -269,16 +269,16 @@ export async function getFriends(profileId: number) {
   );
 
   // Get the friend profile IDs
-  const friendProfileIds = rows.map(r => r.senderId === profileId ? r.receiverId : r.senderId);
+  const friendProfileIds = rows.map((r: typeof rows[number]) => r.senderId === profileId ? r.receiverId : r.senderId);
   if (friendProfileIds.length === 0) return [];
 
   // Fetch friend profiles
   const profiles = await db.select().from(playerProfiles).where(
-    sql`${playerProfiles.id} IN (${sql.join(friendProfileIds.map(id => sql`${id}`), sql`, `)})`
+    sql`${playerProfiles.id} IN (${sql.join(friendProfileIds.map((id: number) => sql`${id}`), sql`, `)})`
   );
 
-  return profiles.map(p => ({
-    friendshipId: rows.find(r => r.senderId === p.id || r.receiverId === p.id)?.id ?? 0,
+  return profiles.map((p: typeof profiles[number]) => ({
+    friendshipId: rows.find((r: typeof rows[number]) => r.senderId === p.id || r.receiverId === p.id)?.id ?? 0,
     profileId: p.id,
     gameId: p.gameId,
     displayName: p.displayName,
@@ -299,13 +299,13 @@ export async function getPendingRequests(profileId: number) {
 
   if (rows.length === 0) return [];
 
-  const senderIds = rows.map(r => r.senderId);
+  const senderIds = rows.map((r: typeof rows[number]) => r.senderId);
   const profiles = await db.select().from(playerProfiles).where(
-    sql`${playerProfiles.id} IN (${sql.join(senderIds.map(id => sql`${id}`), sql`, `)})`
+    sql`${playerProfiles.id} IN (${sql.join(senderIds.map((id: number) => sql`${id}`), sql`, `)})`
   );
 
-  return rows.map(r => {
-    const sender = profiles.find(p => p.id === r.senderId);
+  return rows.map((r: typeof rows[number]) => {
+    const sender = profiles.find((p: typeof profiles[number]) => p.id === r.senderId);
     return {
       friendshipId: r.id,
       senderProfileId: r.senderId,
@@ -549,7 +549,7 @@ export async function getWinsLeaderboard(limit = 50) {
     .orderBy(desc(playerProfiles.wins), desc(playerProfiles.gamesPlayed))
     .limit(limit);
 
-  return rows.map(r => ({
+  return rows.map((r: typeof rows[number]) => ({
     ...r,
     winrate: r.gamesPlayed > 0 ? Math.round((r.wins / r.gamesPlayed) * 100) : 0,
   }));
@@ -593,7 +593,7 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
   ).orderBy(desc(gameHistory.createdAt)).limit(limit);
 
   // Enrich each record with place and rating delta
-  return records.map(record => {
+  return records.map((record: typeof records[number]) => {
     // playerIds contains gameId values (sorted by finish place)
     const playerIds = JSON.parse(record.playersJson || '[]') as number[];
     const place = playerIds.indexOf(playerGameId) + 1;
@@ -1700,7 +1700,7 @@ export async function adminGetPlayerGameHistory(opts: {
     8: [25, 20, 15, 10, 5, 5, 5, -25],
   };
 
-  const games = records.map(record => {
+  const games = records.map((record: typeof records[number]) => {
     const playerIds = JSON.parse(record.playersJson || '[]') as number[];
     const place = playerIds.indexOf(opts.profileId) + 1;
     const isLoser = opts.profileId === record.loserId;
@@ -1904,8 +1904,8 @@ export async function detectSuspiciousTransactions(minAmount: number = 10000) {
     .limit(50);
 
   // Enrich with player info
-  const profileIds = Array.from(new Set(rows.map(r => r.profileId)));
-  if (profileIds.length === 0) return rows.map(r => ({ ...r, gameId: null, displayName: null }));
+  const profileIds = Array.from(new Set(rows.map((r: typeof rows[number]) => r.profileId)));
+  if (profileIds.length === 0) return rows.map((r: typeof rows[number]) => ({ ...r, gameId: null, displayName: null }));
 
   const profiles = await db.select({
     id: playerProfiles.id,
@@ -1915,9 +1915,9 @@ export async function detectSuspiciousTransactions(minAmount: number = 10000) {
     sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
   );
 
-  const profileMap = new Map<number, typeof profiles[0]>(profiles.map(p => [p.id, p]));
+  const profileMap = new Map<number, typeof profiles[0]>(profiles.map((p: typeof profiles[number]) => [p.id, p]));
 
-  return rows.map(r => ({
+  return rows.map((r: typeof rows[number]) => ({
     ...r,
     gameId: profileMap.get(r.profileId)?.gameId ?? null,
     displayName: profileMap.get(r.profileId)?.displayName ?? null,
@@ -1951,7 +1951,7 @@ export async function detectRapidBalanceGrowth(thresholdShanyrak: number = 50000
 
   if (rows.length === 0) return [];
 
-  const profileIds = rows.map(r => r.profileId);
+  const profileIds = rows.map((r: typeof rows[number]) => r.profileId);
   const profiles = await db.select({
     id: playerProfiles.id,
     gameId: playerProfiles.gameId,
@@ -1959,12 +1959,12 @@ export async function detectRapidBalanceGrowth(thresholdShanyrak: number = 50000
     balanceShanyrak: playerProfiles.balanceShanyrak,
     isBanned: playerProfiles.isBanned,
   }).from(playerProfiles).where(
-    sql`${playerProfiles.id} IN (${sql.join(profileIds.map(id => sql`${id}`), sql`, `)})`
+    sql`${playerProfiles.id} IN (${sql.join(profileIds.map((id: number) => sql`${id}`), sql`, `)})`
   );
 
-  const profileMap2 = new Map<number, typeof profiles[0]>(profiles.map(p => [p.id, p]));
+  const profileMap2 = new Map<number, typeof profiles[0]>(profiles.map((p: typeof profiles[number]) => [p.id, p]));
 
-  return rows.map(r => ({
+  return rows.map((r: typeof rows[number]) => ({
     ...r,
     gameId: profileMap2.get(r.profileId)?.gameId ?? null,
     displayName: profileMap2.get(r.profileId)?.displayName ?? null,
@@ -1997,7 +1997,7 @@ export async function sendMassNotification(data: {
   switch (data.segment) {
     case 'all': {
       const rows = await db.select({ id: playerProfiles.id }).from(playerProfiles);
-      profileIds = rows.map(r => r.id);
+      profileIds = rows.map((r: typeof rows[number]) => r.id);
       break;
     }
     case 'inactive_7d': {
@@ -2005,18 +2005,18 @@ export async function sendMassNotification(data: {
       const rows = await db.select({ id: playerProfiles.id, userId: playerProfiles.userId })
         .from(playerProfiles);
       // Get users who haven't signed in for 7+ days
-      const userIds = rows.map(r => r.userId);
+      const userIds = rows.map((r: typeof rows[number]) => r.userId);
       if (userIds.length === 0) break;
       const inactiveUsers = await db.select({ id: users.id })
         .from(users)
         .where(
           and(
-            sql`${users.id} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`,
+            sql`${users.id} IN (${sql.join(userIds.map((id: string) => sql`${id}`), sql`, `)})`,
             sql`${users.lastSignedIn} < ${sevenDaysAgo}`
           )
         );
-      const inactiveUserIds = new Set(inactiveUsers.map(u => u.id));
-      profileIds = rows.filter(r => inactiveUserIds.has(r.userId)).map(r => r.id);
+      const inactiveUserIds = new Set(inactiveUsers.map((u: typeof inactiveUsers[number]) => u.id));
+      profileIds = rows.filter((r: typeof rows[number]) => inactiveUserIds.has(r.userId)).map((r: typeof rows[number]) => r.id);
       break;
     }
     case 'top_100': {
@@ -2024,7 +2024,7 @@ export async function sendMassNotification(data: {
         .from(playerProfiles)
         .orderBy(desc(playerProfiles.rating))
         .limit(100);
-      profileIds = rows.map(r => r.id);
+      profileIds = rows.map((r: typeof rows[number]) => r.id);
       break;
     }
     case 'newbies': {
@@ -2032,7 +2032,7 @@ export async function sendMassNotification(data: {
       const rows = await db.select({ id: playerProfiles.id })
         .from(playerProfiles)
         .where(sql`${playerProfiles.createdAt} >= ${sevenDaysAgo}`);
-      profileIds = rows.map(r => r.id);
+      profileIds = rows.map((r: typeof rows[number]) => r.id);
       break;
     }
   }
@@ -2374,7 +2374,7 @@ export async function getAllPlaylists() {
   const db = await getDb();
   if (!db) return [];
   const rows = await db.select().from(musicPlaylists).where(eq(musicPlaylists.isAvailable, true));
-  return rows.map(r => ({
+  return rows.map((r: typeof rows[number]) => ({
     ...r,
     tracks: JSON.parse(r.tracksJson || '[]') as string[],
   }));
@@ -2544,8 +2544,8 @@ export async function cleanupOldPlaylists() {
   const defaults = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Классический'));
   if (defaults.length > 1) {
     // Keep the one with isDefault=true, or the first one if none has isDefault
-    const keep = defaults.find(d => d.isDefault) || defaults[0];
-    const toDelete = defaults.filter(d => d.id !== keep.id);
+    const keep = defaults.find((d: typeof defaults[number]) => d.isDefault) || defaults[0];
+    const toDelete = defaults.filter((d: typeof defaults[number]) => d.id !== keep.id);
     for (const dup of toDelete) {
       await db.delete(musicPlaylists).where(eq(musicPlaylists.id, dup.id));
     }
@@ -3030,7 +3030,7 @@ export async function adminGetPlayerItems(profileId: number): Promise<{
     .from(seasonRewards)
     .where(eq(seasonRewards.profileId, profileId));
 
-  const pendingSeasonRewards: Array<{ seasonKey: string; rankKey: string; avatarId: string | null; frameId: string | null; claimed: boolean }> = allSeasonRewards.map(r => {
+  const pendingSeasonRewards: Array<{ seasonKey: string; rankKey: string; avatarId: string | null; frameId: string | null; claimed: boolean }> = allSeasonRewards.map((r: typeof allSeasonRewards[number]) => {
     const seasonInfo = getSeasonInfo(r.seasonKey);
     const rewardDef = seasonInfo
       ? getSeasonRewardDefForSeason(r.rankKey, seasonInfo)

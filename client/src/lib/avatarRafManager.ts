@@ -15,13 +15,13 @@ const callbacks = new Map<symbol, DrawCallback>();
 let rafId: number | null = null;
 
 function tick(timestamp: number) {
-  for (const cb of callbacks.values()) {
+  callbacks.forEach((cb) => {
     try {
       cb(timestamp);
     } catch (_e) {
       // Silently ignore errors from individual avatars
     }
-  }
+  });
   if (callbacks.size > 0) {
     rafId = requestAnimationFrame(tick);
   } else {

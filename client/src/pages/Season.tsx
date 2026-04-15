@@ -1077,7 +1077,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    {leaderboardData.entries.map((entry, idx) => {
+                    {leaderboardData.entries.map((entry: (typeof leaderboardData.entries)[number], idx: number) => {
                       const rank = idx + 1;
                       const isTop3 = rank <= 3;
                       const entryRank = SEASON_RANKS.slice().reverse().find(r => entry.seasonRating >= r.minRating) ?? SEASON_RANKS[0];

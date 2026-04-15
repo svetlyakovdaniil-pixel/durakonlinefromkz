@@ -278,7 +278,7 @@ export function SeasonTestTab() {
                 </tr>
               </thead>
               <tbody>
-                {data.profiles.map(p => {
+                {data.profiles.map((p: (typeof data.profiles)[number]) => {
                   const rank = getSeasonRank(p.seasonRating);
                   return (
                     <tr key={p.profileId} className="border-b border-gray-800/50 hover:bg-gray-800/30">
