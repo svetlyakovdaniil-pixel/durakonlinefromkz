@@ -26,6 +26,18 @@ import { NuclearMushroomAvatar } from './NuclearMushroomAvatar';
 import { AmaterasuAvatar } from './avatars/AmaterasuAvatar';
 import { SamuraiAvatar } from './avatars/SamuraiAvatar';
 import { OniMaskAvatar } from './avatars/OniMaskAvatar';
+import { RubyKazakhAvatar } from './RubyKazakhAvatar';
+import { RubyNeonEraAvatar } from './RubyNeonEraAvatar';
+import { RubyApocalypseAvatar } from './RubyApocalypseAvatar';
+import { RubyJapaneseNewAvatar } from './RubyJapaneseNewAvatar';
+import { AmberKazakhAvatar } from './AmberKazakhAvatar';
+import { AmberNeonEraAvatar } from './AmberNeonEraAvatar';
+import { AmberApocalypseAvatar } from './AmberApocalypseAvatar';
+import { AmberJapaneseAvatar } from './AmberJapaneseAvatar';
+import { ObsidianKazakhAvatar } from './ObsidianKazakhAvatar';
+import { ObsidianNeonEraAvatar } from './ObsidianNeonEraAvatar';
+import { ObsidianApocalypseAvatar } from './ObsidianApocalypseAvatar';
+import { ObsidianJapaneseAvatar } from './ObsidianJapaneseAvatar';
 
 interface AvatarPickerProps {
   currentAvatarId: string | null | undefined;
@@ -54,6 +66,21 @@ function AnimatedAvatar({ baseId, size }: { baseId: string; size: number }) {
   if (baseId === 'amaterasu_ruby') return <AmaterasuAvatar size={size} />;
   if (baseId === 'samurai_amber') return <SamuraiAvatar size={size} />;
   if (baseId === 'oni_mask_obsidian') return <OniMaskAvatar size={size} />;
+  // Season 6–9 Ruby
+  if (baseId === 'ruby_kazakh') return <RubyKazakhAvatar size={size} />;
+  if (baseId === 'ruby_neon_era') return <RubyNeonEraAvatar size={size} />;
+  if (baseId === 'ruby_apocalypse') return <RubyApocalypseAvatar size={size} />;
+  if (baseId === 'ruby_japanese') return <RubyJapaneseNewAvatar size={size} />;
+  // Season 6–9 Amber
+  if (baseId === 'amber_kazakh') return <AmberKazakhAvatar size={size} />;
+  if (baseId === 'amber_neon_era') return <AmberNeonEraAvatar size={size} />;
+  if (baseId === 'amber_apocalypse') return <AmberApocalypseAvatar size={size} />;
+  if (baseId === 'amber_japanese') return <AmberJapaneseAvatar size={size} />;
+  // Season 6–9 Obsidian
+  if (baseId === 'obsidian_kazakh') return <ObsidianKazakhAvatar size={size} />;
+  if (baseId === 'obsidian_neon_era') return <ObsidianNeonEraAvatar size={size} />;
+  if (baseId === 'obsidian_apocalypse') return <ObsidianApocalypseAvatar size={size} />;
+  if (baseId === 'obsidian_japanese') return <ObsidianJapaneseAvatar size={size} />;
   return null;
 }
 
@@ -214,13 +241,22 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                       : 'border-amber-700/30 hover:border-amber-600/50 hover:scale-102'
                 }`}
               >
-                {isAnimated ? (
+                {isAnimated && item.previewUrl ? (
+                  // For animated avatars with a static preview image, use the image in the grid
+                  // (saves performance — full animation only shown in the large preview above)
+                  <img
+                    src={item.previewUrl}
+                    alt={item.displayName}
+                    className={`w-full h-full object-cover ${locked ? 'grayscale opacity-60' : ''}`}
+                    loading="lazy"
+                  />
+                ) : isAnimated ? (
                   <div className={`w-full h-full ${locked ? 'grayscale opacity-60' : ''}`}>
                     <AnimatedAvatar baseId={item.baseId} size={60} />
                   </div>
                 ) : (
                   <img
-                    src={item.url}
+                    src={item.previewUrl ?? item.url}
                     alt={item.displayName}
                     className={`w-full h-full object-cover ${locked ? 'grayscale' : ''}`}
                     loading="lazy"

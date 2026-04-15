@@ -93,7 +93,7 @@ import {
   getSeasonTestState,
   upsertSeasonTestState,
 } from "./db";
-import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount } from "./achievementsDb";
+import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
 import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
 import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
@@ -1121,6 +1121,25 @@ export const appRouter = router({
             details: { note: 'Full account reset to fresh-registration state' },
           });
         }
+        return result;
+      }),
+    /**
+     * Force-recalculate the many_faces achievement for a player.
+     * Bypasses the "already unlocked" guard — useful for fixing players
+     * who had the avatar_collector key bug before it was renamed to many_faces.
+     * Admin-only.
+     */
+    recalculateManyFaces: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await forceRecalculateManyFaces(input.profileId);
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'give_item',
+          targetProfileId: input.profileId,
+          details: { note: `Force-recalculated many_faces achievement: progress=${result.progress}, unlocked=${result.unlocked}, justUnlocked=${result.justUnlocked}` },
+        });
         return result;
       }),
   }),

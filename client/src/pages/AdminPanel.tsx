@@ -1169,6 +1169,16 @@ function ProfileResetSection({ profileId, playerName }: { profileId: number; pla
   const [showConfirm, setShowConfirm] = useState(false);
   const utils = trpc.useUtils();
 
+  const recalcManyFacesMutation = trpc.admin.recalculateManyFaces.useMutation({
+    onSuccess: (result) => {
+      toast.success(
+        `Достижение "Многоликий" пересчитано: прогресс ${result.progress}/5${result.justUnlocked ? ' — РАЗБЛОКИРОВАНО!' : result.unlocked ? ' (уже было разблокировано)' : ''}`
+      );
+      utils.admin.playerDetail.invalidate({ profileId });
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
   const resetMutation = trpc.admin.resetPlayerAccount.useMutation({
     onSuccess: (result) => {
       if (result.success) {
@@ -1212,6 +1222,26 @@ function ProfileResetSection({ profileId, playerName }: { profileId: number; pla
           <li className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />Бан → снят</li>
         </ul>
         <p className="text-xs text-gray-600 mt-2">Не трогается: авторизация (имя, email), история игр, друзья, жалобы.</p>
+      </div>
+
+      {/* Recalculate many_faces achievement */}
+      <div className="rounded-lg border border-amber-800/40 bg-amber-950/20 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-amber-300">Исправление достижений</h3>
+        <p className="text-xs text-amber-200/70">
+          Пересчитывает достижение «Многоликий» (владеть 5+ аватарками не считая классических).
+          Используйте если игрок имеет 5+ аватарок, но достижение не засчитано.
+        </p>
+        <Button
+          onClick={() => recalcManyFacesMutation.mutate({ profileId })}
+          disabled={recalcManyFacesMutation.isPending}
+          className="w-full bg-amber-700 hover:bg-amber-600 text-white font-semibold py-2"
+        >
+          {recalcManyFacesMutation.isPending ? (
+            <><RotateCcw className="w-4 h-4 mr-2 animate-spin" /> Пересчитываем...</>
+          ) : (
+            <><RotateCcw className="w-4 h-4 mr-2" /> Пересчитать «Многоликий»</>
+          )}
+        </Button>
       </div>
 
       {/* Reset button */}

@@ -538,8 +538,10 @@ export async function processCollectorAchievements(profileId: number): Promise<v
   await incrementAchievementProgress(profileId, 'deck_collector', 0, Math.min(decks.length, 3)).catch(() => {});
   // playlist_collector: own 3 playlists
   await incrementAchievementProgress(profileId, 'playlist_collector', 0, Math.min(playlists.length, 3)).catch(() => {});
-  // avatar_collector: own 3 premium avatars
-  await incrementAchievementProgress(profileId, 'avatar_collector', 0, Math.min(avatars.length, 3)).catch(() => {});
+  // many_faces: own at least 5 different avatars (excluding classic ones)
+  const CLASSIC_AVATAR_IDS = ['wolf', 'eagle', 'bear', 'fox', 'snow-leopard', 'bot'];
+  const nonClassicAvatars = avatars.filter((id: string) => !CLASSIC_AVATAR_IDS.includes(id));
+  await incrementAchievementProgress(profileId, 'many_faces', 0, Math.min(nonClassicAvatars.length, 5)).catch(() => {});
 }
 
 // ============================================================

@@ -191,3 +191,56 @@ export async function getUnclaimedAchievementCount(profileId: number): Promise<n
     ));
   return rows.length;
 }
+
+/**
+ * Force-recalculate the many_faces achievement for a player.
+ * Unlike incrementAchievementProgress, this bypasses the "already unlocked" guard
+ * and directly updates the progress/unlocked state based on current owned avatars.
+ * Used by admins to fix players who had the achievement key bug (avatar_collector → many_faces).
+ */
+export async function forceRecalculateManyFaces(profileId: number): Promise<{ progress: number; unlocked: boolean; justUnlocked: boolean }> {
+  const db = await getDb();
+  if (!db) return { progress: 0, unlocked: false, justUnlocked: false };
+
+  const [profile] = await db.select({ ownedAvatars: playerProfiles.ownedAvatars })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return { progress: 0, unlocked: false, justUnlocked: false };
+
+  const avatars = JSON.parse(profile.ownedAvatars ?? '[]') as string[];
+  const CLASSIC_AVATAR_IDS = ['wolf', 'eagle', 'bear', 'fox', 'snow-leopard', 'bot'];
+  const nonClassicAvatars = avatars.filter((id: string) => !CLASSIC_AVATAR_IDS.includes(id));
+  const newProgress = Math.min(nonClassicAvatars.length, 5);
+  const newUnlocked = newProgress >= 5;
+
+  const [existing] = await db.select().from(userAchievements)
+    .where(and(
+      eq(userAchievements.profileId, profileId),
+      eq(userAchievements.achievementKey, 'many_faces'),
+    ))
+    .limit(1);
+
+  const wasUnlocked = existing?.unlocked ?? false;
+  const justUnlocked = newUnlocked && !wasUnlocked;
+
+  if (!existing) {
+    await db.insert(userAchievements).values({
+      profileId,
+      achievementKey: 'many_faces',
+      progress: newProgress,
+      unlocked: newUnlocked,
+      unlockedAt: newUnlocked ? new Date() : undefined,
+    });
+  } else {
+    await db.update(userAchievements)
+      .set({
+        progress: newProgress,
+        unlocked: newUnlocked,
+        unlockedAt: newUnlocked && !existing.unlockedAt ? new Date() : existing.unlockedAt,
+      })
+      .where(eq(userAchievements.id, existing.id));
+  }
+
+  return { progress: newProgress, unlocked: newUnlocked, justUnlocked };
+}

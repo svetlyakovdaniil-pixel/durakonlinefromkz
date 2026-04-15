@@ -2965,3 +2965,6 @@
 - [x] AvatarPicker: удалить устаревшие аватарки (старые рубин/янтарь/обсидиан S6 и подобные)
 - [x] AvatarPicker: показывать только owned аватарки игрока
 - [x] ShopModal рамки: показывать только рамки текущего активного сезона
+- [ ] ObsidianJapaneseAvatar: новая анимация в японском стиле (сакура, золото, дракон)
+- [x] Достижение "Многоликий": исправить логику подсчёта аватарок (не засчитывается при 14) — добавлен admin endpoint recalculateManyFaces + кнопка в AdminPanel
+- [x] AvatarPicker: исправить пустые превью для аватарок без previewUrl — добавлен previewUrl для Ruby/Amber S6-S9, AvatarPicker использует previewUrl ?? url
