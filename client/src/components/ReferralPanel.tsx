@@ -9,11 +9,13 @@ const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/
 const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
 
 // Milestones: count, level, shanyrak, tenge
+// above=true → цифра в кружке снизу линии, награда сверху линии
+// above=false → цифра в кружке сверху линии, награда снизу линии
 const MILESTONES = [
-  { count: 1,  level: 1, shanyraks: 5000,   tenge: 5   },
-  { count: 5,  level: 2, shanyraks: 20000,  tenge: 15  },
-  { count: 15, level: 3, shanyraks: 40000,  tenge: 50  },
-  { count: 50, level: 4, shanyraks: 200000, tenge: 100 },
+  { count: 1,  level: 1, shanyraks: 5000,   tenge: 5,   above: true  }, // кружок снизу, награда сверху
+  { count: 5,  level: 2, shanyraks: 20000,  tenge: 15,  above: false }, // кружок сверху, награда снизу
+  { count: 15, level: 3, shanyraks: 40000,  tenge: 50,  above: true  }, // кружок снизу, награда сверху
+  { count: 50, level: 4, shanyraks: 200000, tenge: 100, above: false }, // кружок сверху, награда снизу
 ];
 
 function formatNum(n: number): string {
@@ -26,69 +28,76 @@ interface MilestoneNodeProps {
   index: number;
   totalReferrals: number;
   rewardLevel: number;
-  above: boolean; // alternating: 0,2 above; 1,3 below
 }
 
-function MilestoneNode({ milestone, index, totalReferrals, rewardLevel, above }: MilestoneNodeProps) {
+function MilestoneNode({ milestone, totalReferrals, rewardLevel }: MilestoneNodeProps) {
   const claimed = rewardLevel >= milestone.level;
   const reached = totalReferrals >= milestone.count;
+  const above = milestone.above; // true = кружок снизу, награда сверху
 
-  return (
-    <div className="flex flex-col items-center relative" style={{ flex: 1 }}>
-      {/* Label above */}
-      {above && (
-        <div className="flex flex-col items-center mb-1 min-h-[48px] justify-end">
-          <div className={`text-xs font-bold mb-0.5 ${claimed ? 'text-amber-300' : reached ? 'text-amber-200' : 'text-amber-200/50'}`}>
-            {milestone.count}
-          </div>
-          <div className="flex items-center gap-0.5">
-            <span className={`text-[10px] font-semibold ${claimed ? 'text-amber-300' : 'text-amber-200/60'}`}>
-              {formatNum(milestone.shanyraks)}
-            </span>
-            <img src={SHANYRAK_ICON} alt="" className="w-3 h-3 object-contain" />
-          </div>
-          <div className="flex items-center gap-0.5">
-            <span className={`text-[10px] font-semibold ${claimed ? 'text-emerald-400' : 'text-amber-200/60'}`}>
-              {milestone.tenge}
-            </span>
-            <img src={TENGE_ICON} alt="" className="w-3 h-3 object-contain" />
-          </div>
-        </div>
-      )}
-
-      {/* Dot */}
-      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center z-10 relative
-        ${claimed
-          ? 'bg-amber-400 border-amber-300 shadow-[0_0_8px_2px_rgba(251,191,36,0.6)]'
-          : reached
-          ? 'bg-amber-700/60 border-amber-500/70'
-          : 'bg-[#0f2035] border-amber-700/30'
-        }`}>
-        {claimed && <Check className="w-2.5 h-2.5 text-[#0f2035]" />}
+  const rewardBlock = (
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0.5">
+        <span className={`text-[10px] font-semibold ${claimed ? 'text-green-400' : 'text-amber-200/60'}`}>
+          {formatNum(milestone.shanyraks)}
+        </span>
+        <img src={SHANYRAK_ICON} alt="" className="w-3 h-3 object-contain" />
       </div>
-
-      {/* Label below */}
-      {!above && (
-        <div className="flex flex-col items-center mt-1 min-h-[48px]">
-          <div className={`text-xs font-bold mb-0.5 ${claimed ? 'text-amber-300' : reached ? 'text-amber-200' : 'text-amber-200/50'}`}>
-            {milestone.count}
-          </div>
-          <div className="flex items-center gap-0.5">
-            <span className={`text-[10px] font-semibold ${claimed ? 'text-amber-300' : 'text-amber-200/60'}`}>
-              {formatNum(milestone.shanyraks)}
-            </span>
-            <img src={SHANYRAK_ICON} alt="" className="w-3 h-3 object-contain" />
-          </div>
-          <div className="flex items-center gap-0.5">
-            <span className={`text-[10px] font-semibold ${claimed ? 'text-emerald-400' : 'text-amber-200/60'}`}>
-              {milestone.tenge}
-            </span>
-            <img src={TENGE_ICON} alt="" className="w-3 h-3 object-contain" />
-          </div>
-        </div>
-      )}
+      <div className="flex items-center gap-0.5">
+        <span className={`text-[10px] font-semibold ${claimed ? 'text-yellow-400' : 'text-amber-200/60'}`}>
+          {milestone.tenge}
+        </span>
+        <img src={TENGE_ICON} alt="" className="w-3 h-3 object-contain" />
+      </div>
     </div>
   );
+
+  const dot = (
+    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center z-10 relative shrink-0
+      ${claimed
+        ? 'bg-amber-400 border-amber-300 shadow-[0_0_8px_2px_rgba(251,191,36,0.6)]'
+        : reached
+        ? 'bg-amber-700/60 border-amber-500/70'
+        : 'bg-[#0f2035] border-amber-700/30'
+      }`}>
+      {claimed
+        ? <Check className="w-2.5 h-2.5 text-[#0f2035]" />
+        : <span className={`text-[9px] font-bold leading-none ${reached ? 'text-amber-200' : 'text-amber-200/50'}`}>
+            {milestone.count}
+          </span>
+      }
+    </div>
+  );
+
+  if (above) {
+    // кружок снизу линии → награда сверху линии (mb-0 чтобы не заезжать на линию)
+    return (
+      <div className="flex flex-col items-center" style={{ flex: 1 }}>
+        {/* Награда сверху — не заезжает на линию */}
+        <div className="flex flex-col items-center mb-1" style={{ minHeight: 44 }}>
+          {rewardBlock}
+        </div>
+        {/* Кружок — будет ниже линии (линия проходит через середину flex-контейнера) */}
+        {dot}
+        {/* Пустое место снизу для выравнивания */}
+        <div style={{ minHeight: 44 }} />
+      </div>
+    );
+  } else {
+    // кружок сверху линии → награда снизу линии
+    return (
+      <div className="flex flex-col items-center" style={{ flex: 1 }}>
+        {/* Пустое место сверху для выравнивания */}
+        <div style={{ minHeight: 44 }} />
+        {/* Кружок — будет выше линии */}
+        {dot}
+        {/* Награда снизу — не заезжает на линию */}
+        <div className="flex flex-col items-center mt-1" style={{ minHeight: 44 }}>
+          {rewardBlock}
+        </div>
+      </div>
+    );
+  }
 }
 
 interface ReferralPanelProps {
@@ -149,10 +158,19 @@ export default function ReferralPanel({ onBack }: ReferralPanelProps) {
           {t('referral.progressTitle')} — {totalReferrals} {t('referral.invited')}
         </div>
 
-        {/* Alternating milestone nodes with progress bar */}
-        <div className="relative flex items-center px-2">
-          {/* Track */}
-          <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 bg-amber-900/40 rounded-full overflow-hidden" style={{ zIndex: 0 }}>
+        {/*
+          Layout: каждый MilestoneNode занимает flex:1 и имеет 3 зоны:
+          - верхняя (44px): награда или пусто
+          - середина: кружок (6px)
+          - нижняя (44px): награда или пусто
+          Линия прогресса проходит через середину (top: 44px + 3px = ~47px от верха контейнера)
+        */}
+        <div className="relative flex items-stretch px-1">
+          {/* Track — позиционируем точно по центру кружков */}
+          <div
+            className="absolute left-4 right-4 h-1.5 bg-amber-900/40 rounded-full overflow-hidden"
+            style={{ top: 'calc(44px + 9px)', zIndex: 0 }}
+          >
             <div
               className="h-full bg-gradient-to-r from-amber-600 to-amber-400 rounded-full transition-all duration-700"
               style={{ width: `${progressFraction * 100}%` }}
@@ -167,7 +185,6 @@ export default function ReferralPanel({ onBack }: ReferralPanelProps) {
               index={index}
               totalReferrals={totalReferrals}
               rewardLevel={rewardLevel}
-              above={index % 2 === 0} // 0,2 above; 1,3 below
             />
           ))}
         </div>
@@ -206,10 +223,13 @@ export default function ReferralPanel({ onBack }: ReferralPanelProps) {
       <div className="bg-[#1a2d45]/40 border border-amber-700/10 rounded-xl p-3">
         <div className="text-amber-200/50 text-xs text-center leading-relaxed">
           {t('referral.newPlayerBonus')}
-          <span className="text-amber-300 font-semibold"> 10 000 </span>
-          <img src={SHANYRAK_ICON} alt="" className="w-3 h-3 object-contain inline-block mx-0.5" />
-          + <span className="text-emerald-400 font-semibold">25 </span>
-          <img src={TENGE_ICON} alt="" className="w-3 h-3 object-contain inline-block mx-0.5" />
+        </div>
+        <div className="flex items-center justify-center gap-1.5 mt-1.5">
+          <span className="text-green-400 font-bold text-sm">10 000</span>
+          <img src={SHANYRAK_ICON} alt="" className="w-3.5 h-3.5 object-contain" />
+          <span className="text-amber-200/40 text-xs">+</span>
+          <span className="text-yellow-400 font-bold text-sm">25</span>
+          <img src={TENGE_ICON} alt="" className="w-3.5 h-3.5 object-contain" />
         </div>
       </div>
     </div>

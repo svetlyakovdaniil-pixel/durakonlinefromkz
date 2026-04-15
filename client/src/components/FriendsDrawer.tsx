@@ -236,7 +236,6 @@ function FriendsContent({
         <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
         <Gift className="w-5 h-5 text-red-200 shrink-0" />
         <span className="text-sm tracking-wide">{t('referral.inviteButton')}</span>
-        <Gift className="w-4 h-4 text-red-200/60 shrink-0" />
       </button>
 
       {/* Add friend */}

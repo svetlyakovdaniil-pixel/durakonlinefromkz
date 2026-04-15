@@ -692,7 +692,7 @@ export const ru = {
     invited: 'приглашено',
     yourCode: 'Ваш пригласительный код',
     codeCopied: 'Код скопирован!',
-    newPlayerBonus: 'Новый игрок, введший ваш код, получает:',
+    newPlayerBonus: 'Новый игрок, применивший ваш код, получает:',
     inviteButton: 'Пригласи друга',
   },
 
