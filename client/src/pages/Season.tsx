@@ -29,13 +29,14 @@ interface SeasonPageProps {
   onClose: () => void;
 }
 
-function formatTimeLeft(endDate: Date): string {
+function formatTimeLeft(endDate: Date, locale?: string): string {
   const now = new Date();
   const diff = endDate.getTime() - now.getTime();
-  if (diff <= 0) return '0д 0ч';
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return `${days}д ${hours}ч`;
+  const days = Math.floor(Math.max(0, diff) / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((Math.max(0, diff) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (locale === 'en') return diff <= 0 ? '0d 0h' : `${days}d ${hours}h`;
+  if (locale === 'kk') return diff <= 0 ? '0к 0с' : `${days}к ${hours}с`;
+  return diff <= 0 ? '0д 0ч' : `${days}д ${hours}ч`;
 }
 
 function ProgressBar({ current, min, max, color }: { current: number; min: number; max: number; color: string }) {
@@ -591,7 +592,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   );
 
   const endDate = seasonData?.endDate ? new Date(seasonData.endDate) : null;
-  const timeLeft = endDate ? formatTimeLeft(endDate) : '-';
+  const timeLeft = endDate ? formatTimeLeft(endDate, locale) : '-';
 
   const seasonInfo = seasonData?.seasonInfo;
   const seasonName = seasonInfo

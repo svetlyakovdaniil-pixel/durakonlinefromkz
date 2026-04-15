@@ -2991,3 +2991,10 @@
 - [x] golden_start: исправлено — прогресс обновляется всегда (не только при >= 1200), cap = 1200
 - [x] TypeScript: добавлен give_item в enum adminAuditLog.action (schema.ts + db.ts + миграция)
 - [x] TypeScript: исправлены TS2339 ошибки в db.ts (detectSuspiciousTransactions, detectRapidBalanceGrowth)
+
+## Batch 89 — Переводы и новые аватарки (апрель 2026)
+- [x] Классические аватарки (медведь, волк, лиса...): добавить перевод nameKk в shared/avatars.ts
+- [x] ProfileDrawer: перевести "Рамка игрока" и "изменить" на английский язык
+- [x] Season.tsx: перевести таймер (д/ч → d/h на английском языке)
+- [x] Добавить аватарку kitsune_emerald в магазин за 25 тенге
+- [x] Добавить аватарку dragon_ryu_sapphire в магазин за 25 тенге

@@ -176,12 +176,12 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
       {(ownedFrames.length > 0 || isPremium) && (
         <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-amber-200/60 text-xs">{locale === 'kk' ? 'Аватар жақтауы' : 'Рамка аватарки'}</div>
+            <div className="text-amber-200/60 text-xs">{locale === 'kk' ? 'Аватар жақтауы' : locale === 'en' ? 'Avatar Frame' : 'Рамка аватарки'}</div>
             <button
               onClick={() => setShowFramePicker(!showFramePicker)}
               className="text-amber-400 text-xs hover:text-amber-300 transition-colors"
             >
-              {locale === 'kk' ? 'Өзгерту' : 'Изменить'}
+              {locale === 'kk' ? 'Өзгерту' : locale === 'en' ? 'Change' : 'Изменить'}
             </button>
           </div>
           <div className="flex items-center gap-3">
