@@ -5,7 +5,7 @@ import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { getBaseAvatarId, getSeasonAvatarId, getAvatarDisplayName, isCanvasAvatar, getAvatarAccentColors } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRewardDefForSeason, type SeasonTheme } from '../../../shared/seasons';
 import { useTranslation } from '@/i18n';
-import { X, Flame, Trophy, Clock, Gift } from 'lucide-react';
+import { X, Flame, Trophy, Clock, Gift, HelpCircle } from 'lucide-react';
 import { GreatKhanFrame } from '@/components/GreatKhanFrame';
 import { ObsidianNeonFrame } from '@/components/ObsidianNeonFrame';
 import { RubyNeonFrame } from '@/components/RubyNeonFrame';
@@ -35,7 +35,7 @@ function formatTimeLeft(endDate: Date, locale?: string): string {
   const days = Math.floor(Math.max(0, diff) / (1000 * 60 * 60 * 24));
   const hours = Math.floor((Math.max(0, diff) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   if (locale === 'en') return diff <= 0 ? '0d 0h' : `${days}d ${hours}h`;
-  if (locale === 'kk') return diff <= 0 ? '0к 0с' : `${days}к ${hours}с`;
+  if (locale === 'kk') return diff <= 0 ? '0 күн 0 сағ' : `${days} күн ${hours} сағ`;
   return diff <= 0 ? '0д 0ч' : `${days}д ${hours}ч`;
 }
 
@@ -566,6 +566,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const { locale } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
+  const [showRulesDialog, setShowRulesDialog] = useState(false);
 
   // Support admin test season: read from DB (season_test_state) - works across page reloads and devices
   const { data: testStateData } = trpc.season.activeTestKey.useQuery(undefined, {
@@ -592,6 +593,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   );
 
   const endDate = seasonData?.endDate ? new Date(seasonData.endDate) : null;
+  const startDate = seasonData?.startDate ? new Date(seasonData.startDate) : null;
   const timeLeft = endDate ? formatTimeLeft(endDate, locale) : '-';
 
   const seasonInfo = seasonData?.seasonInfo;
@@ -638,9 +640,18 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 {locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон'}
               </span>
             </div>
-            <button onClick={onClose} className="text-white/50 hover:text-white transition-colors p-1">
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setShowRulesDialog(true)}
+                className="text-white/50 hover:text-white transition-colors p-1"
+                title={locale === 'kk' ? 'Ережелер' : locale === 'en' ? 'Rules' : 'Правила'}
+              >
+                <HelpCircle className="w-5 h-5" />
+              </button>
+              <button onClick={onClose} className="text-white/50 hover:text-white transition-colors p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           {/* Season name + timer */}
@@ -1193,6 +1204,203 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Season Rules Dialog */}
+      {showRulesDialog && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowRulesDialog(false)} />
+          <div
+            className="relative w-[min(480px,95vw)] max-h-[88dvh] rounded-2xl flex flex-col overflow-hidden"
+            style={{
+              background: 'linear-gradient(160deg, #0d1b2a 0%, #0a1628 100%)',
+              border: `1px solid ${theme.border}`,
+              boxShadow: `0 0 40px ${theme.accent}20`,
+            }}
+          >
+            {/* Dialog Header */}
+            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
+              <div className="flex items-center gap-2">
+                <HelpCircle className="w-5 h-5" style={{ color: theme.accent }} />
+                <span className="font-bold text-white text-base">
+                  {locale === 'kk' ? 'Маусым ережелері' : locale === 'en' ? 'Season Rules' : 'Правила сезона'}
+                </span>
+              </div>
+              <button onClick={() => setShowRulesDialog(false)} className="text-white/50 hover:text-white transition-colors p-1">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Dialog Content */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5 text-sm text-amber-100/80">
+
+              {/* Section 1: How the season works */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Маусым қалай жұмыс істейді?' : locale === 'en' ? 'How does the season work?' : 'Как работает сезон?'}
+                </h3>
+                <p>
+                  {locale === 'kk'
+                    ? 'Әр маусым белгілі мерзімде өтеді. Ойын ойнаған сайын маусымдық ұпай жинайды. Маусым аяқталғанда рангыңызға сәйкес сыйақы аласыз. Әр маусымда ұпай сфирланады — жаңа маусым жаңа бастауымен барлық бұрынғы сфірленеді.'
+                    : locale === 'en'
+                      ? 'Each season runs for a fixed period. Playing games earns you season rating points. When the season ends, you receive a reward based on your rank. Points reset each season — every new season starts fresh.'
+                      : 'Каждый сезон идёт фиксированное время. Играя партии, вы набираете сезонные очки. По окончании сезона вы получаете награду соответственно вашему рангу. Очки сбрасываются каждый сезон — каждый новый сезон начинается с нуля.'}
+                </p>
+              </div>
+
+              {/* Section 2: Season dates */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Ағымдағы маусым мерзімдері' : locale === 'en' ? 'Current season dates' : 'Сроки текущего сезона'}
+                </h3>
+                <div className="rounded-xl p-3 space-y-1" style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${theme.border}` }}>
+                  {seasonNumber && (
+                    <div className="font-semibold" style={{ color: theme.accent }}>Season {seasonNumber} — {seasonName}</div>
+                  )}
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-amber-200/60">
+                    <span>
+                      {locale === 'kk' ? 'Басталуы:' : locale === 'en' ? 'Start:' : 'Начало:'}
+                      {' '}{startDate ? startDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+                    </span>
+                    <span>—</span>
+                    <span>
+                      {locale === 'kk' ? 'Аяқталуы:' : locale === 'en' ? 'End:' : 'Окончание:'}
+                      {' '}{endDate ? endDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs" style={{ color: `${theme.accent}80` }}>
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      {locale === 'kk' ? 'Қалған уақыт:' : locale === 'en' ? 'Time left:' : 'Осталось:'} {timeLeft}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Rewards */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Сыйақтар қалай жұмыс беріледі?' : locale === 'en' ? 'How are rewards distributed?' : 'Как выдаются награды?'}
+                </h3>
+                <div className="rounded-xl p-3 space-y-2" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.20)' }}>
+                  <p>
+                    {locale === 'kk'
+                      ? 'Сіз тек өзіңіз қол жеткен рангыңыздың сыйағын аласыз. Төменгі рангтар сыйақ бермейді.'
+                      : locale === 'en'
+                        ? 'You receive only the reward for the rank you achieved. Lower ranks do not grant any reward.'
+                        : 'Вы получаете только награду за тот ранг, которого достигли. Все нижестоящие ранги награду не выдают.'}
+                  </p>
+                  <p className="text-amber-200/60 text-xs italic">
+                    {locale === 'kk'
+                      ? 'Мысалы: егер сіз Беркұт ранғына жетсеңіз, тек Беркұт сыйағын аласыз. Барлық рангтардың сыйақтары берілмейді.'
+                      : locale === 'en'
+                        ? 'Example: if you reach Berkut rank, you only get the Berkut reward. Rewards for lower ranks are not given.'
+                        : 'Пример: если вы достигли ранга Беркут, вы получаете только награду Беркута. Награды за все нижестоящие ранги не выдаются.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 4: Premium note */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Премиум және маусым' : locale === 'en' ? 'Premium and season' : 'Премиум и сезон'}
+                </h3>
+                <div className="rounded-xl p-3" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.20)' }}>
+                  <p>
+                    {locale === 'kk'
+                      ? 'Премиум маусымдық рейтингіңе әсер етпейді. Премиум абонементі бар ойыншы да премиумсыз ойыншымен бірдей ұпай жинайды. Маусым — бұл шынайлы бәсекелік.'
+                      : locale === 'en'
+                        ? 'Premium does not affect season rating. A player with Premium earns the same season points as a player without it. The season is a fair competition for everyone.'
+                        : 'Премиум не влияет на сезонный рейтинг. Игрок с Премиумом набирает столько же сезонных очков, сколько и без Премиума. Сезон — это честная соревнование для всех.'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Section 5: How to earn rating points */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Ұпай қалай жиналады?' : locale === 'en' ? 'How to earn rating points?' : 'Как зарабатывать очки?'}
+                </h3>
+                <div className="rounded-xl p-3 space-y-2" style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${theme.border}` }}>
+                  <div className="space-y-1.5">
+                    {[
+                      {
+                        icon: '✅',
+                        ru: 'Победа в партии — +очки (зависит от числа игроков)',
+                        en: 'Win a game — +points (depends on number of players)',
+                        kk: 'Ойында жеңу — +ұпай (ойыншылар санына байланысты)',
+                      },
+                      {
+                        icon: '❌',
+                        ru: 'Поражение — -очки (незначительно)',
+                        en: 'Loss — -points (small penalty)',
+                        kk: 'Жеңілу — -ұпай (незде)',
+                      },
+                      {
+                        icon: '🤝',
+                        ru: 'Партия против реальных игроков — очки засчитываются',
+                        en: 'Games vs real players — points count',
+                        kk: 'Нақты ойыншылармен ойын — ұпай есептеледі',
+                      },
+                      {
+                        icon: '🤖',
+                        ru: 'Партия против ботов — очки не засчитываются',
+                        en: 'Games vs bots — points do NOT count',
+                        kk: 'Боттармен ойын — ұпай есептелмейді',
+                      },
+                      {
+                        icon: '🏆',
+                        ru: 'Чем больше игроков в партии — тем больше очков за победу',
+                        en: 'More players in a game — more points for winning',
+                        kk: 'Ойында көп ойыншы — жеңуге көп ұпай',
+                      },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start gap-2 text-sm">
+                        <span className="text-base leading-5 flex-shrink-0">{item.icon}</span>
+                        <span>{locale === 'kk' ? item.kk : locale === 'en' ? item.en : item.ru}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 6: Ranks overview */}
+              <div className="space-y-2">
+                <h3 className="font-bold text-base" style={{ color: theme.accent }}>
+                  {locale === 'kk' ? 'Рангтар' : locale === 'en' ? 'Ranks' : 'Ранги'}
+                </h3>
+                <div className="space-y-1.5">
+                  {SEASON_RANKS.map(rank => (
+                    <div key={rank.key} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${rank.color}25` }}>
+                      <DiamondRankIcon seasonRating={rank.minRating} size={24} />
+                      <span className="font-semibold text-sm" style={{ color: rank.color }}>
+                        {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
+                      </span>
+                      <span className="text-xs text-amber-200/40 ml-auto">
+                        {rank.minRating === 0
+                          ? (locale === 'kk' ? 'Бастапқы' : locale === 'en' ? 'Starting' : 'Начальный')
+                          : `${rank.minRating.toLocaleString()}+ ${locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}`
+                        }
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            {/* Dialog Footer */}
+            <div className="shrink-0 px-5 py-4" style={{ borderTop: `1px solid ${theme.border}` }}>
+              <button
+                onClick={() => setShowRulesDialog(false)}
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
+                style={{ background: `${theme.accent}18`, border: `1px solid ${theme.accent}40`, color: theme.accent }}
+              >
+                {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Reward popup */}
       {rewardPopupKey && (
