@@ -2970,7 +2970,7 @@
 - [x] AvatarPicker: исправить пустые превью для аватарок без previewUrl — добавлен previewUrl для Ruby/Amber S6-S9, AvatarPicker использует previewUrl ?? url
 - [x] Задание "Братишка": переименовать quick_batyr, trackType friend_added, триггер при acceptFriendRequest (оба игрока получают прогресс)
 ## Исправление нерабочих ежедневных заданий (апрель 2026)
-- [ ] Группа 1: durationSeconds (gameStartedAt в Room), rating_gained (в recordGameResult), shanyrak_won_today (в creditShanyrakPrize)
-- [ ] Группа 2: spadeKingBeatsTrumpAce, kingBeatsTrump, defended777 в processDefenseAchievement + dailyQuestsDb
-- [ ] Группа 3: in-memory трекеры в socketServer.ts (passCardsShown, startedTurnWith10, attacks, wins_in_a_row, cardsInOneTurn, beatSameRankSuit, threw6ToNonNeighbor, win_when_opponent_has_1card)
+- [x] Группа 1: durationSeconds (gameStartedAt в Room), rating_gained (в recordGameResult), shanyrak_won_today (в creditShanyrakPrize)
+- [x] Группа 2: spadeKingBeatsTrumpAce, kingBeatsTrump, defended777 в processDefenseAchievement + dailyQuestsDb
+- [x] Группа 3: in-memory трекеры в socketServer.ts (passCardsShown, startedTurnWith10, attacks, wins_in_a_row, cardsInOneTurn, beatSameRankSuit, threw6ToNonNeighbor, win_when_opponent_has_1card)
 - [x] Исправить все нерабочие ежедневные задания: durationSeconds, rating_gained, shanyrak_won_today, spadeKingBeatsTrumpAce, kingBeatsTrump, defended777, wins_in_a_row, attacks_total, pass_card_shown, started_turn_with_10, beat_same_rank_suit_15, threw_6_to_non_neighbor, win_when_opponent_has_1card, cardsInOneTurn
