@@ -1,139 +1,117 @@
 import React from 'react';
 interface Props { size?: number; className?: string; }
 /**
- * AmberNeonEraAvatar — Neon circuit amber with double orbit rings.
+ * AmberNeonEraAvatar — Pure neon light art, amber neon tubes.
  * Season: Неоновая эра (Season 7) | Rank: Янтарь
- * Animation: triple aura + double orbit rings + scan line + "AMBER RANK" text
+ * Animation: multicolor neon flicker + electric sparks + neon scan + color shift
+ * offsetX: -2.5%, offsetY: -2.5%
  */
 export function AmberNeonEraAvatar({ size = 48, className = '' }: Props) {
   const uid = React.useId().replace(/:/g, '');
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size / 2;
-  const textR = r * 0.88;
-  const fontSize = Math.max(4, size * 0.085);
+  const posX = 50 + (-2.5);
+  const posY = 50 + (-2.5);
   return (
     <div className={className} style={{ width: size, height: size, position: 'relative', display: 'inline-block', flexShrink: 0 }}>
       <style>{`
-        @keyframes ane-aura-${uid} {
-          0%   { box-shadow: 0 0 8px 3px rgba(245,158,11,0.8), 0 0 18px 7px rgba(251,191,36,0.4), 0 0 35px 13px rgba(234,179,8,0.2); }
-          50%  { box-shadow: 0 0 22px 10px rgba(251,191,36,1), 0 0 40px 16px rgba(245,158,11,0.7), 0 0 60px 22px rgba(234,179,8,0.35); }
-          100% { box-shadow: 0 0 8px 3px rgba(245,158,11,0.8), 0 0 18px 7px rgba(251,191,36,0.4), 0 0 35px 13px rgba(234,179,8,0.2); }
+        @keyframes ane-neon-${uid} {
+          0%   { box-shadow: 0 0 8px 3px rgba(245,158,11,0.9), 0 0 20px 8px rgba(245,158,11,0.5), 0 0 40px 15px rgba(251,191,36,0.25); }
+          25%  { box-shadow: 0 0 12px 5px rgba(255,120,0,1), 0 0 28px 11px rgba(255,120,0,0.6), 0 0 55px 20px rgba(255,120,0,0.3); }
+          50%  { box-shadow: 0 0 16px 7px rgba(251,191,36,1), 0 0 35px 14px rgba(251,191,36,0.7), 0 0 65px 25px rgba(251,191,36,0.35); }
+          75%  { box-shadow: 0 0 10px 4px rgba(255,160,0,0.9), 0 0 24px 10px rgba(255,160,0,0.55), 0 0 48px 18px rgba(255,160,0,0.28); }
+          100% { box-shadow: 0 0 8px 3px rgba(245,158,11,0.9), 0 0 20px 8px rgba(245,158,11,0.5), 0 0 40px 15px rgba(251,191,36,0.25); }
         }
-        @keyframes ane-spin-${uid} {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        @keyframes ane-spin-rev-${uid} {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(-360deg); }
+        @keyframes ane-flicker-${uid} {
+          0%, 100% { opacity: 1; }
+          85%       { opacity: 1; }
+          86%       { opacity: 0.2; }
+          87%       { opacity: 1; }
+          91%       { opacity: 0.8; }
+          92%       { opacity: 1; }
+          96%       { opacity: 0.4; }
+          97%       { opacity: 1; }
         }
         @keyframes ane-scan-${uid} {
-          0%   { top: 0%; opacity: 0; }
-          10%  { opacity: 0.5; }
-          90%  { opacity: 0.5; }
-          100% { top: 100%; opacity: 0; }
+          0%   { transform: translateY(-${size * 1.1}px); opacity: 0.7; }
+          85%  { opacity: 0.7; }
+          100% { transform: translateY(${size * 1.1}px); opacity: 0; }
         }
-        @keyframes ane-pulse-${uid} {
-          0%, 100% { transform: scale(1); }
-          50%       { transform: scale(1.04); }
+        @keyframes ane-spark-${uid} {
+          0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+          40%       { opacity: 1; transform: scale(1.4) rotate(180deg); }
+          70%       { opacity: 0.6; transform: scale(0.8) rotate(270deg); }
+        }
+        @keyframes ane-border-${uid} {
+          0%   { border-color: rgba(245,158,11,0.9); }
+          33%  { border-color: rgba(255,120,0,0.9); }
+          66%  { border-color: rgba(251,191,36,1); }
+          100% { border-color: rgba(245,158,11,0.9); }
         }
       `}</style>
-      <div style={{ width: size, height: size, position: 'relative', animation: `ane-aura-${uid} 1.8s ease-in-out infinite`, borderRadius: '50%' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0, animation: `ane-pulse-${uid} 3s ease-in-out infinite` }}>
-          <defs>
-            <clipPath id={`ane-clip-${uid}`}>
-              <circle cx={cx} cy={cy} r={r} />
-            </clipPath>
-            <radialGradient id={`ane-bg-${uid}`} cx="50%" cy="40%" r="65%">
-              <stop offset="0%" stopColor="#3a2000" />
-              <stop offset="50%" stopColor="#1e1000" />
-              <stop offset="100%" stopColor="#080400" />
-            </radialGradient>
-            <radialGradient id={`ane-gem-${uid}`} cx="50%" cy="30%" r="60%">
-              <stop offset="0%" stopColor="#fef3c7" />
-              <stop offset="50%" stopColor="#fbbf24" />
-              <stop offset="100%" stopColor="#d97706" />
-            </radialGradient>
-            <path id={`ane-textpath-${uid}`} d={`M ${cx - textR},${cy} a ${textR},${textR} 0 1,1 0.01,0`} />
-          </defs>
-          <g clipPath={`url(#ane-clip-${uid})`}>
-            <circle cx={cx} cy={cy} r={r} fill={`url(#ane-bg-${uid})`} />
 
-            {/* Grid */}
-            {Array.from({ length: 6 }).map((_, i) => {
-              const y = (size / 7) * (i + 1);
-              return <line key={`h${i}`} x1={0} y1={y} x2={size} y2={y} stroke="rgba(245,158,11,0.15)" strokeWidth={0.5} />;
-            })}
-            {Array.from({ length: 6 }).map((_, i) => {
-              const x = (size / 7) * (i + 1);
-              return <line key={`v${i}`} x1={x} y1={0} x2={x} y2={size} stroke="rgba(245,158,11,0.15)" strokeWidth={0.5} />;
-            })}
+      {/* Neon border ring */}
+      <div aria-hidden="true" style={{
+        position: 'absolute',
+        inset: -Math.max(1, size * 0.04),
+        borderRadius: '50%',
+        border: `${Math.max(1, size * 0.04)}px solid rgba(245,158,11,0.9)`,
+        boxShadow: `0 0 ${size * 0.08}px rgba(245,158,11,0.6)`,
+        animation: `ane-border-${uid} 2s ease-in-out infinite`,
+        pointerEvents: 'none',
+      }} />
 
-            {/* Hexagonal rings */}
-            {[0.35, 0.55, 0.75].map((scale, ri) => {
-              const s = r * scale;
-              const pts = Array.from({ length: 6 }).map((_, i) => {
-                const a = (i * 60 * Math.PI) / 180;
-                return `${cx + Math.cos(a) * s},${cy + Math.sin(a) * s}`;
-              }).join(' ');
-              return <polygon key={ri} points={pts} fill="none" stroke="#f59e0b" strokeWidth={Math.max(0.5, size * 0.012)} opacity={0.8 - ri * 0.2} />;
-            })}
+      <div style={{
+        width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative',
+        animation: `ane-neon-${uid} 2s ease-in-out infinite, ane-flicker-${uid} 5s ease-in-out infinite`,
+      }}>
+        <img
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_neon_era_s7_v2_434a2768.png"
+          alt="Янтарь Неоновая эра"
+          style={{
+            width: '100%', height: '100%',
+            objectFit: 'cover',
+            objectPosition: `${posX}% ${posY}%`,
+            display: 'block',
+          }}
+          draggable={false}
+        />
 
-            {/* Circuit nodes */}
-            {Array.from({ length: 6 }).map((_, i) => {
-              const a = (i * 60 * Math.PI) / 180;
-              return (
-                <g key={i}>
-                  <circle cx={cx + Math.cos(a) * r * 0.55} cy={cy + Math.sin(a) * r * 0.55} r={Math.max(2, size * 0.04)} fill="#f59e0b" opacity="0.9" />
-                  <circle cx={cx + Math.cos(a) * r * 0.55} cy={cy + Math.sin(a) * r * 0.55} r={Math.max(1, size * 0.02)} fill="#fef3c7" opacity="0.9" />
-                </g>
-              );
-            })}
+        {/* Neon scan line */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', left: 0, right: 0,
+          height: size * 0.1,
+          background: 'linear-gradient(to bottom, transparent, rgba(245,158,11,0.4), transparent)',
+          animation: `ane-scan-${uid} 1.8s linear infinite`,
+          pointerEvents: 'none',
+        }} />
 
-            {/* Center gem */}
-            <circle cx={cx} cy={cy} r={r * 0.18} fill={`url(#ane-gem-${uid})`} opacity="0.95" />
-            <circle cx={cx} cy={cy} r={r * 0.1} fill="#fef3c7" opacity="0.9" />
-            <circle cx={cx} cy={cy} r={r * 0.05} fill="white" opacity="0.95" />
-
-            {/* Outer border */}
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#f59e0b" strokeWidth={Math.max(1, size * 0.03)} opacity="0.85" />
-
-            {/* "AMBER RANK" text */}
-            <text fontSize={fontSize} fill="#fef3c7" fontFamily="'Arial', sans-serif" fontWeight="bold" letterSpacing={Math.max(0.5, size * 0.01)}>
-              <textPath href={`#ane-textpath-${uid}`} startOffset="0%">
-                AMBER RANK • AMBER RANK •{' '}
-              </textPath>
-            </text>
-
-            {/* Vignette */}
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.4)" strokeWidth={size * 0.06} />
-          </g>
-        </svg>
-
-        {/* Outer rotating conic */}
+        {/* Neon glow overlay */}
         <div aria-hidden="true" style={{
           position: 'absolute', inset: 0, borderRadius: '50%',
-          background: 'conic-gradient(from 0deg, transparent 0%, rgba(251,191,36,0.3) 20%, rgba(245,158,11,0.25) 40%, transparent 60%, rgba(251,191,36,0.2) 80%, transparent 100%)',
-          animation: `ane-spin-${uid} 2.5s linear infinite`,
-          pointerEvents: 'none',
-        }} />
-        {/* Inner reverse conic */}
-        <div aria-hidden="true" style={{
-          position: 'absolute', inset: '15%', borderRadius: '50%',
-          background: 'conic-gradient(from 60deg, transparent 0%, rgba(251,191,36,0.35) 25%, transparent 50%, rgba(245,158,11,0.3) 75%, transparent 100%)',
-          animation: `ane-spin-rev-${uid} 1.8s linear infinite`,
-          pointerEvents: 'none',
-        }} />
-        {/* Scan line */}
-        <div aria-hidden="true" style={{
-          position: 'absolute', left: 0, right: 0, height: Math.max(1, size * 0.025),
-          background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.6), transparent)',
-          borderRadius: '50%',
-          animation: `ane-scan-${uid} 2s linear infinite`,
+          background: 'radial-gradient(circle at 50% 50%, rgba(245,158,11,0.08) 0%, transparent 65%)',
           pointerEvents: 'none',
         }} />
       </div>
+
+      {/* Electric spark particles */}
+      {[
+        { top: '6%',  left: '22%', delay: '0s',   dur: '1.6s' },
+        { top: '12%', left: '72%', delay: '0.5s', dur: '2s' },
+        { top: '76%', left: '10%', delay: '1s',   dur: '1.4s' },
+        { top: '80%', left: '72%', delay: '0.3s', dur: '1.8s' },
+        { top: '45%', left: '92%', delay: '1.3s', dur: '1.6s' },
+      ].map((p, i) => (
+        <div key={i} aria-hidden="true" style={{
+          position: 'absolute',
+          top: p.top, left: p.left,
+          width: Math.max(2, size * 0.06),
+          height: Math.max(2, size * 0.06),
+          borderRadius: '50%',
+          background: 'radial-gradient(circle, rgba(255,220,0,1), rgba(245,158,11,0.5))',
+          boxShadow: `0 0 ${size * 0.07}px rgba(255,200,0,1)`,
+          animation: `ane-spark-${uid} ${p.dur} ease-in-out ${p.delay} infinite`,
+          pointerEvents: 'none',
+        }} />
+      ))}
     </div>
   );
 }
