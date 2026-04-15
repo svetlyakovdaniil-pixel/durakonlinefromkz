@@ -1,110 +1,75 @@
 import React from 'react';
 interface Props { size?: number; className?: string; }
 /**
- * RubyNeonEraAvatar — Neon circuit ruby with glitch animation.
+ * RubyNeonEraAvatar — Neon city night with electric signs.
  * Season: Неоновая эра (Season 7) | Rank: Рубин
- * Animation: neon red pulse + glitch flicker + rotating conic + "RUBY RANK" text
+ * Animation: multi-color neon halo flicker (red/cyan/magenta/yellow) + electric spark + color shift
  */
 export function RubyNeonEraAvatar({ size = 48, className = '' }: Props) {
   const uid = React.useId().replace(/:/g, '');
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = size / 2;
-  const textR = r * 0.88;
-  const fontSize = Math.max(4, size * 0.085);
   return (
     <div className={className} style={{ width: size, height: size, position: 'relative', display: 'inline-block', flexShrink: 0 }}>
       <style>{`
-        @keyframes rne-pulse-${uid} {
-          0%, 100% { box-shadow: 0 0 6px 2px rgba(239,68,68,0.7), 0 0 14px 5px rgba(168,85,247,0.3); }
-          50%       { box-shadow: 0 0 18px 8px rgba(239,68,68,1), 0 0 32px 14px rgba(168,85,247,0.5); }
+        @keyframes rneon-halo-${uid} {
+          0%   { box-shadow: 0 0 8px 3px rgba(239,68,68,0.8), 0 0 20px 7px rgba(239,68,68,0.35); }
+          25%  { box-shadow: 0 0 10px 4px rgba(6,182,212,0.8), 0 0 22px 8px rgba(6,182,212,0.35); }
+          50%  { box-shadow: 0 0 12px 5px rgba(217,70,239,0.8), 0 0 26px 10px rgba(217,70,239,0.35); }
+          75%  { box-shadow: 0 0 10px 4px rgba(234,179,8,0.8), 0 0 22px 8px rgba(234,179,8,0.35); }
+          100% { box-shadow: 0 0 8px 3px rgba(239,68,68,0.8), 0 0 20px 7px rgba(239,68,68,0.35); }
         }
-        @keyframes rne-spin-${uid} {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
+        @keyframes rneon-flicker-${uid} {
+          0%, 100% { filter: brightness(1) saturate(1.2); }
+          8%        { filter: brightness(1.4) saturate(1.6) hue-rotate(20deg); }
+          10%       { filter: brightness(0.9) saturate(1.1); }
+          12%       { filter: brightness(1.3) saturate(1.5) hue-rotate(-15deg); }
+          14%       { filter: brightness(1) saturate(1.2); }
+          60%       { filter: brightness(1.15) saturate(1.3) hue-rotate(10deg); }
+          62%       { filter: brightness(0.95) saturate(1.1); }
         }
-        @keyframes rne-glitch-${uid} {
-          0%, 90%, 100% { filter: brightness(1) hue-rotate(0deg); }
-          92%           { filter: brightness(1.5) hue-rotate(20deg); }
-          94%           { filter: brightness(0.8) hue-rotate(-10deg); }
-          96%           { filter: brightness(1.3) hue-rotate(15deg); }
+        @keyframes rneon-spark-${uid} {
+          0%, 80%, 100% { opacity: 0; }
+          83%            { opacity: 0.55; }
+          86%            { opacity: 0.15; }
+          89%            { opacity: 0.65; }
+          92%            { opacity: 0; }
+        }
+        @keyframes rneon-scan-${uid} {
+          0%   { top: 110%; opacity: 0; }
+          5%   { opacity: 0.45; }
+          90%  { opacity: 0.35; }
+          100% { top: -20%; opacity: 0; }
         }
       `}</style>
-      <div style={{ width: size, height: size, position: 'relative', animation: `rne-pulse-${uid} 2s ease-in-out infinite`, borderRadius: '50%' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ display: 'block', borderRadius: '50%', overflow: 'hidden', position: 'absolute', top: 0, left: 0, animation: `rne-glitch-${uid} 4s ease-in-out infinite` }}>
-          <defs>
-            <clipPath id={`rne-clip-${uid}`}>
-              <circle cx={cx} cy={cy} r={r} />
-            </clipPath>
-            <radialGradient id={`rne-bg-${uid}`} cx="50%" cy="40%" r="60%">
-              <stop offset="0%" stopColor="#3d0020" />
-              <stop offset="50%" stopColor="#200010" />
-              <stop offset="100%" stopColor="#0a0008" />
-            </radialGradient>
-            <path id={`rne-textpath-${uid}`} d={`M ${cx - textR},${cy} a ${textR},${textR} 0 1,1 0.01,0`} />
-          </defs>
-          <g clipPath={`url(#rne-clip-${uid})`}>
-            <circle cx={cx} cy={cy} r={r} fill={`url(#rne-bg-${uid})`} />
-
-            {/* Grid lines */}
-            {Array.from({ length: 5 }).map((_, i) => {
-              const y = (size / 6) * (i + 1);
-              return <line key={`h${i}`} x1={0} y1={y} x2={size} y2={y} stroke="rgba(239,68,68,0.2)" strokeWidth={0.5} />;
-            })}
-            {Array.from({ length: 5 }).map((_, i) => {
-              const x = (size / 6) * (i + 1);
-              return <line key={`v${i}`} x1={x} y1={0} x2={x} y2={size} stroke="rgba(239,68,68,0.2)" strokeWidth={0.5} />;
-            })}
-
-            {/* Central hexagon */}
-            {(() => {
-              const s = r * 0.32;
-              const pts = Array.from({ length: 6 }).map((_, i) => {
-                const a = (i * 60 * Math.PI) / 180;
-                return `${cx + Math.cos(a) * s},${cy + Math.sin(a) * s}`;
-              }).join(' ');
-              return <polygon points={pts} fill="none" stroke="#ef4444" strokeWidth={Math.max(1, size * 0.025)} opacity="0.9" />;
-            })()}
-
-            {/* Inner hex */}
-            {(() => {
-              const s = r * 0.18;
-              const pts = Array.from({ length: 6 }).map((_, i) => {
-                const a = (i * 60 * Math.PI) / 180;
-                return `${cx + Math.cos(a) * s},${cy + Math.sin(a) * s}`;
-              }).join(' ');
-              return <polygon points={pts} fill="rgba(239,68,68,0.2)" stroke="#ef4444" strokeWidth={Math.max(0.5, size * 0.015)} opacity="0.8" />;
-            })()}
-
-            {/* Center */}
-            <circle cx={cx} cy={cy} r={r * 0.1} fill="#ef4444" opacity="0.95" />
-            <circle cx={cx} cy={cy} r={r * 0.06} fill="#fca5a5" opacity="0.9" />
-
-            {/* Circuit nodes */}
-            {Array.from({ length: 6 }).map((_, i) => {
-              const a = (i * 60 * Math.PI) / 180;
-              return <circle key={i} cx={cx + Math.cos(a) * r * 0.55} cy={cy + Math.sin(a) * r * 0.55} r={Math.max(1.5, size * 0.03)} fill="#ef4444" opacity="0.85" />;
-            })}
-
-            {/* Outer border */}
-            <circle cx={cx} cy={cy} r={r * 0.92} fill="none" stroke="#ef4444" strokeWidth={Math.max(1, size * 0.03)} opacity="0.8" />
-
-            {/* "RUBY RANK" text */}
-            <text fontSize={fontSize} fill="#fca5a5" fontFamily="'Arial', sans-serif" fontWeight="bold" letterSpacing={Math.max(0.5, size * 0.01)}>
-              <textPath href={`#rne-textpath-${uid}`} startOffset="0%">
-                RUBY RANK • RUBY RANK •{' '}
-              </textPath>
-            </text>
-
-            {/* Vignette */}
-            <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.4)" strokeWidth={size * 0.06} />
-          </g>
-        </svg>
-        {/* Rotating conic */}
+      <div style={{
+        width: size, height: size, borderRadius: '50%', overflow: 'hidden',
+        position: 'relative',
+        animation: `rneon-halo-${uid} 2s linear infinite`,
+      }}>
+        <img
+          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_neon_era_v3_42502a8f.png"
+          alt="Рубин"
+          style={{
+            width: '105%', height: '105%',
+            objectFit: 'cover', objectPosition: 'center',
+            display: 'block',
+            marginLeft: '-2.5%', marginTop: '-2.5%',
+            animation: `rneon-flicker-${uid} 3s ease-in-out infinite`,
+          }}
+          draggable={false}
+        />
+        {/* Horizontal neon scan line */}
         <div aria-hidden="true" style={{
-          position: 'absolute', inset: 0, borderRadius: '50%',
-          background: 'conic-gradient(from 0deg, transparent 0%, rgba(239,68,68,0.25) 20%, transparent 40%, rgba(168,85,247,0.15) 60%, transparent 80%)',
-          animation: `rne-spin-${uid} 3s linear infinite`,
+          position: 'absolute', left: 0, right: 0,
+          height: Math.max(2, size * 0.05),
+          background: 'linear-gradient(180deg, transparent, rgba(239,68,68,0.55), transparent)',
+          animation: `rneon-scan-${uid} 2s ease-in infinite`,
+          pointerEvents: 'none',
+        }} />
+        {/* Electric spark burst overlay */}
+        <div aria-hidden="true" style={{
+          position: 'absolute', inset: 0,
+          background: 'radial-gradient(circle at 50% 50%, rgba(6,182,212,0.28) 0%, transparent 65%)',
+          animation: `rneon-spark-${uid} 2.5s ease-in-out infinite`,
           pointerEvents: 'none',
         }} />
       </div>
