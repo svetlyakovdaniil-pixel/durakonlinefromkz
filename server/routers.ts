@@ -97,7 +97,7 @@ import { getAchievementsForProfile, incrementAchievementProgress, claimAchieveme
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
 import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEASON_RANKS, SEASONS } from "../shared/seasons";
 import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
-import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest } from "./dailyQuestsDb";
+import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest, incrementDailyQuestProgress } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
 
@@ -253,6 +253,9 @@ export const appRouter = router({
           });
           // Emit real-time notification
           emitNotificationToProfile(friendship.senderId, 'friend_accepted');
+          // Daily quest "Братишка" — both players get credit when friendship is accepted
+          await incrementDailyQuestProgress(myProfile.id, 'friend_added', 1).catch(() => {});
+          await incrementDailyQuestProgress(friendship.senderId, 'friend_added', 1).catch(() => {});
         }
 
         return { success: ok };

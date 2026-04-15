@@ -56,7 +56,8 @@ export type DailyQuestTrackType =
   | 'threw_6_to_non_neighbor'     // threw a 6 to a non-neighbor player
   | 'beat_same_rank_suit_15'      // beat a card with same rank and suit 15 times
   | 'meta_quests_completed'       // completed N other daily quests today
-  | 'became_durak_count';         // became durak N times
+  | 'became_durak_count'          // became durak N times
+  | 'friend_added';                // added a friend (accepted friend request)
 
 export const DAILY_QUESTS: DailyQuestDef[] = [
   // ── 1 ─────────────────────────────────────────────────────────────────────
@@ -87,16 +88,16 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
   },
   // ── 3 ─────────────────────────────────────────────────────────────────────
   {
-    key: 'quick_batyr',
-    nameRu: 'Быстрый батыр',
-    nameKk: 'Жылдам батыр',
-    nameEn: 'Quick Batyr',
-    descRu: 'Закончи партию за 15 минут',
-    descKk: 'Ойынды 15 минутта аяқта',
-    descEn: 'Finish a game in under 15 minutes',
+    key: 'bratishka',
+    nameRu: 'Братишка',
+    nameKk: 'Бауырым',
+    nameEn: 'Bro',
+    descRu: 'Добавь 1 человека в друзья',
+    descKk: '1 адамды досқа қос',
+    descEn: 'Add 1 person as a friend',
     reward: { shanyrak: 300 },
     target: 1,
-    trackType: 'game_finished_under_15min',
+    trackType: 'friend_added',
   },
   // ── 4 ─────────────────────────────────────────────────────────────────────
   {
