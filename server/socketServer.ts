@@ -39,6 +39,7 @@ import {
 import { incrementDailyQuestProgress, setDailyQuestProgress, processDailyQuestsAfterGame } from './dailyQuestsDb';
 import { ACHIEVEMENT_MAP } from '../shared/achievements';
 import { DAILY_QUEST_MAP, getMoscowDayStart } from '../shared/dailyQuests';
+import { TABLE_STYLES } from '../shared/cardAssets';
 import { getDb } from './db';
 import { playerProfiles } from '../drizzle/schema';
 import { eq } from 'drizzle-orm';
@@ -426,7 +427,7 @@ export function initSocketServer(httpServer: HttpServer) {
         withBots: data.settings?.withBots || false,
         botCount: data.settings?.botCount || 0,
         deckStyle: data.settings?.deckStyle === 'custom' ? 'custom' : 'classic',
-        tableStyle: ['dark_kazakh', 'neon'].includes(data.settings?.tableStyle ?? '') ? (data.settings!.tableStyle as 'dark_kazakh' | 'neon') : 'classic',
+        tableStyle: (data.settings?.tableStyle && Object.keys(TABLE_STYLES).includes(data.settings.tableStyle)) ? data.settings.tableStyle as import('../shared/cardAssets').TableStyle : 'classic',
         betAmount,
         password: data.settings?.password || undefined,
         isPrivate: data.settings?.isPrivate || false,
