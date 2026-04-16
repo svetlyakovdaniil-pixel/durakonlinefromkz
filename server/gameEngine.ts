@@ -262,6 +262,7 @@ export function createGame(
     tableStyle: settings?.tableStyle ?? 'classic',
     prizePool: 0,
     playerPrizes: [],
+    phantomNeighborIdx: null,
   };
 }
 
@@ -281,9 +282,14 @@ export function getPrevActivePlayer(players: Player[], fromIdx: number, dir: Dir
   return getNextActivePlayer(players, fromIdx, dir === 'cw' ? 'ccw' : 'cw');
 }
 
-export function isEdgePlayer(players: Player[], playerIdx: number, defenderIdx: number, dir: Direction): boolean {
-  const leftNeighbor = getNextActivePlayer(players, defenderIdx, dir === 'cw' ? 'ccw' : 'cw');
-  const rightNeighbor = getNextActivePlayer(players, defenderIdx, dir);
+export function isEdgePlayer(players: Player[], playerIdx: number, defenderIdx: number, dir: Direction, phantomNeighborIdx?: number | null): boolean {
+  // Compute neighbors using only active (non-out) players, but treat the phantom
+  // neighbor as still-active so the player AFTER the phantom doesn't become a neighbor.
+  const effectivePlayers: Player[] = phantomNeighborIdx != null
+    ? players.map((p, i) => i === phantomNeighborIdx ? { ...p, isOut: false } : p)
+    : players;
+  const leftNeighbor = getNextActivePlayer(effectivePlayers, defenderIdx, dir === 'cw' ? 'ccw' : 'cw');
+  const rightNeighbor = getNextActivePlayer(effectivePlayers, defenderIdx, dir);
   return playerIdx === leftNeighbor || playerIdx === rightNeighbor;
 }
 
@@ -388,13 +394,13 @@ export function canPlayerAddCards(state: GameState, playerIdx: number): boolean 
   if (state.players[playerIdx].isOut) return false;
   // Six exception: when lead card is 6, ALL players can add sixes (not just neighbors)
   if (state.leadCardRank === '6') return true;
-  return isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+  return isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
 }
 
 // Check if a specific non-neighbor player can play a specific card
 // When leadCardRank === '6', non-neighbors can ONLY add sixes, not other ranks
 export function canNonNeighborPlayCard(state: GameState, playerIdx: number, card: Card): boolean {
-  const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+  const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
   if (isNeighbor) return true; // Neighbors can play any valid card
   // Non-neighbor can only participate if leadCardRank === '6'
   if (state.leadCardRank !== '6') return false;
@@ -455,7 +461,7 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
   // Six exception: non-neighbors can ONLY add sixes
   // For the current attacker: only restrict if they are NOT a neighbor AND leadCardRank is '6'
   if (state.battleField.length > 0) {
-    const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+    const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
     const isAttacker = playerIdx === state.currentAttackerIdx;
     if (isAttacker) {
       // Attacker is only restricted if lead is 6 AND they are not a neighbor
@@ -623,6 +629,10 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
     : state.direction;
   const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
   const nextDefender = state.players[newDefenderIdx];
+  // Phantom neighbor rule: cannot transfer to a player who just went out this trick
+  if (state.phantomNeighborIdx !== null && newDefenderIdx === state.phantomNeighborIdx) {
+    return `Нельзя перевести — игрок (${nextDefender.name}) уже вышел из игры в этом ходу`;
+  }
   if (nextDefender.hand.length < totalAttackCards) {
     return `Нельзя перевести — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе будет ${totalAttackCards}`;
   }
@@ -682,8 +692,12 @@ export function transferMultipleCards(state: GameState, playerIdx: number, cardI
 
   const newDefenderIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
   const nextDefender = state.players[newDefenderIdx];
+  // Phantom neighbor rule: cannot transfer to a player who just went out this trick
+  if (state.phantomNeighborIdx !== null && newDefenderIdx === state.phantomNeighborIdx) {
+    return `Нельзя перевести — игрок (${nextDefender.name}) уже вышел из игры в этом ходу`;
+  }
   if (nextDefender.hand.length < totalAttackCards) {
-    return `\u041d\u0435\u043b\u044c\u0437\u044f \u043f\u0435\u0440\u0435\u0432\u0435\u0441\u0442\u0438 \u2014 \u0443 \u0441\u043b\u0435\u0434\u0443\u044e\u0449\u0435\u0433\u043e \u0438\u0433\u0440\u043e\u043a\u0430 (${nextDefender.name}) \u0442\u043e\u043b\u044c\u043a\u043e ${nextDefender.hand.length} \u043a\u0430\u0440\u0442(\u044b), \u0430 \u043d\u0430 \u0441\u0442\u043e\u043b\u0435 \u0431\u0443\u0434\u0435\u0442 ${totalAttackCards}`;
+    return `Нельзя перевести — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе будет ${totalAttackCards}`;
   }
 
   // Apply direction change if needed
@@ -750,6 +764,10 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
     : state.direction;
   const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, checkDir);
   const nextDefender = state.players[newDefenderIdxCheck];
+  // Phantom neighbor rule: cannot pass-through to a player who just went out this trick
+  if (state.phantomNeighborIdx !== null && newDefenderIdxCheck === state.phantomNeighborIdx) {
+    return `Нельзя проехать — игрок (${nextDefender.name}) уже вышел из игры в этом ходу`;
+  }
   if (nextDefender.hand.length < totalAttackCards) {
     return `Нельзя проехать — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе ${totalAttackCards}`;
   }
@@ -824,6 +842,10 @@ export function showMultiplePassThroughs(state: GameState, playerIdx: number, ca
   const totalAttackCards = state.battleField.length;
   const newDefenderIdxCheck = getNextActivePlayer(state.players, state.currentDefenderIdx, potentialDir);
   const nextDefender = state.players[newDefenderIdxCheck];
+  // Phantom neighbor rule: cannot pass-through to a player who just went out this trick
+  if (state.phantomNeighborIdx !== null && newDefenderIdxCheck === state.phantomNeighborIdx) {
+    return `Нельзя проехать — игрок (${nextDefender.name}) уже вышел из игры в этом ходу`;
+  }
   if (nextDefender.hand.length < totalAttackCards) {
     return `Нельзя проехать — у следующего игрока (${nextDefender.name}) только ${nextDefender.hand.length} карт(ы), а на столе ${totalAttackCards}`;
   }
@@ -888,6 +910,7 @@ export function finalizeTake(state: GameState): void {
   state.passedAttackers = [];
   state.defenderTaking = false;
   state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
+  state.phantomNeighborIdx = null; // Round ended — phantom neighbor no longer applies
 
   drawCards(state);
   checkAllPlayersOut(state); // Check if any players ran out of cards after draw
@@ -917,6 +940,7 @@ export function successfulDefense(state: GameState): void {
   state.passedAttackers = [];
   state.defenderTaking = false;
   state.revealedPassThroughs = []; // Clear revealed pass-throughs for next trick
+  state.phantomNeighborIdx = null; // Round ended — phantom neighbor no longer applies
 
   drawCards(state);
   checkAllPlayersOut(state); // Check if any players ran out of cards after draw
@@ -1113,6 +1137,14 @@ export function checkPlayerOut(state: GameState, playerIdx: number): boolean {
           place: player.winPlace,
           amount: prizeAmount,
         });
+      }
+      // Mark as phantom neighbor: this player just played their last card during the
+      // current trick. They remain a "phantom neighbor" until the end of this round
+      // so that the player AFTER them doesn't gain neighbor priority prematurely.
+      // Only set if the game is still in progress (battlefield is not empty = mid-trick).
+      // If the battlefield is empty (trick just ended), no phantom is needed.
+      if (state.battleField.length > 0 && state.gamePhase === 'playing') {
+        state.phantomNeighborIdx = playerIdx;
       }
       return true; // player just went out
     }
@@ -1314,7 +1346,9 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           // Check next defender has enough cards (battlefield + 1 transfer card)
           const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
           const nextDef = state.players[nextDefIdx];
-          if (nextDef.hand.length >= totalAfterTransfer) {
+          // Phantom neighbor rule: don't offer transfer if next defender just went out this trick
+          const isPhantomTarget = state.phantomNeighborIdx !== null && nextDefIdx === state.phantomNeighborIdx;
+          if (!isPhantomTarget && nextDef.hand.length >= totalAfterTransfer) {
             actions.push({ type: 'transferCard', cardIds: transferCards });
           }
         }
@@ -1333,7 +1367,9 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
         if (passThroughCards.length > 0) {
           const nextDefIdx = getNextActivePlayer(state.players, state.currentDefenderIdx, state.direction);
           const nextDef = state.players[nextDefIdx];
-          if (nextDef.hand.length >= state.battleField.length) {
+          // Phantom neighbor rule: don't offer pass-through if next defender just went out this trick
+          const isPhantomTarget = state.phantomNeighborIdx !== null && nextDefIdx === state.phantomNeighborIdx;
+          if (!isPhantomTarget && nextDef.hand.length >= state.battleField.length) {
             actions.push({ type: 'showPassThrough', cardIds: passThroughCards });
           }
         }
@@ -1374,7 +1410,7 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Attacker can add matching cards during defend phase
       // Exception: if leadCardRank is '6' and attacker is NOT a neighbor, they can only add sixes
       if (canAddMoreAttackCards(state)) {
-        const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+        const isNeighbor = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
         const playableIds = player.hand
           .filter(c => {
             if (!canPlayAsAttack(state, c)) return false;
@@ -1403,8 +1439,8 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // regardless of attackerHasPriority (they don't wait for their turn)
       const isSixException = state.leadCardRank === '6';
       const canAct = !state.attackerHasPriority || isSixException;
-      // Whether this player is a true neighbor of the defender
-      const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction);
+      // Whether this player is a true neighbor of the defender (phantom-aware)
+      const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
       // When lead is 6 and player is NOT a neighbor, they can only participate if they have a 6 in hand.
       // If they have no 6s, they get NO actions at all (no endAttack/бито either).
       const hasSixInHand = player.hand.some(c => c.rank === '6');
