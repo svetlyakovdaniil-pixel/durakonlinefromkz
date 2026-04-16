@@ -2553,3 +2553,96 @@ describe('Attacker can always throw cards regardless of neighbor status', () => 
     expect(actions.some(a => a.type === 'endAttack')).toBe(true);
   });
 });
+
+// Batch 106: Six-exception endAttack filter for non-neighbors
+describe('Six exception: non-neighbor бито/endAttack filter', () => {
+  function makePlayers5() {
+    return [
+      { id: 'p1', odId: 'p1', name: 'P1', isBot: false },
+      { id: 'p2', odId: 'p2', name: 'P2', isBot: false },
+      { id: 'p3', odId: 'p3', name: 'P3', isBot: false },
+      { id: 'p4', odId: 'p4', name: 'P4', isBot: false },
+      { id: 'p5', odId: 'p5', name: 'P5', isBot: false },
+    ];
+  }
+
+  it('non-neighbor WITHOUT sixes gets NO actions when leadCardRank is 6', () => {
+    const state = createGame('room1', makePlayers5());
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    state.turnPhase = 'defend';
+    // p4 (idx 3) is NOT a neighbor of p2 (idx 1) in 5-player cw game
+    // neighbors of idx 1 are idx 0 and idx 2
+    state.players[3].hand = [
+      { id: 'spades-8-0', suit: 'spades' as any, rank: '8' as any, copy: 0 },
+      { id: 'hearts-9-0', suit: 'hearts' as any, rank: '9' as any, copy: 0 },
+    ];
+    state.players[1].hand = [
+      { id: 'hearts-7-0', suit: 'hearts' as any, rank: '7' as any, copy: 0 },
+    ];
+    state.battleField = [
+      { attack: { id: 'hearts-6-0', suit: 'hearts' as any, rank: '6' as any, copy: 0 }, defense: { id: 'hearts-7-0', suit: 'hearts' as any, rank: '7' as any, copy: 0 } },
+    ];
+
+    const actions = getAvailableActions(state, 3);
+    expect(actions.length).toBe(0);
+    expect(actions.some(a => a.type === 'endAttack')).toBe(false);
+    expect(actions.some(a => a.type === 'playCard')).toBe(false);
+  });
+
+  it('non-neighbor WITH sixes gets endAttack (бито) when leadCardRank is 6', () => {
+    const state = createGame('room1', makePlayers5());
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.firstTrick = false;
+    state.turnPhase = 'defend';
+    state.players[3].hand = [
+      { id: 'spades-6-0', suit: 'spades' as any, rank: '6' as any, copy: 0 },
+      { id: 'hearts-9-0', suit: 'hearts' as any, rank: '9' as any, copy: 0 },
+    ];
+    state.players[1].hand = [
+      { id: 'hearts-7-0', suit: 'hearts' as any, rank: '7' as any, copy: 0 },
+    ];
+    state.battleField = [
+      { attack: { id: 'hearts-6-0', suit: 'hearts' as any, rank: '6' as any, copy: 0 }, defense: { id: 'hearts-7-0', suit: 'hearts' as any, rank: '7' as any, copy: 0 } },
+    ];
+
+    const actions = getAvailableActions(state, 3);
+    expect(actions.some(a => a.type === 'endAttack')).toBe(true);
+    // Should be able to play the six
+    const playAction = actions.find(a => a.type === 'playCard');
+    if (playAction && playAction.type === 'playCard') {
+      expect(playAction.cardIds).toContain('spades-6-0');
+      expect(playAction.cardIds).not.toContain('hearts-9-0');
+    }
+  });
+
+  it('non-neighbor WITHOUT sixes gets NO endAttack in pickup mode', () => {
+    const state = createGame('room1', makePlayers5());
+    state.currentAttackerIdx = 0;
+    state.currentDefenderIdx = 1;
+    state.leadCardRank = '6';
+    state.attackerHasPriority = false;
+    state.defenderTaking = true;
+    state.firstTrick = false;
+    state.turnPhase = 'defend';
+    state.players[3].hand = [
+      { id: 'spades-8-0', suit: 'spades' as any, rank: '8' as any, copy: 0 },
+    ];
+    state.players[1].hand = [
+      { id: 'hearts-7-0', suit: 'hearts' as any, rank: '7' as any, copy: 0 },
+    ];
+    state.battleField = [
+      { attack: { id: 'hearts-6-0', suit: 'hearts' as any, rank: '6' as any, copy: 0 }, defense: null },
+    ];
+
+    const actions = getAvailableActions(state, 3);
+    expect(actions.length).toBe(0);
+    expect(actions.some(a => a.type === 'endAttack')).toBe(false);
+  });
+});
