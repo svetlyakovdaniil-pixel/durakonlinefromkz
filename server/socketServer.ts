@@ -1721,7 +1721,10 @@ function untrackPlayerRoom(odId: string, roomId: string) {
 function handlePlayerLeaveRoom(playerId: string, roomId: string) {
   const room = rooms.get(roomId);
   if (!room) return;
-
+  // During an active game, never close the room — the game continues without the forfeited player.
+  // The game will end naturally via checkGameOver when only 1 active player remains.
+  const activeGame = games.get(roomId);
+  const isActiveGame = activeGame && activeGame.gamePhase === 'playing';
   if (room.hostId === playerId) {
     // Transfer host to next human player if possible
     const nextHost = room.players.find(p => p.id !== playerId && !p.isBot);
@@ -1734,13 +1737,22 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
         const s = io.sockets.sockets.get(sid);
         if (s) s.leave(roomId);
       }
-
-      if (room.players.filter(p => !p.isBot).length === 0) {
+      if (!isActiveGame && room.players.filter(p => !p.isBot).length === 0) {
         closeRoom(roomId);
         return;
       }
-
       io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+      io.to(roomId).emit('playerLeft', playerId);
+      broadcastRoomList();
+    } else if (isActiveGame) {
+      // Host was the only human but game is active — don't close the room.
+      // Remove host from room.players but keep the room alive for the ongoing game.
+      room.players = room.players.filter(p => p.id !== playerId);
+      const sid = playerSockets.get(playerId);
+      if (sid) {
+        const s = io.sockets.sockets.get(sid);
+        if (s) s.leave(roomId);
+      }
       io.to(roomId).emit('playerLeft', playerId);
       broadcastRoomList();
     } else {
@@ -1748,25 +1760,20 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
     }
     return;
   }
-
   room.players = room.players.filter(p => p.id !== playerId);
-
   const sid = playerSockets.get(playerId);
   if (sid) {
     const s = io.sockets.sockets.get(sid);
     if (s) s.leave(roomId);
   }
-
-  if (room.players.filter(p => !p.isBot).length === 0) {
+  if (!isActiveGame && room.players.filter(p => !p.isBot).length === 0) {
     closeRoom(roomId);
     return;
   }
-
   io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
   io.to(roomId).emit('playerLeft', playerId);
   broadcastRoomList();
 }
-
 function closeRoom(roomId: string) {
   const room = rooms.get(roomId);
   if (!room) return;
