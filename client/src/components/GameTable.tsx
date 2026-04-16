@@ -2077,7 +2077,7 @@ export default function GameTable({
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
-            <div className="flex-1 flex flex-col justify-center min-h-[52px]">
+            <div className="flex-1 flex flex-col justify-center min-h-[52px] overflow-hidden">
               {/* Blinking role notice — shown ONLY when there are no action buttons yet */}
               {!hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && (
                 <div className="flex items-center justify-center h-full">
@@ -2104,9 +2104,9 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Action buttons — dynamic size, right-aligned */}
+              {/* Action buttons — dynamic size, slightly inset from right */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
-                <div className="flex flex-wrap gap-1.5 items-center justify-end w-full">
+                <div className="flex flex-wrap gap-1.5 items-center justify-end w-full pr-2">
                   {canTake && (
                     <Button variant="destructive" className={`action-btn-blink shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55 ${dynBtnClass}`} onClick={onTakeCards}>
                       {t('game.take')}
