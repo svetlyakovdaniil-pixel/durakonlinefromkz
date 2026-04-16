@@ -843,7 +843,7 @@ export default function GameTable({
   }, [availableActions]);
 
   const canTake = availableActions.some(a => a.type === 'takeCards');
-  const canEndAttack = availableActions.some(a => a.type === 'endAttack');
+  const canEndAttack = availableActions.some(a => a.type === 'endAttack') && !isSixOnlySpectator;
   const canSkip = availableActions.some(a => a.type === 'skipTurn');
   const canTransfer = transferIds.size > 0;
   const canPassThrough = passThroughIds.size > 0;
@@ -2076,7 +2076,7 @@ export default function GameTable({
             )}
 
             {/* Floating action buttons */}
-            <div className="flex items-center gap-2 pointer-events-auto">
+            <div className="flex flex-wrap items-center justify-center gap-1.5 pointer-events-auto max-w-[95vw]">
               {isMultiSelecting && multiSelectMode === 'attack' && (
                 <>
                   <Button
