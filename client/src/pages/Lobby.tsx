@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import type { Room, RoomSettings, DeckStyle } from '../../../shared/gameTypes';
 import type { TableStyle } from '../../../shared/cardAssets';
 import { BET_AMOUNTS } from '../../../shared/gameTypes';
@@ -251,6 +251,27 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
   const utils = trpc.useUtils(); // used for cache invalidation
+
+  // Auto-delete friend_accepted notifications when the panel is opened and data is loaded
+  const autoDeletedRef = useRef<Set<number>>(new Set());
+  useEffect(() => {
+    if (!notifOpen || notifList.length === 0) return;
+    const friendAcceptedNotifs = notifList.filter(
+      (n: (typeof notifList)[number]) => n.type === 'friend_accepted' && !autoDeletedRef.current.has(n.id)
+    );
+    if (friendAcceptedNotifs.length === 0) return;
+    // Mark them as processed to avoid duplicate calls
+    friendAcceptedNotifs.forEach((n: (typeof notifList)[number]) => autoDeletedRef.current.add(n.id));
+    // Delete them one by one in the background
+    Promise.all(
+      friendAcceptedNotifs.map((n: (typeof notifList)[number]) =>
+        deleteNotif.mutateAsync({ notificationId: n.id }).catch(() => {})
+      )
+    ).then(() => {
+      refetchNotifs();
+      utils.notifications.unreadCount.invalidate();
+    });
+  }, [notifOpen, notifList]);
 
   const handleOpenNotifications = () => {
     setNotifOpen(!notifOpen);
