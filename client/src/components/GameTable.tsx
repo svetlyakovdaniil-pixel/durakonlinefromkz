@@ -2108,15 +2108,15 @@ export default function GameTable({
 
             {/* Center: player avatar with role highlight */}
             <div className="flex flex-col items-center shrink-0">
-              <div className={`rounded-full p-0.5 transition-all duration-300 ${
-                isAttacker && gs.defenderTaking
-                  ? 'bg-orange-500/60 shadow-[0_0_12px_rgba(249,115,22,0.7)]'
-                  : isAttacker
-                  ? 'bg-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.7)]'
+              <div className={`rounded-full p-[3px] transition-all duration-300 ${
+                (isAttacker || (gs.canAddCards && !isDefender)) && gs.defenderTaking
+                  ? 'bg-orange-500 shadow-[0_0_16px_4px_rgba(249,115,22,0.8)]'
+                  : (isAttacker || (gs.canAddCards && !isDefender))
+                  ? 'bg-red-500 shadow-[0_0_16px_4px_rgba(239,68,68,0.8)]'
                   : isDefender && gs.defenderTaking
-                  ? 'bg-orange-500/60 shadow-[0_0_12px_rgba(249,115,22,0.7)]'
+                  ? 'bg-orange-500 shadow-[0_0_16px_4px_rgba(249,115,22,0.8)]'
                   : isDefender
-                  ? 'bg-blue-500/60 shadow-[0_0_12px_rgba(59,130,246,0.7)]'
+                  ? 'bg-blue-500 shadow-[0_0_16px_4px_rgba(59,130,246,0.8)]'
                   : 'bg-transparent'
               }`}>
                 <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
@@ -2124,7 +2124,7 @@ export default function GameTable({
                     avatarId={gs.players[myIdx]?.avatarId}
                     size={52}
                     alt={gs.players[myIdx]?.name || ''}
-                    className="w-13 h-13 rounded-full border-2 border-amber-600/50"
+                    className="w-[52px] h-[52px] rounded-full border-2 border-amber-600/50"
                   />
                 </FrameWrapper>
               </div>
