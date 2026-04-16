@@ -867,10 +867,12 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
-  // Fixed height h-10 always — only font/padding shrinks to fit more buttons
-  const dynBtnClass = visibleActionCount >= 4
-    ? 'h-10 text-[11px] px-2 font-semibold'
-    : 'h-10 text-xs px-3 font-semibold';
+  // Dynamic button sizing: 1 = full area (h-full w-full text-base), 2-3 = medium, 4+ = small
+  const dynBtnClass = visibleActionCount <= 1
+    ? 'h-full w-full text-base px-4 font-bold'
+    : visibleActionCount <= 3
+    ? 'h-10 text-sm px-3 font-semibold'
+    : 'h-9 text-[11px] px-2 font-semibold';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -2102,9 +2104,12 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Action buttons — dynamic size, slightly inset from right */}
+              {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
-                <div className="flex flex-wrap gap-1.5 items-center justify-end w-full pr-2">
+                <div className={visibleActionCount <= 1
+                  ? 'flex items-stretch h-full w-full'
+                  : 'flex flex-wrap gap-1.5 items-center justify-end w-full pr-2'
+                }>
                   {canTake && (
                     <Button variant="destructive" className={`action-btn-blink shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55 ${dynBtnClass}`} onClick={onTakeCards}>
                       {t('game.take')}
