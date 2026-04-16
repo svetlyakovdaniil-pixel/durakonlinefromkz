@@ -1441,13 +1441,13 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       const canAct = !state.attackerHasPriority || isSixException;
       // Whether this player is a true neighbor of the defender (phantom-aware)
       const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
-      // When lead is 6 and player is NOT a neighbor, they can only participate if they have a 6 in hand.
-      // If they have no 6s, they get NO actions at all (no endAttack/бито either).
       const hasSixInHand = player.hand.some(c => c.rank === '6');
-      const isSixOnlyParticipant = isSixException && !isNeighborOfDefender;
-      // Non-neighbor with no sixes: skip entirely — no бито, no playCard
-      if (isSixOnlyParticipant && !hasSixInHand) {
-        // No actions for this player
+      // Non-neighbor can ONLY participate when lead card is 6 AND they have a 6 in hand.
+      // In ALL other cases (including defenderTaking without six exception), non-neighbors
+      // get NO actions at all — no playCard, no endAttack/бито.
+      const isSixOnlyParticipant = !isNeighborOfDefender; // non-neighbor = six-only always
+      if (isSixOnlyParticipant && (!isSixException || !hasSixInHand)) {
+        // Non-neighbor without six exception or without sixes in hand: no actions
       } else if (canAct) {
         if (state.defenderTaking) {
           // In pickup mode, edge players can add cards
@@ -1460,7 +1460,6 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
             }
           }
           // Edge player can also press "бито" to pass
-          // Non-neighbor with sixes: gets бито only if they have sixes (already checked above)
           if (!state.passedAttackers.includes(player.id)) {
             actions.push({ type: 'endAttack' });
           }
@@ -1475,7 +1474,6 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
             }
           }
           // Edge players can also click "бито" to pass
-          // Non-neighbor with sixes: gets бито only if they have sixes (already checked above)
           if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
             actions.push({ type: 'endAttack' });
           }

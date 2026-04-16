@@ -1488,7 +1488,7 @@ export default function GameTable({
           const manyOpponents = opponents.length >= 4;
           const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex ${manyManyOpponents ? 'flex-nowrap overflow-x-auto justify-start scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`}>
+            <div className={`flex ${manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 w-full`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
@@ -2026,178 +2026,39 @@ export default function GameTable({
           </div>
         )}
 
-        {/* MOBILE: Floating action buttons — always visible over battlefield */}
+        {/* Role badge — shown above player hand (mobile only) */}
         {hasAnyAction && !isSixOnlySpectator && (
-          <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex flex-col items-center gap-1.5 pointer-events-none">
-            {/* Role badge */}
-            <div className="pointer-events-auto">
-              {isAttacker && !gs.defenderTaking && (
-                <Badge className="bg-red-900/80 text-red-300 border-red-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAttacking')}
-                </Badge>
-              )}
-              {isAttacker && gs.defenderTaking && (
-                <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAddCards')}
-                </Badge>
-              )}
-              {isDefender && !gs.defenderTaking && (
-                <Badge className="bg-blue-900/80 text-blue-300 border-blue-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <Shield className="w-3.5 h-3.5 mr-1" /> {t('game.roleDefending')}
-                </Badge>
-              )}
-              {isDefender && gs.defenderTaking && (
-                <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  <HandMetal className="w-3.5 h-3.5 mr-1" /> {t('game.roleTaking')}
-                </Badge>
-              )}
-              {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
-                <Badge className="bg-amber-900/80 text-amber-300 border-amber-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  {t('game.roleCanAdd')}
-                </Badge>
-              )}
-              {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
-                <Badge className="bg-gray-800/80 text-gray-400 border-gray-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
-                  {t('game.roleWaiting')}
-                </Badge>
-              )}
-            </div>
-
-            {/* Multi-card selection notice (mobile) */}
-            {isMultiSelecting && (
-              <div className="pointer-events-auto text-center mb-0.5">
-                <span className="text-amber-200 text-xs bg-black/60 px-2.5 py-0.5 rounded-lg backdrop-blur-sm">
-                  {multiSelectMode === 'transfer'
-                    ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
-                    : multiSelectMode === 'passthrough'
-                    ? t('game.multiSelectPassThroughN', { n: String(multiSelectIds.size) })
-                    : t('game.multiSelectAttackN', { n: String(multiSelectIds.size) })}
-                </span>
-              </div>
+          <div className="sm:hidden flex justify-center px-2 mb-0.5 mt-0.5">
+            {isAttacker && !gs.defenderTaking && (
+              <Badge className="bg-red-900/80 text-red-300 border-red-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAttacking')}
+              </Badge>
             )}
-
-            {/* Floating action buttons */}
-            <div className="flex flex-wrap items-center justify-center gap-1.5 pointer-events-auto max-w-[95vw]">
-              {isMultiSelecting && multiSelectMode === 'attack' && (
-                <>
-                  <Button
-                    className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-emerald-500/20"
-                    onClick={handleMultiAttack}
-                  >
-                    {t('game.playN', { n: String(multiSelectIds.size) })}
-                    </Button>
-                  <Button
-                    variant="outline"
-                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
-                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
-                  >
-                    {t('game.cancel')}
-                  </Button>
-                </>
-              )}
-              {isMultiSelecting && multiSelectMode === 'transfer' && (
-                <>
-                  <Button
-                    className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
-                    onClick={handleMultiTransfer}
-                  >
-                    {t('game.transferN', { n: String(multiSelectIds.size) })}
-                    </Button>
-                  <Button
-                    variant="outline"
-                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
-                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
-                  >
-                    {t('game.cancel')}
-                  </Button>
-                </>
-              )}
-              {isMultiSelecting && multiSelectMode === 'passthrough' && (
-                <>
-                  <Button
-                    className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
-                    onClick={handleMultiPassThrough}
-                  >
-                    <Eye className="w-4 h-4 mr-1" />
-                    {t('game.passThroughN', { n: String(multiSelectIds.size) })}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
-                    onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
-                  >
-                    {t('game.cancel')}
-                  </Button>
-                </>
-              )}
-              {selectedCanBeat && (
-                <Button
-                  className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-blue-500/20"
-                  onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}
-                >
-                  <Shield className="w-4 h-4 mr-1" />
-                  {t('game.beat')}
-                </Button>
-              )}
-              {selectedCanTransfer && (
-                <Button
-                  className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
-                  onClick={() => {
-                    const cardId = selectedCardId!;
-                    const card = gs.myHand.find(c => c.id === cardId);
-                    if (card) {
-                      const sameRankTransfer = gs.myHand.filter(
-                        c => c.rank === card.rank && transferIds.has(c.id) && c.id !== cardId
-                      );
-                      if (sameRankTransfer.length > 0) {
-                        // Enter multi-select mode for transfer
-                        setMultiSelectIds(new Set([cardId]));
-                        setMultiSelectMode('transfer');
-                        setSelectedCardId(null);
-                        return;
-                      }
-                    }
-                    onTransferCard(cardId);
-                    setSelectedCardId(null);
-                  }}
-                >
-                  {t('game.transfer')}
-                </Button>
-              )}
-              {selectedCanPassThrough && (
-                <Button
-                  className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20"
-                  onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}
-                >
-                  <Eye className="w-4 h-4 mr-1" />
-                  {t('game.passThrough')}
-                </Button>
-              )}
-              {selectedCardId && !isMultiSelecting && (
-                <Button
-                  variant="outline"
-                  className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm"
-                  onClick={() => setSelectedCardId(null)}
-                >
-                  {t('game.cancel')}
-                </Button>
-              )}
-              {canTake && (
-                <Button variant="destructive" className="action-btn-blink text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55" onClick={onTakeCards}>
-                  {t('game.take')}
-                </Button>
-              )}
-              {canEndAttack && (
-                <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
-                  {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
-                </Button>
-              )}
-              {canSkip && (
-                <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
-                  {t('game.skip')}
-                </Button>
-              )}
-            </div>
+            {isAttacker && gs.defenderTaking && (
+              <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                <Swords className="w-3.5 h-3.5 mr-1" /> {t('game.roleAddCards')}
+              </Badge>
+            )}
+            {isDefender && !gs.defenderTaking && (
+              <Badge className="bg-blue-900/80 text-blue-300 border-blue-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                <Shield className="w-3.5 h-3.5 mr-1" /> {t('game.roleDefending')}
+              </Badge>
+            )}
+            {isDefender && gs.defenderTaking && (
+              <Badge className="bg-orange-900/80 text-orange-300 border-orange-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                <HandMetal className="w-3.5 h-3.5 mr-1" /> {t('game.roleTaking')}
+              </Badge>
+            )}
+            {!isAttacker && !isDefender && gs.canAddCards && !gs.attackerHasPriority && (
+              <Badge className="bg-amber-900/80 text-amber-300 border-amber-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                {t('game.roleCanAdd')}
+              </Badge>
+            )}
+            {!isAttacker && !isDefender && gs.canAddCards && gs.attackerHasPriority && (
+              <Badge className="bg-gray-800/80 text-gray-400 border-gray-700/50 text-xs px-2.5 py-1 shadow-lg backdrop-blur-sm">
+                {t('game.roleWaiting')}
+              </Badge>
+            )}
           </div>
         )}
 
