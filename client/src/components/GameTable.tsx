@@ -856,7 +856,7 @@ export default function GameTable({
   const selectedCanPassThrough = canPassThrough && selectedCardId && passThroughIds.has(selectedCardId);
   const hasAnyAction = canTake || canEndAttack || canSkip || isMultiSelecting || selectedCanTransfer || selectedCanPassThrough || selectedCanBeat;
 
-  // Count visible action buttons for dynamic sizing
+  // Count visible action buttons for dynamic sizing (font/padding only, height is fixed)
   const visibleActionCount = [
     canTake,
     canEndAttack,
@@ -867,12 +867,10 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
-  // Dynamic button classes: 1 button = large (h-12 text-sm), 2-3 = medium (h-10 text-xs), 4+ = small (h-9 text-[11px])
-  const dynBtnClass = visibleActionCount <= 1
-    ? 'h-12 text-sm px-4 font-semibold'
-    : visibleActionCount <= 3
-    ? 'h-10 text-xs px-3 font-semibold'
-    : 'h-9 text-[11px] px-2 font-semibold';
+  // Fixed height h-10 always — only font/padding shrinks to fit more buttons
+  const dynBtnClass = visibleActionCount >= 4
+    ? 'h-10 text-[11px] px-2 font-semibold'
+    : 'h-10 text-xs px-3 font-semibold';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -2063,7 +2061,7 @@ export default function GameTable({
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
-          <div className="flex items-stretch gap-2 mt-1.5 px-1">
+          <div className="flex items-center gap-2 mt-1.5 px-1 h-[56px]">
             {/* Left: player avatar (no role highlight) */}
             <div className="flex flex-col items-center justify-center shrink-0">
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
@@ -2077,7 +2075,7 @@ export default function GameTable({
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
-            <div className="flex-1 flex flex-col justify-center min-h-[52px] overflow-hidden">
+            <div className="flex-1 flex flex-col justify-center h-full overflow-hidden">
               {/* Blinking role notice — shown ONLY when there are no action buttons yet */}
               {!hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && (
                 <div className="flex items-center justify-center h-full">
