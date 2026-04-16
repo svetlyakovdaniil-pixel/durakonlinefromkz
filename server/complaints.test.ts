@@ -98,3 +98,33 @@ describe("moderation procedures", () => {
     ).rejects.toThrow();
   });
 });
+
+describe("admin.forceRenamePlayer", () => {
+  it("rejects regular user access", async () => {
+    const ctx = createContext({ role: "user" });
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.admin.forceRenamePlayer({ profileId: 1 })
+    ).rejects.toThrow();
+  });
+
+  it("rejects unauthenticated access", async () => {
+    const ctx: TrpcContext = {
+      user: null,
+      req: { protocol: "https", headers: {} } as TrpcContext["req"],
+      res: { clearCookie: () => {} } as unknown as TrpcContext["res"],
+    };
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.admin.forceRenamePlayer({ profileId: 1 })
+    ).rejects.toThrow();
+  });
+
+  it("rejects invalid profileId (non-integer)", async () => {
+    const ctx = createAdminContext();
+    const caller = appRouter.createCaller(ctx);
+    await expect(
+      caller.admin.forceRenamePlayer({ profileId: 1.5 as any })
+    ).rejects.toThrow();
+  });
+});

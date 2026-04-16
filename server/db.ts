@@ -1722,7 +1722,7 @@ export async function adminGetPlayerGameHistory(opts: {
 export async function logAdminAction(data: {
   adminId: number;
   adminName: string | null;
-  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account' | 'give_item';
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account' | 'give_item' | 'force_rename';
   targetProfileId?: number | null;
   details?: Record<string, unknown>;
 }) {
@@ -3423,4 +3423,34 @@ export async function getReferralStats(profileId: number): Promise<{
     totalReferrals: Number(countRow?.count ?? 0),
     rewardLevel: profile.referralRewardLevel ?? 0,
   };
+}
+
+/**
+ * Admin: Force-rename a player by resetting their displayName to a generic placeholder.
+ * Used when a complaint about an inappropriate name is confirmed.
+ * The new name is "Player_XXXXX" where XXXXX is derived from the profileId.
+ */
+export async function adminForceRenamePlayer(profileId: number): Promise<{ success: boolean; newName?: string; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'Database not available' };
+
+  const [profile] = await db.select({ id: playerProfiles.id, userId: playerProfiles.userId })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return { success: false, reason: 'Player not found' };
+
+  // Generate a neutral placeholder name
+  const newName = `Player_${String(profileId).padStart(5, '0')}`;
+
+  await db.update(playerProfiles)
+    .set({ displayName: newName })
+    .where(eq(playerProfiles.id, profileId));
+
+  // Also update the users.name field for consistency
+  await db.update(users)
+    .set({ name: newName })
+    .where(eq(users.id, profile.userId));
+
+  return { success: true, newName };
 }

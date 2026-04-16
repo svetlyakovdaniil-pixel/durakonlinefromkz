@@ -2258,7 +2258,19 @@ function ModerationTab() {
     { enabled: selectedId !== null }
   );
   const resolveMut = trpc.moderation.resolve.useMutation();
+  const forceRenameMut = trpc.admin.forceRenamePlayer.useMutation();
   const utils = trpc.useUtils();
+
+  const handleForceRename = async (profileId: number) => {
+    if (!window.confirm(`Сбросить имя игрока (профиль #${profileId}) на автоматически сгенерированное?`)) return;
+    try {
+      const result = await forceRenameMut.mutateAsync({ profileId });
+      toast.success(`Имя сброшено: ${result.newName}`);
+      utils.moderation.detail.invalidate({ id: selectedId! });
+    } catch {
+      toast.error("Ошибка при сбросе имени");
+    }
+  };
 
   const handleResolve = async () => {
     if (!selectedId) return;
@@ -2337,12 +2349,15 @@ function ModerationTab() {
               <tr><td colSpan={7} className="px-3 py-8 text-center text-gray-500">Нет жалоб</td></tr>
             ) : (
               complaints.data?.complaints.map((c: any) => (
-                <tr key={c.id} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                <tr key={c.id} className={`border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors ${c.reason === 'inappropriate_name' && c.status === 'pending' ? 'bg-orange-950/20' : ''}`}>
                   <td className="px-3 py-2 text-gray-400">#{c.id}</td>
                   <td className="px-3 py-2 text-amber-100">ID {c.reporterProfileId}</td>
                   <td className="px-3 py-2 text-amber-100">ID {c.targetProfileId}</td>
                   <td className="px-3 py-2">
-                    <span className="text-amber-200">{REASON_LABELS[c.reason] || c.reason}</span>
+                    <span className={c.reason === 'inappropriate_name' ? 'text-orange-300 font-semibold' : 'text-amber-200'}>
+                      {c.reason === 'inappropriate_name' && <span className="mr-1">🏷️</span>}
+                      {REASON_LABELS[c.reason] || c.reason}
+                    </span>
                   </td>
                   <td className="px-3 py-2">
                     <span className={`px-2 py-0.5 rounded-full text-xs border ${STATUS_COLORS[c.status] || ''}`}>
@@ -2458,6 +2473,27 @@ function ModerationTab() {
                   </div>
                 )}
               </div>
+
+              {/* Quick action: force rename for inappropriate name complaints */}
+              {detail.data.complaint.reason === 'inappropriate_name' && (
+                <div className="bg-orange-950/30 border border-orange-700/40 rounded-lg p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-orange-300 text-xs font-semibold">🏷️ Быстрое действие: неподобающее имя</span>
+                  </div>
+                  <p className="text-gray-400 text-xs mb-3">
+                    Текущее имя нарушителя: <span className="text-orange-200 font-medium">{detail.data.targetProfile?.displayName || `ID ${detail.data.complaint.targetProfileId}`}</span>
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-orange-700/50 text-orange-300 hover:bg-orange-900/30 text-xs"
+                    onClick={() => handleForceRename(detail.data!.complaint.targetProfileId)}
+                    disabled={forceRenameMut.isPending}
+                  >
+                    {forceRenameMut.isPending ? 'Сброс...' : '🔄 Сбросить имя игрока'}
+                  </Button>
+                </div>
+              )}
 
               {/* Resolution form */}
               <div className="space-y-3 border-t border-gray-700/50 pt-3">

@@ -96,6 +96,7 @@ import {
   getOrCreateReferralCode,
   activateReferralCode,
   getReferralStats,
+  adminForceRenamePlayer,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces, retroactiveRecalcAllAchievements } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -952,6 +953,28 @@ export const appRouter = router({
           });
         }
         return { success: kicked };
+      }),
+
+    /** Force-rename a player (for inappropriate name complaints) */
+    forceRenamePlayer: gmProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminForceRenamePlayer(input.profileId);
+        if (!result.success) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: result.reason ?? 'Player not found' });
+        }
+        // Also update in-memory socket name map if player is online
+        const playerDetail = await adminGetPlayerDetail(input.profileId);
+        if (playerDetail?.openId && result.newName) {
+          updatePlayerDisplayName(playerDetail.openId, result.newName);
+        }
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'force_rename',
+          details: { profileId: input.profileId, newName: result.newName },
+        });
+        return { success: true, newName: result.newName };
       }),
 
     // ── Audit Log ──

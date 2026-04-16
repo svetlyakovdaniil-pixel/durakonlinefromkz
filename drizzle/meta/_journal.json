@@ -344,6 +344,13 @@
       "when": 1776279482292,
       "tag": "0048_wandering_blizzard",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "5",
+      "when": 1776335239563,
+      "tag": "0049_moaning_vulture",
+      "breakpoints": true
     }
   ]
 }
