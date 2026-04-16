@@ -5,7 +5,7 @@ import * as db from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
 import { containsProfanity, PROFANITY_ERR_MSG } from "../shared/profanityFilter";
-import { sendVerificationEmail } from "./brevoEmail";
+import { sendVerificationCode } from "./emailService";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
@@ -94,7 +94,7 @@ export function registerEmailAuthRoutes(app: Express) {
       });
 
       // Send OTP email
-      const sent = await sendVerificationEmail(normalizedEmail, code);
+      const sent = await sendVerificationCode(normalizedEmail, code, trimmedName);
       if (!sent) {
         res.status(500).json({ error: "email_send_failed", message: "Не удалось отправить письмо. Попробуйте позже." });
         return;
@@ -251,7 +251,7 @@ export function registerEmailAuthRoutes(app: Express) {
         attempts: 0,
         expiresAt,
       });
-      const sent = await sendVerificationEmail(normalizedEmail, newCode);
+      const sent = await sendVerificationCode(normalizedEmail, newCode, record.pendingData ? JSON.parse(record.pendingData).name : 'Игрок');
       if (!sent) {
         res.status(500).json({ error: "email_send_failed", message: "Не удалось отправить письмо. Попробуйте позже." });
         return;

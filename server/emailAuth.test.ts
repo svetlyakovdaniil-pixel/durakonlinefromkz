@@ -60,10 +60,10 @@ vi.mock("bcryptjs", () => ({
   },
 }));
 
-// Mock brevoEmail
+// Mock emailService
 const mockSendVerificationEmail = vi.fn().mockResolvedValue(true);
-vi.mock("./brevoEmail", () => ({
-  sendVerificationEmail: (...args: any[]) => mockSendVerificationEmail(...args),
+vi.mock("./emailService", () => ({
+  sendVerificationCode: (...args: any[]) => mockSendVerificationEmail(...args),
 }));
 // Mock profanityFilter
 vi.mock("../shared/profanityFilter", () => ({
@@ -190,7 +190,7 @@ describe("Email Auth - Registration", () => {
       expect.objectContaining({ success: true })
     );
     expect(mockCreateEmailVerificationCode).toHaveBeenCalled();
-    expect(mockSendVerificationEmail).toHaveBeenCalledWith("new@example.com", expect.stringMatching(/^\d{6}$/));
+    expect(mockSendVerificationEmail).toHaveBeenCalledWith("new@example.com", expect.stringMatching(/^\d{6}$/), "NewUser");
   });
 
   it("returns 500 when email sending fails", async () => {
