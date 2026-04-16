@@ -3126,3 +3126,9 @@
 - [x] Клиент: подсветка карт с номиналом '6' в руке игрока когда на столе есть шестёрка (sixHighlight)
 - [x] Клиент: надпись "ВАШ ХОД" не показывается если у игрока только skipTurn/endAttack (без playCard/takeCards/transferCard/showPassThrough)
 - [x] Добавить тесты для новой логики
+
+## Batch 108 — Фильтр нецензурных слов в никнейме
+- [x] Создать shared/profanityFilter.ts со списком матов (RU/KZ/EN) и функцией containsProfanity
+- [x] Интегрировать фильтр в emailAuth.ts (регистрация)
+- [x] Интегрировать фильтр в routers.ts (updateName)
+- [x] Добавить тесты для фильтра
