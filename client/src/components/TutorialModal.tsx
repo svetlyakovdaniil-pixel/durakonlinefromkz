@@ -1,6 +1,6 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, SkipForward } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
 interface TutorialModalProps {
@@ -8,14 +8,19 @@ interface TutorialModalProps {
   onClose: () => void;
   onStartTutorial: () => void;
   isLoading?: boolean;
+  /** When true, the Cancel button is hidden and the dialog cannot be dismissed (mandatory first-time tutorial) */
+  isMandatory?: boolean;
+  /** Called when user explicitly skips the tutorial (only shown in mandatory mode) */
+  onSkip?: () => void;
 }
 
-export function TutorialModal({ open, onClose, onStartTutorial, isLoading = false }: TutorialModalProps) {
+export function TutorialModal({ open, onClose, onStartTutorial, isLoading = false, isMandatory = false, onSkip }: TutorialModalProps) {
   const { locale } = useTranslation();
 
   const content = {
     ru: {
-      title: 'Добро пожаловать в обучение!',
+      title: isMandatory ? '👋 Добро пожаловать!' : 'Добро пожаловать в обучение!',
+      subtitle: isMandatory ? 'Перед игрой пройдите короткое обучение' : undefined,
       whatAwaits: 'Что вас ждёт:',
       items: [
         '✓ Полное объяснение правил игры',
@@ -26,11 +31,13 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
       ],
       description: 'Мы создадим специальную учебную комнату, где вы сможете изучить все новые механики и правила нашей версии Дурака. Обучение займёт около 5-10 минут.',
       cancel: 'Отмена',
+      skip: 'Пропустить обучение',
       start: 'Начать обучение',
       loading: 'Загрузка...',
     },
     kk: {
-      title: 'Оқытуға қош келдіңіз!',
+      title: isMandatory ? '👋 Қош келдіңіз!' : 'Оқытуға қош келдіңіз!',
+      subtitle: isMandatory ? 'Ойынға кіру алдында қысқа оқытудан өтіңіз' : undefined,
       whatAwaits: 'Сізді не күтеді:',
       items: [
         '✓ Ойын ережелерінің толық түсіндірмесі',
@@ -41,11 +48,13 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
       ],
       description: 'Біз арнайы оқу бөлмесін жасаймыз, онда сіз Дурактың жаңа механикалары мен ережелерін үйрене аласыз. Оқыту шамамен 5-10 минут алады.',
       cancel: 'Болдырмау',
+      skip: 'Оқытуды өткізіп жіберу',
       start: 'Оқытуды бастау',
       loading: 'Жүктелуде...',
     },
     en: {
-      title: 'Welcome to the Tutorial!',
+      title: isMandatory ? '👋 Welcome!' : 'Welcome to the Tutorial!',
+      subtitle: isMandatory ? 'Please complete a short tutorial before playing' : undefined,
       whatAwaits: 'What awaits you:',
       items: [
         '✓ Full explanation of game rules',
@@ -56,6 +65,7 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
       ],
       description: 'We will create a special training room where you can learn all the new mechanics and rules of our version of Durak. The tutorial takes about 5-10 minutes.',
       cancel: 'Cancel',
+      skip: 'Skip tutorial',
       start: 'Start Tutorial',
       loading: 'Loading...',
     },
@@ -63,11 +73,25 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
 
   const c = content[locale as keyof typeof content] || content.ru;
 
+  // In mandatory mode, prevent closing by clicking outside or pressing Escape
+  const handleOpenChange = (open: boolean) => {
+    if (isMandatory) return; // block dismiss
+    if (!open) onClose();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent
+        className="max-w-md"
+        // Prevent closing on outside click in mandatory mode
+        onPointerDownOutside={isMandatory ? (e) => e.preventDefault() : undefined}
+        onEscapeKeyDown={isMandatory ? (e) => e.preventDefault() : undefined}
+      >
         <DialogHeader>
           <DialogTitle className="text-amber-100">{c.title}</DialogTitle>
+          {c.subtitle && (
+            <p className="text-amber-300/70 text-sm mt-1">{c.subtitle}</p>
+          )}
         </DialogHeader>
 
         <div className="space-y-4">
@@ -89,22 +113,38 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
             {c.description}
           </p>
 
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isLoading}
-            >
-              {c.cancel}
-            </Button>
+          <div className="flex flex-col gap-2">
             <Button
               onClick={onStartTutorial}
-              className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
+              className="w-full bg-amber-600 hover:bg-amber-500 text-white"
               disabled={isLoading}
             >
               {isLoading ? c.loading : c.start}
             </Button>
+
+            {/* In mandatory mode: show Skip button; in optional mode: show Cancel */}
+            {isMandatory ? (
+              onSkip && (
+                <Button
+                  variant="ghost"
+                  onClick={onSkip}
+                  className="w-full text-amber-200/40 hover:text-amber-200/60 text-xs"
+                  disabled={isLoading}
+                >
+                  <SkipForward className="w-3 h-3 mr-1" />
+                  {c.skip}
+                </Button>
+              )
+            ) : (
+              <Button
+                variant="outline"
+                onClick={onClose}
+                className="w-full"
+                disabled={isLoading}
+              >
+                {c.cancel}
+              </Button>
+            )}
           </div>
         </div>
       </DialogContent>

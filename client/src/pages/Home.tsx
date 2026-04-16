@@ -13,6 +13,7 @@ import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
+import { TutorialModal } from '@/components/TutorialModal';
 import { toast } from 'sonner';
 import InviteModal from '@/components/InviteModal';
 import { useTranslation } from '@/i18n';
@@ -109,6 +110,61 @@ export default function Home() {
     },
   });
 
+  // --- Forced tutorial state ---
+  // Shown after music choice for players who haven't completed the tutorial yet
+  const [showForcedTutorial, setShowForcedTutorial] = useState(false);
+  const [forcedTutorialLoading, setForcedTutorialLoading] = useState(false);
+  // Track if we've already triggered the forced tutorial check this session
+  const forcedTutorialCheckedRef = useRef(false);
+
+  // Once music choice is made AND profile is loaded, check if tutorial is needed
+  useEffect(() => {
+    if (!music.choiceMade) return;
+    if (!profile) return;
+    if (forcedTutorialCheckedRef.current) return;
+    // If tutorial not completed yet, show forced tutorial
+    if (!(profile as any).tutorialCompleted) {
+      forcedTutorialCheckedRef.current = true;
+      setShowForcedTutorial(true);
+    } else {
+      forcedTutorialCheckedRef.current = true;
+    }
+  }, [music.choiceMade, profile]);
+
+  const handleForcedTutorialStart = useCallback(async () => {
+    setForcedTutorialLoading(true);
+    try {
+      const tutorialRoomName = locale === 'kk' ? '🎓 Оқыту' : locale === 'en' ? '🎓 Tutorial' : '🎓 Обучение';
+      await createRoom(
+        tutorialRoomName,
+        2,
+        {
+          withBots: true,
+          botCount: 1,
+          turnTimer: 60,
+          deckStyle: 'classic',
+          tableStyle: 'classic',
+          betAmountIdx: 0,
+          isTutorial: true,
+          locale,
+        } as any
+      );
+      setShowForcedTutorial(false);
+    } catch (error) {
+      console.error('Failed to start forced tutorial:', error);
+      toast.error(locale === 'kk' ? 'Оқытуды бастау сәтсіз аяқталды' : locale === 'en' ? 'Failed to start tutorial' : 'Не удалось запустить обучение');
+    } finally {
+      setForcedTutorialLoading(false);
+    }
+  }, [createRoom, locale]);
+
+  const handleForcedTutorialSkip = useCallback(() => {
+    // Allow skipping — mark tutorial as "seen" so it won't show again this session
+    setShowForcedTutorial(false);
+    // Also call completeTutorial on server so it won't show again on next login
+    completeTutorialMutation.mutate();
+  }, [completeTutorialMutation]);
+
   // Invite modal state — shown when a friend invites us to a room
   const [activeInvite, setActiveInvite] = useState<{
     roomId: string; roomName: string; fromName: string; fromGameId: number;
@@ -157,7 +213,7 @@ export default function Home() {
     return <LandingPage />;
   }
 
-  // Music choice dialog — shown once on first visit
+  // Music choice dialog — shown once on first visit (session-only)
   if (isAuthenticated && !music.choiceMade) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628]">
@@ -277,7 +333,7 @@ export default function Home() {
     );
   }
 
-  // Lobby
+  // Lobby — with forced tutorial overlay for new players
   return (
     <>
       <Lobby
@@ -299,6 +355,15 @@ export default function Home() {
         onAccept={handleAcceptInvite}
         onDecline={handleDeclineInvite}
       />
+      {/* Forced tutorial for new players — shown after music choice */}
+      <TutorialModal
+        open={showForcedTutorial}
+        onClose={() => {}} // no-op: cannot close by clicking outside
+        onStartTutorial={handleForcedTutorialStart}
+        isLoading={forcedTutorialLoading}
+        isMandatory={true}
+        onSkip={handleForcedTutorialSkip}
+      />
     </>
   );
 }
@@ -310,14 +375,12 @@ function LandingPage() {
     CARD_IMAGES['J-diamonds'], CARD_IMAGES['A-clubs'],
     CARD_IMAGES['777'],
   ];
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] relative overflow-hidden">
       <div className="absolute inset-0">
         <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full bg-amber-600/5 blur-3xl" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-blue-600/5 blur-3xl" />
       </div>
-
       <div className="relative z-10">
         <div className="container mx-auto px-4 pt-12 pb-20 max-w-6xl">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -334,93 +397,45 @@ function LandingPage() {
               <p className="text-amber-200/60 text-lg mb-8 max-w-lg">
                 {t('landing.feature2Desc')}
               </p>
-
               <div className="flex flex-wrap gap-3 mb-8">
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
                   <Users className="w-3 h-3 mr-1" /> 2-8
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Swords className="w-3 h-3 mr-1" /> 145
+                  <Swords className="w-3 h-3 mr-1" /> {t('landing.feature1')}
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Crown className="w-3 h-3 mr-1" /> 3
+                  <Shield className="w-3 h-3 mr-1" /> {t('landing.feature2')}
                 </Badge>
                 <Badge variant="outline" className="border-amber-700/40 text-amber-200/70 px-3 py-1">
-                  <Zap className="w-3 h-3 mr-1" /> {t('landing.feature3Title')}
+                  <Zap className="w-3 h-3 mr-1" /> {t('landing.feature3')}
                 </Badge>
               </div>
-
-              <Button
-                asChild
-                size="lg"
-                className="bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white shadow-lg shadow-amber-900/40 text-lg px-8"
-              >
-                <a href="/login">
-                  {t('landing.login')}
-                </a>
-              </Button>
+              <a href={getLoginUrl()}>
+                <Button size="lg" className="bg-amber-600 hover:bg-amber-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-lg shadow-amber-900/30">
+                  <Crown className="w-5 h-5 mr-2" /> {t('landing.play')}
+                </Button>
+              </a>
             </div>
-
-            <div className="flex justify-center items-center">
+            <div className="hidden lg:flex justify-center items-center">
               <div className="relative">
-                {faceCards.map((url, i) => (
-                  <div
-                    key={i}
-                    className="absolute rounded-xl overflow-hidden shadow-2xl border-2 border-amber-700/40 w-32 h-48"
-                    style={{
-                      transform: `rotate(${(i - 2) * 12}deg) translateX(${(i - 2) * 40}px)`,
-                      zIndex: i,
-                      top: `${Math.abs(i - 2) * 15}px`,
-                    }}
-                  >
-                    <img src={url} alt="" className="w-full h-full object-cover" loading="lazy" />
-                  </div>
-                ))}
-                <div className="w-80 h-72" />
+                <div className="absolute inset-0 bg-amber-500/10 rounded-full blur-3xl scale-150" />
+                <div className="relative flex gap-3 flex-wrap justify-center max-w-xs">
+                  {faceCards.map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="w-20 h-28 rounded-lg shadow-2xl shadow-black/50"
+                      style={{ transform: `rotate(${(i - 2) * 8}deg) translateY(${Math.abs(i - 2) * 5}px)` }}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="bg-[#0d1f33]/80 border-t border-b border-amber-700/10 py-16">
-          <div className="container mx-auto px-4 max-w-5xl">
-            <h2 className="text-3xl font-bold text-amber-100 text-center mb-12">{t('landing.feature1Title')}</h2>
-            <div className="grid md:grid-cols-3 gap-8">
-              <FeatureCard
-                icon={<Crown className="w-8 h-8 text-amber-400" />}
-                title={t('landing.feature1Title')}
-                desc={t('landing.feature1Desc')}
-              />
-              <FeatureCard
-                icon={<Zap className="w-8 h-8 text-amber-400" />}
-                title={t('landing.feature2Title')}
-                desc={t('landing.feature2Desc')}
-              />
-              <FeatureCard
-                icon={<Shield className="w-8 h-8 text-amber-400" />}
-                title={t('landing.feature3Title')}
-                desc={t('landing.feature3Desc')}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-amber-200/30 text-sm">
-            {t('rules.footer')}
-          </p>
         </div>
       </div>
-    </div>
-  );
-}
-
-function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
-  return (
-    <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-6 text-center hover:border-amber-500/30 transition-colors">
-      <div className="flex justify-center mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-amber-100 mb-2">{title}</h3>
-      <p className="text-amber-200/50 text-sm">{desc}</p>
     </div>
   );
 }
