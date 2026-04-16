@@ -585,14 +585,16 @@ export default function GameTable({
     const activePlayers = gs.players.filter(p => !p.isOut);
     if (activePlayers.length < 2) return true;
     const defIdx = gs.currentDefenderIdx;
-    // Find left neighbor (ccw from defender)
     const dir = gs.direction;
     const n = gs.players.length;
+    const phantomIdx = gs.phantomNeighborIdx;
+    // Mirror server-side isEdgePlayer: treat phantom neighbor as still-active
     const step = (idx: number, forward: boolean) => {
       let i = idx;
       for (let tries = 0; tries < n; tries++) {
         i = forward ? (i + 1) % n : (i - 1 + n) % n;
-        if (!gs.players[i].isOut) return i;
+        // Treat phantom as active (not out)
+        if (!gs.players[i].isOut || i === phantomIdx) return i;
       }
       return idx;
     };
@@ -1574,8 +1576,8 @@ export default function GameTable({
 
         {/* YOUR TURN overlay */}
         {showYourTurn && !isSixOnlySpectator && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-            <div className={`text-4xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
+          <div className="flex justify-center pointer-events-none py-1">
+            <div className={`text-2xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               {t('game.yourTurnCaps')}
             </div>
           </div>
@@ -1585,8 +1587,8 @@ export default function GameTable({
 
         {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && !isSixOnlySpectator && (
-          <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
-            <div className={`text-4xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
+          <div className="flex justify-center pointer-events-none py-1">
+            <div className={`text-2xl sm:text-4xl font-black text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
               <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
             </div>
           </div>
@@ -1833,22 +1835,6 @@ export default function GameTable({
         )}
 
         {/* Role indicator + Action buttons — DESKTOP: centered fixed overlay */}
-        {/* Desktop: First attacker indicator — shown in action buttons area when table is empty */}
-        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && !isSixOnlySpectator && (
-          <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
-            <span className="text-red-500 text-xl md:text-2xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
-              {t('game.yourTurnAttack')}
-            </span>
-          </div>
-        )}
-        {/* Mobile: First attacker indicator — shown in action buttons area when table is empty */}
-        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && !isSixOnlySpectator && (
-          <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex justify-center pointer-events-none">
-            <span className="text-red-500 text-base font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
-              {t('game.yourTurnAttack')}
-            </span>
-          </div>
-        )}
         {/* Desktop version */}
         {hasAnyAction && !isSixOnlySpectator && (
           <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
@@ -2120,16 +2106,28 @@ export default function GameTable({
               )}
             </div>
 
-            {/* Center: player avatar */}
+            {/* Center: player avatar with role highlight */}
             <div className="flex flex-col items-center shrink-0">
-              <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
-                <AvatarDisplay
-                  avatarId={gs.players[myIdx]?.avatarId}
-                  size={52}
-                  alt={gs.players[myIdx]?.name || ''}
-                  className="w-13 h-13 rounded-full border-2 border-amber-600/50"
-                />
-              </FrameWrapper>
+              <div className={`rounded-full p-0.5 transition-all duration-300 ${
+                isAttacker && gs.defenderTaking
+                  ? 'bg-orange-500/60 shadow-[0_0_12px_rgba(249,115,22,0.7)]'
+                  : isAttacker
+                  ? 'bg-red-500/60 shadow-[0_0_12px_rgba(239,68,68,0.7)]'
+                  : isDefender && gs.defenderTaking
+                  ? 'bg-orange-500/60 shadow-[0_0_12px_rgba(249,115,22,0.7)]'
+                  : isDefender
+                  ? 'bg-blue-500/60 shadow-[0_0_12px_rgba(59,130,246,0.7)]'
+                  : 'bg-transparent'
+              }`}>
+                <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
+                  <AvatarDisplay
+                    avatarId={gs.players[myIdx]?.avatarId}
+                    size={52}
+                    alt={gs.players[myIdx]?.name || ''}
+                    className="w-13 h-13 rounded-full border-2 border-amber-600/50"
+                  />
+                </FrameWrapper>
+              </div>
             </div>
 
             {/* Right buttons: Отмена, Перевести, Проездной, Защита, multi-select */}
