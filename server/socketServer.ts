@@ -2080,9 +2080,19 @@ function handleTimeUp(roomId: string, gameState: GameState) {
     }
     trackAndFinalizeTake(roomId, gameState);
   } else if (gameState.turnPhase === 'defend') {
-    // Defender timed out — defender TAKES cards into hand, attackers can add more
+    // Defender timed out — defender TAKES cards into hand
     engineTakeCards(gameState);
-    // Do NOT finalize immediately — let attackers add cards
+    // Check if any human attacker can still add cards
+    // If not, finalize take immediately so cards go to defender's hand right away
+    const hasHumanAttackerWhoCanAdd = gameState.players.some((p, i) => {
+      if (p.isBot || p.isOut || i === gameState.currentDefenderIdx) return false;
+      return canPlayerAddCards(gameState, i);
+    });
+    if (!hasHumanAttackerWhoCanAdd) {
+      // No human attacker can add cards — finalize immediately
+      trackAndFinalizeTake(roomId, gameState);
+    }
+    // Otherwise leave defenderTaking=true so human attackers can still add cards
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
       // Attacker timed out — auto "бито"
