@@ -1438,10 +1438,12 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Whether this player is a true neighbor of the defender (phantom-aware)
       const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
 
-      // RULE: When defender is taking cards, ONLY neighbors (edge players) can act.
-      // Non-neighbors get NO actions at all in defenderTaking mode.
-      if (state.defenderTaking && !isNeighborOfDefender) {
-        // Non-neighbor during pickup: no actions
+      // RULE: When defender is taking cards:
+      // - Neighbors can always act
+      // - Non-neighbors can act ONLY if they have at least one 6 in hand
+      const hasSixInHandForTaking = player.hand.some(c => c.rank === '6');
+      if (state.defenderTaking && !isNeighborOfDefender && !hasSixInHandForTaking) {
+        // Non-neighbor without a 6 during pickup: no actions
       } else {
         // Six exception: when lead card is 6, ANY player can throw sixes immediately
         // regardless of attackerHasPriority (they don't wait for their turn)
@@ -1454,16 +1456,22 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
           // Non-neighbor without six exception or without sixes in hand: no actions
         } else if (canAct) {
           if (state.defenderTaking) {
-            // In pickup mode, only neighbors reach here — they can add cards
+            // In pickup mode: neighbors can add any valid card;
+            // non-neighbors (who passed the hasSix gate above) can only add sixes
             if (canAddMoreAttackCards(state)) {
               const playableIds = player.hand
-                .filter(c => canPlayAsAttack(state, c))
+                .filter(c => {
+                  if (!canPlayAsAttack(state, c)) return false;
+                  // Non-neighbor: only sixes allowed
+                  if (!isNeighborOfDefender && c.rank !== '6') return false;
+                  return true;
+                })
                 .map(c => c.id);
               if (playableIds.length > 0) {
                 actions.push({ type: 'playCard', cardIds: playableIds });
               }
             }
-            // Neighbor can press "бито" to pass
+            // Can press "бито" to pass
             if (!state.passedAttackers.includes(player.id)) {
               actions.push({ type: 'endAttack' });
             }
