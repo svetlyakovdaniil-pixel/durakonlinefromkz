@@ -1572,6 +1572,7 @@ export function toClientState(
     playerPrizes: state.playerPrizes,
     prizePool: state.prizePool,
     isTutorial,
+    phantomNeighborIdx: state.phantomNeighborIdx,
   };
 }
 

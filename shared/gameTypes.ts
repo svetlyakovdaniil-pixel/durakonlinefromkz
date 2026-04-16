@@ -305,6 +305,8 @@ export interface ClientGameState {
   prizePool: number;
   /** If true, this is a tutorial game */
   isTutorial?: boolean;
+  /** Index of the phantom neighbor (player who exited mid-trick) — affects neighbor calculation */
+  phantomNeighborIdx: number | null;
 }
 
 export interface ClientPlayer {
