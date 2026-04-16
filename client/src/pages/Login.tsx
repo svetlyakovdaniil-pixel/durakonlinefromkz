@@ -222,15 +222,7 @@ export default function Login() {
               {t("auth.apple")}
             </Button>
 
-            {/* Manus OAuth button */}
-            <Button
-              variant="outline"
-              onClick={() => { window.location.href = getLoginUrl(); }}
-              className="w-full border-amber-700/30 text-amber-200 hover:bg-amber-700/10 hover:text-amber-100 h-11"
-              disabled={isAnyLoading}
-            >
-              {t("auth.manus")}
-            </Button>
+
           </div>
 
           {/* Register link */}
