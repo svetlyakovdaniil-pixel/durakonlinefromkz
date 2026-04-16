@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus, Music, Settings } from 'lucide-react';
 import ProfileDrawer from '@/components/ProfileDrawer';
+import FriendsDrawer from '@/components/FriendsDrawer';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
@@ -46,6 +47,7 @@ export default function WaitingRoom({
   const { t, locale } = useTranslation();
   const isHost = room.hostId === userId;
   const myPlayer = room.players.find(p => p.id === userId);
+  const [friendsDrawerOpen, setFriendsDrawerOpen] = useState(false);
   // Host clicking "Start" implies they are ready — only check non-host players
   const allReady = room.players.length >= 2 && room.players.every(p => p.isBot || p.id === room.hostId || p.ready);
 
@@ -204,19 +206,20 @@ export default function WaitingRoom({
         {/* Invite friends button (host only, when room has space) */}
         {isHost && room.players.length < room.maxPlayers && (
           <div className="mb-3">
-            <ProfileDrawer
-              profile={profile ?? null}
-              onlineFriendIds={onlineFriendIds}
-              inRoom={true}
-              onInviteFriend={onInviteFriend}
+            <Button
+              variant="outline"
+              className="w-full border-amber-700/30 text-amber-200 hover:bg-amber-900/20 text-sm h-8 sm:h-9"
+              onClick={() => setFriendsDrawerOpen(true)}
             >
-              <Button
-                variant="outline"
-                className="w-full border-amber-700/30 text-amber-200 hover:bg-amber-900/20 text-sm h-8 sm:h-9"
-              >
-                <UserPlus className="w-4 h-4 mr-1.5" /> {t('waitingRoom.inviteFriends')}
-              </Button>
-            </ProfileDrawer>
+              <UserPlus className="w-4 h-4 mr-1.5" /> {t('waitingRoom.inviteFriends')}
+            </Button>
+            <FriendsDrawer
+              open={friendsDrawerOpen}
+              onOpenChange={setFriendsDrawerOpen}
+              onlineFriendIds={onlineFriendIds}
+              onInviteFriend={onInviteFriend}
+              inRoom={true}
+            />
           </div>
         )}
 
