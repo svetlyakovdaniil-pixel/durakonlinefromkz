@@ -250,6 +250,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
   const rejectFriend = trpc.friends.rejectRequest.useMutation();
+  const [processingNotifIds, setProcessingNotifIds] = useState<Set<number>>(new Set());
   const utils = trpc.useUtils(); // used for cache invalidation
 
   // Auto-delete friend_accepted notifications when the panel is opened and data is loaded
@@ -312,6 +313,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   };
 
   const handleAcceptFriend = async (friendshipId: number, notificationId: number) => {
+    if (processingNotifIds.has(notificationId)) return; // Prevent double-click
+    setProcessingNotifIds(prev => new Set(prev).add(notificationId));
     try {
       await acceptFriend.mutateAsync({ friendshipId });
       // Delete the notification after accepting
@@ -321,9 +324,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       utils.friends.list.invalidate();
     } catch (err) {
       console.error('[Friend] Accept failed:', err);
+    } finally {
+      setProcessingNotifIds(prev => { const s = new Set(prev); s.delete(notificationId); return s; });
     }
   };
   const handleRejectFriend = async (friendshipId: number, notificationId: number) => {
+    if (processingNotifIds.has(notificationId)) return; // Prevent double-click
+    setProcessingNotifIds(prev => new Set(prev).add(notificationId));
     try {
       await rejectFriend.mutateAsync({ friendshipId });
       // Delete the notification after rejecting
@@ -332,6 +339,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
       utils.notifications.unreadCount.invalidate();
     } catch (err) {
       console.error('[Friend] Reject failed:', err);
+    } finally {
+      setProcessingNotifIds(prev => { const s = new Set(prev); s.delete(notificationId); return s; });
     }
   };
 
@@ -1535,14 +1544,16 @@ onClick={() => setShowTengeTopUp(true)}
                           </p>
                           <div className="flex gap-2">
                             <button
-                              className="flex items-center gap-1 bg-green-700/60 hover:bg-green-600/60 text-green-200 text-xs px-3 py-1 rounded-md transition-colors"
+                              className="flex items-center gap-1 bg-green-700/60 hover:bg-green-600/60 text-green-200 text-xs px-3 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() => n.data?.friendshipId && handleAcceptFriend(n.data.friendshipId, n.id)}
+                              disabled={processingNotifIds.has(n.id)}
                             >
                               <Check className="w-3 h-3" /> {t('lobby.accept')}
                             </button>
                             <button
-                              className="flex items-center gap-1 bg-red-900/40 hover:bg-red-800/40 text-red-300 text-xs px-3 py-1 rounded-md transition-colors"
+                              className="flex items-center gap-1 bg-red-900/40 hover:bg-red-800/40 text-red-300 text-xs px-3 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               onClick={() => n.data?.friendshipId && handleRejectFriend(n.data.friendshipId, n.id)}
+                              disabled={processingNotifIds.has(n.id)}
                             >
                               <X className="w-3 h-3" /> {t('lobby.decline')}
                             </button>

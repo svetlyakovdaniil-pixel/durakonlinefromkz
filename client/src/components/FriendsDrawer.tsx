@@ -4,6 +4,16 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import {
   Users, UserPlus, UserCheck, UserX,
@@ -147,6 +157,10 @@ function FriendsContent({
   const [addGameId, setAddGameId] = useState('');
   const [viewingFriendGameId, setViewingFriendGameId] = useState<number | null>(null);
   const [showReferral, setShowReferral] = useState(false);
+  // Track which accept requests are in-flight to prevent duplicates
+  const [acceptingIds, setAcceptingIds] = useState<Set<number>>(new Set());
+  // Confirm remove dialog state
+  const [removeConfirm, setRemoveConfirm] = useState<{ profileId: number; name: string } | null>(null);
   const utils = trpc.useUtils();
   const { t } = useTranslation();
 
@@ -170,10 +184,22 @@ function FriendsContent({
   });
 
   const acceptRequest = trpc.friends.acceptRequest.useMutation({
-    onSuccess: () => {
-      toast.success(t('profile.requestAccepted'));
+    onSuccess: (_data, variables) => {
+      toast.success(t('profile.requestAccepted'), { duration: 4000 });
       utils.friends.list.invalidate();
       utils.friends.pendingRequests.invalidate();
+      setAcceptingIds(prev => {
+        const next = new Set(prev);
+        next.delete(variables.friendshipId);
+        return next;
+      });
+    },
+    onError: (_err, variables) => {
+      setAcceptingIds(prev => {
+        const next = new Set(prev);
+        next.delete(variables.friendshipId);
+        return next;
+      });
     },
   });
 
@@ -188,6 +214,7 @@ function FriendsContent({
     onSuccess: () => {
       toast.info(t('profile.friendRemoved'));
       utils.friends.list.invalidate();
+      setRemoveConfirm(null);
     },
   });
 
@@ -198,6 +225,13 @@ function FriendsContent({
       return;
     }
     sendRequest.mutate({ targetGameId: id });
+  };
+
+  const handleAcceptRequest = (friendshipId: number) => {
+    // Prevent duplicate submissions
+    if (acceptingIds.has(friendshipId)) return;
+    setAcceptingIds(prev => new Set(prev).add(friendshipId));
+    acceptRequest.mutate({ friendshipId });
   };
 
   const friends = friendsQuery.data ?? [];
@@ -270,33 +304,39 @@ function FriendsContent({
             <Clock className="w-3.5 h-3.5" /> {t('profile.incomingRequests')} ({pending.length})
           </div>
           <div className="space-y-1.5">
-            {pending.map((req: (typeof pending)[number]) => (
-              <div key={req.friendshipId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
-                <div>
-                  <span className="text-amber-100 text-sm font-medium">{req.senderName}</span>
-                  <span className="text-amber-200/40 text-xs ml-1.5">#{req.senderGameId}</span>
+            {pending.map((req: (typeof pending)[number]) => {
+              const isAccepting = acceptingIds.has(req.friendshipId);
+              return (
+                <div key={req.friendshipId} className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-lg p-2 flex items-center justify-between">
+                  <div>
+                    <span className="text-amber-100 text-sm font-medium">{req.senderName}</span>
+                    <span className="text-amber-200/40 text-xs ml-1.5">#{req.senderGameId}</span>
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      size="sm"
+                      className="bg-green-700 hover:bg-green-600 text-white h-7 w-7 p-0"
+                      onClick={() => handleAcceptRequest(req.friendshipId)}
+                      disabled={isAccepting}
+                    >
+                      {isAccepting
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Check className="w-3.5 h-3.5" />
+                      }
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
+                      onClick={() => rejectRequest.mutate({ friendshipId: req.friendshipId })}
+                      disabled={rejectRequest.isPending || isAccepting}
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    size="sm"
-                    className="bg-green-700 hover:bg-green-600 text-white h-7 w-7 p-0"
-                    onClick={() => acceptRequest.mutate({ friendshipId: req.friendshipId })}
-                    disabled={acceptRequest.isPending}
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
-                    onClick={() => rejectRequest.mutate({ friendshipId: req.friendshipId })}
-                    disabled={rejectRequest.isPending}
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
@@ -353,8 +393,8 @@ function FriendsContent({
                       size="sm"
                       variant="outline"
                       className="border-red-700/40 text-red-300 hover:bg-red-900/30 h-7 w-7 p-0"
-                      onClick={() => removeFriend.mutate({ friendProfileId: friend.profileId })}
-                      disabled={removeFriend.isPending}
+                      onClick={() => setRemoveConfirm({ profileId: friend.profileId, name: friend.displayName || `#${friend.gameId}` })}
+                      disabled={removeFriend.isPending && removeConfirm?.profileId === friend.profileId}
                       title={t('profile.removeFriendTitle')}
                     >
                       <UserX className="w-3.5 h-3.5" />
@@ -366,6 +406,44 @@ function FriendsContent({
           </div>
         )}
       </div>
+
+      {/* Confirm remove friend dialog */}
+      <AlertDialog open={removeConfirm !== null} onOpenChange={(open) => { if (!open) setRemoveConfirm(null); }}>
+        <AlertDialogContent className="bg-[#0f2035] border-amber-700/30 text-amber-100">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-amber-100">
+              {t('profile.removeFriendConfirmTitle')}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-amber-200/70">
+              {removeConfirm
+                ? t('profile.removeFriendConfirmText').replace('{name}', removeConfirm.name)
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              className="bg-transparent border-amber-700/30 text-amber-200 hover:bg-amber-900/30 hover:text-amber-100"
+              onClick={() => setRemoveConfirm(null)}
+            >
+              {t('profile.removeFriendCancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-700 hover:bg-red-600 text-white border-0"
+              onClick={() => {
+                if (removeConfirm) {
+                  removeFriend.mutate({ friendProfileId: removeConfirm.profileId });
+                }
+              }}
+              disabled={removeFriend.isPending}
+            >
+              {removeFriend.isPending
+                ? <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                : null}
+              {t('profile.removeFriendConfirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
