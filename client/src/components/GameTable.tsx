@@ -1193,7 +1193,19 @@ export default function GameTable({
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
 
-  const opponents = gs.players.filter((_, i) => i !== myIdx);
+  // Sort opponents in turn order starting from the player after myIdx (in direction of play).
+  // This ensures the display order matches the actual turn sequence.
+  const opponents = (() => {
+    const n = gs.players.length;
+    const dir = gs.direction;
+    const result: typeof gs.players = [];
+    let idx = myIdx;
+    for (let step = 0; step < n - 1; step++) {
+      idx = dir === 'cw' ? (idx + 1) % n : (idx - 1 + n) % n;
+      result.push(gs.players[idx]);
+    }
+    return result;
+  })();
 
   const deck1Empty = gs.deck1Count === 0;
   const deck2Empty = gs.deck2Count === 0;
@@ -1920,7 +1932,24 @@ export default function GameTable({
                 {selectedCanTransfer && (
                   <Button
                     className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
-                    onClick={() => { onTransferCard(selectedCardId!); setSelectedCardId(null); }}
+                    onClick={() => {
+                      const cardId = selectedCardId!;
+                      const card = gs.myHand.find(c => c.id === cardId);
+                      if (card) {
+                        const sameRankTransfer = gs.myHand.filter(
+                          c => c.rank === card.rank && transferIds.has(c.id) && c.id !== cardId
+                        );
+                        if (sameRankTransfer.length > 0) {
+                          // Enter multi-select mode for transfer
+                          setMultiSelectIds(new Set([cardId]));
+                          setMultiSelectMode('transfer');
+                          setSelectedCardId(null);
+                          return;
+                        }
+                      }
+                      onTransferCard(cardId);
+                      setSelectedCardId(null);
+                    }}
                   >
                     {t('game.transfer')}
                   </Button>
@@ -2079,7 +2108,24 @@ export default function GameTable({
               {selectedCanTransfer && (
                 <Button
                   className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20"
-                  onClick={() => { onTransferCard(selectedCardId!); setSelectedCardId(null); }}
+                  onClick={() => {
+                    const cardId = selectedCardId!;
+                    const card = gs.myHand.find(c => c.id === cardId);
+                    if (card) {
+                      const sameRankTransfer = gs.myHand.filter(
+                        c => c.rank === card.rank && transferIds.has(c.id) && c.id !== cardId
+                      );
+                      if (sameRankTransfer.length > 0) {
+                        // Enter multi-select mode for transfer
+                        setMultiSelectIds(new Set([cardId]));
+                        setMultiSelectMode('transfer');
+                        setSelectedCardId(null);
+                        return;
+                      }
+                    }
+                    onTransferCard(cardId);
+                    setSelectedCardId(null);
+                  }}
                 >
                   {t('game.transfer')}
                 </Button>
