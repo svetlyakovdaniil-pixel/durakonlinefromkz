@@ -1438,12 +1438,10 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
       // Whether this player is a true neighbor of the defender (phantom-aware)
       const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
 
-      // RULE: When defender is taking cards:
-      // - Neighbors can always act
-      // - Non-neighbors can act ONLY if they have at least one 6 in hand
-      const hasSixInHandForTaking = player.hand.some(c => c.rank === '6');
-      if (state.defenderTaking && !isNeighborOfDefender && !hasSixInHandForTaking) {
-        // Non-neighbor without a 6 during pickup: no actions
+      // RULE: When defender is taking cards — ONLY neighbors can act.
+      // No exceptions: non-neighbors get no actions regardless of what cards they hold.
+      if (state.defenderTaking && !isNeighborOfDefender) {
+        // Non-neighbor during pickup: no actions at all
       } else {
         // Six exception: when lead card is 6, ANY player can throw sixes immediately
         // regardless of attackerHasPriority (they don't wait for their turn)
