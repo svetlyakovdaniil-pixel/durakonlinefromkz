@@ -2238,6 +2238,101 @@ export default function GameTable({
               deckStyle={gs.deckStyle}
             />
           </div>
+          {/* Avatar row: action buttons left | avatar center | action buttons right */}
+          <div className="flex items-center justify-center gap-2 mt-1.5 px-1">
+            {/* Left buttons: Взять, Бито/Достаточно, Пропустить */}
+            <div className="flex flex-col gap-1.5 items-end flex-1">
+              {canTake && (
+                <Button variant="destructive" className="action-btn-blink text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55 w-full max-w-[140px]" onClick={onTakeCards}>
+                  {t('game.take')}
+                </Button>
+              )}
+              {canEndAttack && (
+                <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20 w-full max-w-[140px]" onClick={onEndAttack}>
+                  {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
+                </Button>
+              )}
+              {canSkip && (
+                <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 text-sm h-11 px-4 font-semibold shadow-xl backdrop-blur-sm w-full max-w-[140px]" onClick={onSkipTurn}>
+                  {t('game.skip')}
+                </Button>
+              )}
+            </div>
+
+            {/* Center: player avatar */}
+            <div className="flex flex-col items-center shrink-0">
+              <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
+                <AvatarDisplay
+                  avatarId={gs.players[myIdx]?.avatarId}
+                  size={52}
+                  alt={gs.players[myIdx]?.name || ''}
+                  className="w-13 h-13 rounded-full border-2 border-amber-600/50"
+                />
+              </FrameWrapper>
+            </div>
+
+            {/* Right buttons: Отмена, Перевести, Проездной, Защита, multi-select */}
+            <div className="flex flex-col gap-1.5 items-start flex-1">
+              {isMultiSelecting && multiSelectMode === 'attack' && (
+                <>
+                  <Button className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-emerald-500/20 w-full max-w-[140px]" onClick={handleMultiAttack}>
+                    {t('game.playN', { n: String(multiSelectIds.size) })}
+                  </Button>
+                  <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm w-full max-w-[140px]" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                    {t('game.cancel')}
+                  </Button>
+                </>
+              )}
+              {isMultiSelecting && multiSelectMode === 'transfer' && (
+                <>
+                  <Button className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20 w-full max-w-[140px]" onClick={handleMultiTransfer}>
+                    {t('game.transferN', { n: String(multiSelectIds.size) })}
+                  </Button>
+                  <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm w-full max-w-[140px]" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                    {t('game.cancel')}
+                  </Button>
+                </>
+              )}
+              {isMultiSelecting && multiSelectMode === 'passthrough' && (
+                <>
+                  <Button className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20 w-full max-w-[140px]" onClick={handleMultiPassThrough}>
+                    <Eye className="w-4 h-4 mr-1" />{t('game.passThroughN', { n: String(multiSelectIds.size) })}
+                  </Button>
+                  <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm w-full max-w-[140px]" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                    {t('game.cancel')}
+                  </Button>
+                </>
+              )}
+              {selectedCanBeat && (
+                <Button className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-blue-500/20 w-full max-w-[140px]" onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}>
+                  <Shield className="w-4 h-4 mr-1" />{t('game.beat')}
+                </Button>
+              )}
+              {selectedCanTransfer && (
+                <Button className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20 w-full max-w-[140px]" onClick={() => {
+                  const cardId = selectedCardId!;
+                  const card = gs.myHand.find(c => c.id === cardId);
+                  if (card) {
+                    const sameRankTransfer = gs.myHand.filter(c => c.rank === card.rank && transferIds.has(c.id) && c.id !== cardId);
+                    if (sameRankTransfer.length > 0) { setMultiSelectIds(new Set([cardId])); setMultiSelectMode('transfer'); setSelectedCardId(null); return; }
+                  }
+                  onTransferCard(cardId); setSelectedCardId(null);
+                }}>
+                  {t('game.transfer')}
+                </Button>
+              )}
+              {selectedCanPassThrough && (
+                <Button className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20 w-full max-w-[140px]" onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}>
+                  <Eye className="w-4 h-4 mr-1" />{t('game.passThrough')}
+                </Button>
+              )}
+              {selectedCardId && !isMultiSelecting && (
+                <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-sm h-11 px-3 font-semibold shadow-xl backdrop-blur-sm w-full max-w-[140px]" onClick={() => setSelectedCardId(null)}>
+                  {t('game.cancel')}
+                </Button>
+              )}
+            </div>
+          </div>
         </div>
         )}
       </div>
