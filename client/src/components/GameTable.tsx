@@ -1486,15 +1486,16 @@ export default function GameTable({
         {/* Opponents — positioned below expanded HUD */}
         {(() => {
           const manyOpponents = opponents.length >= 4;
+          const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex justify-center flex-wrap px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`}>
+            <div className={`flex ${manyManyOpponents ? 'flex-nowrap overflow-x-auto justify-start scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
                 const isOppDefender = pIdx === gs.currentDefenderIdx;
                 const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
                 return (
-                  <div key={p.id} data-tutorial="opponent-info" className={`flex flex-col items-center ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
+                  <div key={p.id} data-tutorial="opponent-info" className={`flex flex-col items-center ${manyManyOpponents ? 'px-0.5 py-0.5' : manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
                     isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
                     isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
                     'bg-black/30 border-amber-700/20'
@@ -1505,12 +1506,12 @@ export default function GameTable({
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                       disabled={p.isBot || !p.gameId}
                     >
-                       <FrameWrapper frameId={p.equippedFrame} size={manyOpponents ? 32 : 40}>
+                       <FrameWrapper frameId={p.equippedFrame} size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}>
                          <AvatarDisplay
                            avatarId={p.avatarId}
-                           size={manyOpponents ? 32 : 40}
+                           size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
                            alt={p.name}
-                           className={`${manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
+                           className={`${manyManyOpponents ? 'w-7 h-7' : manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
                          />
                       </FrameWrapper>
                     </button>
@@ -1520,7 +1521,7 @@ export default function GameTable({
                       {isOppDefender && gs.defenderTaking && <HandMetal className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-orange-400`} />}
                       {p.isOut && p.winPlace && <Crown className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-amber-400`} />}
                       {!p.isBot && <DiamondRankIcon seasonRating={p.seasonRating ?? 0} size={manyOpponents ? 9 : 11} />}
-                      <span className={`${manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
+                      <span className={`${manyManyOpponents ? 'text-[8px] max-w-9' : manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
                     </div>
                     {isOppDefender && gs.defenderTaking && (
                       <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>{t('game.taking')}</span>
