@@ -618,7 +618,7 @@ describe('Bot action failure handling', () => {
 
     // No cards on table
     const error = endAttack(game, attackerIdx);
-    expect(error).toBe('No cards on table');
+    expect(error).toBe('На столе нет карт');
   });
 
   it('endAttack with all cards defended leads to successfulDefense', () => {

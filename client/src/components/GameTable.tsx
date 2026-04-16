@@ -57,6 +57,7 @@ function PlayerHand({
   tutorialHighlightIds,
   tutorialGreenIds,
   tutorialRedIds,
+  pendingCardId,
   onCardClick,
   onCardDrop,
   deckStyle,
@@ -71,6 +72,7 @@ function PlayerHand({
   tutorialHighlightIds?: Set<string>;
   tutorialGreenIds?: Set<string>;
   tutorialRedIds?: Set<string>;
+  pendingCardId?: string | null;
   onCardClick: (card: Card) => void;
   onCardDrop?: (card: Card) => boolean;
   deckStyle?: 'classic' | 'custom';
@@ -158,6 +160,7 @@ function PlayerHand({
           {sortedHand.map((card, i) => {
             const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
+            const isPending = pendingCardId === card.id;
             const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id);
             const isTutorialHighlighted = tutorialHighlightIds?.has(card.id) ?? false;
             const isTutorialGreen = tutorialGreenIds?.has(card.id) ?? false;
@@ -169,10 +172,11 @@ function PlayerHand({
               <div
                 key={card.id}
                 data-card-id={card.id}
-                className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight) ? 'z-[60]' : ''}`}
+                className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight) ? 'z-[60]' : ''} ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
                 style={{
                   marginLeft: getCardMargin(i),
                   zIndex: (isTutorialHighlighted || hasColoredHighlight) ? 60 : isSelected ? 50 : i,
+                  transition: isPending ? 'opacity 0.15s' : undefined,
                 }}
               >
                 {canDrag && onCardDrop ? (
@@ -510,6 +514,9 @@ export default function GameTable({
   // Multi-card opening attack / transfer selection
   const [multiSelectIds, setMultiSelectIds] = useState<Set<string>>(new Set());
   const [multiSelectMode, setMultiSelectMode] = useState<'attack' | 'transfer' | 'passthrough' | null>(null);
+  // Pending card ID — prevents double-tap/click after card is sent to server
+  // Cleared when gameStateUpdate or yourTurn arrives (via availableActions change)
+  const [pendingCardId, setPendingCardId] = useState<string | null>(null);
   const [showYourTurn, setShowYourTurn] = useState(false);
   const [yourTurnPhase, setYourTurnPhase] = useState<'enter' | 'exit' | null>(null);
   const prevIsMyTurn = useRef(false);
@@ -768,6 +775,12 @@ export default function GameTable({
       urgentAlertShownForTrick.current = -1;
     }
   }, [turnTimer, availableActions, gs.trickCount]);
+
+  // Clear pendingCardId whenever server sends new availableActions (gameStateUpdate or yourTurn)
+  // This unblocks the UI after a card was sent to the server
+  useEffect(() => {
+    setPendingCardId(null);
+  }, [availableActions]);
 
   const playableIds = useMemo(() => {
     const ids = new Set<string>();
@@ -1044,6 +1057,8 @@ export default function GameTable({
           .map((p, i) => ({ pair: p, idx: i }))
           .filter(x => !x.pair.defense);
         if (undefended.length === 1) {
+          if (pendingCardId === card.id) return; // Prevent double-tap
+          setPendingCardId(card.id);
           onPlayCard(card.id, undefended[0].idx);
         } else {
           // Only show target selection for special cards (trump, king of spades, 777)
@@ -1062,6 +1077,8 @@ export default function GameTable({
             }
           } else {
             // Auto-play on first valid undefended pair
+            if (pendingCardId === card.id) return; // Prevent double-tap
+            setPendingCardId(card.id);
             onPlayCard(card.id);
           }
         }
@@ -1085,9 +1102,13 @@ export default function GameTable({
     }
 
     if (playableIds.has(card.id)) {
+      if (pendingCardId === card.id) return; // Prevent double-tap
+      setPendingCardId(card.id);
       onPlayCard(card.id);
       setSelectedCardId(null);
     } else if (transferIds.has(card.id)) {
+      if (pendingCardId === card.id) return; // Prevent double-tap
+      setPendingCardId(card.id);
       onTransferCard(card.id);
       setSelectedCardId(null);
     } else if (passThroughIds.has(card.id)) {
@@ -2112,6 +2133,7 @@ export default function GameTable({
               tutorialHighlightIds={tutorialHighlightIds}
               tutorialGreenIds={tutorialGreenIds}
               tutorialRedIds={tutorialRedIds}
+              pendingCardId={pendingCardId}
               onCardClick={handleCardClick}
               onCardDrop={handleCardDrop}
               deckStyle={gs.deckStyle}

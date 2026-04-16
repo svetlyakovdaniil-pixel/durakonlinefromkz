@@ -67,6 +67,18 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     socket.on('connect', () => {
       setConnected(true);
+      // Clear the send buffer to prevent stale game actions (e.g. playCard) from being
+      // re-sent after reconnect. The server will send the authoritative game state via
+      // auto-rejoin, so replaying buffered actions would cause 'Card not in hand' errors.
+      if ((socket as any).sendBuffer && Array.isArray((socket as any).sendBuffer)) {
+        const staleGameEvents = ['playCard', 'transferCard', 'transferCards', 'showPassThrough', 'showPassThroughs', 'endAttack', 'passTurn', 'takeCards'];
+        const before = (socket as any).sendBuffer.length;
+        (socket as any).sendBuffer = (socket as any).sendBuffer.filter(
+          (item: any) => !staleGameEvents.includes(item[0])
+        );
+        const cleared = before - (socket as any).sendBuffer.length;
+        if (cleared > 0) console.log(`[Socket] Cleared ${cleared} stale game action(s) from sendBuffer on reconnect`);
+      }
       // On reconnect, try to rejoin the room we were in
       const roomId = currentRoomIdRef.current;
       if (roomId && !leavingRef.current && !blockedRoomIdsRef.current.has(roomId)) {
