@@ -3132,3 +3132,10 @@
 - [x] Интегрировать фильтр в emailAuth.ts (регистрация)
 - [x] Интегрировать фильтр в routers.ts (updateName)
 - [x] Добавить тесты для фильтра
+
+## Batch 109 — Жалобы на неподобающее имя
+- [x] Добавить db.forceRenamePlayer(profileId) — сброс имени на "Player_XXXXX"
+- [x] Добавить admin.forceRenamePlayer процедуру в routers.ts
+- [x] Добавить кнопку "Сбросить имя" в детальный вид жалобы inappropriate_name в AdminPanel
+- [x] Добавить визуальное выделение жалоб с причиной inappropriate_name в списке
+- [x] Добавить тесты

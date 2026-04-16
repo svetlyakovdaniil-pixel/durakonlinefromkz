@@ -218,6 +218,7 @@ export const adminAuditLog = mysqlTable("admin_audit_log", {
     "kick", "update_shop_item", "create_shop_item",
     "toggle_shop_item", "mass_notify", "revoke_purchase",
     "update_avatar_offsets", "remove_item", "reset_account", "give_item",
+    "force_rename",
   ]).notNull(),
   /** Target player profile ID (if applicable) */
   targetProfileId: int("targetProfileId"),
