@@ -727,6 +727,18 @@ export const en = {
     referralCodePlaceholder: 'e.g. AB3C7XYZ',
     referralCodeHint: 'Enter a friend\'s code and get 10,000 shanyrak + 25 tenge',
     optional: 'optional',
+    verifyEmail: 'Email Verification',
+    verifyEmailDesc: 'Enter the 6-digit code sent to',
+    verifyCode: 'Verification Code',
+    verifyCodePlaceholder: '000000',
+    verifyButton: 'Verify',
+    resendCode: 'Resend Code',
+    resendCodeIn: 'New code in',
+    codeSent: 'Code sent to your email',
+    codeExpired: 'Code expired. Request a new one.',
+    codeInvalid: 'Invalid code',
+    tooManyAttempts: 'Too many attempts. Request a new code.',
+    emailSendFailed: 'Failed to send email. Try again later.',
   },
 
   // Contact admin

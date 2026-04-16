@@ -1,7 +1,7 @@
 import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals, emailVerificationCodes, InsertEmailVerificationCode } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -3453,4 +3453,39 @@ export async function adminForceRenamePlayer(profileId: number): Promise<{ succe
     .where(eq(users.id, profile.userId));
 
   return { success: true, newName };
+}
+
+// ============================================================
+// EMAIL VERIFICATION CODES helpers
+// ============================================================
+
+export async function createEmailVerificationCode(data: InsertEmailVerificationCode): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  // Delete any existing codes for this email first
+  await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, data.email));
+  await db.insert(emailVerificationCodes).values(data);
+}
+
+export async function getEmailVerificationCode(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const [row] = await db.select().from(emailVerificationCodes)
+    .where(eq(emailVerificationCodes.email, email))
+    .limit(1);
+  return row ?? null;
+}
+
+export async function incrementVerificationAttempts(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(emailVerificationCodes)
+    .set({ attempts: sql`${emailVerificationCodes.attempts} + 1` })
+    .where(eq(emailVerificationCodes.id, id));
+}
+
+export async function deleteEmailVerificationCode(email: string): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, email));
 }
