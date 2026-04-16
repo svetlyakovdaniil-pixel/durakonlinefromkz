@@ -91,27 +91,87 @@ function splitDecks(cards: Card[]): { deck1: Card[]; deck2: Card[] } {
 }
 
 // ---- First player logic ----
-
+// Rules:
+// 1. Find the player with the lowest trump card.
+// 2. If multiple players share the same minimum trump value, that rank is "cancelled" for those players.
+//    Among tied players, find their next lowest trump (excluding the cancelled rank).
+// 3. Repeat until one player wins.
+// 4. Tie-break at same rank: the player with MORE copies of that rank wins.
+// 5. If all trump ranks are cancelled (complete tie), fall back to player index 0.
 export function findFirstPlayer(players: Player[], trumpSuit: Suit): number {
-  let bestIdx = 0;
-  let bestValue = Infinity;
-  let bestCount = 0;
+  // Build per-player trump card lists (sorted ascending by value)
+  const playerTrumps: { idx: number; cards: number[] }[] = players
+    .map((p, idx) => ({
+      idx,
+      cards: p.hand
+        .filter(c => c.suit === trumpSuit)
+        .map(c => getCardValue(c))
+        .sort((a, b) => a - b),
+    }))
+    .filter(p => p.cards.length > 0);
 
-  for (let i = 0; i < players.length; i++) {
-    const trumpCards = players[i].hand.filter(c => c.suit === trumpSuit);
-    if (trumpCards.length === 0) continue;
-    const lowestTrump = trumpCards.reduce((min, c) =>
-      getCardValue(c) < getCardValue(min) ? c : min
-    );
-    const val = getCardValue(lowestTrump);
-    const count = trumpCards.filter(c => getCardValue(c) === val).length;
-    if (val < bestValue || (val === bestValue && count < bestCount)) {
-      bestValue = val;
-      bestCount = count;
-      bestIdx = i;
+  if (playerTrumps.length === 0) return 0; // No one has trumps — default to player 0
+
+  // Each player tracks a pointer into their sorted trump list (which rank we're currently considering)
+  const pointers: number[] = playerTrumps.map(() => 0);
+
+  // Iteratively resolve ties
+  let candidates = playerTrumps.map((_, i) => i); // indices into playerTrumps array
+
+  while (candidates.length > 1) {
+    // Find the minimum current trump value among all candidates
+    const minVal = Math.min(...candidates.map(ci => {
+      const ptr = pointers[ci];
+      return ptr < playerTrumps[ci].cards.length ? playerTrumps[ci].cards[ptr] : Infinity;
+    }));
+
+    if (minVal === Infinity) break; // All candidates exhausted — complete tie
+
+    // Find candidates that have this minimum value at their current pointer
+    const withMin = candidates.filter(ci => {
+      const ptr = pointers[ci];
+      return ptr < playerTrumps[ci].cards.length && playerTrumps[ci].cards[ptr] === minVal;
+    });
+
+    // Candidates without this minimum value have higher minimums — eliminate them
+    const withoutMin = candidates.filter(ci => !withMin.includes(ci));
+    if (withoutMin.length > 0) {
+      candidates = withMin;
     }
+
+    if (candidates.length === 1) break; // Winner found
+
+    // Multiple candidates share the same minimum rank — apply tie-break by count
+    // Count how many cards of this rank each tied candidate has
+    const counts = candidates.map(ci => ({
+      ci,
+      count: playerTrumps[ci].cards.filter(v => v === minVal).length,
+    }));
+
+    const maxCount = Math.max(...counts.map(x => x.count));
+    const withMaxCount = counts.filter(x => x.count === maxCount).map(x => x.ci);
+
+    if (withMaxCount.length === 1) {
+      // One player has more copies of this rank — they win
+      candidates = withMaxCount;
+      break;
+    }
+
+    // Complete tie at this rank and count — cancel this rank for all tied candidates
+    // Advance each tied candidate's pointer past all cards of this rank
+    for (const ci of candidates) {
+      while (pointers[ci] < playerTrumps[ci].cards.length && playerTrumps[ci].cards[pointers[ci]] === minVal) {
+        pointers[ci]++;
+      }
+    }
+    // Candidates who exhausted their trump list are eliminated
+    candidates = candidates.filter(ci => pointers[ci] < playerTrumps[ci].cards.length);
+
+    if (candidates.length === 0) break; // All exhausted — complete tie, fall back
   }
-  return bestIdx;
+
+  if (candidates.length === 0) return 0; // Complete tie — default to player 0
+  return playerTrumps[candidates[0]].idx;
 }
 
 // ---- Game creation ----
