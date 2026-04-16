@@ -1043,6 +1043,18 @@ function findNextUnpassedAttacker(state: GameState, fromIdx: number): number | n
     if (state.players[idx].isOut) continue;
     if (state.passedAttackers.includes(state.players[idx].id)) continue;
     if (canPlayerAddCards(state, idx) || idx === state.currentAttackerIdx) {
+      // CRITICAL FIX: When defender is taking, only neighbors can get the turn.
+      // Non-neighbors (six-exception players) must NOT become currentAttacker.
+      if (state.defenderTaking) {
+        const isNeighbor = isEdgePlayer(state.players, idx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
+        if (!isNeighbor && idx !== state.currentAttackerIdx) {
+          // Auto-pass this non-neighbor — they can't get the turn during pickup
+          if (!state.passedAttackers.includes(state.players[idx].id)) {
+            state.passedAttackers.push(state.players[idx].id);
+          }
+          continue;
+        }
+      }
       return idx;
     }
   }
@@ -1067,6 +1079,17 @@ function autoPassAttackersWithNoCards(state: GameState): void {
       continue;
     }
     if (!canPlayerAddCards(state, i) && i !== state.currentAttackerIdx) continue;
+    // CRITICAL FIX: When defender is taking, non-neighbors are auto-passed immediately.
+    // They cannot participate in pickup regardless of their cards.
+    if (state.defenderTaking && i !== state.currentAttackerIdx) {
+      const isNeighbor = isEdgePlayer(state.players, i, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
+      if (!isNeighbor) {
+        if (!state.passedAttackers.includes(state.players[i].id)) {
+          state.passedAttackers.push(state.players[i].id);
+        }
+        continue;
+      }
+    }
     // Check if this player has any matching cards to add
     // For non-neighbors in six-exception, only check for sixes
     const hasMatchingCards = state.players[i].hand.some(c => 
@@ -1087,6 +1110,12 @@ function checkAllAttackersPassed(state: GameState): boolean {
     if (i === state.currentDefenderIdx) continue;
     if (state.players[i].isOut) continue;
     if (!canPlayerAddCards(state, i) && i !== state.currentAttackerIdx) continue;
+    // CRITICAL FIX: When defender is taking, non-neighbors are excluded from the check.
+    // They cannot block finalization of the take.
+    if (state.defenderTaking && i !== state.currentAttackerIdx) {
+      const isNeighbor = isEdgePlayer(state.players, i, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
+      if (!isNeighbor) continue; // Non-neighbor is irrelevant during pickup
+    }
     if (!state.passedAttackers.includes(state.players[i].id)) return false;
   }
   return true;
@@ -1383,9 +1412,18 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
   if (isAttacker) {
     // In pickup mode, attacker can add cards
     if (state.defenderTaking) {
+      // CRITICAL FIX: During pickup, only neighbors can act.
+      // If currentAttackerIdx was incorrectly set to a non-neighbor (via six-exception),
+      // they must not get any actions.
+      const isNeighborAttacker = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
+      if (!isNeighborAttacker) {
+        // Non-neighbor became currentAttacker (shouldn't happen after fix, but guard anyway)
+        // Give them no actions — they are irrelevant during pickup
+        return actions;
+      }
       if (canAddMoreAttackCards(state)) {
         const playableIds = player.hand
-          .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
+          .filter(c => canPlayAsAttack(state, c))
           .map(c => c.id);
         if (playableIds.length > 0) {
           actions.push({ type: 'playCard', cardIds: playableIds });

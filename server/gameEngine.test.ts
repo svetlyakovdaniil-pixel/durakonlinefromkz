@@ -2917,3 +2917,96 @@ describe('Phantom neighbor rule', () => {
     expect(actions.some(a => a.type === 'takeCards')).toBe(true);
   });
 });
+
+// ============================================================
+// BUG FIX: Non-neighbor must NOT get actions during defenderTaking (six-exception bug)
+// ============================================================
+describe('Six-exception bug: non-neighbor during defenderTaking', () => {
+  // Setup: 5 players. Attacker=0, Defender=1, Neighbor=2 (right of defender), Non-neighbor=3,4
+  // Lead card is 6 (so canPlayerAddCards returns true for ALL)
+  // defenderTaking = true
+  // Non-neighbor (player 3, 4) must NOT get endAttack or playCard actions
+
+  function createSixExceptionPickupState(): GameState {
+    const state = createTestState(5, {
+      currentAttackerIdx: 0,
+      currentDefenderIdx: 1,
+      direction: 'cw',
+      turnPhase: 'pickup',
+      defenderTaking: true,
+      leadCardRank: '6',
+      attackerHasPriority: false,
+      passedAttackers: [],
+    });
+    // Attacker (0): has a 6
+    state.players[0].hand = [card('hearts', '6')];
+    // Defender (1): taking cards
+    state.players[1].hand = [card('spades', '8')];
+    // Right neighbor of defender (2): has a 6
+    state.players[2].hand = [card('diamonds', '6')];
+    // Non-neighbor (3): has NO 6
+    state.players[3].hand = [card('clubs', '7'), card('hearts', '8')];
+    // Non-neighbor (4): has a 6 (but still not a neighbor)
+    state.players[4].hand = [card('spades', '6')];
+    // Battlefield has a 6 on it
+    state.battleField = [{ attack: card('hearts', '6', 1), defense: null }];
+    return state;
+  }
+
+  it('non-neighbor without 6 gets NO actions during defenderTaking', () => {
+    const state = createSixExceptionPickupState();
+    // Player 3 is non-neighbor, has no 6
+    const actions = getAvailableActions(state, 3);
+    expect(actions.length).toBe(0);
+    expect(actions.some(a => a.type === 'endAttack')).toBe(false);
+    expect(actions.some(a => a.type === 'playCard')).toBe(false);
+  });
+
+  it('non-neighbor WITH 6 also gets NO actions during defenderTaking', () => {
+    const state = createSixExceptionPickupState();
+    // Player 4 is non-neighbor, has a 6 — but still must not act during pickup
+    const actions = getAvailableActions(state, 4);
+    expect(actions.length).toBe(0);
+    expect(actions.some(a => a.type === 'endAttack')).toBe(false);
+    expect(actions.some(a => a.type === 'playCard')).toBe(false);
+  });
+
+  it('neighbor (player 2) CAN act during defenderTaking', () => {
+    const state = createSixExceptionPickupState();
+    // Player 2 is right neighbor of defender
+    // currentAttackerIdx = 0, so player 2 is EDGE player
+    const actions = getAvailableActions(state, 2);
+    // Should have endAttack at minimum
+    expect(actions.some(a => a.type === 'endAttack')).toBe(true);
+  });
+
+  it('findNextUnpassedAttacker skips non-neighbors during defenderTaking', () => {
+    const state = createSixExceptionPickupState();
+    // currentAttackerIdx = 0 (attacker). When attacker presses бито,
+    // findNextUnpassedAttacker should skip non-neighbors (3, 4) and find neighbor (2)
+    // Simulate attacker pressing бито
+    const result = endAttack(state, 0);
+    expect(result).toBeNull();
+    // After attacker passes, currentAttackerIdx should be neighbor (2), not non-neighbor (3 or 4)
+    if (!state.defenderTaking) {
+      // If finalized already, that's also fine
+    } else {
+      expect(state.currentAttackerIdx).toBe(2);
+    }
+  });
+
+  it('non-neighbor does not block finalization of defenderTaking', () => {
+    const state = createSixExceptionPickupState();
+    // Only attacker (0) and neighbor (2) need to pass for finalization
+    // Non-neighbors (3, 4) must not block
+    state.passedAttackers = [state.players[0].id, state.players[2].id];
+    // checkAllAttackersPassed should return true even though players 3,4 haven't passed
+    // We simulate by calling endAttack for player 2 (neighbor)
+    // First set currentAttackerIdx to 2 (neighbor's turn)
+    state.currentAttackerIdx = 2;
+    const result = endAttack(state, 2);
+    expect(result).toBeNull();
+    // Game should have finalized the take (defenderTaking = false)
+    expect(state.defenderTaking).toBe(false);
+  });
+});
