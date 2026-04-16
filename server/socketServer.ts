@@ -264,6 +264,13 @@ export function initSocketServer(httpServer: HttpServer) {
         // watchdog could fire before the player is in the Socket.IO room, causing false forfeit.
         const gameState = games.get(frozenRoomId);
         if (gameState && gameState.gamePhase === 'playing') {
+          // CRITICAL FIX: Reset consecutiveTimeouts for the reconnecting player.
+          // Without this, a disconnect (which causes a timeout) + reconnect leaves the
+          // counter at 1, so the very first real timeout after reconnect triggers forfeit.
+          if (gameState.consecutiveTimeouts[odId]) {
+            gameState.consecutiveTimeouts[odId] = 0;
+            dbg(`[Socket] Reset consecutiveTimeouts for ${odId} after reconnect`);
+          }
           restartTurnTimer(frozenRoomId);
           setTimeout(() => {
             // Only start watchdog if game is still playing
@@ -301,6 +308,13 @@ export function initSocketServer(httpServer: HttpServer) {
           // CRITICAL FIX: Always call socket.join(roomId) even if room object is missing.
           // Without this, watchdog sees player not in Socket.IO room and forfeits them.
           socket.join(roomId);
+          // CRITICAL FIX: Reset consecutiveTimeouts on auto-rejoin.
+          // Covers the case where freeze did NOT start (very fast reconnect) but
+          // a timeout was already counted during the brief disconnect window.
+          if (gameState && gameState.consecutiveTimeouts[odId]) {
+            gameState.consecutiveTimeouts[odId] = 0;
+            dbg(`[Socket] Reset consecutiveTimeouts for ${odId} on auto-rejoin`);
+          }
           if (room) {
             // Send current room state
             socket.emit('roomUpdated', sanitizeRoom(room));
@@ -376,15 +390,19 @@ export function initSocketServer(httpServer: HttpServer) {
         dbg(`[Socket] Cancelled grace period for ${odId} — player reconnected`);
       }
 
-      // Update socket mapping
+        // Update socket mapping
       playerSockets.set(odId, socket.id);
-
       socket.join(roomId);
       trackPlayerRoom(odId, roomId);
-
+      // CRITICAL FIX: Reset consecutiveTimeouts on explicit rejoin.
+      // A disconnect can cause a timeout to be counted; after reconnect the player
+      // should start fresh so the first real timeout doesn't immediately forfeit them.
+      if (gameState && gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+        dbg(`[Socket] Reset consecutiveTimeouts for ${odId} on rejoinRoom`);
+      }
       // Send current room state
       socket.emit('roomUpdated', sanitizeRoom(room));
-
       // If game is in progress, send full game state (reuse gameState from above)
       if (gameState && gameState.gamePhase === 'playing') {
         const clientState = toClientState(gameState, odId, playerGameIds, playerAvatarIds, playerEquippedFrames, room.settings.betAmount || 0, room.settings.isTutorial || false, playerSeasonRatings);
@@ -394,7 +412,6 @@ export function initSocketServer(httpServer: HttpServer) {
         const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
         socket.emit('yourTurn', actions);
       }
-
       cb(true, sanitizeRoom(room));
     });
 

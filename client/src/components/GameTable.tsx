@@ -741,7 +741,7 @@ export default function GameTable({
       a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
     );
 
-    if (isMyTurn && turnTimer !== undefined && turnTimer <= 15 && turnTimer > 0 && urgentAlertShownForTrick.current !== gs.trickCount) {
+    if (isMyTurn && turnTimer !== undefined && turnTimer <= 15 && turnTimer > 0 && turnTimer < 99 && urgentAlertShownForTrick.current !== gs.trickCount) {
       urgentAlertShownForTrick.current = gs.trickCount;
       urgentTurnTimers.current.forEach(t => clearTimeout(t));
       urgentTurnTimers.current = [];
@@ -1392,7 +1392,7 @@ export default function GameTable({
             </Badge>
             <Badge data-tutorial="timer" className={`sm:hidden text-sm px-2 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
               <Timer className="w-4 h-4 mr-0.5" />
-              {turnTimer}с
+              {turnTimer >= 99 ? '--' : `${turnTimer}с`}
             </Badge>
             {/* Settings button */}
             <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty} isTutorial={isTutorial}>
@@ -1558,9 +1558,9 @@ export default function GameTable({
               <span className={`text-4xl md:text-5xl font-black tabular-nums leading-none ${
                 turnTimer <= 5 ? 'text-red-300' : 'text-amber-300'
               }`}>
-                {turnTimer}
+                {turnTimer >= 99 ? '--' : turnTimer}
               </span>
-              <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>{t('game.sec')}</span>
+              <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>{turnTimer >= 99 ? '' : t('game.sec')}</span>
             </div>
 
             {gs.discardCount > 0 && (
