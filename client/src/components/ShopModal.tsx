@@ -29,6 +29,7 @@ import { ObsidianSpaceFrame } from './ObsidianSpaceFrame';
 import { ObsidianCyberpunkFrame } from './ObsidianCyberpunkFrame';
 import { ObsidianHiphopFrame } from './ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from './ObsidianAngelsDemonsFrame';
+import GalaxyTableOverlay from './GalaxyTableOverlay';
 
 const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
 const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
@@ -822,8 +823,13 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 return (
                   <div key={tableId} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex flex-col gap-3">
-                      <div className="w-full h-36 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
+                      <div className="w-full h-36 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg relative">
                         <img src={table.url} alt={table.name} className="w-full h-full object-cover" />
+                        {tableId === 'galaxy' && (
+                          <div className="absolute inset-0 pointer-events-none">
+                            <GalaxyTableOverlay enabled={true} />
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
