@@ -569,3 +569,24 @@ export const referrals = mysqlTable("referrals", {
 });
 export type Referral = typeof referrals.$inferSelect;
 export type InsertReferral = typeof referrals.$inferInsert;
+
+/**
+ * Email verification codes — temporary OTP codes sent during registration.
+ * A code is valid for 10 minutes and can be used only once.
+ */
+export const emailVerificationCodes = mysqlTable("email_verification_codes", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Email address being verified */
+  email: varchar("email", { length: 320 }).notNull(),
+  /** 6-digit numeric OTP code */
+  code: varchar("code", { length: 6 }).notNull(),
+  /** Pending registration data (name, passwordHash, referralCode) stored as JSON */
+  pendingData: text("pendingData").notNull(),
+  /** Number of failed verification attempts */
+  attempts: int("attempts").default(0).notNull(),
+  /** When the code expires (10 minutes from creation) */
+  expiresAt: timestamp("expiresAt").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type EmailVerificationCode = typeof emailVerificationCodes.$inferSelect;
+export type InsertEmailVerificationCode = typeof emailVerificationCodes.$inferInsert;

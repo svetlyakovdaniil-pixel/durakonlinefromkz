@@ -16,6 +16,10 @@ const mockCreateUserCredential = vi.fn();
 const mockGetUserById = vi.fn();
 const mockGetOrCreateProfile = vi.fn().mockResolvedValue({ id: 'profile-1', userId: 'user-1' });
 
+const mockCreateEmailVerificationCode = vi.fn().mockResolvedValue(undefined);
+const mockGetEmailVerificationCode = vi.fn();
+const mockDeleteEmailVerificationCode = vi.fn().mockResolvedValue(undefined);
+const mockIncrementVerificationAttempts = vi.fn().mockResolvedValue(undefined);
 vi.mock("./db", () => ({
   getCredentialByEmail: (...args: any[]) => mockGetCredentialByEmail(...args),
   upsertUser: (...args: any[]) => mockUpsertUser(...args),
@@ -23,6 +27,10 @@ vi.mock("./db", () => ({
   createUserCredential: (...args: any[]) => mockCreateUserCredential(...args),
   getUserById: (...args: any[]) => mockGetUserById(...args),
   getOrCreateProfile: (...args: any[]) => mockGetOrCreateProfile(...args),
+  createEmailVerificationCode: (...args: any[]) => mockCreateEmailVerificationCode(...args),
+  getEmailVerificationCode: (...args: any[]) => mockGetEmailVerificationCode(...args),
+  deleteEmailVerificationCode: (...args: any[]) => mockDeleteEmailVerificationCode(...args),
+  incrementVerificationAttempts: (...args: any[]) => mockIncrementVerificationAttempts(...args),
 }));
 
 // Mock sdk
@@ -52,6 +60,16 @@ vi.mock("bcryptjs", () => ({
   },
 }));
 
+// Mock brevoEmail
+const mockSendVerificationEmail = vi.fn().mockResolvedValue(true);
+vi.mock("./brevoEmail", () => ({
+  sendVerificationEmail: (...args: any[]) => mockSendVerificationEmail(...args),
+}));
+// Mock profanityFilter
+vi.mock("../shared/profanityFilter", () => ({
+  containsProfanity: vi.fn().mockReturnValue(false),
+  PROFANITY_ERR_MSG: "Profanity not allowed",
+}));
 import bcrypt from "bcryptjs";
 
 // Helper to create mock req/res
@@ -97,7 +115,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with missing email", async () => {
     const { req, res } = createMockReqRes({ password: "123456", name: "Test" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "invalid_email" })
@@ -106,7 +124,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with invalid email format", async () => {
     const { req, res } = createMockReqRes({ email: "not-an-email", password: "123456", name: "Test" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "invalid_email" })
@@ -115,7 +133,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with short password", async () => {
     const { req, res } = createMockReqRes({ email: "test@example.com", password: "12345", name: "Test" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "password_too_short" })
@@ -124,7 +142,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with missing password", async () => {
     const { req, res } = createMockReqRes({ email: "test@example.com", name: "Test" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "invalid_password" })
@@ -133,7 +151,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with empty name", async () => {
     const { req, res } = createMockReqRes({ email: "test@example.com", password: "123456", name: "" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "invalid_name" })
@@ -142,7 +160,7 @@ describe("Email Auth - Registration", () => {
 
   it("rejects registration with name longer than 12 chars", async () => {
     const { req, res } = createMockReqRes({ email: "test@example.com", password: "123456", name: "VeryLongNameHere" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "invalid_name" })
@@ -152,49 +170,40 @@ describe("Email Auth - Registration", () => {
   it("rejects registration when email already exists", async () => {
     mockGetCredentialByEmail.mockResolvedValue({ id: 1, email: "test@example.com" });
     const { req, res } = createMockReqRes({ email: "test@example.com", password: "123456", name: "Test" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
     expect(res.status).toHaveBeenCalledWith(409);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ error: "email_exists" })
     );
   });
 
-  it("successfully registers a new user", async () => {
+  it("successfully sends OTP code for new user registration", async () => {
     mockGetCredentialByEmail.mockResolvedValue(null);
-    mockUpsertUser.mockResolvedValue(undefined);
-    mockGetUserByOpenId.mockResolvedValue({ id: 42, openId: "email_test-uuid", name: "Test" });
-    mockCreateUserCredential.mockResolvedValue(undefined);
+    mockCreateEmailVerificationCode.mockResolvedValue(undefined);
+    mockSendVerificationEmail.mockResolvedValue(true);
 
-    const { req, res, cookies } = createMockReqRes({ email: "new@example.com", password: "securepass", name: "NewUser" });
-    await routes["/api/auth/register"](req, res);
+    const { req, res } = createMockReqRes({ email: "new@example.com", password: "securepass", name: "NewUser" });
+    await routes["/api/auth/register/send-code"](req, res);
 
-    expect(res.status).toHaveBeenCalledWith(201);
+    expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ success: true })
     );
-    expect(mockUpsertUser).toHaveBeenCalled();
-    expect(mockCreateUserCredential).toHaveBeenCalledWith(
-      expect.objectContaining({
-        userId: 42,
-        email: "new@example.com",
-      })
-    );
-    expect(mockCreateSessionToken).toHaveBeenCalled();
-    expect(cookies.length).toBe(1);
-    expect(cookies[0].value).toBe("mock-session-token");
+    expect(mockCreateEmailVerificationCode).toHaveBeenCalled();
+    expect(mockSendVerificationEmail).toHaveBeenCalledWith("new@example.com", expect.stringMatching(/^\d{6}$/));
   });
 
-  it("returns 500 when user creation fails (getUserByOpenId returns null)", async () => {
+  it("returns 500 when email sending fails", async () => {
     mockGetCredentialByEmail.mockResolvedValue(null);
-    mockUpsertUser.mockResolvedValue(undefined);
-    mockGetUserByOpenId.mockResolvedValue(null);
+    mockCreateEmailVerificationCode.mockResolvedValue(undefined);
+    mockSendVerificationEmail.mockResolvedValue(false);
 
     const { req, res } = createMockReqRes({ email: "fail@example.com", password: "123456", name: "Fail" });
-    await routes["/api/auth/register"](req, res);
+    await routes["/api/auth/register/send-code"](req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ error: "user_creation_failed" })
+      expect.objectContaining({ error: "email_send_failed" })
     );
   });
 });
