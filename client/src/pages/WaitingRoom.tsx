@@ -1,11 +1,23 @@
-import type { Room } from '../../../shared/gameTypes';
+import { useState, useCallback } from 'react';
+import type { Room, RoomSettings, DeckStyle } from '../../../shared/gameTypes';
+import { BET_AMOUNTS } from '../../../shared/gameTypes';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus, Music } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Slider } from '@/components/ui/slider';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
+} from '@/components/ui/dialog';
+import { Users, Timer, Bot, Crown, Check, X, Gamepad2, Layers, Lock, Hash, UserPlus, Music, Settings } from 'lucide-react';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
+import { trpc } from '@/lib/trpc';
+import { toast } from 'sonner';
 
 interface WaitingRoomProps {
   room: Room;
@@ -24,17 +36,91 @@ interface WaitingRoomProps {
   } | null;
   onlineFriendIds?: number[];
   onInviteFriend?: (targetGameId: number) => void;
+  onUpdateRoom?: (data: { name?: string; maxPlayers?: number; settings?: Partial<RoomSettings> }) => Promise<boolean>;
 }
 
 export default function WaitingRoom({
   room, userId, onToggleReady, onStartGame, onLeave, onCloseRoom,
-  profile, onlineFriendIds = [], onInviteFriend,
+  profile, onlineFriendIds = [], onInviteFriend, onUpdateRoom,
 }: WaitingRoomProps) {
   const { t, locale } = useTranslation();
   const isHost = room.hostId === userId;
   const myPlayer = room.players.find(p => p.id === userId);
   // Host clicking "Start" implies they are ready — only check non-host players
   const allReady = room.players.length >= 2 && room.players.every(p => p.isBot || p.id === room.hostId || p.ready);
+
+  // Settings modal state
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  // Editable settings state — initialized from current room when modal opens
+  const [editName, setEditName] = useState(room.name);
+  const [editMaxPlayers, setEditMaxPlayers] = useState(String(room.maxPlayers));
+  const [editBetAmountIdx, setEditBetAmountIdx] = useState(() => {
+    const idx = BET_AMOUNTS.indexOf(room.settings.betAmount as typeof BET_AMOUNTS[number]);
+    return idx >= 0 ? idx : 0;
+  });
+  const [editTurnTimer, setEditTurnTimer] = useState(room.settings.turnTimer);
+  const [editWithBots, setEditWithBots] = useState(room.settings.withBots);
+  const [editBotCount, setEditBotCount] = useState(room.settings.botCount || 1);
+  const [editDeckStyle, setEditDeckStyle] = useState<DeckStyle>(room.settings.deckStyle);
+  const [editIsPrivate, setEditIsPrivate] = useState(room.settings.isPrivate ?? false);
+  const [editPassword, setEditPassword] = useState('');
+
+  // Owned decks/playlists
+  const { data: ownedDecks = [] } = trpc.shop.ownedDecks.useQuery();
+  const isClassicDeckOwned = ownedDecks.includes('classic');
+
+  const openSettings = useCallback(() => {
+    // Reset to current room values each time
+    setEditName(room.name);
+    setEditMaxPlayers(String(room.maxPlayers));
+    const idx = BET_AMOUNTS.indexOf(room.settings.betAmount as typeof BET_AMOUNTS[number]);
+    setEditBetAmountIdx(idx >= 0 ? idx : 0);
+    setEditTurnTimer(room.settings.turnTimer);
+    setEditWithBots(room.settings.withBots);
+    setEditBotCount(room.settings.botCount || 1);
+    setEditDeckStyle(room.settings.deckStyle);
+    setEditIsPrivate(room.settings.isPrivate ?? false);
+    setEditPassword('');
+    setSettingsOpen(true);
+  }, [room]);
+
+  const handleSave = useCallback(async () => {
+    if (!onUpdateRoom) return;
+    setSaving(true);
+    try {
+      const newSettings: Partial<RoomSettings> = {
+        turnTimer: editTurnTimer,
+        withBots: editWithBots,
+        botCount: editWithBots ? editBotCount : 0,
+        deckStyle: editDeckStyle,
+        betAmount: BET_AMOUNTS[editBetAmountIdx],
+        isPrivate: editIsPrivate,
+      };
+      // Only update password if user typed something
+      if (editIsPrivate && editPassword.trim()) {
+        newSettings.password = editPassword.trim();
+      } else if (!editIsPrivate) {
+        newSettings.password = undefined;
+      }
+      const ok = await onUpdateRoom({
+        name: editName.trim() || room.name,
+        maxPlayers: parseInt(editMaxPlayers),
+        settings: newSettings,
+      });
+      if (ok) {
+        toast.success(t('waitingRoom.settingsSaved'));
+        setSettingsOpen(false);
+      } else {
+        toast.error(t('waitingRoom.settingsError'));
+      }
+    } catch {
+      toast.error(t('waitingRoom.settingsError'));
+    } finally {
+      setSaving(false);
+    }
+  }, [onUpdateRoom, editName, editMaxPlayers, editBetAmountIdx, editTurnTimer, editWithBots, editBotCount, editDeckStyle, editIsPrivate, editPassword, room.name, t]);
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center p-3 sm:p-4">
@@ -134,6 +220,19 @@ export default function WaitingRoom({
           </div>
         )}
 
+        {/* Settings button — host only */}
+        {isHost && onUpdateRoom && (
+          <div className="mb-3">
+            <Button
+              variant="outline"
+              className="w-full border-amber-700/30 text-amber-200 hover:bg-amber-900/20 text-sm h-8 sm:h-9"
+              onClick={openSettings}
+            >
+              <Settings className="w-4 h-4 mr-1.5" /> {t('waitingRoom.settingsTitle')}
+            </Button>
+          </div>
+        )}
+
         {/* My ID display */}
         {profile && (
           <div className="mb-3 text-center">
@@ -186,6 +285,172 @@ export default function WaitingRoom({
           )}
         </div>
       </div>
+
+      {/* Room Settings Modal */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-sm sm:max-w-md max-h-[90dvh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-amber-100">{t('waitingRoom.settingsTitle')}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Room name */}
+            <div>
+              <Label className="text-amber-200/70 text-sm">{t('lobby.roomName')}</Label>
+              <Input
+                value={editName}
+                onChange={e => setEditName(e.target.value)}
+                className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 mt-1"
+              />
+            </div>
+
+            {/* Max players */}
+            <div>
+              <Label className="text-amber-200/70 text-sm">{t('lobby.maxPlayers')}</Label>
+              <Select value={editMaxPlayers} onValueChange={setEditMaxPlayers}>
+                <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                  {[2, 3, 4, 5, 6, 7, 8].map(n => (
+                    <SelectItem key={n} value={String(n)} className="text-amber-100">
+                      {t('lobby.nPlayers', { n })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Bet amount */}
+            <div>
+              <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
+                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                {t('lobby.bet')}: {formatBalance(BET_AMOUNTS[editBetAmountIdx])}
+              </Label>
+              <Slider
+                value={[editBetAmountIdx]}
+                onValueChange={v => setEditBetAmountIdx(v[0])}
+                min={0}
+                max={BET_AMOUNTS.length - 1}
+                step={1}
+                className="mt-2"
+              />
+              <div className="flex justify-between text-[10px] text-amber-200/40 mt-1">
+                <span>{formatBalance(BET_AMOUNTS[0])}</span>
+                <span>{formatBalance(BET_AMOUNTS[BET_AMOUNTS.length - 1])}</span>
+              </div>
+            </div>
+
+            {/* Turn timer */}
+            <div>
+              <Label className="text-amber-200/70 text-sm">
+                {t('lobby.turnTimer')}: {editTurnTimer}{t('roomCreate.seconds')}
+              </Label>
+              <Slider
+                value={[editTurnTimer]}
+                onValueChange={v => setEditTurnTimer(v[0])}
+                min={30}
+                max={60}
+                step={5}
+                className="mt-2"
+              />
+            </div>
+
+            {/* Add bots */}
+            <div className="flex items-center justify-between">
+              <Label className="text-amber-200/70 text-sm">{t('lobby.addBots')}</Label>
+              <Switch checked={editWithBots} onCheckedChange={setEditWithBots} />
+            </div>
+
+            {/* Bot count */}
+            {editWithBots && (
+              <div>
+                <Label className="text-amber-200/70 text-sm">{t('lobby.botCount', { n: editBotCount })}</Label>
+                <Slider
+                  value={[editBotCount]}
+                  onValueChange={v => setEditBotCount(v[0])}
+                  min={1}
+                  max={parseInt(editMaxPlayers) - 1}
+                  step={1}
+                  className="mt-2"
+                />
+              </div>
+            )}
+
+            {/* Deck style */}
+            <div>
+              <Label className="text-amber-200/70 text-sm">{t('lobby.deckStyle')}</Label>
+              <Select
+                value={editDeckStyle}
+                onValueChange={(v) => {
+                  if (v === 'classic' && !isClassicDeckOwned) return;
+                  setEditDeckStyle(v as DeckStyle);
+                }}
+              >
+                <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 mt-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-[#1a2d45] border-amber-700/30">
+                  <SelectItem value="custom" className="text-amber-100">
+                    {t('lobby.deckCustom')}
+                  </SelectItem>
+                  <SelectItem
+                    value="classic"
+                    className={isClassicDeckOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                    disabled={!isClassicDeckOwned}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      {!isClassicDeckOwned && <Lock className="w-3 h-3" />}
+                      {t('lobby.deckClassic')}
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Private room */}
+            <div className="flex items-center justify-between">
+              <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5" /> {t('lobby.privateRoom')}
+              </Label>
+              <Switch checked={editIsPrivate} onCheckedChange={setEditIsPrivate} />
+            </div>
+
+            {/* Password */}
+            {editIsPrivate && (
+              <div>
+                <Label className="text-amber-200/70 text-sm">{t('lobby.roomPassword')}</Label>
+                <Input
+                  type="password"
+                  value={editPassword}
+                  onChange={e => setEditPassword(e.target.value)}
+                  placeholder={room.hasPassword
+                    ? (locale === 'kk' ? 'Жаңа құпиясөз (өзгертпеу үшін бос қалдырыңыз)' : locale === 'en' ? 'New password (leave blank to keep current)' : 'Новый пароль (оставьте пустым, чтобы не менять)')
+                    : t('lobby.enterPassword')
+                  }
+                  className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 mt-1"
+                />
+              </div>
+            )}
+          </div>
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button
+              variant="outline"
+              className="border-amber-700/30 text-amber-200 hover:bg-amber-900/20"
+              onClick={() => setSettingsOpen(false)}
+              disabled={saving}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-500 text-white"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? t('waitingRoom.saving') : t('common.save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

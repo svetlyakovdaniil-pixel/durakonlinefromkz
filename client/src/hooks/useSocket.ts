@@ -589,6 +589,18 @@ export function useSocket(userId: string | null, userName: string | null) {
     socketRef.current?.emit('requestRoomList');
   }, []);
 
+  const updateRoom = useCallback((data: { roomId: string; name?: string; maxPlayers?: number; settings?: Partial<RoomSettings> }): Promise<boolean> => {
+    return new Promise((resolve) => {
+      if (!socketRef.current) { resolve(false); return; }
+      socketRef.current.emit('updateRoom', data, (ok, room) => {
+        if (ok && room) {
+          setCurrentRoom(room);
+        }
+        resolve(ok);
+      });
+    });
+  }, []);
+
   return {
     connected,
     rooms,
@@ -626,6 +638,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     registerProfile,
     returnToLobby,
     requestRoomList,
+    updateRoom,
     clearError: () => setError(null),
   };
 }
