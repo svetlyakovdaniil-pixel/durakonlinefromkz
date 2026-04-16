@@ -427,13 +427,20 @@ export function initSocketServer(httpServer: HttpServer) {
           const stillBanned = await checkAndAutoUnban(profile.id);
           if (stillBanned) {
             const banMsg = profile.bannedUntil
-              ? `Ваш аккаунт заблокирован до ${new Date(profile.bannedUntil).toLocaleString('ru-RU')}. Причина: ${profile.banReason || 'Не указана'}`
-              : `Ваш аккаунт заблокирован. Причина: ${profile.banReason || 'Не указана'}`;
+              ? `\u0412\u0430\u0448 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d \u0434\u043e ${new Date(profile.bannedUntil).toLocaleString('ru-RU')}. \u041f\u0440\u0438\u0447\u0438\u043d\u0430: ${profile.banReason || '\u041d\u0435 \u0443\u043a\u0430\u0437\u0430\u043d\u0430'}`
+              : `\u0412\u0430\u0448 \u0430\u043a\u043a\u0430\u0443\u043d\u0442 \u0437\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u043d. \u041f\u0440\u0438\u0447\u0438\u043d\u0430: ${profile.banReason || '\u041d\u0435 \u0443\u043a\u0430\u0437\u0430\u043d\u0430'}`;
             socket.emit('error', banMsg);
             cb(false as any);
             return;
           }
         }
+      }
+      // Prevent creating a second room: check if this player is already hosting a room
+      const existingHostedRoom = Array.from(rooms.values()).find(r => r.hostId === odId);
+      if (existingHostedRoom) {
+        socket.emit('error', '\u0412\u044b \u0443\u0436\u0435 \u044f\u0432\u043b\u044f\u0435\u0442\u0435\u0441\u044c \u0445\u043e\u0437\u044f\u0438\u043d\u043e\u043c \u0434\u0440\u0443\u0433\u043e\u0439 \u043a\u043e\u043c\u043d\u0430\u0442\u044b. \u0421\u043d\u0430\u0447\u0430\u043b\u0430 \u0437\u0430\u043a\u0440\u043e\u0439\u0442\u0435 \u0435\u0451.');
+        cb(false as any);
+        return;
       }
       const roomId = nanoid(8);
       const rawBet = data.settings?.betAmount || 100;
@@ -1725,37 +1732,31 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
   // The game will end naturally via checkGameOver when only 1 active player remains.
   const activeGame = games.get(roomId);
   const isActiveGame = activeGame && activeGame.gamePhase === 'playing';
+  // Helper: check if only bots remain after removing this player
+  const humanCountAfter = room.players.filter(p => p.id !== playerId && !p.isBot).length;
+  const onlyBotsRemain = humanCountAfter === 0;
+
   if (room.hostId === playerId) {
     // Transfer host to next human player if possible
     const nextHost = room.players.find(p => p.id !== playerId && !p.isBot);
     if (nextHost) {
       room.hostId = nextHost.id;
       room.players = room.players.filter(p => p.id !== playerId);
-      
       const sid = playerSockets.get(playerId);
       if (sid) {
         const s = io.sockets.sockets.get(sid);
         if (s) s.leave(roomId);
       }
-      if (!isActiveGame && room.players.filter(p => !p.isBot).length === 0) {
+      // Close if only bots remain (regardless of active game)
+      if (onlyBotsRemain) {
         closeRoom(roomId);
         return;
       }
       io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
       io.to(roomId).emit('playerLeft', playerId);
       broadcastRoomList();
-    } else if (isActiveGame) {
-      // Host was the only human but game is active — don't close the room.
-      // Remove host from room.players but keep the room alive for the ongoing game.
-      room.players = room.players.filter(p => p.id !== playerId);
-      const sid = playerSockets.get(playerId);
-      if (sid) {
-        const s = io.sockets.sockets.get(sid);
-        if (s) s.leave(roomId);
-      }
-      io.to(roomId).emit('playerLeft', playerId);
-      broadcastRoomList();
     } else {
+      // No other human — always close the room (even during active game with only bots)
       closeRoom(roomId);
     }
     return;
@@ -1766,7 +1767,8 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
     const s = io.sockets.sockets.get(sid);
     if (s) s.leave(roomId);
   }
-  if (!isActiveGame && room.players.filter(p => !p.isBot).length === 0) {
+  // Close if only bots remain (regardless of active game)
+  if (onlyBotsRemain) {
     closeRoom(roomId);
     return;
   }
