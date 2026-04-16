@@ -153,6 +153,15 @@ export interface GameState {
   _lastCardDefenseDelay?: boolean;
   /** Order of players who forfeited (first to leave is first in array) */
   forfeitOrder?: string[];
+  /**
+   * Phantom neighbor: the index of a player who played their last card during the
+   * CURRENT trick and went out (isOut=true). They remain a "phantom neighbor" until
+   * the end of this round (finalizeTake or successfulDefense), blocking:
+   *   1. The player AFTER them from gaining neighbor priority.
+   *   2. Transfer/pass-through to that phantom player (they have no cards).
+   * Reset to null at the start of the next trick.
+   */
+  phantomNeighborIdx: number | null;
 }
 
 // --- Room ---

@@ -3153,3 +3153,21 @@
 
 ## Batch 113
 - [x] Не-сосед без шестёрок не видит ВАШ ХОД/Бито при ходе с 6-ки
+## Batch 114 — Правило фантомного соседа
+- [x] Добавить поле phantomNeighborIdx: number | null в GameState (gameTypes.ts)
+- [x] Инициализировать phantomNeighborIdx: null в createGame
+- [x] checkPlayerOut устанавливает phantomNeighborIdx = playerIdx когда игрок выходит в середине хода (battleField.length > 0)
+- [x] finalizeTake сбрасывает phantomNeighborIdx = null при завершении раунда (взятие)
+- [x] successfulDefense сбрасывает phantomNeighborIdx = null при завершении раунда (бито)
+- [x] isEdgePlayer принимает опциональный phantomNeighborIdx — трактует фантомного игрока как активного при вычислении соседей
+- [x] canPlayerAddCards передаёт phantomNeighborIdx в isEdgePlayer
+- [x] canNonNeighborPlayCard передаёт phantomNeighborIdx в isEdgePlayer
+- [x] playAttackCard передаёт phantomNeighborIdx в isEdgePlayer
+- [x] getAvailableActions передаёт phantomNeighborIdx в isEdgePlayer (все вызовы)
+- [x] transferAttack блокирует перевод к фантомному соседу (уже вышел из игры в этом ходу)
+- [x] transferMultipleCards блокирует перевод к фантомному соседу
+- [x] showPassThrough блокирует проездной к фантомному соседу
+- [x] showMultiplePassThroughs блокирует проездной к фантомному соседу
+- [x] getAvailableActions скрывает transferCard и showPassThrough если цель — фантомный сосед
+- [x] createTestState в gameEngine.test.ts инициализирует phantomNeighborIdx: null
+- [x] 9 новых тестов для правила фантомного соседа (573 теста проходят)
