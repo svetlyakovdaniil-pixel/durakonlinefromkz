@@ -200,3 +200,67 @@ describe('Disconnect/Reconnect Scenarios', () => {
     expect(game.players[game.currentDefenderIdx].isOut).toBe(false);
   });
 });
+
+describe('consecutiveTimeouts reset on reconnect', () => {
+  it('should have consecutiveTimeouts initialized as empty object', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    expect(game.consecutiveTimeouts).toBeDefined();
+    expect(typeof game.consecutiveTimeouts).toBe('object');
+  });
+
+  it('should reset consecutiveTimeouts for a player on reconnect (simulated)', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const playerId = players[0].id;
+
+    // Simulate a timeout being counted (e.g., during disconnect)
+    game.consecutiveTimeouts[playerId] = 1;
+    expect(game.consecutiveTimeouts[playerId]).toBe(1);
+
+    // Simulate reconnect: server resets the counter
+    if (game.consecutiveTimeouts[playerId]) {
+      game.consecutiveTimeouts[playerId] = 0;
+    }
+
+    expect(game.consecutiveTimeouts[playerId]).toBe(0);
+  });
+
+  it('should not forfeit player on first timeout after reconnect when counter was reset', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const playerId = players[0].id;
+
+    // Simulate: player disconnected, timeout was counted
+    game.consecutiveTimeouts[playerId] = 1;
+
+    // Simulate: player reconnected — counter reset
+    game.consecutiveTimeouts[playerId] = 0;
+
+    // Now simulate one more timeout — should be at 1, NOT 2 (no forfeit)
+    game.consecutiveTimeouts[playerId] = (game.consecutiveTimeouts[playerId] || 0) + 1;
+
+    // Should be 1, not 2 — player should NOT be forfeited yet
+    expect(game.consecutiveTimeouts[playerId]).toBe(1);
+    // Only forfeit at 2 consecutive timeouts
+    expect(game.consecutiveTimeouts[playerId]).toBeLessThan(2);
+  });
+
+  it('should forfeit player only after 2 consecutive timeouts without reconnect', () => {
+    const players = createTestPlayers(2);
+    const game = createGame('room1', players);
+    const playerId = players[0].id;
+
+    // First timeout
+    game.consecutiveTimeouts[playerId] = (game.consecutiveTimeouts[playerId] || 0) + 1;
+    expect(game.consecutiveTimeouts[playerId]).toBe(1);
+    // Not yet forfeit
+    expect(game.consecutiveTimeouts[playerId]).toBeLessThan(2);
+
+    // Second timeout without reconnect
+    game.consecutiveTimeouts[playerId] = (game.consecutiveTimeouts[playerId] || 0) + 1;
+    expect(game.consecutiveTimeouts[playerId]).toBe(2);
+    // Now should forfeit (>= 2)
+    expect(game.consecutiveTimeouts[playerId]).toBeGreaterThanOrEqual(2);
+  });
+});

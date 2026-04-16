@@ -124,6 +124,15 @@ export function useSocket(userId: string | null, userName: string | null) {
         toast.warning(tRef.current('socket.connectionLost'), { duration: 5000 });
       }
 
+      // CRITICAL FIX: Freeze the turn timer on disconnect.
+      // Without this the timer display freezes on the last received value, which is
+      // confusing — it looks like the timer is still running but nothing responds.
+      // We set it to a high value so the player doesn't feel urgency while reconnecting.
+      // The server will send the authoritative value via gameStateUpdate on reconnect.
+      if (currentRoomIdRef.current && !leavingRef.current) {
+        setTurnTimer(99); // Show "--" / frozen state via GameTable
+      }
+
       // If server disconnected us (not transport issue), force reconnect
       if (reason === 'io server disconnect') {
         // Server explicitly disconnected us — reconnect manually
