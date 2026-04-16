@@ -624,13 +624,92 @@ export function initSocketServer(httpServer: HttpServer) {
       handlePlayerLeaveRoom(odId, roomId);
     });
 
-    socket.on('closeRoom', (roomId) => {
+     socket.on('closeRoom', (roomId) => {
       const room = rooms.get(roomId);
       if (!room) return;
       if (room.hostId !== odId) return;
       closeRoom(roomId);
     });
-
+    socket.on('updateRoom', (data, cb) => {
+      const room = rooms.get(data.roomId);
+      if (!room) { cb(false); return; }
+      if (room.hostId !== odId) { cb(false); return; }
+      if (room.gameState && room.gameState.gamePhase === 'playing') { cb(false); return; }
+      if (data.name && data.name.trim()) {
+        room.name = data.name.trim().slice(0, 40);
+      }
+      if (data.maxPlayers) {
+        const newMax = Math.min(Math.max(data.maxPlayers, 2), 8);
+        if (newMax >= room.players.length) {
+          room.maxPlayers = newMax;
+        }
+      }
+      if (data.settings) {
+        const s = data.settings;
+        const validBets = [100, 200, 500, 1000, 3000, 5000, 10000, 25000, 50000, 100000, 250000, 500000, 1000000, 2000000, 5000000, 10000000];
+        if (s.turnTimer !== undefined) {
+          room.settings.turnTimer = Math.min(Math.max(s.turnTimer, 15), 60);
+        }
+        if (s.withBots !== undefined) {
+          room.settings.withBots = s.withBots;
+          if (!s.withBots) {
+            room.players = room.players.filter(p => !p.isBot);
+            room.settings.botCount = 0;
+          }
+        }
+        if (s.botCount !== undefined && room.settings.withBots) {
+          const newBotCount = Math.min(Math.max(s.botCount, 0), room.maxPlayers - 1);
+          const currentBots = room.players.filter(p => p.isBot);
+          const diff = newBotCount - currentBots.length;
+          if (diff > 0) {
+            const locale = room.settings.locale;
+            const botNameList = locale === 'en' ? BOT_NAMES_EN : BOT_NAMES;
+            const usedNames = new Set(currentBots.map(b => b.name.replace('\uD83E\uDD16 ', '')));
+            const availableNames = [...botNameList].filter(n => !usedNames.has(n));
+            const shuffled = availableNames.sort(() => Math.random() - 0.5);
+            for (let i = 0; i < diff && room.players.length < room.maxPlayers; i++) {
+              room.players.push({
+                id: `bot-${nanoid(6)}`,
+                name: `\uD83E\uDD16 ${shuffled[i % shuffled.length]}`,
+                ready: true,
+                isBot: true,
+                avatarId: 'bot',
+              });
+            }
+          } else if (diff < 0) {
+            let toRemove = -diff;
+            room.players = room.players.filter(p => {
+              if (p.isBot && toRemove > 0) { toRemove--; return false; }
+              return true;
+            });
+          }
+          room.settings.botCount = room.players.filter(p => p.isBot).length;
+        }
+        if (s.deckStyle !== undefined) {
+          room.settings.deckStyle = s.deckStyle === 'custom' ? 'custom' : 'classic';
+        }
+        if (s.betAmount !== undefined && validBets.includes(s.betAmount)) {
+          room.settings.betAmount = s.betAmount;
+        }
+        if (s.isPrivate !== undefined) {
+          room.settings.isPrivate = s.isPrivate;
+          // If switching to non-private, clear password
+          if (!s.isPrivate) {
+            room.settings.password = undefined;
+          }
+        }
+        if (s.password !== undefined && s.password) {
+          room.settings.password = s.password;
+          room.settings.isPrivate = true;
+        }
+        if (s.playlistId !== undefined) {
+          room.settings.playlistId = typeof s.playlistId === 'number' ? s.playlistId : null;
+        }
+      }
+      broadcastRoomList();
+      io.to(data.roomId).emit('roomUpdated', sanitizeRoom(room));
+      cb(true, sanitizeRoom(room));
+    });
     socket.on('toggleReady', (roomId) => {
       const room = rooms.get(roomId);
       if (!room) return;

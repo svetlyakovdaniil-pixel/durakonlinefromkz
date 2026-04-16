@@ -195,6 +195,10 @@ export const kk = {
     closeRoom: 'Бөлмені жабу',
     readyBtn: 'Дайын',
     notReadyBtn: 'Дайын емес',
+    settingsTitle: 'Бөлме баптаулары',
+    settingsSaved: 'Баптаулар сақталды',
+    settingsError: 'Баптауларды сақтау мүмкін болмады',
+    saving: 'Сақталуда...',
   },
 
   // Game

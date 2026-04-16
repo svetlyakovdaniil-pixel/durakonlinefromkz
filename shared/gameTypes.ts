@@ -253,6 +253,8 @@ export interface ClientToServerEvents {
   registerProfile: (data: { gameId: number; displayName: string; avatarId?: string; equippedFrame?: string | null; isPremium?: boolean; seasonRating?: number }, cb?: (ok: boolean) => void) => void;
   /** Request fresh room list */
   requestRoomList: () => void;
+  /** Update room settings (host only, before game starts) */
+  updateRoom: (data: { roomId: string; name?: string; maxPlayers?: number; settings?: Partial<RoomSettings> }, cb: (ok: boolean, room?: Room) => void) => void;
 }
 
 // --- Client-side game state ---

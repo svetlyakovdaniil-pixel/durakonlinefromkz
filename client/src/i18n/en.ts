@@ -195,6 +195,10 @@ export const en = {
     closeRoom: 'Close room',
     readyBtn: 'Ready',
     notReadyBtn: 'Not ready',
+    settingsTitle: 'Room Settings',
+    settingsSaved: 'Settings saved',
+    settingsError: 'Failed to save settings',
+    saving: 'Saving...',
   },
 
   // Game

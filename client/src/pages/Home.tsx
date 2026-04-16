@@ -29,7 +29,7 @@ export default function Home() {
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, transferCards, showPassThrough, showPassThroughs, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
-    requestRoomList,
+    requestRoomList, updateRoom,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
     isAuthenticated ? user?.name || t('landing.guest') : null
@@ -272,6 +272,7 @@ export default function Home() {
         profile={profile}
         onlineFriendIds={onlineFriendIds}
         onInviteFriend={(targetGameId) => inviteFriend(currentRoom.id, targetGameId)}
+        onUpdateRoom={(data) => updateRoom({ roomId: currentRoom.id, ...data })}
       />
     );
   }

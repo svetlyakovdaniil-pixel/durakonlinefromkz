@@ -195,6 +195,10 @@ export const ru = {
     closeRoom: 'Закрыть комнату',
     readyBtn: 'Готов',
     notReadyBtn: 'Не готов',
+    settingsTitle: 'Настройки комнаты',
+    settingsSaved: 'Настройки сохранены',
+    settingsError: 'Не удалось сохранить настройки',
+    saving: 'Сохранение...',
   },
 
   // Game
