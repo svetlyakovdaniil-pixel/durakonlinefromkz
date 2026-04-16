@@ -740,9 +740,14 @@ export default function GameTable({
 
   // Urgent turn alert when timer reaches 15 seconds
   useEffect(() => {
-    const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
+    // Base check: player has meaningful actions
+    const hasMeaningfulAction = availableActions.length > 0 && availableActions.some(a =>
       a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
     );
+    // Exclude case: I'm the attacker, already put cards on table, and defender hasn't taken yet.
+    // In this state I have playCard/endAttack available but it's NOT "my turn" — I'm waiting for defender.
+    const attackerWaitingForDefense = isAttacker && gs.battleField.length > 0 && gs.turnPhase === 'defend' && !gs.defenderTaking;
+    const isMyTurn = hasMeaningfulAction && !attackerWaitingForDefense;
 
     if (isMyTurn && turnTimer !== undefined && turnTimer <= 15 && turnTimer > 0 && turnTimer < 99 && urgentAlertShownForTrick.current !== gs.trickCount) {
       urgentAlertShownForTrick.current = gs.trickCount;
