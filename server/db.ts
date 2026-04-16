@@ -220,7 +220,10 @@ export async function acceptFriendRequest(friendshipId: number, receiverProfileI
     and(eq(friendships.id, friendshipId), eq(friendships.receiverId, receiverProfileId), eq(friendships.status, 'pending'))
   );
 
-  return true;
+  // Return true only if a row was actually updated (prevents duplicate notifications on repeated clicks)
+  // MySQL2 with drizzle returns [ResultSetHeader, ...] — affectedRows is in index 0
+  const affectedRows = (result as any)?.[0]?.affectedRows ?? 0;
+  return affectedRows > 0;
 }
 
 /**
