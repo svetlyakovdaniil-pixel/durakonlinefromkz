@@ -856,6 +856,24 @@ export default function GameTable({
   const selectedCanPassThrough = canPassThrough && selectedCardId && passThroughIds.has(selectedCardId);
   const hasAnyAction = canTake || canEndAttack || canSkip || isMultiSelecting || selectedCanTransfer || selectedCanPassThrough || selectedCanBeat;
 
+  // Count visible action buttons for dynamic sizing
+  const visibleActionCount = [
+    canTake,
+    canEndAttack,
+    canSkip,
+    isMultiSelecting, // multi-select adds 2 buttons but treat as group
+    selectedCanBeat,
+    selectedCanTransfer,
+    selectedCanPassThrough,
+    selectedCardId && !isMultiSelecting, // cancel button
+  ].filter(Boolean).length;
+  // Dynamic button classes: 1 button = large (h-12 text-sm), 2-3 = medium (h-10 text-xs), 4+ = small (h-9 text-[11px])
+  const dynBtnClass = visibleActionCount <= 1
+    ? 'h-12 text-sm px-4 font-semibold'
+    : visibleActionCount <= 3
+    ? 'h-10 text-xs px-3 font-semibold'
+    : 'h-9 text-[11px] px-2 font-semibold';
+
   const sortedHand = sortHand(gs.myHand, sortMode);
 
   // Compute tutorial-highlighted card IDs from scenario.highlightCards
@@ -1845,22 +1863,22 @@ export default function GameTable({
                 <div className="mb-2">
                   {isAttacker && !gs.defenderTaking && (
                     <span className="text-red-400 font-black text-3xl animate-pulse tracking-widest drop-shadow-lg">
-                      ВЫ АТАКУЕТЕ
+                      {t('game.bannerYouAttack')}
                     </span>
                   )}
                   {isAttacker && gs.defenderTaking && (
                     <span className="text-orange-400 font-black text-3xl animate-pulse tracking-widest drop-shadow-lg">
-                      ДОКИНЬТЕ
+                      {t('game.bannerAddCards')}
                     </span>
                   )}
                   {isDefender && !gs.defenderTaking && (
                     <span className="text-blue-400 font-black text-3xl animate-pulse tracking-widest drop-shadow-lg">
-                      ВЫ БЬЁТЕСЬ
+                      {t('game.bannerYouDefend')}
                     </span>
                   )}
                   {isDefender && gs.defenderTaking && (
                     <span className="text-orange-400 font-black text-3xl animate-pulse tracking-widest drop-shadow-lg">
-                      БЕРЁТЕ КАРТЫ
+                      {t('game.bannerTakeCards')}
                     </span>
                   )}
                 </div>
@@ -2065,82 +2083,82 @@ export default function GameTable({
                 <div className="flex items-center justify-center h-full">
                   {isAttacker && !gs.defenderTaking && (
                     <span className="text-red-400 font-black text-xl animate-pulse tracking-wide">
-                      ВЫ АТАКУЕТЕ
+                      {t('game.bannerYouAttack')}
                     </span>
                   )}
                   {isAttacker && gs.defenderTaking && (
                     <span className="text-orange-400 font-black text-xl animate-pulse tracking-wide">
-                      ДОКИНЬТЕ
+                      {t('game.bannerAddCards')}
                     </span>
                   )}
                   {isDefender && !gs.defenderTaking && (
                     <span className="text-blue-400 font-black text-xl animate-pulse tracking-wide">
-                      ВЫ БЬЁТЕСЬ
+                      {t('game.bannerYouDefend')}
                     </span>
                   )}
                   {isDefender && gs.defenderTaking && (
                     <span className="text-orange-400 font-black text-xl animate-pulse tracking-wide">
-                      БЕРЁТЕ КАРТЫ
+                      {t('game.bannerTakeCards')}
                     </span>
                   )}
                 </div>
               )}
 
-              {/* Action buttons — shown when there are actions */}
+              {/* Action buttons — dynamic size, right-aligned */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
-                <div className="flex flex-wrap gap-1.5 items-center">
+                <div className="flex flex-wrap gap-1.5 items-center justify-end w-full">
                   {canTake && (
-                    <Button variant="destructive" className="action-btn-blink text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55" onClick={onTakeCards}>
+                    <Button variant="destructive" className={`action-btn-blink shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55 ${dynBtnClass}`} onClick={onTakeCards}>
                       {t('game.take')}
                     </Button>
                   )}
                   {canEndAttack && (
-                    <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-green-500/20" onClick={onEndAttack}>
+                    <Button className={`action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white shadow-xl backdrop-blur-sm border border-green-500/20 ${dynBtnClass}`} onClick={onEndAttack}>
                       {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                     </Button>
                   )}
                   {canSkip && (
-                    <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm" onClick={onSkipTurn}>
+                    <Button variant="outline" className={`action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={onSkipTurn}>
                       {t('game.skip')}
                     </Button>
                   )}
                   {isMultiSelecting && multiSelectMode === 'attack' && (
                     <>
-                      <Button className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-emerald-500/20" onClick={handleMultiAttack}>
+                      <Button className={`action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white shadow-xl backdrop-blur-sm border border-emerald-500/20 ${dynBtnClass}`} onClick={handleMultiAttack}>
                         {t('game.playN', { n: String(multiSelectIds.size) })}
                       </Button>
-                      <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
                       </Button>
                     </>
                   )}
                   {isMultiSelecting && multiSelectMode === 'transfer' && (
                     <>
-                      <Button className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20" onClick={handleMultiTransfer}>
+                      <Button className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white shadow-xl backdrop-blur-sm border border-purple-500/20 ${dynBtnClass}`} onClick={handleMultiTransfer}>
                         {t('game.transferN', { n: String(multiSelectIds.size) })}
                       </Button>
-                      <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
                       </Button>
                     </>
                   )}
                   {isMultiSelecting && multiSelectMode === 'passthrough' && (
                     <>
-                      <Button className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20" onClick={handleMultiPassThrough}>
+                      <Button className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white shadow-xl backdrop-blur-sm border border-yellow-500/20 ${dynBtnClass}`} onClick={handleMultiPassThrough}>
                         <Eye className="w-3.5 h-3.5 mr-1" />{t('game.passThroughN', { n: String(multiSelectIds.size) })}
                       </Button>
-                      <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm" onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
                       </Button>
                     </>
                   )}
                   {selectedCanBeat && (
-                    <Button className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-blue-500/20" onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}>
+                    <Button className={`action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white shadow-xl backdrop-blur-sm border border-blue-500/20 ${dynBtnClass}`} onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}>
                       <Shield className="w-3.5 h-3.5 mr-1" />{t('game.beat')}
                     </Button>
                   )}
                   {selectedCanTransfer && (
-                    <Button className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-purple-500/20" onClick={() => {
+                    <Button className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white shadow-xl backdrop-blur-sm border border-purple-500/20 ${dynBtnClass}`} onClick={() => {
                       const cardId = selectedCardId!;
                       const card = gs.myHand.find(c => c.id === cardId);
                       if (card) {
@@ -2153,12 +2171,12 @@ export default function GameTable({
                     </Button>
                   )}
                   {selectedCanPassThrough && (
-                    <Button className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm border border-yellow-500/20" onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}>
+                    <Button className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white shadow-xl backdrop-blur-sm border border-yellow-500/20 ${dynBtnClass}`} onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}>
                       <Eye className="w-3.5 h-3.5 mr-1" />{t('game.passThrough')}
                     </Button>
                   )}
                   {selectedCardId && !isMultiSelecting && (
-                    <Button variant="outline" className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-xs h-10 px-3 font-semibold shadow-xl backdrop-blur-sm" onClick={() => setSelectedCardId(null)}>
+                    <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => setSelectedCardId(null)}>
                       {t('game.cancel')}
                     </Button>
                   )}
