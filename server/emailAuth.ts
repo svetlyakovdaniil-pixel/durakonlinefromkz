@@ -5,6 +5,7 @@ import type { Express, Request, Response } from "express";
 import * as db from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
+import { containsProfanity, PROFANITY_ERR_MSG } from "../shared/profanityFilter";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 6;
@@ -51,6 +52,10 @@ export function registerEmailAuthRoutes(app: Express) {
       const trimmedName = (name && typeof name === "string") ? name.trim() : "";
       if (!trimmedName || trimmedName.length < 1 || trimmedName.length > 12) {
         res.status(400).json({ error: "invalid_name", message: "Имя должно быть от 1 до 12 символов" });
+        return;
+      }
+      if (containsProfanity(trimmedName)) {
+        res.status(400).json({ error: "profanity_name", message: PROFANITY_ERR_MSG });
         return;
       }
 

@@ -1,4 +1,5 @@
 import { COOKIE_NAME, RESERVED_NAME_ERR_MSG } from "@shared/const";
+import { containsProfanity, PROFANITY_ERR_MSG } from "../shared/profanityFilter";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, gmProcedure, router } from "./_core/trpc";
@@ -173,6 +174,10 @@ export const appRouter = router({
           ];
           if (forbidden.some(f => normalized.includes(f))) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: RESERVED_NAME_ERR_MSG });
+          }
+          // Block profanity in display names
+          if (containsProfanity(input.displayName)) {
+            throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
           }
         }
         await updateProfileDisplayName(ctx.user.id, input.displayName);
