@@ -710,8 +710,11 @@ export default function GameTable({
   // Show "YOUR TURN" overlay — triggers on every turn start (including when it's already your turn but a new trick begins)
   const prevTrickCount = useRef(gs.trickCount);
   useEffect(() => {
-    const isMyTurn = availableActions.length > 0 && availableActions.some(a =>
-      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough' || a.type === 'endAttack'
+    // "ВАШ ХОД" overlay only shows when player has meaningful actions.
+    // endAttack alone (without playCard/takeCards/transferCard/showPassThrough) means the player
+    // is a non-neighbor with sixes in hand — they can press бито but it's NOT "their turn".
+    const isMyTurn = availableActions.some(a =>
+      a.type === 'playCard' || a.type === 'takeCards' || a.type === 'transferCard' || a.type === 'showPassThrough'
     );
     const trickChanged = gs.trickCount !== prevTrickCount.current;
     // Show overlay when: transitioning to my turn, OR trick changed and it's still my turn
@@ -894,21 +897,37 @@ export default function GameTable({
     return ids;
   }, [isTutorial, currentTutorialScenario?.highlightCardsRed, gs.myHand]);
 
-  // Compute highlighted card IDs: cards of the same rank as selected multi-attack/transfer cards
+  // Compute highlighted card IDs:
+  // 1. Cards of the same rank as selected multi-attack/transfer cards (existing logic)
+  // 2. Six-highlight: when leadCardRank === '6', highlight all 6s in hand so player
+  //    knows they can/should throw them (even if they are a non-neighbor)
   const highlightedIds = useMemo(() => {
-    if (multiSelectIds.size === 0) return new Set<string>();
-    const selectedCards = gs.myHand.filter(c => multiSelectIds.has(c.id));
-    if (selectedCards.length === 0) return new Set<string>();
-    const rank = selectedCards[0].rank;
     const ids = new Set<string>();
-    const validPool = multiSelectMode === 'transfer' ? transferIds : multiSelectMode === 'passthrough' ? passThroughIds : playableIds;
-    for (const c of gs.myHand) {
-      if (c.rank === rank && !multiSelectIds.has(c.id) && validPool.has(c.id)) {
-        ids.add(c.id);
+
+    // Six-highlight: leadCardRank === '6' → highlight all 6s in hand
+    // Only applies when there are cards on the battlefield (active trick)
+    if (gs.leadCardRank === '6' && gs.battleField.length > 0) {
+      for (const c of gs.myHand) {
+        if (c.rank === '6') ids.add(c.id);
       }
     }
+
+    // Multi-select highlight (existing): same rank as already-selected cards
+    if (multiSelectIds.size > 0) {
+      const selectedCards = gs.myHand.filter(c => multiSelectIds.has(c.id));
+      if (selectedCards.length > 0) {
+        const rank = selectedCards[0].rank;
+        const validPool = multiSelectMode === 'transfer' ? transferIds : multiSelectMode === 'passthrough' ? passThroughIds : playableIds;
+        for (const c of gs.myHand) {
+          if (c.rank === rank && !multiSelectIds.has(c.id) && validPool.has(c.id)) {
+            ids.add(c.id);
+          }
+        }
+      }
+    }
+
     return ids;
-  }, [multiSelectIds, multiSelectMode, gs.myHand, playableIds, transferIds, passThroughIds]);
+  }, [multiSelectIds, multiSelectMode, gs.myHand, gs.leadCardRank, gs.battleField.length, playableIds, transferIds, passThroughIds]);
 
   // Clear multi-select when trick changes
   useEffect(() => {
