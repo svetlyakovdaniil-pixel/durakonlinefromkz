@@ -578,6 +578,34 @@ export default function GameTable({
 
   const isAttacker = myIdx === gs.currentAttackerIdx;
   const isDefender = myIdx === gs.currentDefenderIdx;
+  // Helper: is myIdx a direct neighbor (left or right) of the current defender?
+  // Mirrors server-side isEdgePlayer logic using active players.
+  const isNeighborOfDefender = (() => {
+    if (isAttacker || isDefender) return true; // attacker is always a neighbor
+    const activePlayers = gs.players.filter(p => !p.isOut);
+    if (activePlayers.length < 2) return true;
+    const defIdx = gs.currentDefenderIdx;
+    // Find left neighbor (ccw from defender)
+    const dir = gs.direction;
+    const n = gs.players.length;
+    const step = (idx: number, forward: boolean) => {
+      let i = idx;
+      for (let tries = 0; tries < n; tries++) {
+        i = forward ? (i + 1) % n : (i - 1 + n) % n;
+        if (!gs.players[i].isOut) return i;
+      }
+      return idx;
+    };
+    const cwNeighbor = step(defIdx, true);
+    const ccwNeighbor = step(defIdx, false);
+    return myIdx === cwNeighbor || myIdx === ccwNeighbor;
+  })();
+  // True when: lead card is 6, I'm NOT a neighbor, and I have NO sixes in hand.
+  // In this case the player is purely a spectator — hide all action UI.
+  const isSixOnlySpectator = gs.leadCardRank === '6' &&
+    gs.battleField.length > 0 &&
+    !isNeighborOfDefender &&
+    !gs.myHand.some(c => c.rank === '6');
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -1544,7 +1572,7 @@ export default function GameTable({
         })()}
 
         {/* YOUR TURN overlay */}
-        {showYourTurn && (
+        {showYourTurn && !isSixOnlySpectator && (
           <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
             <div className={`text-4xl sm:text-8xl md:text-[10rem] font-black text-amber-400 drop-shadow-[0_0_40px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               {t('game.yourTurnCaps')}
@@ -1555,7 +1583,7 @@ export default function GameTable({
 
 
         {/* URGENT TURN ALERT at 15 seconds */}
-        {showUrgentTurn && (
+        {showUrgentTurn && !isSixOnlySpectator && (
           <div className="fixed inset-0 z-[55] flex items-center justify-center pointer-events-none">
             <div className={`text-4xl sm:text-7xl md:text-9xl font-black text-red-500 drop-shadow-[0_0_40px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
               <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
@@ -1805,7 +1833,7 @@ export default function GameTable({
 
         {/* Role indicator + Action buttons — DESKTOP: centered fixed overlay */}
         {/* Desktop: First attacker indicator — shown in action buttons area when table is empty */}
-        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
+        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && !isSixOnlySpectator && (
           <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
             <span className="text-red-500 text-xl md:text-2xl font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
               {t('game.yourTurnAttack')}
@@ -1813,7 +1841,7 @@ export default function GameTable({
           </div>
         )}
         {/* Mobile: First attacker indicator — shown in action buttons area when table is empty */}
-        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && (
+        {!hasAnyAction && isAttacker && gs.battleField.length === 0 && gs.turnPhase === 'attack' && !gs.players[myIdx]?.isOut && !isSixOnlySpectator && (
           <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex justify-center pointer-events-none">
             <span className="text-red-500 text-base font-black tracking-wider drop-shadow-[0_0_10px_rgba(239,68,68,0.6)]" style={{ animation: 'attackBlink 0.33s ease-in-out infinite alternate' }}>
               {t('game.yourTurnAttack')}
@@ -1821,7 +1849,7 @@ export default function GameTable({
           </div>
         )}
         {/* Desktop version */}
-        {hasAnyAction && (
+        {hasAnyAction && !isSixOnlySpectator && (
           <div className="hidden sm:flex fixed left-0 right-0 bottom-[180px] z-40 justify-center pointer-events-none">
             <div className="flex flex-col items-center gap-2 pointer-events-auto">
               {/* Role badges */}
@@ -1998,7 +2026,7 @@ export default function GameTable({
         )}
 
         {/* MOBILE: Floating action buttons — always visible over battlefield */}
-        {hasAnyAction && (
+        {hasAnyAction && !isSixOnlySpectator && (
           <div className="sm:hidden fixed bottom-[120px] left-0 right-0 z-40 flex flex-col items-center gap-1.5 pointer-events-none">
             {/* Role badge */}
             <div className="pointer-events-auto">
