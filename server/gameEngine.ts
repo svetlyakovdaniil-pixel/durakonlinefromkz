@@ -1435,47 +1435,52 @@ export function getAvailableActions(state: GameState, playerIdx: number): Availa
   // === EDGE PLAYER ACTIONS (non-attacker, non-defender) ===
   if (!isAttacker && !isDefender && canPlayerAddCards(state, playerIdx)) {
     if (state.battleField.length > 0) {
-      // Six exception: when lead card is 6, ANY player can throw sixes immediately
-      // regardless of attackerHasPriority (they don't wait for their turn)
-      const isSixException = state.leadCardRank === '6';
-      const canAct = !state.attackerHasPriority || isSixException;
       // Whether this player is a true neighbor of the defender (phantom-aware)
       const isNeighborOfDefender = isEdgePlayer(state.players, playerIdx, state.currentDefenderIdx, state.direction, state.phantomNeighborIdx);
-      const hasSixInHand = player.hand.some(c => c.rank === '6');
-      // Non-neighbor can ONLY participate when lead card is 6 AND they have a 6 in hand.
-      // In ALL other cases (including defenderTaking without six exception), non-neighbors
-      // get NO actions at all — no playCard, no endAttack/бито.
-      const isSixOnlyParticipant = !isNeighborOfDefender; // non-neighbor = six-only always
-      if (isSixOnlyParticipant && (!isSixException || !hasSixInHand)) {
-        // Non-neighbor without six exception or without sixes in hand: no actions
-      } else if (canAct) {
-        if (state.defenderTaking) {
-          // In pickup mode, edge players can add cards
-          if (canAddMoreAttackCards(state)) {
-            const playableIds = player.hand
-              .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
-              .map(c => c.id);
-            if (playableIds.length > 0) {
-              actions.push({ type: 'playCard', cardIds: playableIds });
+
+      // RULE: When defender is taking cards, ONLY neighbors (edge players) can act.
+      // Non-neighbors get NO actions at all in defenderTaking mode.
+      if (state.defenderTaking && !isNeighborOfDefender) {
+        // Non-neighbor during pickup: no actions
+      } else {
+        // Six exception: when lead card is 6, ANY player can throw sixes immediately
+        // regardless of attackerHasPriority (they don't wait for their turn)
+        const isSixException = state.leadCardRank === '6';
+        const canAct = !state.attackerHasPriority || isSixException;
+        const hasSixInHand = player.hand.some(c => c.rank === '6');
+        // Non-neighbor can ONLY participate when lead card is 6 AND they have a 6 in hand.
+        const isSixOnlyParticipant = !isNeighborOfDefender;
+        if (isSixOnlyParticipant && (!isSixException || !hasSixInHand)) {
+          // Non-neighbor without six exception or without sixes in hand: no actions
+        } else if (canAct) {
+          if (state.defenderTaking) {
+            // In pickup mode, only neighbors reach here — they can add cards
+            if (canAddMoreAttackCards(state)) {
+              const playableIds = player.hand
+                .filter(c => canPlayAsAttack(state, c))
+                .map(c => c.id);
+              if (playableIds.length > 0) {
+                actions.push({ type: 'playCard', cardIds: playableIds });
+              }
             }
-          }
-          // Edge player can also press "бито" to pass
-          if (!state.passedAttackers.includes(player.id)) {
-            actions.push({ type: 'endAttack' });
-          }
-        } else {
-          // Normal mode — edge can add cards when all defended or when there are cards on table
-          if (canAddMoreAttackCards(state)) {
-            const playableIds = player.hand
-              .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
-              .map(c => c.id);
-            if (playableIds.length > 0) {
-              actions.push({ type: 'playCard', cardIds: playableIds });
+            // Neighbor can press "бито" to pass
+            if (!state.passedAttackers.includes(player.id)) {
+              actions.push({ type: 'endAttack' });
             }
-          }
-          // Edge players can also click "бито" to pass
-          if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
-            actions.push({ type: 'endAttack' });
+          } else {
+            // Normal mode — edge can add cards when all defended or when there are cards on table
+            if (canAddMoreAttackCards(state)) {
+              const playableIds = player.hand
+                .filter(c => canPlayAsAttack(state, c) && canNonNeighborPlayCard(state, playerIdx, c))
+                .map(c => c.id);
+              if (playableIds.length > 0) {
+                actions.push({ type: 'playCard', cardIds: playableIds });
+              }
+            }
+            // Edge players can also click "бито" to pass
+            if (state.battleField.every(p => p.defense) && !state.passedAttackers.includes(player.id)) {
+              actions.push({ type: 'endAttack' });
+            }
           }
         }
       }
