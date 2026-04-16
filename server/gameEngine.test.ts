@@ -885,7 +885,7 @@ describe('Attacker priority mechanic', () => {
     // Edge player (p3) should NOT be able to add cards while attacker has priority
     const error = playAttackCard(state, 2, state.players[2].hand[0].id);
     expect(error).toBeTruthy();
-    expect(error).toContain('priority');
+    expect(error).toContain('Бито');  // Атакующий ещё не нажал Бито
   });
 
   it('attacker pressing bito passes priority to edge player', () => {
@@ -1108,7 +1108,7 @@ describe('Pickup mechanic (defender takes)', () => {
     // Should not be able to add more
     const error = playAttackCard(state, 0, state.players[0].hand[0].id);
     expect(error).toBeTruthy();
-    expect(error).toContain('Maximum');
+    expect(error).toContain('максимум');  // Достигнут максимум атакующих карт
   });
 
   it('card limit enforced: after first trick, max = defender hand size', () => {
@@ -1133,7 +1133,7 @@ describe('Pickup mechanic (defender takes)', () => {
     // Should not be able to add more (3 attack cards = 3 cards in defender hand)
     const error = playAttackCard(state, 0, state.players[0].hand[0].id);
     expect(error).toBeTruthy();
-    expect(error).toContain('Maximum');
+    expect(error).toContain('максимум');  // Достигнут максимум атакующих карт
   });
 });
 

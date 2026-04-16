@@ -730,7 +730,14 @@ export function initSocketServer(httpServer: HttpServer) {
         error = playAttackCard(gameState, playerIdx, data.cardId);
       }
 
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        // Re-send current available actions so client UI stays in sync
+        // (prevents stale state where client thinks card is still playable after reconnect)
+        const actions = getAvailableActions(gameState, playerIdx);
+        socket.emit('yourTurn', actions);
+        return;
+      }
 
       // --- Achievement tracking ---
       const botCount = gameState.players.filter(p => p.isBot).length;
@@ -894,7 +901,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const preTransferCard = gameState.players[playerIdx]?.hand.find(c => c.id === data.cardId);
       const preTransferAttackerOdId = gameState.players[gameState.currentAttackerIdx]?.id;
       const error = transferAttack(gameState, playerIdx, data.cardId);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
 
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
@@ -935,7 +946,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = transferMultipleCards(gameState, playerIdx, data.cardIds);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
 
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
@@ -953,7 +968,11 @@ export function initSocketServer(httpServer: HttpServer) {
       if (!gameState) return;
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = showPassThrough(gameState, playerIdx, data.cardId);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
       // Track pass card shown
       trackPassCardShown(data.roomId, odId);
       // Reset consecutive timeout counter — player took action
@@ -972,7 +991,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = showMultiplePassThroughs(gameState, playerIdx, data.cardIds);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
 
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
@@ -1011,7 +1034,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = engineEndAttack(gameState, playerIdx);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
 
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {
@@ -1031,7 +1058,11 @@ export function initSocketServer(httpServer: HttpServer) {
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       const error = engineEndAttack(gameState, playerIdx);
-      if (error) { socket.emit('error', error); return; }
+      if (error) {
+        socket.emit('error', error);
+        socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+        return;
+      }
 
       // Reset consecutive timeout counter — player took action
       if (gameState.consecutiveTimeouts[odId]) {

@@ -367,19 +367,19 @@ function canAddMoreAttackCards(state: GameState): boolean {
 export function playAttackCard(state: GameState, playerIdx: number, cardId: string): string | null {
   // Only the current attacker can initiate the first card
   if (state.battleField.length === 0 && playerIdx !== state.currentAttackerIdx) {
-    return 'Only the attacker can play the first card';
+    return 'Только атакующий может сыграть первую карту';
   }
 
   // Defender cannot play attack cards
   if (playerIdx === state.currentDefenderIdx) {
-    return 'Defender cannot attack';
+    return 'Защитник не может атаковать';
   }
 
   const player = state.players[playerIdx];
-  if (player.isOut) return 'Player is out of the game';
+  if (player.isOut) return 'Игрок уже вышел из игры';
 
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
-  if (cardIndex === -1) return 'Card not in hand';
+  if (cardIndex === -1) return 'Такой карты нет в руке';
   const card = player.hand[cardIndex];
 
   // After first card, check if this player can add cards
@@ -388,8 +388,8 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
     const isSixException = state.leadCardRank === '6' && card.rank === '6';
     // PRIORITY RULE: Edge players cannot add cards while attacker has priority
     // But sixes bypass this rule when the lead card is 6
-    if (state.attackerHasPriority && !isSixException) return 'Attacker has priority — wait for them to press Бито';
-    if (!canPlayerAddCards(state, playerIdx)) return 'You cannot add cards to this trick';
+    if (state.attackerHasPriority && !isSixException) return 'Атакующий ещё не нажал Бито — подождите';
+    if (!canPlayerAddCards(state, playerIdx)) return 'Вы не можете подкидывать карты в этот ход';
   }
 
   // Six exception: non-neighbors can ONLY add sixes
@@ -407,10 +407,10 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
     }
   }
 
-  if (!canPlayAsAttack(state, card)) return 'Cannot play this card as attack';
+  if (!canPlayAsAttack(state, card)) return 'Эту карту нельзя сыграть в атаку';
 
   // Check card limit
-  if (!canAddMoreAttackCards(state)) return 'Maximum attack cards reached';
+  if (!canAddMoreAttackCards(state)) return 'Достигнут максимум атакующих карт';
 
   player.hand.splice(cardIndex, 1);
   state.battleField.push({ attack: card, defense: null });
@@ -475,12 +475,12 @@ export function playAttackCard(state: GameState, playerIdx: number, cardId: stri
 // ---- Defense card play ----
 
 export function playDefenseCard(state: GameState, playerIdx: number, cardId: string, targetPairIdx?: number): string | null {
-  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn to defend';
-  if (state.defenderTaking) return 'You already chose to take cards';
+  if (playerIdx !== state.currentDefenderIdx) return 'Сейчас не ваш ход защищаться';
+  if (state.defenderTaking) return 'Вы уже выбрали взять карты';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
-  if (cardIndex === -1) return 'Card not in hand';
+  if (cardIndex === -1) return 'Такой карты нет в руке';
   const card = player.hand[cardIndex];
 
   let pairIdx = targetPairIdx;
@@ -488,13 +488,13 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
     pairIdx = state.battleField.findIndex(p => !p.defense && canBeat(p.attack, card, state.trumpInfo.currentTrump));
   }
 
-  if (pairIdx === -1 || pairIdx === undefined) return 'No valid target for this card';
+  if (pairIdx === -1 || pairIdx === undefined) return 'Нет подходящей цели для этой карты';
   const pair = state.battleField[pairIdx];
-  if (!pair) return 'Invalid target';
-  if (pair.defense) return 'Already defended';
+  if (!pair) return 'Неверная цель';
+  if (pair.defense) return 'Эта карта уже отбита';
 
   if (!canBeat(pair.attack, card, state.trumpInfo.currentTrump)) {
-    return 'This card cannot beat the attack card';
+    return 'Этой картой нельзя отбить атакующую карту';
   }
 
   player.hand.splice(cardIndex, 1);
@@ -538,18 +538,18 @@ export function playDefenseCard(state: GameState, playerIdx: number, cardId: str
 // ---- Transfer (perevod) ----
 
 export function transferAttack(state: GameState, playerIdx: number, cardId: string): string | null {
-  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
-  if (state.defenderTaking) return 'Cannot transfer while taking';
+  if (playerIdx !== state.currentDefenderIdx) return 'Сейчас не ваш ход';
+  if (state.defenderTaking) return 'Нельзя переводить, когда берёте карты';
 
   const player = state.players[playerIdx];
   const cardIndex = player.hand.findIndex(c => c.id === cardId);
-  if (cardIndex === -1) return 'Card not in hand';
+  if (cardIndex === -1) return 'Такой карты нет в руке';
   const card = player.hand[cardIndex];
 
-  if (state.battleField.some(p => p.defense)) return 'Cannot transfer after defending';
+  if (state.battleField.some(p => p.defense)) return 'Нельзя переводить после отбивания карт';
 
   const attackRank = state.battleField[0]?.attack.rank;
-  if (card.rank !== attackRank) return 'Transfer card must match attack rank';
+  if (card.rank !== attackRank) return 'Карта перевода должна совпадать по номиналу с атакующей';
 
   // Check if the next defender has enough cards to handle all attack cards
   // Total attack cards after transfer = current battlefield cards + 1 (the transfer card)
@@ -590,12 +590,12 @@ export function transferAttack(state: GameState, playerIdx: number, cardId: stri
 // ---- Multi-card Transfer ----
 
 export function transferMultipleCards(state: GameState, playerIdx: number, cardIds: string[]): string | null {
-  if (cardIds.length === 0) return 'No cards to transfer';
+  if (cardIds.length === 0) return 'Нет карт для перевода';
   if (cardIds.length === 1) return transferAttack(state, playerIdx, cardIds[0]);
 
-  if (playerIdx !== state.currentDefenderIdx) return 'Not your turn';
-  if (state.defenderTaking) return 'Cannot transfer while taking';
-  if (state.battleField.some(p => p.defense)) return 'Cannot transfer after defending';
+  if (playerIdx !== state.currentDefenderIdx) return 'Сейчас не ваш ход';
+  if (state.defenderTaking) return 'Нельзя переводить, когда берёте карты';
+  if (state.battleField.some(p => p.defense)) return 'Нельзя переводить после отбивания карт';
 
   const player = state.players[playerIdx];
   const attackRank = state.battleField[0]?.attack.rank;
@@ -604,9 +604,9 @@ export function transferMultipleCards(state: GameState, playerIdx: number, cardI
   const cards: { card: Card; index: number }[] = [];
   for (const cardId of cardIds) {
     const cardIndex = player.hand.findIndex(c => c.id === cardId);
-    if (cardIndex === -1) return `Card ${cardId} not in hand`;
+    if (cardIndex === -1) return `Карты ${cardId} нет в руке`;
     const card = player.hand[cardIndex];
-    if (card.rank !== attackRank) return 'All transfer cards must match attack rank';
+    if (card.rank !== attackRank) return 'Все карты перевода должны совпадать по номиналу';
     cards.push({ card, index: cardIndex });
   }
 
@@ -728,7 +728,7 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
 // Each 10 reverses direction, so odd count = reverse, even count = no change.
 
 export function showMultiplePassThroughs(state: GameState, playerIdx: number, cardIds: string[]): string | null {
-  if (cardIds.length === 0) return 'No cards to show';
+  if (cardIds.length === 0) return 'Нет карт для показа';
   if (cardIds.length === 1) return showPassThrough(state, playerIdx, cardIds[0]);
 
   if (playerIdx !== state.currentDefenderIdx) return 'Не ваш ход';
@@ -881,11 +881,11 @@ export function successfulDefense(state: GameState): void {
 //    - Otherwise → defender must still take or defend
 
 export function endAttack(state: GameState, playerIdx: number): string | null {
-  if (state.battleField.length === 0) return 'No cards on table';
+  if (state.battleField.length === 0) return 'На столе нет карт';
 
   const isCurrentAttacker = playerIdx === state.currentAttackerIdx;
   const isEdge = canPlayerAddCards(state, playerIdx);
-  if (!isCurrentAttacker && !isEdge) return 'Not an attacker or edge player';
+  if (!isCurrentAttacker && !isEdge) return 'Вы не атакующий и не крайний игрок';
 
   const playerId = state.players[playerIdx].id;
   if (!state.passedAttackers.includes(playerId)) {
