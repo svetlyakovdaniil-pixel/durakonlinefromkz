@@ -225,7 +225,7 @@ export default function DraggableCard({
         ref={cardRef}
         className={`relative flex-shrink-0 transition-transform duration-150 ${dragging ? 'opacity-30' : ''}`}
         style={{
-          transform: dragging ? undefined : highlighted ? 'translateY(-12px)' : selected ? 'translateY(-8px)' : undefined,
+          transform: dragging ? undefined : selected ? 'translateY(-8px)' : undefined,
           transition: 'transform 0.2s ease',
           // NO touch-none — allow horizontal scroll on mobile
         }}
