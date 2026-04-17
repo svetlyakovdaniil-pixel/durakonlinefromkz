@@ -906,12 +906,14 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
-  // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid max 3 per row
+  // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid 2×3 (max 3 per row, 2 rows)
   const dynBtnClass = visibleActionCount <= 1
     ? 'h-full w-full text-base px-4 font-bold'
     : visibleActionCount === 2
     ? 'h-9 text-xs px-2 font-semibold flex-1'
-    : 'h-9 text-xs px-1.5 font-semibold game-btn-grid-item';
+    : visibleActionCount === 3
+    ? 'h-9 text-xs px-1.5 font-semibold game-btn-grid-item'
+    : 'h-8 text-xs px-1 font-semibold game-btn-grid-item';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -2152,11 +2154,13 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap max 3 per row */}
+              {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap max 3 per row (2×3 grid) */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
                 <div className={visibleActionCount <= 1
                   ? 'flex items-stretch h-[52px] w-full'
-                  : 'flex flex-wrap gap-1 items-center justify-end w-full py-1'
+                  : visibleActionCount <= 3
+                  ? 'flex flex-wrap gap-1 items-center justify-end w-full py-1'
+                  : 'grid grid-cols-3 gap-1 w-full py-0.5'
                 }>
                   {canTake && (
                     <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass}`} onClick={onTakeCards}>
