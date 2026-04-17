@@ -86,7 +86,7 @@ export const GAME_TABLE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/31051966350
 export const GAME_TABLE_DARK_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/khansky_oktogon_table_523470d5.webp';
 export const GAME_TABLE_NEON_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_table-eY4ptBJDmBaDo69F5sQkTp.webp';
 export const GAME_TABLE_APOCALYPSE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/table_apocalypse-H8YjUxzbwgWkFc5HnxrkhG.webp';
-export const GAME_TABLE_GALAXY_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/table-galaxy-DaEcfj87JYr46LEK45bG9S.webp';
+export const GAME_TABLE_GALAXY_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/galaxy_table_4a7cd0ed.png';
 
 export type TableStyle = 'classic' | 'dark_kazakh' | 'neon' | 'apocalypse' | 'galaxy';
 
