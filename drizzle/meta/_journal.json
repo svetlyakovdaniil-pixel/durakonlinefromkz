@@ -358,6 +358,20 @@
       "when": 1776348809871,
       "tag": "0050_nervous_black_cat",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "5",
+      "when": 1776464678457,
+      "tag": "0051_high_scalphunter",
+      "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "5",
+      "when": 1776464966485,
+      "tag": "0052_perpetual_leopardon",
+      "breakpoints": true
     }
   ]
 }

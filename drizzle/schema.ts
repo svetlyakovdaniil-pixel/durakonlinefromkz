@@ -259,14 +259,18 @@ export type InsertMassNotification = typeof massNotifications.$inferInsert;
  */
 export const shopPriceOverrides = mysqlTable("shop_price_overrides", {
   id: int("id").autoincrement().primaryKey(),
-  /** Item type: deck, table, frame, avatar */
-  itemType: mysqlEnum("itemType", ["deck", "table", "frame", "avatar"]).notNull(),
+  /** Item type: deck, table, frame, avatar, playlist */
+  itemType: mysqlEnum("itemType", ["deck", "table", "frame", "avatar", "playlist"]).notNull(),
   /** Item ID (e.g., 'custom', 'dark_kazakh', 'fire') */
   itemId: varchar("itemId", { length: 64 }).notNull(),
   /** Overridden price in tenge (null = use default) */
   priceTenge: int("priceTenge"),
   /** Whether the item is available for purchase */
   isAvailable: boolean("isAvailable").default(true).notNull(),
+  /** Discount percentage (0-100), null = no discount */
+  discountPercent: int("discountPercent"),
+  /** Discount expiry timestamp (null = no expiry) */
+  discountExpiresAt: timestamp("discountExpiresAt"),
   /** Last updated by admin */
   updatedBy: int("updatedBy"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -590,3 +594,18 @@ export const emailVerificationCodes = mysqlTable("email_verification_codes", {
 });
 export type EmailVerificationCode = typeof emailVerificationCodes.$inferSelect;
 export type InsertEmailVerificationCode = typeof emailVerificationCodes.$inferInsert;
+
+/**
+ * Server settings — key/value store for global server configuration.
+ * Used for maintenance mode, feature flags, etc.
+ */
+export const serverSettings = mysqlTable("server_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Setting key (unique) */
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  /** Setting value as JSON string */
+  value: text("value").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type ServerSetting = typeof serverSettings.$inferSelect;
+export type InsertServerSetting = typeof serverSettings.$inferInsert;

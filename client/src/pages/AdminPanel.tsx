@@ -1798,6 +1798,7 @@ function AntifraudTab() {
 function ShopManagementTab() {
   const utils = trpc.useUtils();
   const { data: overrides = [] } = trpc.admin.shopItems.useQuery();
+  const { data: allPlaylists = [] } = trpc.playlists.list.useQuery();
   const updatePrice = trpc.admin.updateShopPrice.useMutation({
     onSuccess: () => {
       utils.admin.shopItems.invalidate();
@@ -1806,18 +1807,22 @@ function ShopManagementTab() {
     onError: () => toast.error("Ошибка обновления"),
   });
 
-  // Build catalog dynamically from cardAssets + avatars
-  const DEFAULT_ITEMS: { itemType: string; itemId: string; name: string; defaultPrice: number; category: string }[] = [
+  // Build catalog dynamically from cardAssets + avatars + playlists
+  const DEFAULT_ITEMS: { itemType: string; itemId: string; name: string; defaultPrice: number; category: string; currency: 'tenge' | 'shanyrak' }[] = [
     // Decks
-    { itemType: "deck", itemId: "custom", name: "Казахская колода", defaultPrice: 60, category: "Колоды" },
+    { itemType: "deck", itemId: "custom", name: "Казахская колода", defaultPrice: 60, category: "Колоды", currency: 'tenge' },
     // Tables (skip classic - it's free)
     ...Object.entries(TABLE_STYLES)
       .filter(([key]) => key !== 'classic')
-      .map(([key, val]) => ({ itemType: "table", itemId: key, name: val.name, defaultPrice: val.price, category: "Столы" })),
+      .map(([key, val]) => ({ itemType: "table", itemId: key, name: val.name, defaultPrice: val.price, category: "Столы", currency: 'tenge' as const })),
     // Frames
-    ...AVATAR_FRAMES.map(f => ({ itemType: "frame", itemId: f.id, name: f.name, defaultPrice: f.price, category: "Рамки" })),
+    ...AVATAR_FRAMES.map(f => ({ itemType: "frame", itemId: f.id, name: f.name, defaultPrice: f.price, category: "Рамки", currency: 'tenge' as const })),
     // Premium avatars
-    ...AVATAR_OPTIONS.filter(a => a.premium && a.price).map(a => ({ itemType: "avatar", itemId: a.id, name: a.name, defaultPrice: a.price!, category: "Аватары" })),
+    ...AVATAR_OPTIONS.filter(a => a.premium && a.price).map(a => ({ itemType: "avatar", itemId: a.id, name: a.name, defaultPrice: a.price!, category: "Аватары", currency: 'tenge' as const })),
+    // Playlists (from DB)
+    ...allPlaylists
+      .filter((p: any) => !p.isDefault)
+      .map((p: any) => ({ itemType: "playlist", itemId: String(p.id), name: p.name, defaultPrice: p.priceShanyrak, category: "Плейлисты", currency: 'shanyrak' as const })),
   ];
 
   // Merge defaults with overrides
@@ -1828,38 +1833,53 @@ function ShopManagementTab() {
       currentPrice: override?.priceTenge ?? item.defaultPrice,
       isAvailable: override?.isAvailable ?? true,
       hasOverride: !!override,
+      discountPercent: override?.discountPercent ?? null as number | null,
+      discountExpiresAt: override?.discountExpiresAt ? new Date(override.discountExpiresAt) : null as Date | null,
     };
   });
 
   const [editItem, setEditItem] = useState<typeof items[0] | null>(null);
   const [editPrice, setEditPrice] = useState("");
   const [editAvailable, setEditAvailable] = useState(true);
+  const [editDiscountPercent, setEditDiscountPercent] = useState("");
+  const [editDiscountExpiresAt, setEditDiscountExpiresAt] = useState("");
 
   const openEdit = (item: typeof items[0]) => {
     setEditItem(item);
     setEditPrice(String(item.currentPrice));
     setEditAvailable(item.isAvailable);
+    setEditDiscountPercent(item.discountPercent != null ? String(item.discountPercent) : "");
+    setEditDiscountExpiresAt(item.discountExpiresAt ? item.discountExpiresAt.toISOString().slice(0, 16) : "");
   };
 
   const saveEdit = () => {
     if (!editItem) return;
     const price = parseInt(editPrice);
     if (isNaN(price) || price < 0) { toast.error("Некорректная цена"); return; }
+    const discountPct = editDiscountPercent !== "" ? parseInt(editDiscountPercent) : null;
+    if (discountPct !== null && (isNaN(discountPct) || discountPct < 0 || discountPct > 100)) {
+      toast.error("Скидка должна быть от 0 до 100%"); return;
+    }
+    const discountExpiry = editDiscountExpiresAt ? new Date(editDiscountExpiresAt) : null;
     updatePrice.mutate({
-      itemType: editItem.itemType as 'deck' | 'table' | 'frame' | 'avatar',
+      itemType: editItem.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist',
       itemId: editItem.itemId,
       priceTenge: price,
       isAvailable: editAvailable,
+      discountPercent: discountPct,
+      discountExpiresAt: discountExpiry,
     });
     setEditItem(null);
   };
 
   const resetToDefault = (item: typeof items[0]) => {
     updatePrice.mutate({
-      itemType: item.itemType as 'deck' | 'table' | 'frame' | 'avatar',
+      itemType: item.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist',
       itemId: item.itemId,
       priceTenge: item.defaultPrice,
       isAvailable: true,
+      discountPercent: null,
+      discountExpiresAt: null,
     });
   };
 
@@ -1906,14 +1926,26 @@ function ShopManagementTab() {
                     </span>
                   </td>
                   <td className="px-4 py-3 text-amber-100">{item.name}</td>
-                  <td className="px-4 py-3 text-gray-400">{formatNumber(item.defaultPrice)} ₸</td>
+                  <td className="px-4 py-3 text-gray-400">
+                    {formatNumber(item.defaultPrice)} {item.currency === 'shanyrak' ? '🏠' : '₸'}
+                  </td>
                   <td className="px-4 py-3">
-                    <span className={item.currentPrice !== item.defaultPrice ? "text-amber-300 font-bold" : "text-gray-200"}>
-                      {formatNumber(item.currentPrice)} ₸
-                    </span>
-                    {item.currentPrice !== item.defaultPrice && (
-                      <span className="text-xs text-amber-500 ml-1">(изменено)</span>
-                    )}
+                    <div>
+                      <span className={item.currentPrice !== item.defaultPrice ? "text-amber-300 font-bold" : "text-gray-200"}>
+                        {formatNumber(item.currentPrice)} {item.currency === 'shanyrak' ? '🏠' : '₸'}
+                      </span>
+                      {item.currentPrice !== item.defaultPrice && (
+                        <span className="text-xs text-amber-500 ml-1">(изменено)</span>
+                      )}
+                      {item.discountPercent != null && item.discountPercent > 0 && (
+                        <div className="text-xs text-pink-400 mt-0.5">
+                          −{item.discountPercent}% скидка
+                          {item.discountExpiresAt && (
+                            <span className="text-gray-500 ml-1">до {item.discountExpiresAt.toLocaleDateString('ru-RU')}</span>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     {item.isAvailable ? (
@@ -1956,7 +1988,9 @@ function ShopManagementTab() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
-              <label className="text-sm text-gray-300 mb-1 block">Новая цена (тенге)</label>
+              <label className="text-sm text-gray-300 mb-1 block">
+                Новая цена ({editItem?.currency === 'shanyrak' ? 'шаныраки 🏠' : 'тенге ₸'})
+              </label>
               <Input
                 type="number"
                 min={0}
@@ -1964,6 +1998,29 @@ function ShopManagementTab() {
                 onChange={e => setEditPrice(e.target.value)}
                 className="bg-gray-900/50 border-gray-700 text-amber-100"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Скидка (%)</label>
+                <Input
+                  type="number"
+                  min={0}
+                  max={100}
+                  placeholder="0"
+                  value={editDiscountPercent}
+                  onChange={e => setEditDiscountPercent(e.target.value)}
+                  className="bg-gray-900/50 border-gray-700 text-amber-100"
+                />
+              </div>
+              <div>
+                <label className="text-sm text-gray-300 mb-1 block">Скидка до</label>
+                <Input
+                  type="datetime-local"
+                  value={editDiscountExpiresAt}
+                  onChange={e => setEditDiscountExpiresAt(e.target.value)}
+                  className="bg-gray-900/50 border-gray-700 text-amber-100"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <label className="text-sm text-gray-300">Доступен для покупки:</label>
@@ -2351,8 +2408,14 @@ function ModerationTab() {
               complaints.data?.complaints.map((c: any) => (
                 <tr key={c.id} className={`border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors ${c.reason === 'inappropriate_name' && c.status === 'pending' ? 'bg-orange-950/20' : ''}`}>
                   <td className="px-3 py-2 text-gray-400">#{c.id}</td>
-                  <td className="px-3 py-2 text-amber-100">ID {c.reporterProfileId}</td>
-                  <td className="px-3 py-2 text-amber-100">ID {c.targetProfileId}</td>
+                  <td className="px-3 py-2 text-amber-100">
+                    <div className="font-medium">{c.reporterName || '—'}</div>
+                    <div className="text-xs text-gray-400">ID {c.reporterGameId ?? c.reporterProfileId}</div>
+                  </td>
+                  <td className="px-3 py-2 text-amber-100">
+                    <div className="font-medium">{c.targetName || '—'}</div>
+                    <div className="text-xs text-gray-400">ID {c.targetGameId ?? c.targetProfileId}</div>
+                  </td>
                   <td className="px-3 py-2">
                     <span className={c.reason === 'inappropriate_name' ? 'text-orange-300 font-semibold' : 'text-amber-200'}>
                       {c.reason === 'inappropriate_name' && <span className="mr-1">🏷️</span>}
@@ -2739,6 +2802,30 @@ function ContactMessagesTab() {
 function ToolsTab() {
   const utils = trpc.useUtils();
 
+  // ─── Maintenance mode ───
+  const { data: maintenanceStatus } = trpc.maintenance.status.useQuery();
+  const setMaintenance = trpc.maintenance.set.useMutation({
+    onSuccess: () => {
+      utils.maintenance.status.invalidate();
+      toast.success('Режим тех.работ обновлён');
+    },
+    onError: (e) => toast.error(`Ошибка: ${e.message}`),
+  });
+  const [maintenanceEndTime, setMaintenanceEndTime] = useState('');
+  const [maintenanceMessage, setMaintenanceMessage] = useState('');
+
+  const enableMaintenance = () => {
+    setMaintenance.mutate({
+      enabled: true,
+      endTime: maintenanceEndTime ? new Date(maintenanceEndTime).toISOString() : null,
+      message: maintenanceMessage.trim() || null,
+    });
+  };
+
+  const disableMaintenance = () => {
+    setMaintenance.mutate({ enabled: false, endTime: null, message: null });
+  };
+
   // Retroactive achievement recalculation
   const [recalcResult, setRecalcResult] = useState<{
     totalPlayers: number;
@@ -2774,6 +2861,90 @@ function ToolsTab() {
         Служебные операции для исправления данных после обновлений логики.
         Используйте осторожно — операции могут занять время при большом количестве игроков.
       </p>
+
+      {/* ─── Maintenance Mode ─── */}
+      <div className={`rounded-xl border p-5 space-y-4 ${
+        maintenanceStatus?.enabled
+          ? 'border-red-700/60 bg-red-950/20'
+          : 'border-gray-700/40 bg-gray-900/20'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Wrench className={`w-5 h-5 ${maintenanceStatus?.enabled ? 'text-red-400' : 'text-gray-400'}`} />
+            <div>
+              <h3 className="font-semibold text-amber-200">Режим технических работ</h3>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Закрывает доступ всем игрокам, кроме администраторов
+              </p>
+            </div>
+          </div>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+            maintenanceStatus?.enabled
+              ? 'bg-red-900/50 text-red-300'
+              : 'bg-green-900/50 text-green-300'
+          }`}>
+            {maintenanceStatus?.enabled ? 'ВКЛЮЧЕН' : 'ВЫКЛЮЧЕН'}
+          </span>
+        </div>
+
+        {/* Current status info */}
+        {maintenanceStatus?.enabled && (
+          <div className="rounded-lg bg-red-950/30 border border-red-800/40 p-3 text-sm space-y-1">
+            {maintenanceStatus.endTime && (
+              <p className="text-red-200">
+                Окончание: {new Date(maintenanceStatus.endTime).toLocaleString('ru-RU')}
+              </p>
+            )}
+            {maintenanceStatus.message && (
+              <p className="text-red-200/80 text-xs">Сообщение: {maintenanceStatus.message}</p>
+            )}
+          </div>
+        )}
+
+        {/* Enable form */}
+        {!maintenanceStatus?.enabled && (
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Примерное время окончания (необязательно)</label>
+              <Input
+                type="datetime-local"
+                value={maintenanceEndTime}
+                onChange={e => setMaintenanceEndTime(e.target.value)}
+                className="bg-gray-900/50 border-gray-700 text-amber-100 text-sm"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Сообщение игрокам (необязательно)</label>
+              <Input
+                placeholder="Например: Обновляем серверы..."
+                value={maintenanceMessage}
+                onChange={e => setMaintenanceMessage(e.target.value)}
+                className="bg-gray-900/50 border-gray-700 text-amber-100 text-sm"
+              />
+            </div>
+            <Button
+              onClick={enableMaintenance}
+              disabled={setMaintenance.isPending}
+              className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold"
+            >
+              <Wrench className="w-4 h-4 mr-2" />
+              Включить режим тех.работ
+            </Button>
+          </div>
+        )}
+
+        {/* Disable button */}
+        {maintenanceStatus?.enabled && (
+          <Button
+            onClick={disableMaintenance}
+            disabled={setMaintenance.isPending}
+            className="w-full bg-green-700 hover:bg-green-600 text-white font-semibold"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Выключить режим тех.работ — открыть сервер
+          </Button>
+        )}
+      </div>
 
       {/* Retroactive achievement recalculation */}
       <div className="rounded-xl border border-amber-800/40 bg-amber-950/20 p-5 space-y-4">

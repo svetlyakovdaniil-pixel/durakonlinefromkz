@@ -1,7 +1,7 @@
-import { eq, and, or, like, sql, desc, asc } from "drizzle-orm";
+import { eq, and, or, like, sql, desc, asc, aliasedTable } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals, emailVerificationCodes, InsertEmailVerificationCode } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals, emailVerificationCodes, InsertEmailVerificationCode, serverSettings } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -1726,7 +1726,7 @@ export async function adminGetPlayerGameHistory(opts: {
 export async function logAdminAction(data: {
   adminId: number;
   adminName: string | null;
-  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account' | 'give_item' | 'force_rename';
+  action: 'ban' | 'unban' | 'temp_ban' | 'update_balance' | 'reset_stats' | 'change_role' | 'kick' | 'update_shop_item' | 'create_shop_item' | 'toggle_shop_item' | 'mass_notify' | 'revoke_purchase' | 'update_avatar_offsets' | 'remove_item' | 'reset_account' | 'give_item' | 'force_rename' | 'set_maintenance_mode';
   targetProfileId?: number | null;
   details?: Record<string, unknown>;
 }) {
@@ -2112,10 +2112,12 @@ export async function getShopPriceOverrides() {
  * Upsert a shop price override. If an override for this itemType+itemId exists, update it; otherwise insert.
  */
 export async function upsertShopPriceOverride(data: {
-  itemType: 'deck' | 'table' | 'frame' | 'avatar';
+  itemType: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist';
   itemId: string;
   priceTenge: number | null;
   isAvailable: boolean;
+  discountPercent?: number | null;
+  discountExpiresAt?: Date | null;
   updatedBy: number;
 }) {
   const db = await getDb();
@@ -2134,6 +2136,8 @@ export async function upsertShopPriceOverride(data: {
     await db.update(shopPriceOverrides).set({
       priceTenge: data.priceTenge,
       isAvailable: data.isAvailable,
+      discountPercent: data.discountPercent ?? null,
+      discountExpiresAt: data.discountExpiresAt ?? null,
       updatedBy: data.updatedBy,
     }).where(eq(shopPriceOverrides.id, existing.id));
   } else {
@@ -2142,6 +2146,8 @@ export async function upsertShopPriceOverride(data: {
       itemId: data.itemId,
       priceTenge: data.priceTenge,
       isAvailable: data.isAvailable,
+      discountPercent: data.discountPercent ?? null,
+      discountExpiresAt: data.discountExpiresAt ?? null,
       updatedBy: data.updatedBy,
     });
   }
@@ -2284,10 +2290,17 @@ export async function getComplaints(opts: {
     .from(playerComplaints)
     .where(whereClause);
 
+  const reporterProfiles = aliasedTable(playerProfiles, 'reporter_profiles');
+  const targetProfiles = aliasedTable(playerProfiles, 'target_profiles');
+
   const complaints = await db.select({
     id: playerComplaints.id,
     reporterProfileId: playerComplaints.reporterProfileId,
     targetProfileId: playerComplaints.targetProfileId,
+    reporterName: reporterProfiles.displayName,
+    reporterGameId: reporterProfiles.gameId,
+    targetName: targetProfiles.displayName,
+    targetGameId: targetProfiles.gameId,
     reason: playerComplaints.reason,
     description: playerComplaints.description,
     status: playerComplaints.status,
@@ -2298,6 +2311,8 @@ export async function getComplaints(opts: {
     updatedAt: playerComplaints.updatedAt,
   })
     .from(playerComplaints)
+    .leftJoin(reporterProfiles, eq(playerComplaints.reporterProfileId, reporterProfiles.id))
+    .leftJoin(targetProfiles, eq(playerComplaints.targetProfileId, targetProfiles.id))
     .where(whereClause)
     .orderBy(desc(playerComplaints.createdAt))
     .limit(limit)
@@ -3525,4 +3540,44 @@ export async function deleteEmailVerificationCode(email: string): Promise<void> 
   const db = await getDb();
   if (!db) return;
   await db.delete(emailVerificationCodes).where(eq(emailVerificationCodes.email, email));
+}
+
+// ─────────────────────────────────────────────
+// SERVER SETTINGS / MAINTENANCE MODE
+// ─────────────────────────────────────────────
+
+export interface MaintenanceStatus {
+  enabled: boolean;
+  endTime: string | null; // ISO string or null
+  message: string | null;
+}
+
+export async function getMaintenanceStatus(): Promise<MaintenanceStatus> {
+  const db = await getDb();
+  if (!db) return { enabled: false, endTime: null, message: null };
+  const [row] = await db.select().from(serverSettings)
+    .where(eq(serverSettings.key, 'maintenance'))
+    .limit(1);
+  if (!row) return { enabled: false, endTime: null, message: null };
+  try {
+    return JSON.parse(row.value) as MaintenanceStatus;
+  } catch {
+    return { enabled: false, endTime: null, message: null };
+  }
+}
+
+export async function setMaintenanceStatus(status: MaintenanceStatus): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const value = JSON.stringify(status);
+  const [existing] = await db.select().from(serverSettings)
+    .where(eq(serverSettings.key, 'maintenance'))
+    .limit(1);
+  if (existing) {
+    await db.update(serverSettings)
+      .set({ value, updatedAt: new Date() })
+      .where(eq(serverSettings.key, 'maintenance'));
+  } else {
+    await db.insert(serverSettings).values({ key: 'maintenance', value });
+  }
 }

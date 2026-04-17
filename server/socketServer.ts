@@ -2820,10 +2820,11 @@ function sanitizeRoom(room: Room): Room {
   const sanitizedSettings = { ...room.settings, password: undefined };
   // Add premium host flag
   const isPremiumHost = playerIsPremium.get(room.hostId) === true;
-  // Inject season ratings into players
+  // Inject season ratings and gameIds into players
   const playersWithRank = room.players.map(p => ({
     ...p,
     seasonRating: p.isBot ? 0 : (playerSeasonRatings.get(p.id) ?? 0),
+    gameId: p.isBot ? p.gameId : (playerGameIds.get(p.id) ?? p.gameId),
   }));
   return { ...room, players: playersWithRank, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, isPremiumHost, settings: sanitizedSettings };
 }

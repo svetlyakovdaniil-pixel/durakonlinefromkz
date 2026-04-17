@@ -1,4 +1,14 @@
 export const ru = {
+  // Maintenance mode
+  maintenance: {
+    title: 'Технические работы',
+    subtitle: 'Сервер временно недоступен',
+    description: 'Мы улучшаем игру для вас. Пожалуйста, зайдите позже.',
+    estimatedEnd: 'Примерное время включения серверов',
+    noEstimate: 'Время окончания не указано',
+    retry: 'Попробовать снова',
+    customMessage: 'Сообщение администратора',
+  },
   // Common
   common: {
     confirm: 'Подтвердить',

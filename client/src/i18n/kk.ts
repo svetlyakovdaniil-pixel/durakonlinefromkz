@@ -1,4 +1,14 @@
 export const kk = {
+  // Maintenance mode
+  maintenance: {
+    title: 'Техникалық жұмыстар',
+    subtitle: 'Сервер уақытша қол жетімсіз',
+    description: 'Біз ойынды жақсартамыз. Кейінірек кіріңіз.',
+    estimatedEnd: 'Серверлердің қосылу уақыты',
+    noEstimate: 'Аяқталу уақыты көрсетілмеген',
+    retry: 'Қайтадан көру',
+    customMessage: 'Администратор хабарламасы',
+  },
   // Common
   common: {
     confirm: 'Растау',

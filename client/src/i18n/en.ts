@@ -1,4 +1,14 @@
 export const en = {
+  // Maintenance mode
+  maintenance: {
+    title: 'Maintenance',
+    subtitle: 'Server temporarily unavailable',
+    description: "We're improving the game for you. Please check back later.",
+    estimatedEnd: 'Estimated server restoration time',
+    noEstimate: 'No estimated end time',
+    retry: 'Try again',
+    customMessage: 'Administrator message',
+  },
   // Common
   common: {
     confirm: 'Confirm',

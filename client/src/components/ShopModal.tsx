@@ -530,6 +530,15 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     return base;
   };
 
+  /** Get active discount info for a shop item (playlist uses shanyrak, others use tenge) */
+  const getDiscount = (itemType: string, itemId: string): { percent: number; expiresAt: Date | null } | null => {
+    const override = priceOverrides.find((o: any) => o.itemType === itemType && o.itemId === itemId);
+    if (!override || !override.discountPercent || override.discountPercent <= 0) return null;
+    const expiresAt = override.discountExpiresAt ? new Date(override.discountExpiresAt) : null;
+    if (expiresAt && expiresAt < new Date()) return null; // expired
+    return { percent: override.discountPercent, expiresAt };
+  };
+
   /** Check if item is available (not disabled by admin) */
   const isItemAvailable = (itemType: string, itemId: string): boolean => {
     const override = priceOverrides.find((o: any) => o.itemType === itemType && o.itemId === itemId);
@@ -1031,7 +1040,9 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               {allPlaylists.map((playlist: any) => {
                 const isOwned = ownedPlaylistIds.includes(playlist.id);
                 const isFree = playlist.isDefault || playlist.priceShanyrak === 0;
-                const canAffordPlaylist = currentShanyrak >= playlist.priceShanyrak;
+                const discount = getDiscount('playlist', String(playlist.id));
+                const effectivePrice = discount ? Math.floor(playlist.priceShanyrak * (1 - discount.percent / 100)) : playlist.priceShanyrak;
+                const canAffordPlaylist = currentShanyrak >= effectivePrice;
                 const isPreviewPlaying = previewPlaylistId === playlist.id;
                 const trackCount = playlist.tracks?.length || 0;
                 const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : locale === 'en' && playlist.nameEn ? playlist.nameEn : playlist.name;
@@ -1085,15 +1096,23 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               type: 'playlist',
                               id: String(playlist.id),
                               name: displayName,
-                              price: playlist.priceShanyrak,
+                              price: effectivePrice,
                             })}
                             disabled={purchasing || !canAffordPlaylist}
                           >
                             {purchasing ? '...' : t('shop.buy')}
                           </Button>
-                          <div className="flex items-center gap-1">
-                            <span className="text-amber-100 font-bold text-sm">{playlist.priceShanyrak.toLocaleString()}</span>
-                            <img src={SHANYRAK_ICON} alt="" className="w-5 h-5" />
+                          <div className="flex flex-col items-end">
+                            {discount && (
+                              <span className="text-gray-400 line-through text-xs">{playlist.priceShanyrak.toLocaleString()} 🏠</span>
+                            )}
+                            <div className="flex items-center gap-1">
+                              <span className={`font-bold text-sm ${discount ? 'text-pink-300' : 'text-amber-100'}`}>{effectivePrice.toLocaleString()}</span>
+                              <img src={SHANYRAK_ICON} alt="" className="w-5 h-5" />
+                            </div>
+                            {discount && (
+                              <span className="text-pink-400 text-[10px]">−{discount.percent}%</span>
+                            )}
                           </div>
                         </div>
                       )}
