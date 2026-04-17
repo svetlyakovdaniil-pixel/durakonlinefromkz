@@ -173,6 +173,13 @@ export async function claimAchievementReward(
     processAchievementCountAchievements(profileId).catch(() => {});
   } catch (e) { /* non-blocking */ }
 
+  // Track first_millionaire progress after any shanyrak award
+  if (shanyrakAward > 0 && newShanyrak > 0) {
+    try {
+      await incrementAchievementProgress(profileId, 'first_millionaire', 0, Math.min(newShanyrak, 1000000));
+    } catch (e) { /* non-blocking */ }
+  }
+
   return { success: true, shanyrakAwarded: shanyrakAward, tengeAwarded: tengeAward };
 }
 

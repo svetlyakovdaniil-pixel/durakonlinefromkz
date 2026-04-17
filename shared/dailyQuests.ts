@@ -300,12 +300,12 @@ export const DAILY_QUESTS: DailyQuestDef[] = [
     nameRu: 'Козырной дождь',
     nameKk: 'Козырь жаңбыры',
     nameEn: 'Trump Rain',
-    descRu: 'Отбейся козырем 20 раз',
-    descKk: 'Козырьмен 20 рет жауап бер',
-    descEn: 'Defend with a trump card 20 times',
+    descRu: 'Отбейся козырем 20 раз за одну партию',
+    descKk: 'Бір ойында козырьмен 20 рет жауап бер',
+    descEn: 'Defend with a trump card 20 times in one game',
     reward: { shanyrak: 200 },
     target: 20,
-    trackType: 'trump_defenses_total',
+    trackType: 'trump_beats_in_one_game',
   },
   // ── 20 ────────────────────────────────────────────────────────────────────
   {

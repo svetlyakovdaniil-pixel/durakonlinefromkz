@@ -93,7 +93,8 @@ const gameTransferCounts = new Map<string, Map<string, number>>();
 /** Per-game tracking of cards taken by winner: roomId -> { odId -> count } */
 const gameCardsTaken = new Map<string, Map<string, number>>();
 /** Per-game tracking of 10-transfers: roomId -> { odId -> { targetOdId -> count } } */
-const game10Transfers = new Map<string, Map<string, { lastTarget: string; streak: number }>>();
+// Stores last 3 transfers per room as [{from, to}] to detect A→B, B→A, A→B pattern
+const game10Transfers = new Map<string, Array<{ from: string; to: string }>>();
 /** Consecutive win streaks: odId -> streak count (persists across games in memory) */
 const consecutiveWinStreaks = new Map<string, number>();
 /** Per-game tracking of trump ace usage: roomId -> { odId -> count } */
@@ -123,7 +124,7 @@ export function initGameTracking(roomId: string): void {
   gameThrowCounts.set(roomId, new Map());
   gameTransferCounts.set(roomId, new Map());
   gameCardsTaken.set(roomId, new Map());
-  game10Transfers.set(roomId, new Map());
+  game10Transfers.set(roomId, []);
   gameTrumpAceUsed.set(roomId, new Map());
   gameSuccessfulRounds.set(roomId, new Map());
   gamePassCardsShown.set(roomId, new Map());
@@ -250,16 +251,31 @@ export function getCardsTakenMap(roomId: string): Map<string, number> {
   return gameCardsTaken.get(roomId) ?? new Map();
 }
 
-/** Track 10-transfer chains: returns true if the spiderman meme condition is met */
+/** Track 10-transfer chains: returns true if the spiderman meme condition is met.
+ * Condition: A→B, B→A, A→B — three alternating transfers between the same two players.
+ */
 export function track10Transfer(roomId: string, defenderOdId: string, attackerOdId: string): boolean {
-  const map = game10Transfers.get(roomId);
-  if (!map) return false;
-  const entry = map.get(defenderOdId);
-  if (entry && entry.lastTarget === attackerOdId) {
-    entry.streak++;
-    if (entry.streak >= 3) return true;
-  } else {
-    map.set(defenderOdId, { lastTarget: attackerOdId, streak: 1 });
+  const list = game10Transfers.get(roomId);
+  if (!list) return false;
+
+  // Append this transfer
+  list.push({ from: defenderOdId, to: attackerOdId });
+  // Keep only last 3
+  if (list.length > 3) list.splice(0, list.length - 3);
+
+  // Check if we have exactly 3 transfers matching the A→B, B→A, A→B pattern
+  if (list.length < 3) return false;
+  const [t1, t2, t3] = list;
+  // Pattern: t1.from == t3.from, t1.to == t3.to == t2.from, t2.to == t1.from
+  const isSpiderman =
+    t1.from === t3.from &&
+    t1.to === t3.to &&
+    t2.from === t1.to &&
+    t2.to === t1.from;
+  if (isSpiderman) {
+    // Reset to prevent repeated triggers
+    list.length = 0;
+    return true;
   }
   return false;
 }
@@ -365,9 +381,15 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
   const transferMap = gameTransferCounts.get(ctx.roomId) ?? new Map<string, number>();
   const takenMap = gameCardsTaken.get(ctx.roomId) ?? new Map<string, number>();
   const successfulRoundsMap = gameSuccessfulRounds.get(ctx.roomId) ?? new Map<string, number>();
+  const maxCardsInOneTurnMap = gameMaxCardsInOneTurn.get(ctx.roomId) ?? new Map<string, number>();
 
   const winner1stOdId = winnersOrder[0] ?? null;
-  const secondLastOdId = allHumanOdIds.length >= 2 ? allHumanOdIds[allHumanOdIds.length - 2] : null;
+  // secondLastOdId: предпоследний выбывший = winnersOrder[winnersOrder.length - 2]
+  // winnersOrder[0] = 1st place, winnersOrder[last] = last winner before loser
+  // allHumanOdIds = all humans; loserId = last place
+  // Предпоследнее место: последний из winnersOrder (если есть), либо второй с конца allHumanOdIds без loserId
+  const nonLoserHumans = allHumanOdIds.filter(id => id !== loserId);
+  const secondLastOdId = nonLoserHumans.length >= 1 ? nonLoserHumans[nonLoserHumans.length - 1] : null;
 
   for (const odId of allHumanOdIds) {
     const profileId = await getProfileIdByOdId(odId, playerGameIds);
@@ -444,9 +466,9 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
         await incrementAchievementProgress(profileId, 'trump_rookie', 1);
       }
 
-      // Первый подкид — throw 5 cards in one turn (tracked separately)
-      const thrown = throwMap.get(odId) ?? 0;
-      if (thrown >= 5) {
+      // Первый подкид — throw 5+ cards in one turn (tracked as max per turn)
+      const maxInOneTurn = maxCardsInOneTurnMap.get(odId) ?? 0;
+      if (maxInOneTurn >= 5) {
         await incrementAchievementProgress(profileId, 'first_throw', 1);
       }
 
@@ -460,15 +482,17 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
       // (tracked via player.hand.length at game end — handled in socketServer)
     }
 
-    // Первый миллионер — 1,000,000 shanyrak (not restricted to human games)
+    // Первый миллионер — 1,000,000 shanyrak: прогресс привязан к текущему балансу
     const db2 = await getDb();
     if (db2) {
       const [profile2] = await db2.select({ balanceShanyrak: playerProfiles.balanceShanyrak })
         .from(playerProfiles)
         .where(eq(playerProfiles.id, profileId))
         .limit(1);
-      if (profile2 && profile2.balanceShanyrak >= 1000000) {
-        await incrementAchievementProgress(profileId, 'first_millionaire', 0, 1000000);
+      if (profile2) {
+        // Отслеживаем прогресс по текущему балансу (max 1_000_000)
+        const currentBalance = profile2.balanceShanyrak ?? 0;
+        await incrementAchievementProgress(profileId, 'first_millionaire', 0, Math.min(currentBalance, 1000000));
       }
     }
   }

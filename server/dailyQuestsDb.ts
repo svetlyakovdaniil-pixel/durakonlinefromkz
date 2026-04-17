@@ -314,6 +314,19 @@ export async function claimDailyQuestReward(
     await incrementAchievementProgress(profileId, 'daily_regular', 0, Math.min(total, 120)).catch(() => {});
   }
 
+  // Track first_millionaire progress after quest reward
+  try {
+    const [balanceRow] = await db
+      .select({ balanceShanyrak: playerProfiles.balanceShanyrak })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.id, profileId))
+      .limit(1);
+    if (balanceRow && balanceRow.balanceShanyrak > 0) {
+      const { incrementAchievementProgress: incAch } = await import('./achievementsDb');
+      await incAch(profileId, 'first_millionaire', 0, Math.min(balanceRow.balanceShanyrak, 1000000)).catch(() => {});
+    }
+  } catch (e) { /* non-blocking */ }
+
   return { shanyrakAwarded: shanyrak };
 }
 
