@@ -1,34 +1,53 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 /**
- * GalaxyTableOverlay — animated star layer for the Galaxy table style.
- * Renders a set of twinkling/fading stars as absolutely-positioned dots
- * using CSS keyframe animations injected via a <style> tag.
- * Each star has a randomised position, size, colour, and animation timing.
+ * GalaxyTableOverlay — реалистичная Canvas-анимация звёзд для стола Галактика.
+ *
+ * Использует requestAnimationFrame + Canvas 2D для:
+ * - Реалистичного мерцания (sinusoidal opacity + size variation)
+ * - Shooting stars (падающие звёзды с хвостом)
+ * - Разных цветов звёзд (белые, голубые, жёлтые, розовые)
+ * - Эффекта diffraction spike (крестообразного блика) для ярких звёзд
+ * - Плавного parallax drift (медленное движение)
  */
 
-interface Star {
-  id: number;
-  x: number;   // % from left
-  y: number;   // % from top
-  r: number;   // radius in px
+interface StarData {
+  x: number;
+  y: number;
+  baseR: number;
   color: string;
-  dur: number; // animation duration in seconds
-  delay: number; // animation delay in seconds
-  type: 'twinkle' | 'fade' | 'pulse';
+  phase: number;
+  speed: number;
+  brightness: number;
+  spike: boolean;
+  driftX: number;
+  driftY: number;
+  cx: number;
+  cy: number;
+}
+
+interface ShootingStar {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  maxLife: number;
+  age: number;
+  length: number;
+  opacity: number;
 }
 
 const STAR_COLORS = [
   '#ffffff',
   '#e8f0ff',
-  '#c8d8ff',
-  '#a0c4ff',
-  '#b8aaff',
-  '#ffd6ff',
-  '#ffe0a0',
+  '#b8d4ff',
+  '#ffd6a0',
+  '#ffc8e8',
+  '#c8b4ff',
+  '#a0e8ff',
 ];
 
-function seededRandom(seed: number): () => number {
+function seededRng(seed: number) {
   let s = seed;
   return () => {
     s = (s * 1664525 + 1013904223) & 0xffffffff;
@@ -36,108 +55,230 @@ function seededRandom(seed: number): () => number {
   };
 }
 
-function generateStars(count: number): Star[] {
-  const rng = seededRandom(42);
-  const types: Star['type'][] = ['twinkle', 'fade', 'pulse'];
-  return Array.from({ length: count }, (_, i) => ({
-    id: i,
-    x: rng() * 100,
-    y: rng() * 100,
-    r: rng() * 2.2 + 0.6,
-    color: STAR_COLORS[Math.floor(rng() * STAR_COLORS.length)],
-    dur: rng() * 3 + 1.5,
-    delay: rng() * 5,
-    type: types[Math.floor(rng() * types.length)],
-  }));
+function buildStars(count: number, W: number, H: number): StarData[] {
+  const rng = seededRng(137);
+  return Array.from({ length: count }, () => {
+    const xFrac = rng();
+    const yFrac = rng();
+    const baseR = rng() * 2.0 + 0.4;
+    const bright = rng() * 0.7 + 0.3;
+    return {
+      x: xFrac,
+      y: yFrac,
+      baseR,
+      color: STAR_COLORS[Math.floor(rng() * STAR_COLORS.length)],
+      phase: rng() * Math.PI * 2,
+      speed: rng() * 0.8 + 0.3,
+      brightness: bright,
+      spike: baseR > 1.6 && rng() > 0.5,
+      driftX: (rng() - 0.5) * 2,
+      driftY: (rng() - 0.5) * 1,
+      cx: xFrac * W,
+      cy: yFrac * H,
+    };
+  });
 }
 
-// 60 animated stars + 80 static background stars
-const ANIMATED_STARS = generateStars(60);
-const STATIC_STARS = generateStars(80).map((s, i) => ({
-  ...s,
-  id: i + 1000,
-  x: seededRandom(i * 7 + 99)() * 100,
-  y: seededRandom(i * 13 + 77)() * 100,
-  r: seededRandom(i * 3 + 55)() * 1.2 + 0.3,
-}));
-
-const CSS = `
-@keyframes galaxy-twinkle {
-  0%   { opacity: 0.15; transform: scale(0.8); }
-  25%  { opacity: 1;    transform: scale(1.3); }
-  50%  { opacity: 0.3;  transform: scale(0.9); }
-  75%  { opacity: 0.9;  transform: scale(1.1); }
-  100% { opacity: 0.15; transform: scale(0.8); }
+function spawnShootingStar(W: number, H: number): ShootingStar {
+  const x = Math.random() * W * 0.8 + W * 0.1;
+  const y = Math.random() * H * 0.3;
+  const angle = (Math.random() * 30 + 20) * (Math.PI / 180);
+  const speed = 300 + Math.random() * 400;
+  return {
+    x, y,
+    vx: Math.cos(angle) * speed,
+    vy: Math.sin(angle) * speed,
+    maxLife: 0.6 + Math.random() * 0.8,
+    age: 0,
+    length: 80 + Math.random() * 120,
+    opacity: 0,
+  };
 }
-@keyframes galaxy-fade {
-  0%   { opacity: 0.05; }
-  40%  { opacity: 0.85; }
-  60%  { opacity: 0.85; }
-  100% { opacity: 0.05; }
-}
-@keyframes galaxy-pulse {
-  0%   { opacity: 0.2;  box-shadow: 0 0 0px currentColor; }
-  50%  { opacity: 1;    box-shadow: 0 0 6px 2px currentColor; }
-  100% { opacity: 0.2;  box-shadow: 0 0 0px currentColor; }
-}
-`;
-
-const ANIM_MAP: Record<Star['type'], string> = {
-  twinkle: 'galaxy-twinkle',
-  fade: 'galaxy-fade',
-  pulse: 'galaxy-pulse',
-};
 
 interface Props {
-  enabled?: boolean; // controlled by animationsEnabled setting
+  enabled?: boolean;
 }
 
 const GalaxyTableOverlay: React.FC<Props> = ({ enabled = true }) => {
-  const animatedStars = useMemo(() => ANIMATED_STARS, []);
-  const staticStars = useMemo(() => STATIC_STARS, []);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef<StarData[]>([]);
+  const shootingStarsRef = useRef<ShootingStar[]>([]);
+  const rafRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
+  const nextShootingRef = useRef<number>(4 + Math.random() * 6);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const resize = () => {
+      const parent = canvas.parentElement;
+      if (!parent) return;
+      canvas.width = parent.clientWidth;
+      canvas.height = parent.clientHeight;
+      starsRef.current = buildStars(200, canvas.width, canvas.height);
+    };
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    if (canvas.parentElement) ro.observe(canvas.parentElement);
+
+    const render = (timestamp: number) => {
+      const dt = lastTimeRef.current
+        ? Math.min((timestamp - lastTimeRef.current) / 1000, 0.05)
+        : 0.016;
+      lastTimeRef.current = timestamp;
+      const t = timestamp / 1000;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (!enabled) {
+        rafRef.current = requestAnimationFrame(render);
+        return;
+      }
+
+      const W = canvas.width;
+      const H = canvas.height;
+
+      // ── Stars ──
+      for (const star of starsRef.current) {
+        star.cx += star.driftX * dt;
+        star.cy += star.driftY * dt;
+        if (star.cx < -5) star.cx = W + 5;
+        if (star.cx > W + 5) star.cx = -5;
+        if (star.cy < -5) star.cy = H + 5;
+        if (star.cy > H + 5) star.cy = -5;
+
+        const twinkle = 0.5 + 0.5 * Math.sin(t * star.speed * Math.PI * 2 + star.phase);
+        const opacity = star.brightness * (0.3 + 0.7 * twinkle);
+        const r = star.baseR * (0.7 + 0.3 * twinkle);
+
+        ctx.save();
+
+        // Glow halo
+        if (star.baseR > 1.2) {
+          const grad = ctx.createRadialGradient(star.cx, star.cy, 0, star.cx, star.cy, r * 4);
+          grad.addColorStop(0, star.color);
+          grad.addColorStop(1, 'transparent');
+          ctx.globalAlpha = opacity * 0.25;
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(star.cx, star.cy, r * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Core
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = star.color;
+        ctx.beginPath();
+        ctx.arc(star.cx, star.cy, r, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Diffraction spikes
+        if (star.spike && twinkle > 0.6) {
+          const spikeLen = r * 5 * twinkle;
+          const spikeOpacity = opacity * 0.5 * (twinkle - 0.6) / 0.4;
+          ctx.globalAlpha = spikeOpacity;
+          ctx.lineWidth = 0.5;
+
+          const gradH = ctx.createLinearGradient(star.cx - spikeLen, star.cy, star.cx + spikeLen, star.cy);
+          gradH.addColorStop(0, 'transparent');
+          gradH.addColorStop(0.5, star.color);
+          gradH.addColorStop(1, 'transparent');
+          ctx.strokeStyle = gradH;
+          ctx.beginPath();
+          ctx.moveTo(star.cx - spikeLen, star.cy);
+          ctx.lineTo(star.cx + spikeLen, star.cy);
+          ctx.stroke();
+
+          const gradV = ctx.createLinearGradient(star.cx, star.cy - spikeLen, star.cx, star.cy + spikeLen);
+          gradV.addColorStop(0, 'transparent');
+          gradV.addColorStop(0.5, star.color);
+          gradV.addColorStop(1, 'transparent');
+          ctx.strokeStyle = gradV;
+          ctx.beginPath();
+          ctx.moveTo(star.cx, star.cy - spikeLen);
+          ctx.lineTo(star.cx, star.cy + spikeLen);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      // ── Shooting stars ──
+      nextShootingRef.current -= dt;
+      if (nextShootingRef.current <= 0) {
+        shootingStarsRef.current.push(spawnShootingStar(W, H));
+        nextShootingRef.current = 5 + Math.random() * 10;
+      }
+
+      shootingStarsRef.current = shootingStarsRef.current.filter(ss => ss.age < ss.maxLife);
+
+      for (const ss of shootingStarsRef.current) {
+        ss.age += dt;
+        ss.x += ss.vx * dt;
+        ss.y += ss.vy * dt;
+
+        const progress = ss.age / ss.maxLife;
+        ss.opacity = progress < 0.2
+          ? progress / 0.2
+          : progress > 0.7
+            ? 1 - (progress - 0.7) / 0.3
+            : 1;
+
+        const mag = Math.hypot(ss.vx, ss.vy);
+        const tailX = ss.x - (ss.vx / mag) * ss.length;
+        const tailY = ss.y - (ss.vy / mag) * ss.length;
+
+        ctx.save();
+        ctx.globalAlpha = ss.opacity * 0.9;
+        const grad = ctx.createLinearGradient(tailX, tailY, ss.x, ss.y);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(0.7, 'rgba(200,220,255,0.6)');
+        grad.addColorStop(1, 'rgba(255,255,255,1)');
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(tailX, tailY);
+        ctx.lineTo(ss.x, ss.y);
+        ctx.stroke();
+
+        ctx.globalAlpha = ss.opacity;
+        const headGrad = ctx.createRadialGradient(ss.x, ss.y, 0, ss.x, ss.y, 4);
+        headGrad.addColorStop(0, 'white');
+        headGrad.addColorStop(1, 'transparent');
+        ctx.fillStyle = headGrad;
+        ctx.beginPath();
+        ctx.arc(ss.x, ss.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      rafRef.current = requestAnimationFrame(render);
+    };
+
+    rafRef.current = requestAnimationFrame(render);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      ro.disconnect();
+    };
+  }, [enabled]);
 
   return (
-    <>
-      <style>{CSS}</style>
-      {/* Static background stars — always visible, no animation */}
-      {staticStars.map(star => (
-        <div
-          key={star.id}
-          style={{
-            position: 'absolute',
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.r * 2}px`,
-            height: `${star.r * 2}px`,
-            borderRadius: '50%',
-            backgroundColor: star.color,
-            opacity: 0.35,
-            pointerEvents: 'none',
-          }}
-        />
-      ))}
-      {/* Animated twinkling stars */}
-      {animatedStars.map(star => (
-        <div
-          key={star.id}
-          style={{
-            position: 'absolute',
-            left: `${star.x}%`,
-            top: `${star.y}%`,
-            width: `${star.r * 2}px`,
-            height: `${star.r * 2}px`,
-            borderRadius: '50%',
-            backgroundColor: star.color,
-            color: star.color,
-            opacity: 0.2,
-            pointerEvents: 'none',
-            animation: enabled
-              ? `${ANIM_MAP[star.type]} ${star.dur}s ease-in-out ${star.delay}s infinite`
-              : 'none',
-          }}
-        />
-      ))}
-    </>
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute',
+        inset: 0,
+        width: '100%',
+        height: '100%',
+        pointerEvents: 'none',
+      }}
+    />
   );
 };
 
