@@ -1476,7 +1476,7 @@ export default function GameTable({
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col h-[100dvh]">
+      <div className="relative z-10 flex flex-col game-table-root">
         {/* Top HUD — compact panel */}
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1526,7 +1526,7 @@ export default function GameTable({
           const manyOpponents = opponents.length >= 4;
           const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex ${manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 w-full`}>
+            <div className={`flex ${manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 w-full shrink-0`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
@@ -1647,7 +1647,7 @@ export default function GameTable({
         })()}
 
         {/* Main game area */}
-        <div className="flex-1 flex relative overflow-hidden">
+        <div className="flex-1 flex relative overflow-hidden min-h-0">
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
             <div data-tutorial="timer-desktop" className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
@@ -2049,7 +2049,7 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div className="px-1 sm:px-2 pb-2 sm:pb-3 pt-0.5 sm:pt-1">
+        <div className="px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
@@ -2079,7 +2079,7 @@ export default function GameTable({
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
-          <div className="flex items-center gap-2 mt-1.5 px-1 h-[56px]">
+          <div className="flex items-center gap-2 mt-1.5 px-1 h-[56px] avatar-action-row">
             {/* Left: player avatar (no role highlight) */}
             <div className="flex flex-col items-center justify-center shrink-0">
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>

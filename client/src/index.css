@@ -609,3 +609,36 @@
 .animate-pulse-slow {
   animation: pulse-slow 2.5s ease-in-out infinite;
 }
+
+/* ===== iOS Safe Area & Mobile Browser Adaptation ===== */
+/* Ensure game table fills the full visual viewport including safe areas */
+.game-table-root {
+  /* Use dvh for dynamic viewport (accounts for browser chrome appearing/disappearing) */
+  height: 100dvh;
+  /* Add padding for iOS home indicator and browser bottom bar */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-sizing: border-box;
+}
+
+/* Player hand area bottom padding — always above browser nav bar */
+.player-hand-area {
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+}
+
+/* Avatar row — ensure it's always visible above safe area */
+.avatar-action-row {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  min-height: calc(56px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Battlefield scroll — account for safe area in max-height */
+@media (max-width: 639px) {
+  .battlefield-scroll.mobile-needs-scroll {
+    max-height: calc(100dvh - 280px - env(safe-area-inset-bottom, 0px));
+  }
+}
+@media (min-width: 640px) {
+  .battlefield-scroll.desktop-needs-scroll {
+    max-height: calc(100dvh - 320px - env(safe-area-inset-bottom, 0px));
+  }
+}
