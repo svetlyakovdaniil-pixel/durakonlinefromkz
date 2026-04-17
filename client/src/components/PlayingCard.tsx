@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Card, DeckStyle } from '../../../shared/gameTypes';
 import {
   CARD_IMAGES, CARD_IMAGES_CUSTOM,
@@ -18,6 +19,95 @@ interface PlayingCardProps {
   deckStyle?: DeckStyle;
   onClick?: () => void;
   className?: string;
+}
+
+// Placeholder shown while the card image is loading (or if image fails)
+// Shows rank + suit symbol so the card is always readable
+function CardPlaceholder({ card, small }: { card: Card; small?: boolean }) {
+  const symbol = card.suit ? SUIT_SYMBOLS[card.suit] || '' : '';
+  const color = card.suit ? SUIT_COLORS[card.suit] || '#1a1a2e' : '#1a1a2e';
+  return (
+    <div
+      className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-between pointer-events-none"
+      style={{ padding: small ? '2px' : '4px' }}
+    >
+      <div className="self-start leading-none" style={{ color }}>
+        <div className={`font-bold ${small ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>{card.rank}</div>
+        <div className={`-mt-0.5 ${small ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>{symbol}</div>
+      </div>
+      <div className={`${small ? 'text-base' : 'text-xl sm:text-2xl'}`} style={{ color }}>
+        {symbol}
+      </div>
+      <div className="self-end leading-none rotate-180" style={{ color }}>
+        <div className={`font-bold ${small ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>{card.rank}</div>
+        <div className={`-mt-0.5 ${small ? 'text-[8px]' : 'text-[10px] sm:text-xs'}`}>{symbol}</div>
+      </div>
+    </div>
+  );
+}
+
+// Card image with placeholder: shows rank+suit while loading, then fades in the image
+function CardImage({ src, alt, card, small }: { src: string; alt: string; card: Card; small?: boolean }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return <CardPlaceholder card={card} small={small} />;
+  }
+
+  return (
+    <div className="w-full h-full relative pointer-events-none">
+      {/* Placeholder always rendered underneath */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ opacity: loaded ? 0 : 1, transition: 'opacity 0.15s ease' }}
+      >
+        <CardPlaceholder card={card} small={small} />
+      </div>
+      {/* Actual image fades in on load */}
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover relative z-10 pointer-events-none"
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.15s ease' }}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+}
+
+// Card back image with placeholder (dark back)
+function CardBackImage({ src, alt }: { src: string; alt: string }) {
+  const [loaded, setLoaded] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className="w-full h-full bg-gradient-to-br from-amber-900 to-amber-950 rounded-lg flex items-center justify-center pointer-events-none">
+        <div className="w-3/4 h-3/4 border-2 border-amber-700/50 rounded-md opacity-50" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full h-full relative pointer-events-none">
+      <div
+        className="absolute inset-0 bg-gradient-to-br from-amber-900 to-amber-950 rounded-lg pointer-events-none"
+        style={{ opacity: loaded ? 0 : 1, transition: 'opacity 0.15s ease' }}
+      />
+      <img
+        src={src}
+        alt={alt}
+        className="w-full h-full object-cover relative z-10 pointer-events-none"
+        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.15s ease' }}
+        loading="lazy"
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+      />
+    </div>
+  );
 }
 
 function NumberCard({ card }: { card: Card }) {
@@ -69,7 +159,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
         className={`${sizeClasses} rounded-lg overflow-hidden shadow-md border border-amber-900/30 ${className || ''}`}
         onClick={onClick}
       >
-        <img src={backUrl} alt="card back" className="w-full h-full object-cover" loading="lazy" />
+        <CardBackImage src={backUrl} alt="card back" />
       </div>
     );
   }
@@ -92,9 +182,12 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
       onClick={playable || onClick ? onClick : undefined}
     >
       {hasImage ? (
-        <div className="w-full h-full bg-white relative pointer-events-none">
-          <img src={imageMap[imageKey!]} alt={`${card.rank} ${card.suit || ''}`} className="w-full h-full object-cover relative z-10 pointer-events-none" loading="lazy" />
-        </div>
+        <CardImage
+          src={imageMap[imageKey!]}
+          alt={`${card.rank} ${card.suit || ''}`}
+          card={card}
+          small={small}
+        />
       ) : (
         <NumberCard card={card} />
       )}
