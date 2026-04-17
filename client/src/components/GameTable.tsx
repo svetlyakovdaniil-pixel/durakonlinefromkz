@@ -164,7 +164,7 @@ function PlayerHand({
             const isPlayable = (playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id)) && !suppressPlayableStyle;
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
             const isPending = pendingCardId === card.id;
-            const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id);
+            const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id) && !suppressPlayableStyle;
             const isTutorialHighlighted = tutorialHighlightIds?.has(card.id) ?? false;
             const isTutorialGreen = tutorialGreenIds?.has(card.id) ?? false;
             const isTutorialRed = tutorialRedIds?.has(card.id) ?? false;
@@ -196,7 +196,7 @@ function PlayerHand({
                 ) : (
                   <div
                     style={{
-                      transform: (isTutorialHighlighted || isTutorialGreen) ? 'translateY(-16px)' : isHighlighted ? 'translateY(-12px)' : isSelected ? 'translateY(-8px)' : undefined,
+                      transform: (isTutorialHighlighted || isTutorialGreen) ? 'translateY(-16px)' : isSelected ? 'translateY(-8px)' : undefined,
                       transition: 'transform 0.2s ease',
                     }}
                   >
