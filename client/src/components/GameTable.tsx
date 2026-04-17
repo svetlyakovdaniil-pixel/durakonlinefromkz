@@ -835,6 +835,26 @@ export default function GameTable({
     setPendingCardId(null);
   }, [availableActions]);
 
+  // Auto-skip turn when player has only 777 in hand (lucky sevens rule)
+  // This ensures the achievement is tracked server-side via the skipTurn event
+  const autoSkipSentRef = useRef<string | null>(null);
+  useEffect(() => {
+    const hasSkipAction = availableActions.some(a => a.type === 'skipTurn');
+    if (!hasSkipAction) {
+      autoSkipSentRef.current = null;
+      return;
+    }
+    // Use trickCount as a unique key to prevent double-sending per trick
+    const key = `${gs.trickCount}`;
+    if (autoSkipSentRef.current === key) return;
+    autoSkipSentRef.current = key;
+    // Small delay so the UI shows the 777 card briefly before skipping
+    const t = setTimeout(() => {
+      onSkipTurn();
+    }, 600);
+    return () => clearTimeout(t);
+  }, [availableActions, gs.trickCount, onSkipTurn]);
+
   const playableIds = useMemo(() => {
     const ids = new Set<string>();
     for (const a of availableActions) {
@@ -1552,7 +1572,7 @@ export default function GameTable({
                            avatarId={p.avatarId}
                            size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
                            alt={p.name}
-                           className={`${manyManyOpponents ? 'w-7 h-7' : manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} sm:w-14 sm:h-14 rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
+                           className={p.equippedFrame ? `rounded-full ${p.isBot ? 'opacity-70' : ''}` : `${manyManyOpponents ? 'w-7 h-7' : manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
                          />
                       </FrameWrapper>
                     </button>
@@ -2090,7 +2110,7 @@ export default function GameTable({
                   avatarId={gs.players[myIdx]?.avatarId}
                   size={52}
                   alt={gs.players[myIdx]?.name || ''}
-                  className="w-[52px] h-[52px] rounded-full border-2 border-amber-600/50"
+                  className={gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'}
                 />
               </FrameWrapper>
             </div>

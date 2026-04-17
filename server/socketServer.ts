@@ -931,17 +931,8 @@ export function initSocketServer(httpServer: HttpServer) {
               }).catch(() => {});
             }).catch(() => {});
           }
-          // Track 777 skip turn (lucky sevens — only 777 in hand at start of attack)
-          if (!isDefender && prePlayBattlefieldLength === 0 && prePlayCard.rank === '777') {
-            getDb().then(db => {
-              if (!db) return;
-              db.select({ id: playerProfiles.id }).from(playerProfiles).where(eq(playerProfiles.gameId, gameId)).limit(1).then((rows: { id: number }[]) => {
-                const profileId = rows[0]?.id;
-                if (!profileId) return;
-                processLucky777Achievement({ profileId, botCount, totalPlayersInRoom }).catch(() => {});
-              }).catch(() => {});
-            }).catch(() => {});
-          }
+          // NOTE: Lucky 777 achievement is tracked in skipTurn handler only.
+          // Playing 777 as an attack card does NOT trigger the achievement.
         }
       }
 
