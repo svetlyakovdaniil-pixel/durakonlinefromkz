@@ -1,4 +1,4 @@
-name: Deploy to Hetzner
+name: Deploy to Aeza
 
 on:
   push:
@@ -11,13 +11,14 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 62.238.10.101
+          host: 185.221.199.177
           username: root
-          key: ${{ secrets.HETZNER_SSH_KEY }}
+          key: ${{ secrets.AEZA_SSH_PRIVATE_KEY }}
           script: |
-            cd /root/durakonlinefromkz
+            set -e
+            cd /root/app
             git pull origin main
             pnpm install --frozen-lockfile
-            pnpm build
+            pnpm run build
             pm2 restart durak
-            echo "Deploy completed successfully!"
+            echo "Deploy completed at $(date)"
