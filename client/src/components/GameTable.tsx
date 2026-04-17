@@ -61,6 +61,7 @@ function PlayerHand({
   onCardClick,
   onCardDrop,
   deckStyle,
+  suppressPlayableStyle,
 }: {
   sortedHand: Card[];
   playableIds: Set<string>;
@@ -76,6 +77,8 @@ function PlayerHand({
   onCardClick: (card: Card) => void;
   onCardDrop?: (card: Card) => boolean;
   deckStyle?: 'classic' | 'custom';
+  /** When true, cards won't show playable visual effects (lift/glow) even if they are playable */
+  suppressPlayableStyle?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -158,7 +161,7 @@ function PlayerHand({
       >
         <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : ''}`} style={needsScroll ? { minWidth: 'min-content', margin: '0 auto' } : undefined}>
           {sortedHand.map((card, i) => {
-            const isPlayable = playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id);
+            const isPlayable = (playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id)) && !suppressPlayableStyle;
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
             const isPending = pendingCardId === card.id;
             const isHighlighted = highlightedIds.has(card.id) && !multiSelectIds.has(card.id);
@@ -167,7 +170,7 @@ function PlayerHand({
             const isTutorialRed = tutorialRedIds?.has(card.id) ?? false;
             const hasColoredHighlight = isTutorialGreen || isTutorialRed;
             const isPassThroughCard = passThroughIds.has(card.id);
-            const canDrag = playableIds.has(card.id) || transferIds.has(card.id);
+            const canDrag = (playableIds.has(card.id) || transferIds.has(card.id)) && !suppressPlayableStyle;
             return (
               <div
                 key={card.id}
@@ -2092,6 +2095,7 @@ export default function GameTable({
               onCardClick={handleCardClick}
               onCardDrop={handleCardDrop}
               deckStyle={gs.deckStyle}
+              suppressPlayableStyle={isNonNeighborWithSixes}
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
