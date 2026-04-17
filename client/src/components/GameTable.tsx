@@ -172,10 +172,10 @@ function PlayerHand({
               <div
                 key={card.id}
                 data-card-id={card.id}
-                className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight) ? 'z-[60]' : ''} ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
+                className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight || isHighlighted) ? 'z-[60]' : ''} ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
                 style={{
                   marginLeft: getCardMargin(i),
-                  zIndex: (isTutorialHighlighted || hasColoredHighlight) ? 60 : isSelected ? 50 : i,
+                  zIndex: (isTutorialHighlighted || hasColoredHighlight || isHighlighted) ? 60 : isSelected ? 50 : i,
                   transition: isPending ? 'opacity 0.15s' : undefined,
                 }}
               >
@@ -184,6 +184,7 @@ function PlayerHand({
                     card={card}
                     playable={isPlayable}
                     selected={isSelected}
+                    highlighted={isHighlighted}
                     isPassThrough={isPassThroughCard}
                     deckStyle={deckStyle}
                     onClick={() => onCardClick(card)}

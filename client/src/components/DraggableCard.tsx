@@ -6,6 +6,7 @@ interface DraggableCardProps {
   card: Card;
   playable: boolean;
   selected: boolean;
+  highlighted?: boolean;
   isPassThrough?: boolean;
   deckStyle?: 'classic' | 'custom';
   onClick: () => void;
@@ -22,7 +23,7 @@ interface DraggableCardProps {
  *   Horizontal swipe on non-selected cards = scroll (no touch-none).
  */
 export default function DraggableCard({
-  card, playable, selected, isPassThrough, deckStyle, onClick, onDrop, dropZoneId = 'battlefield-drop-zone',
+  card, playable, selected, highlighted, isPassThrough, deckStyle, onClick, onDrop, dropZoneId = 'battlefield-drop-zone',
 }: DraggableCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -224,7 +225,8 @@ export default function DraggableCard({
         ref={cardRef}
         className={`relative flex-shrink-0 transition-transform duration-150 ${dragging ? 'opacity-30' : ''}`}
         style={{
-          transform: selected && !dragging ? 'translateY(-8px)' : undefined,
+          transform: dragging ? undefined : highlighted ? 'translateY(-12px)' : selected ? 'translateY(-8px)' : undefined,
+          transition: 'transform 0.2s ease',
           // NO touch-none — allow horizontal scroll on mobile
         }}
         onPointerDown={handlePointerDown}
@@ -240,6 +242,7 @@ export default function DraggableCard({
             card={card}
             playable={playable}
             selected={selected}
+            highlighted={highlighted}
             deckStyle={deckStyle}
             onClick={!onDrop ? onClick : undefined}
           />
