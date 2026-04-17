@@ -2051,7 +2051,7 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div className="px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0">
+        <div className="px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0 bg-black/60 backdrop-blur-sm border-t border-amber-700/20">
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
