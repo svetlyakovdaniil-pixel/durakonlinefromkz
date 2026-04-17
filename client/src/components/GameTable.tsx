@@ -993,20 +993,11 @@ export default function GameTable({
 
   // Compute highlighted card IDs:
   // 1. Cards of the same rank as selected multi-attack/transfer cards (existing logic)
-  // 2. Six-highlight: when leadCardRank === '6', highlight all 6s in hand so player
-  //    knows they can/should throw them (even if they are a non-neighbor)
+  // 2. Six-highlight removed: sixes are no longer highlighted/lifted in hand
   const highlightedIds = useMemo(() => {
     const ids = new Set<string>();
 
-    // Six-highlight: leadCardRank === '6' → highlight all 6s in hand for ALL players
-    // (neighbors, non-neighbors, attackers, defenders — everyone with a 6 should see it highlighted)
-    if (gs.leadCardRank === '6' && gs.battleField.length > 0) {
-      for (const c of gs.myHand) {
-        if (c.rank === '6') ids.add(c.id);
-      }
-    }
-    // Also merge sixCardIds (non-neighbor sixes) — they are the same condition but kept separate for clarity
-    Array.from(sixCardIds).forEach(id => ids.add(id));
+    // Six-highlight intentionally disabled — players see the banner instead
 
     // Multi-select highlight (existing): same rank as already-selected cards
     if (multiSelectIds.size > 0) {
