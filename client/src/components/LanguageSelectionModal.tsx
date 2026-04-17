@@ -60,7 +60,7 @@ export default function LanguageSelectionModal() {
             className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-amber-600/40 bg-amber-900/20 hover:bg-amber-900/40 hover:border-amber-500/60 transition-all cursor-pointer group w-32"
           >
             <span className="text-3xl">🇬🇧</span>
-            <span className="text-amber-200 text-sm font-medium">English</span>
+            <span className="text-amber-200 text-sm font-medium">ENG</span>
           </button>
         </div>
       </div>

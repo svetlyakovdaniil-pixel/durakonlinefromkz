@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { MusicProvider } from "./contexts/MusicContext";
@@ -17,6 +17,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
+import MaintenancePage from "./pages/MaintenancePage";
 
 function Router() {
   return (
@@ -53,6 +54,27 @@ function LanguageGate({ children }: { children: React.ReactNode }) {
   );
 }
 
+/**
+ * MaintenanceGate — intercepts all routes except /admin when maintenance is active.
+ * Admins bypass maintenance mode and can still access /admin.
+ */
+function MaintenanceGate({ children }: { children: React.ReactNode }) {
+  const [location] = useLocation();
+  const meQuery = trpc.auth.me.useQuery();
+  const { data: maintenanceStatus } = trpc.maintenance.status.useQuery(undefined, {
+    refetchInterval: 30_000,
+  });
+
+  const isAdmin = meQuery.data?.role === 'admin';
+  const isAdminRoute = location.startsWith('/admin');
+
+  if (maintenanceStatus?.enabled && !isAdmin && !isAdminRoute) {
+    return <MaintenancePage />;
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <ErrorBoundary>
@@ -65,7 +87,9 @@ function App() {
             <SoundProvider>
               <TooltipProvider>
               <Toaster position="top-center" />
-              <Router />
+              <MaintenanceGate>
+                <Router />
+              </MaintenanceGate>
               </TooltipProvider>
             </SoundProvider>
           </MusicProvider>

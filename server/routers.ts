@@ -97,6 +97,8 @@ import {
   activateReferralCode,
   getReferralStats,
   adminForceRenamePlayer,
+  getMaintenanceStatus,
+  setMaintenanceStatus,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces, retroactiveRecalcAllAchievements } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -1063,10 +1065,12 @@ export const appRouter = router({
 
     updateShopPrice: adminProcedure
       .input(z.object({
-        itemType: z.enum(['deck', 'table', 'frame', 'avatar']),
+        itemType: z.enum(['deck', 'table', 'frame', 'avatar', 'playlist']),
         itemId: z.string().min(1),
         priceTenge: z.number().min(0).nullable(),
         isAvailable: z.boolean(),
+        discountPercent: z.number().min(0).max(100).nullable().optional(),
+        discountExpiresAt: z.date().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const result = await upsertShopPriceOverride({
@@ -1074,6 +1078,8 @@ export const appRouter = router({
           itemId: input.itemId,
           priceTenge: input.priceTenge,
           isAvailable: input.isAvailable,
+          discountPercent: input.discountPercent ?? null,
+          discountExpiresAt: input.discountExpiresAt ?? null,
           updatedBy: ctx.user.id,
         });
         if (result.success) {
@@ -1081,7 +1087,7 @@ export const appRouter = router({
             adminId: ctx.user.id,
             adminName: ctx.user.name ?? null,
             action: 'update_shop_item',
-            details: { itemType: input.itemType, itemId: input.itemId, priceTenge: input.priceTenge, isAvailable: input.isAvailable },
+            details: { itemType: input.itemType, itemId: input.itemId, priceTenge: input.priceTenge, isAvailable: input.isAvailable, discountPercent: input.discountPercent },
           });
         }
         return result;
@@ -1850,6 +1856,38 @@ export const appRouter = router({
         if (!profile) throw new TRPCError({ code: 'NOT_FOUND' });
         const result = await activateReferralCode(profile.id, input.code);
         return result;
+      }),
+  }),
+
+  // ============================================================
+  // MAINTENANCE MODE
+  // ============================================================
+  maintenance: router({
+    /** Get current maintenance status (public) */
+    status: publicProcedure.query(async () => {
+      return getMaintenanceStatus();
+    }),
+
+    /** Set maintenance mode (admin only) */
+    set: adminProcedure
+      .input(z.object({
+        enabled: z.boolean(),
+        endTime: z.string().nullable(),
+        message: z.string().nullable(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await setMaintenanceStatus({
+          enabled: input.enabled,
+          endTime: input.endTime,
+          message: input.message,
+        });
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'set_maintenance_mode',
+          details: { enabled: input.enabled, endTime: input.endTime },
+        });
+        return { success: true };
       }),
   }),
 });
