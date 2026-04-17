@@ -1594,11 +1594,15 @@ export default function GameTable({
                         })()}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-0.5 sm:gap-1.5">
+                      <div className="flex items-center gap-0.5 sm:gap-1.5 relative">
+                        {/* Six-round highlight: show glowing 6 badge when opponent has a 6 */}
+                        {gs.leadCardRank === '6' && p.hasSix && (
+                          <span className={`absolute -top-1 -right-1 z-10 ${manyOpponents ? 'text-[8px] w-3 h-3' : 'text-[9px] w-3.5 h-3.5'} sm:text-[10px] sm:w-4 sm:h-4 bg-green-500 text-white font-black rounded-full flex items-center justify-center animate-pulse shadow-lg shadow-green-500/50`}>6</span>
+                        )}
                         <img
                           src={gs.deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL}
                           alt="cards"
-                          className={`${manyOpponents ? 'w-3 h-[18px]' : 'w-4 h-6'} sm:w-5 sm:h-7 rounded-sm object-cover`}
+                          className={`${manyOpponents ? 'w-3 h-[18px]' : 'w-4 h-6'} sm:w-5 sm:h-7 rounded-sm object-cover ${gs.leadCardRank === '6' && p.hasSix ? 'ring-1 ring-green-400 animate-pulse' : ''}`}
                         />
                         <span className={`${manyOpponents ? 'text-[10px]' : 'text-xs'} sm:text-sm text-amber-200 font-bold`}>{p.cardCount}</span>
                       </div>
