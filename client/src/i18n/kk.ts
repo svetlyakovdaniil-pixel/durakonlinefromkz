@@ -296,7 +296,7 @@ export const kk = {
     bannerYouDefend: 'СИЗ ҚОРғАЛАСЫЗ',
     bannerAddCards: 'ТАСТАҢЫЗ',
     bannerTakeCards: 'КАРТАЛАРДЫ АЛЫҢЫЗ',
-    bannerThrowSixes: 'АЛТЫЛАРДЫ ТАСТАҢЫЗ',
+    bannerThrowSixes: 'АЛТЫЛАРДЫ ТАСТАҢЫЗ ДА БОЛАДЫ',
     roleCanAdd: 'Тастау',
     roleWaiting: 'Күту...',
     multiSelectAttackN: 'Үстелге қанша карта қоюды таңдаңыз ({n} таңдалды)',
