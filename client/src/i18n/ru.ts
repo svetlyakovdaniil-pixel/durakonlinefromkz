@@ -296,6 +296,7 @@ export const ru = {
     bannerYouDefend: 'ВЫ БЬЁТЕСЬ',
     bannerAddCards: 'ДОКИНЬТЕ',
     bannerTakeCards: 'БЕРЁТЕ КАРТЫ',
+    bannerThrowSixes: 'ПОДКИНЬТЕ 6-КИ',
     roleCanAdd: 'Подкинуть',
     roleWaiting: 'Ожидание...',
     multiSelectAttackN: 'Выберите сколько карт положить на стол ({n} выбрано)',
