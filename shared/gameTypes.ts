@@ -326,6 +326,8 @@ export interface ClientPlayer {
   equippedFrame?: string | null;
   /** Player's current season rating */
   seasonRating?: number;
+  /** Whether this player has at least one 6 in hand (used for six-round highlight) */
+  hasSix?: boolean;
 }
 
 // --- Available actions ---

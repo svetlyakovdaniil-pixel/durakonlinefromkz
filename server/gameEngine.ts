@@ -1561,6 +1561,7 @@ export function toClientState(
     avatarId: playerAvatarIdsMap?.get(p.id) ?? p.avatarId ?? (p.isBot ? 'bot' : undefined),
     equippedFrame: playerEquippedFramesMap?.get(p.id) ?? null,
     seasonRating: p.isBot ? 0 : (playerSeasonRatingsMap?.get(p.id) ?? 0),
+    hasSix: p.hand.some(c => c.rank === '6'),
   }));
 
   const playerCanAdd = myIndex >= 0 ? canPlayerAddCards(state, myIndex) : false;
