@@ -192,8 +192,8 @@ function PlayerHand({
                 ) : (
                   <div
                     style={{
-                      transform: (isTutorialHighlighted || isTutorialGreen) ? 'translateY(-16px)' : isSelected ? 'translateY(-8px)' : undefined,
-                      transition: 'transform 0.15s',
+                      transform: (isTutorialHighlighted || isTutorialGreen) ? 'translateY(-16px)' : isHighlighted ? 'translateY(-12px)' : isSelected ? 'translateY(-8px)' : undefined,
+                      transition: 'transform 0.2s ease',
                     }}
                   >
                     {/* Colored glow wrapper for green/red tutorial highlights */}
@@ -609,6 +609,20 @@ export default function GameTable({
     !isNeighborOfDefender &&
     !gs.myHand.some(c => c.rank === '6');
 
+  // True when: lead card is 6, I'm NOT a neighbor, but I DO have sixes in hand.
+  // These players can throw sixes but should NOT see "YOUR TURN" overlay.
+  // Their sixes should be highlighted in hand.
+  const isNonNeighborWithSixes = gs.leadCardRank === '6' &&
+    gs.battleField.length > 0 &&
+    !isNeighborOfDefender &&
+    gs.myHand.some(c => c.rank === '6');
+
+  // IDs of sixes in hand — highlighted for non-neighbor six players
+  const sixCardIds = useMemo(() => {
+    if (!isNonNeighborWithSixes) return new Set<string>();
+    return new Set(gs.myHand.filter(c => c.rank === '6').map(c => c.id));
+  }, [isNonNeighborWithSixes, gs.myHand]);
+
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -845,7 +859,11 @@ export default function GameTable({
   }, [availableActions]);
 
   const canTake = availableActions.some(a => a.type === 'takeCards');
-  const canEndAttack = availableActions.some(a => a.type === 'endAttack') && !isSixOnlySpectator;
+  // Non-neighbors in a six-round (leadCard=6) never see Bito — they can only throw sixes, not end the attack
+  const isNonNeighborInSixRound = gs.leadCardRank === '6' && gs.battleField.length > 0 && !isNeighborOfDefender;
+  const canEndAttack = availableActions.some(a => a.type === 'endAttack') &&
+    !isSixOnlySpectator &&
+    !isNonNeighborInSixRound;
   const canSkip = availableActions.some(a => a.type === 'skipTurn');
   const canTransfer = transferIds.size > 0;
   const canPassThrough = passThroughIds.size > 0;
@@ -1592,8 +1610,8 @@ export default function GameTable({
           );
         })()}
 
-        {/* YOUR TURN overlay */}
-        {showYourTurn && !isSixOnlySpectator && (
+        {/* YOUR TURN overlay — hidden for non-neighbors with sixes (they see highlighted cards instead) */}
+        {showYourTurn && !isSixOnlySpectator && !isNonNeighborWithSixes && (
           <div className="absolute left-0 right-0 top-[120px] flex justify-center pointer-events-none z-30">
             <div className={`text-2xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               {t('game.yourTurnCaps')}
@@ -1601,8 +1619,8 @@ export default function GameTable({
           </div>
         )}
 
-        {/* URGENT TURN ALERT at 15 seconds */}
-        {showUrgentTurn && !isSixOnlySpectator && (
+        {/* URGENT TURN ALERT at 15 seconds — hidden for non-neighbors with sixes */}
+        {showUrgentTurn && !isSixOnlySpectator && !isNonNeighborWithSixes && (
           <div className="absolute left-0 right-0 top-[120px] flex justify-center pointer-events-none z-30">
             <div className={`text-2xl sm:text-4xl font-black text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
               <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
@@ -2076,8 +2094,17 @@ export default function GameTable({
 
             {/* Right: action buttons area OR blinking role notice */}
             <div className="flex-1 flex flex-col justify-center h-full overflow-hidden">
+              {/* Non-neighbor with sixes: show hint to throw sixes */}
+              {isNonNeighborWithSixes && !hasAnyAction && (
+                <div className="flex items-center justify-center h-full">
+                  <span className="text-yellow-400 font-black text-sm animate-pulse tracking-wide text-center leading-tight">
+                    {t('game.bannerThrowSixes')}
+                  </span>
+                </div>
+              )}
+
               {/* Blinking role notice — shown ONLY when there are no action buttons yet */}
-              {!hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && (
+              {!hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && !isNonNeighborWithSixes && (
                 <div className="flex items-center justify-center h-full">
                   {isAttacker && !gs.defenderTaking && (
                     <span className="text-red-400 font-black text-xl animate-pulse tracking-wide">

@@ -296,6 +296,7 @@ export const en = {
     bannerYouDefend: 'YOU DEFEND',
     bannerAddCards: 'ADD CARDS',
     bannerTakeCards: 'TAKE CARDS',
+    bannerThrowSixes: 'THROW YOUR SIXES',
     roleCanAdd: 'Add',
     roleWaiting: 'Waiting...',
     multiSelectAttackN: 'Select how many cards to play ({n} selected)',
