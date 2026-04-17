@@ -906,12 +906,12 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
-  // Dynamic button sizing: 1 = full area (h-full w-full text-base), 2-3 = medium, 4+ = small
+  // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid max 3 per row
   const dynBtnClass = visibleActionCount <= 1
     ? 'h-full w-full text-base px-4 font-bold'
-    : visibleActionCount <= 3
-    ? 'h-9 text-xs px-2 font-semibold'
-    : 'h-8 text-[10px] px-1.5 font-semibold';
+    : visibleActionCount === 2
+    ? 'h-9 text-xs px-2 font-semibold flex-1'
+    : 'h-9 text-xs px-1.5 font-semibold game-btn-grid-item';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -2102,7 +2102,7 @@ export default function GameTable({
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
-          <div className="flex items-center gap-1.5 mt-1.5 px-1 min-h-[56px] avatar-action-row">
+          <div className="flex items-start gap-1.5 mt-1.5 px-1 avatar-action-row">
             {/* Left: player avatar (no role highlight) */}
             <div className="flex flex-col items-center justify-center shrink-0">
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
@@ -2116,7 +2116,7 @@ export default function GameTable({
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
-            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-visible">
+            <div className="flex-1 flex flex-col justify-center min-h-[52px] overflow-visible">
               {/* Non-neighbor with sixes: show hint to throw sixes */}
               {isNonNeighborWithSixes && !hasAnyAction && (
                 <div className="flex items-center justify-center h-full">
@@ -2152,7 +2152,7 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap */}
+              {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap max 3 per row */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
                 <div className={visibleActionCount <= 1
                   ? 'flex items-stretch h-[52px] w-full'
