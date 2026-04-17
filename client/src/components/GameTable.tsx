@@ -890,8 +890,8 @@ export default function GameTable({
   const dynBtnClass = visibleActionCount <= 1
     ? 'h-full w-full text-base px-4 font-bold'
     : visibleActionCount <= 3
-    ? 'h-10 text-sm px-3 font-semibold'
-    : 'h-9 text-[11px] px-2 font-semibold';
+    ? 'h-9 text-xs px-2 font-semibold'
+    : 'h-8 text-[10px] px-1.5 font-semibold';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
 
@@ -2082,7 +2082,7 @@ export default function GameTable({
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
-          <div className="flex items-center gap-2 mt-1.5 px-1 h-[56px] avatar-action-row">
+          <div className="flex items-center gap-1.5 mt-1.5 px-1 min-h-[56px] avatar-action-row">
             {/* Left: player avatar (no role highlight) */}
             <div className="flex flex-col items-center justify-center shrink-0">
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
@@ -2096,7 +2096,7 @@ export default function GameTable({
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
-            <div className="flex-1 flex flex-col justify-center h-full overflow-hidden">
+            <div className="flex-1 flex flex-col justify-center min-h-0 overflow-visible">
               {/* Non-neighbor with sixes: show hint to throw sixes */}
               {isNonNeighborWithSixes && !hasAnyAction && (
                 <div className="flex items-center justify-center h-full">
@@ -2135,8 +2135,8 @@ export default function GameTable({
               {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap */}
               {(hasAnyAction || canTake || canEndAttack || canSkip) && (
                 <div className={visibleActionCount <= 1
-                  ? 'flex items-stretch h-full w-full'
-                  : 'flex flex-wrap gap-1.5 items-center justify-end w-full pr-2'
+                  ? 'flex items-stretch h-[52px] w-full'
+                  : 'flex flex-wrap gap-1 items-center justify-end w-full py-1'
                 }>
                   {canTake && (
                     <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass}`} onClick={onTakeCards}>
