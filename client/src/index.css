@@ -407,11 +407,13 @@
   pointer-events: none;
 }
 
-/* Grid layout: max 3 per row, wraps to next line */
+/* Grid layout: max 3 per row, wraps to next line (flex or grid) */
 .game-btn-grid-item {
   flex: 1 1 30%;
   min-width: 0;
   max-width: 50%;
+  /* In grid mode (4+ buttons): fill the grid cell */
+  width: 100%;
 }
 
 /* Green — Бито */
