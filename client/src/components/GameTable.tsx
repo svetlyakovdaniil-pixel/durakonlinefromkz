@@ -1594,18 +1594,16 @@ export default function GameTable({
 
         {/* YOUR TURN overlay */}
         {showYourTurn && !isSixOnlySpectator && (
-          <div className="flex justify-center pointer-events-none py-1">
+          <div className="absolute left-0 right-0 top-[120px] flex justify-center pointer-events-none z-30">
             <div className={`text-2xl sm:text-4xl font-black text-amber-400 drop-shadow-[0_0_20px_rgba(245,158,11,0.6)] tracking-wider text-center whitespace-nowrap px-4 ${yourTurnPhase === 'enter' ? 'your-turn-enter' : yourTurnPhase === 'exit' ? 'your-turn-exit' : ''}`}>
               {t('game.yourTurnCaps')}
             </div>
           </div>
         )}
 
-
-
         {/* URGENT TURN ALERT at 15 seconds */}
         {showUrgentTurn && !isSixOnlySpectator && (
-          <div className="flex justify-center pointer-events-none py-1">
+          <div className="absolute left-0 right-0 top-[120px] flex justify-center pointer-events-none z-30">
             <div className={`text-2xl sm:text-4xl font-black text-red-500 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)] tracking-wider text-center whitespace-nowrap px-4 ${urgentTurnPhase === 'enter' ? 'urgent-turn-enter' : urgentTurnPhase === 'exit' ? 'urgent-turn-exit' : ''}`}>
               <span className="urgent-blink">{t('game.yourTurnCaps')}</span>
             </div>
@@ -2111,57 +2109,57 @@ export default function GameTable({
                   : 'flex flex-wrap gap-1.5 items-center justify-end w-full pr-2'
                 }>
                   {canTake && (
-                    <Button variant="destructive" className={`action-btn-blink shadow-xl backdrop-blur-sm bg-red-700/35 hover:bg-red-600/55 ${dynBtnClass}`} onClick={onTakeCards}>
+                    <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass}`} onClick={onTakeCards}>
                       {t('game.take')}
-                    </Button>
+                    </button>
                   )}
                   {canEndAttack && (
-                    <Button className={`action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white shadow-xl backdrop-blur-sm border border-green-500/20 ${dynBtnClass}`} onClick={onEndAttack}>
+                    <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass}`} onClick={onEndAttack}>
                       {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
-                    </Button>
+                    </button>
                   )}
                   {canSkip && (
-                    <Button variant="outline" className={`action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/15 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={onSkipTurn}>
+                    <button className={`game-btn game-btn-amber action-btn-blink ${dynBtnClass}`} onClick={onSkipTurn}>
                       {t('game.skip')}
-                    </Button>
+                    </button>
                   )}
                   {isMultiSelecting && multiSelectMode === 'attack' && (
                     <>
-                      <Button className={`action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white shadow-xl backdrop-blur-sm border border-emerald-500/20 ${dynBtnClass}`} onClick={handleMultiAttack}>
+                      <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass}`} onClick={handleMultiAttack}>
                         {t('game.playN', { n: String(multiSelectIds.size) })}
-                      </Button>
-                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      </button>
+                      <button className={`game-btn game-btn-gray ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
-                      </Button>
+                      </button>
                     </>
                   )}
                   {isMultiSelecting && multiSelectMode === 'transfer' && (
                     <>
-                      <Button className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white shadow-xl backdrop-blur-sm border border-purple-500/20 ${dynBtnClass}`} onClick={handleMultiTransfer}>
+                      <button className={`game-btn game-btn-purple action-btn-blink ${dynBtnClass}`} onClick={handleMultiTransfer}>
                         {t('game.transferN', { n: String(multiSelectIds.size) })}
-                      </Button>
-                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      </button>
+                      <button className={`game-btn game-btn-gray ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
-                      </Button>
+                      </button>
                     </>
                   )}
                   {isMultiSelecting && multiSelectMode === 'passthrough' && (
                     <>
-                      <Button className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white shadow-xl backdrop-blur-sm border border-yellow-500/20 ${dynBtnClass}`} onClick={handleMultiPassThrough}>
-                        <Eye className="w-3.5 h-3.5 mr-1" />{t('game.passThroughN', { n: String(multiSelectIds.size) })}
-                      </Button>
-                      <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
+                      <button className={`game-btn game-btn-amber action-btn-blink ${dynBtnClass}`} onClick={handleMultiPassThrough}>
+                        <Eye className="w-3.5 h-3.5 mr-1 inline" />{t('game.passThroughN', { n: String(multiSelectIds.size) })}
+                      </button>
+                      <button className={`game-btn game-btn-gray ${dynBtnClass}`} onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}>
                         {t('game.cancel')}
-                      </Button>
+                      </button>
                     </>
                   )}
                   {selectedCanBeat && (
-                    <Button className={`action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white shadow-xl backdrop-blur-sm border border-blue-500/20 ${dynBtnClass}`} onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}>
-                      <Shield className="w-3.5 h-3.5 mr-1" />{t('game.beat')}
-                    </Button>
+                    <button className={`game-btn game-btn-blue action-btn-blink ${dynBtnClass}`} onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}>
+                      <Shield className="w-3.5 h-3.5 mr-1 inline" />{t('game.beat')}
+                    </button>
                   )}
                   {selectedCanTransfer && (
-                    <Button className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white shadow-xl backdrop-blur-sm border border-purple-500/20 ${dynBtnClass}`} onClick={() => {
+                    <button className={`game-btn game-btn-purple action-btn-blink ${dynBtnClass}`} onClick={() => {
                       const cardId = selectedCardId!;
                       const card = gs.myHand.find(c => c.id === cardId);
                       if (card) {
@@ -2171,17 +2169,17 @@ export default function GameTable({
                       onTransferCard(cardId); setSelectedCardId(null);
                     }}>
                       {t('game.transfer')}
-                    </Button>
+                    </button>
                   )}
                   {selectedCanPassThrough && (
-                    <Button className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white shadow-xl backdrop-blur-sm border border-yellow-500/20 ${dynBtnClass}`} onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}>
-                      <Eye className="w-3.5 h-3.5 mr-1" />{t('game.passThrough')}
-                    </Button>
+                    <button className={`game-btn game-btn-amber action-btn-blink ${dynBtnClass}`} onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}>
+                      <Eye className="w-3.5 h-3.5 mr-1 inline" />{t('game.passThrough')}
+                    </button>
                   )}
                   {selectedCardId && !isMultiSelecting && (
-                    <Button variant="outline" className={`border-gray-600/40 text-gray-300 bg-gray-800/20 shadow-xl backdrop-blur-sm ${dynBtnClass}`} onClick={() => setSelectedCardId(null)}>
+                    <button className={`game-btn game-btn-gray ${dynBtnClass}`} onClick={() => setSelectedCardId(null)}>
                       {t('game.cancel')}
-                    </Button>
+                    </button>
                   )}
                 </div>
               )}
