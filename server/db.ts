@@ -2508,6 +2508,39 @@ export async function seedChinesePlaylist() {
     .where(eq(musicPlaylists.name, 'Chinese chill+hiphop motives'));
 }
 
+/** Seed the "Lo-Fi Chillhop" playlist if it doesn't exist */
+export async function seedLoFiChillhopPlaylist() {
+  const db = await getDb();
+  if (!db) return;
+
+  // Check if Lo-Fi Chillhop playlist already exists by name
+  const existing = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Lo-Fi Chillhop'));
+  if (existing.length > 0) return;
+
+  const lofiTracks = [
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-1_bb4df576.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-2_2e307db3.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-3_b8c1d6c4.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-4_ecd3d521.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-5_97ffd728.mp3',
+    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-6_172e37a3.mp3',
+  ];
+
+  await db.insert(musicPlaylists).values({
+    name: 'Lo-Fi Chillhop',
+    nameKk: 'Lo-Fi Chillhop',
+    nameEn: 'Lo-Fi Chillhop',
+    tracksJson: JSON.stringify(lofiTracks),
+    priceShanyrak: 100000,
+    isDefault: false,
+    isAvailable: true,
+    volumeMultiplier: 1.0,
+    description: 'Lo-Fi чиллхоп — расслабляющие биты для игры — 6 треков',
+    descriptionKk: 'Lo-Fi чиллхоп — ойын үшін демалдыратын биттер — 6 трек',
+    descriptionEn: 'Lo-Fi Chillhop — relaxing beats for your game — 6 tracks',
+  });
+}
+
 /** Fix Chinese playlist URLs (replace + with %2B for CloudFront) */
 export async function fixChinesePlaylistUrls() {
   const db = await getDb();
