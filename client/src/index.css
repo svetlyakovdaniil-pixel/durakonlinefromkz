@@ -407,6 +407,13 @@
   pointer-events: none;
 }
 
+/* Grid layout: max 3 per row, wraps to next line */
+.game-btn-grid-item {
+  flex: 1 1 30%;
+  min-width: 0;
+  max-width: 50%;
+}
+
 /* Green — Бито */
 .game-btn-green {
   background: linear-gradient(135deg, #14532d 0%, #166534 40%, #15803d 70%, #16a34a 100%);
