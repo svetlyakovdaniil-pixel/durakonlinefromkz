@@ -44,6 +44,28 @@ export function useSocket(userId: string | null, userName: string | null) {
   // Persistent set of room IDs we intentionally left — blocks rejoin/updates permanently
   const blockedRoomIdsRef = useRef<Set<string>>(new Set());
 
+  // ─── localStorage helpers for cross-page-reload reconnect ─────────────────────────────
+  // When the page is closed/refreshed (e.g. Safari on iPhone kills the tab),
+  // currentRoomIdRef is lost. We persist it to localStorage so the lobby can
+  // show a "return to game" banner within the 30-second grace period.
+  const RECONNECT_WINDOW_MS = 30_000;
+  const getStorageKeys = () => ({
+    room: `durak_active_room_${userId || 'anon'}`,
+    ts: `durak_active_room_ts_${userId || 'anon'}`,
+  });
+  const persistActiveRoom = useCallback((roomId: string | null, intentional = false) => {
+    const { room: roomKey, ts: tsKey } = getStorageKeys();
+    if (roomId && !intentional) {
+      localStorage.setItem(roomKey, roomId);
+      localStorage.setItem(tsKey, Date.now().toString());
+    } else {
+      localStorage.removeItem(roomKey);
+      localStorage.removeItem(tsKey);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+  // ────────────────────────────────────────────────────────────────────────────
+
   useEffect(() => {
     if (!userId) return;
 
@@ -264,6 +286,9 @@ export function useSocket(userId: string | null, userName: string | null) {
     // Server forces us back to lobby (e.g. disconnect timeout expired)
     socket.on('forcedToLobby', (data) => {
       console.log(`[Socket] Forced to lobby: ${data.reason}`);
+      // NOTE: do NOT call persistActiveRoom(null) here — we keep the stored roomId
+      // so the lobby can show the "return to game" banner for 30 seconds.
+      // The timestamp was already set when we joined; it will expire naturally.
       currentRoomIdRef.current = null;
       setCurrentRoom(null);
       setGameState(null);
@@ -446,10 +471,11 @@ export function useSocket(userId: string | null, userName: string | null) {
       socketRef.current?.emit('createRoom', { name, maxPlayers, settings }, (room) => {
         setCurrentRoom(room);
         currentRoomIdRef.current = room.id;
+        persistActiveRoom(room.id);
         resolve(room);
       });
     });
-  }, []);
+  }, [persistActiveRoom]);
 
   const joinRoom = useCallback((roomId: string, password?: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -459,26 +485,29 @@ export function useSocket(userId: string | null, userName: string | null) {
         if (ok && room) {
           setCurrentRoom(room);
           currentRoomIdRef.current = room.id;
+          persistActiveRoom(room.id);
         }
         resolve(ok);
       });
     });
-  }, []);
+  }, [persistActiveRoom]);
 
   const leaveRoom = useCallback((roomId: string) => {
     socketRef.current?.emit('leaveRoom', roomId);
     currentRoomIdRef.current = null;
+    persistActiveRoom(null, true); // intentional leave
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
     setPrizeData(null);
-  }, []);
+  }, [persistActiveRoom]);
 
   const leaveGame = useCallback((roomId: string) => {
     leavingRef.current = true;
     blockedRoomIdsRef.current.add(roomId);
+    persistActiveRoom(null, true); // intentional leave
 
     const doReturnToLobby = () => {
       currentRoomIdRef.current = null;
@@ -500,18 +529,19 @@ export function useSocket(userId: string | null, userName: string | null) {
         doReturnToLobby();
       }
     }, 2000);
-  }, []);
+  }, [persistActiveRoom]);
 
   const closeRoom = useCallback((roomId: string) => {
     socketRef.current?.emit('closeRoom', roomId);
     currentRoomIdRef.current = null;
+    persistActiveRoom(null, true); // intentional close
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
     setPrizeData(null);
-  }, []);
+  }, [persistActiveRoom]);
 
   const toggleReady = useCallback((roomId: string) => {
     socketRef.current?.emit('toggleReady', roomId);
@@ -577,13 +607,14 @@ export function useSocket(userId: string | null, userName: string | null) {
       socketRef.current?.emit('leaveRoom', roomId);
     }
     currentRoomIdRef.current = null;
+    persistActiveRoom(null, true); // intentional return
     setCurrentRoom(null);
     setGameState(null);
     setAvailableActions([]);
     setChatMessages([]);
     setGameOverData(null);
     setPrizeData(null);
-  }, []);
+  }, [persistActiveRoom]);
 
   const requestRoomList = useCallback(() => {
     socketRef.current?.emit('requestRoomList');
@@ -640,5 +671,9 @@ export function useSocket(userId: string | null, userName: string | null) {
     requestRoomList,
     updateRoom,
     clearError: () => setError(null),
+    // Exposed for lobby reconnect banner
+    RECONNECT_WINDOW_MS,
+    getStorageKeys,
+    persistActiveRoom,
   };
 }

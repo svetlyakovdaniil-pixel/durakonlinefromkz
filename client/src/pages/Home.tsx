@@ -9,7 +9,7 @@ import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
 import GameTable from "@/components/GameTable";
 import { CARD_IMAGES } from "../../../shared/cardAssets";
-import { Loader2, Swords, Shield, Crown, Star, Users, Zap } from "lucide-react";
+import { Loader2, Swords, Shield, Crown, Star, Users, Zap, RotateCcw, X } from "lucide-react";
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import MusicChoiceDialog from "@/components/MusicChoiceDialog";
@@ -31,10 +31,92 @@ export default function Home() {
     playCard, transferCard, transferCards, showPassThrough, showPassThroughs, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
     requestRoomList, updateRoom,
+    RECONNECT_WINDOW_MS, getStorageKeys, persistActiveRoom,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
     isAuthenticated ? user?.name || t('landing.guest') : null
   );
+
+  // ─── Reconnect banner: detect if player was in a game before page reload ──────────────────
+  const [reconnectRoomId, setReconnectRoomId] = useState<string | null>(null);
+  const [reconnectSecondsLeft, setReconnectSecondsLeft] = useState(0);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const reconnectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Check localStorage on mount (after userId is known)
+  useEffect(() => {
+    if (!user?.openId) return;
+    if (currentRoom || gameState) return; // already in game, no banner needed
+    const { room: roomKey, ts: tsKey } = getStorageKeys();
+    const storedRoomId = localStorage.getItem(roomKey);
+    const storedTs = parseInt(localStorage.getItem(tsKey) || '0', 10);
+    if (!storedRoomId) return;
+    const elapsed = Date.now() - storedTs;
+    const remaining = Math.ceil((RECONNECT_WINDOW_MS - elapsed) / 1000);
+    if (remaining > 0) {
+      setReconnectRoomId(storedRoomId);
+      setReconnectSecondsLeft(remaining);
+    } else {
+      localStorage.removeItem(roomKey);
+      localStorage.removeItem(tsKey);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.openId]);
+
+  // Countdown timer for reconnect banner
+  useEffect(() => {
+    if (!reconnectRoomId || reconnectSecondsLeft <= 0) return;
+    const interval = setInterval(() => {
+      setReconnectSecondsLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          const { room: roomKey, ts: tsKey } = getStorageKeys();
+          localStorage.removeItem(roomKey);
+          localStorage.removeItem(tsKey);
+          setReconnectRoomId(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    reconnectIntervalRef.current = interval;
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reconnectRoomId]);
+
+  // Dismiss banner once player enters a room
+  useEffect(() => {
+    if (currentRoom || gameState) {
+      setReconnectRoomId(null);
+      if (reconnectIntervalRef.current) clearInterval(reconnectIntervalRef.current);
+    }
+  }, [currentRoom, gameState]);
+
+  const handleReconnectBanner = useCallback(async () => {
+    if (!reconnectRoomId || isReconnecting) return;
+    setIsReconnecting(true);
+    persistActiveRoom(null, true);
+    const roomIdToJoin = reconnectRoomId;
+    setReconnectRoomId(null);
+    if (reconnectIntervalRef.current) clearInterval(reconnectIntervalRef.current);
+    try {
+      const ok = await joinRoom(roomIdToJoin);
+      if (!ok) {
+        toast.error(t('socket.reconnectFailed'), { duration: 5000 });
+      }
+    } catch {
+      toast.error(t('socket.reconnectFailed'), { duration: 5000 });
+    } finally {
+      setIsReconnecting(false);
+    }
+  }, [reconnectRoomId, isReconnecting, joinRoom, persistActiveRoom, t]);
+
+  const handleDismissReconnect = useCallback(() => {
+    persistActiveRoom(null, true);
+    setReconnectRoomId(null);
+    if (reconnectIntervalRef.current) clearInterval(reconnectIntervalRef.current);
+  }, [persistActiveRoom]);
+  // ────────────────────────────────────────────────────────────────────────────
 
   const music = useMusicContext();
   const { setMusicEnabled } = useSettings();
@@ -364,6 +446,67 @@ export default function Home() {
         isMandatory={true}
         onSkip={handleForcedTutorialSkip}
       />
+      {/* Reconnect banner — shown when player was in a game before page reload */}
+      {reconnectRoomId && (
+        <div className="fixed bottom-20 sm:bottom-6 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm">
+          <div
+            className="relative flex flex-col gap-2 rounded-2xl px-4 py-3 shadow-2xl"
+            style={{
+              background: 'linear-gradient(135deg, #0f2035 0%, #1a3a5c 100%)',
+              border: '1.5px solid rgba(201,168,76,0.5)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(201,168,76,0.15)',
+            }}
+          >
+            {/* Dismiss button */}
+            <button
+              onClick={handleDismissReconnect}
+              className="absolute top-2 right-2 text-amber-300/50 hover:text-amber-300 transition-colors"
+              aria-label="Dismiss"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div className="flex items-center gap-2 pr-4">
+              <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                <RotateCcw className="w-4 h-4 text-amber-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-amber-100 font-semibold text-sm leading-tight">
+                  {t('socket.rejoinBannerTitle')}
+                </p>
+                <p className="text-amber-300/70 text-xs mt-0.5">
+                  {t('socket.rejoinBannerDesc', { sec: String(reconnectSecondsLeft) })}
+                </p>
+              </div>
+            </div>
+            {/* Progress bar */}
+            <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-amber-400 transition-all duration-1000 ease-linear"
+                style={{ width: `${(reconnectSecondsLeft / (RECONNECT_WINDOW_MS / 1000)) * 100}%` }}
+              />
+            </div>
+            <button
+              onClick={handleReconnectBanner}
+              disabled={isReconnecting}
+              className="w-full rounded-xl py-2 text-sm font-bold text-black transition-all active:scale-[0.98] disabled:opacity-60"
+              style={{
+                background: isReconnecting
+                  ? 'rgba(201,168,76,0.5)'
+                  : 'linear-gradient(90deg, #c9a84c 0%, #f0c040 100%)',
+              }}
+            >
+              {isReconnecting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  {t('lobby.rejoining')}
+                </span>
+              ) : (
+                t('socket.rejoinBannerBtn')
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   );
 }
