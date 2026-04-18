@@ -52,7 +52,7 @@ export const MONKEY_PACK: EmotionPack = {
   description: 'Те же эмоции, только с обезьяной!',
   descriptionKk: 'Сол эмоциялар, бірақ маймылмен!',
   descriptionEn: 'Same emotions, but with a monkey!',
-  price: 0, // Free — already owned
+  price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_laugh_9e3429b4.png' },
     { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_cool_4b56eac0.png' },

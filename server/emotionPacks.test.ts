@@ -12,8 +12,8 @@ describe('emotionPacks', () => {
     expect(HAMSTER_PACK.price).toBe(0);
   });
 
-  it('monkey pack should be free (price 0)', () => {
-    expect(MONKEY_PACK.price).toBe(0);
+  it('monkey pack should have price 150 tenge', () => {
+    expect(MONKEY_PACK.price).toBe(150);
   });
 
   it('both packs should have exactly 10 emotions', () => {

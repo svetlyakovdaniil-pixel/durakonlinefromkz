@@ -708,7 +708,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           toast.error(t('common.error'));
         }
       } else if (item.type === 'emotionpack') {
-        const result = await purchaseEmotionPackMutation.mutateAsync({ packId: item.id, tengeCost: item.price });
+        const result = await purchaseEmotionPackMutation.mutateAsync({ packId: item.id });
         if (result.success) {
           toast.success(t('toast.purchaseSuccess'));
           refetchOwnedEmotionPacks();
@@ -1154,10 +1154,12 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 <h3 className="text-amber-100 font-bold text-sm">{t('shop.emotions')}</h3>
               </div>
               {EMOTION_PACKS.map(pack => {
-                const isOwned = pack.price === 0 || pack.id === 'hamster' || ownedEmotionPacks.includes(pack.id);
+                const effectivePrice = getPrice('emotionpack', pack.id, pack.price);
+                const isOwned = pack.id === 'hamster' || ownedEmotionPacks.includes(pack.id);
                 const isActive = activeEmotionPack === pack.id;
                 const packName = locale === 'kk' && pack.nameKk ? pack.nameKk : locale === 'en' && pack.nameEn ? pack.nameEn : pack.name;
                 const packDesc = locale === 'kk' && pack.descriptionKk ? pack.descriptionKk : locale === 'en' && pack.descriptionEn ? pack.descriptionEn : (pack.description || '');
+                const canAffordPack = currentTenge >= effectivePrice;
                 return (
                   <div key={pack.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
@@ -1190,7 +1192,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           <>
                             <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                               <Check className="w-4 h-4" />
-                              <span>{pack.price === 0 ? t('shop.free') : t('shop.purchased')}</span>
+                              <span>{pack.id === 'hamster' ? t('shop.free') : t('shop.purchased')}</span>
                             </div>
                             <Button
                               className="ml-auto bg-amber-700/40 hover:bg-amber-600/60 text-amber-100 text-xs h-8 px-3"
@@ -1213,16 +1215,17 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               type: 'emotionpack',
                               id: pack.id,
                               name: packName,
-                              price: pack.price,
+                              price: effectivePrice,
                             })}
-                            disabled={purchasing || currentTenge < pack.price}
+                            disabled={purchasing || !canAffordPack}
                           >
                             {purchasing ? '...' : t('shop.buy')}
                           </Button>
                           <div className="flex items-center gap-1">
-                            <span className="text-amber-100 font-bold text-sm">{pack.price}</span>
+                            <span className="text-amber-100 font-bold text-sm">{effectivePrice}</span>
                             <img src={TENGE_ICON} alt="T" className="w-5 h-5 rounded-full object-cover" />
                           </div>
+                          {!canAffordPack && <p className="text-red-400/80 text-xs w-full mt-1">{t('shop.notEnough')}</p>}
                         </>
                       )}
                     </div>

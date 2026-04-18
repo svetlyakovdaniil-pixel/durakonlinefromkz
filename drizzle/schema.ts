@@ -263,8 +263,8 @@ export type InsertMassNotification = typeof massNotifications.$inferInsert;
  */
 export const shopPriceOverrides = mysqlTable("shop_price_overrides", {
   id: int("id").autoincrement().primaryKey(),
-  /** Item type: deck, table, frame, avatar, playlist */
-  itemType: mysqlEnum("itemType", ["deck", "table", "frame", "avatar", "playlist"]).notNull(),
+  /** Item type: deck, table, frame, avatar, playlist, emotionpack */
+  itemType: mysqlEnum("itemType", ["deck", "table", "frame", "avatar", "playlist", "emotionpack"]).notNull(),
   /** Item ID (e.g., 'custom', 'dark_kazakh', 'fire') */
   itemId: varchar("itemId", { length: 64 }).notNull(),
   /** Overridden price in tenge (null = use default) */
