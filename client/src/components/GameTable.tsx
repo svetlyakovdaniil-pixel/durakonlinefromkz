@@ -1562,17 +1562,8 @@ export default function GameTable({
                     'bg-black/30 border-amber-700/20'
                   }`}>
                     {/* Avatar — clickable for profile popup */}
-                    {/* relative wrapper with explicit size so EmotionBubble (absolute inset-0) aligns exactly over the avatar */}
-                    <div
-                      className="relative mb-0.5 sm:mb-1"
-                      style={{ width: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, height: manyManyOpponents ? 28 : manyOpponents ? 32 : 40 }}
-                    >
-                      {/* Emotion bubble covering opponent avatar */}
-                      {playerEmotions[p.id] && (
-                        <EmotionBubble emotionId={playerEmotions[p.id].emotionId} />
-                      )}
                     <button
-                      className="focus:outline-none w-full h-full block"
+                      className="focus:outline-none mb-0.5 sm:mb-1 relative block"
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                       disabled={p.isBot || !p.gameId}
                     >
@@ -1584,8 +1575,14 @@ export default function GameTable({
                            className={p.equippedFrame ? `rounded-full ${p.isBot ? 'opacity-70' : ''}` : `${manyManyOpponents ? 'w-7 h-7' : manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
                          />
                       </FrameWrapper>
+                      {/* Emotion bubble covering opponent avatar */}
+                      {playerEmotions[p.id] && (
+                        <EmotionBubble
+                          emotionId={playerEmotions[p.id].emotionId}
+                          size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
+                        />
+                      )}
                     </button>
-                    </div>{/* end relative wrapper for emotion bubble */}
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
                       {isOppAttacker && <Swords className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-red-400`} />}
                       {isOppDefender && !gs.defenderTaking && <Shield className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-blue-400`} />}
