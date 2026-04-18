@@ -13,7 +13,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
-import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls } from "../db";
+import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls, fixAllPlaylistCloudFrontUrls } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -91,6 +91,7 @@ async function startServer() {
   seedLoFiChillhopPlaylist().catch((e: unknown) => console.warn('[Music] Failed to seed Lo-Fi Chillhop playlist:', e));
   seedDarkTrapPlaylist().catch((e: unknown) => console.warn('[Music] Failed to seed Dark Trap playlist:', e));
   fixChinesePlaylistUrls().catch(e => console.warn('[Music] Failed to fix Chinese playlist URLs:', e));
+  fixAllPlaylistCloudFrontUrls().catch((e: unknown) => console.warn('[Music] Failed to fix CloudFront URLs:', e));
 
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {

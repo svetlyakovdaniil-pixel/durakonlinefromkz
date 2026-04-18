@@ -3615,3 +3615,33 @@ export async function setMaintenanceStatus(status: MaintenanceStatus): Promise<v
     await db.insert(serverSettings).values({ key: 'maintenance', value });
   }
 }
+
+
+/** Fix all playlist tracks that still use CloudFront URLs — replace with local /assets/static/ paths.
+ *  This runs at server startup to fix records written before the CDN migration. */
+export async function fixAllPlaylistCloudFrontUrls() {
+  const db = await getDb();
+  if (!db) return;
+  const CLOUDFRONT_BASE = 'https://d2xsxph8kpxj0f.cloudfront.net';
+  const rows = await db.select().from(musicPlaylists);
+  let fixed = 0;
+  for (const row of rows) {
+    const tracks = JSON.parse(row.tracksJson || '[]') as string[];
+    const hasCloudFront = tracks.some(t => t.includes(CLOUDFRONT_BASE));
+    if (!hasCloudFront) continue;
+    const fixedTracks = tracks.map(t => {
+      if (!t.includes(CLOUDFRONT_BASE)) return t;
+      // Extract filename from CloudFront URL: .../path/filename.mp3 → /assets/static/filename.mp3
+      const filename = t.split('/').pop() || '';
+      return `/assets/static/${filename}`;
+    });
+    await db.update(musicPlaylists)
+      .set({ tracksJson: JSON.stringify(fixedTracks) })
+      .where(eq(musicPlaylists.id, row.id));
+    fixed++;
+    console.log(`[Music] Fixed CloudFront URLs in playlist: ${row.name}`);
+  }
+  if (fixed > 0) {
+    console.log(`[Music] Fixed CloudFront URLs in ${fixed} playlist(s)`);
+  }
+}
