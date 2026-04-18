@@ -704,10 +704,19 @@ export const appRouter = router({
     }),
     /** Purchase an emotion pack */
     purchaseEmotionPack: protectedProcedure
-      .input(z.object({ packId: z.string(), tengeCost: z.number() }))
+      .input(z.object({ packId: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        const result = await purchaseEmotionPack(ctx.user.id, input.packId, input.tengeCost);
-        if (result.success && input.tengeCost > 0) {
+        // Use server-side price from shop overrides (prevents price manipulation)
+        const { EMOTION_PACKS } = await import('../shared/emotionPacks');
+        const pack = EMOTION_PACKS.find(p => p.id === input.packId);
+        if (!pack) return { success: false, reason: 'pack_not_found' };
+        const overrides = await getShopPriceOverrides();
+        const override = overrides.find((o: any) => o.itemType === 'emotionpack' && o.itemId === input.packId);
+        const serverPrice = (override && override.priceTenge !== null && override.priceTenge !== undefined)
+          ? override.priceTenge
+          : pack.price;
+        const result = await purchaseEmotionPack(ctx.user.id, input.packId, serverPrice);
+        if (result.success && serverPrice > 0) {
           const profile = await getProfileByUserId(ctx.user.id);
           if (profile) {
             const totalSpent = await getTotalTengeSpentByProfile(profile.id);
@@ -1148,7 +1157,7 @@ export const appRouter = router({
 
     updateShopPrice: adminProcedure
       .input(z.object({
-        itemType: z.enum(['deck', 'table', 'frame', 'avatar', 'playlist']),
+        itemType: z.enum(['deck', 'table', 'frame', 'avatar', 'playlist', 'emotionpack']),
         itemId: z.string().min(1),
         priceTenge: z.number().min(0).nullable(),
         isAvailable: z.boolean(),

@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { TABLE_STYLES } from "@shared/cardAssets";
 import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
+import { EMOTION_PACKS } from "@shared/emotionPacks";
 import { SeasonTestTab } from "@/components/SeasonTestTab";
 import { AvatarEditorTab } from "@/components/AvatarEditorTab";
 import { ProfileItemsSection } from "@/components/ProfileItemsSection";
@@ -1879,6 +1880,10 @@ function ShopManagementTab() {
     ...allPlaylists
       .filter((p: any) => !p.isDefault)
       .map((p: any) => ({ itemType: "playlist", itemId: String(p.id), name: p.name, defaultPrice: p.priceShanyrak, category: "Плейлисты", currency: 'shanyrak' as const })),
+    // Emotion packs (skip hamster - it's free/default)
+    ...EMOTION_PACKS
+      .filter(ep => ep.id !== 'hamster')
+      .map(ep => ({ itemType: "emotionpack", itemId: ep.id, name: ep.name, defaultPrice: ep.price, category: "Эмоции", currency: 'tenge' as const })),
   ];
 
   // Merge defaults with overrides
@@ -1918,7 +1923,7 @@ function ShopManagementTab() {
     }
     const discountExpiry = editDiscountExpiresAt ? new Date(editDiscountExpiresAt) : null;
     updatePrice.mutate({
-      itemType: editItem.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist',
+      itemType: editItem.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist' | 'emotionpack',
       itemId: editItem.itemId,
       priceTenge: price,
       isAvailable: editAvailable,
@@ -1930,7 +1935,7 @@ function ShopManagementTab() {
 
   const resetToDefault = (item: typeof items[0]) => {
     updatePrice.mutate({
-      itemType: item.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist',
+      itemType: item.itemType as 'deck' | 'table' | 'frame' | 'avatar' | 'playlist' | 'emotionpack',
       itemId: item.itemId,
       priceTenge: item.defaultPrice,
       isAvailable: true,
@@ -1976,6 +1981,7 @@ function ShopManagementTab() {
                       item.category === "Колоды" ? "bg-blue-900/50 text-blue-300" :
                       item.category === "Столы" ? "bg-green-900/50 text-green-300" :
                       item.category === "Аватары" ? "bg-amber-900/50 text-amber-300" :
+                      item.category === "Эмоции" ? "bg-pink-900/50 text-pink-300" :
                       "bg-purple-900/50 text-purple-300"
                     }`}>
                       {item.category}

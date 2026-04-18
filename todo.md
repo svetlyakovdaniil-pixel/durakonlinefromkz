@@ -3252,3 +3252,13 @@
 - [x] Обновить Home.tsx: передавать activeEmotionPackId из профиля в GameTable
 - [x] Добавить i18n ключ shop.emotions в ru.ts, en.ts, kk.ts
 - [x] Написать тесты для emotionPacks (11 тестов проходят)
+
+## Управление ценами эмоций в AdminPanel
+- [x] Изучить паттерн shop price override в AdminPanel (как работает для других типов)
+- [x] Обновить upsertShopPriceOverride/getShopPriceOverride в db.ts для поддержки itemType=emotionpack
+- [x] Добавить tRPC процедуру admin.updateEmotionPackPrice в routers.ts
+- [x] Добавить секцию управления ценами emotion packs в AdminPanel.tsx
+- [x] Установить цену 150 тенге для пака обезьяны через AdminPanel
+- [x] Обновить ShopModal: monkey пак стоит 150 тенге (не бесплатный), покупка за тенге
+- [x] Обновить emotionPacks.ts: monkey pack price не 0 (убрать бесплатность)
+- [x] Тесты для новой функциональности

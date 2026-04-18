@@ -1,0 +1,1 @@
+ALTER TABLE `shop_price_overrides` MODIFY COLUMN `itemType` enum('deck','table','frame','avatar','playlist','emotionpack') NOT NULL;

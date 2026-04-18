@@ -2112,7 +2112,7 @@ export async function getShopPriceOverrides() {
  * Upsert a shop price override. If an override for this itemType+itemId exists, update it; otherwise insert.
  */
 export async function upsertShopPriceOverride(data: {
-  itemType: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist';
+  itemType: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist' | 'emotionpack';
   itemId: string;
   priceTenge: number | null;
   isAvailable: boolean;
