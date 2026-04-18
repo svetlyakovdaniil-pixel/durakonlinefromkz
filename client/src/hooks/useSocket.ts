@@ -36,6 +36,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   const [frozenInfo, setFrozenInfo] = useState<{
     disconnectedPlayerName: string; secondsLeft: number;
   } | null>(null);
+  // Active emotions: playerId -> { emotionId, expiresAt }
+  const [playerEmotions, setPlayerEmotions] = useState<Record<string, { emotionId: string; expiresAt: number }>>({});
 
   // Track the room ID we're currently in for reconnect
   const currentRoomIdRef = useRef<string | null>(null);
@@ -363,6 +365,19 @@ export function useSocket(userId: string | null, userName: string | null) {
       setOnlineFriendIds(data.onlineGameIds);
     });
 
+    // Player emotion reactions
+    socket.on('playerEmotion', (data) => {
+      const expiresAt = Date.now() + 3500; // show for 3.5 seconds
+      setPlayerEmotions(prev => ({ ...prev, [data.playerId]: { emotionId: data.emotionId, expiresAt } }));
+      setTimeout(() => {
+        setPlayerEmotions(prev => {
+          const next = { ...prev };
+          if (next[data.playerId]?.expiresAt === expiresAt) delete next[data.playerId];
+          return next;
+        });
+      }, 3500);
+    });
+
     // Room freeze/unfreeze events
     socket.on('roomFrozen', (data) => {
       console.log(`[Socket] Room ${data.roomId} frozen — ${data.disconnectedPlayerName} disconnected`);
@@ -591,6 +606,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     socketRef.current?.emit('sendChat', { roomId, text });
   }, []);
 
+  const sendEmotion = useCallback((roomId: string, emotionId: string) => {
+    socketRef.current?.emit('sendEmotion', { roomId, emotionId });
+  }, []);
+
   const inviteFriend = useCallback((roomId: string, targetGameId: number) => {
     socketRef.current?.emit('inviteFriend', { roomId, targetGameId });
     toast.success(tRef.current('socket.inviteSent'), { duration: 3000 });
@@ -671,6 +690,8 @@ export function useSocket(userId: string | null, userName: string | null) {
     requestRoomList,
     updateRoom,
     clearError: () => setError(null),
+    playerEmotions,
+    sendEmotion,
     // Exposed for lobby reconnect banner
     RECONNECT_WINDOW_MS,
     getStorageKeys,
