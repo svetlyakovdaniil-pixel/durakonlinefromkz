@@ -4,10 +4,9 @@ import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 // =============================================================================
-// Manus Debug Collector - Vite Plugin
+// Dev Debug Collector - Vite Plugin
 // Writes browser logs directly to files, trimmed when exceeding size limit
 // =============================================================================
 
@@ -70,13 +69,13 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
 
 /**
  * Vite plugin to collect browser debug logs
- * - POST /__manus__/logs: Browser sends logs, written directly to files
+ * - POST /__dev__/logs: Browser sends logs, written directly to files
  * - Files: browserConsole.log, networkRequests.log, sessionReplay.log
  * - Auto-trimmed when exceeding 1MB (keeps newest entries)
  */
-function vitePluginManusDebugCollector(): Plugin {
+function vitePluginDevDebugCollector(): Plugin {
   return {
-    name: "manus-debug-collector",
+    name: "dev-debug-collector",
 
     transformIndexHtml(html) {
       if (process.env.NODE_ENV === "production") {
@@ -88,7 +87,7 @@ function vitePluginManusDebugCollector(): Plugin {
           {
             tag: "script",
             attrs: {
-              src: "/__manus__/debug-collector.js",
+              src: "/__dev__/debug-collector.js",
               defer: true,
             },
             injectTo: "head",
@@ -98,8 +97,8 @@ function vitePluginManusDebugCollector(): Plugin {
     },
 
     configureServer(server: ViteDevServer) {
-      // POST /__manus__/logs: Browser sends logs (written directly to files)
-      server.middlewares.use("/__manus__/logs", (req, res, next) => {
+      // POST /__dev__/logs: Browser sends logs (written directly to files)
+      server.middlewares.use("/__dev__/logs", (req, res, next) => {
         if (req.method !== "POST") {
           return next();
         }
@@ -150,14 +149,11 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-// Only include manus-runtime in development, not in production builds
-const isDev = process.env.NODE_ENV !== 'production';
 const plugins = [
   react(),
   tailwindcss(),
   jsxLocPlugin(),
-  ...(isDev ? [vitePluginManusRuntime()] : []),
-  vitePluginManusDebugCollector(),
+  vitePluginDevDebugCollector(),
 ];
 
 export default defineConfig({
