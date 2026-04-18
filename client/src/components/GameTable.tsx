@@ -499,7 +499,7 @@ export default function GameTable({
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
-  sendEmotion, playerEmotions = {}, activeEmotionPackId = 'hamster',
+  sendEmotion, playerEmotions = {}, activeEmotionPackId = 'khan',
 }: GameTableProps) {
   // Interactive tutorial state
   const {

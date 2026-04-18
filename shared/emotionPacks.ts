@@ -19,7 +19,31 @@ export interface EmotionPack {
   emotions: EmotionPackItem[];
 }
 
-// Hamster pack (original, always free)
+// Khan pack (default, always free)
+export const KHAN_PACK: EmotionPack = {
+  id: 'khan',
+  name: 'Казахский Хан',
+  nameKk: 'Қазақ Ханы',
+  nameEn: 'Kazakh Khan',
+  description: 'Эмоции с казахским ханом в калпаке',
+  descriptionKk: 'Қалпақты қазақ ханымен эмоциялар',
+  descriptionEn: 'Emotions with a Kazakh Khan in kalpak',
+  price: 0, // free by default
+  emotions: [
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_laugh_68ee4d40.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_cool_7a4a8a8d.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_angry_8618af32.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sad_27908e27.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_think_33befc92.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_wow_a86a7e15.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_heart_e35ddda3.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_hurry_618fde27.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_win_e091d556.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sleep_be20119f.png' },
+  ],
+};
+
+// Hamster pack (purchasable, 150 tenge)
 export const HAMSTER_PACK: EmotionPack = {
   id: 'hamster',
   name: 'Хомяк',
@@ -28,7 +52,7 @@ export const HAMSTER_PACK: EmotionPack = {
   description: 'Оригинальные эмоции с хомяком',
   descriptionKk: 'Хомякпен түпнұсқа эмоциялар',
   descriptionEn: 'Original hamster emotions',
-  price: 0,
+  price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',   url: '/assets/static/emotion_laugh.png' },
     { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',    url: '/assets/static/emotion_cool.png' },
@@ -91,9 +115,13 @@ export const DEVIL_PACK: EmotionPack = {
   ],
 };
 
-export const EMOTION_PACKS: EmotionPack[] = [HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK];
+// Khan is first (default), then paid packs
+export const EMOTION_PACKS: EmotionPack[] = [KHAN_PACK, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK];
 
-/** Get an emotion pack by ID, falls back to hamster */
+/** Default pack ID for new players */
+export const DEFAULT_EMOTION_PACK_ID = 'khan';
+
+/** Get an emotion pack by ID, falls back to khan */
 export function getEmotionPack(packId: string): EmotionPack {
-  return EMOTION_PACKS.find(p => p.id === packId) ?? HAMSTER_PACK;
+  return EMOTION_PACKS.find(p => p.id === packId) ?? KHAN_PACK;
 }

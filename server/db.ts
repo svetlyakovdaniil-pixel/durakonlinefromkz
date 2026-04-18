@@ -3755,8 +3755,10 @@ export async function setActiveEmotionPack(
   if (!db) return { success: false, reason: 'db_unavailable' };
   const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
   if (!profile) return { success: false, reason: 'not_found' };
-  // hamster is always free/owned
-  if (packId !== 'hamster') {
+  // khan and other free packs are always owned
+  const { EMOTION_PACKS } = await import('../shared/emotionPacks');
+  const packDef = EMOTION_PACKS.find(p => p.id === packId);
+  if (!packDef || packDef.price > 0) {
     const owned: string[] = profile.ownedEmotionPacks ? JSON.parse(profile.ownedEmotionPacks) : [];
     if (!owned.includes(packId)) {
       return { success: false, reason: 'not_owned' };

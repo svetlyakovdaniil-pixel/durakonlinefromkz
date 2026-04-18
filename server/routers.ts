@@ -700,7 +700,7 @@ export const appRouter = router({
     /** Get active emotion pack for the current user */
     activeEmotionPack: protectedProcedure.query(async ({ ctx }) => {
       const profile = await getProfileByUserId(ctx.user.id);
-      return profile?.activeEmotionPack ?? 'hamster';
+      return profile?.activeEmotionPack ?? 'khan';
     }),
     /** Purchase an emotion pack */
     purchaseEmotionPack: protectedProcedure
@@ -1165,15 +1165,16 @@ export const appRouter = router({
         discountExpiresAt: z.date().nullable().optional(),
       }))
       .mutation(async ({ ctx, input }) => {
-        const result = await upsertShopPriceOverride({
+        const overrideData: Parameters<typeof upsertShopPriceOverride>[0] = {
           itemType: input.itemType,
           itemId: input.itemId,
           priceTenge: input.priceTenge,
           isAvailable: input.isAvailable,
-          discountPercent: input.discountPercent ?? null,
-          discountExpiresAt: input.discountExpiresAt ?? null,
           updatedBy: ctx.user.id,
-        });
+        };
+        if (input.discountPercent !== undefined) overrideData.discountPercent = input.discountPercent ?? null;
+        if (input.discountExpiresAt !== undefined) overrideData.discountExpiresAt = input.discountExpiresAt ?? null;
+        const result = await upsertShopPriceOverride(overrideData);
         if (result.success) {
           await logAdminAction({
             adminId: ctx.user.id,
