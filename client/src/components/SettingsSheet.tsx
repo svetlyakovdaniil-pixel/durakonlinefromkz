@@ -151,13 +151,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   // Default tracks (same as useMusic hook)
   const DEFAULT_TRACKS = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+    '/assets/static/1_fd1382d6.mp3',
+    '/assets/static/2_97b3c0a9.mp3',
+    '/assets/static/3_9c1cf3b0.mp3',
+    '/assets/static/4_3882b329.mp3',
+    '/assets/static/5_79e63061.mp3',
+    '/assets/static/6_2a64f936.mp3',
+    '/assets/static/7_48c4f68c.mp3',
   ];
 
   // When playlist data loads or changes, switch the music tracks and apply volume multiplier

@@ -73,7 +73,7 @@ export function ObsidianAngelsDemonsAvatar({ size = 48, className = '' }: Props)
         animation: `oada-duality-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_angels_demons-Jb4TqRyJ4bRGFfWdknwUSR.webp"
+          src="/assets/static/obsidian_angels_demons-Jb4TqRyJ4bRGFfWdknwUSR.webp"
           alt="Обсидиан Ангелы и Демоны"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

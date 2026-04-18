@@ -42,7 +42,7 @@ export function NeonPawAvatar({ size = 48, className = '' }: NeonPawAvatarProps)
 
       {/* Paw image */}
       <img
-        src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp"
+        src="/assets/static/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp"
         alt="Циркон"
         style={{
           width: '100%',

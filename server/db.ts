@@ -2494,13 +2494,13 @@ export async function seedChinesePlaylist() {
   if (existing.length > 0) return;
 
   const chineseTracks = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives1_de29af93.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives2_f4033f03.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives3_a0d85a28.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives4_888af5a4.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives5_dcef8e36.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives6_34e4a5fa.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Chinesechill%2Bhiphopmotives7_69ba9d28.mp3',
+    '/assets/static/Chinesechill+hiphopmotives1_de29af93.mp3',
+    '/assets/static/Chinesechill+hiphopmotives2_f4033f03.mp3',
+    '/assets/static/Chinesechill+hiphopmotives3_a0d85a28.mp3',
+    '/assets/static/Chinesechill+hiphopmotives4_888af5a4.mp3',
+    '/assets/static/Chinesechill+hiphopmotives5_dcef8e36.mp3',
+    '/assets/static/Chinesechill+hiphopmotives6_34e4a5fa.mp3',
+    '/assets/static/Chinesechill+hiphopmotives7_69ba9d28.mp3',
   ];
 
   await db.insert(musicPlaylists).values({
@@ -2533,12 +2533,12 @@ export async function seedLoFiChillhopPlaylist() {
   if (existing.length > 0) return;
 
   const lofiTracks = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-1_bb4df576.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-2_2e307db3.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-3_b8c1d6c4.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-4_ecd3d521.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-5_97ffd728.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/Lo-FiChillhop-6_172e37a3.mp3',
+    '/assets/static/Lo-FiChillhop-1_bb4df576.mp3',
+    '/assets/static/Lo-FiChillhop-2_2e307db3.mp3',
+    '/assets/static/Lo-FiChillhop-3_b8c1d6c4.mp3',
+    '/assets/static/Lo-FiChillhop-4_ecd3d521.mp3',
+    '/assets/static/Lo-FiChillhop-5_97ffd728.mp3',
+    '/assets/static/Lo-FiChillhop-6_172e37a3.mp3',
   ];
 
   await db.insert(musicPlaylists).values({
@@ -2566,13 +2566,13 @@ export async function seedDarkTrapPlaylist() {
   if (existing.length > 0) return;
 
   const darkTrapTracks = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-1_ed58de8d.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-2_9c7ffb18.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-3_42bbb53d.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-4_807d043b.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-5_d4af0442.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-6_972297b4.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/darktrap-7_193db398.mp3',
+    '/assets/static/darktrap-1_ed58de8d.mp3',
+    '/assets/static/darktrap-2_9c7ffb18.mp3',
+    '/assets/static/darktrap-3_42bbb53d.mp3',
+    '/assets/static/darktrap-4_807d043b.mp3',
+    '/assets/static/darktrap-5_d4af0442.mp3',
+    '/assets/static/darktrap-6_972297b4.mp3',
+    '/assets/static/darktrap-7_193db398.mp3',
   ];
 
   await db.insert(musicPlaylists).values({
@@ -2650,13 +2650,13 @@ export async function seedDefaultPlaylist() {
   if (existingByName.length > 0) return;
 
   const standardTracks = [
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№1_fd1382d6.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№2_97b3c0a9.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№3_9c1cf3b0.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№4_3882b329.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№5_79e63061.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№6_2a64f936.mp3',
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/№7_48c4f68c.mp3',
+    '/assets/static/1_fd1382d6.mp3',
+    '/assets/static/2_97b3c0a9.mp3',
+    '/assets/static/3_9c1cf3b0.mp3',
+    '/assets/static/4_3882b329.mp3',
+    '/assets/static/5_79e63061.mp3',
+    '/assets/static/6_2a64f936.mp3',
+    '/assets/static/7_48c4f68c.mp3',
   ];
 
   await db.insert(musicPlaylists).values({

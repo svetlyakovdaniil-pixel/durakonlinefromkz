@@ -8,7 +8,7 @@ interface SamuraiAvatarProps {
 }
 
 const BASE_IMAGE_URL =
-  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp';
+  '/assets/static/samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp';
 
 export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

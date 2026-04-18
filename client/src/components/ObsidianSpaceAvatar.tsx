@@ -69,7 +69,7 @@ export function ObsidianSpaceAvatar({ size = 48, className = '' }: Props) {
         animation: `osa-supernova-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_space_odyssey-7gENsHLXLmZaeUU6EcPbyv.webp"
+          src="/assets/static/obsidian_space_odyssey-7gENsHLXLmZaeUU6EcPbyv.webp"
           alt="Обсидиан Космос"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -99,7 +99,7 @@ export function NeonCrownAvatar({ size = 48, className = '', offsetX = 0, offset
         <div style={{ position: 'absolute', inset: 0, background: '#050a14' }} />
         {/* Crown image — colour cycle via filter only */}
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_crown_no_ring-k2gijZGF223aiMcs6ZohLm.webp"
+          src="/assets/static/neon_crown_no_ring-k2gijZGF223aiMcs6ZohLm.webp"
           alt="Обсидиан"
           style={{
             position: 'absolute',

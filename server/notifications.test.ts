@@ -189,13 +189,13 @@ describe('Player Profile Popup (In-Game)', () => {
 
 describe('Currency Icons', () => {
   it('should have valid CDN URLs for tenge icon', () => {
-    const tengeUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
+    const tengeUrl = '/assets/static/tenge_9aefd1b7.png';
     expect(tengeUrl).toMatch(/^https:\/\//);
     expect(tengeUrl).toContain('tenge');
   });
 
   it('should have valid CDN URLs for shanyrak icon', () => {
-    const shanyrakUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
+    const shanyrakUrl = '/assets/static/shanyrak_96e91a49.png';
     expect(shanyrakUrl).toMatch(/^https:\/\//);
     expect(shanyrakUrl).toContain('shanyrak');
   });

@@ -46,7 +46,7 @@ export function RubyNeonEraAvatar({ size = 48, className = '' }: Props) {
         animation: `rneon-halo-${uid} 2s linear infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_neon_era_v3_42502a8f.png"
+          src="/assets/static/ruby_neon_era_v3_42502a8f.png"
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

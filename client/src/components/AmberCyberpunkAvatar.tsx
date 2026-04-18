@@ -51,7 +51,7 @@ export function AmberCyberpunkAvatar({ size = 48, className = '' }: Props) {
         animation: `acv4-circuit-${uid} 2s ease-in-out infinite, acv4-flicker-${uid} 6s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_cyberpunk_v4-52jR9jKRMgjhsCZXjNstx8.webp"
+          src="/assets/static/amber_cyberpunk_v4-52jR9jKRMgjhsCZXjNstx8.webp"
           alt="Янтарь Киберпанк"
           style={{
             width: '100%', height: '100%',

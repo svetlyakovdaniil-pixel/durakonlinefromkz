@@ -27,7 +27,7 @@ export function NuclearMushroomAvatar({ size = 48, className = '' }: NuclearMush
   const startRef = useRef<number>(0);
 
   const imgUrl =
-    'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp';
+    '/assets/static/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp';
 
   useEffect(() => {
     const canvas = canvasRef.current;

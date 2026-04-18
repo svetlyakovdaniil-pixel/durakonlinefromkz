@@ -139,7 +139,7 @@ export function ObsidianNeonEraAvatar({ size = 48, className = '' }: Props) {
         animation: `ona-pulse-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_neon_era_v2-adGE4hKxxPSNzmcWxb3qZE.webp"
+          src="/assets/static/obsidian_neon_era_v2-adGE4hKxxPSNzmcWxb3qZE.webp"
           alt="Обсидиан Неоновая эра"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

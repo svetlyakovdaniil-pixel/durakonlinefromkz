@@ -118,7 +118,7 @@ export function ObsidianApocalypseAvatar({ size = 48, className = '' }: Props) {
         animation: `oap-glow-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_apocalypse_v2_464c2e3e.png"
+          src="/assets/static/obsidian_apocalypse_v2_464c2e3e.png"
           alt="Обсидиан Апокалипсис"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

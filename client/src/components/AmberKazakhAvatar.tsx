@@ -54,7 +54,7 @@ export function AmberKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `aka-pulse-${uid} 2.5s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_kazakh_s6_v2_675d657a.png"
+          src="/assets/static/amber_kazakh_s6_v2_675d657a.png"
           alt="Янтарь Казахский колорит"
           style={{
             width: '100%', height: '100%',

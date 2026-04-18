@@ -10,8 +10,8 @@ import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
 
-const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
-const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
+const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
+const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
 
 interface AchievementsModalProps {
   open: boolean;

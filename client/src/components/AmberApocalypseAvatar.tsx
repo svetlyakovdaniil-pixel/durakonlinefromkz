@@ -61,7 +61,7 @@ export function AmberApocalypseAvatar({ size = 48, className = '' }: Props) {
         animation: `aap-lava-${uid} 1.6s ease-in-out infinite, aap-flicker-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_apocalypse_s8_96da3687.png"
+          src="/assets/static/amber_apocalypse_s8_96da3687.png"
           alt="Янтарь Апокалипсис"
           style={{
             width: '100%', height: '100%',

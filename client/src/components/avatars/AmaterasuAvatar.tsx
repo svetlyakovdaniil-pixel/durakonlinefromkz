@@ -7,7 +7,7 @@ interface AmaterasuAvatarProps {
   style?: React.CSSProperties;
 }
 
-const BASE_IMAGE_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp';
+const BASE_IMAGE_URL = '/assets/static/amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp';
 
 export function AmaterasuAvatar({ size = 64, className = '', style }: AmaterasuAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

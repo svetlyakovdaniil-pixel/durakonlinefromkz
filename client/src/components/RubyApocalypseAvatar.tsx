@@ -39,7 +39,7 @@ export function RubyApocalypseAvatar({ size = 48, className = '' }: Props) {
         animation: `rapo-halo-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_apocalypse_final_791c8b8e.png"
+          src="/assets/static/ruby_apocalypse_final_791c8b8e.png"
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

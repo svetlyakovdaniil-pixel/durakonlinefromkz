@@ -64,7 +64,7 @@ export function ObsidianNorseAvatar({ size = 48, className = '' }: Props) {
         animation: `ona-pulse-${uid} 2.5s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_norse_gods-cZ2YKE5bVYuvdXd4WuLkfw.webp"
+          src="/assets/static/obsidian_norse_gods-cZ2YKE5bVYuvdXd4WuLkfw.webp"
           alt="Обсидиан Скандинавские боги"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}
