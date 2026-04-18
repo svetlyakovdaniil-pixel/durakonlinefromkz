@@ -2,14 +2,16 @@ import { useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 
 export const EMOTIONS = [
-  { id: 'laugh',  label: 'Смех',    url: '/assets/static/emotion_laugh.webp' },
-  { id: 'cool',   label: 'Круто',   url: '/assets/static/emotion_cool.webp' },
-  { id: 'angry',  label: 'Злость',  url: '/assets/static/emotion_angry.webp' },
-  { id: 'sad',    label: 'Грусть',  url: '/assets/static/emotion_sad.webp' },
-  { id: 'think',  label: 'Думаю',   url: '/assets/static/emotion_think.webp' },
-  { id: 'wow',    label: 'Вау',     url: '/assets/static/emotion_wow.webp' },
-  { id: 'heart',  label: 'Любовь',  url: '/assets/static/emotion_heart.webp' },
-  { id: 'thumb',  label: 'Класс',   url: '/assets/static/emotion_thumb.webp' },
+  { id: 'laugh',  label: 'Смех',     url: '/assets/static/emotion_laugh.png' },
+  { id: 'cool',   label: 'Круто',    url: '/assets/static/emotion_cool.png' },
+  { id: 'angry',  label: 'Злость',   url: '/assets/static/emotion_angry.png' },
+  { id: 'sad',    label: 'Грусть',   url: '/assets/static/emotion_sad.png' },
+  { id: 'think',  label: 'Думаю',    url: '/assets/static/emotion_think.png' },
+  { id: 'wow',    label: 'Вау',      url: '/assets/static/emotion_wow.png' },
+  { id: 'heart',  label: 'Любовь',   url: '/assets/static/emotion_heart.png' },
+  { id: 'hurry',  label: 'Тороплю',  url: '/assets/static/emotion_hurry.png' },
+  { id: 'win',    label: 'Победа',   url: '/assets/static/emotion_win.png' },
+  { id: 'sleep',  label: 'Скучно',   url: '/assets/static/emotion_sleep.png' },
 ];
 
 interface EmotionPickerProps {
@@ -88,9 +90,6 @@ interface EmotionBubbleProps {
   size?: number;
 }
 
-/** Fixed display size for all emotion bubbles (px). Matches the "cool" emoji reference size. */
-const EMOTION_DISPLAY_SIZE = 40;
-
 export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
   const emotion = EMOTIONS.find(e => e.id === emotionId);
   if (!emotion) return null;
@@ -98,13 +97,11 @@ export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
   return (
     <div
       className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop"
-      style={{ overflow: 'visible' }}
     >
       <img
         src={emotion.url}
         alt={emotion.label}
-        style={{ width: EMOTION_DISPLAY_SIZE, height: EMOTION_DISPLAY_SIZE, flexShrink: 0 }}
-        className="object-contain drop-shadow-lg"
+        className="w-full h-full object-contain drop-shadow-lg"
         draggable={false}
       />
     </div>
