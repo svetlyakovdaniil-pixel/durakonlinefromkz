@@ -43,6 +43,19 @@ function IAPInitializer() {
   return null;
 }
 
+/** Syncs battery-saver CSS class on <body> with the user's setting */
+function BatterySaverSync() {
+  const { settings } = useSettings();
+  useEffect(() => {
+    if (settings.batterySaverEnabled) {
+      document.body.classList.add('battery-saver');
+    } else {
+      document.body.classList.remove('battery-saver');
+    }
+  }, [settings.batterySaverEnabled]);
+  return null;
+}
+
 function LanguageGate({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings();
   const [location] = useLocation();
@@ -85,6 +98,7 @@ function App() {
         <SettingsProvider>
           <I18nProvider>
           <IAPInitializer />
+          <BatterySaverSync />
           <LanguageGate>
           <MusicProvider>
             <SoundProvider>

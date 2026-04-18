@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useCallback, useEffect } from 'react';
+import React, { memo, useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import type { ClientGameState, AvailableAction, Card, BattlePair } from '../../../shared/gameTypes';
 import { RANK_ORDER } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS, SUIT_COLORS, CARD_BACK_URL, CARD_BACK_CUSTOM_URL, GAME_TABLE_URL, TABLE_STYLES, CARD_IMAGES, CARD_IMAGES_CUSTOM, getCardImageKey, getCustomCardImageKey } from '../../../shared/cardAssets';
@@ -19,6 +19,7 @@ import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import GameSettingsSheet from './GameSettingsSheet';
 import { EmotionPicker, EmotionBubble, useEmotionPicker } from './EmotionPicker';
+import { TurnTimerMobile, TurnTimerDesktop } from './TurnTimer';
 import TutorialOverlay from './TutorialOverlay';
 import TutorialTooltip from './TutorialTooltip';
 import TutorialArrow from './TutorialArrow';
@@ -47,7 +48,7 @@ function sortHand(hand: Card[], mode: 'suit-rank' | 'rank-only'): Card[] {
 
 // ---- PlayerHand component with drag-and-drop support ----
 
-function PlayerHand({
+const PlayerHand = memo(function PlayerHand({
   sortedHand,
   playableIds,
   transferIds,
@@ -236,10 +237,10 @@ function PlayerHand({
       </div>
     </div>
   );
-}
+});
 
 // ---- Deck visual: trump card peeks from LEFT side of deck ----
-function DeckVisual({
+const DeckVisual = memo(function DeckVisual({
   deckCount,
   trumpCard,
   hiddenTrumpCard1,
@@ -349,10 +350,11 @@ function DeckVisual({
       </div>
     </div>
   );
-}
+});
 
 // ---- Trump icon ----
-function TrumpIcon({ suit, size = 'normal', label = 'Козырь' }: { suit: string; size?: 'normal' | 'large'; label?: string }) {
+interface TrumpIconProps { suit: string; size?: 'normal' | 'large'; label?: string }
+const TrumpIcon = memo(function TrumpIcon({ suit, size = 'normal', label = 'Козырь' }: TrumpIconProps) {
   const symbol = SUIT_SYMBOLS[suit] || suit;
   const isRed = suit === 'hearts' || suit === 'diamonds';
   const color = isRed ? '#ef4444' : '#e5e7eb';
@@ -400,10 +402,11 @@ function TrumpIcon({ suit, size = 'normal', label = 'Козырь' }: { suit: st
       </span>
     </div>
   );
-}
+});
 
 // ---- Discard pile visual ----
-function DiscardPile({ count, deckStyle, bitoLabel = 'Бито' }: { count: number; deckStyle: 'classic' | 'custom'; bitoLabel?: string }) {
+interface DiscardPileProps { count: number; deckStyle: 'classic' | 'custom'; bitoLabel?: string }
+const DiscardPile = memo(function DiscardPile({ count, deckStyle, bitoLabel = 'Бито' }: DiscardPileProps) {
   const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
 
   const cardPositions = useMemo(() => {
@@ -457,7 +460,7 @@ function DiscardPile({ count, deckStyle, bitoLabel = 'Бито' }: { count: numb
       <span className="text-amber-300 text-xs sm:text-2xl font-bold">{bitoLabel}</span>
     </div>
   );
-}
+});
 
 
 export interface GameTableProps {
@@ -562,6 +565,8 @@ export default function GameTable({
   // Sound effects
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
   const { settings: gameSettings } = useSettings();
+  // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
+  const blurClass = gameSettings.batterySaverEnabled ? '' : '${blurClass}';
 
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
@@ -1429,7 +1434,7 @@ export default function GameTable({
 
       {/* Leave game confirmation dialog */}
       {showLeaveConfirm && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 ${blurClass}">
           <div className="bg-[#1a2d45] border border-red-700/40 rounded-2xl p-4 sm:p-6 max-w-sm w-full mx-4 text-center space-y-3 sm:space-y-4">
             <DoorOpen className="w-10 h-10 sm:w-12 sm:h-12 text-red-400 mx-auto" />
             <h3 className="text-lg sm:text-xl font-bold text-amber-100">{t('game.leaveGameTitle')}</h3>
@@ -1475,7 +1480,7 @@ export default function GameTable({
 
       {/* Room frozen overlay */}
       {frozenInfo && (
-        <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className={`absolute inset-0 z-[60] flex items-center justify-center bg-black/70 ${blurClass}`}>
           <div className="bg-[#1a2d45] border-2 border-amber-600/60 rounded-2xl p-5 sm:p-8 max-w-sm w-full mx-4 text-center space-y-4">
             <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-full bg-amber-900/40 border-2 border-amber-600/40 flex items-center justify-center">
               <svg className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1515,7 +1520,7 @@ export default function GameTable({
 
       <div className="relative z-10 flex flex-col game-table-root">
         {/* Top HUD — compact panel */}
-        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 backdrop-blur-sm border-b border-amber-700/20 overflow-hidden">
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 ${blurClass} border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge data-tutorial="deck-info" variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
               <span data-tutorial="mobile-decks">{locale === 'en' ? 'D1' : 'К1'}:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
@@ -1529,10 +1534,7 @@ export default function GameTable({
             <Badge variant="outline" className="border-amber-700/30 text-amber-200/70 text-sm px-2 sm:px-3 py-1">
               {gs.direction === 'cw' ? <ArrowRight className="w-[18px] h-[18px] sm:w-5 sm:h-5" /> : <ArrowLeft className="w-[18px] h-[18px] sm:w-5 sm:h-5" />}
             </Badge>
-            <Badge data-tutorial="timer" className={`sm:hidden text-sm px-2 py-1 ${turnTimer <= 5 ? 'bg-red-900/60 text-red-300 border-red-700/40 animate-pulse' : 'bg-amber-900/60 text-amber-300 border-amber-700/40'}`}>
-              <Timer className="w-4 h-4 mr-0.5" />
-              {turnTimer >= 99 ? '--' : `${turnTimer}с`}
-            </Badge>
+            <TurnTimerMobile seconds={turnTimer} />
             {/* Settings button */}
             <GameSettingsSheet onLeaveGame={() => onLeaveGame?.()} roomPenalty={roomPenalty} isTutorial={isTutorial}>
               <button className={`transition-colors p-1 sm:p-1.5 rounded relative ${isTutorial ? 'text-amber-300 hover:text-amber-200' : 'text-amber-200/50 hover:text-amber-100'}`}>
@@ -1696,19 +1698,7 @@ export default function GameTable({
         <div className="flex-1 flex relative overflow-hidden min-h-0">
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
-            <div data-tutorial="timer-desktop" className={`flex flex-col items-center gap-1 rounded-xl px-4 py-3 border-2 transition-all ${
-              turnTimer <= 5
-                ? 'bg-red-900/60 border-red-500/50 animate-pulse'
-                : 'bg-black/50 border-amber-700/30'
-            }`}>
-              <Timer className={`w-6 h-6 ${turnTimer <= 5 ? 'text-red-400' : 'text-amber-400'}`} />
-              <span className={`text-4xl md:text-5xl font-black tabular-nums leading-none ${
-                turnTimer <= 5 ? 'text-red-300' : 'text-amber-300'
-              }`}>
-                {turnTimer >= 99 ? '--' : turnTimer}
-              </span>
-              <span className={`text-xs font-medium ${turnTimer <= 5 ? 'text-red-400/70' : 'text-amber-200/50'}`}>{turnTimer >= 99 ? '' : t('game.sec')}</span>
-            </div>
+            <TurnTimerDesktop seconds={turnTimer} secLabel={t('game.sec')} />
 
             {gs.discardCount > 0 && (
               <div data-tutorial="bito-counter"><DiscardPile count={gs.discardCount} deckStyle={gs.deckStyle} bitoLabel={t('game.bito')} /></div>
@@ -1871,7 +1861,7 @@ export default function GameTable({
           </div>
 
           {/* MOBILE: Trump icon */}
-          <div data-tutorial="trump-indicator" className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 backdrop-blur-sm rounded-lg px-2.5 py-2 border border-amber-700/40">
+          <div data-tutorial="trump-indicator" className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 ${blurClass} rounded-lg px-2.5 py-2 border border-amber-700/40">
             <span className={`${mobileTrumpColor} text-3xl leading-none`}>{trumpSymbol}</span>
             <span className="text-amber-200/60 text-[8px] font-semibold">{t('game.trumpSuit')}</span>
 
@@ -1949,7 +1939,7 @@ export default function GameTable({
               {/* Multi-card selection notice */}
               {isMultiSelecting && (
                 <div className="text-center mb-1">
-                  <span className="text-amber-200 text-sm sm:text-base bg-black/50 px-3 py-1 rounded-lg backdrop-blur-sm">
+                  <span className="text-amber-200 text-sm sm:text-base bg-black/50 px-3 py-1 rounded-lg ${blurClass}">
                     {multiSelectMode === 'transfer'
                       ? t('game.multiSelectTransferN', { n: String(multiSelectIds.size) })
                       : multiSelectMode === 'passthrough'
@@ -1964,14 +1954,14 @@ export default function GameTable({
                 {isMultiSelecting && multiSelectMode === 'attack' && (
                   <>
                     <Button
-                      className="action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-emerald-500/20"
+                      className={`action-btn-blink bg-emerald-700/35 hover:bg-emerald-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-emerald-500/20`}
                       onClick={handleMultiAttack}
                     >
                       {t('game.playN', { n: String(multiSelectIds.size) })}
                     </Button>
                     <Button
                       variant="outline"
-                      className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                      className={`border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl`}
                       onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
                       {t('game.cancel')}
@@ -1981,14 +1971,14 @@ export default function GameTable({
                 {isMultiSelecting && multiSelectMode === 'transfer' && (
                   <>
                     <Button
-                      className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
+                      className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-purple-500/20`}
                       onClick={handleMultiTransfer}
                     >
                       {t('game.transferN', { n: String(multiSelectIds.size) })}
                     </Button>
                     <Button
                       variant="outline"
-                      className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                      className={`border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl`}
                       onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
                       {t('game.cancel')}
@@ -1998,7 +1988,7 @@ export default function GameTable({
                 {isMultiSelecting && multiSelectMode === 'passthrough' && (
                   <>
                     <Button
-                      className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
+                      className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-yellow-500/20`}
                       onClick={handleMultiPassThrough}
                     >
                       <Eye className="w-5 h-5 mr-1.5" />
@@ -2006,7 +1996,7 @@ export default function GameTable({
                     </Button>
                     <Button
                       variant="outline"
-                      className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                      className={`border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl`}
                       onClick={() => { setMultiSelectIds(new Set()); setMultiSelectMode(null); }}
                     >
                       {t('game.cancel')}
@@ -2015,7 +2005,7 @@ export default function GameTable({
                 )}
                 {selectedCanBeat && (
                   <Button
-                    className="action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-blue-500/20"
+                    className={`action-btn-blink bg-blue-700/35 hover:bg-blue-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-blue-500/20`}
                     onClick={() => { onPlayCard(selectedCardId!); setSelectedCardId(null); }}
                   >
                     <Shield className="w-5 h-5 mr-1.5" />
@@ -2024,7 +2014,7 @@ export default function GameTable({
                 )}
                 {selectedCanTransfer && (
                   <Button
-                    className="action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-purple-500/20"
+                    className={`action-btn-blink bg-purple-700/35 hover:bg-purple-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-purple-500/20`}
                     onClick={() => {
                       const cardId = selectedCardId!;
                       const card = gs.myHand.find(c => c.id === cardId);
@@ -2049,7 +2039,7 @@ export default function GameTable({
                 )}
                 {selectedCanPassThrough && (
                   <Button
-                    className="action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-yellow-500/20"
+                    className={`action-btn-blink bg-yellow-700/35 hover:bg-yellow-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-yellow-500/20`}
                     onClick={() => { onShowPassThrough(selectedCardId!); setSelectedCardId(null); }}
                   >
                     <Eye className="w-5 h-5 mr-1.5" />
@@ -2059,24 +2049,24 @@ export default function GameTable({
                 {selectedCardId && !isMultiSelecting && (
                   <Button
                     variant="outline"
-                    className="border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl"
+                    className={`border-gray-600/40 text-gray-300 bg-gray-800/20 text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl`}
                     onClick={() => setSelectedCardId(null)}
                   >
                     {t('game.cancel')}
                   </Button>
                 )}
                 {canTake && (
-                  <Button variant="destructive" className="action-btn-blink text-lg h-14 px-6 font-semibold bg-red-700/35 hover:bg-red-600/55 backdrop-blur-sm shadow-xl" onClick={onTakeCards}>
+                  <Button variant="destructive" className={`action-btn-blink text-lg h-14 px-6 font-semibold bg-red-700/35 hover:bg-red-600/55 ${blurClass} shadow-xl`} onClick={onTakeCards}>
                     {t('game.take')}
                   </Button>
                 )}
                 {canEndAttack && (
-                  <Button className="action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl border border-green-500/20" onClick={onEndAttack}>
+                  <Button className={`action-btn-blink bg-green-700/35 hover:bg-green-600/55 text-white text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl border border-green-500/20`} onClick={onEndAttack}>
                     {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                   </Button>
                 )}
                 {canSkip && (
-                  <Button variant="outline" className="action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/20 text-lg h-14 px-6 font-semibold backdrop-blur-sm shadow-xl" onClick={onSkipTurn}>
+                  <Button variant="outline" className={`action-btn-blink border-amber-700/40 text-amber-200 bg-amber-900/20 text-lg h-14 px-6 font-semibold ${blurClass} shadow-xl`} onClick={onSkipTurn}>
                     {t('game.skip')}
                   </Button>
                 )}
@@ -2095,7 +2085,7 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div className="px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0 bg-black/60 backdrop-blur-sm border-t border-amber-700/20">
+        <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0 bg-black/60 ${blurClass} border-t border-amber-700/20`}>
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Sparkles, Check, Banknote } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Sparkles, Check, Banknote, Battery } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { useSoundContext } from '@/contexts/SoundContext';
@@ -18,7 +18,7 @@ interface GameSettingsSheetProps {
 }
 
 export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty = 0, isTutorial = false }: GameSettingsSheetProps) {
-  const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled } = useSettings();
+  const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled, setBatterySaverEnabled } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
   const sound = useSoundContext();
@@ -55,6 +55,10 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
 
   const handleAnimationsToggle = (checked: boolean) => {
     setAnimationsEnabled(checked);
+  };
+
+  const handleBatterySaverToggle = (checked: boolean) => {
+    setBatterySaverEnabled(checked);
   };
 
   return (
@@ -146,7 +150,23 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
             />
           </label>
 
-          {/* 5. Language */}
+          {/* 5. Battery Saver */}
+          <label className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 cursor-pointer">
+            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+              <Battery className="w-4 h-4 text-green-400" />
+              <span>
+                <span className="block">{t('settings.batterySaver') || 'Экономия батареи'}</span>
+                <span className="block text-xs text-amber-200/40 font-normal">{t('settings.batterySaverDesc') || 'Меньше нагрев, больше скорость'}</span>
+              </span>
+            </span>
+            <Checkbox
+              checked={settings.batterySaverEnabled}
+              onCheckedChange={(checked) => handleBatterySaverToggle(checked === true)}
+              className="border-green-700/40 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+            />
+          </label>
+
+          {/* 6. Language */}
           <div className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
               <Globe className="w-4 h-4 text-amber-400" />
