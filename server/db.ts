@@ -3645,3 +3645,60 @@ export async function fixAllPlaylistCloudFrontUrls() {
     console.log(`[Music] Fixed CloudFront URLs in ${fixed} playlist(s)`);
   }
 }
+
+// ============================================================
+// ADMIN: Force rename player to a specific name
+// ============================================================
+
+export async function adminSetPlayerName(
+  profileId: number,
+  newName: string
+): Promise<{ success: boolean; newName?: string; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'Database not available' };
+
+  const [profile] = await db.select({ id: playerProfiles.id, userId: playerProfiles.userId })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+  if (!profile) return { success: false, reason: 'Player not found' };
+
+  await db.update(playerProfiles)
+    .set({ displayName: newName })
+    .where(eq(playerProfiles.id, profileId));
+
+  await db.update(users)
+    .set({ name: newName })
+    .where(eq(users.id, profile.userId));
+
+  return { success: true, newName };
+}
+
+// ============================================================
+// ADMIN: Custom profanity word list (stored in server_settings)
+// ============================================================
+
+const CUSTOM_PROFANITY_KEY = 'profanity_custom_words';
+
+export async function getCustomProfanityWords(): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const [row] = await db.select().from(serverSettings)
+    .where(eq(serverSettings.key, CUSTOM_PROFANITY_KEY))
+    .limit(1);
+  if (!row) return [];
+  try {
+    return JSON.parse(row.value) as string[];
+  } catch {
+    return [];
+  }
+}
+
+export async function setCustomProfanityWords(words: string[]): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const value = JSON.stringify(words);
+  await db.insert(serverSettings)
+    .values({ key: CUSTOM_PROFANITY_KEY, value })
+    .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
+}

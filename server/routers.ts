@@ -97,6 +97,9 @@ import {
   activateReferralCode,
   getReferralStats,
   adminForceRenamePlayer,
+  adminSetPlayerName,
+  getCustomProfanityWords,
+  setCustomProfanityWords,
   getMaintenanceStatus,
   setMaintenanceStatus,
 } from "./db";
@@ -181,6 +184,14 @@ export const appRouter = router({
           // Block profanity in display names
           if (containsProfanity(input.displayName)) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
+          }
+          // Block custom profanity words added by admins
+          const customWords = await getCustomProfanityWords();
+          if (customWords.length > 0) {
+            const normalizedInput = input.displayName.toLowerCase().replace(/[\s._\-]/g, '');
+            if (customWords.some((w: string) => normalizedInput.includes(w.toLowerCase().replace(/[\s._\-]/g, '')))) {
+              throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
+            }
           }
         }
         await updateProfileDisplayName(ctx.user.id, input.displayName);
@@ -977,6 +988,47 @@ export const appRouter = router({
           details: { profileId: input.profileId, newName: result.newName },
         });
         return { success: true, newName: result.newName };
+      }),
+
+    // ── Set player name (admin/gm) ──
+    setPlayerName: gmProcedure
+      .input(z.object({ profileId: z.number(), newName: z.string().min(1).max(32) }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await adminSetPlayerName(input.profileId, input.newName.trim());
+        if (!result.success) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: result.reason ?? 'Player not found' });
+        }
+        // Update in-memory socket name map if player is online
+        const playerDetail = await adminGetPlayerDetail(input.profileId);
+        if (playerDetail?.openId && result.newName) {
+          updatePlayerDisplayName(playerDetail.openId, result.newName);
+        }
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'force_rename',
+          details: { profileId: input.profileId, newName: result.newName },
+        });
+        return { success: true, newName: result.newName };
+      }),
+
+    // ── Custom profanity words ──
+    getCustomProfanityWords: adminProcedure
+      .query(async () => {
+        return getCustomProfanityWords();
+      }),
+
+    setCustomProfanityWords: adminProcedure
+      .input(z.object({ words: z.array(z.string().min(1).max(64)) }))
+      .mutation(async ({ ctx, input }) => {
+        await setCustomProfanityWords(input.words);
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'force_rename',
+          details: { action: 'update_profanity_filter', wordCount: input.words.length },
+        });
+        return { success: true };
       }),
 
     // ── Audit Log ──

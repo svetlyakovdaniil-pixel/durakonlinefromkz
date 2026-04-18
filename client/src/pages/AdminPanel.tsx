@@ -1,6 +1,6 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   Users, Activity, ArrowLeftRight, Shield, Search,
@@ -691,6 +691,18 @@ function ProfileInfoSection({
 }) {
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [selectedRole, setSelectedRole] = useState<"admin" | "user" | "gm">("user");
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [newNameInput, setNewNameInput] = useState("");
+  const utils = trpc.useUtils();
+  const setPlayerNameMut = trpc.admin.setPlayerName.useMutation({
+    onSuccess: (res) => {
+      toast.success(`Имя изменено на: ${res.newName}`);
+      setShowRenameDialog(false);
+      setNewNameInput("");
+      utils.admin.playerDetail.invalidate({ profileId: detail.id });
+    },
+    onError: (e) => toast.error(`Ошибка: ${e.message}`),
+  });
 
   return (
     <div className="space-y-6">
@@ -734,8 +746,8 @@ function ProfileInfoSection({
       </div>
 
       {/* Role change button (admin only) */}
-      {!isGM && (
-        <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
+        {!isGM && (
           <Button
             variant="outline"
             size="sm"
@@ -748,8 +760,16 @@ function ProfileInfoSection({
             <Crown className="w-4 h-4 mr-2" />
             Сменить роль
           </Button>
-        </div>
-      )}
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => { setNewNameInput(detail.displayName || ""); setShowRenameDialog(true); }}
+          className="border-orange-700/60 text-orange-300 hover:bg-orange-900/20"
+        >
+          ✏️ Принудительно переименовать
+        </Button>
+      </div>
 
       {/* Role change dialog */}
       <Dialog open={showRoleDialog} onOpenChange={setShowRoleDialog}>
@@ -794,6 +814,42 @@ function ProfileInfoSection({
               className="bg-amber-600 hover:bg-amber-700"
             >
               Подтвердить
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Force rename dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent className="bg-gray-900 border-orange-800/60 text-gray-100">
+          <DialogHeader>
+            <DialogTitle className="text-orange-300">✉️ Принудительное переименование</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              Игрок: <strong className="text-amber-100">{detail.displayName || `#${detail.gameId}`}</strong>
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-xs text-gray-400 block">Новое имя (1–32 символа)</label>
+            <Input
+              value={newNameInput}
+              onChange={e => setNewNameInput(e.target.value)}
+              placeholder="Введите новое имя..."
+              maxLength={32}
+              className="bg-gray-800 border-gray-700 text-amber-100"
+              onKeyDown={e => { if (e.key === 'Enter' && newNameInput.trim()) setPlayerNameMut.mutate({ profileId: detail.id, newName: newNameInput.trim() }); }}
+            />
+            <p className="text-xs text-gray-500">Имя будет установлено без проверки фильтра матов.</p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)} className="border-gray-700 text-gray-300">
+              Отмена
+            </Button>
+            <Button
+              disabled={setPlayerNameMut.isPending || !newNameInput.trim()}
+              onClick={() => setPlayerNameMut.mutate({ profileId: detail.id, newName: newNameInput.trim() })}
+              className="bg-orange-700 hover:bg-orange-600 text-white"
+            >
+              {setPlayerNameMut.isPending ? 'Применяем...' : 'Применить'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -3038,6 +3094,97 @@ function ToolsTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ─── Custom Profanity Filter ─── */}
+      <ProfanityFilterSection />
+    </div>
+  );
+}
+
+function ProfanityFilterSection() {
+  const utils = trpc.useUtils();
+  const { data: words = [], isLoading } = trpc.admin.getCustomProfanityWords.useQuery();
+  const setWordsMut = trpc.admin.setCustomProfanityWords.useMutation({
+    onSuccess: () => {
+      utils.admin.getCustomProfanityWords.invalidate();
+      toast.success('Фильтр обновлён');
+    },
+    onError: (e) => toast.error(`Ошибка: ${e.message}`),
+  });
+  const [newWord, setNewWord] = useState('');
+  const [localWords, setLocalWords] = useState<string[]>([]);
+
+  useEffect(() => {
+    setLocalWords(words);
+  }, [words]);
+
+  const addWord = () => {
+    const trimmed = newWord.trim().toLowerCase();
+    if (!trimmed || localWords.includes(trimmed)) return;
+    const updated = [...localWords, trimmed];
+    setLocalWords(updated);
+    setNewWord('');
+    setWordsMut.mutate({ words: updated });
+  };
+
+  const removeWord = (word: string) => {
+    const updated = localWords.filter(w => w !== word);
+    setLocalWords(updated);
+    setWordsMut.mutate({ words: updated });
+  };
+
+  return (
+    <div className="rounded-xl border border-purple-700/40 bg-purple-950/10 p-5 space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="text-purple-400 text-xl">🚫</span>
+        <div>
+          <h3 className="font-semibold text-amber-200">Фильтр имён (кастомные слова)</h3>
+          <p className="text-xs text-gray-400 mt-0.5">Добавляйте слова, которые игроки не смогут использовать в никах</p>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Input
+          value={newWord}
+          onChange={e => setNewWord(e.target.value)}
+          placeholder="Добавить слово..."
+          maxLength={64}
+          className="bg-gray-800 border-gray-700 text-amber-100 flex-1"
+          onKeyDown={e => { if (e.key === 'Enter') addWord(); }}
+        />
+        <Button
+          onClick={addWord}
+          disabled={!newWord.trim() || setWordsMut.isPending}
+          className="bg-purple-700 hover:bg-purple-600 text-white shrink-0"
+        >
+          + Добавить
+        </Button>
+      </div>
+      {isLoading ? (
+        <p className="text-xs text-gray-500">Загрузка...</p>
+      ) : localWords.length === 0 ? (
+        <p className="text-xs text-gray-500 italic">Кастомных слов нет. Добавьте первое слово выше.</p>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          {localWords.map(word => (
+            <span
+              key={word}
+              className="inline-flex items-center gap-1.5 bg-purple-900/40 border border-purple-700/50 text-purple-200 text-sm px-3 py-1 rounded-full"
+            >
+              {word}
+              <button
+                onClick={() => removeWord(word)}
+                className="text-purple-400 hover:text-red-400 transition-colors ml-0.5"
+                title="Удалить"
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <p className="text-xs text-gray-500">
+        Слова хранятся в БД и проверяются при каждой смене имени игрока. Строчные буквы и регистр игнорируются.
+      </p>
     </div>
   );
 }
