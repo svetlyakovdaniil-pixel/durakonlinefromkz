@@ -136,7 +136,7 @@ function RewardPopup({
           <div className="space-y-2">
             {/* Shanyraks */}
             <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(234,179,8,0.08)' }}>
-              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
+              <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
               <span className="text-amber-200 font-semibold text-sm">
                 +{reward.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
               </span>
@@ -145,7 +145,7 @@ function RewardPopup({
             {/* Tenge */}
             {reward.tenge > 0 && (
               <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(139,92,246,0.10)' }}>
-                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
+                <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
                 <span className="text-purple-300 font-semibold text-sm">
                   +{reward.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
                 </span>
@@ -786,13 +786,13 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       <div className="text-amber-100 text-sm space-y-1.5">
                         {/* Shanyraks */}
                         <div className="flex items-center gap-2">
-                          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                          <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
                           <span>+{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}</span>
                         </div>
                         {/* Tenge */}
                         {rewardDef.tenge > 0 && (
                           <div className="flex items-center gap-2">
-                            <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                            <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
                             <span>+{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</span>
                           </div>
                         )}

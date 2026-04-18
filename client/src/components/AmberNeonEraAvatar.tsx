@@ -64,7 +64,7 @@ export function AmberNeonEraAvatar({ size = 48, className = '' }: Props) {
         animation: `ane-neon-${uid} 2s ease-in-out infinite, ane-flicker-${uid} 5s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_neon_era_s7_v2_434a2768.png"
+          src="/assets/static/amber_neon_era_s7_v2_434a2768.png"
           alt="Янтарь Неоновая эра"
           style={{
             width: '100%', height: '100%',

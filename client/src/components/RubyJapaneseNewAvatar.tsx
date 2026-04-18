@@ -41,7 +41,7 @@ export function RubyJapaneseNewAvatar({ size = 48, className = '' }: Props) {
         animation: `rjpn-halo-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_japanese_v2_ed9fc656.png"
+          src="/assets/static/ruby_japanese_v2_ed9fc656.png"
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

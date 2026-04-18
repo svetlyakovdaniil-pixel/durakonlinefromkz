@@ -25,7 +25,7 @@ export function RubyEgyptianAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `reg-halo-${uid} 2.5s ease-in-out infinite` }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_egyptian_gods_52ceb9b8.png"
+          src="/assets/static/ruby_egyptian_gods_52ceb9b8.png"
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `reg-flicker-${uid} 3s ease-in-out infinite` }}
           draggable={false}

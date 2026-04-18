@@ -1321,7 +1321,7 @@ export default function GameTable({
           {((gs.prizePool && gs.prizePool > 0) || (prizeData && prizeData.pool > 0)) && (
             <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
+                <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
                 <span className="text-amber-300 font-bold text-sm sm:text-base">{t('game.bank')}: {formatBalance(gs.prizePool || prizeData?.pool || 0)}</span>
               </div>
             </div>
@@ -1349,7 +1349,7 @@ export default function GameTable({
                     {prize && prize.amount > 0 && (
                       <span className="flex items-center gap-0.5 text-xs sm:text-sm text-amber-300">
                         +{formatBalance(prize.amount)}
-                        <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3.5 h-3.5" />
+                        <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3.5 h-3.5" />
                       </span>
                     )}
                     <span className={`text-xs sm:text-sm ${p.leftGame && p.id === gs.loserId ? 'text-red-400' : p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
@@ -1424,7 +1424,7 @@ export default function GameTable({
                   <span className="text-red-300 text-xs sm:text-sm font-medium">
                     {t('game.leaveGameDeduction', { amount: formatBalance(Math.floor(gs.prizePool / gs.players.length)) })}
                   </span>
-                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                  <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                 </div>
               )}
               <div className="flex items-center justify-center gap-1.5 bg-red-900/30 border border-red-700/30 rounded-lg px-3 py-2">
@@ -1607,7 +1607,7 @@ export default function GameTable({
                           return oppPrize && oppPrize.amount > 0 ? (
                             <div className={`flex items-center gap-0.5 ${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-amber-300 font-medium`}>
                               <span>+{formatBalance(oppPrize.amount)}</span>
-                              <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3" />
+                              <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3 h-3" />
                             </div>
                           ) : null;
                         })()}
@@ -1868,7 +1868,7 @@ export default function GameTable({
                 return myPrize && myPrize.amount > 0 ? (
                   <div className="flex items-center gap-1.5 text-amber-300 text-xs sm:text-sm font-medium">
                     <span>+{formatBalance(myPrize.amount)}</span>
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                    <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                   </div>
                 ) : null;
               })()}

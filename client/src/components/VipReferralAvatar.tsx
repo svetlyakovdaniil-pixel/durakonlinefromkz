@@ -6,7 +6,7 @@ interface VipReferralAvatarProps {
 }
 
 const VIP_AVATAR_URL =
-  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
+  '/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
 
 /**
  * VipReferralAvatar — Referral reward VIP avatar

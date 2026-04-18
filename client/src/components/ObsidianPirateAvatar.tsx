@@ -66,7 +66,7 @@ export function ObsidianPirateAvatar({ size = 48, className = '' }: Props) {
         animation: `opa-storm-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_pirate_islands-m7mqMLNNUB3WiggJMsPgQ7.webp"
+          src="/assets/static/obsidian_pirate_islands-m7mqMLNNUB3WiggJMsPgQ7.webp"
           alt="Обсидиан Пираты"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -59,7 +59,7 @@ export function NeonDinoAvatar({ size = 48, className = '' }: NeonDinoAvatarProp
         }}
       >
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp"
+          src="/assets/static/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp"
           alt="Рубин"
           style={{
             width: '100%',

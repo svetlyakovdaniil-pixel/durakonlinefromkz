@@ -97,7 +97,7 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
       >
         {/* ── Base image — fades during glasses-only phase ── */}
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp"
+          src="/assets/static/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp"
           alt="Янтарь"
           style={{
             position: 'absolute',

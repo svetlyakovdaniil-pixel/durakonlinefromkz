@@ -9,7 +9,7 @@ interface OniMaskAvatarProps {
 
 // v3: transparent background, red-gold mask
 const BASE_IMAGE_URL =
-  'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp';
+  '/assets/static/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp';
 
 export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

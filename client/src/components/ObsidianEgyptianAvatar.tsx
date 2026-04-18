@@ -68,7 +68,7 @@ export function ObsidianEgyptianAvatar({ size = 48, className = '' }: Props) {
         animation: `oea-pulse-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_egyptian_gods-HwZuAJipid5wMPLwE9jfDN.webp"
+          src="/assets/static/obsidian_egyptian_gods-HwZuAJipid5wMPLwE9jfDN.webp"
           alt="Обсидиан Египетские боги"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

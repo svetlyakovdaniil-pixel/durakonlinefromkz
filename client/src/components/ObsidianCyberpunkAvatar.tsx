@@ -67,7 +67,7 @@ export function ObsidianCyberpunkAvatar({ size = 48, className = '' }: Props) {
         animation: `oca-void-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_cyberpunk-F42HmWbza98ZbqBggYVNNt.webp"
+          src="/assets/static/obsidian_cyberpunk-F42HmWbza98ZbqBggYVNNt.webp"
           alt="Обсидиан Киберпанк"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

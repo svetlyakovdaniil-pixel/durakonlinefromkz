@@ -3,19 +3,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 // CDN URLs for sound effects
 const SOUND_URLS = {
   // Original sounds
-  cardDeal: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/card_deal_faaefea0.wav',
-  roundWin: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/round_win_72f79f57.wav',
-  gameWin: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_win_1b8d5eaa.wav',
-  gameLose: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/game_lose_d0b3c1f1.wav',
+  cardDeal: '/assets/static/card_deal_faaefea0.wav',
+  roundWin: '/assets/static/round_win_72f79f57.wav',
+  gameWin: '/assets/static/game_win_1b8d5eaa.wav',
+  gameLose: '/assets/static/game_lose_d0b3c1f1.wav',
 
   // New custom sounds
-  cardPlay: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%BE%D0%BB%D0%BE%D0%B6%D0%B8%D0%BB%D0%B8%D0%BA%D0%B0%D1%80%D1%82%D1%83%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB_2d5c774f.mp3',
-  trumpPlay: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%BE%D0%BB%D0%BE%D0%B6%D0%B8%D0%BB%D0%B8%D0%BA%D0%BE%D0%B7%D1%8B%D1%80%D1%8C%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB_a1725e72.mp3',
-  cardTake: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B1%D0%B5%D1%80%D0%B5%D1%82%D0%B2%D1%80%D1%83%D0%BA%D0%B8_8e6bac85.mp3',
-  transfer: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%BF%D0%B5%D1%80%D0%B5%D0%B2%D0%BE%D0%B4_685db838.mp3',
-  multiCard: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%B8%D0%B3%D1%80%D0%BE%D0%BA%D0%BA%D0%B8%D0%B4%D0%B0%D0%B5%D1%82%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%81%D1%80%D0%B0%D0%B7%D1%83%D0%BD%D0%B5%D1%81%D0%BA%D0%BE%D0%BB%D1%8C%D0%BA%D0%BE%D0%BA%D0%B0%D1%80%D1%82%D0%B7%D0%B0%D1%80%D0%B0%D0%B7_db22f391.mp3',
-  yourTurn: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/%D0%92%D0%90%D0%A8%D0%A5%D0%9E%D0%94_41ad06aa.mp3',
-  bito: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/bito1_120_6a477906.mp3',
+  cardPlay: '/assets/static/положиликартунастол_2d5c774f.mp3',
+  trumpPlay: '/assets/static/положиликозырьнастол_a1725e72.mp3',
+  cardTake: '/assets/static/беретвруки_8e6bac85.mp3',
+  transfer: '/assets/static/перевод_685db838.mp3',
+  multiCard: '/assets/static/игроккидаетнастолсразунесколькокартзараз_db22f391.mp3',
+  yourTurn: '/assets/static/ВАШХОД_41ad06aa.mp3',
+  bito: '/assets/static/bito1_120_6a477906.mp3',
 } as const;
 
 export type SoundName = keyof typeof SOUND_URLS;

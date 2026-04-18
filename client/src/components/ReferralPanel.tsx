@@ -6,9 +6,9 @@ import { toast } from 'sonner';
 import { Gift, Copy, Check, Loader2, ChevronLeft } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 
-const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
-const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
-const VIP_AVATAR_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
+const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
+const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
+const VIP_AVATAR_URL = '/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
 
 // Milestones: count, level, shanyrak, tenge
 // above=true → цифра в кружке снизу линии, награда сверху линии

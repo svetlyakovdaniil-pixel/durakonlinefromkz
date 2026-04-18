@@ -515,7 +515,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   onClick={() => setShowTengeTopUp(true)}
                   title={t('lobby.topUpTenge')}
                 >
-                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-10 h-10 object-contain" />
+                  <img src="/assets/static/tenge_9aefd1b7.png" alt="Тенге" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-amber-300/70 font-semibold leading-tight mt-0.5">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                 </button>
                 {/* Shanyrak */}
@@ -524,7 +524,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   onClick={() => setShowShanyrakTopUp(true)}
                   title={t('lobby.topUpShanyrak')}
                 >
-                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="w-10 h-10 object-contain" />
+                  <img src="/assets/static/shanyrak_96e91a49.png" alt="Шаныраки" className="w-10 h-10 object-contain" />
                   <span className="text-xs text-green-400 font-semibold leading-tight mt-0.5">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                 </button>
               </div>
@@ -663,7 +663,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
                   <div className="w-[51px] h-[51px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] object-contain" />
+                    <img src="/assets/static/tenge_9aefd1b7.png" alt="Тенге" className="w-[51px] h-[51px] object-contain" />
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
@@ -677,7 +677,7 @@ onClick={() => setShowTengeTopUp(true)}
                 <div className="flex items-center gap-1">
                   <div className="flex flex-col items-center">
                     <div className="h-[42px] flex items-center justify-center">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
+                      <img src="/assets/static/shanyrak_96e91a49.png" alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
                     </div>
                     <span className="text-xs text-green-400 font-semibold -mt-1">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   </div>
@@ -816,7 +816,7 @@ onClick={() => setShowTengeTopUp(true)}
                 </div>
                 <div>
                   <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
-                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                    <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
                     {t('lobby.bet')}: {formatBalance(BET_AMOUNTS[betAmountIdx])}
                   </Label>
                   <Slider
@@ -1396,7 +1396,7 @@ onClick={() => setShowTengeTopUp(true)}
                       <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? t('waitingRoom.deckN2') : t('waitingRoom.deckN1')}
                     </Badge>
                     <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs px-1.5 sm:px-2">
-                      <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+                      <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
                       {formatBalance(room.settings.betAmount || 100)}
                     </Badge>
                   </div>
@@ -1665,12 +1665,12 @@ onClick={() => setShowTengeTopUp(true)}
                                   {locale === 'kk' ? 'Нағыздар:' : locale === 'en' ? 'Rewards:' : 'Награды:'}
                                 </div>
                                 <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                  <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png" alt="" className="w-4 h-4 object-contain" />
+                                  <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4 object-contain" />
                                   +{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
                                 </div>
                                 {rewardDef.tenge > 0 && (
                                   <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                    <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png" alt="" className="w-4 h-4 object-contain" />
+                                    <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-4 h-4 object-contain" />
                                     +{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
                                   </div>
                                 )}

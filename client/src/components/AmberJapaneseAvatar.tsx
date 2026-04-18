@@ -61,7 +61,7 @@ export function AmberJapaneseAvatar({ size = 48, className = '' }: Props) {
         animation: `ajp-aura-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/amber_japanese_s9_11a4e751.png"
+          src="/assets/static/amber_japanese_s9_11a4e751.png"
           alt="Янтарь Японские мотивы"
           style={{
             width: '100%', height: '100%',

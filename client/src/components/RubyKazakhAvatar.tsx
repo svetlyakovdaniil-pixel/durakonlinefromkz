@@ -36,7 +36,7 @@ export function RubyKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `rkaz-halo-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_kazakh_v3_49409013.png"
+          src="/assets/static/ruby_kazakh_v3_49409013.png"
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

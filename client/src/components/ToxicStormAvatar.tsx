@@ -14,7 +14,7 @@ interface ToxicStormAvatarProps {
  * - Rain streaks animated falling down
  */
 export function ToxicStormAvatar({ size = 48, className = '' }: ToxicStormAvatarProps) {
-  const imgUrl = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/toxic_storm_avatar-cR6SmN4ZtMUEBVktcpwyo9.png';
+  const imgUrl = '/assets/static/toxic_storm_avatar-cR6SmN4ZtMUEBVktcpwyo9.png';
 
   return (
     <div

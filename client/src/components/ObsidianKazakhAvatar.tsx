@@ -160,7 +160,7 @@ export function ObsidianKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `oka-pulse-${uid} 2.4s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_kazakh_v2-CwSTTzwCooxU3Z7eSWybpy.webp"
+          src="/assets/static/obsidian_kazakh_v2-CwSTTzwCooxU3Z7eSWybpy.webp"
           alt="Обсидиан Казахский хан"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

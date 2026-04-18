@@ -178,7 +178,7 @@ export function ObsidianJapaneseAvatar({ size = 48, className = '' }: Props) {
         animation: `ojp5-pulse-${uid} 2.4s ease-in-out infinite`,
       }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/obsidian_japanese_v2_0098554b.png"
+          src="/assets/static/obsidian_japanese_v2_0098554b.png"
           alt="Обсидиан Японские мотивы"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '47.5% 47.5%', display: 'block' }}
           draggable={false}

@@ -36,7 +36,7 @@ const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
 // Batyry deck (classic) assets for shop display
 const CLASSIC_DECK_BACK = CARD_BACK_URL;
 const CLASSIC_KING_SPADES = CARD_IMAGES['K-spades'];
-const TENGE_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/tenge_9aefd1b7.png';
+const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
 
 const CLASSIC_DECK_PRICE = 25; // Батыры великой степи — платная колода
 
@@ -493,7 +493,7 @@ interface ConfirmPurchase {
   price: number;
 }
 
-const SHANYRAK_ICON = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/shanyrak_96e91a49.png';
+const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
 
 export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, isPremium = false, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);

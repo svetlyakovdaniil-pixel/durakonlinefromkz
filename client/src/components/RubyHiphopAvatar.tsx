@@ -25,7 +25,7 @@ export function RubyHiphopAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `rhh-halo-${uid} 2.8s ease-in-out infinite` }}>
         <img
-          src="https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/ruby_hiphop_90s_bde0fc3c.png"
+          src="/assets/static/ruby_hiphop_90s_bde0fc3c.png"
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `rhh-flicker-${uid} 3s ease-in-out infinite` }}
           draggable={false}
