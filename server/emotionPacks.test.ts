@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { EMOTION_PACKS, HAMSTER_PACK, MONKEY_PACK, getEmotionPack } from '../shared/emotionPacks';
+import { EMOTION_PACKS, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK, getEmotionPack } from '../shared/emotionPacks';
 
 describe('emotionPacks', () => {
-  it('should have two packs: hamster and monkey', () => {
-    expect(EMOTION_PACKS).toHaveLength(2);
+  it('should have three packs: hamster, monkey, and devil', () => {
+    expect(EMOTION_PACKS).toHaveLength(3);
     expect(EMOTION_PACKS[0].id).toBe('hamster');
     expect(EMOTION_PACKS[1].id).toBe('monkey');
+    expect(EMOTION_PACKS[2].id).toBe('devil');
   });
 
   it('hamster pack should be free (price 0)', () => {
@@ -16,19 +17,32 @@ describe('emotionPacks', () => {
     expect(MONKEY_PACK.price).toBe(150);
   });
 
-  it('both packs should have exactly 10 emotions', () => {
-    expect(HAMSTER_PACK.emotions).toHaveLength(10);
-    expect(MONKEY_PACK.emotions).toHaveLength(10);
+  it('devil pack should have price 150 tenge', () => {
+    expect(DEVIL_PACK.price).toBe(150);
   });
 
-  it('both packs should have the same emotion IDs', () => {
+  it('all packs should have exactly 10 emotions', () => {
+    expect(HAMSTER_PACK.emotions).toHaveLength(10);
+    expect(MONKEY_PACK.emotions).toHaveLength(10);
+    expect(DEVIL_PACK.emotions).toHaveLength(10);
+  });
+
+  it('all packs should have the same emotion IDs', () => {
     const hamsterIds = HAMSTER_PACK.emotions.map(e => e.id).sort();
     const monkeyIds = MONKEY_PACK.emotions.map(e => e.id).sort();
+    const devilIds = DEVIL_PACK.emotions.map(e => e.id).sort();
     expect(hamsterIds).toEqual(monkeyIds);
+    expect(hamsterIds).toEqual(devilIds);
   });
 
   it('monkey pack emotions should have CDN URLs', () => {
     for (const emotion of MONKEY_PACK.emotions) {
+      expect(emotion.url).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('devil pack emotions should have CDN URLs', () => {
+    for (const emotion of DEVIL_PACK.emotions) {
       expect(emotion.url).toMatch(/^https:\/\//);
     }
   });
@@ -47,6 +61,11 @@ describe('emotionPacks', () => {
   it('getEmotionPack should return monkey pack for monkey id', () => {
     const pack = getEmotionPack('monkey');
     expect(pack.id).toBe('monkey');
+  });
+
+  it('getEmotionPack should return devil pack for devil id', () => {
+    const pack = getEmotionPack('devil');
+    expect(pack.id).toBe('devil');
   });
 
   it('getEmotionPack should return hamster pack for hamster id', () => {
