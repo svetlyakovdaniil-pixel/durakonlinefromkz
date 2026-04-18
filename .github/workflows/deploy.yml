@@ -20,11 +20,5 @@ jobs:
             git pull origin main
             pnpm install --frozen-lockfile
             pnpm run build
-            # Restore static assets (images, audio) that are served locally
-            # These files are stored in /root/static_assets/ and survive deploys
-            if [ -d /root/static_assets ]; then
-              cp -r /root/static_assets/. /root/app/dist/public/assets/static/
-              echo "Static assets restored: $(ls /root/static_assets | wc -l) files"
-            fi
             pm2 restart durak
             echo "Deploy completed at $(date)"
