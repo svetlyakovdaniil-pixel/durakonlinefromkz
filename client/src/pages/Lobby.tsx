@@ -248,6 +248,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const isGalaxyTableOwned = ownedTables.includes('galaxy');
   const isSeaDepthsOwned = ownedTables.includes('sea_depths');
   const isStargazerOwned = ownedTables.includes('stargazer');
+  const isBlackVelvetOwned = ownedTables.includes('black_velvet');
   const { data: lobbyPlaylists = [] } = trpc.playlists.list.useQuery();
   const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
@@ -896,6 +897,7 @@ onClick={() => setShowTengeTopUp(true)}
       if (v === 'galaxy' && !isGalaxyTableOwned) return;
       if (v === 'sea_depths' && !isSeaDepthsOwned) return;
       if (v === 'stargazer' && !isStargazerOwned) return;
+      if (v === 'black_velvet' && !isBlackVelvetOwned) return;
                       setTableStyle(v as TableStyle);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
@@ -961,6 +963,16 @@ onClick={() => setShowTengeTopUp(true)}
                           <span className="flex items-center gap-1.5">
                             {!isStargazerOwned && <Lock className="w-3 h-3" />}
                             Звездочёт
+                          </span>
+                        </SelectItem>
+                        <SelectItem
+                          value="black_velvet"
+                          className={isBlackVelvetOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isBlackVelvetOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isBlackVelvetOwned && <Lock className="w-3 h-3" />}
+                            Чёрный Бархат
                           </span>
                         </SelectItem>
                       </SelectContent>

@@ -89,8 +89,9 @@ export const GAME_TABLE_APOCALYPSE_URL = '/assets/static/table_apocalypse-H8YjUx
 export const GAME_TABLE_GALAXY_URL = '/assets/static/table-galaxy-fixed_b6059c99.webp';
 export const GAME_TABLE_SEA_DEPTHS_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/table_sea_depths_8d949ab4.png';
 export const GAME_TABLE_STARGAZER_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/table_stargazer_95bf3fd6.png';
+export const GAME_TABLE_BLACK_VELVET_URL = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/khan_black_velvet_table_v3-5FMgqXZn8wa4Eo6sPsUP8f.webp';
 
-export type TableStyle = 'classic' | 'dark_kazakh' | 'neon' | 'apocalypse' | 'galaxy' | 'sea_depths' | 'stargazer';
+export type TableStyle = 'classic' | 'dark_kazakh' | 'neon' | 'apocalypse' | 'galaxy' | 'sea_depths' | 'stargazer' | 'black_velvet';
 
 export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; nameKk: string; nameEn: string; price: number }> = {
   classic: { url: GAME_TABLE_URL, name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', price: 0 },
@@ -100,6 +101,7 @@ export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; nameK
   galaxy: { url: GAME_TABLE_GALAXY_URL, name: 'Галактика', nameKk: 'Галактика', nameEn: 'Galaxy', price: 550 },
   sea_depths: { url: GAME_TABLE_SEA_DEPTHS_URL, name: 'Морские глубины', nameKk: 'Теңіз тереңдігі', nameEn: 'Sea Depths', price: 350 },
   stargazer: { url: GAME_TABLE_STARGAZER_URL, name: 'Звездочёт', nameKk: 'Жұлдызшы', nameEn: 'Stargazer', price: 350 },
+  black_velvet: { url: GAME_TABLE_BLACK_VELVET_URL, name: 'Чёрный Бархат', nameKk: 'Қара Барқыт', nameEn: 'Black Velvet', price: 350 },
 };
 
 export const SUIT_SYMBOLS: Record<string, string> = {
