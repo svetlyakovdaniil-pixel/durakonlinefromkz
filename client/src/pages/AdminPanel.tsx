@@ -1880,9 +1880,9 @@ function ShopManagementTab() {
     ...allPlaylists
       .filter((p: any) => !p.isDefault)
       .map((p: any) => ({ itemType: "playlist", itemId: String(p.id), name: p.name, defaultPrice: p.priceShanyrak, category: "Плейлисты", currency: 'shanyrak' as const })),
-    // Emotion packs (skip hamster - it's free/default)
+    // Emotion packs (skip free packs - price 0)
     ...EMOTION_PACKS
-      .filter(ep => ep.id !== 'hamster')
+      .filter(ep => ep.price > 0)
       .map(ep => ({ itemType: "emotionpack", itemId: ep.id, name: ep.name, defaultPrice: ep.price, category: "Эмоции", currency: 'tenge' as const })),
   ];
 

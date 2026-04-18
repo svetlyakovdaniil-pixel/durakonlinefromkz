@@ -1,0 +1,1 @@
+ALTER TABLE `player_profiles` MODIFY COLUMN `activeEmotionPack` varchar(32) DEFAULT 'khan';

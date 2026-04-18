@@ -3274,3 +3274,8 @@
 - [x] Обновить server/db.ts: setActiveEmotionPack — проверка по price вместо хардкода 'hamster'
 - [x] Обновить тесты emotionPacks.test.ts (17/17 проходят)
 - [x] Исправить тест admin.updateShopPrice (43/43 проходят)
+## Баг: активация пака эмоций не работает
+- [x] ShopModal.tsx: isOwned для khan pack (price===0 → всегда owned, как hamster)
+- [x] Home.tsx: дефолт activeEmotionPackId изменить с 'hamster' на 'khan'
+- [x] schema.ts: дефолт activeEmotionPack изменить с "hamster" на "khan"
+- [x] Мигрировать БД: обновить существующих пользователей с activeEmotionPack='hamster' на 'khan' (27 строк)

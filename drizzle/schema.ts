@@ -68,8 +68,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   activePlaylistId: int("activePlaylistId"),
   /** JSON array of owned emotion pack IDs, e.g. ["monkey"] */
   ownedEmotionPacks: text("ownedEmotionPacks"),
-  /** Currently active emotion pack ID ("hamster" by default) */
-  activeEmotionPack: varchar("activeEmotionPack", { length: 32 }).default("hamster"),
+  /** Currently active emotion pack ID ("khan" by default) */
+  activeEmotionPack: varchar("activeEmotionPack", { length: 32 }).default("khan"),
   /** Currently equipped avatar frame ID (null = no frame) */
   equippedFrame: varchar("equippedFrame", { length: 32 }),
   /** Whether the player has completed the tutorial */
