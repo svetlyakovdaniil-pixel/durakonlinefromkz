@@ -1562,13 +1562,10 @@ export default function GameTable({
                     'bg-black/30 border-amber-700/20'
                   }`}>
                     {/* Avatar — clickable for profile popup */}
-                    {/* Wrapper with explicit size so EmotionBubble absolute inset-0 aligns exactly over avatar */}
-                    <div
-                      className="relative"
-                      style={{ width: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, height: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, marginBottom: '2px' }}
-                    >
+                    {/* inline-block so div.relative wraps tightly around button, making absolute inset-0 align with avatar */}
+                    <div className="relative inline-block mb-0.5 sm:mb-1">
                       <button
-                        className="focus:outline-none w-full h-full"
+                        className="focus:outline-none block"
                         onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                         disabled={p.isBot || !p.gameId}
                       >
@@ -1581,11 +1578,10 @@ export default function GameTable({
                            />
                         </FrameWrapper>
                       </button>
-                      {/* Emotion bubble covering opponent avatar — absolute inset-0 fills the explicit-size wrapper */}
+                      {/* Emotion bubble — absolute inset-0 fills the inline-block wrapper which wraps tightly around button */}
                       {playerEmotions[p.id] && (
                         <EmotionBubble
                           emotionId={playerEmotions[p.id].emotionId}
-                          size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
                         />
                       )}
                     </div>
