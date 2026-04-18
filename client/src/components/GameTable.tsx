@@ -932,7 +932,7 @@ export default function GameTable({
     : visibleActionCount === 3
     ? 'h-9 text-xs px-1.5 font-semibold game-btn-grid-item'
     : visibleActionCount === 5
-    ? 'h-10 text-[11px] px-1.5 font-semibold game-btn-grid-item'
+    ? 'h-10 text-xs px-2 font-semibold game-btn-grid-item'
     : 'h-8 text-xs px-1 font-semibold game-btn-grid-item';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
@@ -2148,18 +2148,6 @@ export default function GameTable({
                   />
                 </FrameWrapper>
               </div>
-              {/* Emotion picker modal — full-screen overlay */}
-              {emotionPicker.open && sendEmotion && (
-                <EmotionPicker
-                  onSelect={(eid) => {
-                    if (emotionPicker.canSend()) {
-                      sendEmotion(gs.roomId, eid);
-                      emotionPicker.markSent();
-                    }
-                  }}
-                  onClose={emotionPicker.close}
-                />
-              )}
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
@@ -2311,6 +2299,19 @@ export default function GameTable({
           tutorialGreenIds={tutorialGreenIds}
           gameState={gs}
           locale={locale}
+        />
+      )}
+
+      {/* Emotion picker — rendered at root level to avoid stacking context issues */}
+      {emotionPicker.open && sendEmotion && (
+        <EmotionPicker
+          onSelect={(eid) => {
+            if (emotionPicker.canSend()) {
+              sendEmotion(gs.roomId, eid);
+              emotionPicker.markSent();
+            }
+          }}
+          onClose={emotionPicker.close}
         />
       )}
     </div>
