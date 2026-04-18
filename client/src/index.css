@@ -662,3 +662,29 @@
 .animate-emotion-pop {
   animation: emotion-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
+
+/* ─── Battery Saver Mode ──────────────────────────────────────────────────── */
+/*
+ * When .battery-saver is applied to <body>, all expensive continuous animations
+ * are disabled: button shimmer, blink, glow pulses, and star/galaxy overlay.
+ * This significantly reduces GPU load and heat on mobile devices.
+ */
+.battery-saver .game-btn::after {
+  animation: none;
+  background: none;
+}
+.battery-saver .action-btn-blink {
+  animation: none;
+}
+.battery-saver .game-btn-green,
+.battery-saver .game-btn-red,
+.battery-saver .game-btn-amber,
+.battery-saver .game-btn-blue,
+.battery-saver .game-btn-purple {
+  animation: none !important;
+}
+/* Also stop animate-pulse on timer when battery saver is on */
+.battery-saver [data-tutorial="timer"],
+.battery-saver [data-tutorial="timer-desktop"] {
+  animation: none !important;
+}

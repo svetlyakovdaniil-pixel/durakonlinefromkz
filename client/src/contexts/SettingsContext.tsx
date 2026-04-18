@@ -7,6 +7,7 @@ export interface GameSettings {
   musicEnabled: boolean;
   vibrationEnabled: boolean;
   animationsEnabled: boolean;
+  batterySaverEnabled: boolean;
   language: string;
   hasChosenLanguage: boolean;
 }
@@ -16,6 +17,7 @@ const DEFAULT_SETTINGS: GameSettings = {
   musicEnabled: false,
   vibrationEnabled: true,
   animationsEnabled: true,
+  batterySaverEnabled: false,
   language: 'ru',
   hasChosenLanguage: false,
 };
@@ -27,6 +29,7 @@ interface SettingsContextType {
   setMusicEnabled: (v: boolean) => void;
   setVibrationEnabled: (v: boolean) => void;
   setAnimationsEnabled: (v: boolean) => void;
+  setBatterySaverEnabled: (v: boolean) => void;
   setLanguage: (v: string) => void;
   setHasChosenLanguage: (v: boolean) => void;
 }
@@ -72,11 +75,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setMusicEnabled = useCallback((v: boolean) => updateSetting('musicEnabled', v), [updateSetting]);
   const setVibrationEnabled = useCallback((v: boolean) => updateSetting('vibrationEnabled', v), [updateSetting]);
   const setAnimationsEnabled = useCallback((v: boolean) => updateSetting('animationsEnabled', v), [updateSetting]);
+  const setBatterySaverEnabled = useCallback((v: boolean) => updateSetting('batterySaverEnabled', v), [updateSetting]);
   const setLanguage = useCallback((v: string) => updateSetting('language', v), [updateSetting]);
   const setHasChosenLanguage = useCallback((v: boolean) => updateSetting('hasChosenLanguage', v), [updateSetting]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled, setLanguage, setHasChosenLanguage }}>
+    <SettingsContext.Provider value={{ settings, updateSetting, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled, setBatterySaverEnabled, setLanguage, setHasChosenLanguage }}>
       {children}
     </SettingsContext.Provider>
   );
