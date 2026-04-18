@@ -742,7 +742,6 @@ export const kk = {
     noAccount: 'Аккаунт жоқ па?',
     hasAccount: 'Аккаунт бар ма?',
     orLoginWith: 'немесе кіру',
-    manus: 'Manus',
     emailExists: 'Бұл email тіркелген',
     invalidCredentials: 'Қате email немесе құпия сөз',
     serverError: 'Сервер қатесі, кейін қайталаңыз',

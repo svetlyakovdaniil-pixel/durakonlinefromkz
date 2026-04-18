@@ -742,7 +742,6 @@ export const en = {
     noAccount: 'No account?',
     hasAccount: 'Already have an account?',
     orLoginWith: 'or sign in with',
-    manus: 'Manus',
     emailExists: 'This email is already registered',
     invalidCredentials: 'Invalid email or password',
     serverError: 'Server error, please try again later',
