@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import fs from "fs";
+import path from "path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { registerEmailAuthRoutes } from "../emailAuth";
@@ -32,7 +34,32 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+// Restore static assets from persistent storage after each deploy
+function restoreStaticAssets() {
+  const persistentDir = "/root/static_assets";
+  const staticDir = path.join(process.cwd(), "dist", "public", "assets", "static");
+  if (fs.existsSync(persistentDir)) {
+    fs.mkdirSync(staticDir, { recursive: true });
+    const files = fs.readdirSync(persistentDir);
+    let copied = 0;
+    for (const file of files) {
+      const dest = path.join(staticDir, file);
+      if (!fs.existsSync(dest)) {
+        fs.copyFileSync(path.join(persistentDir, file), dest);
+        copied++;
+      }
+    }
+    if (copied > 0) {
+      console.log(`[Static] Restored ${copied} assets from ${persistentDir}`);
+    }
+  }
+}
+
 async function startServer() {
+  // Restore static assets if missing (happens after each deploy)
+  if (process.env.NODE_ENV === "production") {
+    restoreStaticAssets();
+  }
   const app = express();
   const server = createServer(app);
   // Configure body parser with larger size limit for file uploads
