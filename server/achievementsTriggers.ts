@@ -611,8 +611,8 @@ export async function processFirstBerkutAchievement(ctx: {
 
 export async function processLittleHeroAchievement(ctx: {
   profileId: number;
-  attackIsAceOfSpades: boolean;
-  defenseIsKingOfSpades: boolean;
+  attackIsKingOfSpades: boolean;
+  defenseIsAceOfSpades: boolean;
   botCount: number;
   totalPlayersInRoom: number;
 }): Promise<void> {
@@ -620,8 +620,8 @@ export async function processLittleHeroAchievement(ctx: {
   const isHumanGame = botRatio < MAX_BOT_RATIO;
   if (!isHumanGame) return;
 
-  // Маленький герой — на защитника походили тузом пики, и он отбил королём пики
-  if (ctx.attackIsAceOfSpades && ctx.defenseIsKingOfSpades) {
+  // Маленький герой — на защитника походили королём пики, и он отбил тузом пики
+  if (ctx.attackIsKingOfSpades && ctx.defenseIsAceOfSpades) {
     await incrementAchievementProgress(ctx.profileId, 'little_hero', 1);
   }
 }
