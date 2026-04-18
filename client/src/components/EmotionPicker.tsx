@@ -16,7 +16,7 @@ interface EmotionPickerProps {
  * Full-screen modal emotion picker — styled like Durak Online:
  * dark overlay, rounded gray panel, 4-column grid, large emoji, X button.
  */
-export function EmotionPicker({ onSelect, onClose, activePackId = 'hamster' }: EmotionPickerProps) {
+export function EmotionPicker({ onSelect, onClose, activePackId = 'khan' }: EmotionPickerProps) {
   const pack = getEmotionPack(activePackId);
   const handleSelect = useCallback((id: string) => {
     onSelect(id);
@@ -86,7 +86,7 @@ interface EmotionBubbleProps {
   size?: number;
 }
 
-export function EmotionBubble({ emotionId, emotionPackId = 'hamster' }: EmotionBubbleProps) {
+export function EmotionBubble({ emotionId, emotionPackId = 'khan' }: EmotionBubbleProps) {
   const pack = getEmotionPack(emotionPackId);
   const emotion = pack.emotions.find(e => e.id === emotionId);
   if (!emotion) return null;

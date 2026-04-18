@@ -517,7 +517,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
   const { data: allPlaylists = [], refetch: refetchPlaylists } = trpc.playlists.list.useQuery(undefined, { enabled: open });
   const { data: ownedPlaylistIds = [], refetch: refetchOwnedPlaylists } = trpc.playlists.owned.useQuery(undefined, { enabled: open });
   const { data: ownedEmotionPacks = [], refetch: refetchOwnedEmotionPacks } = trpc.shop.ownedEmotionPacks.useQuery(undefined, { enabled: open });
-  const { data: activeEmotionPack = 'hamster', refetch: refetchActiveEmotionPack } = trpc.shop.activeEmotionPack.useQuery(undefined, { enabled: open });
+  const { data: activeEmotionPack = 'khan', refetch: refetchActiveEmotionPack } = trpc.shop.activeEmotionPack.useQuery(undefined, { enabled: open });
   const purchasePlaylistMutation = trpc.playlists.purchase.useMutation();
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
@@ -1155,7 +1155,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               </div>
               {EMOTION_PACKS.map(pack => {
                 const effectivePrice = getPrice('emotionpack', pack.id, pack.price);
-                const isOwned = pack.id === 'hamster' || ownedEmotionPacks.includes(pack.id);
+                const isOwned = pack.price === 0 || ownedEmotionPacks.includes(pack.id);
                 const isActive = activeEmotionPack === pack.id;
                 const packName = locale === 'kk' && pack.nameKk ? pack.nameKk : locale === 'en' && pack.nameEn ? pack.nameEn : pack.name;
                 const packDesc = locale === 'kk' && pack.descriptionKk ? pack.descriptionKk : locale === 'en' && pack.descriptionEn ? pack.descriptionEn : (pack.description || '');
@@ -1192,7 +1192,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           <>
                             <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
                               <Check className="w-4 h-4" />
-                              <span>{pack.id === 'hamster' ? t('shop.free') : t('shop.purchased')}</span>
+                              <span>{pack.price === 0 ? t('shop.free') : t('shop.purchased')}</span>
                             </div>
                             <Button
                               className="ml-auto bg-amber-700/40 hover:bg-amber-600/60 text-amber-100 text-xs h-8 px-3"
