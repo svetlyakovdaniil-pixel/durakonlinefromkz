@@ -88,19 +88,22 @@ interface EmotionBubbleProps {
   size?: number;
 }
 
-export function EmotionBubble({ emotionId, size = 52 }: EmotionBubbleProps) {
+/** Fixed display size for all emotion bubbles (px). Matches the "cool" emoji reference size. */
+const EMOTION_DISPLAY_SIZE = 40;
+
+export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
   const emotion = EMOTIONS.find(e => e.id === emotionId);
   if (!emotion) return null;
 
   return (
     <div
       className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop"
-      style={{ borderRadius: '50%' }}
+      style={{ overflow: 'visible' }}
     >
       <img
         src={emotion.url}
         alt={emotion.label}
-        style={{ width: size, height: size }}
+        style={{ width: EMOTION_DISPLAY_SIZE, height: EMOTION_DISPLAY_SIZE, flexShrink: 0 }}
         className="object-contain drop-shadow-lg"
         draggable={false}
       />
