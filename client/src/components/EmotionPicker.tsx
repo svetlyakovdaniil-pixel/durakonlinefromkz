@@ -32,7 +32,7 @@ export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
   return (
     /* Full-screen backdrop */
     <div
-      className="fixed inset-0 z-[500] flex items-end justify-center pb-48 sm:items-center sm:pb-0"
+      className="fixed inset-0 z-[9999] flex items-end justify-center pb-48 sm:items-center sm:pb-0"
       onClick={onClose}
     >
       {/* Dark overlay */}

@@ -47,6 +47,7 @@ function CardPlaceholder({ card, small }: { card: Card; small?: boolean }) {
 }
 
 // Card image with placeholder: shows rank+suit while loading, then fades in the image
+// Uses eager loading to avoid white flash — browser caches images after first load
 function CardImage({ src, alt, card, small }: { src: string; alt: string; card: Card; small?: boolean }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
@@ -57,20 +58,19 @@ function CardImage({ src, alt, card, small }: { src: string; alt: string; card: 
 
   return (
     <div className="w-full h-full relative pointer-events-none">
-      {/* Placeholder always rendered underneath */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ opacity: loaded ? 0 : 1, transition: 'opacity 0.15s ease' }}
-      >
-        <CardPlaceholder card={card} small={small} />
-      </div>
-      {/* Actual image fades in on load */}
+      {/* Placeholder shown only while loading */}
+      {!loaded && (
+        <div className="absolute inset-0 pointer-events-none">
+          <CardPlaceholder card={card} small={small} />
+        </div>
+      )}
+      {/* Actual image — eager loading for instant display from cache */}
       <img
         src={src}
         alt={alt}
         className="w-full h-full object-cover relative z-10 pointer-events-none"
-        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.15s ease' }}
-        loading="lazy"
+        style={{ opacity: loaded ? 1 : 0 }}
+        loading="eager"
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />
@@ -93,16 +93,15 @@ function CardBackImage({ src, alt }: { src: string; alt: string }) {
 
   return (
     <div className="w-full h-full relative pointer-events-none">
-      <div
-        className="absolute inset-0 bg-gradient-to-br from-amber-900 to-amber-950 rounded-lg pointer-events-none"
-        style={{ opacity: loaded ? 0 : 1, transition: 'opacity 0.15s ease' }}
-      />
+      {!loaded && (
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-900 to-amber-950 rounded-lg pointer-events-none" />
+      )}
       <img
         src={src}
         alt={alt}
         className="w-full h-full object-cover relative z-10 pointer-events-none"
-        style={{ opacity: loaded ? 1 : 0, transition: 'opacity 0.15s ease' }}
-        loading="lazy"
+        style={{ opacity: loaded ? 1 : 0 }}
+        loading="eager"
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
       />

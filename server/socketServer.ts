@@ -1224,7 +1224,7 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on('sendEmotion', (data: { roomId: string; emotionId: string }) => {
       const { roomId, emotionId } = data;
       if (!roomId || !emotionId) return;
-      const VALID_EMOTIONS = ['laugh', 'cool', 'angry', 'sad', 'think', 'wow', 'heart', 'thumb'];
+      const VALID_EMOTIONS = ['laugh', 'cool', 'angry', 'sad', 'think', 'wow', 'heart', 'hurry', 'win', 'sleep'];
       if (!VALID_EMOTIONS.includes(emotionId)) return;
       // Player must be in the room (lobby or game)
       const room = rooms.get(roomId);

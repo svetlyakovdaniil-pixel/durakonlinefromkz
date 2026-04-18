@@ -566,6 +566,17 @@ export default function GameTable({
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
 
+  // Preload all card images for the current deck style to avoid white flash
+  useEffect(() => {
+    const imageMap = gs.deckStyle === 'custom' ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+    const backUrl = gs.deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+    const urls = [...Object.values(imageMap), backUrl];
+    urls.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+  }, [gs.deckStyle]);
+
   // Tutorial state
   const tutorial = useTutorial();
   useEffect(() => {
@@ -913,12 +924,15 @@ export default function GameTable({
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
   // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid 2×3 (max 3 per row, 2 rows)
+  // For 5 buttons: use 2-row layout (3+2) with slightly smaller font but still readable
   const dynBtnClass = visibleActionCount <= 1
     ? 'h-full w-full text-base px-4 font-bold'
     : visibleActionCount === 2
     ? 'h-9 text-xs px-2 font-semibold flex-1'
     : visibleActionCount === 3
     ? 'h-9 text-xs px-1.5 font-semibold game-btn-grid-item'
+    : visibleActionCount === 5
+    ? 'h-10 text-[11px] px-1.5 font-semibold game-btn-grid-item'
     : 'h-8 text-xs px-1 font-semibold game-btn-grid-item';
 
   const sortedHand = sortHand(gs.myHand, sortMode);
@@ -2191,6 +2205,8 @@ export default function GameTable({
                   ? 'flex items-stretch h-[52px] w-full'
                   : visibleActionCount <= 3
                   ? 'flex flex-wrap gap-1 items-center justify-end w-full py-1'
+                  : visibleActionCount === 5
+                  ? 'grid grid-cols-3 gap-1.5 w-full py-0.5'
                   : 'grid grid-cols-3 gap-1 w-full py-0.5'
                 }>
                   {canTake && (
