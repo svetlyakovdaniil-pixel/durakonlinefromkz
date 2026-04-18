@@ -112,7 +112,7 @@ import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEA
 import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest, incrementDailyQuestProgress } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
-import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName } from "./socketServer";
+import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName, updatePlayerEmotionPack } from "./socketServer";
 
 export const appRouter = router({
   system: systemRouter,
@@ -729,7 +729,10 @@ export const appRouter = router({
     setActiveEmotionPack: protectedProcedure
       .input(z.object({ packId: z.string() }))
       .mutation(async ({ ctx, input }) => {
-        return setActiveEmotionPack(ctx.user.id, input.packId);
+        const result = await setActiveEmotionPack(ctx.user.id, input.packId);
+        // Update in-memory socket cache so the new pack is used immediately in-game
+        updatePlayerEmotionPack(ctx.user.openId, input.packId);
+        return result;
       }),
   }),
 
