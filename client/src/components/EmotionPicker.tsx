@@ -79,28 +79,25 @@ export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
 
 /**
  * Emotion bubble shown above a player's avatar.
- * Covers the full avatar+frame area but stays above the name label.
+ * Renders as an absolute overlay that fills the parent container entirely.
+ * The parent must be `position: relative` with explicit width/height matching the avatar.
  */
 interface EmotionBubbleProps {
   emotionId: string;
-  /** Size in px — should match the avatar+frame container size */
-  size?: number;
 }
 
-export function EmotionBubble({ emotionId, size = 52 }: EmotionBubbleProps) {
+export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
   const emotion = EMOTIONS.find(e => e.id === emotionId);
   if (!emotion) return null;
 
   return (
     <div
-      className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop"
-      style={{ borderRadius: '50%' }}
+      className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop rounded-full overflow-hidden"
     >
       <img
         src={emotion.url}
         alt={emotion.label}
-        style={{ width: size, height: size }}
-        className="object-contain drop-shadow-lg"
+        className="w-full h-full object-contain drop-shadow-lg"
         draggable={false}
       />
     </div>

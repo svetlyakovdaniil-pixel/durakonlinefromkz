@@ -45,10 +45,13 @@ function IAPInitializer() {
 
 function LanguageGate({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings();
+  const [location] = useLocation();
+  // Don't show language selection modal on auth pages — it blocks the login/register UI
+  const isAuthPage = location === '/login' || location === '/register';
 
   return (
     <>
-      {!settings.hasChosenLanguage && <LanguageSelectionModal />}
+      {!settings.hasChosenLanguage && !isAuthPage && <LanguageSelectionModal />}
       {children}
     </>
   );
