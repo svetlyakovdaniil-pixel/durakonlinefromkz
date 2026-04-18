@@ -939,8 +939,8 @@ export function getAvatarUrl(avatarId: string | null | undefined): string {
   const baseId = getBaseAvatarId(avatarId);
   const found = AVATAR_OPTIONS.find(a => a.id === baseId);
   // Season reward avatars that use a special animated component (url is a component key, not a real URL)
-  // return wolf as fallback. Static season reward avatars (url starts with http) return their real URL.
-  if (found?.seasonReward && found.url && !found.url.startsWith('http')) {
+  // return wolf as fallback. Static season reward avatars (url starts with http or /assets/) return their real URL.
+  if (found?.seasonReward && found.url && !found.url.startsWith('http') && !found.url.startsWith('/assets/')) {
     return AVATAR_OPTIONS.find(a => a.id === 'wolf')?.url || AVATAR_OPTIONS[0].url;
   }
   return found?.url || AVATAR_OPTIONS[0].url;
