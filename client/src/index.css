@@ -411,9 +411,9 @@
 .game-btn-grid-item {
   flex: 1 1 30%;
   min-width: 0;
-  max-width: 50%;
-  /* In grid mode (4+ buttons): fill the grid cell */
+  /* In grid mode (4+ buttons): fill the grid cell completely */
   width: 100%;
+  max-width: 100%;
 }
 
 /* Green — Бито */
