@@ -1562,16 +1562,17 @@ export default function GameTable({
                     'bg-black/30 border-amber-700/20'
                   }`}>
                     {/* Avatar — clickable for profile popup */}
-                    <div className="relative">
+                    {/* relative wrapper with explicit size so EmotionBubble (absolute inset-0) aligns exactly over the avatar */}
+                    <div
+                      className="relative mb-0.5 sm:mb-1"
+                      style={{ width: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, height: manyManyOpponents ? 28 : manyOpponents ? 32 : 40 }}
+                    >
                       {/* Emotion bubble covering opponent avatar */}
                       {playerEmotions[p.id] && (
-                        <EmotionBubble
-                          emotionId={playerEmotions[p.id].emotionId}
-                          size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
-                        />
+                        <EmotionBubble emotionId={playerEmotions[p.id].emotionId} />
                       )}
                     <button
-                      className="focus:outline-none mb-0.5 sm:mb-1"
+                      className="focus:outline-none w-full h-full block"
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                       disabled={p.isBot || !p.gameId}
                     >
@@ -2114,15 +2115,27 @@ export default function GameTable({
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
           <div className="flex items-start gap-1.5 mt-1.5 px-1 avatar-action-row">
             {/* Left: player avatar — click to open emotion picker */}
-            <div
-              className="flex flex-col items-center justify-center shrink-0 relative"
-              onClick={() => { if (sendEmotion) emotionPicker.toggle(); }}
-            >
-              {/* Emotion bubble covering my avatar */}
-              {playerEmotions[gs.players[myIdx]?.id] && (
-                <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} size={52} />
-              )}
-              {/* Emotion picker modal — full-screen overlay, rendered via portal-like positioning */}
+            <div className="flex flex-col items-center justify-center shrink-0">
+              {/* Avatar wrapper with explicit size so EmotionBubble (absolute inset-0) fills it exactly */}
+              <div
+                className="relative cursor-pointer"
+                style={{ width: 52, height: 52 }}
+                onClick={() => { if (sendEmotion) emotionPicker.toggle(); }}
+              >
+                {/* Emotion bubble covering my avatar */}
+                {playerEmotions[gs.players[myIdx]?.id] && (
+                  <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} />
+                )}
+                <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
+                  <AvatarDisplay
+                    avatarId={gs.players[myIdx]?.avatarId}
+                    size={52}
+                    alt={gs.players[myIdx]?.name || ''}
+                    className={`${gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'} ${sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}`}
+                  />
+                </FrameWrapper>
+              </div>
+              {/* Emotion picker modal — full-screen overlay */}
               {emotionPicker.open && sendEmotion && (
                 <EmotionPicker
                   onSelect={(eid) => {
@@ -2134,14 +2147,6 @@ export default function GameTable({
                   onClose={emotionPicker.close}
                 />
               )}
-              <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
-                <AvatarDisplay
-                  avatarId={gs.players[myIdx]?.avatarId}
-                  size={52}
-                  alt={gs.players[myIdx]?.name || ''}
-                  className={`${gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'} ${sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}`}
-                />
-              </FrameWrapper>
             </div>
 
             {/* Right: action buttons area OR blinking role notice */}
