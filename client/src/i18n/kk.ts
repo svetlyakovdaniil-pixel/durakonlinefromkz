@@ -470,6 +470,8 @@ export const kk = {
     music: 'Фондық музыка',
     vibration: 'Діріл',
     animations: 'Анимацияны қосу',
+    batterySaver: 'Батареяны үнемдеу',
+    batterySaverDesc: 'қызынуды азайту үшін эффектілерді өшіреді',
     language: 'Тіл',
     logout: 'Аккаунттан шығу',
     logoutConfirm: 'Аккаунттан шығу',
