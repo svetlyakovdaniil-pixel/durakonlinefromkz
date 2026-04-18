@@ -902,10 +902,9 @@ export function initSocketServer(httpServer: HttpServer) {
                   attackIsTrumpAce, defenseIsKingOfSpades, attackIs777,
                   isFirstGame, roomId: data.roomId, odId,
                 }).catch(() => {});
-                const attackIsAceOfSpades = attackCard.rank === 'A' && attackCard.suit === 'spades';
                 processLittleHeroAchievement({
                   profileId, botCount, totalPlayersInRoom,
-                  attackIsAceOfSpades, defenseIsKingOfSpades,
+                  attackIsKingOfSpades, defenseIsAceOfSpades,
                 }).catch(() => {});
               }).catch(() => {});
             }
