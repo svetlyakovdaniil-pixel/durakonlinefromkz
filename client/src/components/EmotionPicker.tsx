@@ -1,29 +1,23 @@
 import { useState, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { HAMSTER_PACK, getEmotionPack } from '@shared/emotionPacks';
 
-export const EMOTIONS = [
-  { id: 'laugh',  label: 'Смех',     url: '/assets/static/emotion_laugh.png' },
-  { id: 'cool',   label: 'Круто',    url: '/assets/static/emotion_cool.png' },
-  { id: 'angry',  label: 'Злость',   url: '/assets/static/emotion_angry.png' },
-  { id: 'sad',    label: 'Грусть',   url: '/assets/static/emotion_sad.png' },
-  { id: 'think',  label: 'Думаю',    url: '/assets/static/emotion_think.png' },
-  { id: 'wow',    label: 'Вау',      url: '/assets/static/emotion_wow.png' },
-  { id: 'heart',  label: 'Любовь',   url: '/assets/static/emotion_heart.png' },
-  { id: 'hurry',  label: 'Тороплю',  url: '/assets/static/emotion_hurry.png' },
-  { id: 'win',    label: 'Победа',   url: '/assets/static/emotion_win.png' },
-  { id: 'sleep',  label: 'Скучно',   url: '/assets/static/emotion_sleep.png' },
-];
+// Legacy export for backward compatibility (hamster pack emotions)
+export const EMOTIONS = HAMSTER_PACK.emotions;
 
 interface EmotionPickerProps {
   onSelect: (emotionId: string) => void;
   onClose: () => void;
+  /** Active emotion pack ID — determines which emoji set to show */
+  activePackId?: string;
 }
 
 /**
  * Full-screen modal emotion picker — styled like Durak Online:
  * dark overlay, rounded gray panel, 4-column grid, large emoji, X button.
  */
-export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
+export function EmotionPicker({ onSelect, onClose, activePackId = 'hamster' }: EmotionPickerProps) {
+  const pack = getEmotionPack(activePackId);
   const handleSelect = useCallback((id: string) => {
     onSelect(id);
     onClose();
@@ -57,7 +51,7 @@ export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
 
         {/* Emoji grid — 4 columns */}
         <div className="grid grid-cols-4 gap-3 p-4">
-          {EMOTIONS.map(e => (
+          {pack.emotions.map(e => (
             <button
               key={e.id}
               onClick={() => handleSelect(e.id)}
@@ -86,12 +80,15 @@ export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
  */
 interface EmotionBubbleProps {
   emotionId: string;
+  /** Emotion pack ID — determines which emoji set to use */
+  emotionPackId?: string;
   /** Size in px — should match the avatar+frame container size */
   size?: number;
 }
 
-export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
-  const emotion = EMOTIONS.find(e => e.id === emotionId);
+export function EmotionBubble({ emotionId, emotionPackId = 'hamster' }: EmotionBubbleProps) {
+  const pack = getEmotionPack(emotionPackId);
+  const emotion = pack.emotions.find(e => e.id === emotionId);
   if (!emotion) return null;
 
   return (

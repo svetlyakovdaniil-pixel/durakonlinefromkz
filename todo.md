@@ -3233,3 +3233,22 @@
 - [x] Показывать страницу "Ведутся тех.работы, примерное время включения: N" (RU/KK/EN)
 - [x] Переименовать GB → ENG на экране выбора языка — уже было ENG в LanguageSelectionModal.tsx
 - [x] Добавить плейлист "Dark trap electronic" (7 треков) в магазин за 100к шаныраков, в настройки игры и комнаты
+
+## Раздел "Эмоции" в магазине
+- [x] Сгенерировать 10 смайликов-обезьян с прозрачным фоном (тот же стиль, что и хомяк)
+- [x] Загрузить смайлики-обезьяны в CDN
+- [x] Создать shared/emotionPacks.ts с HAMSTER_PACK и MONKEY_PACK (оба бесплатные, price: 0)
+- [x] Обновить drizzle/schema.ts: добавить ownedEmotionPacks и activeEmotionPack в playerProfiles
+- [x] Запустить pnpm db:push для обновления БД схемы
+- [x] Добавить функции getOwnedEmotionPacks, purchaseEmotionPack, setActiveEmotionPack в server/db.ts
+- [x] Добавить tRPC процедуры в server/routers.ts: ownedEmotionPacks, activeEmotionPack, purchaseEmotionPack, setActiveEmotionPack
+- [x] Обновить shared/gameTypes.ts: тип playerEmotion включает emotionPackId
+- [x] Обновить server/socketServer.ts: хранить playerActiveEmotionPacks, загружать при registerProfile, передавать в playerEmotion event
+- [x] Обновить client/src/hooks/useSocket.ts: хранить emotionPackId в playerEmotions
+- [x] Обновить EmotionPicker.tsx: поддержка activePackId, EmotionBubble поддерживает emotionPackId
+- [x] Добавить вкладку "Эмоции" в ShopModal.tsx с отображением обоих паков
+- [x] Monkey пак отображается как "Бесплатно" / "Куплено" (price: 0)
+- [x] Обновить GameTable.tsx: передавать activeEmotionPackId и emotionPackId
+- [x] Обновить Home.tsx: передавать activeEmotionPackId из профиля в GameTable
+- [x] Добавить i18n ключ shop.emotions в ru.ts, en.ts, kk.ts
+- [x] Написать тесты для emotionPacks (11 тестов проходят)

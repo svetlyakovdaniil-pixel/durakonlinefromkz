@@ -338,6 +338,7 @@ export default function Home() {
         isTutorial={gameState.isTutorial}
         sendEmotion={sendEmotion}
         playerEmotions={playerEmotions}
+        activeEmotionPackId={(profile as any)?.activeEmotionPack || 'hamster'}
         onTutorialComplete={() => {
           // Credit tutorial reward (one-time)
           setTutorialRewardGiven(false);
