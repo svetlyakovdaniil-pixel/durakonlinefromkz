@@ -3702,3 +3702,84 @@ export async function setCustomProfanityWords(words: string[]): Promise<void> {
     .values({ key: CUSTOM_PROFANITY_KEY, value })
     .onDuplicateKeyUpdate({ set: { value, updatedAt: new Date() } });
 }
+
+// ============================================================
+// EMOTION PACKS: Purchase and manage emotion packs
+// ============================================================
+
+/**
+ * Purchase an emotion pack for a player. Deducts tenge and adds pack to ownedEmotionPacks.
+ */
+export async function purchaseEmotionPack(
+  userId: number,
+  packId: string,
+  tengeCost: number
+): Promise<{ success: boolean; newTenge?: number; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+  const owned: string[] = profile.ownedEmotionPacks ? JSON.parse(profile.ownedEmotionPacks) : [];
+  if (owned.includes(packId)) {
+    return { success: false, reason: 'already_owned' };
+  }
+  if (profile.balanceTenge < tengeCost) {
+    return { success: false, reason: 'insufficient_tenge' };
+  }
+  const newTenge = profile.balanceTenge - tengeCost;
+  owned.push(packId);
+  await db.update(playerProfiles).set({
+    balanceTenge: newTenge,
+    ownedEmotionPacks: JSON.stringify(owned),
+    activeEmotionPack: packId,
+  }).where(eq(playerProfiles.id, profile.id));
+  await recordTransaction({
+    profileId: profile.id,
+    type: 'shop_purchase',
+    amount: -tengeCost,
+    currency: 'tenge',
+    description: `Покупка пака эмоций: ${packId}`,
+    balanceAfter: newTenge,
+  });
+  return { success: true, newTenge };
+}
+
+/**
+ * Set the active emotion pack for a player (must own it first).
+ */
+export async function setActiveEmotionPack(
+  userId: number,
+  packId: string
+): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+  // hamster is always free/owned
+  if (packId !== 'hamster') {
+    const owned: string[] = profile.ownedEmotionPacks ? JSON.parse(profile.ownedEmotionPacks) : [];
+    if (!owned.includes(packId)) {
+      return { success: false, reason: 'not_owned' };
+    }
+  }
+  await db.update(playerProfiles).set({
+    activeEmotionPack: packId,
+  }).where(eq(playerProfiles.id, profile.id));
+  return { success: true };
+}
+
+/**
+ * Get owned emotion packs for a player.
+ */
+export async function getOwnedEmotionPacks(userId: number): Promise<string[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const [profile] = await db.select({ ownedEmotionPacks: playerProfiles.ownedEmotionPacks })
+    .from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile || !profile.ownedEmotionPacks) return [];
+  try {
+    return JSON.parse(profile.ownedEmotionPacks) as string[];
+  } catch {
+    return [];
+  }
+}

@@ -459,6 +459,8 @@ export const en = {
     listenBtn: 'Listen',
     stopBtn: 'Stop',
     notEnoughShanyrak: 'Not enough shanyraks',
+    emotions: 'Emotions',
+    emotionsDesc: 'Monkey emotion pack',
   },
 
   // Settings

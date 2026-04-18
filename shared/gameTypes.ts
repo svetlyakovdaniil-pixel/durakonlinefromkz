@@ -232,7 +232,7 @@ export interface ServerToClientEvents {
   /** Daily quest just completed — show toast in game */
   questCompleted: (data: { key: string; titleRu: string; titleKk: string; titleEn: string; shanyrakReward: number }) => void;
   /** Player sent an emotion reaction */
-  playerEmotion: (data: { playerId: string; emotionId: string }) => void;
+  playerEmotion: (data: { playerId: string; emotionId: string; emotionPackId?: string }) => void;
 }
 
 export interface ClientToServerEvents {

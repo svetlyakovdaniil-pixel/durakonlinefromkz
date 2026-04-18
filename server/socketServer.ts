@@ -68,6 +68,7 @@ const playerProfileIds = new Map<string, number>(); // odId -> profileId (player
 const playerAvatarIds = new Map<string, string>(); // odId -> avatarId (for in-game display)
 const playerEquippedFrames = new Map<string, string>(); // odId -> equippedFrame (for in-game frame display)
 const playerIsPremium = new Map<string, boolean>(); // odId -> isPremium status
+const playerActiveEmotionPacks = new Map<string, string>(); // odId -> activeEmotionPack (for in-game emotion display)
 const playerDisplayNames = new Map<string, string>(); // odId -> custom display name from settings
 const playerSeasonRatings = new Map<string, number>(); // odId -> current season rating
 // Room freeze system — when a player disconnects during a game, freeze the room for 30 seconds
@@ -1267,8 +1268,10 @@ export function initSocketServer(httpServer: HttpServer) {
       const room = rooms.get(roomId);
       const gameState = games.get(roomId);
       if (!room && !gameState) return;
+      // Get the player's active emotion pack
+      const emotionPackId = playerActiveEmotionPacks.get(odId) || 'hamster';
       // Broadcast to everyone in the room
-      io.to(roomId).emit('playerEmotion', { playerId: odId, emotionId });
+      io.to(roomId).emit('playerEmotion', { playerId: odId, emotionId, emotionPackId });
     });
 
     // --- Leave game (forfeit) ---
@@ -1513,14 +1516,18 @@ export function initSocketServer(httpServer: HttpServer) {
         }
         dbg(`[Socket] Registered gameId ${data.gameId} for ${odId} (${data.displayName})`);
         // Resolve and cache profileId (playerProfiles.id) for achievement tracking
+        // Also load activeEmotionPack for emotion display
         getDb().then(db => {
           if (!db) return;
-          db.select({ id: playerProfiles.id })
+          db.select({ id: playerProfiles.id, activeEmotionPack: playerProfiles.activeEmotionPack })
             .from(playerProfiles)
             .where(eq(playerProfiles.gameId, data.gameId))
             .limit(1)
-            .then((rows: { id: number }[]) => {
-              if (rows[0]?.id) playerProfileIds.set(odId, rows[0].id);
+            .then((rows: { id: number; activeEmotionPack: string | null }[]) => {
+              if (rows[0]?.id) {
+                playerProfileIds.set(odId, rows[0].id);
+                playerActiveEmotionPacks.set(odId, rows[0].activeEmotionPack || 'hamster');
+              }
             })
             .catch(() => {});
         }).catch(() => {});

@@ -372,6 +372,13 @@
       "when": 1776464966485,
       "tag": "0052_perpetual_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 53,
+      "version": "5",
+      "when": 1776548669468,
+      "tag": "0053_normal_cobalt_man",
+      "breakpoints": true
     }
   ]
 }

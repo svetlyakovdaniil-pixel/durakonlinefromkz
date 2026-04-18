@@ -459,6 +459,8 @@ export const kk = {
     listenBtn: 'Тыңдау',
     stopBtn: 'Тоқтату',
     notEnoughShanyrak: 'Шаңырақ жеткіліксіз',
+    emotions: 'Эмоциялар',
+    emotionsDesc: 'Маймыл эмоция паки',
   },
 
   // Settings

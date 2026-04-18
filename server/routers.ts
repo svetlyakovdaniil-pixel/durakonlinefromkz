@@ -102,6 +102,9 @@ import {
   setCustomProfanityWords,
   getMaintenanceStatus,
   setMaintenanceStatus,
+  purchaseEmotionPack,
+  setActiveEmotionPack,
+  getOwnedEmotionPacks,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces, retroactiveRecalcAllAchievements } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -669,11 +672,10 @@ export const appRouter = router({
         return result;
       }),
 
-    /** Get owned premium avatar IDs for the current user */
+     /** Get owned premium avatar IDs for the current user */
     ownedAvatars: protectedProcedure.query(async ({ ctx }) => {
       return getOwnedAvatars(ctx.user.id);
     }),
-
     /** Purchase a premium avatar */
     purchaseAvatar: protectedProcedure
       .input(z.object({ avatarId: z.string(), tengeCost: z.number() }))
@@ -690,6 +692,35 @@ export const appRouter = router({
           }
         }
         return result;
+      }),
+    /** Get owned emotion pack IDs for the current user */
+    ownedEmotionPacks: protectedProcedure.query(async ({ ctx }) => {
+      return getOwnedEmotionPacks(ctx.user.id);
+    }),
+    /** Get active emotion pack for the current user */
+    activeEmotionPack: protectedProcedure.query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      return profile?.activeEmotionPack ?? 'hamster';
+    }),
+    /** Purchase an emotion pack */
+    purchaseEmotionPack: protectedProcedure
+      .input(z.object({ packId: z.string(), tengeCost: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await purchaseEmotionPack(ctx.user.id, input.packId, input.tengeCost);
+        if (result.success && input.tengeCost > 0) {
+          const profile = await getProfileByUserId(ctx.user.id);
+          if (profile) {
+            const totalSpent = await getTotalTengeSpentByProfile(profile.id);
+            processDonatorAchievement(profile.id, totalSpent).catch(() => {});
+          }
+        }
+        return result;
+      }),
+    /** Set active emotion pack */
+    setActiveEmotionPack: protectedProcedure
+      .input(z.object({ packId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        return setActiveEmotionPack(ctx.user.id, input.packId);
       }),
   }),
 

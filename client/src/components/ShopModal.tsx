@@ -7,6 +7,7 @@ import { X, ShoppingCart, Check, AlertTriangle, Flame, Zap, Snowflake, Music, Pl
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_URL, CARD_IMAGES, CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
+import { EMOTION_PACKS, HAMSTER_PACK } from '@shared/emotionPacks';
 import { getCurrentSeasonNumber } from '../../../shared/seasons';
 import { AVATAR_OPTIONS, type AvatarOption } from '@shared/avatars';
 import { FireFrame } from './FireFrame';
@@ -484,10 +485,10 @@ interface ShopModalProps {
   onPurchased?: () => void;
 }
 
-type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars' | 'music';
+type ShopTab = 'decks' | 'tables' | 'frames' | 'avatars' | 'music' | 'emotions';
 
 interface ConfirmPurchase {
-  type: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist';
+  type: 'deck' | 'table' | 'frame' | 'avatar' | 'playlist' | 'emotionpack';
   id: string;
   name: string;
   price: number;
@@ -515,11 +516,15 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
   const { data: priceOverrides = [] } = trpc.shopPrices.overrides.useQuery(undefined, { enabled: open });
   const { data: allPlaylists = [], refetch: refetchPlaylists } = trpc.playlists.list.useQuery(undefined, { enabled: open });
   const { data: ownedPlaylistIds = [], refetch: refetchOwnedPlaylists } = trpc.playlists.owned.useQuery(undefined, { enabled: open });
+  const { data: ownedEmotionPacks = [], refetch: refetchOwnedEmotionPacks } = trpc.shop.ownedEmotionPacks.useQuery(undefined, { enabled: open });
+  const { data: activeEmotionPack = 'hamster', refetch: refetchActiveEmotionPack } = trpc.shop.activeEmotionPack.useQuery(undefined, { enabled: open });
   const purchasePlaylistMutation = trpc.playlists.purchase.useMutation();
   const purchaseMutation = trpc.shop.purchaseDeck.useMutation();
   const purchaseTableMutation = trpc.shop.purchaseTable.useMutation();
   const purchaseFrameMutation = trpc.shop.purchaseFrame.useMutation();
   const purchaseAvatarMutation = trpc.shop.purchaseAvatar.useMutation();
+  const purchaseEmotionPackMutation = trpc.shop.purchaseEmotionPack.useMutation();
+  const setActiveEmotionPackMutation = trpc.shop.setActiveEmotionPack.useMutation();
 
   /** Get effective price considering admin overrides and premium discount */
   const getPrice = (itemType: string, itemId: string, defaultPrice: number): number => {
@@ -702,6 +707,21 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         } else {
           toast.error(t('common.error'));
         }
+      } else if (item.type === 'emotionpack') {
+        const result = await purchaseEmotionPackMutation.mutateAsync({ packId: item.id, tengeCost: item.price });
+        if (result.success) {
+          toast.success(t('toast.purchaseSuccess'));
+          refetchOwnedEmotionPacks();
+          refetchActiveEmotionPack();
+          onPurchased?.();
+        } else if (result.reason === 'already_owned') {
+          toast.info(t('shop.owned'));
+          refetchOwnedEmotionPacks();
+        } else if (result.reason === 'insufficient_tenge') {
+          toast.error(t('shop.notEnough'));
+        } else {
+          toast.error(t('common.error'));
+        }
       }
     } catch {
       toast.error(t('common.error'));
@@ -744,7 +764,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
 
         {/* Tabs */}
         <div className="flex gap-1 sm:gap-0 border-b border-amber-700/20">
-          {(['decks', 'tables', 'frames', 'avatars', 'music'] as const).map(tab => (
+          {(['decks', 'tables', 'frames', 'avatars', 'music', 'emotions'] as const).map(tab => (
             <button
               key={tab}
               className={`flex-1 py-2.5 px-1 text-[10px] sm:text-sm font-medium transition-colors ${
@@ -754,7 +774,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : t('shop.music')}
+              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : tab === 'music' ? t('shop.music') : t('shop.emotions')}
             </button>
           ))}
         </div>
@@ -1125,10 +1145,93 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   </div>
                 );
               })}
+             </div>
+          )}
+          {activeTab === 'emotions' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-2xl">😊</span>
+                <h3 className="text-amber-100 font-bold text-sm">{t('shop.emotions')}</h3>
+              </div>
+              {EMOTION_PACKS.map(pack => {
+                const isOwned = pack.price === 0 || pack.id === 'hamster' || ownedEmotionPacks.includes(pack.id);
+                const isActive = activeEmotionPack === pack.id;
+                const packName = locale === 'kk' && pack.nameKk ? pack.nameKk : locale === 'en' && pack.nameEn ? pack.nameEn : pack.name;
+                const packDesc = locale === 'kk' && pack.descriptionKk ? pack.descriptionKk : locale === 'en' && pack.descriptionEn ? pack.descriptionEn : (pack.description || '');
+                return (
+                  <div key={pack.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-amber-900/30 flex items-center justify-center">
+                        <img src={pack.emotions[0].url} alt={packName} className="w-10 h-10 object-contain" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h4 className="text-amber-100 font-bold text-sm">{packName}</h4>
+                        {packDesc && <p className="text-amber-200/50 text-xs mt-0.5">{packDesc}</p>}
+                      </div>
+                    </div>
+                    {/* Emotion preview grid */}
+                    <div className="grid grid-cols-5 gap-1.5 mb-3">
+                      {pack.emotions.map(em => (
+                        <div key={em.id} className="flex flex-col items-center gap-0.5">
+                          <img src={em.url} alt={em.label} className="w-10 h-10 object-contain" />
+                          <span className="text-[9px] text-amber-200/40 leading-none">{locale === 'kk' && em.labelKk ? em.labelKk : locale === 'en' && em.labelEn ? em.labelEn : em.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-2">
+                      {isOwned ? (
+                        isActive ? (
+                          <div className="flex items-center gap-1.5 text-amber-400 text-sm font-medium">
+                            <Check className="w-4 h-4" />
+                            <span>{t('shop.equipped')}</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
+                              <Check className="w-4 h-4" />
+                              <span>{pack.price === 0 ? t('shop.free') : t('shop.purchased')}</span>
+                            </div>
+                            <Button
+                              className="ml-auto bg-amber-700/40 hover:bg-amber-600/60 text-amber-100 text-xs h-8 px-3"
+                              onClick={async () => {
+                                await setActiveEmotionPackMutation.mutateAsync({ packId: pack.id });
+                                refetchActiveEmotionPack();
+                                toast.success(locale === 'kk' ? 'Белсенді болды' : locale === 'en' ? 'Activated!' : 'Активировано!');
+                              }}
+                            >
+                              {locale === 'kk' ? 'Белсендіру' : locale === 'en' ? 'Activate' : 'Активировать'}
+                            </Button>
+                          </>
+                        )
+                      ) : (
+                        <>
+                          <div className="flex-1" />
+                          <Button
+                            className="bg-amber-600 hover:bg-amber-500 text-white text-xs h-8 px-3"
+                            onClick={() => setConfirmPurchase({
+                              type: 'emotionpack',
+                              id: pack.id,
+                              name: packName,
+                              price: pack.price,
+                            })}
+                            disabled={purchasing || currentTenge < pack.price}
+                          >
+                            {purchasing ? '...' : t('shop.buy')}
+                          </Button>
+                          <div className="flex items-center gap-1">
+                            <span className="text-amber-100 font-bold text-sm">{pack.price}</span>
+                            <img src={TENGE_ICON} alt="T" className="w-5 h-5 rounded-full object-cover" />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
-
         <div className="px-5 pb-4 text-center">
           <p className="text-amber-200/30 text-xs">{t('shop.comingSoon')}</p>
         </div>

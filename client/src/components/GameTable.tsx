@@ -489,7 +489,9 @@ export interface GameTableProps {
    isTutorial?: boolean;
   onTutorialComplete?: () => void;
   sendEmotion?: (roomId: string, emotionId: string) => void;
-  playerEmotions?: Record<string, { emotionId: string; expiresAt: number }>;
+  playerEmotions?: Record<string, { emotionId: string; emotionPackId?: string; expiresAt: number }>;
+  /** Active emotion pack ID for the current player */
+  activeEmotionPackId?: string;
 }
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
@@ -497,7 +499,7 @@ export default function GameTable({
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
-  sendEmotion, playerEmotions = {},
+  sendEmotion, playerEmotions = {}, activeEmotionPackId = 'hamster',
 }: GameTableProps) {
   // Interactive tutorial state
   const {
@@ -1598,6 +1600,7 @@ export default function GameTable({
                       {playerEmotions[p.id] && (
                         <EmotionBubble
                           emotionId={playerEmotions[p.id].emotionId}
+                          emotionPackId={playerEmotions[p.id].emotionPackId}
                         />
                       )}
                     </div>
@@ -2127,7 +2130,7 @@ export default function GameTable({
               >
                 {/* Emotion bubble covering my avatar */}
                 {playerEmotions[gs.players[myIdx]?.id] && (
-                  <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} />
+                  <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} emotionPackId={playerEmotions[gs.players[myIdx].id].emotionPackId} />
                 )}
                 <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
                   <AvatarDisplay
@@ -2302,6 +2305,7 @@ export default function GameTable({
             }
           }}
           onClose={emotionPicker.close}
+          activePackId={activeEmotionPackId}
         />
       )}
     </div>

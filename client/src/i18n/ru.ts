@@ -459,6 +459,8 @@ export const ru = {
     listenBtn: 'Прослушать',
     stopBtn: 'Стоп',
     notEnoughShanyrak: 'Недостаточно шаныраков',
+    emotions: 'Эмоции',
+    emotionsDesc: 'Пак эмоций с обезьяной',
   },
 
   // Settings

@@ -36,8 +36,8 @@ export function useSocket(userId: string | null, userName: string | null) {
   const [frozenInfo, setFrozenInfo] = useState<{
     disconnectedPlayerName: string; secondsLeft: number;
   } | null>(null);
-  // Active emotions: playerId -> { emotionId, expiresAt }
-  const [playerEmotions, setPlayerEmotions] = useState<Record<string, { emotionId: string; expiresAt: number }>>({});
+  // Active emotions: playerId -> { emotionId, emotionPackId, expiresAt }
+  const [playerEmotions, setPlayerEmotions] = useState<Record<string, { emotionId: string; emotionPackId?: string; expiresAt: number }>>({});
 
   // Track the room ID we're currently in for reconnect
   const currentRoomIdRef = useRef<string | null>(null);
@@ -368,7 +368,7 @@ export function useSocket(userId: string | null, userName: string | null) {
     // Player emotion reactions
     socket.on('playerEmotion', (data) => {
       const expiresAt = Date.now() + 3500; // show for 3.5 seconds
-      setPlayerEmotions(prev => ({ ...prev, [data.playerId]: { emotionId: data.emotionId, expiresAt } }));
+      setPlayerEmotions(prev => ({ ...prev, [data.playerId]: { emotionId: data.emotionId, emotionPackId: data.emotionPackId, expiresAt } }));
       setTimeout(() => {
         setPlayerEmotions(prev => {
           const next = { ...prev };
