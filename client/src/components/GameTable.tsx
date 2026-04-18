@@ -1563,9 +1563,12 @@ export default function GameTable({
                   }`}>
                     {/* Avatar — clickable for profile popup */}
                     <div className="relative">
-                      {/* Emotion bubble above opponent avatar */}
+                      {/* Emotion bubble covering opponent avatar */}
                       {playerEmotions[p.id] && (
-                        <EmotionBubble emotionId={playerEmotions[p.id].emotionId} />
+                        <EmotionBubble
+                          emotionId={playerEmotions[p.id].emotionId}
+                          size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
+                        />
                       )}
                     <button
                       className="focus:outline-none mb-0.5 sm:mb-1"
@@ -2115,28 +2118,21 @@ export default function GameTable({
               className="flex flex-col items-center justify-center shrink-0 relative"
               onClick={() => { if (sendEmotion) emotionPicker.toggle(); }}
             >
-              {/* Emotion bubble above my avatar */}
+              {/* Emotion bubble covering my avatar */}
               {playerEmotions[gs.players[myIdx]?.id] && (
-                <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} />
+                <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} size={52} />
               )}
-              {/* Emotion picker popup */}
+              {/* Emotion picker modal — full-screen overlay, rendered via portal-like positioning */}
               {emotionPicker.open && sendEmotion && (
-                <>
-                  {/* Backdrop to close */}
-                  <div
-                    className="fixed inset-0 z-40"
-                    onClick={(e) => { e.stopPropagation(); emotionPicker.close(); }}
-                  />
-                  <EmotionPicker
-                    onSelect={(eid) => {
-                      if (emotionPicker.canSend()) {
-                        sendEmotion(gs.roomId, eid);
-                        emotionPicker.markSent();
-                      }
-                    }}
-                    onClose={emotionPicker.close}
-                  />
-                </>
+                <EmotionPicker
+                  onSelect={(eid) => {
+                    if (emotionPicker.canSend()) {
+                      sendEmotion(gs.roomId, eid);
+                      emotionPicker.markSent();
+                    }
+                  }}
+                  onClose={emotionPicker.close}
+                />
               )}
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
                 <AvatarDisplay

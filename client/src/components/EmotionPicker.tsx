@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { X } from 'lucide-react';
 
 export const EMOTIONS = [
   { id: 'laugh',  label: 'Смех',    url: '/assets/static/emotion_laugh.webp' },
@@ -16,6 +17,10 @@ interface EmotionPickerProps {
   onClose: () => void;
 }
 
+/**
+ * Full-screen modal emotion picker — styled like Durak Online:
+ * dark overlay, rounded gray panel, 4-column grid, large emoji, X button.
+ */
 export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
   const handleSelect = useCallback((id: string) => {
     onSelect(id);
@@ -23,60 +28,81 @@ export function EmotionPicker({ onSelect, onClose }: EmotionPickerProps) {
   }, [onSelect, onClose]);
 
   return (
+    /* Full-screen backdrop */
     <div
-      className="absolute z-50 bottom-full mb-2 left-1/2 -translate-x-1/2"
-      onClick={e => e.stopPropagation()}
+      className="fixed inset-0 z-[200] flex items-end justify-center pb-24 sm:items-center sm:pb-0"
+      onClick={onClose}
     >
-      {/* Arrow pointing down */}
-      <div className="relative">
-        <div className="bg-black/80 backdrop-blur-sm rounded-2xl p-2 shadow-2xl border border-white/10">
-          <div className="grid grid-cols-4 gap-1.5">
-            {EMOTIONS.map(e => (
-              <button
-                key={e.id}
-                onClick={() => handleSelect(e.id)}
-                className="w-12 h-12 rounded-xl hover:bg-white/20 active:scale-90 transition-all duration-100 flex items-center justify-center"
-                title={e.label}
-              >
-                <img
-                  src={e.url}
-                  alt={e.label}
-                  className="w-10 h-10 object-contain"
-                  draggable={false}
-                />
-              </button>
-            ))}
-          </div>
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/60" />
+
+      {/* Panel */}
+      <div
+        className="relative z-10 w-[min(92vw,360px)] rounded-2xl overflow-hidden shadow-2xl"
+        style={{ background: 'rgba(60,65,80,0.97)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <span className="text-white/80 text-sm font-semibold tracking-wide">Эмоции</span>
+          <button
+            onClick={onClose}
+            className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-400 active:scale-90 transition-all flex items-center justify-center"
+          >
+            <X className="w-4 h-4 text-white" />
+          </button>
         </div>
-        {/* Down arrow */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[8px] border-r-[8px] border-t-[8px] border-l-transparent border-r-transparent border-t-black/80" />
+
+        {/* Emoji grid — 4 columns */}
+        <div className="grid grid-cols-4 gap-3 p-4">
+          {EMOTIONS.map(e => (
+            <button
+              key={e.id}
+              onClick={() => handleSelect(e.id)}
+              className="flex flex-col items-center gap-1 rounded-xl p-2 hover:bg-white/15 active:scale-90 transition-all duration-100"
+              title={e.label}
+            >
+              <img
+                src={e.url}
+                alt={e.label}
+                className="w-14 h-14 object-contain drop-shadow-md"
+                draggable={false}
+              />
+              <span className="text-[10px] text-white/60 font-medium leading-none">{e.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
+/**
+ * Emotion bubble shown above a player's avatar.
+ * Covers the full avatar+frame area but stays above the name label.
+ */
 interface EmotionBubbleProps {
   emotionId: string;
+  /** Size in px — should match the avatar+frame container size */
+  size?: number;
 }
 
-export function EmotionBubble({ emotionId }: EmotionBubbleProps) {
+export function EmotionBubble({ emotionId, size = 52 }: EmotionBubbleProps) {
   const emotion = EMOTIONS.find(e => e.id === emotionId);
   if (!emotion) return null;
 
   return (
-    <div className="absolute -top-14 left-1/2 -translate-x-1/2 z-40 pointer-events-none animate-emotion-pop">
-      <div className="relative">
-        <div className="bg-black/75 backdrop-blur-sm rounded-2xl p-1.5 shadow-xl border border-white/15">
-          <img
-            src={emotion.url}
-            alt={emotion.label}
-            className="w-12 h-12 object-contain"
-            draggable={false}
-          />
-        </div>
-        {/* Down arrow */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-black/75" />
-      </div>
+    <div
+      className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop"
+      style={{ borderRadius: '50%' }}
+    >
+      <img
+        src={emotion.url}
+        alt={emotion.label}
+        style={{ width: size, height: size }}
+        className="object-contain drop-shadow-lg"
+        draggable={false}
+      />
     </div>
   );
 }
