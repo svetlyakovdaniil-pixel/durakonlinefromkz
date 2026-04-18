@@ -3279,3 +3279,7 @@
 - [x] Home.tsx: дефолт activeEmotionPackId изменить с 'hamster' на 'khan'
 - [x] schema.ts: дефолт activeEmotionPack изменить с "hamster" на "khan"
 - [x] Мигрировать БД: обновить существующих пользователей с activeEmotionPack='hamster' на 'khan' (27 строк)
+## Баг: смайлики перепутаны — сокет кэширует устаревший activeEmotionPack
+- [x] socketServer.ts: экспортировать updatePlayerEmotionPack(odId, packId)
+- [x] routers.ts: вызывать updatePlayerEmotionPack после setActiveEmotionPack
+- [x] socketServer.ts: при sendEmotion читать пак из БД (fallback на кэш) для надёжности

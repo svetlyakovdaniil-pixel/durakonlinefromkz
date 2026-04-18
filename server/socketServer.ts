@@ -175,6 +175,11 @@ export async function emitNotificationToProfile(profileId: number, type: string)
   }
 }
 
+/** Update a player's active emotion pack in the in-memory map (called from tRPC when pack changes) */
+export function updatePlayerEmotionPack(odId: string, packId: string) {
+  playerActiveEmotionPacks.set(odId, packId);
+}
+
 /** Update a player's display name in the in-memory maps (called from tRPC when name changes) */
 export function updatePlayerDisplayName(odId: string, newName: string) {
   playerDisplayNames.set(odId, newName);
@@ -1259,7 +1264,7 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     // --- Emotion / reaction ---
-    socket.on('sendEmotion', (data: { roomId: string; emotionId: string }) => {
+    socket.on('sendEmotion', async (data: { roomId: string; emotionId: string }) => {
       const { roomId, emotionId } = data;
       if (!roomId || !emotionId) return;
       const VALID_EMOTIONS = ['laugh', 'cool', 'angry', 'sad', 'think', 'wow', 'heart', 'hurry', 'win', 'sleep'];
@@ -1268,8 +1273,25 @@ export function initSocketServer(httpServer: HttpServer) {
       const room = rooms.get(roomId);
       const gameState = games.get(roomId);
       if (!room && !gameState) return;
-      // Get the player's active emotion pack
-      const emotionPackId = playerActiveEmotionPacks.get(odId) || 'khan';
+      // Get the player's active emotion pack — always read from DB for accuracy
+      let emotionPackId = playerActiveEmotionPacks.get(odId) || 'khan';
+      try {
+        const db = await getDb();
+        if (db) {
+          const user = await getUserByOpenId(odId);
+          if (user) {
+            const [prof] = await db.select({ activeEmotionPack: playerProfiles.activeEmotionPack })
+              .from(playerProfiles)
+              .where(eq(playerProfiles.userId, user.id))
+              .limit(1);
+            if (prof?.activeEmotionPack) {
+              emotionPackId = prof.activeEmotionPack;
+              // Update cache for next time
+              playerActiveEmotionPacks.set(odId, emotionPackId);
+            }
+          }
+        }
+      } catch { /* fallback to cached value */ }
       // Broadcast to everyone in the room
       io.to(roomId).emit('playerEmotion', { playerId: odId, emotionId, emotionPackId });
     });
