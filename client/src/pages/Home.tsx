@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import { useEffect, useRef, useCallback, useState, lazy, Suspense } from 'react';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { useSocket } from "@/hooks/useSocket";
 import { useProfile } from "@/hooks/useProfile";
 import Lobby from "./Lobby";
 import WaitingRoom from "./WaitingRoom";
-import GameTable from "@/components/GameTable";
+const GameTable = lazy(() => import("@/components/GameTable"));
 import { CARD_IMAGES } from "../../../shared/cardAssets";
 import { Loader2, Swords, Shield, Crown, Star, Users, Zap, RotateCcw, X } from "lucide-react";
 import { useMusicContext } from '@/contexts/MusicContext';
@@ -312,6 +312,7 @@ export default function Home() {
   if (gameState && (gameState.gamePhase === 'playing' || gameState.gamePhase === 'finished')) {
     return (
       <>
+      <Suspense fallback={<div className="min-h-screen bg-[#0a1628]" />}>
       <GameTable
         gameState={gameState}
         availableActions={availableActions}
@@ -394,6 +395,7 @@ export default function Home() {
           </div>
         </div>
       )}
+      </Suspense>
     </>
     );
     // eslint-disable-next-line
