@@ -3262,3 +3262,15 @@
 - [x] Обновить ShopModal: monkey пак стоит 150 тенге (не бесплатный), покупка за тенге
 - [x] Обновить emotionPacks.ts: monkey pack price не 0 (убрать бесплатность)
 - [x] Тесты для новой функциональности
+## Пак "Казахский Хан" (khan) — бесплатный по умолчанию
+- [x] Сгенерировать 10 смайликов казахского хана (chibi, калпак, борода, чапан)
+- [x] Обрезать до 200x200 и загрузить в CDN
+- [x] Добавить KHAN_PACK в shared/emotionPacks.ts (price: 0, бесплатный)
+- [x] Изменить HAMSTER_PACK.price с 0 на 150 тенге
+- [x] Изменить DEFAULT_EMOTION_PACK_ID с 'hamster' на 'khan'
+- [x] Обновить дефолтный пак в server/routers.ts (activeEmotionPack ?? 'khan')
+- [x] Обновить дефолтный пак в server/socketServer.ts (|| 'khan')
+- [x] Обновить дефолтный пак в client/src/components/GameTable.tsx (activeEmotionPackId = 'khan')
+- [x] Обновить server/db.ts: setActiveEmotionPack — проверка по price вместо хардкода 'hamster'
+- [x] Обновить тесты emotionPacks.test.ts (17/17 проходят)
+- [x] Исправить тест admin.updateShopPrice (43/43 проходят)

@@ -1269,7 +1269,7 @@ export function initSocketServer(httpServer: HttpServer) {
       const gameState = games.get(roomId);
       if (!room && !gameState) return;
       // Get the player's active emotion pack
-      const emotionPackId = playerActiveEmotionPacks.get(odId) || 'hamster';
+      const emotionPackId = playerActiveEmotionPacks.get(odId) || 'khan';
       // Broadcast to everyone in the room
       io.to(roomId).emit('playerEmotion', { playerId: odId, emotionId, emotionPackId });
     });
@@ -1526,7 +1526,7 @@ export function initSocketServer(httpServer: HttpServer) {
             .then((rows: { id: number; activeEmotionPack: string | null }[]) => {
               if (rows[0]?.id) {
                 playerProfileIds.set(odId, rows[0].id);
-                playerActiveEmotionPacks.set(odId, rows[0].activeEmotionPack || 'hamster');
+                playerActiveEmotionPacks.set(odId, rows[0].activeEmotionPack || 'khan');
               }
             })
             .catch(() => {});
