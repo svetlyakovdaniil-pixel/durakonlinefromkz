@@ -743,7 +743,6 @@ export const ru = {
     noAccount: 'Нет аккаунта?',
     hasAccount: 'Уже есть аккаунт?',
     orLoginWith: 'или войти через',
-    manus: 'Manus',
     emailExists: 'Этот email уже зарегистрирован',
     invalidCredentials: 'Неверный email или пароль',
     serverError: 'Ошибка сервера, попробуйте позже',
