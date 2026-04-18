@@ -1220,6 +1220,20 @@ export function initSocketServer(httpServer: HttpServer) {
       scheduleBotAction(roomId);
     });
 
+    // --- Emotion / reaction ---
+    socket.on('sendEmotion', (data: { roomId: string; emotionId: string }) => {
+      const { roomId, emotionId } = data;
+      if (!roomId || !emotionId) return;
+      const VALID_EMOTIONS = ['laugh', 'cool', 'angry', 'sad', 'think', 'wow', 'heart', 'thumb'];
+      if (!VALID_EMOTIONS.includes(emotionId)) return;
+      // Player must be in the room (lobby or game)
+      const room = rooms.get(roomId);
+      const gameState = games.get(roomId);
+      if (!room && !gameState) return;
+      // Broadcast to everyone in the room
+      io.to(roomId).emit('playerEmotion', { playerId: odId, emotionId });
+    });
+
     // --- Leave game (forfeit) ---
     socket.on('leaveGame', (roomId, ack) => {
       const gameState = games.get(roomId);

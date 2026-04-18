@@ -30,7 +30,7 @@ export default function Home() {
     createRoom, joinRoom, leaveRoom, leaveGame, closeRoom, toggleReady, startGame,
     playCard, transferCard, transferCards, showPassThrough, showPassThroughs, takeCards, passTurn, endAttack, skipTurn,
     returnToLobby, clearError, inviteFriend, declineInvite, registerProfile, sendChat,
-    requestRoomList, updateRoom,
+    requestRoomList, updateRoom, sendEmotion, playerEmotions,
     RECONNECT_WINDOW_MS, getStorageKeys, persistActiveRoom,
   } = useSocket(
     isAuthenticated ? user?.openId || null : null,
@@ -336,6 +336,8 @@ export default function Home() {
         onMusicVolumeChange={music.setVolume}
         frozenInfo={frozenInfo}
         isTutorial={gameState.isTutorial}
+        sendEmotion={sendEmotion}
+        playerEmotions={playerEmotions}
         onTutorialComplete={() => {
           // Credit tutorial reward (one-time)
           setTutorialRewardGiven(false);

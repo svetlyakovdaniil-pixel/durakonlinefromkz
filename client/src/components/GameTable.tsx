@@ -18,6 +18,7 @@ import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
 import GameSettingsSheet from './GameSettingsSheet';
+import { EmotionPicker, EmotionBubble, useEmotionPicker } from './EmotionPicker';
 import TutorialOverlay from './TutorialOverlay';
 import TutorialTooltip from './TutorialTooltip';
 import TutorialArrow from './TutorialArrow';
@@ -482,16 +483,18 @@ export interface GameTableProps {
   musicVolume?: number;
   onMusicVolumeChange?: (v: number) => void;
   frozenInfo?: { disconnectedPlayerName: string; secondsLeft: number } | null;
-  isTutorial?: boolean;
+   isTutorial?: boolean;
   onTutorialComplete?: () => void;
+  sendEmotion?: (roomId: string, emotionId: string) => void;
+  playerEmotions?: Record<string, { emotionId: string; expiresAt: number }>;
 }
-
 export default function GameTable({
   gameState, availableActions, turnTimer, gameOverData, prizeData,
   onPlayCard, onTransferCard, onTransferCards, onTakeCards, onPassTurn, onEndAttack, onSkipTurn, onShowPassThrough, onShowPassThroughs,
   onLeaveGame, onReturnToLobby, roomPenalty = 0,
   musicEnabled = false, onToggleMusic, musicVolume = 0.3, onMusicVolumeChange, frozenInfo,
   isTutorial = false, onTutorialComplete,
+  sendEmotion, playerEmotions = {},
 }: GameTableProps) {
   // Interactive tutorial state
   const {
@@ -1282,6 +1285,7 @@ export default function GameTable({
 
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
+  const emotionPicker = useEmotionPicker(2000);
 
   // Sort opponents in turn order starting from the player after myIdx (in direction of play).
   // This ensures the display order matches the actual turn sequence.
@@ -1558,6 +1562,11 @@ export default function GameTable({
                     'bg-black/30 border-amber-700/20'
                   }`}>
                     {/* Avatar — clickable for profile popup */}
+                    <div className="relative">
+                      {/* Emotion bubble above opponent avatar */}
+                      {playerEmotions[p.id] && (
+                        <EmotionBubble emotionId={playerEmotions[p.id].emotionId} />
+                      )}
                     <button
                       className="focus:outline-none mb-0.5 sm:mb-1"
                       onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
@@ -1572,6 +1581,7 @@ export default function GameTable({
                          />
                       </FrameWrapper>
                     </button>
+                    </div>{/* end relative wrapper for emotion bubble */}
                     <div className={`flex items-center gap-0.5 sm:gap-1 ${manyOpponents ? 'mb-0' : 'mb-0.5'} sm:mb-1`}>
                       {isOppAttacker && <Swords className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-red-400`} />}
                       {isOppDefender && !gs.defenderTaking && <Shield className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-blue-400`} />}
@@ -2100,14 +2110,40 @@ export default function GameTable({
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT */}
           <div className="flex items-start gap-1.5 mt-1.5 px-1 avatar-action-row">
-            {/* Left: player avatar (no role highlight) */}
-            <div className="flex flex-col items-center justify-center shrink-0">
+            {/* Left: player avatar — click to open emotion picker */}
+            <div
+              className="flex flex-col items-center justify-center shrink-0 relative"
+              onClick={() => { if (sendEmotion) emotionPicker.toggle(); }}
+            >
+              {/* Emotion bubble above my avatar */}
+              {playerEmotions[gs.players[myIdx]?.id] && (
+                <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} />
+              )}
+              {/* Emotion picker popup */}
+              {emotionPicker.open && sendEmotion && (
+                <>
+                  {/* Backdrop to close */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={(e) => { e.stopPropagation(); emotionPicker.close(); }}
+                  />
+                  <EmotionPicker
+                    onSelect={(eid) => {
+                      if (emotionPicker.canSend()) {
+                        sendEmotion(gs.roomId, eid);
+                        emotionPicker.markSent();
+                      }
+                    }}
+                    onClose={emotionPicker.close}
+                  />
+                </>
+              )}
               <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
                 <AvatarDisplay
                   avatarId={gs.players[myIdx]?.avatarId}
                   size={52}
                   alt={gs.players[myIdx]?.name || ''}
-                  className={gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'}
+                  className={`${gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'} ${sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}`}
                 />
               </FrameWrapper>
             </div>

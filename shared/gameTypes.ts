@@ -231,6 +231,8 @@ export interface ServerToClientEvents {
   achievementUnlocked: (data: { key: string; nameRu: string; nameKk: string; nameEn: string; shanyrakReward: number }) => void;
   /** Daily quest just completed — show toast in game */
   questCompleted: (data: { key: string; titleRu: string; titleKk: string; titleEn: string; shanyrakReward: number }) => void;
+  /** Player sent an emotion reaction */
+  playerEmotion: (data: { playerId: string; emotionId: string }) => void;
 }
 
 export interface ClientToServerEvents {
@@ -264,6 +266,8 @@ export interface ClientToServerEvents {
   requestRoomList: () => void;
   /** Update room settings (host only, before game starts) */
   updateRoom: (data: { roomId: string; name?: string; maxPlayers?: number; settings?: Partial<RoomSettings> }, cb: (ok: boolean, room?: Room) => void) => void;
+  /** Send an emotion reaction to all players in the room */
+  sendEmotion: (data: { roomId: string; emotionId: string }) => void;
 }
 
 // --- Client-side game state ---
