@@ -246,6 +246,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const isNeonTableOwned = ownedTables.includes('neon');
   const isApocalypseTableOwned = ownedTables.includes('apocalypse');
   const isGalaxyTableOwned = ownedTables.includes('galaxy');
+  const isSeaDepthsOwned = ownedTables.includes('sea_depths');
+  const isStargazerOwned = ownedTables.includes('stargazer');
   const { data: lobbyPlaylists = [] } = trpc.playlists.list.useQuery();
   const { data: lobbyOwnedPlaylistIds = [] } = trpc.playlists.owned.useQuery();
   const acceptFriend = trpc.friends.acceptRequest.useMutation();
@@ -892,6 +894,8 @@ onClick={() => setShowTengeTopUp(true)}
                       if (v === 'neon' && !isNeonTableOwned) return;
                       if (v === 'apocalypse' && !isApocalypseTableOwned) return;
       if (v === 'galaxy' && !isGalaxyTableOwned) return;
+      if (v === 'sea_depths' && !isSeaDepthsOwned) return;
+      if (v === 'stargazer' && !isStargazerOwned) return;
                       setTableStyle(v as TableStyle);
                     }}>
                       <SelectTrigger className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 sm:h-10 min-w-0 w-full">
@@ -937,6 +941,26 @@ onClick={() => setShowTengeTopUp(true)}
                           <span className="flex items-center gap-1.5">
                             {!isGalaxyTableOwned && <Lock className="w-3 h-3" />}
                             {t('lobby.tableGalaxy')}
+                          </span>
+                        </SelectItem>
+                        <SelectItem
+                          value="sea_depths"
+                          className={isSeaDepthsOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isSeaDepthsOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isSeaDepthsOwned && <Lock className="w-3 h-3" />}
+                            Морские глубины
+                          </span>
+                        </SelectItem>
+                        <SelectItem
+                          value="stargazer"
+                          className={isStargazerOwned ? 'text-amber-100' : 'text-gray-500 opacity-50'}
+                          disabled={!isStargazerOwned}
+                        >
+                          <span className="flex items-center gap-1.5">
+                            {!isStargazerOwned && <Lock className="w-3 h-3" />}
+                            Звездочёт
                           </span>
                         </SelectItem>
                       </SelectContent>
