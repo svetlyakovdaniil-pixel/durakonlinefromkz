@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
-import { lazy, Suspense, useEffect } from "react";
+import { useEffect } from "react";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import NotFound from "@/pages/NotFound";
 import { Route, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -10,32 +11,25 @@ import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
 import { initIAP } from "./lib/iap";
 import { trpc } from "./lib/trpc";
-
-// Eagerly loaded — small, needed immediately
-import NotFound from "./pages/NotFound";
+import Home from "./pages/Home";
+import AdminPanel from "./pages/AdminPanel";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
 import MaintenancePage from "./pages/MaintenancePage";
 
-// Lazily loaded — heavy pages, split into separate chunks
-const Home = lazy(() => import("./pages/Home"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const Login = lazy(() => import("./pages/Login"));
-const Register = lazy(() => import("./pages/Register"));
-
 function Router() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a1628]" />}>
-      <Switch>
-        <Route path={"/"} component={Home} />
-        <Route path={"/login"} component={Login} />
-        <Route path={"/register"} component={Register} />
-        <Route path={"/admin"} component={AdminPanel} />
-        <Route path={"/privacy"} component={PrivacyPolicy} />
-        <Route path={"/404"} component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
+    <Switch>
+      <Route path={"/"} component={Home} />
+      <Route path={"/login"} component={Login} />
+      <Route path={"/register"} component={Register} />
+      <Route path={"/admin"} component={AdminPanel} />
+      <Route path={"/privacy"} component={PrivacyPolicy} />
+      <Route path={"/404"} component={NotFound} />
+      <Route component={NotFound} />
+    </Switch>
   );
 }
 

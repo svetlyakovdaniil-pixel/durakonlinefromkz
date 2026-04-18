@@ -470,6 +470,8 @@ export const ru = {
     music: 'Фоновая музыка',
     vibration: 'Вибрация',
     animations: 'Включить анимацию',
+    batterySaver: 'Экономия батареи',
+    batterySaverDesc: 'Отключает эффекты для снижения нагрева',
     language: 'Язык',
     logout: 'Выйти из аккаунта',
     logoutConfirm: 'Выход из аккаунта',

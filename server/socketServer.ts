@@ -850,12 +850,35 @@ export function initSocketServer(httpServer: HttpServer) {
         if (gameId) {
           // Track defense events
           if (isDefender && prePlayCard) {
-            const targetPair = prePlayBattlefield.find(p => !p.defense);
+            // Find the correct attack card: use targetPairIdx if provided, otherwise find by King of Spades or first undefended
+            const targetPairByIdx = data.targetPairIdx !== undefined && data.targetPairIdx !== null
+              ? prePlayBattlefield[data.targetPairIdx]
+              : undefined;
+            // Also find the pair that matches the defense card (canBeat logic already ran in engine)
+            // We look for the pair where attack is King of Spades if defense is Ace of Spades, else use targetPairIdx or first undefended
+            const defenseIsAceOfSpadesCheck = prePlayCard.rank === 'A' && prePlayCard.suit === 'spades';
+            let targetPair: typeof prePlayBattlefield[0] | undefined;
+            if (targetPairByIdx && !targetPairByIdx.defense) {
+              targetPair = targetPairByIdx;
+            } else if (defenseIsAceOfSpadesCheck) {
+              // Find King of Spades attack card specifically
+              targetPair = prePlayBattlefield.find(p => !p.defense && p.attack.rank === 'K' && p.attack.suit === 'spades')
+                ?? prePlayBattlefield.find(p => !p.defense);
+            } else {
+              targetPair = prePlayBattlefield.find(p => !p.defense);
+            }
             const attackCard = targetPair?.attack;
+            // Always track total defense count (for Батыр-новобранец: 10 defenses per game)
+            {
+              const currentTrumpForCount = gameState.trumpInfo.currentTrump;
+              const isTrumpDefenseForCount = attackCard
+                ? prePlayCard.suit === currentTrumpForCount && attackCard.suit !== currentTrumpForCount
+                : false;
+              trackTrumpDefense(data.roomId, odId, isTrumpDefenseForCount);
+            }
             if (attackCard) {
               const currentTrump = gameState.trumpInfo.currentTrump;
               const isTrumpDefense = prePlayCard.suit === currentTrump && attackCard.suit !== currentTrump;
-              trackTrumpDefense(data.roomId, odId, isTrumpDefense);
               // Track trump ace usage (defender plays trump ace)
               if (prePlayCard.rank === 'A' && prePlayCard.suit === currentTrump) {
                 trackTrumpAceUsed(data.roomId, odId);
@@ -879,9 +902,10 @@ export function initSocketServer(httpServer: HttpServer) {
                   attackIsTrumpAce, defenseIsKingOfSpades, attackIs777,
                   isFirstGame, roomId: data.roomId, odId,
                 }).catch(() => {});
+                const attackIsAceOfSpades = attackCard.rank === 'A' && attackCard.suit === 'spades';
                 processLittleHeroAchievement({
                   profileId, botCount, totalPlayersInRoom,
-                  attackIsKingOfSpades, defenseIsAceOfSpades,
+                  attackIsAceOfSpades, defenseIsKingOfSpades,
                 }).catch(() => {});
               }).catch(() => {});
             }
@@ -889,6 +913,10 @@ export function initSocketServer(httpServer: HttpServer) {
           // Track attack (any card played as attacker)
           if (!isDefender && prePlayCard) {
             trackAttack(data.roomId, odId);
+            // Track throw: подкидывание = карта сыграна не-защитником когда на столе уже есть карты (не первый ход)
+            if (prePlayBattlefieldLength > 0) {
+              trackThrow(data.roomId, odId, 1);
+            }
             // Track started-turn-with-10 (10 played as first card of attack)
             if (prePlayBattlefieldLength === 0 && prePlayCard.rank === '10') {
               trackStartedTurnWith10(data.roomId, odId);
@@ -1127,11 +1155,21 @@ export function initSocketServer(httpServer: HttpServer) {
       if (!gameState) return;
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
+      // Capture pre-endAttack state for achievement tracking
+      const preEndDefenderOdId = gameState.players[gameState.currentDefenderIdx]?.id;
+      const preEndAllDefended = gameState.battleField.length > 0 && gameState.battleField.every(p => p.defense !== null);
+      const preEndTrickCount = gameState.trickCount;
       const error = engineEndAttack(gameState, playerIdx);
       if (error) {
         socket.emit('error', error);
         socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
         return;
+      }
+
+      // Track successful round: if all cards were defended and trickCount advanced
+      // (meaning successfulDefense was called inside the engine)
+      if (preEndAllDefended && preEndDefenderOdId && gameState.trickCount !== preEndTrickCount) {
+        trackSuccessfulRound(roomId, preEndDefenderOdId);
       }
 
       // Reset consecutive timeout counter — player took action

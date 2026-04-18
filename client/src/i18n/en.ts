@@ -470,6 +470,8 @@ export const en = {
     music: 'Background music',
     vibration: 'Vibration',
     animations: 'Enable animations',
+    batterySaver: 'Battery Saver',
+    batterySaverDesc: 'Disables effects to reduce overheating',
     language: 'Language',
     logout: 'Log out',
     logoutConfirm: 'Log out',

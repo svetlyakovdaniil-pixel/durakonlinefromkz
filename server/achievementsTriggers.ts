@@ -453,8 +453,8 @@ export async function processGameEndAchievements(ctx: GameEndContext): Promise<v
         await incrementAchievementProgress(profileId, 'clean_win', 1);
       }
 
-      // Батыр-новобранец — successfully defend 10 full rounds in one game
-      // (a "round" = the entire table was beaten and attack went to discard)
+      // Батыр-новобранец — успешно отбить 10 ходов за одну партию
+      // (ход = отбившийся раунд: весь стол отбит и карты ушли в бито)
       const successfulRounds = successfulRoundsMap.get(odId) ?? 0;
       if (successfulRounds >= 10) {
         await incrementAchievementProgress(profileId, 'batyr_recruit', 1);
@@ -611,8 +611,8 @@ export async function processFirstBerkutAchievement(ctx: {
 
 export async function processLittleHeroAchievement(ctx: {
   profileId: number;
-  attackIsKingOfSpades: boolean;
-  defenseIsAceOfSpades: boolean;
+  attackIsAceOfSpades: boolean;
+  defenseIsKingOfSpades: boolean;
   botCount: number;
   totalPlayersInRoom: number;
 }): Promise<void> {
@@ -620,8 +620,8 @@ export async function processLittleHeroAchievement(ctx: {
   const isHumanGame = botRatio < MAX_BOT_RATIO;
   if (!isHumanGame) return;
 
-  // Маленький герой — beat King of Spades with Ace of Spades
-  if (ctx.attackIsKingOfSpades && ctx.defenseIsAceOfSpades) {
+  // Маленький герой — на защитника походили тузом пики, и он отбил королём пики
+  if (ctx.attackIsAceOfSpades && ctx.defenseIsKingOfSpades) {
     await incrementAchievementProgress(ctx.profileId, 'little_hero', 1);
   }
 }

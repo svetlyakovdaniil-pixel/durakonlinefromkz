@@ -173,40 +173,6 @@ export default defineConfig({
     emptyOutDir: true,
     // Strip ALL comments (including @license and copyright) from production build
     minify: 'esbuild',
-    rollupOptions: {
-      output: {
-        manualChunks: (id: string) => {
-          // React core — tiny, loads first
-          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) {
-            return 'react-core';
-          }
-          // tRPC + React Query — data layer
-          if (id.includes('@trpc/') || id.includes('@tanstack/react-query')) {
-            return 'trpc-query';
-          }
-          // Radix UI + shadcn components
-          if (id.includes('@radix-ui/')) {
-            return 'radix-ui';
-          }
-          // Lucide icons
-          if (id.includes('lucide-react')) {
-            return 'icons';
-          }
-          // Socket.IO client
-          if (id.includes('socket.io-client') || id.includes('engine.io-client')) {
-            return 'socket';
-          }
-          // Framer Motion animations
-          if (id.includes('framer-motion')) {
-            return 'framer';
-          }
-          // All other node_modules
-          if (id.includes('node_modules/')) {
-            return 'vendor';
-          }
-        },
-      },
-    },
   },
   esbuild: {
     // Remove all comments including @license / copyright comments in production
