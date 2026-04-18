@@ -1564,8 +1564,8 @@ export default function GameTable({
                     {/* Avatar — clickable for profile popup */}
                     {/* Wrapper with explicit size so EmotionBubble absolute inset-0 aligns exactly over avatar */}
                     <div
-                      className="relative mb-0.5 sm:mb-1"
-                      style={{ width: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, height: manyManyOpponents ? 28 : manyOpponents ? 32 : 40 }}
+                      className="relative"
+                      style={{ width: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, height: manyManyOpponents ? 28 : manyOpponents ? 32 : 40, marginBottom: '2px' }}
                     >
                       <button
                         className="focus:outline-none w-full h-full"
