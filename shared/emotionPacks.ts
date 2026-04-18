@@ -67,7 +67,31 @@ export const MONKEY_PACK: EmotionPack = {
   ],
 };
 
-export const EMOTION_PACKS: EmotionPack[] = [HAMSTER_PACK, MONKEY_PACK];
+// Devil pack (purchasable)
+export const DEVIL_PACK: EmotionPack = {
+  id: 'devil',
+  name: 'Чертик',
+  nameKk: 'Шайтан',
+  nameEn: 'Devil',
+  description: 'Те же эмоции, только с чертиком!',
+  descriptionKk: 'Сол эмоциялар, бірақ шайтанмен!',
+  descriptionEn: 'Same emotions, but with a little devil!',
+  price: 150, // 150 tenge
+  emotions: [
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_laugh_810771e3.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_cool_e5b18242.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_angry_e4ff36c8.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sad_fc1ad763.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_think_a32cf7f5.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_wow_6f7fcd2b.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_heart_4914bc75.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_hurry_97527c35.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_win_d390dde4.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sleep_5d68d751.png' },
+  ],
+};
+
+export const EMOTION_PACKS: EmotionPack[] = [HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK];
 
 /** Get an emotion pack by ID, falls back to hamster */
 export function getEmotionPack(packId: string): EmotionPack {
