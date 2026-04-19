@@ -51,9 +51,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   if (!open) return null;
 
   const getName = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a.nameUk ?? a.nameRu) : locale === 'ka' ? (a.nameKa ?? a.nameRu) : a.nameRu;
+    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a.nameUk ?? a.nameRu) : locale === 'ka' ? (a.nameKa ?? a.nameRu) : locale === 'az' ? ((a as any).nameAz ?? a.nameRu) : a.nameRu;
   const getDesc = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a.descUk ?? a.descRu) : locale === 'ka' ? (a.descKa ?? a.descRu) : a.descRu;
+    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a.descUk ?? a.descRu) : locale === 'ka' ? (a.descKa ?? a.descRu) : locale === 'az' ? ((a as any).descAz ?? a.descRu) : a.descRu;
 
   // Sort: claimable first (unlocked & not claimed), then locked, then claimed
   const sorted = [...achievements].sort((a, b) => {

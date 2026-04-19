@@ -22,7 +22,7 @@ export default function TermsOfService() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : <TermsContentRu />}
+          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : locale === 'az' ? <TermsContentAz /> : <TermsContentRu />}
         </div>
         {/* Last updated */}
         <p className="text-xs text-muted-foreground mt-10 text-center">
@@ -264,6 +264,55 @@ function TermsContentKk() {
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">10. Байланыс</h3>
         <p>Осы келісімге қатысты сұрақтар бойынша Қосымшаның параметрлеріндегі кері байланыс формасы арқылы бізге хабарласыңыз.</p>
+      </section>
+    </>
+  );
+}
+
+function TermsContentAz() {
+  return (
+    <>
+      <h2 className="text-xl font-bold text-foreground">İstifadə Şərtləri</h2>
+      <p className="text-muted-foreground text-sm">Qüvvəyə minmə tarixi: 1 yanvar, 2025</p>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">1. Şərtlərin qəbul edilməsi</h3>
+        <p>«Durak Online from KZ» tətbiqindən («Tətbiq») istifadə etməklə siz bu İstifadə Şərtlərinə razı olursunuz. Razı deyilsinizsə, tətbiqdən istifadə etməyin.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">2. Xidmətin təsviri</h3>
+        <p>«Durak Online from KZ» Qazax «Durak» kart oyununun onlayn versiyasıdır. Tətbiq multiplayer, oyun valyutası (Şaniraq və tenge) və kosmetik əşyalar daxil olmaqla oyun platforması təqdim edir.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">3. Hesab</h3>
+        <p>Tətbiqdən istifadə etmək üçün e-poçt, Google hesabı və ya Apple hesabı ilə qeydiyyatdan keçmək lazımdır. Siz hesabınızın təhlükəsizliyindən məsuliyyət daşıyırsınız. Məhdudiyyətləri dəf etmək və ya sistemi sui-istifadə etmək məqsədilə bir neçə hesab yaratmaq qadagandir.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">4. Daxili alışverişlər</h3>
+        <p>Tətbiq rəsmi mağazalar (App Store, Google Play) vasitəsilə real pulla oyun valyutası (tenge) almaq imkanı təqdim edir. Bütün alışverişlər qətidir və qaytarılmır, qanunvericiliyə və ya müvafiq mağaza siyasətinə uyğun hallar istisna olmaqla. Oyun valyutasının real pul dəyəri yoxdur.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">5. Reklam</h3>
+        <p>Tətbiq reklamlar, o cümlədən mükafatlı reklamlar (baxmaq üçün oyun valyutası almaq) göstərə bilər. Reklamlar üçüncü tərəflər (Google AdMob) tərəfindən təqdim edilir. Biz üçüncü tərəf reklamlarının məzmununa görə məsuliyyət daşımırıq.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">6. Davranış qaydaları</h3>
+        <p>Siz razılaşırsınız ki, istifadə etməyəcəksiniz: aldadıcı proqramlar, botlar və ya digər avtomatlaşdirma alətləri; digər oyunçuları təqib etməyəcəksiniz; serverləri sındırmağa və ya müdaqələ etməyə cəhd etməyəcəksiniz; tətbiqi icazəsiz kommersiya məqsədləri üçün istifadə etməyəcəksiniz.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">7. Əqli mülkiyyət</h3>
+        <p>Qrafika, səslər, kod və ticarət nişanları daxil olmaqla tətbiqin bütün hüquqları yaradıcılara məxsusdur. Yazılı icazə olmadan tətbiqin materiallarını kopyalamaq, dəyişdirmək və ya yaymaq qadagandir.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">8. Məsuliyyətin məhdudlaşdırılması</h3>
+        <p>Tətbiq «olduğu kimi» prinsipi ilə təqdim edilir. Biz fəaliyyətin fasiləsizliyini zəmanət vermirik. Qanunvericiliyin icazə verdiyi maksimum ölçüdə biz doləyli zərərə, məlumat itirilməsinə və ya oyun tərəqqisinin pozulmasına görə məsuliyyət daşımırıq.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">9. Şərtlərin dəyişdirilməsi</h3>
+        <p>Biz bu Şərtlərdə dəyişikliklər etmək hüququnu saxlayırıq. Dəyişikliklərin dərc edilməsindən sonra tətbiqdən istifadə yeni Şərtlərin qəbul edilməsi deməkdir.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">10. Əlaqə</h3>
+        <p>Bu Şərtlərlə bağlı suallar üçün tətbiqin parametrlərindəki rəy forması vasitəsilə bizimlə əlaqə saxlayın.</p>
       </section>
     </>
   );

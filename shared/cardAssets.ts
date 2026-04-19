@@ -93,15 +93,15 @@ export const GAME_TABLE_BLACK_VELVET_URL = '/manus-storage/khan_black_velvet_tab
 
 export type TableStyle = 'classic' | 'dark_kazakh' | 'neon' | 'apocalypse' | 'galaxy' | 'sea_depths' | 'stargazer' | 'black_velvet';
 
-export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; nameKk: string; nameEn: string; nameUk?: string; nameKa?: string; price: number }> = {
-  classic: { url: GAME_TABLE_URL, name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', nameUk: 'Класичний', nameKa: 'კლასიკური', price: 0 },
-  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Ханский Октогон', nameKk: 'Хандық Октогон', nameEn: "Khan's Octagon", nameUk: 'Ханський Октагон', nameKa: 'ხანის ოქტაგონი', price: 500 },
-  neon: { url: GAME_TABLE_NEON_URL, name: 'Неоновый Нексус', nameKk: 'Неон Нексус', nameEn: 'Neon Nexus', nameUk: 'Неоновий Нексус', nameKa: 'ნეონური ნექსუსი', price: 350 },
-  apocalypse: { url: GAME_TABLE_APOCALYPSE_URL, name: 'Апокалипсис', nameKk: 'Апокалипсис', nameEn: 'Apocalypse', nameUk: 'Апокаліпсис', nameKa: 'აპოკალიფსი', price: 600 },
-  galaxy: { url: GAME_TABLE_GALAXY_URL, name: 'Галактика', nameKk: 'Галактика', nameEn: 'Galaxy', nameUk: 'Галактика', nameKa: 'გალაქტიკა', price: 550 },
-  sea_depths: { url: GAME_TABLE_SEA_DEPTHS_URL, name: 'Морские глубины', nameKk: 'Теңіз тереңдігі', nameEn: 'Sea Depths', nameUk: 'Морські глибини', nameKa: 'ზღვის სიღრმეები', price: 350 },
-  stargazer: { url: GAME_TABLE_STARGAZER_URL, name: 'Звездочёт', nameKk: 'Жұлдызшы', nameEn: 'Stargazer', nameUk: 'Зіркогляд', nameKa: 'ვარსკვლავთმჭვრეტელი', price: 350 },
-  black_velvet: { url: GAME_TABLE_BLACK_VELVET_URL, name: 'Чёрный Бархат', nameKk: 'Қара Барқыт', nameEn: 'Black Velvet', nameUk: 'Чорний Оксамит', nameKa: 'შავი ხავერდი', price: 350 },
+export const TABLE_STYLES: Record<TableStyle, { url: string; name: string; nameKk: string; nameEn: string; nameUk?: string; nameKa?: string; nameAz?: string; price: number }> = {
+  classic: { url: GAME_TABLE_URL, name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', nameUk: 'Класичний', nameKa: 'კლასიკური', nameAz: 'Klassik', price: 0 },
+  dark_kazakh: { url: GAME_TABLE_DARK_URL, name: 'Ханский Октогон', nameKk: 'Хандық Октогон', nameEn: "Khan's Octagon", nameUk: 'Ханський Октагон', nameKa: 'ხანის ოქტაგონი', nameAz: 'Xanın Oktoqonu', price: 500 },
+  neon: { url: GAME_TABLE_NEON_URL, name: 'Неоновый Нексус', nameKk: 'Неон Нексус', nameEn: 'Neon Nexus', nameUk: 'Неоновий Нексус', nameKa: 'ნეონური ნექსუსი', nameAz: 'Neon Nexus', price: 350 },
+  apocalypse: { url: GAME_TABLE_APOCALYPSE_URL, name: 'Апокалипсис', nameKk: 'Апокалипсис', nameEn: 'Apocalypse', nameUk: 'Апокаліпсис', nameKa: 'აპოკალიფსი', nameAz: 'Apokalipsis', price: 600 },
+  galaxy: { url: GAME_TABLE_GALAXY_URL, name: 'Галактика', nameKk: 'Галактика', nameEn: 'Galaxy', nameUk: 'Галактика', nameKa: 'გალაქტიკა', nameAz: 'Qalaktika', price: 550 },
+  sea_depths: { url: GAME_TABLE_SEA_DEPTHS_URL, name: 'Морские глубины', nameKk: 'Теңіз тереңдігі', nameEn: 'Sea Depths', nameUk: 'Морські глибини', nameKa: 'ზღვის სიღრმეები', nameAz: 'Dəniz Dərinlikləri', price: 350 },
+  stargazer: { url: GAME_TABLE_STARGAZER_URL, name: 'Звездочёт', nameKk: 'Жұлдызшы', nameEn: 'Stargazer', nameUk: 'Зіркогмяд', nameKa: 'ვარსკვლავთმჭვრეტელი', nameAz: 'Ulduzbaxan', price: 350 },
+  black_velvet: { url: GAME_TABLE_BLACK_VELVET_URL, name: 'Чёрный Бархат', nameKk: 'Қара Барқыт', nameEn: 'Black Velvet', nameUk: 'Чорний Оксамит', nameKa: 'შავი ხავერდი', nameAz: 'Qara Məxmər', price: 350 },
 };
 
 export const SUIT_SYMBOLS: Record<string, string> = {
