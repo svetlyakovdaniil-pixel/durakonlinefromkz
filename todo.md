@@ -3369,3 +3369,11 @@
 - [x] Настройки уведомлений в SettingsSheet (toggle per type)
 - [x] Добавить FIREBASE_SERVICE_ACCOUNT_KEY в secrets (требует реальный Firebase проект)
 - [x] Написать тесты для pushNotifications.ts
+
+## Batch 123 — Firebase регистрация приложений и cron-уведомления
+
+- [ ] Зарегистрировать Android приложение в Firebase (bundle ID: online.durakonline.fromkz)
+- [ ] Зарегистрировать iOS приложение в Firebase (bundle ID: online.durakonline.fromkz)
+- [ ] Скачать google-services.json и добавить в android/app/
+- [ ] Скачать GoogleService-Info.plist и добавить в ios/App/App/
+- [ ] Реализовать cron-задачи для ежедневных push-уведомлений (задание, шаныраки, сезон)

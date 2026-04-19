@@ -14,7 +14,9 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
-import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls, fixAllPlaylistCloudFrontUrls } from "../db";
+import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls, fixAllPlaylistCloudFrontUrls, getDb } from "../db";
+import cron from "node-cron";
+import { sendDailyQuestPushToAll, sendSeasonEndingPushToAll, sendShanyrakRefillPushToEligible } from "../pushNotifications";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -95,6 +97,38 @@ async function startServer() {
   seedDarkTrapPlaylist().catch((e: unknown) => console.warn('[Music] Failed to seed Dark Trap playlist:', e));
   fixChinesePlaylistUrls().catch(e => console.warn('[Music] Failed to fix Chinese playlist URLs:', e));
   fixAllPlaylistCloudFrontUrls().catch((e: unknown) => console.warn('[Music] Failed to fix CloudFront URLs:', e));
+
+  // Cron jobs for push notifications (all times in UTC, Almaty = UTC+5)
+  // Daily quest notification — every day at 00:00 Almaty (19:00 UTC prev day)
+  cron.schedule('0 19 * * *', () => {
+    sendDailyQuestPushToAll().catch((e: unknown) => console.warn('[Cron] Daily quest push failed:', e));
+  });
+
+  // Shanyrak refill notification — every day at 09:00 Almaty (04:00 UTC)
+  cron.schedule('0 4 * * *', () => {
+    sendShanyrakRefillPushToEligible().catch((e: unknown) => console.warn('[Cron] Shanyrak refill push failed:', e));
+  });
+
+  // Season ending notification — every day at 12:00 Almaty (07:00 UTC)
+  // Sends push if active season ends within 3 days
+  cron.schedule('0 7 * * *', async () => {
+    try {
+      const { getCurrentSeasonKey, getSeasonBounds } = await import('../../shared/seasons');
+      const seasonKey = getCurrentSeasonKey();
+      const bounds = getSeasonBounds(seasonKey);
+      const now = Date.now();
+      const threeDaysMs = 3 * 24 * 60 * 60 * 1000;
+      const msLeft = bounds.end.getTime() - now;
+      if (msLeft > 0 && msLeft <= threeDaysMs) {
+        const daysLeft = Math.ceil(msLeft / (24 * 60 * 60 * 1000));
+        await sendSeasonEndingPushToAll(daysLeft);
+      }
+    } catch (e: unknown) {
+      console.warn('[Cron] Season ending push failed:', e);
+    }
+  });
+
+  console.log('[Cron] Push notification cron jobs scheduled');
 
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
