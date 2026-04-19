@@ -9,7 +9,7 @@ import { useTranslation } from '@/i18n';
 export default function LanguageSelectionModal() {
   const { setLanguage, setHasChosenLanguage } = useSettings();
   const { setLocale } = useTranslation();
-  const pick = (lang: 'ru' | 'kk' | 'en' | 'uk' | 'ka' | 'az' | 'uz') => {
+  const pick = (lang: 'ru' | 'kk' | 'en' | 'uk' | 'ka' | 'az' | 'uz' | 'pl') => {
     setLanguage(lang);
     setLocale(lang);
     setHasChosenLanguage(true);
@@ -28,7 +28,7 @@ export default function LanguageSelectionModal() {
           Тілді таңдаңыз
         </h2>
         <p className="text-amber-200/50 text-sm text-center mb-8">
-          Выберите язык / Choose language / Виберіть мову / ენის არჩევა / Dil seçin / Til tanlash
+          Выберите язык / Choose language / Виберіть мову / ენის არჩევა / Dil seçin / Til tanlash / Wybierz język
         </p>
         <div className="flex gap-3 justify-center flex-wrap">
           {/* Russian */}
@@ -86,6 +86,14 @@ export default function LanguageSelectionModal() {
           >
             <span className="text-3xl">🇺🇿</span>
             <span className="text-amber-200 text-sm font-medium">O'zbekcha</span>
+          </button>
+          {/* Polish */}
+          <button
+            onClick={() => pick('pl')}
+            className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-amber-600/40 bg-amber-900/20 hover:bg-amber-900/40 hover:border-amber-500/60 transition-all cursor-pointer group w-32"
+          >
+            <span className="text-3xl">🇵🇱</span>
+            <span className="text-amber-200 text-sm font-medium">Polski</span>
           </button>
         </div>
       </div>

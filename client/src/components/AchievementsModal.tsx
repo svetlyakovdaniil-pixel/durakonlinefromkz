@@ -51,9 +51,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   if (!open) return null;
 
   const getName = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a.nameUk ?? a.nameRu) : locale === 'ka' ? (a.nameKa ?? a.nameRu) : locale === 'az' ? (a.nameAz ?? a.nameRu) : locale === 'uz' ? (a.nameUz ?? a.nameRu) : a.nameRu;
+    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a.nameUk ?? a.nameRu) : locale === 'ka' ? (a.nameKa ?? a.nameRu) : locale === 'az' ? (a.nameAz ?? a.nameRu) : locale === 'uz' ? (a.nameUz ?? a.nameRu) : locale === 'pl' ? ((a as any).namePl ?? a.nameRu) : a.nameRu;
   const getDesc = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a.descUk ?? a.descRu) : locale === 'ka' ? (a.descKa ?? a.descRu) : locale === 'az' ? (a.descAz ?? a.descRu) : locale === 'uz' ? (a.descUz ?? a.descRu) : a.descRu;
+    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a.descUk ?? a.descRu) : locale === 'ka' ? (a.descKa ?? a.descRu) : locale === 'az' ? (a.descAz ?? a.descRu) : locale === 'uz' ? (a.descUz ?? a.descRu) : locale === 'pl' ? ((a as any).descPl ?? a.descRu) : a.descRu;
 
   // Sort: claimable first (unlocked & not claimed), then locked, then claimed
   const sorted = [...achievements].sort((a, b) => {

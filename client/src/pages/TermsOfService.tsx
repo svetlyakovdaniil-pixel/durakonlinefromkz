@@ -22,7 +22,7 @@ export default function TermsOfService() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : locale === 'az' ? <TermsContentAz /> : locale === 'uz' ? <TermsContentUz /> : <TermsContentRu />}
+          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : locale === 'az' ? <TermsContentAz /> : locale === 'uz' ? <TermsContentUz /> : locale === 'pl' ? <TermsContentPl /> : <TermsContentRu />}
         </div>
         {/* Last updated */}
         <p className="text-xs text-muted-foreground mt-10 text-center">
@@ -411,6 +411,65 @@ function TermsContentUz() {
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">10. Aloqa</h3>
         <p>Ushbu Shartlar boʻyicha savollar uchun ilova sozlamalaridagi fikr-mulohaza formasi orqali biz bilan bogʻlaning.</p>
+      </section>
+    </>
+  );
+}
+
+function TermsContentPl() {
+  return (
+    <>
+      <h2 className="text-xl font-bold text-foreground">Warunki korzystania z usługi</h2>
+      <p className="text-muted-foreground text-sm">Data wejścia w życie: 1 stycznia 2025 roku</p>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">1. Akceptacja warunków</h3>
+        <p>Korzystając z aplikacji „Durak online from KZ" („Aplikacja"), wyrażasz zgodę na niniejsze Warunki korzystania z usługi. Jeśli nie zgadzasz się z warunkami, prosimy o zaprzestanie korzystania z Aplikacji.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">2. Opis usługi</h3>
+        <p>„Durak online from KZ" to internetowa gra karciana oparta na tradycyjnej kazachskiej wersji gry „Durak". Aplikacja udostępnia platformę do gry, w tym tryb wieloosobowy, walutę w grze (Szanyraki i Tenge) oraz przedmioty kosmetyczne.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">3. Konto użytkownika</h3>
+        <p>Do korzystania z Aplikacji wymagana jest rejestracja za pomocą adresu e-mail, konta Google lub Apple. Jesteś odpowiedzialny za bezpieczeństwo danych swojego konta. Zabrania się tworzenia wielu kont w celu obejścia ograniczeń lub nadużywania systemu.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">4. Zakupy w aplikacji</h3>
+        <p>Aplikacja oferuje zakup waluty w grze (Tenge) za prawdziwe pieniądze poprzez oficjalne sklepy z aplikacjami (App Store, Google Play). Wszystkie zakupy są ostateczne i nie podlegają zwrotowi, z wyjątkiem przypadków wymaganych przez prawo lub politykę danego sklepu. Waluta w grze nie ma realnej wartości pieniężnej i nie może być wymieniana na prawdziwe pieniądze.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">5. Reklama</h3>
+        <p>Aplikacja może wyświetlać reklamy, w tym reklamy z nagrodą (za obejrzenie których przyznawana jest waluta w grze). Reklamy są dostarczane przez strony trzecie (Google AdMob). Nie ponosimy odpowiedzialności za treść reklam stron trzecich.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">6. Zasady postępowania</h3>
+        <p>Zabrania się: używania cheatów, botów lub innych narzędzi automatyzacji; obrażania innych graczy; próby włamania lub zakłócenia działania serwerów; korzystania z Aplikacji w celach komercyjnych bez zezwolenia.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">7. Własność intelektualna</h3>
+        <p>Wszelkie prawa do Aplikacji, w tym grafika, dźwięki, kod i znaki towarowe, należą do twórców. Kopiowanie, modyfikowanie lub dystrybucja materiałów Aplikacji bez pisemnej zgody jest zabroniona.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">8. Ograniczenie odpowiedzialności</h3>
+        <p>Aplikacja jest dostarczana „tak jak jest". Nie gwarantujemy nieprzerwanego działania usługi. W maksymalnym zakresie dozwolonym przez prawo nie ponosimy odpowiedzialności za pośrednie straty, utratę danych ani przerwy w postępach w grze.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">9. Zmiany warunków</h3>
+        <p>Zastrzegamy sobie prawo do zmiany niniejszych Warunków. Dalsze korzystanie z Aplikacji po opublikowaniu zmian oznacza akceptację nowych warunków.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">10. Kontakt</h3>
+        <p>W przypadku pytań dotyczących niniejszych Warunków skontaktuj się z nami przez formularz opinii w ustawieniach Aplikacji.</p>
       </section>
     </>
   );
