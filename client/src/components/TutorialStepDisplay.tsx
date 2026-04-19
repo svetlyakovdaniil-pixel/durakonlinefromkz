@@ -652,26 +652,47 @@ export default function TutorialStepDisplay({
           let startX: number, startY: number;
           let endX: number, endY: number;
 
-          if (textRect.bottom < sr.top) {
+          const textVertCenter = textRect.top + textRect.height / 2;
+
+          if (textRect.bottom <= sr.top) {
+            // Text is above spotlight — arrow from bottom of text to top of spotlight
             startX = textCenterX;
             startY = textRect.bottom + 4;
             endX = spotCenterX;
             endY = sr.top;
-          } else if (textRect.top > sr.top + sr.height) {
+          } else if (textRect.top >= sr.top + sr.height) {
+            // Text is below spotlight — arrow from top of text to bottom of spotlight
             startX = textCenterX;
             startY = textRect.top - 4;
             endX = spotCenterX;
             endY = sr.top + sr.height;
-          } else if (textRect.left > sr.left + sr.width) {
+          } else if (textRect.left >= sr.left + sr.width) {
+            // Text is to the right of spotlight
             startX = textRect.left - 4;
-            startY = textRect.top + textRect.height / 2;
+            startY = textVertCenter;
             endX = sr.left + sr.width;
             endY = spotCenterY;
-          } else {
+          } else if (textRect.right <= sr.left) {
+            // Text is to the left of spotlight
             startX = textRect.right + 4;
-            startY = textRect.top + textRect.height / 2;
+            startY = textVertCenter;
             endX = sr.left;
             endY = spotCenterY;
+          } else {
+            // Text overlaps with spotlight — use vertical direction based on which center is higher
+            if (textVertCenter <= spotCenterY) {
+              // Text center is above spotlight center — arrow from bottom of text to top of spotlight
+              startX = textCenterX;
+              startY = textRect.bottom + 4;
+              endX = spotCenterX;
+              endY = sr.top;
+            } else {
+              // Text center is below spotlight center — arrow from top of text to bottom of spotlight
+              startX = textCenterX;
+              startY = textRect.top - 4;
+              endX = spotCenterX;
+              endY = sr.top + sr.height;
+            }
           }
 
           return (

@@ -483,6 +483,7 @@ export const kk = {
     nameTooLong: 'Аты тым ұзын (макс. 50 таңба)',
     nameChanged: 'Аты өзгертілді',
     nameError: 'Атын өзгерту кезінде қате',
+    nameProfanity: 'Атта рұқсат сөздер бар',
     enterName: 'Жаңа атыңызды енгізіңіз',
     playlist: 'Плейлист',
     selectPlaylist: 'Плейлистті таңдаңыз',

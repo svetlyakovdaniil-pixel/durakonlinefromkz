@@ -215,7 +215,7 @@ export const appRouter = router({
     updateName: protectedProcedure
       .input(z.object({ displayName: z.string().min(1).max(12) }))
       .mutation(async ({ ctx, input }) => {
-        // Block forbidden names for non-admin users
+        // Block reserved names for non-admin users only
         if (ctx.user.role !== 'admin') {
           const normalized = input.displayName.toLowerCase().replace(/[\s._\-]/g, '');
           const forbidden = [
@@ -227,17 +227,17 @@ export const appRouter = router({
           if (forbidden.some(f => normalized.includes(f))) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: RESERVED_NAME_ERR_MSG });
           }
-          // Block profanity in display names
-          if (containsProfanity(input.displayName)) {
+        }
+        // Block profanity in display names — applies to ALL users including admins
+        if (containsProfanity(input.displayName)) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
+        }
+        // Block custom profanity words added by admins — applies to ALL users
+        const customWords = await getCustomProfanityWords();
+        if (customWords.length > 0) {
+          const normalizedInput = input.displayName.toLowerCase().replace(/[\s._\-]/g, '');
+          if (customWords.some((w: string) => normalizedInput.includes(w.toLowerCase().replace(/[\s._\-]/g, '')))) {
             throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
-          }
-          // Block custom profanity words added by admins
-          const customWords = await getCustomProfanityWords();
-          if (customWords.length > 0) {
-            const normalizedInput = input.displayName.toLowerCase().replace(/[\s._\-]/g, '');
-            if (customWords.some((w: string) => normalizedInput.includes(w.toLowerCase().replace(/[\s._\-]/g, '')))) {
-              throw new TRPCError({ code: 'BAD_REQUEST', message: PROFANITY_ERR_MSG });
-            }
           }
         }
         await updateProfileDisplayName(ctx.user.id, input.displayName);

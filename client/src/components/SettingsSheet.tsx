@@ -98,8 +98,10 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     onError: (err) => {
       if (err.message === 'NAME_RESERVED_10003') {
         toast.error(t('settings.nameReserved'));
+      } else if (err.message === 'NAME_PROFANITY_10004') {
+        toast.error(t('settings.nameProfanity'));
       } else {
-        toast.error(err.message || t('settings.nameError'));
+        toast.error(t('settings.nameError'));
       }
     },
   });
