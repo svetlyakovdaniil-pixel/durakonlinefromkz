@@ -188,16 +188,16 @@ describe('Player Profile Popup (In-Game)', () => {
 });
 
 describe('Currency Icons', () => {
-  it('should have valid CDN URLs for tenge icon', () => {
-    const tengeUrl = '/assets/static/tenge_9aefd1b7.png';
-    expect(tengeUrl).toMatch(/^https:\/\//);
-    expect(tengeUrl).toContain('tenge');
+  it('should have tenge icon referenced in source files', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync('client/src/components/AchievementsModal.tsx', 'utf-8');
+    expect(source).toContain('tenge');
   });
 
-  it('should have valid CDN URLs for shanyrak icon', () => {
-    const shanyrakUrl = '/assets/static/shanyrak_96e91a49.png';
-    expect(shanyrakUrl).toMatch(/^https:\/\//);
-    expect(shanyrakUrl).toContain('shanyrak');
+  it('should have shanyrak icon referenced in source files', async () => {
+    const fs = await import('fs');
+    const source = fs.readFileSync('client/src/components/AchievementsModal.tsx', 'utf-8');
+    expect(source).toContain('shanyrak');
   });
 });
 

@@ -125,7 +125,7 @@ export default function WaitingRoom({
   }, [onUpdateRoom, editName, editMaxPlayers, editBetAmountIdx, editTurnTimer, editWithBots, editBotCount, editDeckStyle, editIsPrivate, editPassword, room.name, t]);
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center p-3 sm:p-4">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center p-3 sm:p-4 safe-area-full">
       <div className="bg-[#1a2d45]/80 border border-amber-700/30 rounded-2xl p-4 sm:p-6 max-w-md w-full">
         <div className="text-center mb-4 sm:mb-6">
           <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10 text-amber-400 mx-auto mb-1.5 sm:mb-2" />

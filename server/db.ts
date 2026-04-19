@@ -783,6 +783,43 @@ export async function freeShanyrakTopup(userId: number): Promise<{
 }
 
 /**
+ * Ad watch reward: give 1000 shanyraks with 1h cooldown.
+ * Called from server after client verifies the rewarded ad was watched.
+ */
+export async function adWatchTopup(userId: number): Promise<{
+  success: boolean;
+  added?: number;
+  newBalance?: number;
+  cooldownUntil?: Date;
+  reason?: string;
+}> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'db_unavailable' };
+
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
+  if (!profile) return { success: false, reason: 'not_found' };
+
+  // Check 1h cooldown
+  const now = new Date();
+  if (profile.lastAdWatch) {
+    const cooldownEnd = new Date(profile.lastAdWatch.getTime() + 60 * 60 * 1000);
+    if (now < cooldownEnd) {
+      return { success: false, reason: 'cooldown', cooldownUntil: cooldownEnd };
+    }
+  }
+
+  const added = 1000;
+  const newBalance = profile.balanceShanyrak + added;
+
+  await db.update(playerProfiles).set({
+    balanceShanyrak: newBalance,
+    lastAdWatch: now,
+  }).where(eq(playerProfiles.userId, userId));
+
+  return { success: true, added, newBalance };
+}
+
+/**
  * Buy shanyrak with tenge. Returns { success, newShanyrak, newTenge } or { success: false, reason }
  */
 export async function buyShanyrakWithTenge(
@@ -2494,13 +2531,13 @@ export async function seedChinesePlaylist() {
   if (existing.length > 0) return;
 
   const chineseTracks = [
-    '/assets/static/Chinesechill+hiphopmotives1_de29af93.mp3',
-    '/assets/static/Chinesechill+hiphopmotives2_f4033f03.mp3',
-    '/assets/static/Chinesechill+hiphopmotives3_a0d85a28.mp3',
-    '/assets/static/Chinesechill+hiphopmotives4_888af5a4.mp3',
-    '/assets/static/Chinesechill+hiphopmotives5_dcef8e36.mp3',
-    '/assets/static/Chinesechill+hiphopmotives6_34e4a5fa.mp3',
-    '/assets/static/Chinesechill+hiphopmotives7_69ba9d28.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives1_de29af93.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives2_f4033f03.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives3_a0d85a28.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives4_888af5a4.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives5_dcef8e36.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives6_34e4a5fa.mp3',
+    '/assets/static/Chinesechill%2Bhiphopmotives7_69ba9d28.mp3',
   ];
 
   await db.insert(musicPlaylists).values({

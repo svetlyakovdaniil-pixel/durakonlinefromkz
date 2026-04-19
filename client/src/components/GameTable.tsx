@@ -29,6 +29,7 @@ import { useInteractiveTutorial } from '@/hooks/useInteractiveTutorial';
 import TutorialStepDisplay from './TutorialStepDisplay';
 import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
+import { hapticError } from '@/lib/haptics';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -829,11 +830,9 @@ export default function GameTable({
       playSound('yourTurn', 0.8);
 
       // Vibrate on mobile (works even if sound is muted, but respects vibration setting)
-      try {
-        if (gameSettings.vibrationEnabled && navigator.vibrate) {
-          navigator.vibrate([200, 100, 200, 100, 200]);
-        }
-      } catch {}
+      if (gameSettings.vibrationEnabled) {
+        void hapticError(); // uses @capacitor/haptics on native, navigator.vibrate on web
+      }
 
       setShowUrgentTurn(true);
       setUrgentTurnPhase('enter');

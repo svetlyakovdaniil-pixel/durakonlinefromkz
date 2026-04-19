@@ -54,6 +54,8 @@ export const playerProfiles = mysqlTable("player_profiles", {
   balanceShanyrak: int("balanceShanyrak").default(0).notNull(),
   /** Last time the player used the free shanyrak top-up (for 12h cooldown) */
   lastFreeTopup: timestamp("lastFreeTopup"),
+  /** Last time the player watched a rewarded ad (for 1h cooldown) */
+  lastAdWatch: timestamp("lastAdWatch"),
   /** JSON array of owned deck IDs, e.g. ["custom"] */
   ownedDecks: text("ownedDecks"),
   /** JSON array of owned table style IDs, e.g. ["dark_kazakh"] */

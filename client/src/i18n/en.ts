@@ -707,6 +707,8 @@ export const en = {
     priceDisclaimer: 'Prices are in {currency}. The final amount may differ depending on the payment system.',
     buyBtn: 'Buy',
     purchaseComingSoon: 'The real-money purchase feature will be added later. Stay tuned!',
+    adCooldown: 'Next view in:',
+    adNote: 'Available once per hour',
   },
 
   // Music choice
@@ -811,6 +813,11 @@ export const en = {
     title: 'Privacy Policy',
     lastUpdated: 'Last updated',
     link: 'Privacy Policy',
+  },
+
+  terms: {
+    title: 'Terms of Service',
+    link: 'Terms of Service',
   },
 
   // Referral

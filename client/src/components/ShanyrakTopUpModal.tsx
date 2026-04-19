@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
 import { translateTxDescription } from "./TengeTopUpModal";
+import { showRewardedAd, isAdMobAvailable } from "@/lib/admob";
 
 const TENGE_ICON = "/assets/static/tenge_9aefd1b7.png";
 const SHANYRAK_ICON = "/assets/static/shanyrak_96e91a49.png";
@@ -62,6 +63,45 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
   });
 
   const testShanyrakMutation = trpc.balance.testAddShanyrak.useMutation();
+
+  const [adCooldownRemaining, setAdCooldownRemaining] = useState<number>(0);
+  const [adWatching, setAdWatching] = useState(false);
+
+  const adWatchTopupMutation = trpc.balance.adWatchTopup.useMutation({
+    onSuccess: (data) => {
+      if (data.success) {
+        setSuccessMessage(`+${formatBalance(data.added ?? 0)} ${t('topUp.shanyrakUnit')}!`);
+        onBalanceUpdated();
+        utils.profile.me.invalidate();
+        // Start 1h cooldown locally
+        const cooldownEnd = Date.now() + 60 * 60 * 1000;
+        const tick = () => {
+          const remaining = cooldownEnd - Date.now();
+          setAdCooldownRemaining(remaining > 0 ? remaining : 0);
+        };
+        tick();
+        const interval = setInterval(() => {
+          const remaining = cooldownEnd - Date.now();
+          setAdCooldownRemaining(remaining > 0 ? remaining : 0);
+          if (remaining <= 0) clearInterval(interval);
+        }, 1000);
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    },
+  });
+
+  const handleWatchAd = useCallback(async () => {
+    if (adWatching || adCooldownRemaining > 0) return;
+    setAdWatching(true);
+    try {
+      const rewarded = await showRewardedAd();
+      if (rewarded) {
+        adWatchTopupMutation.mutate();
+      }
+    } finally {
+      setAdWatching(false);
+    }
+  }, [adWatching, adCooldownRemaining, adWatchTopupMutation]);
 
   const buyShanyrakMutation = trpc.balance.buyShanyrak.useMutation({
     onSuccess: (data) => {
@@ -216,19 +256,30 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             {/* Option 2: Watch ad */}
             <div className="mb-4">
               <button
-                className="w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed"
-                disabled
+                className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
+                  adCooldownRemaining > 0 || adWatching || !isAdMobAvailable()
+                    ? 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
+                    : 'bg-green-900/30 hover:bg-green-800/40 text-green-100 border border-green-600/30'
+                }`}
+                disabled={adCooldownRemaining > 0 || adWatching || !isAdMobAvailable()}
+                onClick={handleWatchAd}
               >
                 <div className="flex items-center gap-2">
-                  <Play className="w-4 h-4" />
-                  <span>{t('topUp.watchAd')}</span>
+                  {adWatching ? (
+                    <span className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Play className="w-4 h-4" />
+                  )}
+                  <span>{adCooldownRemaining > 0 ? formatTime(adCooldownRemaining) : t('topUp.watchAd')}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className="text-green-400/50">+1000</span>
-                  <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain opacity-50" />
+                  <span className={adCooldownRemaining > 0 ? 'text-green-400/50' : 'text-green-400'}>+1000</span>
+                  <img src={SHANYRAK_ICON} alt="" className={`h-4 object-contain ${adCooldownRemaining > 0 ? 'opacity-50' : ''}`} />
                 </div>
               </button>
-              <p className="text-[10px] text-gray-500 text-center mt-1">{t('topUp.comingSoon')}</p>
+              <p className="text-[10px] text-gray-500 text-center mt-1">
+                {!isAdMobAvailable() ? t('topUp.comingSoon') : adCooldownRemaining > 0 ? t('topUp.adCooldown') : t('topUp.adNote')}
+              </p>
             </div>
 
             {/* Divider */}

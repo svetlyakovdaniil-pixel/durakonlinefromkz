@@ -3306,3 +3306,41 @@
 - [x] Диагностика: registeredRef.current=true блокировал повторный registerProfile при смене аватарки/рамки
 - [x] Исправлено: Home.tsx отслеживает изменения avatarId и equippedFrame и автоматически перерегистрирует профиль в сокете
 - [x] Проверено: TypeScript 0 ошибок, 592/595 тестов проходят
+
+## Мобильная публикация (App Store + Google Play)
+### Шаг 1: Capacitor конфиг и сборка
+- [x] Создать capacitor.config.ts (appId, appName, webDir, server, plugins)
+- [x] Настроить vite.config.ts outDir: dist для capacitor build
+
+### Шаг 2: Haptics (вибрация)
+- [x] Создать client/src/lib/haptics.ts — обёртка над @capacitor/haptics с fallback на navigator.vibrate
+- [x] Заменить navigator.vibrate в GameTable.tsx на haptics.ts обёртку
+
+### Шаг 3: AdMob (реклама за награду)
+- [x] Установить @capacitor-community/admob
+- [x] Создать client/src/lib/admob.ts — инициализация и showRewardedAd()
+- [x] Подключить initAdMob() в App.tsx рядом с initIAP()
+- [x] Реализовать watchAd в ShanyrakTopUpModal.tsx (убрать disabled, подключить admob.ts)
+- [ ] Добавить VITE_ADMOB_IOS_APP_ID, VITE_ADMOB_ANDROID_APP_ID, VITE_ADMOB_REWARDED_AD_UNIT_ID в secrets (нужен реальный AdMob аккаунт)
+
+### Шаг 4: IAP (покупка тенге)
+- [ ] Добавить VITE_REVENUECAT_IOS_KEY и VITE_REVENUECAT_ANDROID_KEY в secrets (нужен реальный RevenueCat аккаунт)
+- [ ] Обновить TengeTopUpModal.tsx: показывать нативные IAP кнопки на native платформе
+- [ ] Добавить сервер: endpoint /api/iap/verify — валидация чека через RevenueCat API
+- [ ] Добавить кнопку "Восстановить покупки" в TengeTopUpModal.tsx
+
+### Шаг 5: UI адаптация
+- [x] Добавить StatusBar инициализацию в App.tsx (тёмный стиль, цвет #0a1628)
+- [x] Добавить SplashScreen hide в App.tsx после загрузки
+- [x] Добавить Keyboard плагин для корректного поведения при вводе
+- [ ] Добавить иконки приложения (1024x1024 iOS, 512x512 Android)
+- [ ] Добавить splash screen изображения
+
+### Шаг 6: Terms of Service
+- [x] Создать client/src/pages/TermsOfService.tsx (RU/EN/KK)
+- [x] Добавить роут /terms в App.tsx
+- [x] Добавить ссылку на Terms в SettingsSheet.tsx
+
+### Шаг 7: Финальная проверка
+- [x] Проверить что WebSocket работает через WSS (HTTPS/WSS compliance)
+- [x] Создать MOBILE_BUILD.md — инструкция по сборке для iOS и Android
