@@ -17,6 +17,8 @@
  */
 import { type Express, type Request, type Response } from "express";
 import { creditTengeIAP, getProfileByUserId } from "./db";
+import { activatePremiumIAP, getPremiumStats } from "./premiumDb";
+import { incrementAchievementProgress } from "./achievementsDb";
 import { sdk } from "./_core/sdk";
 
 const PRODUCT_TENGE: Record<string, number> = {
@@ -152,6 +154,88 @@ export function registerIAPRoutes(app: Express): void {
       });
     } catch (err) {
       console.error("[IAP] /api/iap/verify error:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  /**
+   * POST /api/iap/verify-premium
+   * Body: { transactionId, platform }
+   * Headers: Cookie with JWT session
+   *
+   * Verifies a 'premium_monthly' subscription purchase via RevenueCat
+   * and activates premium for the user (no tenge deduction).
+   */
+  app.post("/api/iap/verify-premium", async (req: Request, res: Response) => {
+    try {
+      // Authenticate user via session cookie
+      let user;
+      try {
+        user = await sdk.authenticateRequest(req);
+      } catch {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      if (!user) {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+
+      const { transactionId, platform } = req.body as {
+        transactionId?: string;
+        platform?: string;
+      };
+
+      if (!transactionId || typeof transactionId !== "string" || transactionId.length > 255) {
+        res.status(400).json({ error: "Invalid transactionId" });
+        return;
+      }
+      if (platform !== "ios" && platform !== "android") {
+        res.status(400).json({ error: "Invalid platform" });
+        return;
+      }
+
+      // Verify with RevenueCat (if secret key is configured)
+      const isValid = await verifyWithRevenueCat(transactionId, "premium_monthly", platform);
+      if (!isValid) {
+        res.status(400).json({ error: "Transaction verification failed" });
+        return;
+      }
+
+      // Get player profile
+      const profile = await getProfileByUserId(user.id);
+      if (!profile) {
+        res.status(404).json({ error: "Profile not found" });
+        return;
+      }
+
+      // Activate premium (no tenge deduction)
+      const result = await activatePremiumIAP(profile.id);
+      if (!result.success) {
+        res.status(400).json({ error: result.error ?? "activation_failed" });
+        return;
+      }
+
+      // Trigger premium achievements
+      const premiumStats = await getPremiumStats(profile.id);
+      if (premiumStats) {
+        const count = premiumStats.premiumPurchaseCount;
+        const streak = premiumStats.premiumConsecutiveMonths;
+        await incrementAchievementProgress(profile.id, 'premium_player', 0, 1).catch(() => {});
+        await incrementAchievementProgress(profile.id, 'legendary_player', 0, Math.min(streak, 2)).catch(() => {});
+        await incrementAchievementProgress(profile.id, 'admin_pryanik', 0, Math.min(streak, 3)).catch(() => {});
+        await incrementAchievementProgress(profile.id, 'kazakhstan_pride', 0, Math.min(streak, 6)).catch(() => {});
+        await incrementAchievementProgress(profile.id, 'elbasy', 0, Math.min(count, 10)).catch(() => {});
+      }
+
+      res.json({
+        success: true,
+        expiresAt: result.expiresAt,
+        purchaseCount: result.purchaseCount,
+        consecutiveMonths: result.consecutiveMonths,
+      });
+    } catch (err) {
+      console.error("[IAP] /api/iap/verify-premium error:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });

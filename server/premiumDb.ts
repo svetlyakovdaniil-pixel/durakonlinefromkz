@@ -206,6 +206,84 @@ export async function getDailyQuestSwapsRemaining(profileId: number): Promise<nu
   return Math.max(0, MAX_DAILY_SWAPS - (profile.dailyQuestSwapsUsed ?? 0));
 }
 
+/**
+ * Activate premium subscription via IAP (no tenge deduction).
+ * Called after a successful RevenueCat in-app purchase of 'premium_monthly'.
+ * Handles consecutive month tracking and achievement triggers.
+ * If premium is already active, extends by 30 days from current expiry.
+ */
+export async function activatePremiumIAP(profileId: number): Promise<{
+  success: boolean;
+  error?: string;
+  expiresAt?: Date;
+  purchaseCount?: number;
+  consecutiveMonths?: number;
+}> {
+  const db = await getDb();
+  if (!db) return { success: false, error: "db_unavailable" };
+
+  const [profile] = await db
+    .select({
+      isPremium: playerProfiles.isPremium,
+      premiumExpiresAt: playerProfiles.premiumExpiresAt,
+      premiumPurchaseCount: playerProfiles.premiumPurchaseCount,
+      premiumConsecutiveMonths: playerProfiles.premiumConsecutiveMonths,
+      lastPremiumPurchaseMonth: playerProfiles.lastPremiumPurchaseMonth,
+    })
+    .from(playerProfiles)
+    .where(eq(playerProfiles.id, profileId))
+    .limit(1);
+
+  if (!profile) return { success: false, error: "profile_not_found" };
+
+  const now = new Date();
+
+  // If premium is already active, extend from current expiry; otherwise start from now
+  const baseDate =
+    profile.isPremium && profile.premiumExpiresAt && profile.premiumExpiresAt > now
+      ? profile.premiumExpiresAt
+      : now;
+
+  const newExpiry = new Date(baseDate.getTime() + PREMIUM_DURATION_MS);
+
+  // Track consecutive months and total purchase count
+  const currentMonth = now.toISOString().slice(0, 7); // YYYY-MM
+  const lastMonth = profile.lastPremiumPurchaseMonth ?? null;
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    .toISOString()
+    .slice(0, 7);
+  const newConsecutive =
+    lastMonth === prevMonth ? (profile.premiumConsecutiveMonths ?? 0) + 1 : 1;
+  const newPurchaseCount = (profile.premiumPurchaseCount ?? 0) + 1;
+
+  await db
+    .update(playerProfiles)
+    .set({
+      isPremium: true,
+      premiumExpiresAt: newExpiry,
+      premiumPurchaseCount: newPurchaseCount,
+      premiumConsecutiveMonths: newConsecutive,
+      lastPremiumPurchaseMonth: currentMonth,
+    })
+    .where(eq(playerProfiles.id, profileId));
+
+  // Record transaction (no tenge change — IAP purchase)
+  await db.insert(transactions).values({
+    profileId,
+    type: "premium_purchase" as any,
+    amount: 0,
+    currency: "tenge",
+    description: `Premium IAP subscription (expires ${newExpiry.toISOString().slice(0, 10)})`,
+  });
+
+  return {
+    success: true,
+    expiresAt: newExpiry,
+    purchaseCount: newPurchaseCount,
+    consecutiveMonths: newConsecutive,
+  };
+}
+
 /** Use one daily quest swap */
 export async function useDailyQuestSwap(profileId: number): Promise<{ success: boolean; remaining: number }> {
   const remaining = await getDailyQuestSwapsRemaining(profileId);
