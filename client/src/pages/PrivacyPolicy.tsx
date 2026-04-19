@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : <PrivacyContentRu />}
+          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : <PrivacyContentRu />}
         </div>
 
         {/* Last updated */}
@@ -414,6 +414,93 @@ function PrivacyContentKk() {
         <h2 className="text-xl font-bold text-foreground mb-3">10. Байланыс</h2>
         <p className="text-muted-foreground leading-relaxed">
           Дербес деректерді өңдеуге байланысты барлық сұрақтар бойынша Қосымшадағы «Администрациямен байланыс» бөлімі арқылы немесе электрондық пошта арқылы бізге хабарласа аласыз:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PrivacyContentKa() {
+  return (
+    <>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">1. ზოგადი დებულებები</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          წინამდებარე კონფიდენციალურობის პოლიტიკა (შემდგომ — «პოლიტიკა») განსაზღვრავს «Durak Online from KZ» მობილური აპლიკაციის (შემდგომ — «აპლიკაცია») მომხმარებელთა პერსონალური მონაცემების შეგროვების, გამოყენებისა და დაცვის წესებს.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">2. რა მონაცემებს ვაგროვებთ</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          აპლიკაციის გამოყენებისას შეიძლება შეგროვდეს შემდეგი მონაცემები:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li><strong className="text-foreground">ანგარიშის მონაცემები:</strong> ელ-ფოსტის მისამართი, სახელი (ნიქნეიმი), ავატარი</li>
+          <li><strong className="text-foreground">სათამაშო მონაცემები:</strong> სტატისტიკა (გამარჯვება, წაგება), სათამაშო ბალანსი (ტენგე), შეძენილი ნივთები (ავატარები, ჩარჩოები, ბარათების კომპლექტები, მაგიდები)</li>
+          <li><strong className="text-foreground">ტექნიკური მონაცემები:</strong> მოწყობილობის ტიპი, ოპერაციული სისტემის ვერსია, IP-მისამართი, სესიის იდენტიფიკატორი</li>
+          <li><strong className="text-foreground">ინტერაქციის მონაცემები:</strong> მეგობრების სია, საჩივრების ისტორია</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">3. მონაცემების გამოყენება</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          შეგროვებული მონაცემები გამოიყენება:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>აპლიკაციის ფუნქციონირებისა და სათამაშო შესაძლებლობების უზრუნველსაყოფად</li>
+          <li>მომხმარებლის იდენტიფიკაციისა და ანგარიშის მართვისთვის</li>
+          <li>სათამაშო სტატისტიკისა და ლიდერბოარდის შენარჩუნებისთვის</li>
+          <li>უსაფრთხოების უზრუნველყოფისა და თაღლითობის პრევენციისთვის</li>
+          <li>საჩივრების განხილვისა და მოთამაშეებს შორის დავების გადაწყვეტისთვის</li>
+          <li>აპლიკაციის ხარისხისა და მომხმარებლის გამოცდილების გასაუმჯობესებლად</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">4. მონაცემების შენახვა და დაცვა</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          ჩვენ ვიღებთ ყველა საჭირო ორგანიზაციულ და ტექნიკურ ზომას პერსონალური მონაცემების არასანქცირებული წვდომის, შეცვლის, გამჟღავნებისა თუ განადგურებისგან დასაცავად. მონაცემები ინახება დაცულ სერვერებზე დაშიფვრის გამოყენებით. პაროლები ინახება ჰეშირებული სახით.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">5. მონაცემების გადაცემა მესამე პირებზე</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          ჩვენ არ ვყიდით, არ ვცვლით და არ ვგზავნით თქვენს პერსონალურ მონაცემებს მესამე პირებზე, გარდა კანონმდებლობით გათვალისწინებული შემთხვევებისა ან სერვისის მიწოდებისათვის საჭირო შემთხვევებისა (მაგ., ჰოსტინგ-პროვაიდერები, გადახდის სისტემები).
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">6. მომხმარებლის უფლებები</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          თქვენ გაქვთ უფლება:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>მიიღოთ ინფორმაცია შენახული პერსონალური მონაცემების შესახებ</li>
+          <li>მოითხოვოთ არასწორი მონაცემების გასწორება</li>
+          <li>მოითხოვოთ თქვენი ანგარიშისა და ყველა დაკავშირებული მონაცემის წაშლა</li>
+          <li>გააუქმოთ თანხმობა პერსონალური მონაცემების დამუშავებაზე</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">7. არასრულწლოვანთა მონაცემები</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          აპლიკაცია არ არის განკუთვნილი 13 წლამდე ასაკის ბავშვებისთვის. ჩვენ შეგნებულად არ ვაგროვებთ 13 წლამდე ბავშვების პერსონალურ მონაცემებს. თუ გაიგეთ, რომ ბავშვმა მოგვაწოდა მონაცემები, გთხოვთ დაგვიკავშირდეთ მათი წასაშლელად.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">8. ქუქი-ფაილები და ანალიტიკა</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          აპლიკაცია იყენებს სესიის ქუქი-ფაილებს ავტორიზაციის შესანარჩუნებლად. ჩვენ შეიძლება გამოვიყენოთ ანონიმური ანალიტიკა სერვისის ხარისხის გასაუმჯობესებლად. ანალიტიკური მონაცემები არ შეიცავს პერსონალურ ინფორმაციას.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">9. პოლიტიკის ცვლილებები</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          ჩვენ ვიტოვებთ უფლებას შევიტანოთ ცვლილებები ამ კონფიდენციალურობის პოლიტიკაში. მნიშვნელოვანი ცვლილებების შემთხვევაში მომხმარებლებს ვაცნობებთ აპლიკაციის მეშვეობით. ცვლილებების შემდეგ აპლიკაციის გამოყენება ნიშნავს განახლებული პოლიტიკის მიღებას.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">10. კონტაქტი</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          პერსონალური მონაცემების დამუშავებასთან დაკავშირებული ყველა კითხვისთვის შეგიძლიათ დაგვიკავშირდეთ აპლიკაციის «ადმინისტრაციასთან დაკავშირება» განყოფილების მეშვეობით ან ელ-ფოსტაზე:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
         </p>
       </section>
     </>

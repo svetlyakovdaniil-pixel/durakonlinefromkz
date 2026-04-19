@@ -13,6 +13,10 @@ export function localizeTransactionDescription(description: string, locale: stri
     return localizeToEn(description);
   }
 
+  if (locale === 'ka') {
+    return localizeToKa(description);
+  }
+
   return description;
 }
 
@@ -263,5 +267,71 @@ function localizeToEn(desc: string): string {
   if (desc === '[ТЕСТ] +10 000 шаныраков') return '[TEST] +10,000 shanyraks';
   if (desc === '[ТЕСТ] +10 000 тенге') return '[TEST] +10,000 tenge';
 
+  return desc;
+}
+
+function localizeToKa(desc: string): string {
+  if (desc.startsWith('Достижение: ')) {
+    const name = desc.slice('Достижение: '.length);
+    return `მიღწევა: ${name}`;
+  }
+  if (desc.startsWith('Daily quest reward: ')) {
+    const key = desc.slice('Daily quest reward: '.length);
+    return `ყოველდღიური დავალების ჯილდო: ${key}`;
+  }
+  if (desc.startsWith('Покупка колоды: ')) {
+    const id = desc.slice('Покупка колоды: '.length);
+    return `გემბნის შეძენა: ${id}`;
+  }
+  if (desc.startsWith('Покупка стола: ')) {
+    const id = desc.slice('Покупка стола: '.length);
+    return `მაგიდის შეძენა: ${id}`;
+  }
+  if (desc.startsWith('Покупка рамки: ')) {
+    const id = desc.slice('Покупка рамки: '.length);
+    return `ჩარჩოს შეძენა: ${id}`;
+  }
+  if (desc.startsWith('Покупка аватара: ')) {
+    const id = desc.slice('Покупка аватара: '.length);
+    return `ავატარის შეძენა: ${id}`;
+  }
+  if (desc.startsWith('Покупка пака эмоций: ')) {
+    const id = desc.slice('Покупка пака эмоций: '.length);
+    return `ემოციების პაკეტის შეძენა: ${id}`;
+  }
+  const betMatch = desc.match(/^Ставка на игру \(комната (.+)\)$/);
+  if (betMatch) return `სათამაშო ფსონი (ოთახი ${betMatch[1]})`;
+  const rewardMatch = desc.match(/^Награда за (\d+)-е место \(комната (.+)\)$/);
+  if (rewardMatch) return `ჯილდო ${rewardMatch[1]}-ე ადგილისთვის (ოთახი ${rewardMatch[2]})`;
+  if (desc === 'Награда за прохождение обучения (+2000 шаныраков)') return 'სწავლების დასრულების ჯილდო (+2000 შანირაქი)';
+  const topupMatch = desc.match(/^Добить баланс до 2000 \(\+(\d+) шаныраков\)$/);
+  if (topupMatch) return `ბალანსის შევსება 2000-მდე (+${topupMatch[1]} შანირაქი)`;
+  const adMatch = desc.match(/^Просмотр рекламы \(\+(\d+) шаныраков\)$/);
+  if (adMatch) return `რეკლამის ნახვა (+${adMatch[1]} შანირაქი)`;
+  const shanBuyMatch = desc.match(/^Куплено (\S+) шаныраков за (\d+) тенге$/);
+  if (shanBuyMatch) return `შეძენილია ${shanBuyMatch[1]} შანირაქი ${shanBuyMatch[2]} თენგეში`;
+  const shanPayMatch = desc.match(/^Оплата за (\S+) шаныраков$/);
+  if (shanPayMatch) return `გადახდა ${shanPayMatch[1]} შანირაქისთვის`;
+  const iapMatch = desc.match(/^IAP: \+(\d+) тенге \((.+)\)$/);
+  if (iapMatch) return `IAP: +${iapMatch[1]} თენგე (${iapMatch[2]})`;
+  if (desc === 'Бонус за использование реферального кода') return 'რეფერალური კოდის ბონუსი';
+  const refMatch = desc.match(/^Реферальная награда: (\d+) приглашений$/);
+  if (refMatch) return `რეფერალური ჯილდო: ${refMatch[1]} მოწვევა`;
+  const playlistMatch = desc.match(/^Purchased playlist #(\d+)$/);
+  if (playlistMatch) return `შეძენილია პლეილისტი #${playlistMatch[1]}`;
+  const premiumMatch = desc.match(/^Premium subscription \(expires (.+)\)$/);
+  if (premiumMatch) return `Premium გამოწერა (მოქმედებს ${premiumMatch[1]}-მდე)`;
+  const premiumIapMatch = desc.match(/^Premium IAP subscription \(expires (.+)\)$/);
+  if (premiumIapMatch) return `Premium IAP გამოწერა (მოქმედებს ${premiumIapMatch[1]}-მდე)`;
+  if (desc.startsWith('[ADMIN REFUND] ')) {
+    const inner = desc.slice('[ADMIN REFUND] '.length);
+    return `[ADMIN REFUND] ${localizeToKa(inner)}`;
+  }
+  if (desc.startsWith('[Админ] ')) {
+    const inner = desc.slice('[Админ] '.length);
+    return `[ადმინი] ${inner}`;
+  }
+  if (desc === '[ТЕСТ] +10 000 шаныраков') return '[ტესტი] +10 000 შანირაქი';
+  if (desc === '[ТЕСТ] +10 000 тенге') return '[ტესტი] +10 000 თენგე';
   return desc;
 }
