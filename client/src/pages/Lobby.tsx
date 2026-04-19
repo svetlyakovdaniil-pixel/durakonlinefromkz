@@ -13,7 +13,6 @@ import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl, AVATAR_OPTIONS, getBaseAvatarId, getAvatarDisplayName } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank, getSeasonInfo } from '../../../shared/seasons';
-import { AvatarDisplay } from '@/components/AvatarDisplay';
 import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
@@ -27,7 +26,7 @@ import { TutorialModal } from '@/components/TutorialModal';
 import { useTranslation } from '@/i18n';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
-import { FrameWrapper } from '@/components/AvatarWithFrame';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import TopPlayersMarquee from '@/components/TopPlayersMarquee';
 import FriendsDrawer from '@/components/FriendsDrawer';
 import LeaderboardDrawer from '@/components/LeaderboardDrawer';
@@ -484,11 +483,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   inRoom={false}
                 >
                   <button className="hover:opacity-80 transition-opacity">
-                    <FrameWrapper frameId={(profile as any)?.equippedFrame} size={72}>
-                      <div className="w-[72px] h-[72px] rounded-full overflow-hidden border-2 border-amber-500/60 shadow-lg shadow-amber-900/30">
-                        <AvatarDisplay avatarId={profile?.avatarId} size={72} className="w-full h-full" />
-                      </div>
-                    </FrameWrapper>
+                    <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                   </button>
                 </ProfileDrawer>
                 <div className="flex items-center gap-1.5 mt-1">
@@ -704,11 +699,7 @@ onClick={() => setShowTengeTopUp(true)}
                   inRoom={false}
                 >
                   <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2">
-                    <FrameWrapper frameId={(profile as any)?.equippedFrame} size={40}>
-                      <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-amber-500/50">
-                        <AvatarDisplay avatarId={profile?.avatarId} size={40} className="w-full h-full" />
-                      </div>
-                    </FrameWrapper>
+                    <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={40} />
                   </button>
                 </ProfileDrawer>
                 <div className="flex items-center gap-1.5">
@@ -1715,7 +1706,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   const avatarName = getAvatarDisplayName(notifAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber);
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
-                                      <AvatarDisplay avatarId={notifAvatarId} size={16} className="rounded-full" />
+                                      <PlayerAvatar avatarId={notifAvatarId} size={16} />
                                       {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}</span>
                                     </div>
                                   );

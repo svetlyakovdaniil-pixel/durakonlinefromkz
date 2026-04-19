@@ -13,10 +13,10 @@ import {
   Coins, Banknote,
 } from 'lucide-react';
 import { getAvatarUrl } from '../../../shared/avatars';
-import { AvatarDisplay } from './AvatarDisplay';
 import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper, FrameIcon } from './AvatarWithFrame';
+import { PlayerAvatar } from './PlayerAvatar';
 import { AVATAR_FRAMES } from './ShopModal';
 import { getCurrentSeasonNumber } from '../../../shared/seasons';
 
@@ -145,9 +145,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
         {/* Avatar */}
         <div className="flex justify-center mb-3">
           <div className="relative group">
-            <div className="w-20 h-20 rounded-full overflow-hidden border-3 border-amber-500 shadow-lg shadow-amber-500/20">
-              <AvatarDisplay avatarId={profile.avatarId} size={80} className="w-full h-full" />
-            </div>
+            <PlayerAvatar avatarId={profile.avatarId} size={80} />
             <button
               onClick={() => setShowAvatarPicker(true)}
               className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-600 hover:bg-amber-500 border-2 border-[#0f2035] flex items-center justify-center transition-colors shadow-md z-10"
@@ -185,11 +183,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             </button>
           </div>
           <div className="flex items-center gap-3">
-            <FrameWrapper frameId={equippedFrame} size={48}>
-              <div className="w-[48px] h-[48px] rounded-full overflow-hidden border-2 border-amber-500/60">
-                <AvatarDisplay avatarId={profile.avatarId} size={48} className="w-full h-full" />
-              </div>
-            </FrameWrapper>
+            <PlayerAvatar avatarId={profile.avatarId} frameId={equippedFrame} size={48} />
             <div className="text-amber-100 text-sm">
               {equippedFrame
                 ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : f?.name) || equippedFrame; })()
@@ -453,9 +447,7 @@ function FriendProfileView({
       <div className="bg-gradient-to-r from-blue-700/30 to-blue-600/20 border border-blue-600/30 rounded-xl p-4 text-center">
         {/* Avatar */}
         <div className="flex justify-center mb-2">
-          <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-400/50 shadow-lg">
-            <AvatarDisplay avatarId={(profile as any).avatarId} size={64} className="w-full h-full" />
-          </div>
+          <PlayerAvatar avatarId={(profile as any).avatarId} size={64} />
         </div>
         <div className="flex items-center justify-center gap-2 mb-1">
           <div className={`w-2.5 h-2.5 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-500'}`} />
