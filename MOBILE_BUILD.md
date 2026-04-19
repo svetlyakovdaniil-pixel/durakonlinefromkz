@@ -132,11 +132,19 @@ npx cap open ios
 
 ### 5.4 Иконки приложения
 
-Подготовить иконку `1024×1024 px` (PNG, без прозрачности) и добавить через Xcode → Assets.xcassets → AppIcon.
+Иконка уже сгенерирована (1024×1024 PNG, без прозрачности):
+
+https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/app-icon-1024-2KWTBFRezkbwDxeAeoxNR5.png
+
+Скачайте и добавьте через Xcode → Assets.xcassets → AppIcon.
 
 ### 5.5 Splash Screen
 
-Добавить изображение `2732×2732 px` в `ios/App/App/Assets.xcassets/Splash.imageset/`.
+Сплэш уже сгенерирован (2048×2048 PNG):
+
+https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/splash-screen-2732-Fgq82zxGSYXgiPu4SpJooF.png
+
+Скачайте и добавьте в `ios/App/App/Assets.xcassets/Splash.imageset/`.
 
 ---
 
@@ -178,11 +186,19 @@ android {
 
 ### 6.4 Иконки приложения
 
-Подготовить иконку `512×512 px` и добавить через Android Studio → Resource Manager → Image Asset.
+Используйте ту же иконку (1024×1024, Android Studio сам масштабирует):
+
+https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/app-icon-1024-2KWTBFRezkbwDxeAeoxNR5.png
+
+Добавьте через Android Studio → Resource Manager → Image Asset.
 
 ### 6.5 Splash Screen
 
-Добавить изображение в `android/app/src/main/res/drawable/splash.png`.
+Используйте сгенерированный сплэш:
+
+https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/splash-screen-2732-Fgq82zxGSYXgiPu4SpJooF.png
+
+Добавьте в `android/app/src/main/res/drawable/splash.png`.
 
 ---
 
