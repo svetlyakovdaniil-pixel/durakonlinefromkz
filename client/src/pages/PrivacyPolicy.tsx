@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : <PrivacyContentRu />}
+          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : <PrivacyContentRu />}
         </div>
 
         {/* Last updated */}
@@ -126,6 +126,102 @@ function PrivacyContentRu() {
         <h2 className="text-xl font-bold text-foreground mb-3">10. Контакты</h2>
         <p className="text-muted-foreground leading-relaxed">
           По всем вопросам, связанным с обработкой персональных данных, вы можете обратиться к нам через раздел «Связь с администрацией» в Приложении или по электронной почте:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PrivacyContentUk() {
+  return (
+    <>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">1. Загальні положення</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ця Політика конфіденційності визначає порядок обробки та захисту персональних даних користувачів мобільного додатку «Дурак онлайн from KZ» (далі — «Додаток»). Використовуючи Додаток, ви погоджуєтесь з умовами цієї Політики.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">2. Які дані ми збираємо</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          При використанні Додатку ми можемо збирати такі дані:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li><strong className="text-foreground">Дані акаунту:</strong> адреса електронної пошти, відображуване ім'я (нікнейм), аватар</li>
+          <li><strong className="text-foreground">Ігрові дані:</strong> статистика ігор (перемоги, поразки), ігровий баланс (тенге), придбані предмети (аватарки, рамки, колоди, столи)</li>
+          <li><strong className="text-foreground">Технічні дані:</strong> тип пристрою, версія операційної системи, IP-адреса, ідентифікатор сесії</li>
+          <li><strong className="text-foreground">Дані взаємодії:</strong> список друзів, історія скарг</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">3. Як ми використовуємо дані</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Зібрані дані використовуються для:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Забезпечення роботи Додатку та надання ігрових функцій</li>
+          <li>Ідентифікації користувача та управління акаунтом</li>
+          <li>Ведення ігрової статистики та рейтингів</li>
+          <li>Забезпечення безпеки та запобігання шахрайству</li>
+          <li>Розгляду скарг та вирішення суперечок між гравцями</li>
+          <li>Покращення якості Додатку та користувацького досвіду</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">4. Зберігання та захист даних</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ми вживаємо всіх необхідних організаційних та технічних заходів для захисту персональних даних від несанкціонованого доступу, зміни, розкриття або знищення. Дані зберігаються на захищених серверах з використанням шифрування. Паролі зберігаються у хешованому вигляді та не можуть бути відновлені у вихідному вигляді.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">5. Передача даних третім особам</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ми не продаємо, не обмінюємо та не передаємо ваші персональні дані третім особам, за винятком випадків, передбачених чинним законодавством, або коли це необхідно для надання послуг (наприклад, хостинг-провайдери, платіжні системи).
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">6. Права користувача</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Ви маєте право:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Отримати інформацію про збережені персональні дані</li>
+          <li>Запросити виправлення неточних даних</li>
+          <li>Запросити видалення вашого акаунту та всіх пов'язаних даних</li>
+          <li>Відкликати згоду на обробку персональних даних</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">7. Дані неповнолітніх</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Додаток не призначений для дітей молодше 13 років. Ми свідомо не збираємо персональні дані дітей молодше 13 років. Якщо ви виявили, що дитина надала нам свої дані, зв'яжіться з нами для їх видалення.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">8. Файли cookie та аналітика</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Додаток використовує сесійні cookie для підтримки авторизації. Ми можемо використовувати анонімну аналітику для покращення якості обслуговування. Аналітичні дані не містять персональної інформації.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">9. Зміни в Політиці</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ми залишаємо за собою право вносити зміни до цієї Політики конфіденційності. При суттєвих змінах ми повідомимо користувачів через Додаток. Продовження використання Додатку після внесення змін означає вашу згоду з оновленою Політикою.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">10. Контакти</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          З усіх питань, пов'язаних з обробкою персональних даних, ви можете звернутися до нас через розділ «Зв'язок з адміністрацією» в Додатку або електронною поштою:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
         </p>
       </section>
     </>

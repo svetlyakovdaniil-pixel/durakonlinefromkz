@@ -55,6 +55,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         ru: `Получено: +${result.shanyrakAwarded?.toLocaleString() ?? 0} шаныраков`,
         kk: `Алынды: +${result.shanyrakAwarded?.toLocaleString() ?? 0} шаңырақ`,
         en: `Claimed: +${result.shanyrakAwarded?.toLocaleString() ?? 0} shanyrak`,
+        uk: `Отримано: +${result.shanyrakAwarded?.toLocaleString() ?? 0} шаніраків`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -62,7 +63,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
       setClaimingKey(null);
     },
     onError: () => {
-      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward' };
+      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setClaimingKey(null);
     },
@@ -74,6 +75,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         ru: `Задание заменено! Осталось замен сегодня: ${result.remaining}`,
         kk: `Тапсырма ауыстырылды! Бүгін қалды: ${result.remaining}`,
         en: `Quest swapped! Swaps remaining today: ${result.remaining}`,
+        uk: `Завдання замінено! Залишилось замін сьогодні: ${result.remaining}`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -82,8 +84,8 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     onError: (err) => {
       const isNoSwaps = err.message?.includes('No swaps');
       const msgs = isNoSwaps
-        ? { ru: 'Лимит замен на сегодня исчерпан (3/3)', kk: 'Бүгінгі ауыстыру лимиті таусылды (3/3)', en: 'Daily swap limit reached (3/3)' }
-        : { ru: 'Ошибка замены задания', kk: 'Тапсырманы ауыстыру қатесі', en: 'Failed to swap quest' };
+        ? { ru: 'Лимит замен на сегодня исчерпан (3/3)', kk: 'Бүгінгі ауыстыру лимиті таусылды (3/3)', en: 'Daily swap limit reached (3/3)', uk: 'Ліміт замін на сьогодні вичерпано (3/3)' }
+        : { ru: 'Ошибка замены задания', kk: 'Тапсырманы ауыстыру қатесі', en: 'Failed to swap quest', uk: 'Помилка заміни завдання' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setSwappingKey(null);
     },
@@ -92,27 +94,28 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   if (!open) return null;
 
   const L = {
-    title: { ru: 'Ежедневные задания', kk: 'Күнделікті тапсырмалар', en: 'Daily Quests' }[locale as string] ?? 'Ежедневные задания',
-    reset: { ru: `Сброс через ${getTimeUntilReset()}`, kk: `${getTimeUntilReset()} кейін жаңарады`, en: `Resets in ${getTimeUntilReset()}` }[locale as string] ?? `Resets in ${getTimeUntilReset()}`,
-    claim: { ru: 'Получить', kk: 'Алу', en: 'Claim' }[locale as string] ?? 'Получить',
-    claimed: { ru: 'Получено', kk: 'Алынды', en: 'Claimed' }[locale as string] ?? 'Получено',
-    locked: { ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress' }[locale as string] ?? 'В процессе',
-    swap: { ru: 'Заменить', kk: 'Ауыстыру', en: 'Replace' }[locale as string] ?? 'Заменить',
-    swapsLeft: { ru: `Замен: ${swapsRemaining}/3`, kk: `Ауыстыру: ${swapsRemaining}/3`, en: `Swaps: ${swapsRemaining}/3` }[locale as string] ?? `Замен: ${swapsRemaining}/3`,
+    title: { ru: 'Ежедневные задания', kk: 'Күнделікті тапсырмалар', en: 'Daily Quests', uk: 'Щоденні завдання' }[locale as string] ?? 'Ежедневные задания',
+    reset: { ru: `Сброс через ${getTimeUntilReset()}`, kk: `${getTimeUntilReset()} кейін жаңарады`, en: `Resets in ${getTimeUntilReset()}`, uk: `Скидання через ${getTimeUntilReset()}` }[locale as string] ?? `Resets in ${getTimeUntilReset()}`,
+    claim: { ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати' }[locale as string] ?? 'Получить',
+    claimed: { ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано' }[locale as string] ?? 'Получено',
+    locked: { ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress', uk: 'В процесі' }[locale as string] ?? 'В процессе',
+    swap: { ru: 'Заменить', kk: 'Ауыстыру', en: 'Replace', uk: 'Замінити' }[locale as string] ?? 'Заменить',
+    swapsLeft: { ru: `Замен: ${swapsRemaining}/3`, kk: `Ауыстыру: ${swapsRemaining}/3`, en: `Swaps: ${swapsRemaining}/3`, uk: `Замін: ${swapsRemaining}/3` }[locale as string] ?? `Замен: ${swapsRemaining}/3`,
     humanOnly: {
       ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
       kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
       en: 'Only counts in games with real players (less than 33.4% bots)',
+      uk: 'Зараховується тільки в іграх з реальними людьми (менше 33.4% ботів)',
     }[locale as string] ?? 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
-    loading: { ru: 'Загрузка...', kk: 'Жүктелуде...', en: 'Loading...' }[locale as string] ?? 'Загрузка...',
-    noQuests: { ru: 'Задания не назначены. Сыграйте партию, чтобы получить задания.', kk: 'Тапсырмалар берілмеген. Ойын ойнаңыз.', en: 'No quests assigned. Play a game to get quests.' }[locale as string] ?? 'Задания не назначены.',
-    completed: { ru: 'Выполнено', kk: 'Орындалды', en: 'Completed' }[locale as string] ?? 'Выполнено',
+    loading: { ru: 'Загрузка...', kk: 'Жүктелуде...', en: 'Loading...', uk: 'Завантаження...' }[locale as string] ?? 'Загрузка...',
+    noQuests: { ru: 'Задания не назначены. Сыграйте партию, чтобы получить задания.', kk: 'Тапсырмалар берілмеген. Ойын ойнаңыз.', en: 'No quests assigned. Play a game to get quests.', uk: 'Завдання не призначені. Зіграйте партію, щоб отримати завдання.' }[locale as string] ?? 'Задания не назначены.',
+    completed: { ru: 'Выполнено', kk: 'Орындалды', en: 'Completed', uk: 'Виконано' }[locale as string] ?? 'Выполнено',
   };
 
   const getName = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : q.def.nameRu;
+    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : q.def.nameRu;
   const getDesc = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : q.def.descRu;
+    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : q.def.descRu;
 
   // Sort: claimable first, then in-progress, then claimed
   const sorted = [...quests].sort((a, b) => {
