@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { EMOTION_PACKS, KHAN_PACK, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK, getEmotionPack, DEFAULT_EMOTION_PACK_ID } from '../shared/emotionPacks';
+import { EMOTION_PACKS, KHAN_PACK, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK, RACCOON_PACK, getEmotionPack, DEFAULT_EMOTION_PACK_ID } from '../shared/emotionPacks';
 
 describe('emotionPacks', () => {
-  it('should have four packs: khan, hamster, monkey, and devil', () => {
-    expect(EMOTION_PACKS).toHaveLength(4);
+  it('should have five packs: khan, hamster, monkey, devil, and raccoon', () => {
+    expect(EMOTION_PACKS).toHaveLength(5);
     expect(EMOTION_PACKS[0].id).toBe('khan');
     expect(EMOTION_PACKS[1].id).toBe('hamster');
     expect(EMOTION_PACKS[2].id).toBe('monkey');
     expect(EMOTION_PACKS[3].id).toBe('devil');
+    expect(EMOTION_PACKS[4].id).toBe('raccoon');
   });
 
   it('khan pack should be free (price 0) and is the default', () => {
@@ -27,11 +28,16 @@ describe('emotionPacks', () => {
     expect(DEVIL_PACK.price).toBe(150);
   });
 
+  it('raccoon pack should have price 150 tenge', () => {
+    expect(RACCOON_PACK.price).toBe(150);
+  });
+
   it('all packs should have exactly 10 emotions', () => {
     expect(KHAN_PACK.emotions).toHaveLength(10);
     expect(HAMSTER_PACK.emotions).toHaveLength(10);
     expect(MONKEY_PACK.emotions).toHaveLength(10);
     expect(DEVIL_PACK.emotions).toHaveLength(10);
+    expect(RACCOON_PACK.emotions).toHaveLength(10);
   });
 
   it('all packs should have the same emotion IDs', () => {
@@ -39,9 +45,11 @@ describe('emotionPacks', () => {
     const hamsterIds = HAMSTER_PACK.emotions.map(e => e.id).sort();
     const monkeyIds = MONKEY_PACK.emotions.map(e => e.id).sort();
     const devilIds = DEVIL_PACK.emotions.map(e => e.id).sort();
+    const raccoonIds = RACCOON_PACK.emotions.map(e => e.id).sort();
     expect(khanIds).toEqual(hamsterIds);
     expect(khanIds).toEqual(monkeyIds);
     expect(khanIds).toEqual(devilIds);
+    expect(khanIds).toEqual(raccoonIds);
   });
 
   it('khan pack emotions should have CDN URLs', () => {
@@ -58,6 +66,12 @@ describe('emotionPacks', () => {
 
   it('devil pack emotions should have CDN URLs', () => {
     for (const emotion of DEVIL_PACK.emotions) {
+      expect(emotion.url).toMatch(/^https:\/\//);
+    }
+  });
+
+  it('raccoon pack emotions should have CDN URLs', () => {
+    for (const emotion of RACCOON_PACK.emotions) {
       expect(emotion.url).toMatch(/^https:\/\//);
     }
   });
@@ -91,6 +105,11 @@ describe('emotionPacks', () => {
   it('getEmotionPack should return devil pack for devil id', () => {
     const pack = getEmotionPack('devil');
     expect(pack.id).toBe('devil');
+  });
+
+  it('getEmotionPack should return raccoon pack for raccoon id', () => {
+    const pack = getEmotionPack('raccoon');
+    expect(pack.id).toBe('raccoon');
   });
 
   it('all emotion IDs should be valid', () => {

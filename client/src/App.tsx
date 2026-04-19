@@ -10,10 +10,16 @@ import { SoundProvider } from "./contexts/SoundContext";
 import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
 import { initIAP } from "./lib/iap";
+import { initAdMob } from "./lib/admob";
+import { Capacitor } from '@capacitor/core';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { SplashScreen } from '@capacitor/splash-screen';
+import { Keyboard } from '@capacitor/keyboard';
 import { trpc } from "./lib/trpc";
 import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
@@ -27,6 +33,7 @@ function Router() {
       <Route path={"/register"} component={Register} />
       <Route path={"/admin"} component={AdminPanel} />
       <Route path={"/privacy"} component={PrivacyPolicy} />
+      <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
@@ -40,6 +47,34 @@ function IAPInitializer() {
     const userId = meQuery.data?.openId;
     void initIAP(userId);
   }, [meQuery.data?.openId]);
+  return null;
+}
+
+/** Initialize AdMob SDK on app start (native platforms only) */
+function AdMobInitializer() {
+  useEffect(() => {
+    void initAdMob();
+  }, []);
+  return null;
+}
+
+/** Configure native mobile UI: StatusBar, SplashScreen, Keyboard */
+function MobileInitializer() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // StatusBar: transparent overlay so our dark UI fills the notch area
+    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
+    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: '#00000000' }).catch(() => {});
+
+    // SplashScreen: hide after app is ready (auto-hide is also configured in capacitor.config.ts)
+    SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
+
+    // Keyboard: resize body instead of native resize to avoid layout jumps
+    Keyboard.setResizeMode({ mode: 'body' as any }).catch(() => {});
+    Keyboard.setAccessoryBarVisible({ isVisible: false }).catch(() => {});
+  }, []);
   return null;
 }
 
@@ -98,6 +133,8 @@ function App() {
         <SettingsProvider>
           <I18nProvider>
           <IAPInitializer />
+          <AdMobInitializer />
+          <MobileInitializer />
           <BatterySaverSync />
           <LanguageGate>
           <MusicProvider>

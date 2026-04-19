@@ -424,7 +424,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] sm:block flex flex-col">
       {/* Header */}
-      <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm">
+      <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm safe-top">
         <div className="container py-3 sm:py-5" style={{paddingBottom: '5px', marginBottom: '12px'}}>
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">

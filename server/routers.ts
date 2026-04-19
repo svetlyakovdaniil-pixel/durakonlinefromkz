@@ -28,6 +28,7 @@ import {
   getPlayerProfileWithFriendStatus,
   getFriendshipById,
   freeShanyrakTopup,
+  adWatchTopup,
   buyShanyrakWithTenge,
   getFreeTopupStatus,
   recordTransaction,
@@ -496,6 +497,23 @@ export const appRouter = router({
           amount: result.added,
           currency: 'shanyrak',
           description: `Добить баланс до 2000 (+${result.added} шаныраков)`,
+          balanceAfter: result.newBalance,
+        });
+      }
+      return result;
+    }),
+
+    /** Ad watch reward: give 1000 shanyraks with 1h cooldown */
+    adWatchTopup: protectedProcedure.mutation(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      const result = await adWatchTopup(ctx.user.id);
+      if (result.success && profile && result.added && result.newBalance !== undefined) {
+        await recordTransaction({
+          profileId: profile.id,
+          type: 'free_topup',
+          amount: result.added,
+          currency: 'shanyrak',
+          description: `Просмотр рекламы (+${result.added} шаныраков)`,
           balanceAfter: result.newBalance,
         });
       }

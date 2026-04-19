@@ -620,6 +620,17 @@
 }
 
 /* ===== iOS Safe Area & Mobile Browser Adaptation ===== */
+/* Top safe area utility — add to lobby/waitingroom top bars to clear notch/status bar */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+/* Combined safe area wrapper for full-screen pages */
+.safe-area-full {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+}
 /* Ensure game table fills the full visual viewport including safe areas */
 .game-table-root {
   /* Use dvh for dynamic viewport (accounts for browser chrome appearing/disappearing) */
