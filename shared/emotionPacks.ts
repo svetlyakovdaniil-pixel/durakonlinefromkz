@@ -115,8 +115,32 @@ export const DEVIL_PACK: EmotionPack = {
   ],
 };
 
+// Raccoon pack (purchasable)
+export const RACCOON_PACK: EmotionPack = {
+  id: 'raccoon',
+  name: 'Енот',
+  nameKk: 'Жанат',
+  nameEn: 'Raccoon',
+  description: 'Те же эмоции, только с енотом!',
+  descriptionKk: 'Сол эмоциялар, бірақ енотпен!',
+  descriptionEn: 'Same emotions, but with a raccoon!',
+  price: 150,
+  emotions: [
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_ref_laugh_abe704af.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_cool-6rKk5ui5mySEY6uXKComWK.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_angry-6uVHKrrqCwQBznY5aEh5nC.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sad-FbNZWtaWSm6Fb4ausscNNE.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_think-mo3SbXpKKwTTsM6y8SaNUQ.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_wow-4QRjVrmn7WYaBBZsWLL8Ej.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_heart_v2-TyneVuyMKoLBPNQZyanUc2.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_hurry_v2-agQoZychkNzdjxPYvtLDTE.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_win-PHHWAUiVmxmYgk2AimmfrD.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sleep-JPQYVFAzJtFXuS2m8Ko3Ax.png' },
+  ],
+};
+
 // Khan is first (default), then paid packs
-export const EMOTION_PACKS: EmotionPack[] = [KHAN_PACK, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK];
+export const EMOTION_PACKS: EmotionPack[] = [KHAN_PACK, HAMSTER_PACK, MONKEY_PACK, DEVIL_PACK, RACCOON_PACK];
 
 /** Default pack ID for new players */
 export const DEFAULT_EMOTION_PACK_ID = 'khan';
