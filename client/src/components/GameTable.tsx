@@ -155,7 +155,7 @@ const PlayerHand = memo(function PlayerHand({
 
       <div
         ref={scrollRef}
-        className={`flex pb-1 sm:pb-2 ${needsScroll ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent' : 'justify-center'}${isTutorial ? ' overflow-y-visible' : ''}`}
+        className={`flex pb-1 sm:pb-2 ${needsScroll ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent' : 'justify-center'}${isTutorial ? ' overflow-y-visible pt-5' : ''}`}
         onScroll={checkScroll}
         onWheel={handleWheel}
         style={needsScroll ? {
@@ -2090,7 +2090,7 @@ export default function GameTable({
           </div>
         ) : (
         <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0 bg-black/60 ${blurClass} border-t border-amber-700/20${isTutorial ? ' relative z-[60]' : ''}`}>
-          <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2">
+          <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2 relative z-0">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
               data-tutorial="sort-button"
