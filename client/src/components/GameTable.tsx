@@ -665,7 +665,7 @@ export default function GameTable({
       const cardsCleared = prevBattleFieldLen.current * 2; // attack + defense pairs
       setBitoCardCount(cardsCleared);
       setShowBitoAnim(true);
-      playSound('bito', 0.6);
+      playSound('bito', 0.42);
     } else if (battleCleared && !discardGrew) {
       // Battlefield cleared but discard didn't grow = defender took the cards
       playSound('cardTake', 0.7);
@@ -2116,9 +2116,11 @@ export default function GameTable({
               suppressPlayableStyle={isNonNeighborWithSixes}
             />
           </div>
-          {/* Avatar row: avatar LEFT | action buttons RIGHT */}
+          {/* Avatar row: avatar LEFT | action buttons RIGHT — hidden on tutorial step 20 */}
+          {!(isTutorial && currentTutorialScenario?.id === 20) && (
           <div className="flex items-start gap-1.5 mt-1.5 px-1 avatar-action-row">
-            {/* Left: player avatar — click to open emotion picker */}
+            {/* Left: player avatar — hidden in tutorial mode */}
+            {!isTutorial && (
             <div className="flex flex-col items-center justify-center shrink-0">
               {/* Avatar wrapper with explicit size so EmotionBubble (absolute inset-0) fills it exactly */}
               <div
@@ -2139,6 +2141,7 @@ export default function GameTable({
                 />
               </div>
             </div>
+            )}
 
             {/* Right: action buttons area OR blinking role notice */}
             <div className="flex-1 flex flex-col justify-center min-h-[52px] overflow-visible">
@@ -2262,12 +2265,12 @@ export default function GameTable({
                   )}
                 </div>
               )}
-            </div>
+             </div>
           </div>
+          )}
         </div>
         )}
       </div>
-
       {/* Player Profile Popup */}
       {profilePopupGameId !== null && (
         <PlayerProfilePopup
