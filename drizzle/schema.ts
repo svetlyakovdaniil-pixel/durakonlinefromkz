@@ -615,3 +615,42 @@ export const serverSettings = mysqlTable("server_settings", {
 });
 export type ServerSetting = typeof serverSettings.$inferSelect;
 export type InsertServerSetting = typeof serverSettings.$inferInsert;
+
+/**
+ * Push notification device tokens — stores FCM (Android) and APNs (iOS) tokens per device.
+ * A player may have multiple devices, so (profileId, token) is unique.
+ */
+export const pushTokens = mysqlTable("push_tokens", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Player profile ID */
+  profileId: int("profileId").notNull(),
+  /** FCM registration token (Android) or APNs device token (iOS via FCM) */
+  token: varchar("token", { length: 512 }).notNull(),
+  /** Platform: 'ios' | 'android' | 'web' */
+  platform: varchar("platform", { length: 16 }).notNull().default("android"),
+  /** App version at time of registration */
+  appVersion: varchar("appVersion", { length: 32 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PushToken = typeof pushTokens.$inferSelect;
+export type InsertPushToken = typeof pushTokens.$inferInsert;
+
+/**
+ * Push notification settings — per-player, per-type opt-in/out.
+ * Defaults to enabled (true) for all types if no row exists.
+ */
+export const pushNotificationSettings = mysqlTable("push_notification_settings", {
+  id: int("id").autoincrement().primaryKey(),
+  profileId: int("profileId").notNull(),
+  /**
+   * Notification type key:
+   * 'your_turn' | 'friend_request' | 'shanyrak_refill' | 'room_invite'
+   * | 'daily_quest' | 'season_ending' | 'reward_received' | 'new_update'
+   */
+  notifType: varchar("notifType", { length: 64 }).notNull(),
+  enabled: boolean("enabled").notNull().default(true),
+  updatedAt: timestamp("updatedAt").defaultNow().notNull(),
+});
+export type PushNotificationSetting = typeof pushNotificationSettings.$inferSelect;
+export type InsertPushNotificationSetting = typeof pushNotificationSettings.$inferInsert;

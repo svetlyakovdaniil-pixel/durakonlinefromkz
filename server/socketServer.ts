@@ -37,6 +37,7 @@ import {
   trackBerkutHandSize, getBerkutHandSize,
 } from './achievementsTriggers';
 import { incrementDailyQuestProgress, setDailyQuestProgress, processDailyQuestsAfterGame } from './dailyQuestsDb';
+import { sendYourTurnPush, sendRoomInvitePush } from './pushNotifications';
 import { ACHIEVEMENT_MAP } from '../shared/achievements';
 import { DAILY_QUEST_MAP, getMoscowDayStart } from '../shared/dailyQuests';
 import { TABLE_STYLES } from '../shared/cardAssets';
@@ -1461,9 +1462,13 @@ export function initSocketServer(httpServer: HttpServer) {
         fromGameId: senderGameId,
       });
       dbg(`[Socket] ${name} (gameId: ${senderGameId}) invited gameId: ${targetGameId} to room ${data.roomId}`);
+      // Push notification: target may have app backgrounded
+      const targetProfileId = playerProfileIds.get(targetOdId);
+      if (targetProfileId) {
+        sendRoomInvitePush(targetProfileId, name, room.name).catch(() => {});
+      }
     });
-
-    // --- Decline room invitation ---
+    // --- Decline room invitation ----
     socket.on('declineInvite', (data) => {
       // Find the inviter's socket by their gameId
       const inviterGameId = data.fromGameId;
@@ -2869,17 +2874,24 @@ function broadcastGameState(roomId: string, gameState: GameState) {
   }
 
   // Game still in progress — send gameStateUpdate and yourTurn to each player
+  // Also determine the current attacker to send push notification if they're offline
+  const currentAttackerOdId = gameState.players[gameState.currentAttackerIdx]?.id;
   for (const p of gameState.players) {
     if (p.isBot) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
       const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false, playerSeasonRatings);
       io.to(sid).emit('gameStateUpdate', clientState);
-
       // Always send actions — even empty array to clear stale client state
       const playerIdx = gameState.players.findIndex(pl => pl.id === p.id);
       const actions = playerIdx !== -1 ? getAvailableActions(gameState, playerIdx) : [];
       io.to(sid).emit('yourTurn', actions);
+    } else if (p.id === currentAttackerOdId && !room?.settings.isTutorial) {
+      // Player is offline (app backgrounded) — send push notification
+      const profileId = playerProfileIds.get(p.id);
+      if (profileId) {
+        sendYourTurnPush(profileId).catch(() => {});
+      }
     }
   }
 }

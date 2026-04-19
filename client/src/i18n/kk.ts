@@ -577,6 +577,15 @@ export const kk = {
     privacyPolicyDesc: 'Саясатпен танысу',
     langFlag: '🇰🇿',
     langName: 'Қазақша',
+    pushNotifications: 'Хабарландырулар',
+    pushYourTurn: 'Сіздің кезегіңіз',
+    pushFriendRequest: 'Дос болу өтінімі',
+    pushShanyrakRefill: 'Шаңырақтар қайта қолжетімді',
+    pushRoomInvite: 'Бөлмеге шақыру',
+    pushDailyQuest: 'Жаңа күнделікті тапсырма',
+    pushSeasonEnding: 'Маусым аяқталуда',
+    pushRewardReceived: 'Сыйлық алынды',
+    pushNewUpdate: 'Жаңа жаңарту',
   },
 
   // Rules

@@ -11,6 +11,7 @@ import { SettingsProvider, useSettings } from "./contexts/SettingsContext";
 import { I18nProvider } from "./i18n";
 import { initIAP } from "./lib/iap";
 import { initAdMob } from "./lib/admob";
+import { initPushNotifications, isNativePlatform } from "./lib/pushNotifications";
 import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
@@ -55,6 +56,27 @@ function AdMobInitializer() {
   useEffect(() => {
     void initAdMob();
   }, []);
+  return null;
+}
+
+/** Initialize push notifications on native platforms */
+function PushInitializer() {
+  const meQuery = trpc.auth.me.useQuery();
+  const registerToken = trpc.push.registerToken.useMutation();
+
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+    const userId = meQuery.data?.id;
+    if (!userId) return; // Only register when authenticated
+
+    void initPushNotifications(
+      (token, platform) => {
+        registerToken.mutate({ token, platform });
+      },
+    );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [meQuery.data?.id]);
+
   return null;
 }
 
@@ -135,6 +157,7 @@ function App() {
           <IAPInitializer />
           <AdMobInitializer />
           <MobileInitializer />
+          <PushInitializer />
           <BatterySaverSync />
           <LanguageGate>
           <MusicProvider>

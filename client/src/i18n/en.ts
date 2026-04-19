@@ -579,6 +579,15 @@ export const en = {
     privacyPolicyDesc: 'Read our privacy policy',
     langFlag: '🇬🇧',
     langName: 'English',
+    pushNotifications: 'Notifications',
+    pushYourTurn: 'Your Turn',
+    pushFriendRequest: 'Friend Request',
+    pushShanyrakRefill: 'Shanyraks Refilled',
+    pushRoomInvite: 'Room Invitation',
+    pushDailyQuest: 'New Daily Quest',
+    pushSeasonEnding: 'Season Ending Soon',
+    pushRewardReceived: 'Reward Received',
+    pushNewUpdate: 'New Update',
   },
 
   // Rules
