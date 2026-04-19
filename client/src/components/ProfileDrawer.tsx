@@ -15,6 +15,7 @@ import {
 import { getAvatarUrl } from '../../../shared/avatars';
 import AvatarPicker from './AvatarPicker';
 import { useTranslation } from '@/i18n';
+import { localizeTransactionDescription } from '@/lib/localizeTransaction';
 import { FrameWrapper, FrameIcon } from './AvatarWithFrame';
 import { PlayerAvatar } from './PlayerAvatar';
 import { AVATAR_FRAMES } from './ShopModal';
@@ -747,7 +748,7 @@ function TransactionHistoryTab() {
   const txQuery = trpc.balance.myTransactions.useQuery(undefined, {
     staleTime: 10_000,
   });
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
 
   const data = txQuery.data ?? [];
 
@@ -796,7 +797,7 @@ function TransactionHistoryTab() {
                   <ArrowDownCircle className="w-3.5 h-3.5 text-red-400" />
                 )}
                 <span className="text-amber-100 text-xs font-medium truncate max-w-[180px]">
-                  {tx.description || t('profile.operation')}
+                  {tx.description ? localizeTransactionDescription(tx.description, locale) : t('profile.operation')}
                 </span>
               </div>
               <span className={`text-xs font-bold ${amountColor} flex items-center gap-0.5`}>

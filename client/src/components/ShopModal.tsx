@@ -611,7 +611,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const isOwned = ownedAvatars.includes(avatar.id);
                 const effectiveAvatarPrice = getPrice('avatar', avatar.id, avatar.price || 0);
                 const canAffordAvatar = currentTenge >= effectiveAvatarPrice;
-                const displayName = locale === 'kk' && avatar.nameKk ? avatar.nameKk : locale === 'en' && avatar.nameEn ? avatar.nameEn : avatar.name;
+                const displayName = locale === 'kk' && avatar.nameKk ? avatar.nameKk : locale === 'en' && avatar.nameEn ? avatar.nameEn : locale === 'uk' && (avatar as any).nameUk ? (avatar as any).nameUk : avatar.name;
                 return (
                   <div key={avatar.id} className="bg-[#0f2035]/80 border rounded-xl p-4 border-amber-700/20">
                     <div className="flex items-center gap-4">
