@@ -21,7 +21,7 @@ import { ObsidianSpaceFrame } from '@/components/ObsidianSpaceFrame';
 import { ObsidianCyberpunkFrame } from '@/components/ObsidianCyberpunkFrame';
 import { ObsidianHiphopFrame } from '@/components/ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from '@/components/ObsidianAngelsDemonsFrame';
-import { AvatarDisplay } from '@/components/AvatarDisplay';
+import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useState as useLocalState } from 'react';
 
 interface SeasonPageProps {
@@ -158,9 +158,7 @@ function RewardPopup({
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5`}
                 style={{ background: avatarAccent.bg }}
               >
-                <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${avatarAccent.border} flex-shrink-0`}>
-                  <AvatarDisplay avatarId={seasonAvatarId} size={48} />
-                </div>
+                <PlayerAvatar avatarId={seasonAvatarId} size={48} className="flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className={`${avatarAccent.text} font-semibold text-sm`}>
                     {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
@@ -174,9 +172,7 @@ function RewardPopup({
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5`}
                 style={{ background: avatarAccent.bg }}
               >
-                <div className={`w-12 h-12 rounded-full overflow-hidden border-2 ${avatarAccent.border} flex-shrink-0`}>
-                  <AvatarDisplay avatarId={seasonAvatarId} size={48} />
-                </div>
+                <PlayerAvatar avatarId={seasonAvatarId} size={48} className="flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className={`${avatarAccent.text} font-semibold text-sm`}>
                     {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
@@ -803,8 +799,8 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               className={`flex items-center gap-2 ${isAnimated ? 'cursor-pointer hover:opacity-80 transition-opacity' : ''}`}
                               onClick={isAnimated ? () => setRewardPopupKey(currentRank.key) : undefined}
                             >
-                              <div className="w-8 h-8 rounded-full overflow-hidden border border-amber-500/40 flex-shrink-0 bg-black/30">
-                                {seasonAvatarId ? <AvatarDisplay avatarId={seasonAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
+                              <div className="flex-shrink-0">
+                                {seasonAvatarId ? <PlayerAvatar avatarId={seasonAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
                               </div>
                               <span>
                                 {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarDisplayName}</span>
@@ -1096,12 +1092,11 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                           </div>
 
                           {/* Avatar */}
-                          <div
-                            className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0"
-                            style={isTop3 ? { boxShadow: '0 0 6px rgba(234,179,8,0.5)' } : undefined}
-                          >
-                            <AvatarDisplay avatarId={entry.avatarId ?? 'wolf'} size={32} className="w-full h-full" />
-                          </div>
+                          <PlayerAvatar
+                            avatarId={entry.avatarId ?? 'wolf'}
+                            size={32}
+                            className="flex-shrink-0"
+                          />
 
                           {/* Name + diamond */}
                           <div className="flex-1 min-w-0 flex items-center gap-1.5">

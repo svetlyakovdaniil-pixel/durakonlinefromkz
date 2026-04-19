@@ -3293,3 +3293,12 @@
 ## Баг: скидка применяется к базовой цене, а не к переопределённой
 - [x] Найти логику расчёта цены со скидкой (db.ts или routers.ts)
 - [x] Исправить: discountPercent применять к overridePrice (если задан), а не к basePrice
+## Единый компонент PlayerAvatar
+- [x] Создать PlayerAvatar компонент (FrameWrapper + AvatarDisplay, единый стандарт)
+- [x] Лобби (Lobby.tsx): заменить аватарку на PlayerAvatar (size=72 и size=40)
+- [x] Профиль (ProfileDrawer.tsx): заменить аватарку на PlayerAvatar (size=80, size=48)
+- [x] Профиль друга (FriendsDrawer.tsx): заменить аватарку на PlayerAvatar (size=64)
+- [x] Игровой стол (GameTable.tsx): заменить аватарки игроков на PlayerAvatar (size=28/32/40, 52, 64)
+- [x] Топ игроков (Season.tsx): заменить аватарки на PlayerAvatar (size=48, 32)
+- [x] Награды сезона (Season.tsx): заменить аватарку на PlayerAvatar (size=32)
+- [x] Уведомления в лобби (Lobby.tsx): заменить аватарку на PlayerAvatar (size=16)

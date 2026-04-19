@@ -12,11 +12,10 @@ import { Swords, Shield, ArrowRight, ArrowLeft, Timer, Layers, Trash2, Crown, Tr
 import { useSoundContext } from '@/contexts/SoundContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { getAvatarUrl } from '../../../shared/avatars';
-import { AvatarDisplay } from './AvatarDisplay';
 import { trpc } from '@/lib/trpc';
 import { formatBalance } from '../../../shared/formatBalance';
 import { useTranslation } from '@/i18n';
-import { FrameWrapper } from './AvatarWithFrame';
+import { PlayerAvatar } from './PlayerAvatar';
 import GameSettingsSheet from './GameSettingsSheet';
 import { EmotionPicker, EmotionBubble, useEmotionPicker } from './EmotionPicker';
 import { TurnTimerMobile, TurnTimerDesktop } from './TurnTimer';
@@ -1587,14 +1586,13 @@ export default function GameTable({
                         onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
                         disabled={p.isBot || !p.gameId}
                       >
-                         <FrameWrapper frameId={p.equippedFrame} size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}>
-                           <AvatarDisplay
-                             avatarId={p.avatarId}
-                             size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
-                             alt={p.name}
-                             className={p.equippedFrame ? `rounded-full ${p.isBot ? 'opacity-70' : ''}` : `${manyManyOpponents ? 'w-7 h-7' : manyOpponents ? 'w-8 h-8' : 'w-10 h-10'} rounded-full border-2 ${p.isBot ? 'border-gray-500/40 opacity-70' : 'border-amber-600/50 cursor-pointer hover:border-amber-400 hover:scale-110 transition-all'}`}
-                           />
-                        </FrameWrapper>
+                         <PlayerAvatar
+                           avatarId={p.avatarId}
+                           frameId={p.equippedFrame}
+                           size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
+                           alt={p.name}
+                           className={p.isBot ? 'opacity-70' : ''}
+                         />
                       </button>
                       {/* Emotion bubble — absolute inset-0 fills the inline-block wrapper which wraps tightly around button */}
                       {playerEmotions[p.id] && (
@@ -2132,14 +2130,13 @@ export default function GameTable({
                 {playerEmotions[gs.players[myIdx]?.id] && (
                   <EmotionBubble emotionId={playerEmotions[gs.players[myIdx].id].emotionId} emotionPackId={playerEmotions[gs.players[myIdx].id].emotionPackId} />
                 )}
-                <FrameWrapper frameId={gs.players[myIdx]?.equippedFrame} size={52}>
-                  <AvatarDisplay
-                    avatarId={gs.players[myIdx]?.avatarId}
-                    size={52}
-                    alt={gs.players[myIdx]?.name || ''}
-                    className={`${gs.players[myIdx]?.equippedFrame ? 'rounded-full' : 'w-[52px] h-[52px] rounded-full border-2 border-amber-600/50'} ${sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}`}
-                  />
-                </FrameWrapper>
+                <PlayerAvatar
+                  avatarId={gs.players[myIdx]?.avatarId}
+                  frameId={gs.players[myIdx]?.equippedFrame}
+                  size={52}
+                  alt={gs.players[myIdx]?.name || ''}
+                  className={sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}
+                />
               </div>
             </div>
 
@@ -2375,14 +2372,12 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
         ) : profile ? (
           <div className="flex flex-col items-center gap-3">
             {/* Avatar & Name */}
-            <FrameWrapper frameId={profile.equippedFrame} size={64}>
-              <AvatarDisplay
-                avatarId={profile.avatarId}
-                size={64}
-                alt={profile.displayName || 'Player'}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-amber-600/60"
-              />
-            </FrameWrapper>
+            <PlayerAvatar
+              avatarId={profile.avatarId}
+              frameId={profile.equippedFrame}
+              size={64}
+              alt={profile.displayName || 'Player'}
+            />
             <div className="text-center">
               <h3 className="text-amber-100 font-bold text-base sm:text-lg">{profile.displayName || t('game.player')}</h3>
               <span className="text-amber-200/50 text-xs">ID {profile.gameId}</span>

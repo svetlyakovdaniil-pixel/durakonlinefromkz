@@ -20,9 +20,8 @@ import {
   Clock, Check, X, Loader2,
   Eye, ArrowLeft, Send, Gift,
 } from 'lucide-react';
-import { AvatarDisplay } from './AvatarDisplay';
 import { useTranslation } from '@/i18n';
-import { FrameWrapper } from './AvatarWithFrame';
+import { PlayerAvatar } from './PlayerAvatar';
 import { TrendingUp, Swords, Crown, Shield, Hash, Trophy, Star } from 'lucide-react';
 import ReferralPanel from './ReferralPanel';
 import { DiamondRankIcon } from './DiamondRankIcon';
@@ -101,11 +100,7 @@ function FriendProfileView({
       {/* Avatar + Name */}
       <div className="bg-gradient-to-r from-amber-700/30 to-amber-600/20 border border-amber-600/30 rounded-xl p-4 text-center">
         <div className="flex justify-center mb-3">
-          <FrameWrapper frameId={(profile as any).equippedFrame} size={64}>
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-amber-500/60">
-              <AvatarDisplay avatarId={profile.avatarId} size={64} alt="Avatar" />
-            </div>
-          </FrameWrapper>
+          <PlayerAvatar avatarId={profile.avatarId} frameId={(profile as any).equippedFrame} size={64} alt="Avatar" />
         </div>
         <div className="text-amber-100 font-bold text-lg">{profile.displayName || t('profile.player')}</div>
         <div className="flex items-center justify-center gap-1 mt-1">
