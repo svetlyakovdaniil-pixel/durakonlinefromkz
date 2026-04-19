@@ -138,17 +138,26 @@ export default function Home() {
   );
   const homeSeasonRating = homeSeasonData?.seasonRating ?? 0;
 
-  // Track last registered season rating to re-register when it changes
+  // Track last registered values to re-register when they change
   const lastRegisteredRatingRef = useRef<number | null>(null);
+  const lastRegisteredAvatarRef = useRef<string | null>(null);
+  const lastRegisteredFrameRef = useRef<string | null>(null);
 
-  // Register profile with socket when profile loads, or when seasonRating changes
+  // Register profile with socket when profile loads, or when avatarId/equippedFrame/seasonRating changes
   useEffect(() => {
     if (!profile || !connected) return;
-    const needsRegister = !registeredRef.current || lastRegisteredRatingRef.current !== homeSeasonRating;
+    const currentAvatar = profile.avatarId || null;
+    const currentFrame = (profile as any).equippedFrame || null;
+    const needsRegister = !registeredRef.current
+      || lastRegisteredRatingRef.current !== homeSeasonRating
+      || lastRegisteredAvatarRef.current !== currentAvatar
+      || lastRegisteredFrameRef.current !== currentFrame;
     if (needsRegister) {
       registerProfile(profile.gameId, profile.displayName || t('landing.player'), profile.avatarId || undefined, (profile as any).equippedFrame || null, (profile as any).isPremium === true, homeSeasonRating);
       registeredRef.current = true;
       lastRegisteredRatingRef.current = homeSeasonRating;
+      lastRegisteredAvatarRef.current = currentAvatar;
+      lastRegisteredFrameRef.current = currentFrame;
     }
   }, [profile, connected, registerProfile, homeSeasonRating]);
 
@@ -157,6 +166,8 @@ export default function Home() {
     if (!connected) {
       registeredRef.current = false;
       lastRegisteredRatingRef.current = null;
+      lastRegisteredAvatarRef.current = null;
+      lastRegisteredFrameRef.current = null;
     }
   }, [connected]);
 
