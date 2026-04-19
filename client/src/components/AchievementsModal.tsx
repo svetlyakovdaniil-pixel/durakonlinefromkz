@@ -34,6 +34,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
         ru: `Получено: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаныраков` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
         kk: `Алынды: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаңырақ` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} теңге` : ''}`,
         en: `Claimed: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} shanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
+        uk: `Отримано: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаніраків` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -41,7 +42,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
       setClaimingKey(null);
     },
     onError: () => {
-      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward' };
+      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setClaimingKey(null);
     },
@@ -50,9 +51,9 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   if (!open) return null;
 
   const getName = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : a.nameRu;
+    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a.nameUk ?? a.nameRu) : a.nameRu;
   const getDesc = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : a.descRu;
+    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a.descUk ?? a.descRu) : a.descRu;
 
   // Sort: claimable first (unlocked & not claimed), then locked, then claimed
   const sorted = [...achievements].sort((a, b) => {
@@ -68,24 +69,27 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const totalCount = achievements.length;
   const unclaimedCount = achievements.filter(a => a.unlocked && !a.claimed).length;
 
-  const titleLabel = { ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements' }[locale as string] ?? 'Достижения';
+  const titleLabel = { ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements', uk: 'Досягнення' }[locale as string] ?? 'Достижения';
   const progressLabel = {
     ru: `${unlockedCount}/${totalCount} открыто`,
     kk: `${unlockedCount}/${totalCount} ашылды`,
     en: `${unlockedCount}/${totalCount} unlocked`,
+    uk: `${unlockedCount}/${totalCount} відкрито`,
   }[locale as string] ?? `${unlockedCount}/${totalCount}`;
-  const claimLabel = { ru: 'Получить', kk: 'Алу', en: 'Claim' }[locale as string] ?? 'Получить';
-  const claimedLabel = { ru: 'Получено', kk: 'Алынды', en: 'Claimed' }[locale as string] ?? 'Получено';
-  const lockedLabel = { ru: 'Заблокировано', kk: 'Жабық', en: 'Locked' }[locale as string] ?? 'Заблокировано';
+  const claimLabel = { ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати' }[locale as string] ?? 'Получить';
+  const claimedLabel = { ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано' }[locale as string] ?? 'Получено';
+  const lockedLabel = { ru: 'Заблокировано', kk: 'Жабық', en: 'Locked', uk: 'Заблоковано' }[locale as string] ?? 'Заблокировано';
   const humanOnlyLabel = {
     ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
     kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
     en: 'Only counts in games with real people (less than 33.4% bots)',
+    uk: 'Зараховується лише в іграх з реальними людьми (менше 33.4% ботів)',
   }[locale as string] ?? '';
   const unclaimedLabel = {
     ru: `${unclaimedCount} награды ожидают получения`,
     kk: `${unclaimedCount} сыйлық күтуде`,
     en: `${unclaimedCount} rewards pending`,
+    uk: `${unclaimedCount} нагород очікують отримання`,
   }[locale as string] ?? '';
 
   const handleClaim = (key: string) => {

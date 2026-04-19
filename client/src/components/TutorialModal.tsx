@@ -69,6 +69,23 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
       start: 'Start Tutorial',
       loading: 'Loading...',
     },
+    uk: {
+      title: isMandatory ? '👋 Ласкаво просимо!' : 'Ласкаво просимо до навчання!',
+      subtitle: isMandatory ? 'Пройдіть коротке навчання перед грою' : undefined,
+      whatAwaits: 'Що на вас чекає:',
+      items: [
+        '✓ Повне пояснення правил гри',
+        '✓ Навчання всім механікам',
+        '✓ Практика з ботом',
+        '✓ Без ризику втратити шаниряки',
+        '✓ 2000 шаниряків за перше проходження',
+      ],
+      description: 'Ми створимо спеціальну навчальну кімнату, де ви зможете вивчити всі нові механіки та правила нашої версії Дурня. Навчання займе близько 5-10 хвилин.',
+      cancel: 'Скасувати',
+      skip: 'Пропустити навчання',
+      start: 'Почати навчання',
+      loading: 'Завантаження...',
+    },
   };
 
   const c = content[locale as keyof typeof content] || content.ru;

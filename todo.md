@@ -3430,3 +3430,19 @@
 - [x] Добавить украинский язык в SettingsSheet (настройки)
 - [x] Добавить украинский язык в GameSettingsSheet (настройки в игре)
 - [x] Все 603 теста проходят
+
+## Украинский язык — пропущенные разделы
+- [ ] PrivacyPolicy.tsx — добавить PrivacyContentUk компонент (полный перевод политики конфиденциальности)
+- [ ] TermsOfService.tsx — добавить TermsContentUk компонент (полный перевод пользовательского соглашения)
+- [ ] AchievementsModal.tsx — добавить uk в все объекты msgs/labels
+- [ ] DailyQuestsModal.tsx — добавить uk в объект L (все строки)
+- [ ] PremiumModal.tsx — добавить uk в объект TEXTS (все строки + benefits)
+- [ ] TutorialModal.tsx — добавить uk в объект content
+- [ ] shared/avatars.ts — добавить nameUk для всех аватарок
+- [ ] shared/emotionPacks.ts — добавить nameUk, descriptionUk, labelUk для всех паков
+- [ ] shared/cardAssets.ts — добавить nameUk для всех столов
+- [ ] shared/achievements.ts — добавить nameUk, descUk для всех достижений
+- [ ] shared/dailyQuests.ts — добавить nameUk, descUk для всех заданий
+- [ ] client/src/lib/avatarFrames.tsx — добавить nameUk для всех рамок
+- [ ] useInteractiveTutorial.ts — добавить titleUk, textUk, instructionUk, mobileTextUk для всех 24 шагов
+- [ ] Все компоненты — обновить логику locale для поддержки uk (ProfileDrawer, ShopModal, AchievementsModal, DailyQuestsModal, TutorialStepDisplay)

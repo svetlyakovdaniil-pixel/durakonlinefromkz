@@ -22,7 +22,7 @@ export default function TermsOfService() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : <TermsContentRu />}
+          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : <TermsContentRu />}
         </div>
         {/* Last updated */}
         <p className="text-xs text-muted-foreground mt-10 text-center">
@@ -87,6 +87,65 @@ function TermsContentRu() {
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">10. Контакты</h3>
         <p>По вопросам, связанным с настоящим соглашением, обращайтесь через форму обратной связи в настройках Приложения.</p>
+      </section>
+    </>
+  );
+}
+
+function TermsContentUk() {
+  return (
+    <>
+      <h2 className="text-xl font-bold text-foreground">Угода користувача</h2>
+      <p className="text-muted-foreground text-sm">Дата набрання чинності: 1 січня 2025 року</p>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">1. Прийняття умов</h3>
+        <p>Використовуючи додаток «Дурак онлайн from KZ» («Додаток»), ви погоджуєтесь з цією Угодою користувача. Якщо ви не погоджуєтесь з умовами, будь ласка, не використовуйте Додаток.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">2. Опис сервісу</h3>
+        <p>«Дурак онлайн from KZ» — це онлайн-карткова гра на основі традиційної казахської версії гри «Дурак». Додаток надає ігрову платформу, включаючи мультиплеєр, ігрову валюту (Шанираки та Тенге) і косметичні предмети.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">3. Обліковий запис</h3>
+        <p>Для використання Додатку необхідна реєстрація через електронну пошту, обліковий запис Google або Apple. Ви несете відповідальність за збереження даних вашого облікового запису. Забороняється створювати кілька облікових записів для обходу обмежень або зловживання системою.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">4. Внутрішньоігрові покупки</h3>
+        <p>Додаток пропонує покупку ігрової валюти (Тенге) за реальні гроші через офіційні магазини додатків (App Store, Google Play). Усі покупки є остаточними і не підлягають поверненню, за винятком випадків, передбачених законодавством або політикою відповідного магазину. Ігрова валюта не має реальної грошової вартості і не може бути обміняна на реальні гроші.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">5. Реклама</h3>
+        <p>Додаток може показувати рекламу, в тому числі рекламу з винагородою (за перегляд якої нараховується ігрова валюта). Реклама надається третіми сторонами (Google AdMob). Ми не несемо відповідальності за зміст реклами третіх сторін.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">6. Правила поведінки</h3>
+        <p>Забороняється: використовувати чити, боти або інші засоби автоматизації; ображати інших гравців; намагатись зламати або порушити роботу серверів; використовувати Додаток в комерційних цілях без дозволу.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">7. Інтелектуальна власність</h3>
+        <p>Усі права на Додаток, включаючи графіку, звуки, код та торгові марки, належать розробникам. Копіювати, модифікувати або поширювати матеріали Додатку без письмового дозволу забороняється.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">8. Обмеження відповідальності</h3>
+        <p>Додаток надається «як є». Ми не гарантуємо безперебійну роботу сервісу. У максимально допустимій законом мірі ми не несемо відповідальності за непрямі збитки, втрату даних або перервання ігрового процесу.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">9. Зміни умов</h3>
+        <p>Ми залишаємо за собою право змінювати цю угоду. Продовження використання Додатку після опублікування змін означає вашу згоду з новими умовами.</p>
+      </section>
+
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">10. Контакти</h3>
+        <p>З питань, пов'язаних з цією угодою, звертайтесь до нас через форму зворотного зв'язку в налаштуваннях Додатку.</p>
       </section>
     </>
   );

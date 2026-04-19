@@ -479,7 +479,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h3 className="text-amber-100 font-bold text-sm">{locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : table.name}</h3>
+                          <h3 className="text-amber-100 font-bold text-sm">{locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : locale === 'uk' ? (table.nameUk || table.name) : table.name}</h3>
                         </div>
                         {isOwned ? (
                           <div className="flex items-center gap-1.5 text-green-400 text-sm font-medium">
@@ -488,7 +488,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                         ) : (
                           <div className="flex items-center gap-3">
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
-                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : table.name, price: effectivePrice })}
+                              onClick={() => setConfirmPurchase({ type: 'table', id: tableId, name: locale === 'kk' ? table.nameKk : locale === 'en' ? table.nameEn : locale === 'uk' ? (table.nameUk || table.name) : table.name, price: effectivePrice })}
                               disabled={purchasing || !canAffordTable}>{purchasing ? '...' : t('shop.buy')}</Button>
                             <div className="flex items-center gap-1">
                               <span className="text-amber-100 font-bold text-base">{effectivePrice}</span>
@@ -539,7 +539,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="text-amber-100 font-bold text-sm">
-                            {locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}
+                            {locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : frame.name}
                           </h3>
                           {isPremiumFrame && (
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
@@ -549,7 +549,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           )}
                         </div>
                         <p className="text-amber-200/50 text-xs mb-3">
-                          {locale === 'kk' ? frame.descriptionKk : locale === 'en' ? (frame as any).descriptionEn || frame.description : frame.description}
+                          {locale === 'kk' ? frame.descriptionKk : locale === 'en' ? (frame as any).descriptionEn || frame.description : locale === 'uk' ? ((frame as any).descriptionUk || frame.description) : frame.description}
                         </p>
                         {isSeasonFrame ? (
                           isOwned ? (
@@ -586,7 +586,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             <Button className="bg-amber-600 hover:bg-amber-500 text-white text-sm h-9 px-4"
                               onClick={() => setConfirmPurchase({
                                 type: 'frame', id: frame.id,
-                                name: locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name,
+                                name: locale === 'kk' ? frame.nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : frame.name,
                                 price: effectivePrice,
                               })}
                               disabled={purchasing || !canAffordFrame}>{purchasing ? '...' : t('shop.buy')}</Button>
