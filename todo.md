@@ -3348,3 +3348,24 @@
 ## Batch 121 — UI и контент исправления
 - [x] Сдвинуть имя игрока ниже аватарки в лобби (добавить отступ между аватаркой и именем)
 - [x] В Terms of Service: заменить "Казахский дурак" на "Дурак онлайн from KZ" и исправить пункт 3 (убрать Manus OAuth, заменить на почту/Google/Apple)
+
+## Batch 122 — Push-уведомления (FCM / APNs)
+- [ ] Установить firebase-admin на сервере
+- [ ] Установить @capacitor/push-notifications на клиенте
+- [ ] Добавить таблицу push_tokens в drizzle/schema.ts (profileId, token, platform, createdAt)
+- [ ] Добавить таблицу push_notification_settings (profileId, notifType, enabled)
+- [ ] Создать server/pushNotifications.ts — FCM helper + sendPush функция
+- [ ] tRPC: registerPushToken, unregisterPushToken, getPushSettings, updatePushSetting
+- [ ] Клиент: запрос разрешений на push при старте приложения (только native)
+- [ ] Клиент: регистрация FCM/APNs токена через trpc.registerPushToken
+- [ ] Триггер 1: "Ваш ход" — в socketServer.ts при yourTurn если игрок offline
+- [ ] Триггер 2: "Новая заявка в друзья" — в routers.ts при sendFriendRequest
+- [ ] Триггер 3: "Шаныраки снова доступны" — cron-задача ежедневно в 06:00 UTC
+- [ ] Триггер 4: "Вас пригласили в комнату" — в socketServer.ts при roomInvite
+- [ ] Триггер 5: "Новое ежедневное задание" — cron-задача ежедневно в 00:00 UTC+5
+- [ ] Триггер 6: "Сезон заканчивается через 3 дня" — cron-задача проверки даты сезона
+- [ ] Триггер 7: "Вы получили награду" — при начислении сезонной/достижение награды
+- [ ] Триггер 8: "Новое обновление" — admin tRPC mutation для ручной отправки
+- [ ] Настройки уведомлений в SettingsSheet (toggle per type)
+- [ ] Добавить FIREBASE_SERVICE_ACCOUNT_KEY в secrets
+- [x] Написать тесты для pushNotifications.ts

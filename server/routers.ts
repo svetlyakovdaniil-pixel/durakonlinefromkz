@@ -114,9 +114,75 @@ import { processDonatorAchievement, processTutorialAchievements, processCollecto
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest, incrementDailyQuestProgress } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName, updatePlayerEmotionPack } from "./socketServer";
+import { upsertPushToken, removePushToken, getPushSettings, updatePushSetting, sendNewUpdatePushToAll, sendFriendRequestPush, sendShanyrakRefillPush, sendRewardReceivedPush, PushNotifType } from "./pushNotifications";
+
+// ─── Push Notifications Router ────────────────────────────────────────────────
+const pushRouter = router({
+  /** Register or refresh a push notification token for the current device */
+  registerToken: protectedProcedure
+    .input(z.object({
+      token: z.string().min(10).max(512),
+      platform: z.enum(["ios", "android", "web"]),
+      appVersion: z.string().max(32).optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+      await upsertPushToken(profile.id, input.token, input.platform, input.appVersion);
+      return { success: true };
+    }),
+
+  /** Unregister a push token (on logout) */
+  unregisterToken: protectedProcedure
+    .input(z.object({ token: z.string().min(10).max(512) }))
+    .mutation(async ({ ctx, input }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+      await removePushToken(profile.id, input.token);
+      return { success: true };
+    }),
+
+  /** Get current push notification settings for the player */
+  getSettings: protectedProcedure
+    .query(async ({ ctx }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+      return getPushSettings(profile.id);
+    }),
+
+  /** Update a single push notification setting */
+  updateSetting: protectedProcedure
+    .input(z.object({
+      notifType: z.enum([
+        "your_turn", "friend_request", "shanyrak_refill", "room_invite",
+        "daily_quest", "season_ending", "reward_received", "new_update",
+      ] as [PushNotifType, ...PushNotifType[]]),
+      enabled: z.boolean(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const profile = await getProfileByUserId(ctx.user.id);
+      if (!profile) throw new TRPCError({ code: 'NOT_FOUND', message: 'Profile not found' });
+      await updatePushSetting(profile.id, input.notifType, input.enabled);
+      return { success: true };
+    }),
+
+  /** Admin: send "New Update" push to all players */
+  adminSendUpdatePush: adminProcedure
+    .input(z.object({
+      version: z.string().min(1).max(32),
+      description: z.string().min(1).max(200),
+    }))
+    .mutation(async ({ input }) => {
+      await sendNewUpdatePushToAll(input.version, input.description);
+      return { success: true };
+    }),
+});
+
+
 
 export const appRouter = router({
   system: systemRouter,
+  push: pushRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
@@ -296,10 +362,11 @@ export const appRouter = router({
             senderAvatarId: myProfile.avatarId ?? 'wolf',
             friendshipId,
           });
-          // Emit real-time notification
+           // Emit real-time notification
           emitNotificationToProfile(targetProfile.id, 'friend_request');
+          // Push notification (for players with app backgrounded)
+          sendFriendRequestPush(targetProfile.id, myProfile.displayName ?? 'Unknown').catch(() => {});
         }
-
         return { result };
       }),
 
@@ -502,6 +569,13 @@ export const appRouter = router({
       }
       return result;
     }),
+    /** Trigger shanyrak refill push notification (called by scheduled job or manually) */
+    notifyShanyrakRefill: adminProcedure
+      .input(z.object({ profileId: z.number() }))
+      .mutation(async ({ input }) => {
+        await sendShanyrakRefillPush(input.profileId);
+        return { success: true };
+      }),
 
     /** Ad watch reward: give 1000 shanyraks with 1h cooldown */
     adWatchTopup: protectedProcedure.mutation(async ({ ctx }) => {
@@ -1656,12 +1730,15 @@ export const appRouter = router({
         if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
         const result = await claimAchievementReward(profile.id, input.achievementKey);
         if (!result.success) throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason });
+        // Push notification: reward claimed
+        if (result.success) {
+          sendRewardReceivedPush(profile.id, 'achievement').catch(() => {});
+        }
         return result;
       }),
   }),
-
   // ============================================================
-  // DAILY QUESTS
+  // DAILY QUESTSS
   // ============================================================
   dailyQuests: router({
     /** Get today's 4 quests with definitions and progress */
@@ -1826,11 +1903,12 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         const profile = await getProfileByUserId(ctx.user.id);
         if (!profile) throw new TRPCError({ code: 'UNAUTHORIZED' });
-        const result = await claimSeasonReward(profile.id, input.seasonKey);
+         const result = await claimSeasonReward(profile.id, input.seasonKey);
         if (!result.success) throw new TRPCError({ code: 'BAD_REQUEST', message: result.reason });
+        // Push notification: season reward claimed
+        sendRewardReceivedPush(profile.id, 'season').catch(() => {});
         return { success: true };
       }),
-
     // ─── Season Test Tools (admin only) ────────────────────────────────────────
 
     /** Admin test: get all admin/gm profiles with their current season ratings */
@@ -2059,7 +2137,7 @@ export const appRouter = router({
           action: 'set_maintenance_mode',
           details: { enabled: input.enabled, endTime: input.endTime },
         });
-        return { success: true };
+         return { success: true };
       }),
   }),
 });

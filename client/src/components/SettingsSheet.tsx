@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -37,6 +37,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [contactOpen, setContactOpen] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
+
+  // Push notification settings
+  const { data: pushSettings, refetch: refetchPushSettings } = trpc.push.getSettings.useQuery(undefined, { enabled: open });
+  const updatePushSettingMutation = trpc.push.updateSetting.useMutation({
+    onSuccess: () => { refetchPushSettings(); },
+    onError: (err) => { toast.error(err.message); },
+  });
 
   const sendContactMutation = trpc.contact.send.useMutation({
     onSuccess: () => {
@@ -419,6 +426,39 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
               </p>
             </div>
           </a>
+
+          {/* 9b. Push Notification Settings — shown only on native iOS/Android */}
+          {typeof window !== 'undefined' && !!(window as any)?.Capacitor?.isNativePlatform?.() && (
+            <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+              <div className="flex items-center gap-2 mb-3">
+                <Bell className="w-4 h-4 text-amber-400" />
+                <span className="text-sm font-semibold text-amber-200/80">{t('settings.pushNotifications')}</span>
+              </div>
+              <div className="space-y-2.5">
+                {([
+                  { key: 'your_turn' as const, labelKey: 'settings.pushYourTurn' as const },
+                  { key: 'friend_request' as const, labelKey: 'settings.pushFriendRequest' as const },
+                  { key: 'shanyrak_refill' as const, labelKey: 'settings.pushShanyrakRefill' as const },
+                  { key: 'room_invite' as const, labelKey: 'settings.pushRoomInvite' as const },
+                  { key: 'daily_quest' as const, labelKey: 'settings.pushDailyQuest' as const },
+                  { key: 'season_ending' as const, labelKey: 'settings.pushSeasonEnding' as const },
+                  { key: 'reward_received' as const, labelKey: 'settings.pushRewardReceived' as const },
+                  { key: 'new_update' as const, labelKey: 'settings.pushNewUpdate' as const },
+                ]).map(({ key, labelKey }) => (
+                  <label key={key} className="flex items-center justify-between cursor-pointer">
+                    <span className="text-xs text-amber-200/60">{t(labelKey)}</span>
+                    <Checkbox
+                      checked={pushSettings?.[key] ?? true}
+                      onCheckedChange={(checked) => {
+                        updatePushSettingMutation.mutate({ notifType: key, enabled: !!checked });
+                      }}
+                      className="border-amber-700/50 data-[state=checked]:bg-amber-600 data-[state=checked]:border-amber-600"
+                    />
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* 10. Logout */}
           <AlertDialog>

@@ -579,6 +579,15 @@ export const ru = {
     privacyPolicyDesc: 'Ознакомиться с политикой',
     langFlag: '🇷🇺',
     langName: 'Русский',
+    pushNotifications: 'Уведомления',
+    pushYourTurn: 'Ваш ход',
+    pushFriendRequest: 'Заявка в друзья',
+    pushShanyrakRefill: 'Шаныраки снова доступны',
+    pushRoomInvite: 'Приглашение в комнату',
+    pushDailyQuest: 'Новое ежедневное задание',
+    pushSeasonEnding: 'Сезон заканчивается',
+    pushRewardReceived: 'Награда получена',
+    pushNewUpdate: 'Новое обновление',
   },
   // Rules
   rules: {
