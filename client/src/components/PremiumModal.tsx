@@ -9,7 +9,7 @@ import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
 import { PremiumFrame } from './PremiumFrame';
-import { isIAPAvailable, purchasePremium } from '@/lib/iap';
+import { isIAPAvailable, purchasePremium, restorePurchases } from '@/lib/iap';
 import { Capacitor } from '@capacitor/core';
 const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
 
@@ -68,6 +68,10 @@ const TEXTS = {
     frameDesc: 'Эксклюзивно для подписчиков',
     botRule: 'Бонус к рейтингу засчитывается только в играх с менее чем 33.4% ботов',
     perMonth: '/ месяц',
+    restoreBtn: 'Восстановить покупки',
+    restoreSuccess: 'Покупки восстановлены! Премиум активирован 🎉',
+    restoreNone: 'Активных подписок не найдено',
+    restoreError: 'Ошибка восстановления. Попробуйте ещё раз',
   },
   kk: {
     title: 'PREMIUM',
@@ -118,6 +122,10 @@ const TEXTS = {
     frameDesc: 'Жазылушыларға ғана',
     botRule: 'Рейтинг бонусы тек 33.4%-дан аз бот бар ойындарда есептеледі',
     perMonth: '/ ай',
+    restoreBtn: 'Сатып алуларды қалпына келтіру',
+    restoreSuccess: 'Сатып алулар қалпына келтірілді! Премиум белсенді 🎉',
+    restoreNone: 'Белсенді жазылым табылмады',
+    restoreError: 'Қалпына келтіру қатесі. Қайталап көріңіз',
   },
   en: {
     title: 'PREMIUM',
@@ -168,6 +176,10 @@ const TEXTS = {
     frameDesc: 'Exclusive to subscribers',
     botRule: 'Rating bonus only counts in games with less than 33.4% bots',
     perMonth: '/ month',
+    restoreBtn: 'Restore Purchases',
+    restoreSuccess: 'Purchases restored! Premium activated 🎉',
+    restoreNone: 'No active subscriptions found',
+    restoreError: 'Restore failed. Please try again',
   },
 };
 
@@ -188,6 +200,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   const { locale, t: tI18n } = useTranslation();
   const t = TEXTS[locale as keyof typeof TEXTS] ?? TEXTS.ru;
   const [buying, setBuying] = useState(false);
+  const [restoring, setRestoring] = useState(false);
 
   const { data: status, refetch: refetchStatus } = trpc.premium.status.useQuery(undefined, {
     enabled: open,
@@ -236,6 +249,24 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
       }
     } finally {
       setBuying(false);
+    }
+  };
+
+  const handleRestore = async () => {
+    if (!isNative || !iapReady) return;
+    setRestoring(true);
+    try {
+      const hasActive = await restorePurchases();
+      if (hasActive) {
+        toast.success(t.restoreSuccess);
+        refetchStatus();
+      } else {
+        toast.info(t.restoreNone);
+      }
+    } catch {
+      toast.error(t.restoreError);
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -406,14 +437,30 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
 
         </div>{/* end scrollable content */}
 
-        {/* Fixed close button at bottom */}
+        {/* Fixed bottom actions */}
         <div
-          className="flex-shrink-0 px-6 py-3"
+          className="flex-shrink-0 px-6 py-3 flex flex-col gap-2"
           style={{
             borderTop: '1px solid rgba(250,204,21,0.15)',
             paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
           }}
         >
+          {/* Restore Purchases — required by App Store Guidelines (only on native) */}
+          {isNative && iapReady && !status?.isPremium && (
+            <button
+              onClick={handleRestore}
+              disabled={restoring}
+              className="w-full py-2 rounded-xl font-medium text-xs transition-all active:scale-95 disabled:opacity-50"
+              style={{ color: 'rgba(250,204,21,0.5)' }}
+            >
+              {restoring ? (
+                <span className="flex items-center justify-center gap-1">
+                  <span className="animate-spin w-3 h-3 border border-yellow-400/30 border-t-yellow-400/70 rounded-full" />
+                  {t.restoreBtn}
+                </span>
+              ) : t.restoreBtn}
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"

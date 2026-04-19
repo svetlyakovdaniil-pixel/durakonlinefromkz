@@ -150,14 +150,17 @@ export async function purchaseTenge(productId: TengeProductId): Promise<string |
 
 /**
  * Restore previous purchases (required by App Store guidelines).
+ * Returns true if an active premium entitlement was found after restore.
+ * Throws on error so the caller can show an error message.
  */
-export async function restorePurchases(): Promise<void> {
-  if (!initialized || !Capacitor.isNativePlatform()) return;
-  try {
-    await Purchases.restorePurchases();
-  } catch (err) {
-    console.error('[IAP] Restore failed:', err);
-  }
+export async function restorePurchases(): Promise<boolean> {
+  if (!initialized || !Capacitor.isNativePlatform()) return false;
+  const result = await Purchases.restorePurchases();
+  const info = result.customerInfo;
+  const hasActive =
+    (info.activeSubscriptions?.length ?? 0) > 0 ||
+    Object.keys(info.entitlements?.active ?? {}).length > 0;
+  return hasActive;
 }
 
 export function isIAPAvailable(): boolean {

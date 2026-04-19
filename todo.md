@@ -3400,3 +3400,25 @@
 - [x] Обновить server/iap.ts: добавить verifyPremiumSubscription() через RevenueCat /v1/subscribers
 - [x] Обновить PremiumModal.tsx: на native — кнопка вызывает purchasePremium() → /api/iap/verify-premium- [x] Обновить PremiumModal.tsx: на web — показывать "Доступно только в мобильном приложении" вместо кнопки за- [x] Обновить тексты кнопки: "$4.99 / месяц" вместо "1000 ₸ / месяц""
 - [x] Написать тесты для нового IAP premium flow (13 тестов в server/premiumIAP.test.ts)
+
+## Устранение недочётов перед публикацией (Batch 126)
+
+### 1. Bundle ID — привести к единому виду (online.durakonline.fromkz)
+- [ ] Исправить capacitor.config.ts: appId → online.durakonline.fromkz
+- [ ] Исправить android/app/build.gradle: applicationId и namespace → online.durakonline.fromkz
+- [ ] Проверить iOS bundle identifier
+
+### 2. AdMob
+- [ ] Добавить тестовые AdMob ID как VITE_ADMOB_* secrets (для разработки)
+- [ ] Добавить кнопку "Восстановить покупки" в PremiumModal (требование App Store)
+
+### 3. Firebase Push & Google Sign-In
+- [ ] Проверить FIREBASE_SERVICE_ACCOUNT_KEY (уже настроен через secrets)
+- [ ] Проверить GOOGLE_CLIENT_SECRET (уже настроен через secrets)
+
+### 4. Google Play Console
+- [ ] Создать продукты в Google Play Console (premium_monthly, durak_tenge_100/500/1000/5000)
+- [ ] Привязать Service Account к RevenueCat
+
+### 5. iOS RevenueCat
+- [ ] Добавить iOS приложение в RevenueCat с P8 ключом из App Store Connect
