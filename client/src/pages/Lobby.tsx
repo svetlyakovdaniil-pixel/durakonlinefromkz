@@ -486,7 +486,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                   </button>
                 </ProfileDrawer>
-                <div className="flex items-center gap-1.5 mt-1">
+                <div className="flex items-center gap-1.5 mt-3">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
                   {profile && (

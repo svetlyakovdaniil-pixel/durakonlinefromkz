@@ -41,17 +41,17 @@ function TermsContentRu() {
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">1. Принятие условий</h3>
-        <p>Используя приложение «Казахский Дурак» («Приложение»), вы соглашаетесь с настоящим Пользовательским соглашением. Если вы не согласны с условиями, пожалуйста, не используйте Приложение.</p>
+        <p>Используя приложение «Дурак онлайн from KZ» («Приложение»), вы соглашаетесь с настоящим Пользовательским соглашением. Если вы не согласны с условиями, пожалуйста, не используйте Приложение.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">2. Описание сервиса</h3>
-        <p>«Казахский Дурак» — это онлайн-карточная игра, основанная на традиционной казахской версии игры «Дурак». Приложение предоставляет игровую платформу, включая мультиплеер, внутриигровую валюту (Шаныраки и Тенге) и косметические предметы.</p>
+        <p>«Дурак онлайн from KZ» — это онлайн-карточная игра, основанная на традиционной казахской версии игры «Дурак». Приложение предоставляет игровую платформу, включая мультиплеер, внутриигровую валюту (Шаныраки и Тенге) и косметические предметы.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">3. Учётная запись</h3>
-        <p>Для использования Приложения необходима регистрация через Manus OAuth. Вы несёте ответственность за сохранность данных своей учётной записи. Запрещается создавать несколько учётных записей для обхода ограничений или злоупотребления системой.</p>
+        <p>Для использования Приложения необходима регистрация через электронную почту, учётную запись Google или Apple. Вы несёте ответственность за сохранность данных своей учётной записи. Запрещается создавать несколько учётных записей для обхода ограничений или злоупотребления системой.</p>
       </section>
 
       <section>
@@ -100,17 +100,17 @@ function TermsContentEn() {
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">1. Acceptance of Terms</h3>
-        <p>By using the "Kazakh Durak" application ("App"), you agree to these Terms of Service. If you do not agree, please do not use the App.</p>
+        <p>By using the "Durak Online from KZ" application ("App"), you agree to these Terms of Service. If you do not agree, please do not use the App.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">2. Description of Service</h3>
-        <p>"Kazakh Durak" is an online card game based on the traditional Kazakh version of the card game "Durak." The App provides a gaming platform including multiplayer, in-game currency (Shanyraks and Tenge), and cosmetic items.</p>
+        <p>"Durak Online from KZ" is an online card game based on the traditional Kazakh version of the card game "Durak." The App provides a gaming platform including multiplayer, in-game currency (Shanyraks and Tenge), and cosmetic items.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">3. Account</h3>
-        <p>You must register via Manus OAuth to use the App. You are responsible for maintaining the security of your account. Creating multiple accounts to circumvent restrictions or abuse the system is prohibited.</p>
+        <p>You must register using an email address, Google account, or Apple account to use the App. You are responsible for maintaining the security of your account. Creating multiple accounts to circumvent restrictions or abuse the system is prohibited.</p>
       </section>
 
       <section>
@@ -159,17 +159,17 @@ function TermsContentKk() {
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">1. Шарттарды қабылдау</h3>
-        <p>«Қазақ Дурак» қосымшасын («Қосымша») пайдалана отырып, сіз осы Пайдаланушы келісімімен келісесіз. Егер сіз шарттармен келіспесеңіз, Қосымшаны пайдаланбаңыз.</p>
+        <p>«Дурак Онлайн from KZ» қосымшасын («Қосымша») пайдалана отырып, сіз осы Пайдаланушы келісімімен келісесіз. Егер сіз шарттармен келіспесеңіз, Қосымшаны пайдаланбаңыз.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">2. Қызметтің сипаттамасы</h3>
-        <p>«Қазақ Дурак» — «Дурак» карта ойынының дәстүрлі қазақ нұсқасына негізделген онлайн карта ойыны. Қосымша ойын алаңын қамтамасыз етеді: мультиплеер, ойын ішіндегі валюта (Шаңырақтар мен Теңге) және косметикалық заттар.</p>
+        <p>«Дурак Онлайн from KZ» — «Дурак» карта ойынының дәстүрлі қазақ нұсқасына негізделген онлайн карта ойыны. Қосымша ойын алаңын қамтамасыз етеді: мультиплеер, ойын ішіндегі валюта (Шаңырақтар мен Теңге) және косметикалық заттар.</p>
       </section>
 
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">3. Есептік жазба</h3>
-        <p>Қосымшаны пайдалану үшін Manus OAuth арқылы тіркелу қажет. Есептік жазбаңыздың қауіпсіздігін сақтау сіздің жауапкершілігіңізде. Шектеулерді айналып өту немесе жүйені теріс пайдалану мақсатында бірнеше есептік жазба жасауға тыйым салынады.</p>
+        <p>Қосымшаны пайдалану үшін электрондық пошта, Google немесе Apple есептік жазбасы арқылы тіркелу қажет. Есептік жазбаңыздың қауіпсіздігін сақтау сіздің жауапкершілігіңізде. Шектеулерді айналып өту немесе жүйені теріс пайдалану мақсатында бірнеше есептік жазба жасауға тыйым салынады.</p>
       </section>
 
       <section>
