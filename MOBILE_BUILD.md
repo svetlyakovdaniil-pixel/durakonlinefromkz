@@ -4,7 +4,7 @@
 
 Приложение использует **Capacitor 6** для оборачивания веб-приложения в нативные iOS/Android оболочки.
 
-- **App ID**: `kz.durak.online`
+- **App ID**: `online.durakonline.fromkz`
 - **App Name**: `Дурак KZ`
 - **Минимальный iOS**: 14.0
 - **Минимальный Android SDK**: 22 (Android 5.1)
@@ -102,7 +102,7 @@ npx cap open ios
 
 ### 5.2 Обязательные настройки в Xcode
 
-1. **Bundle Identifier**: `kz.durak.online`
+1. **Bundle Identifier**: `online.durakonline.fromkz`
 2. **Signing**: выбрать Apple Developer Team
 3. **Deployment Target**: iOS 14.0
 4. **Capabilities**: добавить `In-App Purchase`
@@ -175,7 +175,7 @@ npx cap open android
 android {
     compileSdkVersion 34
     defaultConfig {
-        applicationId "kz.durak.online"
+        applicationId "online.durakonline.fromkz"
         minSdkVersion 22
         targetSdkVersion 34
         versionCode 1
@@ -308,3 +308,29 @@ npx cap update
 - Документация Capacitor: https://capacitorjs.com/docs
 - AdMob плагин: https://github.com/capacitor-community/admob
 - RevenueCat Capacitor: https://www.revenuecat.com/docs/getting-started/installation/capacitor
+
+---
+
+## Asset Bundling for Mobile (Cards & Tables)
+
+All card and table images (84 files, ~260MB) are stored in `/home/ubuntu/webdev-static-assets/card-table-assets/` on the build machine.
+
+For web deployment, images are served via `/manus-storage/` CDN paths (already configured in `shared/cardAssets.ts`).
+
+For iOS/Android builds, copy the assets into the Capacitor directories before building:
+
+```bash
+# Copy assets for iOS build
+mkdir -p ios/App/App/public/assets/static
+cp /home/ubuntu/webdev-static-assets/card-table-assets/* ios/App/App/public/assets/static/
+
+# Copy assets for Android build  
+mkdir -p android/app/src/main/assets/public/assets/static
+cp /home/ubuntu/webdev-static-assets/card-table-assets/* android/app/src/main/assets/public/assets/static/
+
+# Then run Capacitor sync
+npx cap sync ios
+npx cap sync android
+```
+
+These directories are in `.gitignore` to prevent deployment timeouts.

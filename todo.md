@@ -3446,3 +3446,21 @@
 - [ ] client/src/lib/avatarFrames.tsx — добавить nameUk для всех рамок
 - [ ] useInteractiveTutorial.ts — добавить titleUk, textUk, instructionUk, mobileTextUk для всех 24 шагов
 - [ ] Все компоненты — обновить логику locale для поддержки uk (ProfileDrawer, ShopModal, AchievementsModal, DailyQuestsModal, TutorialStepDisplay)
+
+## App Store подготовка (Batch 127+)
+### 1. Бандлинг карт и столов
+- [x] Скачать 3 стола с CDN (sea_depths, stargazer, black_velvet) в client/public/assets/static/
+- [x] Обновить URL в shared/cardAssets.ts — все столы на /assets/static/ пути (84 файла, 260MB)
+- [x] Скопировать все изображения карт и столов в ios/App/App/public/assets/static/
+- [x] Скопировать все изображения карт и столов в android/app/src/main/assets/public/assets/static/
+- [x] Проверить что все /assets/static/ пути работают без сети
+
+### 2. Украинский язык — оставшиеся компоненты
+- [x] PremiumModal.tsx — добавить uk в объект TEXTS (также ka)
+- [x] TutorialModal.tsx — добавить uk в объект content (также ka)
+- [x] client/src/lib/avatarFrames.tsx — добавить nameUk для всех рамок (20 рамок, также nameKa)
+
+### 3. AdMob и финальный чеклист
+- [x] Добавить тестовые AdMob ID в secrets (VITE_ADMOB_ANDROID_APP_ID, VITE_ADMOB_IOS_APP_ID) — уже установлены
+- [x] Проверить bundle ID во всех конфигах — online.durakonline.fromkz везде совпадает
+- [x] Обновить MOBILE_BUILD.md — исправлен устаревший bundle ID kz.durak.online → online.durakonline.fromkz

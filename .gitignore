@@ -111,3 +111,7 @@ temp/
 
 # Manus version file (auto-generated, not part of source)
 client/public/__dev__/version.json
+
+# Mobile native asset bundles (large files — bundled locally for Capacitor builds)
+ios/App/App/public/assets/static/
+android/app/src/main/assets/public/assets/static/

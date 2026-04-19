@@ -34,7 +34,7 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- AdMob Application ID (test ID — replace with real ca-app-pub-XXXXXXXX~XXXXXXXX before release) -->
+        <!-- AdMob Application ID (Google test ID — replace with real ca-app-pub-XXXXXXXX~XXXXXXXX from admob.google.com before release) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="ca-app-pub-3940256099942544~3347511713" />
