@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : locale === 'az' ? <PrivacyContentAz /> : <PrivacyContentRu />}
+          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : locale === 'az' ? <PrivacyContentAz /> : locale === 'uz' ? <PrivacyContentUz /> : <PrivacyContentRu />}
         </div>
 
         {/* Last updated */}
@@ -588,6 +588,93 @@ function PrivacyContentKa() {
         <h2 className="text-xl font-bold text-foreground mb-3">10. კონტაქტი</h2>
         <p className="text-muted-foreground leading-relaxed">
           პერსონალური მონაცემების დამუშავებასთან დაკავშირებული ყველა კითხვისთვის შეგიძლიათ დაგვიკავშირდეთ აპლიკაციის «ადმინისტრაციასთან დაკავშირება» განყოფილების მეშვეობით ან ელ-ფოსტაზე:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PrivacyContentUz() {
+  return (
+    <>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">1. Umumiy qoidalar</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ushbu Maxfiylik Siyosati (keyingi oʻrinlarda — «Siyosat») «Durak Online from KZ» mobil ilovasi (keyingi oʻrinlarda — «Ilova») foydalanuvchilarining shaxsiy maʼlumotlarini yigʻish, foydalanish va himoya qilish tartibini belgilaydi. Ilovadan foydalanish orqali siz ushbu Siyosatning shartlariga rozilik bildirasiz.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">2. Qanday maʼlumotlar yigʻiladi</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Ilovadan foydalanish jarayonida quyidagi maʼlumotlar yigʻilishi mumkin:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li><strong className="text-foreground">Hisob maʼlumotlari:</strong> elektron pochta manzili, koʻrinadigan ism (taxallus), avatar</li>
+          <li><strong className="text-foreground">Oʻyin maʼlumotlari:</strong> statistika (gʻalabalar, magʻlubiyatlar), oʻyin balansi (tenge), sotib olingan buyumlar (avatarlar, ramkalar, karta to'plamlari, stollar)</li>
+          <li><strong className="text-foreground">Texnik maʼlumotlar:</strong> qurilma turi, operatsion tizim versiyasi, IP-manzil, sessiya identifikatori</li>
+          <li><strong className="text-foreground">Oʻzaro aloqa maʼlumotlari:</strong> doʻstlar roʻyxati, shikoyatlar tarixi</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">3. Maʼlumotlardan foydalanish</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Yigʻilgan maʼlumotlar quyidagi maqsadlar uchun ishlatiladi:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Ilovaning funksionalligini va oʻyin imkoniyatlarini taʼminlash</li>
+          <li>Foydalanuvchini identifikatsiya qilish va hisobni boshqarish</li>
+          <li>Oʻyin statistikasi va liderlar jadvalini yuritish</li>
+          <li>Xavfsizlikni taʼminlash va firibgarlikni oldini olish</li>
+          <li>Shikoyatlarni koʻrib chiqish va oʻyinchilar oʻrtasidagi nizolarni hal qilish</li>
+          <li>Ilova sifatini va foydalanuvchi tajribasini yaxshilash</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">4. Maʼlumotlarni saqlash va himoya qilish</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz shaxsiy maʼlumotlarni ruxsatsiz kirish, oʻzgartirish, oshkor qilish yoki yoʻq qilishdan himoya qilish uchun barcha zarur tashkiliy va texnik choralarni koʻramiz. Maʼlumotlar shifrlash bilan himoyalangan serverlarda saqlanadi. Parollar xeshlangan shaklda saqlanadi.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">5. Maʼlumotlarni uchinchi shaxslarga uzatish</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz qonun talabiga koʻra yoki xizmat koʻrsatish uchun zarur boʻlgan hollar (masalan, hosting provayderlari, toʻlov tizimlari) bundan mustasno, shaxsiy maʼlumotlaringizni uchinchi shaxslarga sotmaymiz, almashmaymiz va uzatmaymiz.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">6. Foydalanuvchi huquqlari</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Sizda quyidagi huquqlar mavjud:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Saqlangan shaxsiy maʼlumotlar haqida maʼlumot olish</li>
+          <li>Notoʻgʻri maʼlumotlarni toʻgʻrilashni talab qilish</li>
+          <li>Hisobingiz va barcha bogʻliq maʼlumotlarni oʻchirishni talab qilish</li>
+          <li>Shaxsiy maʼlumotlarni qayta ishlashga rozilikni qaytarib olish</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">7. Bolalar maʼlumotlari</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ilova 13 yoshdan kichik bolalar uchun moʻljallanmagan. Biz ataylab 13 yoshdan kichik bolalarning shaxsiy maʼlumotlarini yigʻmaymiz. Agar bola bizga maʼlumot berganini bilsangiz, ularni oʻchirish uchun biz bilan bogʻlaning.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">8. Cookie-fayllar va analitika</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Ilova avtorizatsiyani saqlash uchun sessiya cookie-fayllaridan foydalanadi. Xizmat sifatini yaxshilash uchun anonim analitikadan foydalanishimiz mumkin. Analitik maʼlumotlar shaxsiy maʼlumot oʻz ichiga olmaydi.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">9. Siyosatga oʻzgartirish kiritish</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz ushbu Maxfiylik Siyosatiga oʻzgartirish kiritish huquqini saqlaymiz. Muhim oʻzgartirishlar boʻlganda foydalanuvchilarga ilova orqali xabar beriladi. Oʻzgartirishlardan keyin ilovadan foydalanish yangilangan Siyosatni qabul qilish degan maʼnoni anglatadi.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">10. Aloqa</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Shaxsiy maʼlumotlarni qayta ishlash bilan bogʻliq barcha savollar uchun ilovaning «Administratsiya bilan bogʻlanish» boʻlimi orqali yoki elektron pochta manziliga murojaat qilishingiz mumkin:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
         </p>
       </section>
     </>

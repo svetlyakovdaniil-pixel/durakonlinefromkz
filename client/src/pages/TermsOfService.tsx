@@ -22,7 +22,7 @@ export default function TermsOfService() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : locale === 'az' ? <TermsContentAz /> : <TermsContentRu />}
+          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : locale === 'az' ? <TermsContentAz /> : locale === 'uz' ? <TermsContentUz /> : <TermsContentRu />}
         </div>
         {/* Last updated */}
         <p className="text-xs text-muted-foreground mt-10 text-center">
@@ -362,6 +362,55 @@ function TermsContentKa() {
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">10. კონტაქტი</h3>
         <p>ამ პირობებთან დაკავშირებული კითხვებისთვის გთხოვთ დაგვიკავშირდეთ აპის პარამეტრებში არსებული გამოხმაურების ფორმის მეშვეობით.</p>
+      </section>
+    </>
+  );
+}
+
+function TermsContentUz() {
+  return (
+    <>
+      <h2 className="text-xl font-bold text-foreground">Foydalanish Shartlari</h2>
+      <p className="text-muted-foreground text-sm">Kuchga kirish sanasi: 1 yanvar, 2025</p>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">1. Shartlarni qabul qilish</h3>
+        <p>«Durak Online from KZ» ilovasidan («Ilova») foydalanish orqali siz ushbu Foydalanish Shartlariga rozilik bildirasiz. Agar rozi boʻlmasangiz, ilovadan foydalanmang.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">2. Xizmat tavsifi</h3>
+        <p>«Durak Online from KZ» — Qozoq «Durak» karta oʻyinining onlayn versiyasi. Ilova ko'p o'yinchi rejimi, oʻyin valyutasi (Shanyrak va tenge) va kosmetik buyumlarni oʻz ichiga olgan oʻyin platformasini taqdim etadi.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">3. Hisob</h3>
+        <p>Ilovadan foydalanish uchun elektron pochta, Google yoki Apple hisob qaydnomasi orqali roʻyxatdan oʻtish kerak. Siz oʻz hisobingiz xavfsizligi uchun javobgarsiz. Cheklovlarni chetlab oʻtish yoki tizimni suiiste'mol qilish maqsadida bir nechta hisob yaratish taqiqlanadi.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">4. Ilovadagi xaridlar</h3>
+        <p>Ilova rasmiy do'konlar (App Store, Google Play) orqali haqiqiy pul evaziga oʻyin valyutasini (tenge) sotib olish imkonini beradi. Barcha xaridlar qatʼiy va qaytarilmaydi, qonunchilik yoki tegishli doʻkon siyosatiga muvofiq hollar bundan mustasno. Oʻyin valyutasining haqiqiy pul qiymati yoʻq.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">5. Reklam</h3>
+        <p>Ilova reklamlarni, jumladan mukofotli reklamlarni (koʻrish uchun oʻyin valyutasi olish) koʻrsatishi mumkin. Reklamlar uchinchi shaxslar (Google AdMob) tomonidan taqdim etiladi. Biz uchinchi shaxs reklamlarining mazmuni uchun javobgar emasmiz.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">6. Xulq-atvor qoidalari</h3>
+        <p>Siz quyidagilardan foydalanmaslikka rozilik bildirasiz: aldamchi dasturlar, botlar yoki boshqa avtomatlashtirish vositalari; boshqa oʻyinchilarni taʼqib qilish; serverlarga buzib kirish yoki aralashishga urinish; ilovani ruxsatsiz tijorat maqsadlarida ishlatish.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">7. Intellektual mulk</h3>
+        <p>Grafika, ovozlar, kod va savdo belgilari kabi ilovaning barcha huquqlari yaratuvchilarga tegishli. Yozma ruxsatsiz ilova materiallarini nusxalash, oʻzgartirish yoki tarqatish taqiqlanadi.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">8. Javobgarlikni cheklash</h3>
+        <p>Ilova «mavjud holda» taqdim etiladi. Biz uzluksiz ishlashni kafolatlamaymiz. Qonunchilik ruxsat bergan maksimal darajada biz bilvosita zarar, maʼlumot yoʻqolishi yoki oʻyin taraqqiyotining buzilishi uchun javobgar emasmiz.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">9. Shartlarni oʻzgartirish</h3>
+        <p>Biz ushbu Shartlarga oʻzgartirish kiritish huquqini saqlaymiz. Oʻzgartirishlar eʼlon qilingandan keyin ilovadan foydalanish yangi Shartlarni qabul qilish degan maʼnoni anglatadi.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">10. Aloqa</h3>
+        <p>Ushbu Shartlar boʻyicha savollar uchun ilova sozlamalaridagi fikr-mulohaza formasi orqali biz bilan bogʻlaning.</p>
       </section>
     </>
   );
