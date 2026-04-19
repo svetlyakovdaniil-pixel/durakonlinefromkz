@@ -63,6 +63,7 @@ const PlayerHand = memo(function PlayerHand({
   onCardDrop,
   deckStyle,
   suppressPlayableStyle,
+  isTutorial,
 }: {
   sortedHand: Card[];
   playableIds: Set<string>;
@@ -80,6 +81,8 @@ const PlayerHand = memo(function PlayerHand({
   deckStyle?: 'classic' | 'custom';
   /** When true, cards won't show playable visual effects (lift/glow) even if they are playable */
   suppressPlayableStyle?: boolean;
+  /** In tutorial mode, allow cards to overflow vertically so raised cards are fully visible */
+  isTutorial?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -152,7 +155,7 @@ const PlayerHand = memo(function PlayerHand({
 
       <div
         ref={scrollRef}
-        className={`flex pb-1 sm:pb-2 ${needsScroll ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent' : 'justify-center'}`}
+        className={`flex pb-1 sm:pb-2 ${needsScroll ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent' : 'justify-center'}${isTutorial ? ' overflow-y-visible' : ''}`}
         onScroll={checkScroll}
         onWheel={handleWheel}
         style={needsScroll ? {
@@ -1696,7 +1699,7 @@ export default function GameTable({
         })()}
 
         {/* Main game area */}
-        <div className="flex-1 flex relative overflow-hidden min-h-0">
+        <div className={`flex-1 flex relative min-h-0${isTutorial ? ' overflow-visible' : ' overflow-hidden'}`}>
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
           <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
             <TurnTimerDesktop seconds={turnTimer} secLabel={t('game.sec')} />
@@ -2114,6 +2117,7 @@ export default function GameTable({
               onCardDrop={handleCardDrop}
               deckStyle={gs.deckStyle}
               suppressPlayableStyle={isNonNeighborWithSixes}
+              isTutorial={isTutorial}
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT — hidden on tutorial step 20 */}
