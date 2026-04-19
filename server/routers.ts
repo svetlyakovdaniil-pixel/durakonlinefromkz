@@ -1507,7 +1507,22 @@ export const appRouter = router({
 
         if (playlist.isDefault) return { success: false, reason: 'already_owned' };
 
-        const result = await purchasePlaylist(profile.id, input.playlistId, playlist.priceShanyrak);
+        // Use server-side price from shop overrides (prevents price manipulation)
+        // For playlists, priceTenge in overrides is used as priceShanyrak
+        const overrides = await getShopPriceOverrides();
+        const override = overrides.find((o: any) => o.itemType === 'playlist' && o.itemId === String(input.playlistId));
+        let serverPrice = (override && override.priceTenge !== null && override.priceTenge !== undefined)
+          ? override.priceTenge
+          : playlist.priceShanyrak;
+        // Apply active discount if any
+        if (override && override.discountPercent && override.discountPercent > 0) {
+          const expiresAt = override.discountExpiresAt ? new Date(override.discountExpiresAt) : null;
+          if (!expiresAt || expiresAt >= new Date()) {
+            serverPrice = Math.floor(serverPrice * (1 - override.discountPercent / 100));
+          }
+        }
+
+        const result = await purchasePlaylist(profile.id, input.playlistId, serverPrice);
         if (result.success) {
           processCollectorAchievements(profile.id).catch(() => {});
         }
