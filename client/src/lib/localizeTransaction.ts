@@ -25,6 +25,10 @@ export function localizeTransactionDescription(description: string, locale: stri
     return localizeToUz(description);
   }
 
+  if (locale === 'pl') {
+    return localizeToPl(description);
+  }
+
   return description;
 }
 
@@ -472,6 +476,77 @@ function localizeToUz(desc: string): string {
     return `[Admin] ${inner}`;
   }
   if (desc === '[ТЕСТ] +10 000 шаныраков') return '[TEST] +10 000 shanyrak';
+  if (desc === '[ТЕСТ] +10 000 тенге') return '[TEST] +10 000 tenge';
+  return desc;
+}
+
+function localizeToPl(desc: string): string {
+  if (desc.startsWith('Достижение: ')) {
+    const name = desc.slice('Достижение: '.length);
+    return `Osiągnięcie: ${name}`;
+  }
+  if (desc.startsWith('Daily quest reward: ')) {
+    const key = desc.slice('Daily quest reward: '.length);
+    return `Nagroda za dzienne zadanie: ${key}`;
+  }
+  if (desc.startsWith('Покупка колоды: ')) {
+    const id = desc.slice('Покупка колоды: '.length);
+    return `Zakup talii: ${id}`;
+  }
+  if (desc.startsWith('Покупка стола: ')) {
+    const id = desc.slice('Покупка стола: '.length);
+    return `Zakup stołu: ${id}`;
+  }
+  if (desc.startsWith('Покупка рамки: ')) {
+    const id = desc.slice('Покупка рамки: '.length);
+    return `Zakup ramki: ${id}`;
+  }
+  if (desc.startsWith('Покупка аватара: ')) {
+    const id = desc.slice('Покупка аватара: '.length);
+    return `Zakup awatara: ${id}`;
+  }
+  if (desc.startsWith('Покупка пака эмоций: ')) {
+    const id = desc.slice('Покупка пака эмоций: '.length);
+    return `Zakup pakietu emocji: ${id}`;
+  }
+  const betMatch = desc.match(/^Ставка на игру \(комната (.+)\)$/);
+  if (betMatch) return `Zakład w grze (pokój ${betMatch[1]})`;
+  const rewardMatch = desc.match(/^Награда за (\d+)-е место \(комната (.+)\)$/);
+  if (rewardMatch) {
+    const place = rewardMatch[1];
+    const room = rewardMatch[2];
+    const placePl = place === '1' ? '1.' : place === '2' ? '2.' : place === '3' ? '3.' : `${place}.`;
+    return `Nagroda za ${placePl} miejsce (pokój ${room})`;
+  }
+  if (desc === 'Награда за прохождение обучения (+2000 шаныраков)') return 'Nagroda za ukończenie samouczka (+2000 szaniraków)';
+  const topupMatch = desc.match(/^Добить баланс до 2000 \(\+(\d+) шаныраков\)$/);
+  if (topupMatch) return `Doładowanie salda do 2000 (+${topupMatch[1]} szaniraków)`;
+  const adMatch = desc.match(/^Просмотр рекламы \(\+(\d+) шаныраков\)$/);
+  if (adMatch) return `Obejrzana reklama (+${adMatch[1]} szaniraków)`;
+  const shanBuyMatch = desc.match(/^Куплено (\S+) шаныраков за (\d+) тенге$/);
+  if (shanBuyMatch) return `Zakupiono ${shanBuyMatch[1]} szaniraków za ${shanBuyMatch[2]} tenge`;
+  const shanPayMatch = desc.match(/^Оплата за (\S+) шаныраков$/);
+  if (shanPayMatch) return `Płatność za ${shanPayMatch[1]} szaniraków`;
+  const iapMatch = desc.match(/^IAP: \+(\d+) тенге \((.+)\)$/);
+  if (iapMatch) return `IAP: +${iapMatch[1]} tenge (${iapMatch[2]})`;
+  if (desc === 'Бонус за использование реферального кода') return 'Bonus za użycie kodu polecającego';
+  const refMatch = desc.match(/^Реферальная награда: (\d+) приглашений$/);
+  if (refMatch) return `Nagroda za polecenie: ${refMatch[1]} zaproszeń`;
+  const playlistMatch = desc.match(/^Purchased playlist #(\d+)$/);
+  if (playlistMatch) return `Zakupiono playlistę #${playlistMatch[1]}`;
+  const premiumMatch = desc.match(/^Premium subscription \(expires (.+)\)$/);
+  if (premiumMatch) return `Subskrypcja Premium (wygasa ${premiumMatch[1]})`;
+  const premiumIapMatch = desc.match(/^Premium IAP subscription \(expires (.+)\)$/);
+  if (premiumIapMatch) return `Subskrypcja Premium IAP (wygasa ${premiumIapMatch[1]})`;
+  if (desc.startsWith('[ADMIN REFUND] ')) {
+    const inner = desc.slice('[ADMIN REFUND] '.length);
+    return `[ADMIN REFUND] ${localizeToPl(inner)}`;
+  }
+  if (desc.startsWith('[Админ] ')) {
+    const inner = desc.slice('[Админ] '.length);
+    return `[Admin] ${inner}`;
+  }
+  if (desc === '[ТЕСТ] +10 000 шаныраков') return '[TEST] +10 000 szaniraków';
   if (desc === '[ТЕСТ] +10 000 тенге') return '[TEST] +10 000 tenge';
   return desc;
 }

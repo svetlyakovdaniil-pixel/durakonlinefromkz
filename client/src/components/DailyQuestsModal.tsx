@@ -113,7 +113,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   };
 
   const getName = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : locale === 'ka' ? (q.def.nameKa ?? q.def.nameRu) : locale === 'az' ? ((q.def as any).nameAz ?? q.def.nameRu) : q.def.nameRu;
+    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : locale === 'ka' ? (q.def.nameKa ?? q.def.nameRu) : locale === 'az' ? ((q.def as any).nameAz ?? q.def.nameRu) : locale === 'uz' ? ((q.def as any).nameUz ?? q.def.nameRu) : locale === 'pl' ? ((q.def as any).namePl ?? q.def.nameRu) : q.def.nameRu;
   const getDesc = (q: typeof quests[0]) =>
     locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : locale === 'ka' ? (q.def.descKa ?? q.def.descRu) : locale === 'az' ? ((q.def as any).descAz ?? q.def.descRu) : q.def.descRu;
 

@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : locale === 'az' ? <PrivacyContentAz /> : locale === 'uz' ? <PrivacyContentUz /> : <PrivacyContentRu />}
+          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : locale === 'az' ? <PrivacyContentAz /> : locale === 'uz' ? <PrivacyContentUz /> : locale === 'pl' ? <PrivacyContentPl /> : <PrivacyContentRu />}
         </div>
 
         {/* Last updated */}
@@ -675,6 +675,93 @@ function PrivacyContentUz() {
         <h2 className="text-xl font-bold text-foreground mb-3">10. Aloqa</h2>
         <p className="text-muted-foreground leading-relaxed">
           Shaxsiy maʼlumotlarni qayta ishlash bilan bogʻliq barcha savollar uchun ilovaning «Administratsiya bilan bogʻlanish» boʻlimi orqali yoki elektron pochta manziliga murojaat qilishingiz mumkin:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PrivacyContentPl() {
+  return (
+    <>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">1. Postanowienia ogólne</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Niniejsza Polityka prywatności określa zasady przetwarzania i ochrony danych osobowych użytkowników aplikacji mobilnej „Durak online from KZ" (dalej — „Aplikacja"). Korzystając z Aplikacji, wyrażasz zgodę na warunki niniejszej Polityki.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">2. Jakie dane zbieramy</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Podczas korzystania z Aplikacji możemy zbierać następujące dane:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li><strong className="text-foreground">Dane konta:</strong> adres e-mail, nazwa wyświetlana (pseudonim), awatar</li>
+          <li><strong className="text-foreground">Dane gry:</strong> statystyki gier (wygrane, przegrane), saldo w grze (tenge), zakupione przedmioty (awatary, ramki, talie, stoły)</li>
+          <li><strong className="text-foreground">Dane techniczne:</strong> typ urządzenia, wersja systemu operacyjnego, adres IP, identyfikator sesji</li>
+          <li><strong className="text-foreground">Dane interakcji:</strong> lista znajomych, historia skarg</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">3. Jak wykorzystujemy dane</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Zebrane dane są wykorzystywane do:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Zapewnienia działania Aplikacji i świadczenia funkcji gry</li>
+          <li>Identyfikacji użytkownika i zarządzania kontem</li>
+          <li>Prowadzenia statystyk gry i rankingów</li>
+          <li>Zapewnienia bezpieczeństwa i zapobiegania oszustwom</li>
+          <li>Rozpatrywania skarg i rozwiązywania sporów między graczami</li>
+          <li>Poprawy jakości Aplikacji i doświadczeń użytkownika</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">4. Przechowywanie i ochrona danych</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Podejmujemy wszelkie niezbędne środki organizacyjne i techniczne w celu ochrony danych osobowych przed nieautoryzowanym dostępem, zmianą, ujawnieniem lub zniszczeniem. Dane są przechowywane na zabezpieczonych serwerach z zastosowaniem szyfrowania. Hasła są przechowywane w postaci zaszyfrowanej i nie mogą być odtworzone w oryginalnej formie.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">5. Przekazywanie danych stronom trzecim</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Nie sprzedajemy, nie wymieniamy ani nie przekazujemy Twoich danych osobowych stronom trzecim, z wyjątkiem przypadków przewidzianych przez obowiązujące przepisy prawa lub gdy jest to niezbędne do świadczenia usług (np. dostawcy hostingu, systemy płatności).
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">6. Prawa użytkownika</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Masz prawo do:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Uzyskania informacji o przechowywanych danych osobowych</li>
+          <li>Żądania poprawienia nieprawidłowych danych</li>
+          <li>Żądania usunięcia konta i wszystkich powiązanych danych</li>
+          <li>Wycofania zgody na przetwarzanie danych osobowych</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">7. Dane nieletnich</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Aplikacja nie jest przeznaczona dla dzieci poniżej 13 roku życia. Nie zbieramy świadomie danych osobowych dzieci poniżej 13 roku życia. Jeśli dowiesz się, że dziecko przekazało nam swoje dane, skontaktuj się z nami w celu ich usunięcia.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">8. Pliki cookie i analityka</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Aplikacja używa sesyjnych plików cookie do utrzymania autoryzacji. Możemy korzystać z anonimowej analityki w celu poprawy jakości usług. Dane analityczne nie zawierają danych osobowych.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">9. Zmiany Polityki</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Zastrzegamy sobie prawo do wprowadzania zmian w niniejszej Polityce prywatności. W przypadku istotnych zmian poinformujemy użytkowników za pośrednictwem Aplikacji. Dalsze korzystanie z Aplikacji po wprowadzeniu zmian oznacza akceptację zaktualizowanej Polityki.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">10. Kontakt</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          W przypadku wszelkich pytań dotyczących przetwarzania danych osobowych możesz skontaktować się z nami przez sekcję „Kontakt z administracją" w Aplikacji lub pod adresem e-mail:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
         </p>
       </section>
     </>
