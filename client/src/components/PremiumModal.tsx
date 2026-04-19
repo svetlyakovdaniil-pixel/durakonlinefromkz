@@ -1,13 +1,16 @@
 /**
- * PremiumModal — full-screen modal showing Premium subscription benefits
- * and a buy button (1000 tenge stub).
+ * PremiumModal — full-screen modal showing Premium subscription benefits.
+ * On native (iOS/Android): uses RevenueCat IAP to purchase 'premium_monthly' ($4.99/mo).
+ * On web: shows a "available in mobile app" message.
  */
 import { useState } from 'react';
-import { X, Crown, Star, Zap, RefreshCw, Percent, Shield, Sparkles } from 'lucide-react';
+import { X, Crown, Star, Zap, RefreshCw, Percent, Shield, Sparkles, Smartphone } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
 import { PremiumFrame } from './PremiumFrame';
+import { isIAPAvailable, purchasePremium } from '@/lib/iap';
+import { Capacitor } from '@capacitor/core';
 const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
 
 interface PremiumModalProps {
@@ -22,10 +25,13 @@ const TEXTS = {
     active: 'Активен',
     expires: 'Истекает',
     days: 'дн.',
-    buyBtn: 'Купить за 1000',
+    buyBtn: 'Купить за $4.99',
+    buyBtnWeb: 'Доступно в мобильном приложении',
     insufficientFunds: 'Недостаточно тенге',
     alreadyActive: 'Премиум уже активен',
     buySuccess: 'Премиум активирован! Приятной игры 🎉',
+    buyError: 'Ошибка покупки. Попробуйте ещё раз',
+    webOnlyHint: 'Для покупки Premium скачайте мобильное приложение',
     benefits: [
       {
         icon: 'star',
@@ -69,10 +75,13 @@ const TEXTS = {
     active: 'Белсенді',
     expires: 'Аяқталады',
     days: 'күн',
-    buyBtn: '1000-ға сатып ал',
+    buyBtn: '$4.99-ға сатып ал',
+    buyBtnWeb: 'Мобильді қосымшада қол жетімді',
     insufficientFunds: 'Теңге жеткіліксіз',
     alreadyActive: 'Премиум белсенді',
     buySuccess: 'Премиум белсендірілді! Жақсы ойын 🎉',
+    buyError: 'Сатып алу қатесі. Қайталап көріңіз',
+    webOnlyHint: 'Premium сатып алу үшін мобильді қосымшаны жүктеп алыңыз',
     benefits: [
       {
         icon: 'star',
@@ -116,10 +125,13 @@ const TEXTS = {
     active: 'Active',
     expires: 'Expires',
     days: 'd.',
-    buyBtn: 'Buy for 1000',
+    buyBtn: 'Buy for $4.99',
+    buyBtnWeb: 'Available in mobile app',
     insufficientFunds: 'Insufficient tenge',
     alreadyActive: 'Premium is already active',
     buySuccess: 'Premium activated! Enjoy the game 🎉',
+    buyError: 'Purchase failed. Please try again',
+    webOnlyHint: 'Download the mobile app to purchase Premium',
     benefits: [
       {
         icon: 'star',
@@ -182,30 +194,49 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
     refetchOnWindowFocus: false,
   });
 
-  const buyMutation = trpc.premium.buy.useMutation({
-    onSuccess: () => {
-      toast.success(t.buySuccess);
-      refetchStatus();
-    },
-    onError: (err) => {
-      if (err.message === 'Недостаточно тенге') {
-        toast.error(t.insufficientFunds);
-      } else if (err.message === 'Премиум уже активен') {
-        toast.error(t.alreadyActive);
-        // Refresh status so UI updates immediately
-        refetchStatus();
-      } else {
-        toast.error(err.message);
-      }
-    },
-    onSettled: () => setBuying(false),
-  });
-
   if (!open) return null;
 
-  const handleBuy = () => {
+  const isNative = Capacitor.isNativePlatform();
+  const iapReady = isIAPAvailable();
+
+  const handleBuy = async () => {
+    if (!isNative || !iapReady) return;
     setBuying(true);
-    buyMutation.mutate();
+    try {
+      const result = await purchasePremium();
+      if (!result) {
+        // User cancelled
+        setBuying(false);
+        return;
+      }
+      // Verify with server and activate premium
+      const response = await fetch('/api/iap/verify-premium', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          transactionId: result.transactionId,
+          platform: result.platform,
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error ?? 'verification_failed');
+      }
+      toast.success(t.buySuccess);
+      refetchStatus();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg === 'already_active') {
+        toast.error(t.alreadyActive);
+        refetchStatus();
+      } else {
+        console.error('[PremiumModal] IAP error:', err);
+        toast.error(t.buyError);
+      }
+    } finally {
+      setBuying(false);
+    }
   };
 
   return (
@@ -331,24 +362,45 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
             </div>
           </div>
         ) : (
-          /* Premium not active: show buy button */
+          /* Premium not active: show buy button or web-only hint */
           <div className="px-6 pb-6">
-            <button
-              onClick={handleBuy}
-              disabled={buying}
-              className="w-full py-4 rounded-xl font-black text-lg tracking-wide text-black bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 active:scale-95 transition-all duration-150 shadow-lg shadow-yellow-500/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {buying ? (
-                <span className="animate-spin w-5 h-5 border-2 border-black/30 border-t-black rounded-full" />
-              ) : (
-                <>
-                  <Crown className="w-5 h-5" />
-                  <span>{t.buyBtn}</span>
-                  <img src={TENGE_ICON} alt="₸" className="w-5 h-5" />
-                  <span className="text-sm font-medium opacity-70">{t.perMonth}</span>
-                </>
-              )}
-            </button>
+            {isNative && iapReady ? (
+              /* Native: real IAP purchase button */
+              <button
+                onClick={handleBuy}
+                disabled={buying}
+                className="w-full py-4 rounded-xl font-black text-lg tracking-wide text-black bg-gradient-to-r from-yellow-400 via-yellow-300 to-yellow-500 hover:from-yellow-300 hover:to-yellow-400 active:scale-95 transition-all duration-150 shadow-lg shadow-yellow-500/30 disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {buying ? (
+                  <span className="animate-spin w-5 h-5 border-2 border-black/30 border-t-black rounded-full" />
+                ) : (
+                  <>
+                    <Crown className="w-5 h-5" />
+                    <span>{t.buyBtn}</span>
+                    <span className="text-sm font-medium opacity-70">{t.perMonth}</span>
+                  </>
+                )}
+              </button>
+            ) : (
+              /* Web: show mobile-only hint */
+              <div
+                className="w-full py-4 rounded-xl flex flex-col items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(250,204,21,0.08) 0%, rgba(250,204,21,0.03) 100%)',
+                  border: '1px solid rgba(250,204,21,0.25)',
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-5 h-5 text-yellow-400/70" />
+                  <span className="font-semibold text-yellow-200/80 text-sm">
+                    {t.buyBtnWeb}
+                  </span>
+                </div>
+                <span className="text-xs text-yellow-200/40 text-center px-4">
+                  {t.webOnlyHint}
+                </span>
+              </div>
+            )}
           </div>
         )}
 

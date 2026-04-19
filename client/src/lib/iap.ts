@@ -7,6 +7,7 @@
  * 3. Create products in App Store Connect and Google Play Console:
  *    - Product IDs: durak_tenge_100, durak_tenge_500, durak_tenge_1000, durak_tenge_5000
  *    - Type: Consumable (Non-Subscription)
+ *    - Product ID: premium_monthly → $4.99/month subscription
  * 4. Add those product IDs to RevenueCat as Entitlements or just use them directly
  * 5. Set VITE_REVENUECAT_IOS_KEY and VITE_REVENUECAT_ANDROID_KEY in your .env
  *
@@ -15,6 +16,7 @@
  *   durak_tenge_500   → 500 тенге  (~$4.99)
  *   durak_tenge_1000  → 1000 тенге (~$9.99)
  *   durak_tenge_5000  → 5000 тенге (~$49.99)
+ *   premium_monthly   → Premium subscription (~$4.99/month)
  */
 
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
@@ -160,4 +162,65 @@ export async function restorePurchases(): Promise<void> {
 
 export function isIAPAvailable(): boolean {
   return Capacitor.isNativePlatform() && initialized;
+}
+
+/** Product ID for the monthly premium subscription */
+export const PREMIUM_PRODUCT_ID = 'premium_monthly';
+
+export interface PremiumPurchaseResult {
+  /** RevenueCat transaction identifier */
+  transactionId: string;
+  /** Platform: 'ios' or 'android' */
+  platform: 'ios' | 'android';
+  /** Price string shown to user, e.g. "$4.99" */
+  priceString: string;
+}
+
+/**
+ * Purchase the monthly premium subscription via RevenueCat.
+ * Returns purchase result on success, or null if user cancelled.
+ * Throws on other errors.
+ */
+export async function purchasePremium(): Promise<PremiumPurchaseResult | null> {
+  if (!initialized || !Capacitor.isNativePlatform()) return null;
+
+  const platform = Capacitor.getPlatform() as 'ios' | 'android';
+
+  try {
+    const { products } = await Purchases.getProducts({
+      productIdentifiers: [PREMIUM_PRODUCT_ID],
+    });
+
+    if (products.length === 0) {
+      throw new Error(`Premium product not found: ${PREMIUM_PRODUCT_ID}`);
+    }
+
+    const product = products[0];
+    const { transaction } = await Purchases.purchaseStoreProduct({
+      product,
+    });
+
+    const transactionId = transaction?.transactionIdentifier;
+    if (!transactionId) {
+      throw new Error('No transaction ID returned from purchase');
+    }
+
+    return {
+      transactionId,
+      platform,
+      priceString: product.priceString,
+    };
+  } catch (err: unknown) {
+    // User cancelled — not an error
+    if (
+      err &&
+      typeof err === 'object' &&
+      'userCancelled' in err &&
+      (err as { userCancelled: boolean }).userCancelled
+    ) {
+      return null;
+    }
+    console.error('[IAP] Premium purchase failed:', err);
+    throw err;
+  }
 }

@@ -3392,3 +3392,11 @@
 - [x] Написать тесты для валидации RevenueCat конфигурации (6 тестов, все проходят)
 - [x] Все 587 тестов проходят
 - [x] TODO (будущий шаг): Добавить iOS приложение в RevenueCat после получения P8 ключа из App Store Connect — требует зарегистрировать приложение в App Store Connect → Users & Access → Integrations → In-App Purchase → создать ключ (.p8), затем добавить в RevenueCat
+
+## Premium IAP — реальная покупка за $5/мес через RevenueCat (Batch 125)
+- [x] Добавить PREMIUM_PRODUCT_ID = 'premium_monthly' в iap.ts
+- [x] Добавить функцию purchasePremium() в iap.ts (покупает premium_monthly через RevenueCat)
+- [x] Добавить POST /api/iap/verify-premium — верификация подписки через RevenueCat и активация премиума
+- [x] Обновить server/iap.ts: добавить verifyPremiumSubscription() через RevenueCat /v1/subscribers
+- [x] Обновить PremiumModal.tsx: на native — кнопка вызывает purchasePremium() → /api/iap/verify-premium- [x] Обновить PremiumModal.tsx: на web — показывать "Доступно только в мобильном приложении" вместо кнопки за- [x] Обновить тексты кнопки: "$4.99 / месяц" вместо "1000 ₸ / месяц""
+- [x] Написать тесты для нового IAP premium flow (13 тестов в server/premiumIAP.test.ts)
