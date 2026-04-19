@@ -31,7 +31,7 @@ function getTimeUntilReset(): string {
 }
 
 export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: DailyQuestsModalProps) {
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [claimingKey, setClaimingKey] = useState<string | null>(null);
   const [swappingKey, setSwappingKey] = useState<string | null>(null);
 
@@ -261,7 +261,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
                       {/* Reward */}
                       <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-xs text-gray-500">
-                          {locale === 'ru' ? 'Награда:' : locale === 'kk' ? 'Сыйлық:' : 'Reward:'}
+                          {t('common.reward')}:
                         </span>
                         <span className="text-green-400 text-xs font-semibold">+{quest.def?.reward?.shanyrak?.toLocaleString()}</span>
                         <img src={SHANYRAK_ICON} alt="shanyrak" className="w-3.5 h-3.5" />
@@ -320,7 +320,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
             onClick={onClose}
             className="w-full py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-sm font-semibold transition-colors border border-white/20"
           >
-            {locale === 'ru' ? 'Закрыть' : locale === 'kk' ? 'Жабу' : 'Close'}
+            {t('common.close')}
           </button>
         </div>
       </div>

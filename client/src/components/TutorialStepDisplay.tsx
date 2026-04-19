@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { TutorialScenario } from '@/hooks/useInteractiveTutorial';
 import { useSoundContext } from '@/contexts/SoundContext';
+import { useTranslation } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ClientGameState } from '../../../shared/gameTypes';
@@ -94,6 +95,7 @@ export default function TutorialStepDisplay({
   gameState,
   locale = 'ru',
 }: TutorialStepDisplayProps) {
+  const { t } = useTranslation();
   const { play: playSound } = useSoundContext();
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
   const [textPos, setTextPos] = useState<{ top: number; left: number; maxWidth: number }>({
@@ -820,7 +822,7 @@ export default function TutorialStepDisplay({
               transition: 'opacity 0.5s',
             }}
           >
-            {locale === 'kk' ? 'БІТТІ!' : locale === 'en' ? 'BEATEN!' : 'БИТО!'}
+            {t('tutorial.bitoLabel')}
           </div>
         </div>
       </div>
@@ -1071,7 +1073,7 @@ export default function TutorialStepDisplay({
               <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
-            <span className="text-[9px] sm:text-[11px] text-yellow-300 font-medium whitespace-nowrap">{locale === 'kk' ? 'Жолаушы' : locale === 'en' ? 'Pass-Through' : 'Проездной'}</span>
+            <span className="text-[9px] sm:text-[11px] text-yellow-300 font-medium whitespace-nowrap">{t('tutorial.passThroughLabel')}</span>
           </div>
         );
       })()}
@@ -1271,8 +1273,8 @@ export default function TutorialStepDisplay({
         <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
             <div className="text-4xl mb-2">✅</div>
-            <p className="text-emerald-300 font-bold text-lg">{locale === 'kk' ? 'Бітті!' : locale === 'en' ? 'Beaten!' : 'Отбито!'}</p>
-            <p className="text-emerald-200/70 text-sm mt-1">{locale === 'kk' ? 'Карталар өздігінен-өзі ұтты' : locale === 'en' ? 'Cards beat themselves' : 'Карты побили сами себя'}</p>
+            <p className="text-emerald-300 font-bold text-lg">{t('tutorial.beatenLabel')}</p>
+            <p className="text-emerald-200/70 text-sm mt-1">{t('tutorial.cardsBeatThemselves')}</p>
           </div>
         </div>
       )}
@@ -1293,7 +1295,7 @@ export default function TutorialStepDisplay({
         <div className={`flex justify-between items-start ${(isCompact || isBottom) ? 'mb-1' : 'mb-3'}`}>
           <div>
             <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{locale === 'kk' ? ((scenario as any).titleKk || scenario.title) : locale === 'en' ? ((scenario as any).titleEn || scenario.title) : scenario.title}</h3>
-            <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>{locale === 'kk' ? `Қадам ${currentStep + 1} / ${totalSteps}` : locale === 'en' ? `Step ${currentStep + 1} of ${totalSteps}` : `Шаг ${currentStep + 1} из ${totalSteps}`}</p>
+            <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>{t('tutorial.stepCounter').replace('{current}', String(currentStep + 1)).replace('{total}', String(totalSteps))}</p>
           </div>
           <button
             onClick={onSkip}
@@ -1351,7 +1353,7 @@ export default function TutorialStepDisplay({
             className={`flex items-center gap-1 ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
           >
             <ChevronLeft size={isCompact ? 10 : 14} />
-            {locale === 'kk' ? 'Алдыңғы' : locale === 'en' ? 'Back' : 'Назад'}
+            {t('tutorial.prev')}
           </Button>
 
           <Button
@@ -1361,7 +1363,7 @@ export default function TutorialStepDisplay({
             className={`flex items-center gap-1 ${scenario?.isLastStep ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-black font-bold ${isCompact ? 'text-[10px] h-6 px-2' : 'text-xs'}`}
             disabled={isNextDisabled}
           >
-            {scenario?.finishButtonText || (scenario?.isLastStep ? (locale === 'kk' ? 'Оқытуды аяқтау' : locale === 'en' ? 'Finish Tutorial' : 'Завершить обучение') : (locale === 'kk' ? 'Алға' : locale === 'en' ? 'Next' : 'Далее'))}
+            {scenario?.finishButtonText || (scenario?.isLastStep ? t('tutorial.finishTutorial') : t('tutorial.next'))}
             <ChevronRight size={isCompact ? 10 : 14} />
           </Button>
         </div>
@@ -1411,7 +1413,7 @@ export default function TutorialStepDisplay({
               size="sm"
               className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm px-6 py-2 shadow-lg shadow-emerald-500/30"
             >
-              {locale === 'kk' ? 'Аудару' : locale === 'en' ? 'Transfer' : 'Перевести'}
+              {t('tutorial.transferBtn')}
             </Button>
           </div>
         );
@@ -1463,7 +1465,7 @@ export default function TutorialStepDisplay({
         <div className="fixed inset-0 z-[70] flex items-center justify-center pointer-events-none">
           <div className="bg-emerald-900/90 border-2 border-emerald-400 rounded-2xl px-8 py-6 text-center animate-bounce-in shadow-2xl">
             <div className="text-4xl mb-2">↩️</div>
-            <p className="text-emerald-300 font-bold text-lg">{locale === 'kk' ? 'Аудару!' : locale === 'en' ? 'Transfer!' : 'Перевод!'}</p>
+            <p className="text-emerald-300 font-bold text-lg">{t('tutorial.transferLabel')}</p>
             <p className="text-emerald-200/70 text-sm mt-1">
               {(() => {
                 const nameRu = scenario.transferMechanic.targetBotName;

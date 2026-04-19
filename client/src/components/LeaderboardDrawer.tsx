@@ -69,7 +69,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
     { key: 'shanyrak', label: t('lobby.leaderboardTabs.shanyrak'), icon: <Banknote className="w-3.5 h-3.5 shrink-0" /> },
     {
       key: 'season',
-      label: locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон',
+      label: t('lobby.season'),
       icon: <Flame className="w-3.5 h-3.5 shrink-0" />,
     },
   ];
@@ -272,7 +272,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                         <div className="flex items-center gap-1 shrink-0">
                           <span className="text-amber-300 text-sm font-bold">{entry.seasonRating}</span>
                           <span className="text-amber-200/40 text-[10px]">
-                            {locale === 'kk' ? 'ұп' : locale === 'en' ? 'pt' : 'оч'}
+                            {t('lobby.leaderboardPointsAbbr')}
                           </span>
                         </div>
                       </div>
@@ -280,7 +280,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
                   })}
                   {(seasonQuery.data?.entries ?? []).length === 0 && (
                     <div className="text-center py-8 text-amber-200/30 text-sm">
-                      {locale === 'kk' ? 'Ойыншылар жоқ' : locale === 'en' ? 'No players yet' : 'Пока нет игроков'}
+                      {t('lobby.leaderboardNoPlayers')}
                     </div>
                   )}
                 </div>

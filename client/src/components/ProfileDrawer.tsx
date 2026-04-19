@@ -102,7 +102,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
 
   const equipFrameMutation = trpc.shop.equipFrame.useMutation({
     onSuccess: () => {
-      toast.success(locale === 'kk' ? 'Жақтау жаңартылды!' : 'Рамка обновлена!');
+      toast.success(t('profile.frameUpdated'));
       utils.profile.me.invalidate();
       setShowFramePicker(false);
     },
@@ -174,12 +174,12 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
       {(ownedFrames.length > 0 || isPremium) && (
         <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3">
           <div className="flex items-center justify-between mb-2">
-            <div className="text-amber-200/60 text-xs">{locale === 'kk' ? 'Аватар жақтауы' : locale === 'en' ? 'Avatar Frame' : 'Рамка аватарки'}</div>
+            <div className="text-amber-200/60 text-xs">{t('profile.avatarFrameLabel')}</div>
             <button
               onClick={() => setShowFramePicker(!showFramePicker)}
               className="text-amber-400 text-xs hover:text-amber-300 transition-colors"
             >
-              {locale === 'kk' ? 'Өзгерту' : locale === 'en' ? 'Change' : 'Изменить'}
+              {t('profile.changeFrame')}
             </button>
           </div>
           <div className="flex items-center gap-3">
@@ -187,7 +187,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             <div className="text-amber-100 text-sm">
               {equippedFrame
                 ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : f?.name) || equippedFrame; })()
-                : (locale === 'kk' ? 'Жақтау жоқ' : locale === 'en' ? 'No frame' : 'Без рамки')}
+                : t('profile.noFrame')}
             </div>
           </div>
 
@@ -202,7 +202,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                 <div className="w-10 h-10 rounded-full bg-[#1a2d45] border-2 border-amber-700/30 flex items-center justify-center">
                   <X className="w-5 h-5 text-amber-200/40" />
                 </div>
-                <span className="text-amber-200/70 text-sm">{locale === 'kk' ? 'Жақтаусыз' : locale === 'en' ? 'No frame' : 'Без рамки'}</span>
+                <span className="text-amber-200/70 text-sm">{t('profile.noFrame')}</span>
                 {!equippedFrame && <Check className="w-4 h-4 text-green-400 ml-auto" />}
               </button>
               {/* Regular owned frames (excludes premiumOnly and seasonOnly) */}
@@ -267,7 +267,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                         <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
                       </div>
-                      <span className="text-amber-200/40 text-[10px]">{locale === 'kk' ? 'Premium қажет' : locale === 'en' ? 'Requires Premium' : 'Требуется Premium'}</span>
+                      <span className="text-amber-200/40 text-[10px]">{t('profile.requiresPremium')}</span>
                     </div>
                     <Crown className="w-4 h-4 text-yellow-600/50 ml-auto" />
                   </div>
@@ -304,7 +304,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
                         <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : frame.name}</span>
-                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
+                        <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">{t('profile.seasonBadge')}</span>
                       </div>
                     </div>
                     {isEquipped && <Check className="w-4 h-4 text-yellow-400 ml-auto" />}

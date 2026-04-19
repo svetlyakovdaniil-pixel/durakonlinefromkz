@@ -1527,9 +1527,9 @@ export default function GameTable({
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 ${blurClass} border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge data-tutorial="deck-info" variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
-              <span data-tutorial="mobile-decks">{locale === 'en' ? 'D1' : 'К1'}:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
+              <span data-tutorial="mobile-decks">{t('game.deck1Abbr')}:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
               <span className="text-amber-300 mx-1">|</span>
-              {locale === 'en' ? 'D2' : 'К2'}:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span></span>
+              {t('game.deck2Abbr')}:<span className={`font-bold ${gs.deck2Count < 5 ? 'text-red-400' : ''}`}>{gs.deck2Count}</span></span>
               <span className="text-amber-300 mx-1">|</span>
               <span data-tutorial="mobile-bito">{t('game.bitoCount')}<span className="font-bold">{gs.discardCount}</span></span>
             </Badge>

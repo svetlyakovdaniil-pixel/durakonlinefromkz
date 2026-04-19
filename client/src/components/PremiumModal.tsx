@@ -173,7 +173,7 @@ function BenefitIcon({ type }: { type: string }) {
 }
 
 export default function PremiumModal({ open, onClose }: PremiumModalProps) {
-  const { locale } = useTranslation();
+  const { locale, t: tI18n } = useTranslation();
   const t = TEXTS[locale as keyof typeof TEXTS] ?? TEXTS.ru;
   const [buying, setBuying] = useState(false);
 
@@ -371,7 +371,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
               color: '#fbbf24',
             }}
           >
-            {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+            {tI18n('common.close')}
           </button>
         </div>
       </div>

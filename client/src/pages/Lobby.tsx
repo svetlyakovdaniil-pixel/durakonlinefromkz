@@ -289,7 +289,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     setTutorialLoading(true);
     try {
       // Create a tutorial room with specific name
-      const tutorialRoomName = locale === 'kk' ? '🎓 Оқыту' : locale === 'en' ? '🎓 Tutorial' : '🎓 Обучение';
+      const tutorialRoomName = `🎓 ${t('lobby.tutorial')}`;
       const tutorialRoom = await onCreateRoom(
         tutorialRoomName,
         2,
@@ -435,9 +435,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Title — shifted right toward avatar, 20% larger */}
               <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
                 <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '205px', fontSize: '1.2rem'}}>
-                  {locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'}
+                  {t('lobby.title').split(' ')[0]}
                   <br/>
-                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span>
+                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}</span>
                   <br/>
                   <span>from KZ</span>
                 </h1>
@@ -536,7 +536,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Gamepad2 className="w-7 h-7 text-amber-400" />
-                <h1 className="text-xl font-bold text-amber-100">{locale === 'kk' ? 'Дұрақ' : locale === 'en' ? 'Durak' : 'Дурак'} <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? (locale === 'kk' ? 'онлайн' : locale === 'en' ? 'online' : 'онлайн') : (locale === 'kk' ? 'оффлайн' : locale === 'en' ? 'offline' : 'оффлайн')}</span> from KZ</h1>
+                <h1 className="text-xl font-bold text-amber-100">{t('lobby.title').split(' ')[0]} <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}</span> from KZ</h1>
               </div>
               <div className="flex items-center gap-3">
                 {/* Admin button (only for admins/GMs) */}
@@ -582,7 +582,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowDailyQuests(true)}
-                  title={locale === 'kk' ? 'Күнделік тапсырмалар' : locale === 'en' ? 'Daily Quests' : 'Ежедневные задания'}
+                  title={t('lobby.dailyQuests')}
                 >
                   <CalendarCheck className="w-5 h-5" />
                   {unclaimedDailyQuests > 0 && (
@@ -596,7 +596,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowSeason(true)}
-                  title={locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон'}
+                  title={t('lobby.season')}
                 >
                   <Flame className="w-5 h-5" />
                 </button>
@@ -605,7 +605,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowAchievements(true)}
-                  title={locale === 'kk' ? 'Жетістіктер' : locale === 'en' ? 'Achievements' : 'Достижения'}
+                  title={t('lobby.achievements')}
                 >
                   <Trophy className="w-5 h-5" />
                   {unclaimedAchievements > 0 && (
@@ -619,7 +619,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowLeaderboard(true)}
-                  title={locale === 'kk' ? 'Рейтинг' : locale === 'en' ? 'Leaderboard' : 'Лидерборд'}
+                  title={t('lobby.leaderboard')}
                 >
                   <Medal className="w-5 h-5" />
                 </button>
@@ -628,7 +628,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button
                   className="relative text-amber-200/60 hover:text-amber-100 transition-colors p-2 rounded"
                   onClick={() => setShowFriends(true)}
-                  title={locale === 'kk' ? 'Достар' : locale === 'en' ? 'Friends' : 'Друзья'}
+                  title={t('lobby.friends')}
                 >
                   <Users className="w-5 h-5" />
                   {onlineFriendsCount > 0 && (
@@ -943,7 +943,7 @@ onClick={() => setShowTengeTopUp(true)}
                         >
                           <span className="flex items-center gap-1.5">
                             {!isSeaDepthsOwned && <Lock className="w-3 h-3" />}
-                            Морские глубины
+                            {t('lobby.tableSeaDepths')}
                           </span>
                         </SelectItem>
                         <SelectItem
@@ -953,7 +953,7 @@ onClick={() => setShowTengeTopUp(true)}
                         >
                           <span className="flex items-center gap-1.5">
                             {!isStargazerOwned && <Lock className="w-3 h-3" />}
-                            Звездочёт
+                            {t('lobby.tableStargazer')}
                           </span>
                         </SelectItem>
                         <SelectItem
@@ -963,7 +963,7 @@ onClick={() => setShowTengeTopUp(true)}
                         >
                           <span className="flex items-center gap-1.5">
                             {!isBlackVelvetOwned && <Lock className="w-3 h-3" />}
-                            Чёрный Бархат
+                            {t('lobby.tableBlackVelvet')}
                           </span>
                         </SelectItem>
                       </SelectContent>
@@ -1567,7 +1567,7 @@ onClick={() => setShowTengeTopUp(true)}
                             <span className="text-amber-100 text-sm font-medium">{t('lobby.friendRequest')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs mb-2">
-                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) {locale === 'kk' ? 'сізді достарға қосқысы келеді' : locale === 'en' ? 'wants to add you as a friend' : 'хочет добавить вас в друзья'}
+                            <span className="font-semibold text-amber-200/80">{n.data?.senderName}</span> (ID {n.data?.senderGameId}) {t('lobby.friendWantsToAdd')}
                           </p>
                           <div className="flex gap-2">
                             <button
@@ -1594,7 +1594,7 @@ onClick={() => setShowTengeTopUp(true)}
                             <span className="text-amber-100 text-sm font-medium">{t('lobby.friendAccepted')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> {locale === 'kk' ? 'достық сұрауыңызды қабылдады' : locale === 'en' ? 'accepted your friend request' : 'принял(а) ваш запрос в друзья'}
+                            <span className="font-semibold text-amber-200/80">{n.data?.accepterName}</span> {t('lobby.acceptedFriendRequest')}
                           </p>
                         </>
                       )}
@@ -1636,14 +1636,14 @@ onClick={() => setShowTengeTopUp(true)}
                           <div className="flex items-center gap-2 mb-1">
                             <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
                             <span className="text-red-300 text-sm font-medium">
-                            {locale === 'kk' ? 'Сіздің аккаунтыңыз бұғатталды' : locale === 'en' ? 'Your account has been banned' : 'Ваш аккаунт заблокирован'}
+                            {t('lobby.accountBanned')}
                           </span>
                           </div>
                           <p className="text-red-200/70 text-xs">
-                            {locale === 'kk' ? 'Мерзімі' : locale === 'en' ? 'Duration' : 'Срок'}: {n.data?.duration || (locale === 'kk' ? 'көрсетілмеген' : locale === 'en' ? 'not specified' : 'не указан')}
+                            {t('lobby.banDuration')}: {n.data?.duration || t('lobby.notSpecified')}
                           </p>
                           <p className="text-red-200/70 text-xs">
-                            {locale === 'kk' ? 'Себебі' : locale === 'en' ? 'Reason' : 'Причина'}: {n.data?.reason || (locale === 'kk' ? 'көрсетілмеген' : locale === 'en' ? 'not specified' : 'не указана')}
+                            {t('lobby.banReason')}: {n.data?.reason || t('lobby.notSpecified')}
                           </p>
                         </>
                       )}
@@ -1664,14 +1664,14 @@ onClick={() => setShowTengeTopUp(true)}
                             <div className="flex items-center gap-2 mb-2">
                               <Trophy className="w-4 h-4 text-amber-400 shrink-0" />
                               <span className="text-amber-100 text-sm font-semibold">
-                                {locale === 'kk' ? 'Маусым аяқталды' : locale === 'en' ? 'Season ended' : 'Сезон завершён'}
+                                {t('lobby.seasonEnded')}
                               </span>
                             </div>
                             {/* Rank */}
                             {rank && (
                               <div className="mb-1.5">
                                 <span className="text-amber-200/60 text-xs">
-                                  {locale === 'kk' ? 'Сіздің рангіңіз: ' : locale === 'en' ? 'Your rank: ' : 'Ваш ранг: '}
+                                  {t('lobby.yourRank')}: 
                                 </span>
                                 <span className="text-sm font-bold" style={{ color: rank.color }}>
                                   {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
@@ -1681,7 +1681,7 @@ onClick={() => setShowTengeTopUp(true)}
                             {/* Rating */}
                             {n.data?.seasonRating !== undefined && (
                               <div className="text-amber-200/60 text-xs mb-1.5">
-                                {locale === 'kk' ? 'Рейтинг: ' : locale === 'en' ? 'Rating: ' : 'Рейтинг: '}
+                                {t('lobby.seasonRatingLabel')}: 
                                 <span className="text-amber-200/90 font-mono">{n.data.seasonRating}</span>
                               </div>
                             )}
@@ -1689,16 +1689,16 @@ onClick={() => setShowTengeTopUp(true)}
                             {rewardDef && (
                               <div className="space-y-1 mb-2.5 rounded-lg p-2" style={{ background: 'rgba(234,179,8,0.07)', border: '1px solid rgba(234,179,8,0.15)' }}>
                                 <div className="text-amber-300/80 text-xs font-medium mb-1">
-                                  {locale === 'kk' ? 'Нағыздар:' : locale === 'en' ? 'Rewards:' : 'Награды:'}
+                                  {t('lobby.seasonRewardsLabel')}:
                                 </div>
                                 <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                   <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4 object-contain" />
-                                  +{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
+                                  +{rewardDef.shanyraks.toLocaleString()} {t('lobby.shanyraksUnit')}
                                 </div>
                                 {rewardDef.tenge > 0 && (
                                   <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                     <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-4 h-4 object-contain" />
-                                    +{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
+                                    +{rewardDef.tenge} {t('lobby.tengeUnit')}
                                   </div>
                                 )}
                                 {notifAvatarId && (() => {
@@ -1707,7 +1707,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <PlayerAvatar avatarId={notifAvatarId} size={16} />
-                                      {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300">{avatarName}</span>
+                                      {t('lobby.avatarLabel')}: <span className="text-amber-300">{avatarName}</span>
                                     </div>
                                   );
                                 })()}
@@ -1719,7 +1719,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <span className="text-amber-400">🛡️</span>
-                                      {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-amber-300">{frameName}{seasonLabel}</span>
+                                      {t('lobby.frameLabel')}: <span className="text-amber-300">{frameName}{seasonLabel}</span>
                                     </div>
                                   );
                                 })()}
@@ -1737,23 +1737,21 @@ onClick={() => setShowTengeTopUp(true)}
                                     await refetchNotifs();
                                     utils.notifications.unreadCount.invalidate();
                                     utils.season.unclaimedRewards.invalidate();
-                                    toast.success(locale === 'kk' ? 'Нағыздар алынды!' : locale === 'en' ? 'Rewards claimed!' : 'Награды получены!');
+                                    toast.success(t('lobby.rewardsClaimed'));
                                   } catch {
-                                    toast.error(locale === 'kk' ? 'Қате орын кесті' : locale === 'en' ? 'Error claiming rewards' : 'Ошибка получения наград');
+                                    toast.error(t('lobby.errorClaimingRewards'));
                                   }
                                 }}
                                 className="w-full py-1.5 rounded-lg text-xs font-semibold transition-all"
                                 style={{ background: 'linear-gradient(90deg, #b8860b, #fbbf24, #b8860b)', color: '#1a0a00' }}
                               >
-                                {claimSeasonReward.isPending
-                                  ? (locale === 'kk' ? 'Жүктелуде...' : locale === 'en' ? 'Claiming...' : 'Получение...')
-                                  : (locale === 'kk' ? 'Алу' : locale === 'en' ? 'Claim' : 'Получить')}
+                                {claimSeasonReward.isPending ? t('lobby.claimingRewards') : t('lobby.claimRewards')}
                               </button>
                             )}
                             {isClaimed && (
                               <div className="text-green-400/80 text-xs flex items-center gap-1">
                                 <Check className="w-3 h-3" />
-                                {locale === 'kk' ? 'Алынды' : locale === 'en' ? 'Claimed' : 'Получено'}
+                                {t('lobby.rewardsClaimedAlready')}
                               </div>
                             )}
                           </>
