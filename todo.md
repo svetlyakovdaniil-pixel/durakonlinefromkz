@@ -3372,8 +3372,23 @@
 
 ## Batch 123 — Firebase регистрация приложений и cron-уведомления
 
-- [ ] Зарегистрировать Android приложение в Firebase (bundle ID: online.durakonline.fromkz)
-- [ ] Зарегистрировать iOS приложение в Firebase (bundle ID: online.durakonline.fromkz)
-- [ ] Скачать google-services.json и добавить в android/app/
-- [ ] Скачать GoogleService-Info.plist и добавить в ios/App/App/
-- [ ] Реализовать cron-задачи для ежедневных push-уведомлений (задание, шаныраки, сезон)
+- [x] Зарегистрировать Android приложение в Firebase (bundle ID: online.durakonline.fromkz)
+- [x] Зарегистрировать iOS приложение в Firebase (bundle ID: online.durakonline.fromkz)
+- [x] Скачать google-services.json и добавить в android/app/
+- [x] Скачать GoogleService-Info.plist и добавить в ios/App/App/
+- [x] Реализовать cron-задачи для ежедневных push-уведомлений (задание, шаныраки, сезон)
+
+## RevenueCat конфигурация (Batch 124)
+- [x] Создать аккаунт RevenueCat и войти (svetlyakovdaniil@gmail.com)
+- [x] Создать Android приложение "Durak Online from KZ" в RevenueCat (bundle: online.durakonline.fromkz)
+- [x] Создать продукты в RevenueCat для Android: premium_monthly:monthly (subscription), durak_tenge_100, durak_tenge_500, durak_tenge_1000, durak_tenge_5000 (consumables)
+- [x] Получить Android SDK ключ: goog_hXjnyimijBJbaxxINMZucNdxDxt
+- [x] Получить Secret API ключ для серверной верификации
+- [x] Добавить REVENUECAT_SECRET_KEY в secrets (серверная верификация)
+- [x] Добавить REVENUECAT_ANDROID_API_KEY в secrets
+- [x] Добавить REVENUECAT_IOS_API_KEY в secrets (test key пока нет iOS app)
+- [x] Добавить VITE_REVENUECAT_IOS_KEY в secrets (для Capacitor SDK)
+- [x] Добавить VITE_REVENUECAT_ANDROID_KEY в secrets (для Capacitor SDK)
+- [x] Написать тесты для валидации RevenueCat конфигурации (6 тестов, все проходят)
+- [x] Все 587 тестов проходят
+- [ ] TODO: Добавить iOS приложение в RevenueCat после получения P8 ключа из App Store Connect
