@@ -11,7 +11,7 @@ export default function LanguageSelectionModal() {
   const { setLanguage, setHasChosenLanguage } = useSettings();
   const { setLocale } = useTranslation();
 
-  const pick = (lang: 'ru' | 'kk' | 'en') => {
+  const pick = (lang: 'ru' | 'kk' | 'en' | 'uk') => {
     setLanguage(lang);
     setLocale(lang);
     setHasChosenLanguage(true);
@@ -27,12 +27,12 @@ export default function LanguageSelectionModal() {
           </div>
         </div>
 
-        {/* Trilingual title */}
+        {/* Multilingual title */}
         <h2 className="text-amber-100 text-xl font-bold text-center mb-1">
           Тілді таңдаңыз
         </h2>
         <p className="text-amber-200/50 text-sm text-center mb-8">
-          Выберите язык / Choose language
+          Выберите язык / Choose language / Виберіть мову
         </p>
 
         <div className="flex gap-3 justify-center flex-wrap">
@@ -61,6 +61,15 @@ export default function LanguageSelectionModal() {
           >
             <span className="text-3xl">🇬🇧</span>
             <span className="text-amber-200 text-sm font-medium">ENG</span>
+          </button>
+
+          {/* Ukrainian */}
+          <button
+            onClick={() => pick('uk')}
+            className="flex flex-col items-center gap-3 p-5 rounded-xl border-2 border-amber-600/40 bg-amber-900/20 hover:bg-amber-900/40 hover:border-amber-500/60 transition-all cursor-pointer group w-32"
+          >
+            <span className="text-3xl">🇺🇦</span>
+            <span className="text-amber-200 text-sm font-medium">Українська</span>
           </button>
         </div>
       </div>

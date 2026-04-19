@@ -3421,4 +3421,12 @@
 - [ ] Привязать Service Account к RevenueCat
 
 ### 5. iOS RevenueCat
-- [ ] Добавить iOS приложение в RevenueCat с P8 ключом из App Store Connect
+- [x] Добавить iOS приложение в RevenueCat с P8 ключом из App Store Connect (appd44dfba10c, Bundle: com.durakonlinefromkz.app, Key: T3MFPSB685, iOS SDK Key: appl_GdpfUqDfDgVtrHhTWhmzgSCogqz)
+
+## Украинский язык
+- [x] Создать файл uk.ts с полным переводом всех текстов игры на украинский язык
+- [x] Зарегистрировать украинский язык в i18n/index.tsx (Locale type, translations map)
+- [x] Добавить украинский язык в LanguageSelectionModal (экран первого запуска)
+- [x] Добавить украинский язык в SettingsSheet (настройки)
+- [x] Добавить украинский язык в GameSettingsSheet (настройки в игре)
+- [x] Все 603 теста проходят
