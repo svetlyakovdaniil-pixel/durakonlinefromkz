@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- ── App Identity ──────────────────────────────────────────────────── -->
+	<key>CFBundleDisplayName</key>
+	<string>Дурак KZ</string>
+	<key>CFBundleIdentifier</key>
+	<string>online.durakonline.fromkz</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleExecutable</key>
+	<string>App</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+
+	<!-- ── Minimum iOS version ───────────────────────────────────────────── -->
+	<key>MinimumOSVersion</key>
+	<string>14.0</string>
+
+	<!-- ── Supported device orientations (iPhone) ────────────────────────── -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+
+	<!-- ── Supported device orientations (iPad) ──────────────────────────── -->
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+
+	<!-- ── Status bar ────────────────────────────────────────────────────── -->
+	<key>UIStatusBarHidden</key>
+	<false/>
+	<key>UIStatusBarStyle</key>
+	<string>UIStatusBarStyleLightContent</string>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- ── Launch screen ─────────────────────────────────────────────────── -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+
+	<!-- ── Main storyboard ───────────────────────────────────────────────── -->
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+
+	<!-- ── AdMob: REQUIRED by Google Mobile Ads SDK ──────────────────────── -->
+	<!-- Value is injected by GitHub Actions from VITE_ADMOB_IOS_APP_ID secret -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+
+	<!-- ── App Tracking Transparency (ATT) — iOS 14+ ─────────────────────── -->
+	<!-- Shown to the user before requesting IDFA permission.                  -->
+	<!-- Apple REQUIRES this key if your app uses AdMob or any ad network.    -->
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Мы используем данные для показа персонализированной рекламы и улучшения игрового опыта.</string>
+
+	<!-- ── Google Sign-In URL scheme ─────────────────────────────────────── -->
+	<!-- REVERSED_CLIENT_ID from GoogleService-Info.plist -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.825855589810-p63edci1a8ehttgcgurcehlskpp8vnb3</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ── Background modes ──────────────────────────────────────────────── -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- ── Network security ──────────────────────────────────────────────── -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsArbitraryLoadsInWebContent</key>
+		<true/>
+	</dict>
+
+	<!-- ── Capacitor: allow file access ──────────────────────────────────── -->
+	<key>WKAppBoundDomains</key>
+	<array>
+		<string>localhost</string>
+	</array>
+
+	<!-- ── Privacy: no camera/microphone/location needed ─────────────────── -->
+	<!-- Add these only if you add features that require them -->
+
+	<!-- ── App uses non-exempt encryption: NO ────────────────────────────── -->
+	<!-- Required for App Store export compliance -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+</dict>
+</plist>
