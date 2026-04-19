@@ -2097,7 +2097,7 @@ export default function GameTable({
               {sortMode === 'suit-rank' ? t('game.sortBySuit') : t('game.sortByRank')}
             </button>
           </div>
-          <div data-tutorial="player-hand">
+          <div data-tutorial="player-hand" className="relative z-10">
             <PlayerHand
               sortedHand={sortedHand}
               playableIds={playableIds}
