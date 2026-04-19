@@ -200,11 +200,14 @@ export default function TutorialStepDisplay({
       if (element) {
         const rect = element.getBoundingClientRect();
         if (rect.width === 0 && rect.height === 0) continue;
+        // For player-hand, add extra top padding to accommodate cards lifted on hover/highlight
+        const isPlayerHand = selector.includes('player-hand');
+        const topPadding = isPlayerHand ? 44 : padding;
         rects.push({
           left: rect.left - padding,
-          top: rect.top - padding,
+          top: rect.top - topPadding,
           width: rect.width + padding * 2,
-          height: rect.height + padding * 2,
+          height: rect.height + padding + topPadding,
         });
       }
     }
