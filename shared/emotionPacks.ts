@@ -54,11 +54,11 @@ export const HAMSTER_PACK: EmotionPack = {
   name: 'Хомяк',
   nameKk: 'Хомяк',
   nameEn: 'Hamster',
-  nameUk: "Хом'як",
+  nameUk: 'Хомяк',
   description: 'Оригинальные эмоции с хомяком',
   descriptionKk: 'Хомякпен түпнұсқа эмоциялар',
   descriptionEn: 'Original hamster emotions',
-  descriptionUk: "Оригінальні емоції з хом'яком",
+  descriptionUk: 'Оригінальні емоції з хомяком',
   price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   url: '/assets/static/emotion_laugh.png' },
@@ -106,6 +106,7 @@ export const DEVIL_PACK: EmotionPack = {
   name: 'Чертик',
   nameKk: 'Шайтан',
   nameEn: 'Devil',
+  nameUk: 'Чортеня',
   description: 'Те же эмоции, только с чертиком!',
   descriptionKk: 'Сол эмоциялар, бірақ шайтанмен!',
   descriptionEn: 'Same emotions, but with a little devil!',
