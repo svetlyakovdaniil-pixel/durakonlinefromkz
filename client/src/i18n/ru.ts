@@ -483,6 +483,7 @@ export const ru = {
     nameTooLong: 'Имя слишком длинное (макс. 50 символов)',
     nameChanged: 'Имя изменено',
     nameError: 'Ошибка при смене имени',
+    nameProfanity: 'Имя содержит недопустимые слова',
     enterName: 'Введите новое имя',
     playlist: 'Плейлист',
     selectPlaylist: 'Выберите плейлист',

@@ -482,6 +482,7 @@ export const en = {
     nameTooLong: 'Name is too long (max 50 characters)',
     nameChanged: 'Name changed',
     nameError: 'Error changing name',
+    nameProfanity: 'Name contains prohibited words',
     enterName: 'Enter new name',
     playlist: 'Playlist',
     selectPlaylist: 'Select playlist',

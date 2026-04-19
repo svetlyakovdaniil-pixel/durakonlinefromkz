@@ -197,5 +197,5 @@ export function containsProfanity(name: string): boolean {
   return ALL_TOKENS.some(token => normalized.includes(token));
 }
 
-/** Error message to return when profanity is detected */
-export const PROFANITY_ERR_MSG = 'Имя содержит недопустимые слова';
+/** Error code returned when profanity is detected — translated on the client side */
+export const PROFANITY_ERR_MSG = 'NAME_PROFANITY_10004';
