@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'kz.durak.online',
+  appId: 'online.durakonline.fromkz',
   appName: 'Дурак KZ',
   webDir: 'dist/public',
 
