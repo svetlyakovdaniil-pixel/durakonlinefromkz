@@ -3290,3 +3290,6 @@
 - [x] FriendsDrawer.tsx: добавить сезонный рейтинг + ранг в статистику FriendProfileView
 - [x] FriendsDrawer.tsx: добавить вкладки "Статистика" / "Достижения" в FriendProfileView
 - [x] FriendsDrawer.tsx: вкладка достижений показывает только unlocked=true достижения с иконкой, названием, датой
+## Баг: скидка применяется к базовой цене, а не к переопределённой
+- [x] Найти логику расчёта цены со скидкой (db.ts или routers.ts)
+- [x] Исправить: discountPercent применять к overridePrice (если задан), а не к basePrice

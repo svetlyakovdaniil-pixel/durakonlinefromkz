@@ -1061,7 +1061,12 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const isOwned = ownedPlaylistIds.includes(playlist.id);
                 const isFree = playlist.isDefault || playlist.priceShanyrak === 0;
                 const discount = getDiscount('playlist', String(playlist.id));
-                const effectivePrice = discount ? Math.floor(playlist.priceShanyrak * (1 - discount.percent / 100)) : playlist.priceShanyrak;
+                // Use admin override price if set (stored as priceTenge, but used as shanyrak for playlists)
+                const playlistOverride = priceOverrides.find((o: any) => o.itemType === 'playlist' && o.itemId === String(playlist.id));
+                const basePrice = (playlistOverride && playlistOverride.priceTenge !== null && playlistOverride.priceTenge !== undefined)
+                  ? playlistOverride.priceTenge
+                  : playlist.priceShanyrak;
+                const effectivePrice = discount ? Math.floor(basePrice * (1 - discount.percent / 100)) : basePrice;
                 const canAffordPlaylist = currentShanyrak >= effectivePrice;
                 const isPreviewPlaying = previewPlaylistId === playlist.id;
                 const trackCount = playlist.tracks?.length || 0;
@@ -1124,7 +1129,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           </Button>
                           <div className="flex flex-col items-end">
                             {discount && (
-                              <span className="text-gray-400 line-through text-xs">{playlist.priceShanyrak.toLocaleString()} 🏠</span>
+                              <span className="text-gray-400 line-through text-xs">{basePrice.toLocaleString()} 🏠</span>
                             )}
                             <div className="flex items-center gap-1">
                               <span className={`font-bold text-sm ${discount ? 'text-pink-300' : 'text-amber-100'}`}>{effectivePrice.toLocaleString()}</span>
