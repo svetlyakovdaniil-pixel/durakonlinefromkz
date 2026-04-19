@@ -227,7 +227,7 @@ export default function Home() {
   const handleForcedTutorialStart = useCallback(async () => {
     setForcedTutorialLoading(true);
     try {
-      const tutorialRoomName = locale === 'kk' ? '🎓 Оқыту' : locale === 'en' ? '🎓 Tutorial' : '🎓 Обучение';
+      const tutorialRoomName = `🎓 ${t('lobby.tutorial')}`;
       await createRoom(
         tutorialRoomName,
         2,
@@ -245,7 +245,7 @@ export default function Home() {
       setShowForcedTutorial(false);
     } catch (error) {
       console.error('Failed to start forced tutorial:', error);
-      toast.error(locale === 'kk' ? 'Оқытуды бастау сәтсіз аяқталды' : locale === 'en' ? 'Failed to start tutorial' : 'Не удалось запустить обучение');
+      toast.error(t('lobby.tutorialFailed'));
     } finally {
       setForcedTutorialLoading(false);
     }
@@ -369,23 +369,19 @@ export default function Home() {
           <div className="bg-gradient-to-b from-gray-800 to-gray-900 border border-yellow-500/40 rounded-2xl p-6 sm:p-8 max-w-md mx-4 text-center shadow-2xl shadow-yellow-500/10">
             <div className="text-5xl mb-4">🎉</div>
             <h2 className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-3">
-              {locale === 'kk' ? 'Құттықтаймыз! Оқыту аяқталды.' : locale === 'en' ? 'Congratulations! Tutorial completed.' : 'Поздравляем! Обучение пройдено.'}
+              {t('lobby.tutorialCongratsTitle')}
             </h2>
             <p className="text-white text-sm sm:text-base mb-4">
-              {locale === 'kk'
-                ? 'Егер оқытуды қайталан өткіңіз келсе, лоббидегі "оқыту" түймесіне басуға болады.'
-                : locale === 'en'
-                ? 'If you want to take the tutorial again, you can click the "Tutorial" button in the lobby.'
-                : 'Если вы захотите пройти обучение повторно, вы можете нажать на кнопку "обучение" в лобби.'}
+              {t('lobby.tutorialCongratsRepeat')}
             </p>
             {tutorialRewardGiven && (
               <>
                 <p className="text-yellow-300 text-sm sm:text-base mb-1">
-                  {locale === 'kk' ? 'Оқытуды сәтті аяқтағаныңыз үшін есептелді:' : locale === 'en' ? 'For successfully completing the tutorial, you have been credited:' : 'За успешное прохождение обучения, вам начислено:'}
+                  {t('lobby.tutorialRewardText')}
                 </p>
                 <div className="flex items-center justify-center gap-2 mb-6">
                   <span className="text-3xl sm:text-4xl font-bold text-yellow-400">+2000</span>
-                  <span className="text-lg text-yellow-300">{locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyrak' : 'шаныраков'}</span>
+                  <span className="text-lg text-yellow-300">{t('lobby.shanyraksUnit')}</span>
                 </div>
               </>
             )}
@@ -401,7 +397,7 @@ export default function Home() {
               }}
               className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold px-8 py-3 text-base rounded-xl"
             >
-              {locale === 'kk' ? 'Лоббиге өту' : locale === 'en' ? 'Go to Lobby' : 'Перейти в лобби'}
+              {t('lobby.goToLobby')}
             </Button>
           </div>
         </div>

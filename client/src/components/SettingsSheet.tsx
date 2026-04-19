@@ -40,24 +40,24 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   const sendContactMutation = trpc.contact.send.useMutation({
     onSuccess: () => {
-      toast.success(locale === 'kk' ? 'Хабарламаңыз жіберілді!' : locale === 'en' ? 'Message sent!' : 'Сообщение отправлено!');
+      toast.success(t('contact.successTitle'));
       setContactEmail('');
       setContactMessage('');
       setContactOpen(false);
     },
     onError: (err) => {
-      toast.error(err.message || (locale === 'kk' ? 'Қате орын алды' : locale === 'en' ? 'Error sending message' : 'Ошибка при отправке'));
+      toast.error(err.message || t('contact.errorTitle'));
     },
   });
 
   const handleSendContact = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(contactEmail)) {
-      toast.error(locale === 'kk' ? 'Жарамды email енгізіңіз' : locale === 'en' ? 'Enter a valid email' : 'Введите корректный email');
+      toast.error(t('contact.validationEmail'));
       return;
     }
     if (contactMessage.trim().length < 10) {
-      toast.error(locale === 'kk' ? 'Хабарлама тым қысқа (мин. 10 таңба)' : locale === 'en' ? 'Message too short (min. 10 characters)' : 'Сообщение слишком короткое (мин. 10 символов)');
+      toast.error(t('contact.validationMessage'));
       return;
     }
     sendContactMutation.mutate({ replyEmail: contactEmail, message: contactMessage.trim() });
@@ -279,7 +279,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             {ownedPlaylists.length > 0 && (
               <div className="mt-2">
                 <span className="text-xs text-amber-200/50 mb-1.5 block">
-                  {locale === 'kk' ? 'Плейлист' : locale === 'en' ? 'Playlist' : 'Плейлист'}
+                  {t('settings.playlist')}
                 </span>
                 <Select value={selectedPlaylistId} onValueChange={handlePlaylistChange}>
                   <SelectTrigger className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm">
@@ -287,7 +287,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   </SelectTrigger>
                   <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                     <SelectItem value="default" className="text-amber-100 text-sm">
-                      {locale === 'kk' ? 'Классикалық' : locale === 'en' ? 'Classic' : 'Классический'}
+                      {t('settings.classicMusic')}
                     </SelectItem>
                     {ownedPlaylists.map((p: any) => (
                       <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">
@@ -335,8 +335,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <Popover open={langOpen} onOpenChange={setLangOpen}>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-2 text-sm text-amber-100 hover:text-amber-300 transition-colors bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
-                  <span className="text-base">{locale === 'kk' ? '🇰🇿' : locale === 'en' ? '🇬🇧' : '🇷🇺'}</span>
-                  {locale === 'kk' ? 'Қазақша' : locale === 'en' ? 'English' : 'Русский'}
+                  <span className="text-base">{t('settings.langFlag')}</span>
+                  {t('settings.langName')}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="bg-[#1a2d45] border-amber-700/30 w-48 p-2" align="end">
@@ -376,10 +376,10 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <MessageSquare className="w-5 h-5 text-amber-400 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-amber-200/80">
-                {locale === 'kk' ? 'Әкімшілікпен байланыс' : locale === 'en' ? 'Contact Administration' : 'Связь с администрацией'}
+                {t('settings.contactButtonLabel')}
               </p>
               <p className="text-xs text-amber-200/40 mt-0.5">
-                {locale === 'kk' ? 'Сұрақ немесе ұсыныс жіберіңіз' : locale === 'en' ? 'Ask a question or leave a suggestion' : 'Задать вопрос или оставить предложение'}
+                {t('settings.contactButtonDesc')}
               </p>
             </div>
           </button>
@@ -394,10 +394,10 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             <Shield className="w-5 h-5 text-amber-400 shrink-0" />
             <div>
               <p className="text-sm font-semibold text-amber-200/80">
-                {locale === 'kk' ? 'Күпіялылық саясаты' : locale === 'en' ? 'Privacy Policy' : 'Политика конфиденциальности'}
+                {t('settings.privacyPolicy')}
               </p>
               <p className="text-xs text-amber-200/40 mt-0.5">
-                {locale === 'kk' ? 'Деректерді оқу' : locale === 'en' ? 'Read our privacy policy' : 'Ознакомиться с политикой'}
+                {t('settings.privacyPolicyDesc')}
               </p>
             </div>
           </a>
@@ -440,32 +440,32 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         <DialogHeader>
           <DialogTitle className="text-amber-100 flex items-center gap-2">
             <MessageSquare className="w-5 h-5 text-amber-400" />
-            {locale === 'kk' ? 'Әкімшілікпен байланыс' : locale === 'en' ? 'Contact Administration' : 'Связь с администрацией'}
+            {t('contact.dialogTitle')}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div>
             <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {locale === 'kk' ? 'Жауап електрондық пошта (email)' : locale === 'en' ? 'Your reply email' : 'Ваш email для обратной связи'}
+              {t('contact.emailLabel')}
               <span className="text-red-400 ml-1">*</span>
             </label>
             <Input
               type="email"
               value={contactEmail}
               onChange={(e) => setContactEmail(e.target.value)}
-              placeholder={locale === 'kk' ? 'example@mail.com' : 'example@mail.com'}
+              placeholder={t('contact.emailPlaceholder')}
               className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30"
             />
           </div>
           <div>
             <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {locale === 'kk' ? 'Хабарлама' : locale === 'en' ? 'Message' : 'Сообщение'}
+              {t('contact.messageLabel')}
               <span className="text-red-400 ml-1">*</span>
             </label>
             <Textarea
               value={contactMessage}
               onChange={(e) => setContactMessage(e.target.value)}
-              placeholder={locale === 'kk' ? 'Сұрақтарыңызды немесе ұсыныстарыңызды жазыңыз...' : locale === 'en' ? 'Describe your question or suggestion...' : 'Опишите ваш вопрос или предложение...'}
+              placeholder={t('contact.messagePlaceholder')}
               rows={5}
               maxLength={2000}
               className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30 resize-none"
@@ -486,9 +486,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             disabled={sendContactMutation.isPending}
             className="bg-amber-600 hover:bg-amber-500 text-white"
           >
-            {sendContactMutation.isPending
-              ? (locale === 'kk' ? 'Жіберілуде...' : locale === 'en' ? 'Sending...' : 'Отправка...')
-              : (locale === 'kk' ? 'Жіберу' : locale === 'en' ? 'Send' : 'Отправить')}
+            {sendContactMutation.isPending ? t('contact.sending') : t('contact.sendButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

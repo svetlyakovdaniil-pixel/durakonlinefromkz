@@ -151,7 +151,7 @@ export default function WaitingRoom({
             </Badge>
             {room.settings.playlistId && (
               <Badge variant="outline" className="border-purple-500/30 text-purple-300/70 text-[10px] sm:text-xs">
-                <Music className="w-3 h-3 mr-0.5 sm:mr-1" /> {locale === 'kk' ? 'Плейлист' : 'Плейлист'}
+                <Music className="w-3 h-3 mr-0.5 sm:mr-1" /> {t('settings.playlist')}
               </Badge>
             )}
             {room.hasPassword && (
@@ -427,7 +427,7 @@ export default function WaitingRoom({
                   value={editPassword}
                   onChange={e => setEditPassword(e.target.value)}
                   placeholder={room.hasPassword
-                    ? (locale === 'kk' ? 'Жаңа құпиясөз (өзгертпеу үшін бос қалдырыңыз)' : locale === 'en' ? 'New password (leave blank to keep current)' : 'Новый пароль (оставьте пустым, чтобы не менять)')
+                    ? t('waitingRoom.newPasswordPlaceholder')
                     : t('lobby.enterPassword')
                   }
                   className="bg-[#0f2035] border-amber-700/30 text-amber-100 h-9 mt-1"

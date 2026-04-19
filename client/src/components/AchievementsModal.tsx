@@ -20,7 +20,7 @@ interface AchievementsModalProps {
 }
 
 export default function AchievementsModal({ open, onClose, onRewardClaimed }: AchievementsModalProps) {
-  const { locale } = useTranslation();
+  const { locale, t } = useTranslation();
   const [claimingKey, setClaimingKey] = useState<string | null>(null);
 
   const { data: achievements = [], refetch } = trpc.achievements.list.useQuery(undefined, {
@@ -283,7 +283,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
               color: '#c9a84c',
             }}
           >
-            {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+            {t('common.close')}
           </button>
         </div>
       </div>

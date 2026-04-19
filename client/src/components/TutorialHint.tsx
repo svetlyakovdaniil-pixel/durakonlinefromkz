@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
+import { useTranslation } from '@/i18n';
 
 interface TutorialHintProps {
   title: string;
@@ -23,13 +24,26 @@ export default function TutorialHint({
   onPrevious,
   onSkip,
 }: TutorialHintProps) {
+  const { t, locale } = useTranslation();
+
+  const stepLabel = locale === 'kk'
+      ? `Қадам ${currentStep} / ${totalSteps}`
+      : locale === 'en'
+        ? `Step ${currentStep} of ${totalSteps}`
+        : `Шаг ${currentStep} из ${totalSteps}`;
+
+  const descLabel = t('tutorial.descLabel');
+  const situationLabel = t('tutorial.situationLabel');
+  const backLabel = t('common.back');
+  const nextLabel = currentStep === totalSteps ? t('tutorial.finish') : t('tutorial.next');
+
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-96 z-40 bg-[#1a2d45] border-2 border-amber-700/50 rounded-lg p-4 shadow-2xl max-h-[60vh] overflow-y-auto">
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1">
           <h3 className="text-amber-300 font-bold text-lg">{title}</h3>
-          <p className="text-amber-200/70 text-xs mt-1">Шаг {currentStep} из {totalSteps}</p>
+          <p className="text-amber-200/70 text-xs mt-1">{stepLabel}</p>
         </div>
         <button
           onClick={onSkip}
@@ -50,12 +64,12 @@ export default function TutorialHint({
       {/* Content */}
       <div className="space-y-3 mb-4">
         <div>
-          <p className="text-amber-100 text-sm font-semibold mb-1">Описание:</p>
+          <p className="text-amber-100 text-sm font-semibold mb-1">{descLabel}</p>
           <p className="text-amber-100/80 text-sm">{description}</p>
         </div>
 
         <div>
-          <p className="text-amber-100 text-sm font-semibold mb-1">Ситуация:</p>
+          <p className="text-amber-100 text-sm font-semibold mb-1">{situationLabel}</p>
           <p className="text-amber-100/80 text-sm">{situation}</p>
         </div>
       </div>
@@ -70,7 +84,7 @@ export default function TutorialHint({
           className="flex-1 border-amber-700/30 text-amber-200 hover:bg-[#0a1628] disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="w-4 h-4 mr-1" />
-          Назад
+          {backLabel}
         </Button>
 
         <Button
@@ -79,7 +93,7 @@ export default function TutorialHint({
           size="sm"
           className="flex-1 bg-amber-600 hover:bg-amber-500 text-white"
         >
-          {currentStep === totalSteps ? 'Завершить' : 'Далее'}
+          {nextLabel}
           <ChevronRight className="w-4 h-4 ml-1" />
         </Button>
       </div>

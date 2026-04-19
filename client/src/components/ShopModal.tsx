@@ -703,7 +703,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           toast.info(t('shop.owned'));
           refetchOwnedPlaylists();
         } else if (result.reason === 'insufficient_shanyrak') {
-          toast.error(locale === 'kk' ? 'Шаңырақ жеткіліксіз' : 'Недостаточно шаныраков');
+          toast.error(t('shop.notEnoughShanyrak'));
         } else {
           toast.error(t('common.error'));
         }
@@ -928,7 +928,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                             <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
                           )}
                           {isSeasonFrame && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">{locale === 'kk' ? 'МАУСЫМ' : locale === 'en' ? 'SEASON' : 'СЕЗОН'}</span>
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">{t('shop.seasonBadgeLabel')}</span>
                           )}
                         </div>
                         <p className="text-amber-200/50 text-xs mb-3">
@@ -938,26 +938,26 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           isOwned ? (
                             <div className="flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
                               <Check className="w-4 h-4" />
-                              <span>{locale === 'kk' ? 'Алынды' : locale === 'en' ? 'Earned' : 'Получена'}</span>
+                              <span>{t('shop.frameEarned')}</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 text-amber-200/50 text-xs">
                               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 text-yellow-600/60">
                                 <polygon points="12,2 15,9 22,9 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9 9,9" fill="rgba(218,165,32,0.2)" stroke="rgba(218,165,32,0.6)" />
                               </svg>
-                              <span>{locale === 'kk' ? 'Маусымда Обсидиан дәрежесін алу қажет' : locale === 'en' ? 'Earn Obsidian rank at season end' : 'Получите ранг Обсидиан в конце сезона'}</span>
+                              <span>{t('shop.frameEarnObsidian')}</span>
                             </div>
                           )
                         ) : isPremiumFrame ? (
                           isOwned ? (
                             <div className="flex items-center gap-1.5 text-yellow-400 text-sm font-medium">
                               <Crown className="w-4 h-4" />
-                              <span>{locale === 'kk' ? 'Белсенді' : locale === 'en' ? 'Active with Premium' : 'Активна с Premium'}</span>
+                              <span>{t('shop.frameActiveWithPremium')}</span>
                             </div>
                           ) : (
                             <div className="flex items-center gap-2 text-amber-200/50 text-xs">
                               <Crown className="w-4 h-4 text-yellow-600/60" />
-                              <span>{locale === 'kk' ? 'Premium жазылымы қажет' : locale === 'en' ? 'Requires Premium subscription' : 'Требуется подписка Premium'}</span>
+                              <span>{t('shop.requiresPremiumSub')}</span>
                             </div>
                           )
                         ) : isOwned ? (
@@ -1022,7 +1022,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                           // No price — referral reward only
                           <div className="flex items-center gap-2 mt-1">
                             <span className="text-xs text-amber-400/80 font-medium">
-                              🎁 {locale === 'kk' ? '50 достық шақыру арқылы алыңыз' : locale === 'en' ? 'Invite 50 friends to unlock' : 'Награда за 50 приглашений'}
+                              🎁 {t('shop.invite50Friends')}
                             </span>
                           </div>
                         ) : (
@@ -1084,7 +1084,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-amber-100 font-bold text-sm">{displayName}</h4>
-                        <p className="text-amber-200/50 text-xs">{trackCount} {locale === 'kk' ? 'трек' : locale === 'en' ? 'tracks' : 'треков'}</p>
+                        <p className="text-amber-200/50 text-xs">{trackCount} {t('shop.tracksUnit')}</p>
                         {displayDesc && <p className="text-amber-200/40 text-[10px] mt-0.5">{displayDesc}</p>}
                       </div>
                     </div>
@@ -1204,10 +1204,10 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               onClick={async () => {
                                 await setActiveEmotionPackMutation.mutateAsync({ packId: pack.id });
                                 refetchActiveEmotionPack();
-                                toast.success(locale === 'kk' ? 'Белсенді болды' : locale === 'en' ? 'Activated!' : 'Активировано!');
+                                toast.success(t('shop.activated'));
                               }}
                             >
-                              {locale === 'kk' ? 'Белсендіру' : locale === 'en' ? 'Activate' : 'Активировать'}
+                              {t('shop.activateBtn')}
                             </Button>
                           </>
                         )
@@ -1285,10 +1285,10 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 <div className="flex flex-col items-center gap-2 py-2">
                   <div className="text-amber-400 text-2xl">🎁</div>
                   <p className="text-amber-300/80 text-sm font-medium text-center">
-                    {locale === 'kk' ? '50 достық шақыру арқылы алыңыз' : locale === 'en' ? 'Invite 50 friends to unlock' : 'Награда за 50 приглашений'}
+                    {t('shop.invite50Friends')}
                   </p>
                   <p className="text-amber-200/40 text-xs text-center">
-                    {locale === 'kk' ? 'Сатып алуға болмайды' : locale === 'en' ? 'Not available for purchase' : 'Недоступно для покупки'}
+                    {t('shop.notForSale')}
                   </p>
                 </div>
               ) : (

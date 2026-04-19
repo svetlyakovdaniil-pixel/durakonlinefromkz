@@ -175,8 +175,8 @@ export default function GameSettingsSheet({ onLeaveGame, children, roomPenalty =
             <Popover open={langOpen} onOpenChange={setLangOpen}>
               <PopoverTrigger asChild>
                 <button className="flex items-center gap-2 text-sm text-amber-100 hover:text-amber-300 transition-colors bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
-                  <span className="text-base">{locale === 'kk' ? '🇰🇿' : locale === 'en' ? '🇬🇧' : '🇷🇺'}</span>
-                  {locale === 'kk' ? 'Қазақша' : locale === 'en' ? 'English' : 'Русский'}
+                  <span className="text-base">{t('settings.langFlag')}</span>
+                  {t('settings.langName')}
                 </button>
               </PopoverTrigger>
               <PopoverContent className="bg-[#1a2d45] border-amber-700/30 w-48 p-2" align="end">

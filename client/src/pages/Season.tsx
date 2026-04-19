@@ -29,11 +29,15 @@ interface SeasonPageProps {
   onClose: () => void;
 }
 
-function formatTimeLeft(endDate: Date, locale?: string): string {
+function formatTimeLeft(endDate: Date, locale?: string, t?: (key: string) => string): string {
   const now = new Date();
   const diff = endDate.getTime() - now.getTime();
   const days = Math.floor(Math.max(0, diff) / (1000 * 60 * 60 * 24));
   const hours = Math.floor((Math.max(0, diff) % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  if (t) {
+    if (diff <= 0) return t('season.timeLeftZero');
+    return t('season.timeLeftFormat').replace('{d}', String(days)).replace('{h}', String(hours));
+  }
   if (locale === 'en') return diff <= 0 ? '0d 0h' : `${days}d ${hours}h`;
   if (locale === 'kk') return diff <= 0 ? '0 күн 0 сағ' : `${days} күн ${hours} сағ`;
   return diff <= 0 ? '0д 0ч' : `${days}д ${hours}ч`;
@@ -67,6 +71,7 @@ function RewardPopup({
   locale: string;
   onClose: () => void;
 }) {
+  const { t } = useTranslation();
   const rank = SEASON_RANKS.find(r => r.key === rankKey);
 
   if (!rank) return null;
@@ -127,7 +132,7 @@ function RewardPopup({
             <div>
               <div className="font-bold text-base" style={{ color: rank.color }}>{rankName}</div>
               <div className="text-amber-200/50 text-xs mt-0.5">
-                {locale === 'kk' ? 'Маусым соңындағы сыйақы' : locale === 'en' ? 'End of season reward' : 'Награда в конце сезона'}
+                {t('lobby.endOfSeasonReward')}
               </div>
             </div>
           </div>
@@ -138,7 +143,7 @@ function RewardPopup({
             <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(234,179,8,0.08)' }}>
               <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
               <span className="text-amber-200 font-semibold text-sm">
-                +{reward.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}
+                +{reward.shanyraks.toLocaleString()} {t('lobby.shanyraksUnit')}
               </span>
             </div>
 
@@ -147,7 +152,7 @@ function RewardPopup({
               <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(139,92,246,0.10)' }}>
                 <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
                 <span className="text-purple-300 font-semibold text-sm">
-                  +{reward.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}
+                  +{reward.tenge} {t('lobby.tengeUnit')}
                 </span>
               </div>
             )}
@@ -161,7 +166,7 @@ function RewardPopup({
                 <PlayerAvatar avatarId={seasonAvatarId} size={48} className="flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className={`${avatarAccent.text} font-semibold text-sm`}>
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
+                    {t('lobby.avatarLabel')}: {avatarDisplayName}
                   </div>
                 </div>
               </div>
@@ -175,7 +180,7 @@ function RewardPopup({
                 <PlayerAvatar avatarId={seasonAvatarId} size={48} className="flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className={`${avatarAccent.text} font-semibold text-sm`}>
-                    {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: {avatarDisplayName}
+                    {t('lobby.avatarLabel')}: {avatarDisplayName}
                   </div>
 
                 </div>
@@ -200,10 +205,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-yellow-300 font-semibold text-sm">
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` - Season ${seasonNumber}` : ''}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')}{seasonNumber ? ` - Season ${seasonNumber}` : ''}
                   </div>
                   <div className="text-amber-200/50 text-xs mt-0.5">
-                    {locale === 'kk' ? 'Анимациялық эксклюзивті жақтау' : locale === 'en' ? 'Exclusive animated frame' : 'Эксклюзивная анимированная рамка'}
+                    {t('lobby.frameExclusiveAnimated')}
                   </div>
                 </div>
               </div>
@@ -226,10 +231,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(220,0,60,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameRuby')}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,160,0.50)' }}>
-                    {locale === 'kk' ? 'Алқызыл жарқыл жақтауы' : locale === 'en' ? 'Exclusive crimson flash frame' : 'Эксклюзивная рамка с алой вспышкой'}
+                    {t('lobby.frameCrimsonFlash')}
                   </div>
                 </div>
               </div>
@@ -252,10 +257,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(245,158,11,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameAmber')}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(251,146,60,0.50)' }}>
-                    {locale === 'kk' ? 'Күн жарқылы жақтауы' : locale === 'en' ? 'Exclusive solar flare frame' : 'Эксклюзивная рамка с солнечной вспышкой'}
+                    {t('lobby.frameSolarFlare')}
                   </div>
                 </div>
               </div>
@@ -278,10 +283,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(249,115,22,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameZircon')}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(168,85,247,0.50)' }}>
-                    {locale === 'kk' ? 'Комета құйрығы жақтауы' : locale === 'en' ? 'Exclusive comet trail frame' : 'Эксклюзивная рамка с хвостом кометы'}
+                    {t('lobby.frameCometTrail')}
                   </div>
                 </div>
               </div>
@@ -304,10 +309,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(0,212,255,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: Obsidian - Season 7
+                    {t('lobby.frameLabel')}: Obsidian - Season 7
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(0,180,255,0.50)' }}>
-                    {locale === 'kk' ? 'Қос орбиталы эксклюзивті жақтау' : locale === 'en' ? 'Exclusive dual-orbit animated frame' : 'Эксклюзивная рамка с двойной орбитой'}
+                    {t('lobby.frameDualOrbit')}
                   </div>
                 </div>
               </div>
@@ -331,10 +336,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(220,50,0,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 9}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season {seasonNumber ?? 9}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(200,80,0,0.50)' }}>
-                    {locale === 'kk' ? 'Жапон Они жақтауы' : locale === 'en' ? 'Exclusive Japanese Oni frame' : 'Эксклюзивная японская рамка Они'}
+                    {t('lobby.frameJapaneseOni')}
                   </div>
                 </div>
               </div>
@@ -357,10 +362,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(255,100,10,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 8}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season {seasonNumber ?? 8}
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(255,80,0,0.50)' }}>
-                    {locale === 'kk' ? 'Балқыған лава жақтауы' : locale === 'en' ? 'Exclusive molten lava frame' : 'Эксклюзивная рамка с расплавленной лавой'}
+                    {t('lobby.frameMoltenLava')}
                   </div>
                 </div>
               </div>
@@ -381,10 +386,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(0,200,180,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 1' : locale === 'en' ? 'Obsidian - Season 1' : 'Обсидиан - Season 1'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 1
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(0,200,180,0.50)' }}>
-                    {locale === 'kk' ? 'Мұхит түбі: биолюминесцентті жыланбалықтар' : locale === 'en' ? 'Ocean abyss: bioluminescent tentacles' : 'Бездна океана: биолюминесцентные щупальца'}
+                    {t('lobby.frameOceanAbyss')}
                   </div>
                 </div>
               </div>
@@ -404,10 +409,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(200,160,0,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 2' : locale === 'en' ? 'Obsidian - Season 2' : 'Обсидиан - Season 2'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 2
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(200,160,0,0.50)' }}>
-                    {locale === 'kk' ? 'Фараондардың қара сиқыры' : locale === 'en' ? 'Dark pharaoh magic: golden hieroglyphs' : 'Тёмная магия фараонов: золотые иероглифы'}
+                    {t('lobby.frameEgyptianMagic')}
                   </div>
                 </div>
               </div>
@@ -427,10 +432,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(100,150,255,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 3' : locale === 'en' ? 'Obsidian - Season 3' : 'Обсидиан - Season 3'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 3
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(100,150,255,0.50)' }}>
-                    {locale === 'kk' ? 'Елес дауылы: найзағайлар мен бас сүйек' : locale === 'en' ? 'Ghost storm: lightning and skull' : 'Призрачный шторм: молнии и череп'}
+                    {t('lobby.framePirateStorm')}
                   </div>
                 </div>
               </div>
@@ -450,10 +455,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(140,60,220,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 4' : locale === 'en' ? 'Obsidian - Season 4' : 'Обсидиан - Season 4'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 4
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(140,60,220,0.50)' }}>
-                    {locale === 'kk' ? 'Иггдрасиль рундары' : locale === 'en' ? 'Yggdrasil runes: aurora and Mjolnir' : 'Руны Иггдрасиля: аврора и молот Тора'}
+                    {t('lobby.frameNorseRunes')}
                   </div>
                 </div>
               </div>
@@ -473,10 +478,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(100,0,200,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 5' : locale === 'en' ? 'Obsidian - Season 5' : 'Обсидиан - Season 5'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 5
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(100,0,200,0.50)' }}>
-                    {locale === 'kk' ? 'Қара тесік: галактикалық спираль' : locale === 'en' ? 'Black hole: galactic spiral' : 'Чёрная дыра: галактическая спираль'}
+                    {t('lobby.frameSpaceGalaxy')}
                   </div>
                 </div>
               </div>
@@ -496,10 +501,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(0,255,180,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 10' : locale === 'en' ? 'Obsidian - Season 10' : 'Обсидиан - Season 10'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 10
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(0,255,180,0.50)' }}>
-                    {locale === 'kk' ? 'Void circuit: неон глитч пен матрица' : locale === 'en' ? 'Void circuit: neon glitch and matrix rain' : 'Void circuit: неоновый глитч и матричный дождь'}
+                    {t('lobby.frameCyberpunkVoid')}
                   </div>
                 </div>
               </div>
@@ -519,10 +524,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(200,150,0,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 11' : locale === 'en' ? 'Obsidian - Season 11' : 'Обсидиан - Season 11'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 11
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(200,150,0,0.50)' }}>
-                    {locale === 'kk' ? 'Алтын тізбек: винил ойықтары' : locale === 'en' ? 'Gold chain: vinyl grooves and beat wave' : 'Золотая цепь: виниловые бороздки и beat wave'}
+                    {t('lobby.frameHiphopGold')}
                   </div>
                 </div>
               </div>
@@ -542,10 +547,10 @@ function RewardPopup({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-sm" style={{ color: 'rgba(180,120,255,0.95)' }}>
-                    {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: {locale === 'kk' ? 'Обсидиан - Season 12' : locale === 'en' ? 'Obsidian - Season 12' : 'Обсидиан - Season 12'}
+                    {t('lobby.frameLabel')}: {t('lobby.frameObsidian')} - Season 12
                   </div>
                   <div className="text-xs mt-0.5" style={{ color: 'rgba(180,120,255,0.50)' }}>
-                    {locale === 'kk' ? 'Қосарлылық: периште қанаттары мен тозақ оты' : locale === 'en' ? 'Duality: angel wings and hellfire' : 'Двойственность: крылья ангела и адский огонь'}
+                    {t('lobby.frameAngelsDuality')}
                   </div>
                 </div>
               </div>
@@ -559,7 +564,7 @@ function RewardPopup({
 
 export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const { user } = useAuth();
-  const { locale } = useTranslation();
+  const { t, locale } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
   const [showRulesDialog, setShowRulesDialog] = useState(false);
@@ -590,7 +595,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
 
   const endDate = seasonData?.endDate ? new Date(seasonData.endDate) : null;
   const startDate = seasonData?.startDate ? new Date(seasonData.startDate) : null;
-  const timeLeft = endDate ? formatTimeLeft(endDate, locale) : '-';
+  const timeLeft = endDate ? formatTimeLeft(endDate, locale, t) : '-';
 
   const seasonInfo = seasonData?.seasonInfo;
   const seasonName = seasonInfo
@@ -633,14 +638,14 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
             <div className="flex items-center gap-2">
               <span className="text-xl">{theme.emoji}</span>
               <span className="font-bold text-white text-lg">
-                {locale === 'kk' ? 'Маусым' : locale === 'en' ? 'Season' : 'Сезон'}
+                {t('season.seasonLabel')}
               </span>
             </div>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setShowRulesDialog(true)}
                 className="text-white/50 hover:text-white transition-colors p-1"
-                title={locale === 'kk' ? 'Ережелер' : locale === 'en' ? 'Rules' : 'Правила'}
+                title={t('season.rulesButton')}
               >
                 <HelpCircle className="w-5 h-5" />
               </button>
@@ -661,16 +666,12 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
             <div className="flex items-center justify-center gap-2 text-sm" style={{ color: `${theme.accent}80` }}>
               <Clock className="w-4 h-4" />
               <span>
-                {locale === 'kk' ? 'Аяқталуға дейін:' : locale === 'en' ? 'Ends in:' : 'До конца:'} {timeLeft}
+                {t('season.endsIn')} {timeLeft}
               </span>
             </div>
             {/* Premium note */}
             <div className="mt-2 text-xs italic" style={{ color: `${theme.accent}50` }}>
-              {locale === 'kk'
-                ? '★ Премиум сезондық рейтингке бонус бермейді'
-                : locale === 'en'
-                  ? '★ Premium does not grant bonuses to season rating'
-                  : '★ Премиум не даёт бонус к сезонному рейтингу'}
+            {t('season.premiumNote')}
             </div>
           </div>
 
@@ -687,10 +688,10 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 }
               >
                 {tab === 'info'
-                  ? (locale === 'kk' ? 'Менің рейтингім' : locale === 'en' ? 'My Rating' : 'Мой рейтинг')
+                  ? t('season.myRating')
                   : tab === 'leaderboard'
-                    ? (locale === 'kk' ? 'Топ ойыншылар' : locale === 'en' ? 'Top Players' : 'Топ игроков')
-                    : (locale === 'kk' ? 'Рангтар' : locale === 'en' ? 'Ranks' : 'Ранги')}
+                    ? t('season.topPlayers')
+                    : t('season.ranksTab')}
               </button>
             ))}
           </div>
@@ -709,13 +710,13 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-xs text-amber-200/50 mb-0.5">
-                        {locale === 'kk' ? 'Ағымдағы ранг' : locale === 'en' ? 'Current rank' : 'Текущий ранг'}
+                        {t('season.currentRank')}
                       </div>
                       <div className="font-bold text-lg" style={{ color: currentRank.color }}>
                         {locale === 'kk' ? currentRank.nameKk : locale === 'en' ? currentRank.nameEn : currentRank.nameRu}
                       </div>
                       <div className="text-amber-100 font-mono text-sm mt-0.5">
-                        {seasonData?.seasonRating ?? 0} {locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}
+                        {seasonData?.seasonRating ?? 0} {t('season.ptsAbbr')}
                       </div>
                     </div>
                   </div>
@@ -735,7 +736,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       color={nextRank.color}
                     />
                     <div className="text-center text-xs text-amber-200/40">
-                      {nextRank.minRating - (seasonData?.seasonRating ?? 0)} {locale === 'kk' ? 'ұпай қалды' : locale === 'en' ? 'pts to next rank' : 'очков до следующего ранга'}
+                      {nextRank.minRating - (seasonData?.seasonRating ?? 0)} {t('season.ptsToNextRank')}
                     </div>
                   </div>
                 )}
@@ -743,9 +744,9 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { label: locale === 'kk' ? 'Ойындар' : locale === 'en' ? 'Games' : 'Игры', value: seasonData?.gamesPlayed ?? 0 },
-                    { label: locale === 'kk' ? 'Жеңістер' : locale === 'en' ? 'Wins' : 'Победы', value: seasonData?.wins ?? 0 },
-                    { label: locale === 'kk' ? 'Жеңілістер' : locale === 'en' ? 'Losses' : 'Поражения', value: seasonData?.losses ?? 0 },
+                    { label: t('season.gamesLabel'), value: seasonData?.gamesPlayed ?? 0 },
+                    { label: t('season.winsLabel'), value: seasonData?.wins ?? 0 },
+                    { label: t('season.lossesLabel'), value: seasonData?.losses ?? 0 },
                   ].map(stat => (
                     <div key={stat.label} className="rounded-lg p-3 text-center" style={{ background: 'rgba(255,255,255,0.04)' }}>
                       <div className="text-amber-100 font-bold text-xl">{stat.value}</div>
@@ -758,7 +759,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.15)' }}>
                   <div className="flex items-center gap-2 text-amber-300 font-semibold text-sm">
                     <Trophy className="w-4 h-4" />
-                    <span>{locale === 'kk' ? 'Маусым соңындағы сыйақы' : locale === 'en' ? 'End of season reward' : 'Награда за сезон'}</span>
+                    <span>{t('season.endOfSeasonRewardPreview')}</span>
                   </div>
                   {currentRank && (() => {
                     // Use per-season reward def
@@ -783,13 +784,13 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                         {/* Shanyraks */}
                         <div className="flex items-center gap-2">
                           <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
-                          <span>+{rewardDef.shanyraks.toLocaleString()} {locale === 'kk' ? 'шаңырақ' : locale === 'en' ? 'shanyraks' : 'шаныраков'}</span>
+                          <span>+{rewardDef.shanyraks.toLocaleString()} {t('lobby.shanyraksUnit')}</span>
                         </div>
                         {/* Tenge */}
                         {rewardDef.tenge > 0 && (
                           <div className="flex items-center gap-2">
                             <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
-                            <span>+{rewardDef.tenge} {locale === 'kk' ? 'теңге' : locale === 'en' ? 'tenge' : 'тенге'}</span>
+                            <span>+{rewardDef.tenge} {t('lobby.tengeUnit')}</span>
                           </div>
                         )}
                         {/* Avatar - per-season */}
@@ -803,7 +804,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                                 {seasonAvatarId ? <PlayerAvatar avatarId={seasonAvatarId} size={32} /> : <div className="w-8 h-8 flex items-center justify-center text-lg">🖼</div>}
                               </div>
                               <span>
-                                {locale === 'kk' ? 'Аватар' : locale === 'en' ? 'Avatar' : 'Аватарка'}: <span className="text-amber-300 font-medium">{avatarDisplayName}</span>
+                                {t('lobby.avatarLabel')}: <span className="text-amber-300 font-medium">{avatarDisplayName}</span>
                               </span>
 
                             </div>
@@ -822,7 +823,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </GreatKhanFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span className="text-yellow-300 font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'}{seasonNumber ? ` - Season ${seasonNumber}` : ''}</span>
+                              {t('lobby.frameLabel')}: <span className="text-yellow-300 font-medium">{t('lobby.frameObsidian')}{seasonNumber ? ` - Season ${seasonNumber}` : ''}</span>
                             </span>
                           </div>
                         )}
@@ -839,7 +840,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </RubyNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,0,60,0.95)' }} className="font-medium">{locale === 'kk' ? 'Рубин' : locale === 'en' ? 'Ruby' : 'Рубин'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(220,0,60,0.95)' }} className="font-medium">{t('lobby.frameRuby')}</span>
                             </span>
                           </div>
                         )}
@@ -856,7 +857,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </AmberNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(245,158,11,0.95)' }} className="font-medium">{locale === 'kk' ? 'Янтар' : locale === 'en' ? 'Amber' : 'Янтарь'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(245,158,11,0.95)' }} className="font-medium">{t('lobby.frameAmber')}</span>
                             </span>
                           </div>
                         )}
@@ -873,7 +874,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ZirconNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(249,115,22,0.95)' }} className="font-medium">{locale === 'kk' ? 'Циркон' : locale === 'en' ? 'Zircon' : 'Циркон'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(249,115,22,0.95)' }} className="font-medium">{t('lobby.frameZircon')}</span>
                             </span>
                           </div>
                         )}
@@ -891,7 +892,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianNeonFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">Obsidian - Season 7</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(0,212,255,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 7</span>
                             </span>
                           </div>
                         )}
@@ -910,7 +911,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </OniJapaneseFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(220,50,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 9}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(220,50,0,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season {seasonNumber ?? 9}</span>
                             </span>
                           </div>
                         )}
@@ -928,7 +929,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </MoltenLavaFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(255,100,10,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан' : locale === 'en' ? 'Obsidian' : 'Обсидиан'} - Season {seasonNumber ?? 8}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(255,100,10,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season {seasonNumber ?? 8}</span>
                             </span>
                           </div>
                         )}
@@ -944,7 +945,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianUnderwaterFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,200,180,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 1' : locale === 'en' ? 'Obsidian - Season 1' : 'Обсидиан - Season 1'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(0,200,180,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 1</span>
                             </span>
                           </div>
                         )}
@@ -959,7 +960,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianEgyptianFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(200,160,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 2' : locale === 'en' ? 'Obsidian - Season 2' : 'Обсидиан - Season 2'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(200,160,0,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 2</span>
                             </span>
                           </div>
                         )}
@@ -974,7 +975,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianPirateFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(100,150,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 3' : locale === 'en' ? 'Obsidian - Season 3' : 'Обсидиан - Season 3'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(100,150,255,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 3</span>
                             </span>
                           </div>
                         )}
@@ -989,7 +990,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianNorseFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(140,60,220,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 4' : locale === 'en' ? 'Obsidian - Season 4' : 'Обсидиан - Season 4'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(140,60,220,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 4</span>
                             </span>
                           </div>
                         )}
@@ -1004,7 +1005,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianSpaceFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(100,0,200,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 5' : locale === 'en' ? 'Obsidian - Season 5' : 'Обсидиан - Season 5'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(100,0,200,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 5</span>
                             </span>
                           </div>
                         )}
@@ -1019,7 +1020,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianCyberpunkFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(0,255,180,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 10' : locale === 'en' ? 'Obsidian - Season 10' : 'Обсидиан - Season 10'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(0,255,180,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 10</span>
                             </span>
                           </div>
                         )}
@@ -1034,7 +1035,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianHiphopFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(200,150,0,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 11' : locale === 'en' ? 'Obsidian - Season 11' : 'Обсидиан - Season 11'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(200,150,0,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 11</span>
                             </span>
                           </div>
                         )}
@@ -1049,7 +1050,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               </ObsidianAngelsDemonsFrame>
                             </div>
                             <span>
-                              {locale === 'kk' ? 'Жақтау' : locale === 'en' ? 'Frame' : 'Рамка'}: <span style={{ color: 'rgba(180,120,255,0.95)' }} className="font-medium">{locale === 'kk' ? 'Обсидиан - Season 12' : locale === 'en' ? 'Obsidian - Season 12' : 'Обсидиан - Season 12'}</span>
+                              {t('lobby.frameLabel')}: <span style={{ color: 'rgba(180,120,255,0.95)' }} className="font-medium">{t('lobby.frameObsidian')} - Season 12</span>
                             </span>
                           </div>
                         )}
@@ -1065,11 +1066,11 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               <div className="p-3">
                 {!leaderboardData ? (
                   <div className="text-center text-amber-200/40 py-10">
-                    {locale === 'kk' ? 'Жүктелуде...' : locale === 'en' ? 'Loading...' : 'Загрузка...'}
+                    {t('common.loading')}
                   </div>
                 ) : leaderboardData.entries.length === 0 ? (
                   <div className="text-center text-amber-200/40 py-10">
-                    {locale === 'kk' ? 'Ойыншылар жоқ' : locale === 'en' ? 'No players yet' : 'Пока нет игроков'}
+                    {t('season.noPlayersYet')}
                   </div>
                 ) : (
                   <div className="space-y-1">
@@ -1112,7 +1113,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                               {entry.seasonRating}
                             </div>
                             <div className="text-amber-200/40 text-xs">
-                              {locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}
+                              {t('season.ptsAbbr')}
                             </div>
                           </div>
                         </div>
@@ -1152,16 +1153,16 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                           </div>
                           {isCurrent ? (
                             <div className="text-[10px] text-amber-300 mt-0.5 font-medium">
-                              ★ {locale === 'kk' ? 'Сіздің рангіңіз' : locale === 'en' ? 'Your rank' : 'Ваш ранг'}
+                              ★ {t('season.yourRankLabel')}
                             </div>
                           ) : (
                             <div className="text-amber-200/40 text-xs mt-0.5">
-                              {ratingRange} {locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}
+                              {ratingRange} {t('season.ptsAbbr')}
                             </div>
                           )}
                           {isCurrent && (
                             <div className="text-amber-200/40 text-xs mt-0.5">
-                              {ratingRange} {locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}
+                              {ratingRange} {t('season.ptsAbbr')}
                             </div>
                           )}
                         </div>
@@ -1177,7 +1178,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                           }}
                         >
                           <Gift className="w-3 h-3" />
-                          {locale === 'kk' ? 'Сыйақы' : locale === 'en' ? 'Reward' : 'Награда'}
+                          {t('season.rewardLabel')}
                         </button>
                       </div>
                     </div>
@@ -1194,7 +1195,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
               style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
             >
-              {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+              {t('season.closeButton')}
             </button>
           </div>
         </div>
@@ -1217,7 +1218,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               <div className="flex items-center gap-2">
                 <HelpCircle className="w-5 h-5" style={{ color: theme.accent }} />
                 <span className="font-bold text-white text-base">
-                  {locale === 'kk' ? 'Маусым ережелері' : locale === 'en' ? 'Season Rules' : 'Правила сезона'}
+                  {t('season.rulesTitle')}
                 </span>
               </div>
               <button onClick={() => setShowRulesDialog(false)} className="text-white/50 hover:text-white transition-colors p-1">
@@ -1231,21 +1232,17 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               {/* Section 1: How the season works */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Маусым қалай жұмыс істейді?' : locale === 'en' ? 'How does the season work?' : 'Как работает сезон?'}
+                  {t('season.howSeasonWorks')}
                 </h3>
                 <p>
-                  {locale === 'kk'
-                    ? 'Әр маусым белгілі мерзімде өтеді. Ойын ойнаған сайын маусымдық ұпай жинайды. Маусым аяқталғанда рангыңызға сәйкес сыйақы аласыз. Әр маусымда ұпай сфирланады — жаңа маусым жаңа бастауымен барлық бұрынғы сфірленеді.'
-                    : locale === 'en'
-                      ? 'Each season runs for a fixed period. Playing games earns you season rating points. When the season ends, you receive a reward based on your rank. Points reset each season — every new season starts fresh.'
-                      : 'Каждый сезон идёт фиксированное время. Играя партии, вы набираете сезонные очки. По окончании сезона вы получаете награду соответственно вашему рангу. Очки сбрасываются каждый сезон — каждый новый сезон начинается с нуля.'}
+                  {t('season.rulesHowSeasonWorksText')}
                 </p>
               </div>
 
               {/* Section 2: Season dates */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Ағымдағы маусым мерзімдері' : locale === 'en' ? 'Current season dates' : 'Сроки текущего сезона'}
+                  {t('season.currentDates')}
                 </h3>
                 <div className="rounded-xl p-3 space-y-1" style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${theme.border}` }}>
                   {seasonNumber && (
@@ -1253,19 +1250,19 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   )}
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-amber-200/60">
                     <span>
-                      {locale === 'kk' ? 'Басталуы:' : locale === 'en' ? 'Start:' : 'Начало:'}
+                      {t('season.startLabel')}
                       {' '}{startDate ? startDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                     </span>
                     <span>—</span>
                     <span>
-                      {locale === 'kk' ? 'Аяқталуы:' : locale === 'en' ? 'End:' : 'Окончание:'}
+                      {t('season.endLabel')}
                       {' '}{endDate ? endDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-xs" style={{ color: `${theme.accent}80` }}>
                     <Clock className="w-3 h-3" />
                     <span>
-                      {locale === 'kk' ? 'Қалған уақыт:' : locale === 'en' ? 'Time left:' : 'Осталось:'} {timeLeft}
+                      {t('season.timeLeftLabel')} {timeLeft}
                     </span>
                   </div>
                 </div>
@@ -1274,22 +1271,14 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               {/* Section 3: Rewards */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Сыйақтар қалай жұмыс беріледі?' : locale === 'en' ? 'How are rewards distributed?' : 'Как выдаются награды?'}
+                  {t('season.howRewards')}
                 </h3>
                 <div className="rounded-xl p-3 space-y-2" style={{ background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.20)' }}>
                   <p>
-                    {locale === 'kk'
-                      ? 'Сіз тек өзіңіз қол жеткен рангыңыздың сыйағын аласыз. Төменгі рангтар сыйақ бермейді.'
-                      : locale === 'en'
-                        ? 'You receive only the reward for the rank you achieved. Lower ranks do not grant any reward.'
-                        : 'Вы получаете только награду за тот ранг, которого достигли. Все нижестоящие ранги награду не выдают.'}
+                    {t('season.rulesRewardsText')}
                   </p>
                   <p className="text-amber-200/60 text-xs italic">
-                    {locale === 'kk'
-                      ? 'Мысалы: егер сіз Рубин ранғына жетсеңіз, тек Рубин сыйағын аласыз. Барлық рангтардың сыйақтары берілмейді.'
-                      : locale === 'en'
-                        ? 'Example: if you reach Ruby rank, you only get the Ruby reward. Rewards for lower ranks are not given.'
-                        : 'Пример: если вы достигли ранга Рубин, вы получаете только награду Рубина. Награды за все нижестоящие ранги не выдаются.'}
+                    {t('season.rulesRewardsExample')}
                   </p>
                 </div>
               </div>
@@ -1297,15 +1286,11 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               {/* Section 4: Premium note */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Премиум және маусым' : locale === 'en' ? 'Premium and season' : 'Премиум и сезон'}
+                  {t('season.premiumAndSeason')}
                 </h3>
                 <div className="rounded-xl p-3" style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.20)' }}>
                   <p>
-                    {locale === 'kk'
-                      ? 'Премиум маусымдық рейтингіңе әсер етпейді. Премиум абонементі бар ойыншы да премиумсыз ойыншымен бірдей ұпай жинайды. Маусым — бұл шынайлы бәсекелік.'
-                      : locale === 'en'
-                        ? 'Premium does not affect season rating. A player with Premium earns the same season points as a player without it. The season is a fair competition for everyone.'
-                        : 'Премиум не влияет на сезонный рейтинг. Игрок с Премиумом набирает столько же сезонных очков, сколько и без Премиума. Сезон — это честная соревнование для всех.'}
+                    {t('season.rulesPremiumText')}
                   </p>
                 </div>
               </div>
@@ -1313,7 +1298,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               {/* Section 5: How to earn rating points */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Ұпай қалай жиналады?' : locale === 'en' ? 'How to earn rating points?' : 'Как зарабатывать очки?'}
+                  {t('season.howEarnPoints')}
                 </h3>
                 <div className="rounded-xl p-3 space-y-2" style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${theme.border}` }}>
                   <div className="space-y-1.5">
@@ -1361,7 +1346,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
               {/* Section 6: Ranks overview */}
               <div className="space-y-2">
                 <h3 className="font-bold text-base" style={{ color: theme.accent }}>
-                  {locale === 'kk' ? 'Рангтар' : locale === 'en' ? 'Ranks' : 'Ранги'}
+                  {t('season.ranksSection')}
                 </h3>
                 <div className="space-y-1.5">
                   {SEASON_RANKS.map(rank => (
@@ -1372,8 +1357,8 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       </span>
                       <span className="text-xs text-amber-200/40 ml-auto">
                         {rank.minRating === 0
-                          ? (locale === 'kk' ? 'Бастапқы' : locale === 'en' ? 'Starting' : 'Начальный')
-                          : `${rank.minRating.toLocaleString()}+ ${locale === 'kk' ? 'ұпай' : locale === 'en' ? 'pts' : 'очков'}`
+                          ? t('season.startingRank')
+                          : `${rank.minRating.toLocaleString()}+ ${t('season.ptsAbbr')}`
                         }
                       </span>
                     </div>
@@ -1390,7 +1375,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 className="w-full py-3 rounded-xl font-semibold text-sm transition-all"
                 style={{ background: `${theme.accent}18`, border: `1px solid ${theme.accent}40`, color: theme.accent }}
               >
-                {locale === 'kk' ? 'Жабу' : locale === 'en' ? 'Close' : 'Закрыть'}
+                {t('season.closeButton')}
               </button>
             </div>
           </div>
