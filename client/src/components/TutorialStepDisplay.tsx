@@ -465,7 +465,7 @@ export default function TutorialStepDisplay({
                 // After exactly 2 seconds, show БИТО text
                 setTimeout(() => {
                   setSeqPhase('bito-text');
-                  playSound('bito', 0.6);
+                  playSound('bito', 0.42);
                 }, 2000);
 
                 // After 3 seconds, start flying cards to bito
