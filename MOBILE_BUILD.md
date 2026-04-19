@@ -45,6 +45,9 @@ VITE_ADMOB_REWARDED_AD_UNIT_ID=ca-app-pub-XXXXXXXX/XXXXXXXX
 # RevenueCat (IAP — https://app.revenuecat.com)
 VITE_REVENUECAT_IOS_KEY=appl_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 VITE_REVENUECAT_ANDROID_KEY=goog_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+# RevenueCat Secret Key (server-side receipt verification — optional but recommended)
+# Get from: https://app.revenuecat.com → Project → API Keys → Secret keys
+REVENUECAT_SECRET_KEY=sk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 ```
 
 **Тестовые ID для AdMob (только для разработки):**
@@ -243,6 +246,7 @@ AAB файл: `android/app/build/outputs/bundle/release/app-release.aab`
    - `tenge_1000` — 1000 Тенге
    - `tenge_5000` — 5000 Тенге
 5. Скопировать API ключи в env vars
+6. (Опционально) Скопировать **Secret Key** (не публичный) в `REVENUECAT_SECRET_KEY` для серверной валидации чеков через `/api/iap/verify`
 
 ---
 

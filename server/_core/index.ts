@@ -9,6 +9,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerEmailAuthRoutes } from "../emailAuth";
 import { registerGoogleAuthRoutes } from "../googleAuth";
 import { registerAppleAuthRoutes } from "../appleAuth";
+import { registerIAPRoutes } from "../iap";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -73,6 +74,8 @@ async function startServer() {
   registerGoogleAuthRoutes(app);
   // Apple Sign In routes
   registerAppleAuthRoutes(app);
+  // IAP verification endpoint
+  registerIAPRoutes(app);
   // tRPC API
   app.use(
     "/api/trpc",
