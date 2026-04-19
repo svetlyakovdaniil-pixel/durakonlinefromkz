@@ -9,6 +9,8 @@ export interface TutorialScenario {
   titleEn?: string;
   /** Title in Ukrainian */
   titleUk?: string;
+  /** Title in Georgian */
+  titleKa?: string;
   description: string;
   /** Array of CSS selectors for highlighted areas (multiple spotlights supported) */
   highlightElements: string[];
@@ -19,6 +21,8 @@ export interface TutorialScenario {
   textEn?: string;
   /** Text in Ukrainian */
   textUk?: string;
+  /** Text in Georgian */
+  textKa?: string;
   instruction?: string;
   /** Instruction in Kazakh */
   instructionKk?: string;
@@ -26,6 +30,8 @@ export interface TutorialScenario {
   instructionEn?: string;
   /** Instruction in Ukrainian */
   instructionUk?: string;
+  /** Instruction in Georgian */
+  instructionKa?: string;
   /** Card IDs to give player */
   playerHand?: string[];
   /** Card IDs to give bot */
@@ -170,6 +176,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойын басында әр ойыншыға 14 карта бөлінеді.\nКолодаларда карта бар кезде ойыншы қолында әрқашан да 14 карта болуы керек.',
     textEn: 'At the start of the game, each player is dealt 14 cards.\nA player must always have at least 14 cards in hand while there are cards in the decks.',
     textUk: 'На початку гри кожному гравцю роздається по 14 карт.\nУ руці гравця завжди має бути мінімум 14 карт, поки в колодах є карти.',
+    textKa: 'თამაშის დასაწყისში თითოეულ მოთამაშეს ურიგდება 14 ბარათი.\nმოთამაშის ხელში ყოველთვის უნდა იყოს მინიმუმ 14 ბარათი, სანამ გემბნებში ბარათებია.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -194,6 +201,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Бұл қадам таймері. Әр ойыншының қадамына әр бөлме баптауларында белгіленетін секунд саны бөлінеді. Уақыт аяқталса — қадам келесі ойыншыға өтеді.',
     textEn: 'This is the turn timer. Each player has a set number of seconds per turn, configured in each room\'s settings. When time runs out, the turn passes to the next player.',
     textUk: 'Це таймер ходу. Кожен гравець має певну кількість секунд на хід, яка встановлюється в налаштуваннях кімнати. Коли час закінчується — хід переходить до наступного гравця.',
+    textKa: 'ეს არის სვლის ტაიმერი. თითოეულ მოთამაშეს აქვს გარკვეული წამები სვლისთვის, რომელიც დგინდება ოთახის პარამეტრებში. დროის ამოწურვისას — სვლა გადადის შემდეგ მოთამაშეზე.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -218,6 +226,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Бұл битодағы (ұтылған) карталар санағышы. Ойыннан қанша карталар санын көрсетеді.',
     textEn: 'This is the discard pile counter (beaten cards). It shows how many cards have already been eliminated from the game.',
     textUk: 'Це лічильник карт у бито (побитих карт). Показує скільки карт вже вибуло з гри.',
+    textKa: 'ეს არის ამოღებული ბარათების მრიცხველი. გვიჩვენებს რამდენი ბარათი უკვე გამოვიდა თამაშიდან.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -242,6 +251,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойында 2 карта колодасы пайдаланылады. Алдымен колода №1 барлық ойыншылар арасында ойналады. Ол біткенде, колода №2 басталады.',
     textEn: 'The game uses 2 card decks. First, deck #1 is played among all players. When it runs out, deck #2 begins.',
     textUk: 'У грі використовуються 2 колоди карт. Спочатку розігрується колода №1 між усіма гравцями. Коли вона закінчується, починається колода №2.',
+    textKa: 'თამაშში გამოიყენება 2 გემბანი ბარათი. პირველად ყველა მოთამაშეს შორის ითამაშება გემბანი №1. მისი ამოწურვისას იწყება გემბანი №2.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -266,6 +276,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Карта санағышы қолыңыздағы карталар санын нақты уақытта көрсетеді.\nСұрыптау түймесі арқылы қолдағы карталардың орналасуын өзгертеді',
     textEn: 'The card counter shows the number of cards in your hand in real time.\nThe sort button changes the arrangement of cards in your hand.',
     textUk: 'Лічильник карт показує кількість карт у вашій руці в реальному часі.\nКнопка сортування змінює розташування карт у руці.',
+    textKa: 'ბარათების მრიცხველი გვიჩვენებს ბარათების რაოდენობას თქვენს ხელში რეალურ დროში.\nდახარისხების ღილაკი ცვლის ბარათების განლაგებას ხელში.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -290,6 +301,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Карталарды номинал бойынша сұрыптау үшін "Сапта бойынша" басыңыз.',
     textEn: 'Click "By Suit" to sort the cards in your hand by rank.',
     textUk: 'Натисніть "За мастю", щоб сортувати карти в руці за номіналом.',
+    textKa: 'დააჭირეთ "მასით" ბარათების ხელში ნომინალის მიხედვით დასახარისხებლად.',
     instruction: 'Нажмите на кнопку сортировки',
     instructionKk: 'Сұрыптау түймесін басыңыз',
     instructionEn: 'Click the sort button',
@@ -314,6 +326,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Енді қолыңыздағы карталар номинал бойынша кішіден үлкенге дейін сұрыпталған.',
     textEn: 'Your cards in hand are now sorted by rank from lowest to highest.',
     textUk: 'Тепер ваші карти в руці відсортовані за номіналом від меншого до більшого.',
+    textKa: 'ახლა თქვენი ბარათები ხელში დახარისხებულია ნომინალის მიხედვით პატარიდან დიდამდე.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -338,6 +351,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойында 4 стандартты 36 карталық колода араластырылғандықтан, сапта мен номиналы бірдей карталар кездеседі. Мұндай карталар өздеріне өздері ұра алады. Ерекшелік - Піка Көрпесі. Піка Көрпесі өзіне-өзі ұра ала алмайды',
     textEn: 'Since the game combines 4 standard 36-card decks, you will encounter cards of the same suit and rank. Such cards beat each other. Exception — King of Spades. The King of Spades cannot beat itself.',
     textUk: 'Оскільки в грі змішані 4 стандартні колоди по 36 карт, зустрічаються однакові за мастю та номіналом карти. Такі карти б\'ють самі себе. Виняток — Король пік. Король пік сам себе побити не може.',
+    textKa: 'ვინაიდან თამაშში შერეულია 4 სტანდარტული გემბანი 36 ბარათით, გვხვდება ერთი და იმავე მასის და ნომინალის ბარათები. ასეთი ბარათები ერთმანეთს სცემენ. გამონაკლისია პიკის მეფე. პიკის მეფეს თავი ვერ სცემს.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -365,6 +379,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Қорғану үшін 6 жүрекке басыңыз. Бірдей номинал мен сапталы карталар өздеріне өздері ұра алады',
     textEn: 'Click the 6 of Hearts to defend. Cards with the same rank and suit beat each other.',
     textUk: 'Натисніть на 6 червей щоб відбитися. Карти з однаковим номіналом та мастю б\'ють самі себе.',
+    textKa: 'დააჭირეთ გულის 6-ს დასაცავად. ერთი და იმავე ნომინალისა და მასის ბარათები ერთმანეთს სცემენ.',
     instruction: 'Нажмите на 6 черви в вашей руке',
     instructionKk: 'Қолыңыздағы 6 жүрекке басыңыз',
     instructionEn: 'Click the 6 of Hearts in your hand',
@@ -397,6 +412,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Қолыңызда Піка Көрпесі бар — оны табыңыз. Бұл ерекше механикалық өте күшті карта. Ол қозырдан тәуелсіз ойындағы кез картаны ұра ала алады, <red>өзінен басқа</red>. Үстелдегі қозыр түзін Піка Көрпесімен ұрыңыз',
     textEn: 'You have the King of Spades in your hand — find it. This is a very powerful card with a unique mechanic. It can beat any card in the game regardless of trump, <red>except itself</red>. Beat the trump ace on the table with the King of Spades.',
     textUk: 'У вас у руці є карта Король пік — знайдіть її. Це дуже сильна карта з унікальною механікою. Вона може побити будь-яку карту в грі, незалежно від козиря, <red>крім самої себе</red>. Поб\'йте Королем пік козирний туз на столі.',
+    textKa: 'თქვენს ხელში არის პიკის მეფე — იპოვეთ იგი. ეს ძალიან ძლიერი ბარათია უნიკალური მექანიკით. მას შეუძლია სცეს ნებისმიერ ბარათს თამაშში, კოზირისგან დამოუკიდებლად, <red>გარდა საკუთარი თავისა</red>. სცეთ პიკის მეფით მაგიდაზე კოზირ ტუზს.',
     instruction: 'Нажмите на Короля пики в вашей руке',
     instructionKk: 'Қолыңыздағы Піка Көрпесіне басыңыз',
     instructionEn: 'Click the King of Spades in your hand',
@@ -422,13 +438,15 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     title: 'Карта 777 - бьет все карты в игре',
     titleKk: '777 картасы — ойындағы барлық картаны ұрады',
     titleEn: 'Card 777 — Beats All Cards in the Game',
-    titleUk: 'Карта 777 — б\'є всі карти в грі',
-    description: 'Специальные карты',
+     titleUk: 'Карта 777 — б\'є всі карти в грі',
+    titleKa: 'ბარათი 777 — ყველა ბარათს სცემს თამაშში',
+    description: 'Спеціальні карти',
     highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="table-area"]'],
     text: '777 - бьет любую карту! В колоде всего одна.\nС карты 777 нельзя походить! Только биться. Если в конце игры у вас осталась только эта карта в руке, и начинается ваш ход - вы его пропустите',
     textKk: '777 — кез картаны ұрады! Колодада тек біреу.\n777 картасымен шабуға шығармайды! Тек қорғануға арналған. Егер ойын соңында қолыңызда тек осы карта қалса және сіздің қадамыңыз келсе — оны өткізесіз',
     textEn: '777 beats any card! There is only one in the deck.\nYou cannot attack with the 777 card! Only defend. If at the end of the game you have only this card in hand and it is your turn — you will skip it.',
     textUk: '777 — б\'є будь-яку карту! У колоді лише одна.\nЗ карти 777 не можна ходити! Тільки відбиватися. Якщо в кінці гри у вас залишилась лише ця карта в руці, і починається ваш хід — ви його пропустите.',
+    textKa: '777 — სცემს ნებისმიერ ბარათს! გემბანში მხოლოდ ერთია.\n777 ბარათით ვერ ივლი! მხოლოდ დაცვა. თუ თამაშის ბოლოს ხელში მხოლოდ ეს ბარათი გრჩებათ და თქვენი სვლაა — გამოტოვებთ.',
     instruction: 'Нажмите на 777 в вашей руке',
     instructionKk: 'Қолыңыздағы 777 басыңыз',
     instructionEn: 'Click the 777 in your hand',
@@ -463,6 +481,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Піка Көрпесін тек Піка Түзі мен 777 ұра ала алады, басқа ешқанда карта бұны істе асыра алмайды\nҚолыңызда Піка Түзін табыңыз. Үстелдегі Піка Көрпесін қорғау үшін оны басыңыз',
     textEn: 'The King of Spades can only be beaten by the Ace of Spades and 777, no other card can do this.\nFind the Ace of Spades in your hand. Click it to beat the King of Spades on the table.',
     textUk: 'Короля пік може побити лише Туз пік та 777, жодна інша карта не здатна це зробити.\nЗнайдіть у своїй руці Туз пік. Натисніть на нього щоб відбити Короля пік на столі.',
+    textKa: 'პიკის მეფეს შეუძლია სცეს მხოლოდ პიკის ტუზმა და 777-მა, სხვა ბარათს ეს არ შეუძლია.\nიპოვეთ ხელში პიკის ტუზი. დააჭირეთ მას მაგიდაზე პიკის მეფის დასაცავად.',
     instruction: 'Нажмите на Туз пики в вашей руке',
     instructionKk: 'Қолыңыздағы Піка Түзіне басыңыз',
     instructionEn: 'Click the Ace of Spades in your hand',
@@ -498,6 +517,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойын әрқашан аудармалық механикасымен жүреді. Егер сізге картамен шабуға шықса және қолыңызда сондай номиналды (индексті) карта болса, сіз оны үстелге тастап қадамды келесі ойыншыға аудара аласыз',
     textEn: 'The game always uses the transfer mechanic. If a card was played against you and you have a card with the same rank (index) in hand, you can transfer the turn to the next player by placing that card on the table.',
     textUk: 'Гра завжди з механікою переведення. Якщо на вас походили картою, і у вас у руці є карта з таким же номіналом (індексом), ви можете перевести хід на наступного гравця, кинувши цю карту на стіл.',
+    textKa: 'თამაში ყოველთვის გადაცემის მექანიკით. თუ თქვენზე ივლეს ბარათით, და ხელში გაქვთ ბარათი ამავე ნომინალით (ინდექსით), შეგიძლიათ გადასცეთ სვლა შემდეგ მოთამაშეს, ეს ბარათი მაგიდაზე გადაყრით.',
     instruction: 'Нажмите на 7 пики в вашей руке',
     instructionKk: 'Қолыңыздағы 7 пікаға басыңыз',
     instructionEn: 'Click the 7 of Spades in your hand',
@@ -538,6 +558,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойыншылар сағат тілі бойынша біріне бірі қадам жасайды, бірақ ерекшелік бар:\nЕгер қандай ойыншы 10-ды үстелге тастап өз қадамын бастаса, <red>ойын бағыты өзгереді</red> сағат тіліне қарсы',
     textEn: 'Players take turns clockwise, but there is an exception:\nIf a player starts their turn by playing a 10, <red>the direction of play reverses</red> to counter-clockwise.',
     textUk: 'Гравці ходять один на одного за годинниковою стрілкою, але є виняток:\nЯкщо якийсь гравець починає свій хід з 10-ки, кинувши її на стіл, <red>напрямок гри змінюється</red> на проти годинникової стрілки.',
+    textKa: 'მოთამაშეები ერთმანეთზე ივლიან საათის ისრის მიმართულებით, მაგრამ არის გამონაკლისი:\nთუ რომელიმე მოთამაშე სვლას 10-ით იწყებს, მაგიდაზე გადაყრით, <red>თამაშის მიმართულება იცვლება</red> საათის ისრის საწინააღმდეგოდ.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -580,6 +601,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Егер ойыншы 10 картасымен өз қадамын бастаса, ойын бағыты өзгереді. Қазір Қадамы 3, ол сізге қарай шабуға шығуы керек',
     textEn: 'If a player starts their turn with a 10 card, the direction of play changes. Now it is Bot 3\'s turn, and he must attack you.',
     textUk: 'Якщо гравець починає свій хід з карти 10, то змінюється напрямок гри. Зараз хід Бота 3, він має походити на вас.',
+    textKa: 'თუ მოთამაშე სვლას 10 ბარათით იწყებს, თამაშის მიმართულება იცვლება. ახლა ბოტ 3-ის სვლაა, მან თქვენზე უნდა ივლიოს.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -612,6 +634,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Енді Қадам 3 сізге емес, Мадина ойыншысына қарай жүреді',
     textEn: 'Now Bot 3 attacks not you, but the player Madina.',
     textUk: 'Тепер Бот 3 ходить не на вас, а на гравця Мадіна.',
+    textKa: 'ახლა ბოტ 3 თქვენზე კი არ ივლის, არამედ მოთამაშე მადინაზე.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -645,6 +668,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Мадина ойыншысы Піка 10-мен Қадам 3 ойыншысына қадамды аударды. Енді ойын қайтадан сағат тілі бойынша жүреді.',
     textEn: 'Player Madina transferred the turn to Bot 3 using the 10 of Spades. Now the game goes clockwise again.',
     textUk: 'Гравець Мадіна перевела 10-кою пік хід на гравця Бот 3. Тепер гра знову йде за годинниковою стрілкою.',
+    textKa: 'მოთამაშე მადინამ პიკის 10-ით სვლა გადასცა ბოტ 3-ს. ახლა თამაში კვლავ საათის ისრის მიმართულებით მიდის.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -678,6 +702,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Қадам 3 ойыншысының қолында қозыр 10 болды, ол жолаушыдан пайдаланып, Қадамды Қайтадан Мадина ойыншысына аударды. Ойын бағытын өзгертті.',
     textEn: 'Bot 3 had a trump 10 in hand, used the pass-through, and transferred the turn back to player Madina. Changing the direction of play.',
     textUk: 'У гравця Бот 3 в руці була козирна 10-ка, він скористався проїзним, і перевів хід знову на гравця Мадіна. Змінивши напрямок гри.',
+    textKa: 'ბოტ 3-ს ხელში ჰქონდა კოზირი 10, გამოიყენა გადაცემა და სვლა კვლავ მოთამაშე მადინაზე გადასცა. შეცვალა თამაშის მიმართულება.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -712,6 +737,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Ойын ережелері бойынша, қорғаушы ойыншыға тек көршілер қосымша карта ұра алады. Бірақ егер кімдер 6-мен шабуға шықса, үстел басындағы кез ойыншы 6-ларды қосымшы болмаса да қоса алады',
     textEn: 'By the rules, only neighbors can add cards to the defender. But if someone started with a six, any player at the table can add sixes, even if they are not a neighbor.',
     textUk: 'За правилами гри, захисному гравцю можуть підкидати лише сусіди. Але якщо хтось походив з 6-ки, то будь-який гравець за столом може підкинути 6-ки, навіть якщо не є сусідом.',
+    textKa: 'თამაშის წესების მიხედვით, მცველ მოთამაშეს შეუძლიათ მხოლოდ მეზობლებმა მიაყარონ. მაგრამ თუ ვინმე 6-ით ივლის, ნებისმიერ მოთამაშეს მაგიდასთან შეუძლია 6-ები მიაყაროს, თუნდაც მეზობელი არ იყოს.',
     highlightElements: ['[data-tutorial="table-area"]', '[data-tutorial="opponent-info"]:nth-of-type(1)', '[data-tutorial="opponent-info"]:nth-of-type(2)'],
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -750,6 +776,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Камила мен Қадам 3 қолында қоса алатын карталар жоқ, бірақ Камила бастапқыда 6-мен шабуға шыққандықтан, қадам сізге өтті. Сіз Мадинаға 6-ларды қоса ала аласыз, көршісі болмасаңыз да. Бұл жағдайда ондықтарды қосуға болмайды.',
     textEn: 'Kamila and Bot 3 have no cards to add, but since Kamila originally started with a six, the turn passed to you. You can add sixes to Madina, even though you are not her neighbor. Tens cannot be added in this case.',
     textUk: 'У Каміли та Бота 3 в руці немає карт, які вони могли б підкинути, але оскільки Каміла спочатку походила з 6-ки, хід перейшов до вас. Ви можете підкинути 6-ки Мадіні, хоч і не є її сусідом. Десятки в даному випадку підкидати не можна.',
+    textKa: 'კამილასა და ბოტ 3-ს ხელში არ აქვთ ბარათები, რომლებიც შეეძლოთ მიეყარათ, მაგრამ ვინაიდან კამილამ პირველად 6-ით ივლო, სვლა თქვენზე გადავიდა. შეგიძლიათ 6-ები მიაყაროთ მადინას, თუნდაც მისი მეზობელი არ იყოთ. ამ შემთხვევაში ათეულების მიყრა არ შეიძლება.',
     mobileText: 'Камила 6-дан бастады, ход перешёл к вам. Можно подкидывать 6-ки, но не десятки.',
     mobileTextKk: 'Камила 6-дан бастағандықтан, қадам сізге өтті. 6-ларды қоса аласыз, ондықтарды — жоқ.',
     mobileTextEn: 'Kamila started with a six, turn passed to you. Add sixes — not tens.',
@@ -800,6 +827,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Қазір ойында 2 колода бар. Колода №1 астында жүрек дамасы жатыр — бұл қазіргі қозырды белгілейтін карта.\nЖүрек дамасының астында жасырын карта — жасырын қозыр №1.\nКолода №2 астында жасырын қозыр №2 жатыр',
     textEn: 'Now there are 2 decks in the game. Under deck #1 lies the Queen of Hearts — this is the card that determines the current trump.\nUnder the Queen of Hearts is a hidden card — hidden trump #1.\nUnder deck #2 lies hidden trump #2.',
     textUk: 'Зараз у грі 2 колоди. Під колодою №1 лежить дама червей — це карта, що призначає нинішній козир.\nПід дамою червей захована карта — прихований козир №1.\nПід колодою №2 лежить прихований козир №2.',
+    textKa: 'ახლა თამაშში 2 გემბანია. გემბანი №1-ის ქვეშ დევს გულის ქალბატონი — ეს ბარათი ადგენს მიმდინარე კოზირს.\nქალბატონის ქვეშ დამალულია ბარათი — ფარული კოზირი №1.\nგემბანი №2-ის ქვეშ დევს ფარული კოზირი №2.',
     mobileText: 'В начале партии козырем стала масть черви. Как только карты в колоде №1 (К1) закончатся, козырь поменяется',
     mobileTextKk: 'Ойын басында қозыр жүрек масы болды. Колода №1 (Қ1) біткенде, қозыр өзгереді',
     mobileTextEn: 'At the start of the game, hearts became the trump suit. Once the cards in deck #1 (D1) run out, the trump will change.',
@@ -832,6 +860,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Колода №1 біткенде, жасырын қозыр №1 ашылады және ойындағы қозыр өзгереді. Бұл жағдайда қозыр крестіге өзгерді',
     textEn: 'When deck #1 runs out, hidden trump #1 is revealed and the trump in the game changes. In this case the trump changed to clubs.',
     textUk: 'Коли колода №1 закінчується, відкривається прихований козир №1, і козир у грі змінюється. В даному випадку козир змінився на трефи.',
+    textKa: 'გემბანი №1-ის ამოწურვისას იხსნება ფარული კოზირი №1 და თამაშში კოზირი იცვლება. ამ შემთხვევაში კოზირი ჩვენად შეიცვალა.',
     mobileText: 'Когда колода №1 заканчивается, вскрывается потайный козырь №1, и козырь в игре меняется. Козырь поменялся на крести',
     mobileTextKk: 'Колода №1 біткенде, жасырын қозыр №1 ашылады және ойындағы қозыр өзгереді. Қозыр крестіге өзгерді',
     mobileTextEn: 'When deck #1 runs out, hidden trump #1 is revealed and the trump changes. The trump changed to clubs.',
@@ -866,6 +895,7 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     textKk: 'Колода №1 мен колода №2 біткенде, жасырын қозыр №2 ашылады және ойындағы қозыр соңғы рет өзгереді. Енді ойындағы қозыр бүбі',
     textEn: 'When deck #1 and deck #2 run out, hidden trump #2 is revealed, changing the trump for the last time. Now the trump in the game is diamonds.',
     textUk: 'Коли колода №1 і колода №2 закінчуються, відкривається прихований козир №2, змінюючи козир у грі востаннє. Тепер козир у грі бубни.',
+    textKa: 'გემბანი №1 და გემბანი №2-ის ამოწურვისას იხსნება ფარული კოზირი №2, რომელიც ბოლოჯერ ცვლის კოზირს თამაშში. ახლა თამაშში კოზირი ბუბია.',
     mobileText: 'Когда колода №1 и колода №2 заканчиваются, вскрывается потайный козырь №2, меняя козырь в игре в последний раз. Теперь козырь в игре буби',
     mobileTextKk: 'Колода №1 мен колода №2 біткенде, жасырын қозыр №2 ашылады, ойындағы қозыр соңғы рет өзгереді. Енді қозыр бүбі',
     mobileTextEn: 'When deck #1 and deck #2 run out, hidden trump #2 is revealed, changing the trump for the last time. Now the trump is diamonds.',

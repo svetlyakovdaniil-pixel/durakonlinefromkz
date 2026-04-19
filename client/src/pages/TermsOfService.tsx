@@ -22,7 +22,7 @@ export default function TermsOfService() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : <TermsContentRu />}
+          {locale === 'kk' ? <TermsContentKk /> : locale === 'en' ? <TermsContentEn /> : locale === 'uk' ? <TermsContentUk /> : locale === 'ka' ? <TermsContentKa /> : <TermsContentRu />}
         </div>
         {/* Last updated */}
         <p className="text-xs text-muted-foreground mt-10 text-center">
@@ -264,6 +264,55 @@ function TermsContentKk() {
       <section>
         <h3 className="text-base font-semibold text-foreground mb-2">10. Байланыс</h3>
         <p>Осы келісімге қатысты сұрақтар бойынша Қосымшаның параметрлеріндегі кері байланыс формасы арқылы бізге хабарласыңыз.</p>
+      </section>
+    </>
+  );
+}
+
+function TermsContentKa() {
+  return (
+    <>
+      <h2 className="text-xl font-bold text-foreground">მომსახურების პირობები</h2>
+      <p className="text-muted-foreground text-sm">ძალაში შესვლის თარიღი: 1 იანვარი, 2025</p>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">1. პირობების მიღება</h3>
+        <p>«Durak Online from KZ» აპლიკაციის («აპი») გამოყენებით თქვენ ეთანხმებით წინამდებარე მომსახურების პირობებს. თუ არ ეთანხმებით, გთხოვთ არ გამოიყენოთ აპი.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">2. სერვისის აღწერა</h3>
+        <p>«Durak Online from KZ» არის ონლაინ სამბანქო თამაში, რომელიც ეფუძნება «ბანქოს» ყაზახურ ვერსიას. აპი უზრუნველყოფს სათამაშო პლატფორმას, მათ შორის მულტიპლეიერს, სათამაშო ვალუტას (შანირაქი და ტენგე) და კოსმეტიკურ ნივთებს.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">3. ანგარიში</h3>
+        <p>აპის გამოსაყენებლად საჭიროა რეგისტრაცია ელ-ფოსტის, Google ანგარიშის ან Apple ანგარიშის გამოყენებით. თქვენ პასუხისმგებელი ხართ თქვენი ანგარიშის უსაფრთხოებაზე. შეზღუდვების გვერდის ავლის ან სისტემის ბოროტად გამოყენების მიზნით მრავალი ანგარიშის შექმნა აკრძალულია.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">4. შიდა შესყიდვები</h3>
+        <p>აპი გთავაზობთ სათამაშო ვალუტის (ტენგე) შეძენას რეალური ფულით ოფიციალური მაღაზიების (App Store, Google Play) მეშვეობით. ყველა შესყიდვა საბოლოოა და არ ექვემდებარება დაბრუნებას, გარდა მოქმედი კანონმდებლობით ან შესაბამისი მაღაზიის პოლიტიკით გათვალისწინებული შემთხვევებისა. სათამაშო ვალუტას რეალური ფულადი ღირებულება არ გააჩნია.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">5. რეკლამა</h3>
+        <p>აპი შეიძლება აჩვენებდეს რეკლამებს, მათ შორის ჯილდოიანი რეკლამებს (სათამაშო ვალუტის მიღება ნახვისთვის). რეკლამები მოწოდებულია მესამე პირების მიერ (Google AdMob). ჩვენ არ ვართ პასუხისმგებელი მესამე პირების რეკლამების შინაარსზე.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">6. ქცევის კოდექსი</h3>
+        <p>თქვენ ეთანხმებით, რომ არ გამოიყენებთ: ჩიტებს, ბოტებს ან სხვა ავტომატიზაციის ინსტრუმენტებს; სხვა მოთამაშეებს არ შეავიწროებთ; სერვერების გატეხვას ან ხელის შეშლას არ შეეცდებით; აპს კომერციული მიზნებისთვის ნებართვის გარეშე არ გამოიყენებთ.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">7. ინტელექტუალური საკუთრება</h3>
+        <p>აპის ყველა უფლება, მათ შორის გრაფიკა, ხმები, კოდი და სასაქონლო ნიშნები, ეკუთვნის შემქმნელებს. აპის მასალების კოპირება, შეცვლა ან გავრცელება წერილობითი ნებართვის გარეშე აკრძალულია.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">8. პასუხისმგებლობის შეზღუდვა</h3>
+        <p>აპი მოწოდებულია «როგორც არის» პრინციპით. ჩვენ არ ვიძლევით გარანტიას შეუფერხებელ მომსახურებაზე. კანონმდებლობით დაშვებულ მაქსიმალურ ზომამდე ჩვენ არ ვართ პასუხისმგებელი არაპირდაპირ ზიანზე, მონაცემების დაკარგვაზე ან სათამაშო პროგრესის შეფერხებაზე.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">9. პირობების ცვლილებები</h3>
+        <p>ჩვენ ვიტოვებთ უფლებას შევიტანოთ ცვლილებები ამ პირობებში. ცვლილებების გამოქვეყნების შემდეგ აპის გამოყენება ნიშნავს ახალი პირობების მიღებას.</p>
+      </section>
+      <section>
+        <h3 className="text-base font-semibold text-foreground mb-2">10. კონტაქტი</h3>
+        <p>ამ პირობებთან დაკავშირებული კითხვებისთვის გთხოვთ დაგვიკავშირდეთ აპის პარამეტრებში არსებული გამოხმაურების ფორმის მეშვეობით.</p>
       </section>
     </>
   );

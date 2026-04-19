@@ -113,9 +113,9 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   };
 
   const getName = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : q.def.nameRu;
+    locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : locale === 'ka' ? (q.def.nameKa ?? q.def.nameRu) : q.def.nameRu;
   const getDesc = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : q.def.descRu;
+    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : locale === 'ka' ? (q.def.descKa ?? q.def.descRu) : q.def.descRu;
 
   // Sort: claimable first, then in-progress, then claimed
   const sorted = [...quests].sort((a, b) => {

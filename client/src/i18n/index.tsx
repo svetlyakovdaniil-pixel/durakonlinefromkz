@@ -4,9 +4,8 @@ import { ru } from './ru';
 import { kk } from './kk';
 import { en } from './en';
 import { uk } from './uk';
-
-export type Locale = 'ru' | 'kk' | 'en' | 'uk';
-
+import { ka } from './ka';
+export type Locale = 'ru' | 'kk' | 'en' | 'uk' | 'ka';
 // Flatten nested object keys with dot notation
 type FlattenKeys<T, Prefix extends string = ''> = T extends Record<string, unknown>
   ? { [K in keyof T & string]: T[K] extends Record<string, unknown>
@@ -14,11 +13,8 @@ type FlattenKeys<T, Prefix extends string = ''> = T extends Record<string, unkno
       : `${Prefix}${K}`
     }[keyof T & string]
   : never;
-
 export type TranslationKey = FlattenKeys<typeof ru>;
-
-const translations: Record<Locale, Record<string, unknown>> = { ru, kk, en, uk };
-
+const translations: Record<Locale, Record<string, unknown>> = { ru, kk, en, uk, ka };
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const keys = path.split('.');
   let current: unknown = obj;
@@ -31,19 +27,15 @@ function getNestedValue(obj: Record<string, unknown>, path: string): string {
   }
   return typeof current === 'string' ? current : path;
 }
-
 interface I18nContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
   locale: Locale;
   setLocale: (locale: Locale) => void;
 }
-
 const I18nContext = createContext<I18nContextType | null>(null);
-
 export function I18nProvider({ children }: { children: ReactNode }) {
   const { settings, setLanguage } = useSettings();
-  const locale = (['ru', 'kk', 'en', 'uk'].includes(settings.language) ? settings.language : 'ru') as Locale;
-
+  const locale = (['ru', 'kk', 'en', 'uk', 'ka'].includes(settings.language) ? settings.language : 'ru') as Locale;
   const t = useCallback((key: string, params?: Record<string, string | number>): string => {
     let text = getNestedValue(translations[locale] as Record<string, unknown>, key);
     if (params) {
@@ -53,18 +45,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     }
     return text;
   }, [locale]);
-
   const setLocale = useCallback((newLocale: Locale) => {
     setLanguage(newLocale);
   }, [setLanguage]);
-
   return (
     <I18nContext.Provider value={{ t, locale, setLocale }}>
       {children}
     </I18nContext.Provider>
   );
 }
-
 export function useTranslation() {
   const ctx = useContext(I18nContext);
   if (!ctx) throw new Error('useTranslation must be used within I18nProvider');
