@@ -3404,17 +3404,17 @@
 ## Устранение недочётов перед публикацией (Batch 126)
 
 ### 1. Bundle ID — привести к единому виду (online.durakonline.fromkz)
-- [ ] Исправить capacitor.config.ts: appId → online.durakonline.fromkz
-- [ ] Исправить android/app/build.gradle: applicationId и namespace → online.durakonline.fromkz
-- [ ] Проверить iOS bundle identifier
+- [x] Исправить capacitor.config.ts: appId → online.durakonline.fromkz
+- [x] Исправить android/app/build.gradle: applicationId и namespace → online.durakonline.fromkz
+- [x] Проверить iOS bundle identifier
 
 ### 2. AdMob
-- [ ] Добавить тестовые AdMob ID как VITE_ADMOB_* secrets (для разработки)
-- [ ] Добавить кнопку "Восстановить покупки" в PremiumModal (требование App Store)
+- [x] Добавить тестовые AdMob ID как VITE_ADMOB_* secrets (для разработки)
+- [x] Добавить кнопку "Восстановить покупки" в PremiumModal (требование App Store)
 
 ### 3. Firebase Push & Google Sign-In
-- [ ] Проверить FIREBASE_SERVICE_ACCOUNT_KEY (уже настроен через secrets)
-- [ ] Проверить GOOGLE_CLIENT_SECRET (уже настроен через secrets)
+- [x] Проверить FIREBASE_SERVICE_ACCOUNT_KEY (уже настроен через secrets)
+- [x] Проверить GOOGLE_CLIENT_SECRET (уже настроен через secrets)
 
 ### 4. Google Play Console
 - [ ] Создать продукты в Google Play Console (premium_monthly, durak_tenge_100/500/1000/5000)
@@ -3432,20 +3432,20 @@
 - [x] Все 603 теста проходят
 
 ## Украинский язык — пропущенные разделы
-- [ ] PrivacyPolicy.tsx — добавить PrivacyContentUk компонент (полный перевод политики конфиденциальности)
-- [ ] TermsOfService.tsx — добавить TermsContentUk компонент (полный перевод пользовательского соглашения)
-- [ ] AchievementsModal.tsx — добавить uk в все объекты msgs/labels
-- [ ] DailyQuestsModal.tsx — добавить uk в объект L (все строки)
-- [ ] PremiumModal.tsx — добавить uk в объект TEXTS (все строки + benefits)
-- [ ] TutorialModal.tsx — добавить uk в объект content
-- [ ] shared/avatars.ts — добавить nameUk для всех аватарок
-- [ ] shared/emotionPacks.ts — добавить nameUk, descriptionUk, labelUk для всех паков
-- [ ] shared/cardAssets.ts — добавить nameUk для всех столов
-- [ ] shared/achievements.ts — добавить nameUk, descUk для всех достижений
-- [ ] shared/dailyQuests.ts — добавить nameUk, descUk для всех заданий
-- [ ] client/src/lib/avatarFrames.tsx — добавить nameUk для всех рамок
-- [ ] useInteractiveTutorial.ts — добавить titleUk, textUk, instructionUk, mobileTextUk для всех 24 шагов
-- [ ] Все компоненты — обновить логику locale для поддержки uk (ProfileDrawer, ShopModal, AchievementsModal, DailyQuestsModal, TutorialStepDisplay)
+- [x] PrivacyPolicy.tsx — добавить PrivacyContentUk компонент (полный перевод политики конфиденциальности)
+- [x] TermsOfService.tsx — добавить TermsContentUk компонент (полный перевод пользовательского соглашения)
+- [x] AchievementsModal.tsx — добавить uk в все объекты msgs/labels
+- [x] DailyQuestsModal.tsx — добавить uk в объект L (все строки)
+- [x] PremiumModal.tsx — добавить uk в объект TEXTS (все строки + benefits)
+- [x] TutorialModal.tsx — добавить uk в объект content
+- [x] shared/avatars.ts — добавить nameUk для всех аватарок
+- [x] shared/emotionPacks.ts — добавить nameUk, descriptionUk, labelUk для всех паков
+- [x] shared/cardAssets.ts — добавить nameUk для всех столов
+- [x] shared/achievements.ts — добавить nameUk, descUk для всех достижений
+- [x] shared/dailyQuests.ts — добавить nameUk, descUk для всех заданий
+- [x] client/src/lib/avatarFrames.tsx — добавить nameUk для всех рамок
+- [x] useInteractiveTutorial.ts — добавить titleUk, textUk, instructionUk, mobileTextUk для всех 24 шагов
+- [x] Все компоненты — обновить логику locale для поддержки uk (ProfileDrawer, ShopModal, AchievementsModal, DailyQuestsModal, TutorialStepDisplay)
 
 ## App Store подготовка (Batch 127+)
 ### 1. Бандлинг карт и столов
