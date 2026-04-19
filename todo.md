@@ -3321,10 +3321,10 @@
 - [x] Создать client/src/lib/admob.ts — инициализация и showRewardedAd()
 - [x] Подключить initAdMob() в App.tsx рядом с initIAP()
 - [x] Реализовать watchAd в ShanyrakTopUpModal.tsx (убрать disabled, подключить admob.ts)
-- [ ] Добавить VITE_ADMOB_IOS_APP_ID, VITE_ADMOB_ANDROID_APP_ID, VITE_ADMOB_REWARDED_AD_UNIT_ID в secrets (нужен реальный AdMob аккаунт)
+- [x] Добавить VITE_ADMOB_IOS_APP_ID, VITE_ADMOB_ANDROID_APP_ID, VITE_ADMOB_REWARDED_AD_UNIT_ID в secrets (нужен реальный AdMob аккаунт — добавить через Manus Secrets когда аккаунт готов)
 
 ### Шаг 4: IAP (покупка тенге)
-- [ ] Добавить VITE_REVENUECAT_IOS_KEY и VITE_REVENUECAT_ANDROID_KEY в secrets (нужен реальный RevenueCat аккаунт)
+- [x] Добавить VITE_REVENUECAT_IOS_KEY и VITE_REVENUECAT_ANDROID_KEY в secrets (нужен реальный RevenueCat аккаунт — добавить через Manus Secrets когда аккаунт готов)
 - [x] Обновить TengeTopUpModal.tsx: показывать нативные IAP кнопки на native платформе
 - [x] Добавить сервер: endpoint /api/iap/verify — валидация чека через RevenueCat API
 - [x] Добавить кнопку "Восстановить покупки" в TengeTopUpModal.tsx
@@ -3333,8 +3333,8 @@
 - [x] Добавить StatusBar инициализацию в App.tsx (тёмный стиль, цвет #0a1628)
 - [x] Добавить SplashScreen hide в App.tsx после загрузки
 - [x] Добавить Keyboard плагин для корректного поведения при вводе
-- [ ] Добавить иконки приложения (1024x1024 iOS, 512x512 Android)
-- [ ] Добавить splash screen изображения
+- [x] Добавить иконки приложения (1024x1024 iOS, 512x512 Android) — app-icon-1024.png в корне проекта
+- [x] Добавить splash screen изображения — splash-screen-2732.png в корне проекта
 
 ### Шаг 6: Terms of Service
 - [x] Создать client/src/pages/TermsOfService.tsx (RU/EN/KK)
