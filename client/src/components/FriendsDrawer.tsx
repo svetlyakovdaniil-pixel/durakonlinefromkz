@@ -23,8 +23,9 @@ import {
 import { AvatarDisplay } from './AvatarDisplay';
 import { useTranslation } from '@/i18n';
 import { FrameWrapper } from './AvatarWithFrame';
-import { TrendingUp, Swords, Crown, Shield, Hash } from 'lucide-react';
+import { TrendingUp, Swords, Crown, Shield, Hash, Trophy, Star } from 'lucide-react';
 import ReferralPanel from './ReferralPanel';
+import { DiamondRankIcon } from './DiamondRankIcon';
 
 // ============================================================
 // Friend Profile View (inline, replaces friends list)
@@ -43,8 +44,11 @@ function FriendProfileView({
   isOnline: boolean;
 }) {
   const profileQuery = trpc.profile.byGameId.useQuery({ gameId }, { staleTime: 10_000 });
+  const seasonQuery = trpc.profile.seasonRatingByGameId.useQuery({ gameId }, { staleTime: 30_000 });
+  const achievementsQuery = trpc.profile.achievementsByGameId.useQuery({ gameId }, { staleTime: 30_000 });
   const profile = profileQuery.data;
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
+  const [activeTab, setActiveTab] = useState<'stats' | 'achievements'>('stats');
 
   if (profileQuery.isLoading) {
     return (
@@ -71,6 +75,23 @@ function FriendProfileView({
     ? ((profile.wins / profile.gamesPlayed) * 100).toFixed(1)
     : '0.0';
 
+  const seasonData = seasonQuery.data;
+  const achievements = achievementsQuery.data ?? [];
+
+  const tabLabels = {
+    stats: { ru: 'Статистика', kk: 'Статистика', en: 'Stats' }[locale as string] ?? 'Статистика',
+    achievements: { ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements' }[locale as string] ?? 'Достижения',
+  };
+
+  const rankName = seasonData?.rank
+    ? (locale === 'kk' ? seasonData.rank.nameKk : locale === 'en' ? seasonData.rank.nameEn : seasonData.rank.nameRu)
+    : null;
+
+  const getAchName = (a: typeof achievements[0]) =>
+    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : a.nameRu;
+  const getAchDesc = (a: typeof achievements[0]) =>
+    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : a.descRu;
+
   return (
     <div className="space-y-4 mt-3">
       <Button variant="ghost" size="sm" className="text-amber-200/70 hover:text-amber-100" onClick={onBack}>
@@ -94,39 +115,118 @@ function FriendProfileView({
             {isOnline ? t('profile.online') : t('profile.offline')}
           </span>
         </div>
+        {/* Season rank badge */}
+        {seasonData && rankName && (
+          <div className="flex items-center justify-center gap-1.5 mt-2">
+            <DiamondRankIcon seasonRating={seasonData.seasonRating} size={14} />
+            <span className="text-xs font-medium" style={{ color: seasonData.rank.color }}>
+              {rankName}
+            </span>
+            <span className="text-amber-200/40 text-xs">·</span>
+            <span className="text-amber-200/60 text-xs">{seasonData.seasonRating} {{ ru: 'очков', kk: 'ұпай', en: 'pts' }[locale as string]}</span>
+          </div>
+        )}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-2">
-        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
-          <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
-          <div>
-            <div className="text-amber-200/60 text-[10px]">{t('profile.rating')}</div>
-            <div className="text-amber-300 font-bold">{profile.rating}</div>
-          </div>
-        </div>
-        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
-          <Swords className="w-4 h-4 text-blue-400 shrink-0" />
-          <div>
-            <div className="text-amber-200/60 text-[10px]">{t('profile.gamesPlayed')}</div>
-            <div className="text-amber-100 font-bold">{profile.gamesPlayed}</div>
-          </div>
-        </div>
-        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
-          <Crown className="w-4 h-4 text-green-400 shrink-0" />
-          <div>
-            <div className="text-amber-200/60 text-[10px]">{t('profile.wins')}</div>
-            <div className="text-green-400 font-bold">{profile.wins}</div>
-          </div>
-        </div>
-        <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
-          <Shield className="w-4 h-4 text-amber-400 shrink-0" />
-          <div>
-            <div className="text-amber-200/60 text-[10px]">{t('profile.winRate')}</div>
-            <div className="text-amber-300 font-bold">{winRate}%</div>
-          </div>
-        </div>
+      {/* Tabs */}
+      <div className="flex rounded-lg overflow-hidden border border-amber-700/30">
+        {(['stats', 'achievements'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 py-2 text-xs font-medium transition-colors ${
+              activeTab === tab
+                ? 'bg-amber-700/40 text-amber-100'
+                : 'bg-[#1a2d45]/40 text-amber-200/50 hover:text-amber-200/80'
+            }`}
+          >
+            {tab === 'stats' ? <span className="flex items-center justify-center gap-1"><TrendingUp className="w-3 h-3" />{tabLabels.stats}</span>
+              : <span className="flex items-center justify-center gap-1"><Trophy className="w-3 h-3" />{tabLabels.achievements} {achievements.length > 0 && <span className="bg-amber-600/60 text-amber-100 rounded-full px-1 text-[10px]">{achievements.length}</span>}</span>}
+          </button>
+        ))}
       </div>
+
+      {/* Tab: Stats */}
+      {activeTab === 'stats' && (
+        <div className="space-y-2">
+          {/* Season rating card */}
+          {seasonData && (
+            <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+              <DiamondRankIcon seasonRating={seasonData.seasonRating} size={18} />
+              <div className="flex-1">
+                <div className="text-amber-200/60 text-[10px]">
+                  {{ ru: 'Сезонный рейтинг', kk: 'Маусымдық рейтинг', en: 'Season rating' }[locale as string]}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold" style={{ color: seasonData.rank.color }}>{seasonData.seasonRating}</span>
+                  {rankName && <span className="text-xs text-amber-200/50">· {rankName}</span>}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <div className="text-amber-200/60 text-[10px]">{t('profile.rating')}</div>
+                <div className="text-amber-300 font-bold">{profile.rating}</div>
+              </div>
+            </div>
+            <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+              <Swords className="w-4 h-4 text-blue-400 shrink-0" />
+              <div>
+                <div className="text-amber-200/60 text-[10px]">{t('profile.gamesPlayed')}</div>
+                <div className="text-amber-100 font-bold">{profile.gamesPlayed}</div>
+              </div>
+            </div>
+            <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+              <Crown className="w-4 h-4 text-green-400 shrink-0" />
+              <div>
+                <div className="text-amber-200/60 text-[10px]">{t('profile.wins')}</div>
+                <div className="text-green-400 font-bold">{profile.wins}</div>
+              </div>
+            </div>
+            <div className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-3 flex items-center gap-2">
+              <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+              <div>
+                <div className="text-amber-200/60 text-[10px]">{t('profile.winRate')}</div>
+                <div className="text-amber-300 font-bold">{winRate}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab: Achievements */}
+      {activeTab === 'achievements' && (
+        <div className="space-y-2">
+          {achievementsQuery.isLoading ? (
+            <div className="flex justify-center py-6">
+              <Loader2 className="w-5 h-5 animate-spin text-amber-400" />
+            </div>
+          ) : achievements.length === 0 ? (
+            <div className="text-center py-8 text-amber-200/30 text-sm">
+              {{ ru: 'Нет выполненных достижений', kk: 'Жетістіктер жоқ', en: 'No achievements yet' }[locale as string]}
+            </div>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">
+              {achievements.map(a => (
+                <div
+                  key={a.key}
+                  className="bg-[#1a2d45]/60 border border-amber-700/20 rounded-xl p-2.5 flex items-center gap-2.5"
+                >
+                  <span className="text-xl shrink-0">{a.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-amber-100 text-xs font-semibold truncate">{getAchName(a)}</div>
+                    <div className="text-amber-200/50 text-[10px] truncate">{getAchDesc(a)}</div>
+                  </div>
+                  <Star className="w-3 h-3 text-amber-400 shrink-0" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Invite button */}
       {inRoom && isOnline && onInviteFriend && (

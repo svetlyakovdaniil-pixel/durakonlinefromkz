@@ -3283,3 +3283,10 @@
 - [x] socketServer.ts: экспортировать updatePlayerEmotionPack(odId, packId)
 - [x] routers.ts: вызывать updatePlayerEmotionPack после setActiveEmotionPack
 - [x] socketServer.ts: при sendEmotion читать пак из БД (fallback на кэш) для надёжности
+## Профиль друга: сезонный рейтинг + достижения
+- [x] routers.ts: добавить profile.byGameId возврат profileId (для последующих запросов)
+- [x] routers.ts: добавить profile.achievementsByGameId — публичная процедура, возвращает выполненные достижения по gameId
+- [x] routers.ts: добавить profile.seasonRatingByGameId — публичная процедура, возвращает сезонный рейтинг по gameId
+- [x] FriendsDrawer.tsx: добавить сезонный рейтинг + ранг в статистику FriendProfileView
+- [x] FriendsDrawer.tsx: добавить вкладки "Статистика" / "Достижения" в FriendProfileView
+- [x] FriendsDrawer.tsx: вкладка достижений показывает только unlocked=true достижения с иконкой, названием, датой

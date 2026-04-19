@@ -159,6 +159,49 @@ export const appRouter = router({
         };
       }),
 
+    /** Get completed achievements for a player by gameId (public) */
+    achievementsByGameId: publicProcedure
+      .input(z.object({ gameId: z.number() }))
+      .query(async ({ input }) => {
+        const profile = await getProfileByGameId(input.gameId);
+        if (!profile) return [];
+        const all = await getAchievementsForProfile(profile.id);
+        // Only return unlocked achievements (privacy: don't expose progress on locked ones)
+        return all
+          .filter(a => a.unlocked)
+          .map(a => ({
+            key: a.key,
+            nameRu: a.nameRu,
+            nameKk: a.nameKk,
+            nameEn: a.nameEn,
+            descRu: a.descRu,
+            descKk: a.descKk,
+            descEn: a.descEn,
+            icon: a.icon,
+            category: a.category,
+            reward: a.reward,
+            unlockedAt: a.unlockedAt,
+          }));
+      }),
+
+    /** Get current season rating for a player by gameId (public) */
+    seasonRatingByGameId: publicProcedure
+      .input(z.object({ gameId: z.number() }))
+      .query(async ({ input }) => {
+        const profile = await getProfileByGameId(input.gameId);
+        if (!profile) return null;
+        const seasonKey = getCurrentSeasonKey();
+        const seasonRating = await getPlayerSeasonRating(profile.id, seasonKey);
+        const rank = getSeasonRank(seasonRating?.seasonRating ?? 0);
+        return {
+          seasonKey,
+          seasonRating: seasonRating?.seasonRating ?? 0,
+          gamesPlayed: seasonRating?.gamesPlayed ?? 0,
+          wins: seasonRating?.wins ?? 0,
+          rank,
+        };
+      }),
+
     /** Get a player's profile with friendship status (for in-game popup) */
     withFriendStatus: protectedProcedure
       .input(z.object({ targetGameId: z.number() }))
