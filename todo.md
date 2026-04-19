@@ -3464,3 +3464,11 @@
 - [x] Добавить тестовые AdMob ID в secrets (VITE_ADMOB_ANDROID_APP_ID, VITE_ADMOB_IOS_APP_ID) — уже установлены
 - [x] Проверить bundle ID во всех конфигах — online.durakonline.fromkz везде совпадает
 - [x] Обновить MOBILE_BUILD.md — исправлен устаревший bundle ID kz.durak.online → online.durakonline.fromkz
+
+### 4. iOS сборка без Mac — GitHub Actions CI
+- [x] .github/workflows/build-ios.yml — GitHub Actions workflow (macOS runner, Fastlane, TestFlight)
+- [x] fastlane/Fastfile — lanes: beta, bump_build_number, setup_signing, build, upload
+- [x] fastlane/Appfile — bundle ID и Apple ID конфигурация
+- [x] Gemfile — fastlane ~2.225, cocoapods ~1.15
+- [x] scripts/download_assets_ci.py — скачивает 84 ассета из Manus S3 в CI
+- [x] IOS_BUILD_GUIDE.md — пошаговая инструкция для пользователя без Mac
