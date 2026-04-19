@@ -187,7 +187,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             <PlayerAvatar avatarId={profile.avatarId} frameId={equippedFrame} size={48} />
             <div className="text-amber-100 text-sm">
               {equippedFrame
-                ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : locale === 'uk' ? ((f as any)?.nameUk || f?.name) : locale === 'ka' ? ((f as any)?.nameKa || f?.name) : f?.name) || equippedFrame; })()
+                ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : locale === 'uk' ? ((f as any)?.nameUk || f?.name) : locale === 'ka' ? ((f as any)?.nameKa || f?.name) : locale === 'az' ? ((f as any)?.nameAz || f?.name) : f?.name) || equippedFrame; })()
                 : t('profile.noFrame')}
             </div>
           </div>
@@ -222,7 +222,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                       </div>
                     </div>
                   </FrameWrapper>
-                  <span className="text-amber-100 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : frame.name}</span>
+                  <span className="text-amber-100 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : locale === 'az' ? ((frame as any).nameAz || frame.name) : frame.name}</span>
                   {equippedFrame === frame.id && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
               ))}
@@ -245,7 +245,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     </FrameWrapper>
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : frame.name}</span>
+                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : locale === 'az' ? ((frame as any).nameAz || frame.name) : frame.name}</span>
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
                       </div>
                     </div>
@@ -265,7 +265,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     </FrameWrapper>
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : frame.name}</span>
+                        <span className="text-amber-200/50 text-sm">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : locale === 'az' ? ((frame as any).nameAz || frame.name) : frame.name}</span>
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">PREMIUM</span>
                       </div>
                       <span className="text-amber-200/40 text-[10px]">{t('profile.requiresPremium')}</span>
@@ -304,7 +304,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
                     </FrameWrapper>
                     <div className="flex-1">
                       <div className="flex items-center gap-1.5">
-                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : frame.name}</span>
+                        <span className="text-yellow-300 text-sm font-semibold">{locale === 'kk' ? (frame as any).nameKk : locale === 'en' ? (frame as any).nameEn || frame.name : locale === 'uk' ? ((frame as any).nameUk || frame.name) : locale === 'ka' ? ((frame as any).nameKa || frame.name) : locale === 'az' ? ((frame as any).nameAz || frame.name) : frame.name}</span>
                         <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">{t('profile.seasonBadge')}</span>
                       </div>
                     </div>

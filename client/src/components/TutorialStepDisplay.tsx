@@ -1294,7 +1294,7 @@ export default function TutorialStepDisplay({
       >
         <div className={`flex justify-between items-start ${(isCompact || isBottom) ? 'mb-1' : 'mb-3'}`}>
           <div>
-            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{locale === 'kk' ? ((scenario as any).titleKk || scenario.title) : locale === 'en' ? ((scenario as any).titleEn || scenario.title) : locale === 'uk' ? ((scenario as any).titleUk || scenario.title) : locale === 'ka' ? ((scenario as any).titleKa || scenario.title) : scenario.title}</h3>
+            <h3 className={`font-bold text-yellow-400 ${isCompact ? 'text-sm sm:text-base mb-0' : isBottom ? 'text-xs sm:text-sm mb-0' : 'text-base sm:text-lg mb-0.5'}`}>{locale === 'kk' ? ((scenario as any).titleKk || scenario.title) : locale === 'en' ? ((scenario as any).titleEn || scenario.title) : locale === 'uk' ? ((scenario as any).titleUk || scenario.title) : locale === 'ka' ? ((scenario as any).titleKa || scenario.title) : locale === 'az' ? ((scenario as any).titleAz || scenario.title) : scenario.title}</h3>
             <p className={`text-gray-400 ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px]' : 'text-[10px] sm:text-xs'}`}>{t('tutorial.stepCounter').replace('{current}', String(currentStep + 1)).replace('{total}', String(totalSteps))}</p>
           </div>
           <button
@@ -1307,8 +1307,8 @@ export default function TutorialStepDisplay({
 
         {/* Desktop text */}
         {(() => {
-          const localizedText = locale === 'kk' ? ((scenario as any).textKk || scenario.text) : locale === 'en' ? ((scenario as any).textEn || scenario.text) : locale === 'uk' ? ((scenario as any).textUk || scenario.text) : locale === 'ka' ? ((scenario as any).textKa || scenario.text) : scenario.text;
-          const localizedMobileText = scenario.mobileText ? (locale === 'kk' ? ((scenario as any).mobileTextKk || scenario.mobileText) : locale === 'en' ? ((scenario as any).mobileTextEn || scenario.mobileText) : locale === 'uk' ? ((scenario as any).mobileTextUk || scenario.mobileText) : locale === 'ka' ? ((scenario as any).mobileTextKa || scenario.mobileText) : scenario.mobileText) : null;
+          const localizedText = locale === 'kk' ? ((scenario as any).textKk || scenario.text) : locale === 'en' ? ((scenario as any).textEn || scenario.text) : locale === 'uk' ? ((scenario as any).textUk || scenario.text) : locale === 'ka' ? ((scenario as any).textKa || scenario.text) : locale === 'az' ? ((scenario as any).textAz || scenario.text) : scenario.text;
+          const localizedMobileText = scenario.mobileText ? (locale === 'kk' ? ((scenario as any).mobileTextKk || scenario.mobileText) : locale === 'en' ? ((scenario as any).mobileTextEn || scenario.mobileText) : locale === 'uk' ? ((scenario as any).mobileTextUk || scenario.mobileText) : locale === 'ka' ? ((scenario as any).mobileTextKa || scenario.mobileText) : locale === 'az' ? ((scenario as any).mobileTextAz || scenario.mobileText) : scenario.mobileText) : null;
           const fmt = (t: string) => t.replace(/<red>(.*?)<\/red>/g, '<span class="text-red-500 font-bold">$1</span>').replace(/\n/g, '<br/>');
           return localizedMobileText ? (
             <>
@@ -1327,7 +1327,7 @@ export default function TutorialStepDisplay({
         })()}
 
         {(() => {
-          const localizedInstruction = locale === 'kk' ? ((scenario as any).instructionKk || scenario.instruction) : locale === 'en' ? ((scenario as any).instructionEn || scenario.instruction) : locale === 'uk' ? ((scenario as any).instructionUk || scenario.instruction) : locale === 'ka' ? ((scenario as any).instructionKa || scenario.instruction) : scenario.instruction;
+          const localizedInstruction = locale === 'kk' ? ((scenario as any).instructionKk || scenario.instruction) : locale === 'en' ? ((scenario as any).instructionEn || scenario.instruction) : locale === 'uk' ? ((scenario as any).instructionUk || scenario.instruction) : locale === 'ka' ? ((scenario as any).instructionKa || scenario.instruction) : locale === 'az' ? ((scenario as any).instructionAz || scenario.instruction) : scenario.instruction;
           return localizedInstruction ? (
             <p className={`text-yellow-300 italic ${(isCompact || isBottom) ? 'text-[9px] sm:text-[10px] mb-1' : 'text-[10px] sm:text-xs mb-3'}`}>{localizedInstruction}</p>
           ) : null;
@@ -1471,11 +1471,14 @@ export default function TutorialStepDisplay({
                 const nameRu = scenario.transferMechanic.targetBotName;
                 const nameEn = scenario.transferMechanic.targetBotNameEn || nameRu;
                 const nameKk = scenario.transferMechanic.targetBotNameKk || nameRu;
-                const displayName = locale === 'en' ? nameEn : locale === 'kk' ? nameKk : nameRu;
+                const nameAz = (scenario.transferMechanic as any).targetBotNameAz || nameRu;
+                const displayName = locale === 'en' ? nameEn : locale === 'kk' ? nameKk : locale === 'az' ? nameAz : nameRu;
                 return locale === 'kk'
                   ? `Сіз жүрісті "${displayName}" ойыншысына аудардыңыз,\nенді осы ойыншы ұрады`
                   : locale === 'en'
                   ? `You transferred the turn to "${displayName}",\nnow this player defends`
+                  : locale === 'az'
+                  ? `Siz növbəni "${displayName}" oyunçusuna ötürdünüz,\nindi bu oyunçu müdafiə edir`
                   : `Вы перевели ход на игрока "${displayName}",\nтеперь бьется этот игрок`;
               })()}
             </p>

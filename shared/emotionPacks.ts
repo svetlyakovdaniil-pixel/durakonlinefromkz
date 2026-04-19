@@ -6,6 +6,7 @@ export interface EmotionPackItem {
   labelEn?: string;
   labelUk?: string;
   labelKa?: string;
+  labelAz?: string;
   url: string;
 }
 
@@ -16,11 +17,13 @@ export interface EmotionPack {
   nameEn?: string;
   nameUk?: string;
   nameKa?: string;
+  nameAz?: string;
   description?: string;
   descriptionKk?: string;
   descriptionEn?: string;
   descriptionUk?: string;
   descriptionKa?: string;
+  descriptionAz?: string;
   price: number; // 0 = free
   emotions: EmotionPackItem[];
 }
@@ -33,23 +36,25 @@ export const KHAN_PACK: EmotionPack = {
   nameEn: 'Kazakh Khan',
   nameUk: 'Казахський Хан',
   nameKa: 'ყაზახური ხანი',
+  nameAz: 'Qazax Xanı',
   description: 'Эмоции с казахским ханом в калпаке',
   descriptionKk: 'Қалпақты қазақ ханымен эмоциялар',
   descriptionEn: 'Emotions with a Kazakh Khan in kalpak',
   descriptionUk: 'Емоції з казахським ханом у калпаку',
   descriptionKa: 'ემოციები ყაზახური ხანით ყალპაყში',
+  descriptionAz: 'Qazax xanı ilə emosiyalar',
   price: 0, // free by default
   emotions: [
-    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_laugh_68ee4d40.png' },
-    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_cool_7a4a8a8d.png' },
-    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_angry_8618af32.png' },
-    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sad_27908e27.png' },
-    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_think_33befc92.png' },
-    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_wow_a86a7e15.png' },
-    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_heart_e35ddda3.png' },
-    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_hurry_618fde27.png' },
-    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_win_e091d556.png' },
-    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sleep_be20119f.png' },
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_laugh_68ee4d40.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    labelAz: 'Əla', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_cool_7a4a8a8d.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   labelAz: 'Qəzəb', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_angry_8618af32.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     labelAz: 'Kədər', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sad_27908e27.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   labelAz: 'Düşünürəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_think_33befc92.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     labelAz: 'Vay', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_wow_a86a7e15.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    labelAz: 'Sevgi', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_heart_e35ddda3.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   labelAz: 'Tələsirəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_hurry_618fde27.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     labelAz: 'Qalibiyyət', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_win_e091d556.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   labelAz: 'Cansıxıcı', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_sleep_be20119f.png' },
   ],
 };
 
@@ -60,22 +65,24 @@ export const HAMSTER_PACK: EmotionPack = {
   nameKk: 'Хомяк',
   nameEn: 'Hamster',
   nameUk: 'Хомяк',
+  nameAz: 'Hamster',
   description: 'Оригинальные эмоции с хомяком',
   descriptionKk: 'Хомякпен түпнұсқа эмоциялар',
   descriptionEn: 'Original hamster emotions',
   descriptionUk: 'Оригінальні емоції з хомяком',
+  descriptionAz: 'Hamster ilə orijinal emosiyalar',
   price: 150, // 150 tenge
   emotions: [
-    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   url: '/assets/static/emotion_laugh.png' },
-    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    url: '/assets/static/emotion_cool.png' },
-    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   url: '/assets/static/emotion_angry.png' },
-    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     url: '/assets/static/emotion_sad.png' },
-    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   url: '/assets/static/emotion_think.png' },
-    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     url: '/assets/static/emotion_wow.png' },
-    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    url: '/assets/static/emotion_heart.png' },
-    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   url: '/assets/static/emotion_hurry.png' },
-    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     url: '/assets/static/emotion_win.png' },
-    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   url: '/assets/static/emotion_sleep.png' },
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: '/assets/static/emotion_laugh.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    labelAz: 'Əla', url: '/assets/static/emotion_cool.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   labelAz: 'Qəzəb', url: '/assets/static/emotion_angry.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     labelAz: 'Kədər', url: '/assets/static/emotion_sad.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   labelAz: 'Düşünürəm', url: '/assets/static/emotion_think.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     labelAz: 'Vay', url: '/assets/static/emotion_wow.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    labelAz: 'Sevgi', url: '/assets/static/emotion_heart.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   labelAz: 'Tələsirəm', url: '/assets/static/emotion_hurry.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     labelAz: 'Qalibiyyət', url: '/assets/static/emotion_win.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   labelAz: 'Cansıxıcı', url: '/assets/static/emotion_sleep.png' },
   ],
 };
 
@@ -86,22 +93,24 @@ export const MONKEY_PACK: EmotionPack = {
   nameKk: 'Маймыл',
   nameEn: 'Monkey',
   nameUk: 'Мавпа',
+  nameAz: 'Meymun',
   description: 'Те же эмоции, только с обезьяной!',
   descriptionKk: 'Сол эмоциялар, бірақ маймылмен!',
   descriptionEn: 'Same emotions, but with a monkey!',
   descriptionUk: 'Ті ж емоції, тільки з мавпою!',
+  descriptionAz: 'Eyni emosiyalar, amma meymunla!',
   price: 150, // 150 tenge
   emotions: [
-    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_laugh_9e3429b4.png' },
-    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_cool_4b56eac0.png' },
-    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_angry_9fb48b22.png' },
-    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_sad_a1b76315.png' },
-    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_think_979faf8d.png' },
-    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_wow_4a569438.png' },
-    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_heart_6fb9e4ca.png' },
-    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_hurry_33227715.png' },
-    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_win_cbae3999.png' },
-    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_sleep_0c454b9a.png' },
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_laugh_9e3429b4.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',   labelAz: 'Əla', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_cool_4b56eac0.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',  labelAz: 'Qəzəb', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_angry_9fb48b22.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',    labelAz: 'Kədər', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_sad_a1b76315.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',  labelAz: 'Düşünürəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_think_979faf8d.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',    labelAz: 'Vay', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_wow_4a569438.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',   labelAz: 'Sevgi', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_heart_6fb9e4ca.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',  labelAz: 'Tələsirəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_hurry_33227715.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',    labelAz: 'Qalibiyyət', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_win_cbae3999.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',  labelAz: 'Cansıxıcı', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_sleep_0c454b9a.png' },
   ],
 };
 
@@ -112,21 +121,23 @@ export const DEVIL_PACK: EmotionPack = {
   nameKk: 'Шайтан',
   nameEn: 'Devil',
   nameUk: 'Чортеня',
+  nameAz: 'Şeytan',
   description: 'Те же эмоции, только с чертиком!',
   descriptionKk: 'Сол эмоциялар, бірақ шайтанмен!',
   descriptionEn: 'Same emotions, but with a little devil!',
+  descriptionAz: 'Eyni emosiyalar, amma şeytanla!',
   price: 150, // 150 tenge
   emotions: [
-    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_laugh_810771e3.png' },
-    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_cool_e5b18242.png' },
-    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_angry_e4ff36c8.png' },
-    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sad_fc1ad763.png' },
-    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_think_a32cf7f5.png' },
-    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_wow_6f7fcd2b.png' },
-    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_heart_4914bc75.png' },
-    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_hurry_97527c35.png' },
-    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_win_d390dde4.png' },
-    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',  url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sleep_5d68d751.png' },
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_laugh_810771e3.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',   labelAz: 'Əla', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_cool_e5b18242.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',  labelAz: 'Qəzəb', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_angry_e4ff36c8.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',    labelAz: 'Kədər', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sad_fc1ad763.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',  labelAz: 'Düşünürəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_think_a32cf7f5.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',    labelAz: 'Vay', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_wow_6f7fcd2b.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',   labelAz: 'Sevgi', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_heart_4914bc75.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',  labelAz: 'Tələsirəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_hurry_97527c35.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',    labelAz: 'Qalibiyyət', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_win_d390dde4.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',  labelAz: 'Cansıxıcı', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_sleep_5d68d751.png' },
   ],
 };
 
@@ -137,22 +148,24 @@ export const RACCOON_PACK: EmotionPack = {
   nameKk: 'Жанат',
   nameEn: 'Raccoon',
   nameUk: 'Єнот',
+  nameAz: 'Yenot',
   description: 'Те же эмоции, только с енотом!',
   descriptionKk: 'Сол эмоциялар, бірақ енотпен!',
   descriptionEn: 'Same emotions, but with a raccoon!',
   descriptionUk: 'Ті ж емоції, тільки з єнотом!',
+  descriptionAz: 'Eyni emosiyalar, amma yenotla!',
   price: 150,
   emotions: [
-    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_ref_laugh_abe704af.png' },
-    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_cool-6rKk5ui5mySEY6uXKComWK.png' },
-    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_angry-6uVHKrrqCwQBznY5aEh5nC.png' },
-    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sad-FbNZWtaWSm6Fb4ausscNNE.png' },
-    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_think-mo3SbXpKKwTTsM6y8SaNUQ.png' },
-    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_wow-4QRjVrmn7WYaBBZsWLL8Ej.png' },
-    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_heart_v2-TyneVuyMKoLBPNQZyanUc2.png' },
-    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_hurry_v2-agQoZychkNzdjxPYvtLDTE.png' },
-    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_win-PHHWAUiVmxmYgk2AimmfrD.png' },
-    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sleep-JPQYVFAzJtFXuS2m8Ko3Ax.png' },
+    { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_ref_laugh_abe704af.png' },
+    { id: 'cool',   label: 'Круто',   labelKk: 'Керемет',  labelEn: 'Cool',   labelUk: 'Круто',    labelKa: 'მაგარია',    labelAz: 'Əla', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_cool-6rKk5ui5mySEY6uXKComWK.png' },
+    { id: 'angry',  label: 'Злость',  labelKk: 'Ашу',      labelEn: 'Angry',  labelUk: 'Злість',   labelKa: 'ბრაზი',   labelAz: 'Qəzəb', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_angry-6uVHKrrqCwQBznY5aEh5nC.png' },
+    { id: 'sad',    label: 'Грусть',  labelKk: 'Қайғы',    labelEn: 'Sad',    labelUk: 'Сум',     labelKa: 'სევდა',     labelAz: 'Kədər', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sad-FbNZWtaWSm6Fb4ausscNNE.png' },
+    { id: 'think',  label: 'Думаю',   labelKk: 'Ойлаймын', labelEn: 'Think',  labelUk: 'Думаю',   labelKa: 'ვფიქრობ',   labelAz: 'Düşünürəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_think-mo3SbXpKKwTTsM6y8SaNUQ.png' },
+    { id: 'wow',    label: 'Вау',     labelKk: 'Уау',      labelEn: 'Wow',    labelUk: 'Вау',     labelAz: 'Vay', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_wow-4QRjVrmn7WYaBBZsWLL8Ej.png' },
+    { id: 'heart',  label: 'Любовь',  labelKk: 'Сүйіспен', labelEn: 'Love',   labelUk: 'Любов',    labelAz: 'Sevgi', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_heart_v2-TyneVuyMKoLBPNQZyanUc2.png' },
+    { id: 'hurry',  label: 'Тороплю', labelKk: 'Асығам',   labelEn: 'Hurry',  labelUk: 'Поспішаю',   labelAz: 'Tələsirəm', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_hurry_v2-agQoZychkNzdjxPYvtLDTE.png' },
+    { id: 'win',    label: 'Победа',  labelKk: 'Жеңіс',    labelEn: 'Win',    labelUk: 'Перемога',     labelAz: 'Qalibiyyət', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_win-PHHWAUiVmxmYgk2AimmfrD.png' },
+    { id: 'sleep',  label: 'Скучно',  labelKk: 'Жалықтым', labelEn: 'Bored',  labelUk: 'Нудно',   labelAz: 'Cansıxıcı', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_sleep-JPQYVFAzJtFXuS2m8Ko3Ax.png' },
   ],
 };
 

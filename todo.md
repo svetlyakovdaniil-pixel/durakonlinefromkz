@@ -3417,8 +3417,8 @@
 - [x] Проверить GOOGLE_CLIENT_SECRET (уже настроен через secrets)
 
 ### 4. Google Play Console
-- [ ] Создать продукты в Google Play Console (premium_monthly, durak_tenge_100/500/1000/5000)
-- [ ] Привязать Service Account к RevenueCat
+- [ ] [ОТЛОЖЕНО — Google Play] Создать продукты в Google Play Console (premium_monthly, durak_tenge_100/500/1000/5000)
+- [ ] [ОТЛОЖЕНО — Google Play] Привязать Service Account к RevenueCat
 
 ### 5. iOS RevenueCat
 - [x] Добавить iOS приложение в RevenueCat с P8 ключом из App Store Connect (appd44dfba10c, Bundle: com.durakonlinefromkz.app, Key: T3MFPSB685, iOS SDK Key: appl_GdpfUqDfDgVtrHhTWhmzgSCogqz)

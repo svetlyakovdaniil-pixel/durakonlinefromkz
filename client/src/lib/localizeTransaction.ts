@@ -17,6 +17,10 @@ export function localizeTransactionDescription(description: string, locale: stri
     return localizeToKa(description);
   }
 
+  if (locale === 'az') {
+    return localizeToAz(description);
+  }
+
   return description;
 }
 
@@ -333,5 +337,71 @@ function localizeToKa(desc: string): string {
   }
   if (desc === '[ТЕСТ] +10 000 шаныраков') return '[ტესტი] +10 000 შანირაქი';
   if (desc === '[ТЕСТ] +10 000 тенге') return '[ტესტი] +10 000 თენგე';
+  return desc;
+}
+
+function localizeToAz(desc: string): string {
+  if (desc.startsWith('Достижение: ')) {
+    const name = desc.slice('Достижение: '.length);
+    return `Nailiyyət: ${name}`;
+  }
+  if (desc.startsWith('Daily quest reward: ')) {
+    const key = desc.slice('Daily quest reward: '.length);
+    return `Gündəlik tapşırıq mükafatı: ${key}`;
+  }
+  if (desc.startsWith('Покупка колоды: ')) {
+    const id = desc.slice('Покупка колоды: '.length);
+    return `Dəstə alışı: ${id}`;
+  }
+  if (desc.startsWith('Покупка стола: ')) {
+    const id = desc.slice('Покупка стола: '.length);
+    return `Masa alışı: ${id}`;
+  }
+  if (desc.startsWith('Покупка рамки: ')) {
+    const id = desc.slice('Покупка рамки: '.length);
+    return `Çərçivə alışı: ${id}`;
+  }
+  if (desc.startsWith('Покупка аватара: ')) {
+    const id = desc.slice('Покупка аватара: '.length);
+    return `Avatar alışı: ${id}`;
+  }
+  if (desc.startsWith('Покупка пака эмоций: ')) {
+    const id = desc.slice('Покупка пака эмоций: '.length);
+    return `Emosiya paketi alışı: ${id}`;
+  }
+  const betMatch = desc.match(/^Ставка на игру \(комната (.+)\)$/);
+  if (betMatch) return `Oyun mərcı (otaq ${betMatch[1]})`;
+  const rewardMatch = desc.match(/^Награда за (\d+)-е место \(комната (.+)\)$/);
+  if (rewardMatch) return `${rewardMatch[1]}-ci yer üçün mükafat (otaq ${rewardMatch[2]})`;
+  if (desc === 'Награда за прохождение обучения (+2000 шаныраков)') return 'Öyrədici tamamlama mükafatı (+2000 şanyrak)';
+  const topupMatch = desc.match(/^Добить баланс до 2000 \(\+(\d+) шаныраков\)$/);
+  if (topupMatch) return `Balansın 2000-ə qədər doldurulması (+${topupMatch[1]} şanyrak)`;
+  const adMatch = desc.match(/^Просмотр рекламы \(\+(\d+) шаныраков\)$/);
+  if (adMatch) return `Reklam izlənildi (+${adMatch[1]} şanyrak)`;
+  const shanBuyMatch = desc.match(/^Куплено (\S+) шаныраков за (\d+) тенге$/);
+  if (shanBuyMatch) return `${shanBuyMatch[1]} şanyrak ${shanBuyMatch[2]} tenge-yə alındı`;
+  const shanPayMatch = desc.match(/^Оплата за (\S+) шаныраков$/);
+  if (shanPayMatch) return `${shanPayMatch[1]} şanyrak üçün ödəniş`;
+  const iapMatch = desc.match(/^IAP: \+(\d+) тенге \((.+)\)$/);
+  if (iapMatch) return `IAP: +${iapMatch[1]} tenge (${iapMatch[2]})`;
+  if (desc === 'Бонус за использование реферального кода') return 'Referral kodu bonusu';
+  const refMatch = desc.match(/^Реферальная награда: (\d+) приглашений$/);
+  if (refMatch) return `Referral mükafatı: ${refMatch[1]} dəvət`;
+  const playlistMatch = desc.match(/^Purchased playlist #(\d+)$/);
+  if (playlistMatch) return `Pleylist #${playlistMatch[1]} alındı`;
+  const premiumMatch = desc.match(/^Premium subscription \(expires (.+)\)$/);
+  if (premiumMatch) return `Premium abunəlik (${premiumMatch[1]}-ə qədər)`;
+  const premiumIapMatch = desc.match(/^Premium IAP subscription \(expires (.+)\)$/);
+  if (premiumIapMatch) return `Premium IAP abunəlik (${premiumIapMatch[1]}-ə qədər)`;
+  if (desc.startsWith('[ADMIN REFUND] ')) {
+    const inner = desc.slice('[ADMIN REFUND] '.length);
+    return `[ADMIN REFUND] ${localizeToAz(inner)}`;
+  }
+  if (desc.startsWith('[Админ] ')) {
+    const inner = desc.slice('[Админ] '.length);
+    return `[Admin] ${inner}`;
+  }
+  if (desc === '[ТЕСТ] +10 000 шаныраков') return '[TEST] +10 000 şanyrak';
+  if (desc === '[ТЕСТ] +10 000 тенге') return '[TEST] +10 000 tenge';
   return desc;
 }

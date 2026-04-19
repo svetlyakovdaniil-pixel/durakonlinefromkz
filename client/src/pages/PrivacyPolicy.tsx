@@ -24,7 +24,7 @@ export default function PrivacyPolicy() {
       {/* Content */}
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="prose prose-invert prose-sm max-w-none space-y-6">
-          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : <PrivacyContentRu />}
+          {locale === 'kk' ? <PrivacyContentKk /> : locale === 'en' ? <PrivacyContentEn /> : locale === 'uk' ? <PrivacyContentUk /> : locale === 'ka' ? <PrivacyContentKa /> : locale === 'az' ? <PrivacyContentAz /> : <PrivacyContentRu />}
         </div>
 
         {/* Last updated */}
@@ -414,6 +414,93 @@ function PrivacyContentKk() {
         <h2 className="text-xl font-bold text-foreground mb-3">10. Байланыс</h2>
         <p className="text-muted-foreground leading-relaxed">
           Дербес деректерді өңдеуге байланысты барлық сұрақтар бойынша Қосымшадағы «Администрациямен байланыс» бөлімі арқылы немесе электрондық пошта арқылы бізге хабарласа аласыз:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PrivacyContentAz() {
+  return (
+    <>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">1. Ümumi müddəalar</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Bu Məxfilik Siyasəti (bundan sonra — «Siyasət») «Durak Online from KZ» mobil tətbiqinin (bundan sonra — «Tətbiq») istifadəçilərinin şəxsi məlumatlarının toplanması, istifadəsi və qorunması qaydalarını müəyyən edir. Tətbiqdən istifadə etməklə siz bu Siyasətin şərtlərinə razılıq verirsiniz.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">2. Hansı məlumatları toplayırıq</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Tətbiqdən istifadə zamanı aşağıdakı məlumatlar toplanıla bilər:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li><strong className="text-foreground">Hesab məlumatları:</strong> e-poçt ünvanı, görünən ad (ləqəb), avatar</li>
+          <li><strong className="text-foreground">Oyun məlumatları:</strong> statistika (qalibiyyət, məğlubiyyət), oyun balansı (tenge), alınmış əşyalar (avatarlar, çərçivələr, kart dəstləri, masalar)</li>
+          <li><strong className="text-foreground">Texniki məlumatlar:</strong> cihaz növü, əməliyyat sisteminin versiyası, IP-ünvan, sessiya identifikatoru</li>
+          <li><strong className="text-foreground">Qarşılıqlı əlaqə məlumatları:</strong> dostlar siyahısı, şikayətlər tarixi</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">3. Məlumatların istifadəsi</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Toplanan məlumatlar aşağıdakı məqsədlər üçün istifadə olunur:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Tətbiqin funksionallığını və oyun imkanlarını təmin etmək</li>
+          <li>İstifadəçinin identifikasiyası və hesabın idarə edilməsi</li>
+          <li>Oyun statistikasının və liderler cədvəlinin aparılması</li>
+          <li>Təhlükəsizliyin təmin edilməsi və fırıldaqçılığın qarşısının alınması</li>
+          <li>Şikayətlərin baxılması və oyunçular arasındakı mübahisələrin həlli</li>
+          <li>Tətbiqin keyfiyyətinin və istifadəçi təcrübəsinin yaxşılaşdırılması</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">4. Məlumatların saxlanması və qorunması</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz şəxsi məlumatların icazəsiz girişdən, dəyişdirilməsindən, açıqlanmasından və ya məhv edilməsindən qorunması üçün bütün lazımi təşkilati və texniki tədbirləri görürük. Məlumatlar şifrələmə ilə qorunan serverlərdə saxlanılır. Parollar hash edilmiş formada saxlanılır.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">5. Məlumatların üçüncü tərəflərə ötürülməsi</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz qanunvericiliyin tələb etdiyi hallar və ya xidmətin göstərilməsi üçün zəruri olan hallar (məs., hosting provayderləri, ödəniş sistemləri) istisna olmaqla, şəxsi məlumatlarınızı üçüncü tərəflərə satmır, dəyişmir və ötürmürük.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">6. İstifadəçinin hüquqları</h2>
+        <p className="text-muted-foreground leading-relaxed mb-3">
+          Sizin aşağıdakı hüquqlarınız var:
+        </p>
+        <ul className="list-disc pl-6 text-muted-foreground space-y-2">
+          <li>Saxlanılan şəxsi məlumatlar haqqında məlumat almaq</li>
+          <li>Yanlış məlumatların düzəldilməsini tələb etmək</li>
+          <li>Hesabınızın və bütün əlaqəli məlumatların silinməsini tələb etmək</li>
+          <li>Şəxsi məlumatların işlənməsinə razılığı geri götürmək</li>
+        </ul>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">7. Uşaqların məlumatları</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Tətbiq 13 yaşından kiçik uşaqlar üçün nəzərdə tutulmayıb. Biz bilərəkdən 13 yaşından kiçik uşaqların şəxsi məlumatlarını toplamırıq. Əgər uşağın bizə məlumat verdiyini öyrənsəniz, onları silmək üçün bizimlə əlaqə saxlayın.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">8. Kukilər və analitika</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Tətbiq avtorizasiyanı saxlamaq üçün sessiya kukilərindən istifadə edir. Xidmətin keyfiyyətini yaxşılaşdırmaq üçün anonim analitikadan istifadə edə bilərik. Analitik məlumatlar şəxsi məlumat ehtiva etmir.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">9. Siyasətin dəyişdirilməsi</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Biz bu Məxfilik Siyasətinə dəyişikliklər etmək hüququnu saxlayırıq. Əhəmiyyətli dəyişikliklər olduqda istifadəçilərə tətbiq vasitəsilə məlumat veriləcək. Dəyişikliklərdən sonra tətbiqdən istifadə yenilənmiş Siyasətin qəbul edilməsi deməkdir.
+        </p>
+      </section>
+      <section>
+        <h2 className="text-xl font-bold text-foreground mb-3">10. Əlaqə</h2>
+        <p className="text-muted-foreground leading-relaxed">
+          Şəxsi məlumatların işlənməsi ilə bağlı bütün suallar üçün tətbiqin «Administrasiya ilə əlaqə» bölməsi vasitəsilə və ya e-poçt ünvanına müraciət edə bilərsiniz:{' '}<a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 hover:text-amber-300 underline">durakonlinefromkz@gmail.com</a>.
         </p>
       </section>
     </>

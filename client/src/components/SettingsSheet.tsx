@@ -387,6 +387,14 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                   ქართული
                   {locale === 'ka' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
                 </button>
+                <button
+                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
+                  onClick={() => { setLocale('az'); setLangOpen(false); }}
+                >
+                  <span className="text-base">🇦🇿</span>
+                  Azərbaycanca
+                  {locale === 'az' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
+                </button>
               </PopoverContent>
             </Popover>
           </div>
