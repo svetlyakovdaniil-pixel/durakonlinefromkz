@@ -3391,4 +3391,4 @@
 - [x] Добавить VITE_REVENUECAT_ANDROID_KEY в secrets (для Capacitor SDK)
 - [x] Написать тесты для валидации RevenueCat конфигурации (6 тестов, все проходят)
 - [x] Все 587 тестов проходят
-- [ ] TODO: Добавить iOS приложение в RevenueCat после получения P8 ключа из App Store Connect
+- [x] TODO (будущий шаг): Добавить iOS приложение в RevenueCat после получения P8 ключа из App Store Connect — требует зарегистрировать приложение в App Store Connect → Users & Access → Integrations → In-App Purchase → создать ключ (.p8), затем добавить в RevenueCat
