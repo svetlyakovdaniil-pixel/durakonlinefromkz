@@ -136,7 +136,8 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
       const mainBotNameEn = scenario.overrideMainBotNameEn || mainBotNameRu;
       const mainBotNameKk = scenario.overrideMainBotNameKk || mainBotNameRu;
       const mainBotNameAz = (scenario as any).overrideMainBotNameAz || mainBotNameRu;
-      const mainBotName = locale === 'en' ? mainBotNameEn : locale === 'kk' ? mainBotNameKk : locale === 'az' ? mainBotNameAz : mainBotNameRu;
+      const mainBotNameUz = (scenario as any).overrideMainBotNameUz || mainBotNameRu;
+      const mainBotName = locale === 'en' ? mainBotNameEn : locale === 'kk' ? mainBotNameKk : locale === 'az' ? mainBotNameAz : locale === 'uz' ? mainBotNameUz : mainBotNameRu;
       tutorialState.players = tutorialState.players.map(p => {
         if (p.isBot && !p.id.startsWith('tutorial-extra-bot-')) {
           return { ...p, name: mainBotName };
@@ -181,7 +182,8 @@ export function useTutorialGameState(scenario: TutorialScenario | null, baseGame
         const botNameEn = scenario.extraBotNamesEn?.[i] || `Bot ${i + 2}`;
         const botNameKk = scenario.extraBotNamesKk?.[i] || `Қадам ${i + 2}`;
         const botNameAz = (scenario as any).extraBotNamesAz?.[i] || `Bot ${i + 2}`;
-        const botName = locale === 'en' ? botNameEn : locale === 'kk' ? botNameKk : locale === 'az' ? botNameAz : botNameRu;
+        const botNameUz = (scenario as any).extraBotNamesUz?.[i] || `Bot ${i + 2}`;
+        const botName = locale === 'en' ? botNameEn : locale === 'kk' ? botNameKk : locale === 'az' ? botNameAz : locale === 'uz' ? botNameUz : botNameRu;
         existingPlayers.push({
           id: `tutorial-extra-bot-${i + 2}`,
           name: botName,

@@ -18,12 +18,14 @@ export interface EmotionPack {
   nameUk?: string;
   nameKa?: string;
   nameAz?: string;
+  nameUz?: string;
   description?: string;
   descriptionKk?: string;
   descriptionEn?: string;
   descriptionUk?: string;
   descriptionKa?: string;
   descriptionAz?: string;
+  descriptionUz?: string;
   price: number; // 0 = free
   emotions: EmotionPackItem[];
 }
@@ -37,12 +39,14 @@ export const KHAN_PACK: EmotionPack = {
   nameUk: 'Казахський Хан',
   nameKa: 'ყაზახური ხანი',
   nameAz: 'Qazax Xanı',
+  nameUz: 'Qozoq Xoni',
   description: 'Эмоции с казахским ханом в калпаке',
   descriptionKk: 'Қалпақты қазақ ханымен эмоциялар',
   descriptionEn: 'Emotions with a Kazakh Khan in kalpak',
   descriptionUk: 'Емоції з казахським ханом у калпаку',
   descriptionKa: 'ემოციები ყაზახური ხანით ყალპაყში',
   descriptionAz: 'Qazax xanı ilə emosiyalar',
+  descriptionUz: 'Qozoq xoni bilan emotsiyalar',
   price: 0, // free by default
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_khan_laugh_68ee4d40.png' },
@@ -66,11 +70,13 @@ export const HAMSTER_PACK: EmotionPack = {
   nameEn: 'Hamster',
   nameUk: 'Хомяк',
   nameAz: 'Hamster',
+  nameUz: 'Hamster',
   description: 'Оригинальные эмоции с хомяком',
   descriptionKk: 'Хомякпен түпнұсқа эмоциялар',
   descriptionEn: 'Original hamster emotions',
   descriptionUk: 'Оригінальні емоції з хомяком',
   descriptionAz: 'Hamster ilə orijinal emosiyalar',
+  descriptionUz: 'Hamster bilan original emotsiyalar',
   price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: '/assets/static/emotion_laugh.png' },
@@ -94,11 +100,13 @@ export const MONKEY_PACK: EmotionPack = {
   nameEn: 'Monkey',
   nameUk: 'Мавпа',
   nameAz: 'Meymun',
+  nameUz: 'Maymun',
   description: 'Те же эмоции, только с обезьяной!',
   descriptionKk: 'Сол эмоциялар, бірақ маймылмен!',
   descriptionEn: 'Same emotions, but with a monkey!',
   descriptionUk: 'Ті ж емоції, тільки з мавпою!',
   descriptionAz: 'Eyni emosiyalar, amma meymunla!',
+  descriptionUz: 'Xuddi shu emotsiyalar, lekin maymun bilan!',
   price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_monkey_laugh_9e3429b4.png' },
@@ -122,10 +130,12 @@ export const DEVIL_PACK: EmotionPack = {
   nameEn: 'Devil',
   nameUk: 'Чортеня',
   nameAz: 'Şeytan',
+  nameUz: 'Shayton',
   description: 'Те же эмоции, только с чертиком!',
   descriptionKk: 'Сол эмоциялар, бірақ шайтанмен!',
   descriptionEn: 'Same emotions, but with a little devil!',
   descriptionAz: 'Eyni emosiyalar, amma şeytanla!',
+  descriptionUz: 'Xuddi shu emotsiyalar, lekin shayton bilan!',
   price: 150, // 150 tenge
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',  labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_devil_laugh_810771e3.png' },
@@ -149,11 +159,13 @@ export const RACCOON_PACK: EmotionPack = {
   nameEn: 'Raccoon',
   nameUk: 'Єнот',
   nameAz: 'Yenot',
+  nameUz: 'Yenot',
   description: 'Те же эмоции, только с енотом!',
   descriptionKk: 'Сол эмоциялар, бірақ енотпен!',
   descriptionEn: 'Same emotions, but with a raccoon!',
   descriptionUk: 'Ті ж емоції, тільки з єнотом!',
   descriptionAz: 'Eyni emosiyalar, amma yenotla!',
+  descriptionUz: 'Xuddi shu emotsiyalar, lekin yenot bilan!',
   price: 150,
   emotions: [
     { id: 'laugh',  label: 'Смех',    labelKk: 'Күлу',     labelEn: 'Laugh',  labelUk: 'Сміх',   labelKa: 'სიცილი',   labelAz: 'Gülüş', url: 'https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/emotion_raccoon_ref_laugh_abe704af.png' },
