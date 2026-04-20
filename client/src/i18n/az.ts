@@ -210,6 +210,7 @@ export const az = {
     frameCyberpunkVoid: 'Void circuit: neon qlitch və matris yağışı',
     frameHiphopGold: 'Qızıl zəncir: vinyl cızıqları və beat dalğası',
     frameAngelsDuality: 'Duallik: mələk qanadları və cəhənnəm odu',
+    adminAnnouncement: 'Elan',
   },
 
   // Room creation

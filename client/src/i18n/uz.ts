@@ -210,6 +210,7 @@ export const uz = {
     frameCyberpunkVoid: 'Void circuit: neon glitch va matritsa yomg\'iri',
     frameHiphopGold: 'Oltin zanjir: vinyl izlari va beat to\'lqini',
     frameAngelsDuality: 'Ikkilik: farishta qanotlari va do\'zax olovi',
+    adminAnnouncement: "E'lon",
   },
 
   // Room creation

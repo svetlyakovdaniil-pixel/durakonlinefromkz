@@ -210,6 +210,7 @@ export const kk = {
     frameCyberpunkVoid: 'Void circuit: неон глитч пен матрица',
     frameHiphopGold: 'Алтын тізбек: винил ойықтары мен beat wave',
     frameAngelsDuality: 'Қосарлық: періште қанаттары мен тозақ оты',
+    adminAnnouncement: 'Хабарландыру',
   },
 
   // Room creation

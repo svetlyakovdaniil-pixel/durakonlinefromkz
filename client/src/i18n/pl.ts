@@ -210,6 +210,7 @@ export const pl = {
     frameCyberpunkVoid: 'Void circuit: neonowy glitch i deszcz matrycy',
     frameHiphopGold: 'Złoty łańcuch: rysy winylowe i fala bitu',
     frameAngelsDuality: 'Dualność: skrzydła anioła i ogień piekła',
+    adminAnnouncement: 'Ogłoszenie',
   },
 
   // Room creation

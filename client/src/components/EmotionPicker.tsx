@@ -1,9 +1,22 @@
 import { useState, useCallback } from 'react';
 import { X } from 'lucide-react';
-import { HAMSTER_PACK, getEmotionPack } from '@shared/emotionPacks';
+import { HAMSTER_PACK, getEmotionPack, type EmotionPackItem } from '@shared/emotionPacks';
+import { useTranslation } from '@/i18n';
 
 // Legacy export for backward compatibility (hamster pack emotions)
 export const EMOTIONS = HAMSTER_PACK.emotions;
+
+/** Get locale-aware label for an emotion item */
+function getEmotionLabel(e: EmotionPackItem, locale: string): string {
+  if (locale === 'kk' && e.labelKk) return e.labelKk;
+  if (locale === 'en' && e.labelEn) return e.labelEn;
+  if (locale === 'uk' && e.labelUk) return e.labelUk;
+  if (locale === 'ka' && e.labelKa) return e.labelKa;
+  if (locale === 'az' && e.labelAz) return e.labelAz;
+  if (locale === 'uz' && e.labelUz) return e.labelUz;
+  if (locale === 'pl' && e.labelPl) return e.labelPl;
+  return e.label;
+}
 
 interface EmotionPickerProps {
   onSelect: (emotionId: string) => void;
@@ -18,6 +31,7 @@ interface EmotionPickerProps {
  */
 export function EmotionPicker({ onSelect, onClose, activePackId = 'khan' }: EmotionPickerProps) {
   const pack = getEmotionPack(activePackId);
+  const { t, locale } = useTranslation();
   const handleSelect = useCallback((id: string) => {
     onSelect(id);
     onClose();
@@ -40,7 +54,7 @@ export function EmotionPicker({ onSelect, onClose, activePackId = 'khan' }: Emot
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-          <span className="text-white/80 text-sm font-semibold tracking-wide">Эмоции</span>
+          <span className="text-white/80 text-sm font-semibold tracking-wide">{t('shop.emotions')}</span>
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-400 active:scale-90 transition-all flex items-center justify-center"
@@ -51,22 +65,25 @@ export function EmotionPicker({ onSelect, onClose, activePackId = 'khan' }: Emot
 
         {/* Emoji grid — 4 columns */}
         <div className="grid grid-cols-4 gap-3 p-4">
-          {pack.emotions.map(e => (
-            <button
-              key={e.id}
-              onClick={() => handleSelect(e.id)}
-              className="flex flex-col items-center gap-1 rounded-xl p-2 hover:bg-white/15 active:scale-90 transition-all duration-100"
-              title={e.label}
-            >
-              <img
-                src={e.url}
-                alt={e.label}
-                className="w-14 h-14 object-contain drop-shadow-md"
-                draggable={false}
-              />
-              <span className="text-[10px] text-white/60 font-medium leading-none">{e.label}</span>
-            </button>
-          ))}
+          {pack.emotions.map(e => {
+            const label = getEmotionLabel(e, locale);
+            return (
+              <button
+                key={e.id}
+                onClick={() => handleSelect(e.id)}
+                className="flex flex-col items-center gap-1 rounded-xl p-2 hover:bg-white/15 active:scale-90 transition-all duration-100"
+                title={label}
+              >
+                <img
+                  src={e.url}
+                  alt={label}
+                  className="w-14 h-14 object-contain drop-shadow-md"
+                  draggable={false}
+                />
+                <span className="text-[10px] text-white/60 font-medium leading-none">{label}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

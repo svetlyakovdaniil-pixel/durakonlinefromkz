@@ -211,6 +211,7 @@ export const en = {
     frameCyberpunkVoid: 'Void circuit: neon glitch and matrix rain',
     frameHiphopGold: 'Gold chain: vinyl grooves and beat wave',
     frameAngelsDuality: 'Duality: angel wings and hellfire',
+    adminAnnouncement: 'Announcement',
   },
 
   // Room creation

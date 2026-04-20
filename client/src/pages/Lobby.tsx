@@ -1616,7 +1616,7 @@ onClick={() => setShowTengeTopUp(true)}
                             <span className="text-amber-100 text-sm font-medium">{t('lobby.cooldownExpired')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs">
-                            {n.data?.message || t('lobby.cooldownExpiredDefault')}
+                            {t('lobby.cooldownExpiredDefault')}
                           </p>
                         </>
                       )}
@@ -1624,7 +1624,7 @@ onClick={() => setShowTengeTopUp(true)}
                         <>
                           <div className="flex items-center gap-2 mb-1">
                             <Bell className="w-4 h-4 text-blue-400 shrink-0" />
-                            <span className="text-amber-100 text-sm font-medium">{n.data?.title || 'Объявление'}</span>
+                            <span className="text-amber-100 text-sm font-medium">{n.data?.title || t('lobby.adminAnnouncement')}</span>
                           </div>
                           <p className="text-amber-200/60 text-xs whitespace-pre-wrap">
                             {n.data?.content || ''}
@@ -1703,7 +1703,7 @@ onClick={() => setShowTengeTopUp(true)}
                                 )}
                                 {notifAvatarId && (() => {
                                   // Use per-season avatarId from notification (already suffixed, e.g. 'neon_paw_2026Q3')
-                                  const avatarName = getAvatarDisplayName(notifAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber);
+                                  const avatarName = getAvatarDisplayName(notifAvatarId, locale, seasonNumber);
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
                                       <PlayerAvatar avatarId={notifAvatarId} size={16} />
