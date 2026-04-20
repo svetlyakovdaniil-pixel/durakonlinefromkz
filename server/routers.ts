@@ -114,6 +114,7 @@ import { processDonatorAchievement, processTutorialAchievements, processCollecto
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest, incrementDailyQuestProgress } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
 import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName, updatePlayerEmotionPack } from "./socketServer";
+import { getGhostStats, initGhostPlayers, stopGhostPlayers } from "./ghostPlayers";
 import { upsertPushToken, removePushToken, getPushSettings, updatePushSetting, sendNewUpdatePushToAll, sendFriendRequestPush, sendShanyrakRefillPush, sendRewardReceivedPush, PushNotifType } from "./pushNotifications";
 
 // ─── Push Notifications Router ────────────────────────────────────────────────
@@ -943,7 +944,9 @@ export const appRouter = router({
 
     /** Get online monitoring stats */
     onlineStats: adminProcedure.query(async () => {
-      return getAdminOnlineStats();
+      const stats = getAdminOnlineStats();
+      const ghostStats = getGhostStats();
+      return { ...stats, ghostStats };
     }),
 
     /** Get players list with search/pagination */
@@ -1141,6 +1144,26 @@ export const appRouter = router({
       }),
 
     /** Kick a player (disconnect their socket) */
+    /** Ghost player controls */
+    ghostPlayers: adminProcedure
+      .input(z.object({
+        action: z.enum(['start', 'stop', 'stats']),
+        count: z.number().min(1).max(90).optional(),
+        port: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        if (input.action === 'start') {
+          const port = input.port ?? parseInt(process.env.PORT ?? '3000');
+          initGhostPlayers(port, input.count ?? 15);
+          return { success: true, stats: getGhostStats() };
+        } else if (input.action === 'stop') {
+          stopGhostPlayers();
+          return { success: true, stats: getGhostStats() };
+        } else {
+          return { success: true, stats: getGhostStats() };
+        }
+      }),
+
     kickPlayer: adminProcedure
       .input(z.object({ openId: z.string() }))
       .mutation(async ({ ctx, input }) => {

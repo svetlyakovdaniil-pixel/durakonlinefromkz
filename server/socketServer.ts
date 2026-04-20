@@ -100,8 +100,10 @@ export function getAdminOnlineStats() {
       withBots: r.settings.withBots || false,
       hasActiveGame: r.gameState !== null,
     }));
+  // Exclude ghost players (odId starts with 'ghost-') from real player count
+  const realPlayerCount = Array.from(playerSockets.keys()).filter(id => !id.startsWith('ghost-')).length;
   return {
-    onlinePlayerCount: playerSockets.size,
+    onlinePlayerCount: realPlayerCount,
     activeRoomCount: activeRooms.length,
     rooms: activeRooms,
   };
@@ -174,6 +176,15 @@ export async function emitNotificationToProfile(profileId: number, type: string)
   } catch (err) {
     console.error('[Socket] Failed to emit newNotification:', err);
   }
+}
+
+/** Get open (non-private, non-password, non-tutorial) rooms for ghost player browsing */
+export function getAvailableRooms(): Room[] {
+  return Array.from(rooms.values()).filter(r =>
+    !r.settings.isTutorial &&
+    !r.settings.isPrivate &&
+    !r.settings.password,
+  );
 }
 
 /** Update a player's active emotion pack in the in-memory map (called from tRPC when pack changes) */

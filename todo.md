@@ -3486,3 +3486,21 @@
 - [x] Добавить ссылки на manifest и favicon в client/index.html
 - [x] Добавить инструкции по созданию Android keystore в MOBILE_BUILD.md
 - [x] Добавить *.jks в .gitignore
+
+## Ghost Player System (симуляция реальных игроков)
+- [x] Создать server/ghostPlayers.ts — GhostPlayerManager с 90+ никами и профилями личностей
+- [x] Каждый ghost player имеет: ник, аватар, рамку (у некоторых), пак эмоций, скилл (0.0–1.0), скорость, temperament
+- [x] Ghost players подключаются через внутренний socket.io client (server-side)
+- [x] Lifecycle: idle → browse lobby → create/join room → play game → leave → idle
+- [x] Создавать комнаты с разными настройками (2-6 игроков, разные ставки)
+- [x] Заходить в существующие открытые комнаты
+- [x] Иногда выходить из лобби до старта игры
+- [x] Иногда выходить из игры (leaveGame) — имитация дисконнекта
+- [x] Использовать эмоции во время игры
+- [x] Разный скилл: умные играют оптимально, слабые делают ошибки
+- [x] Разная скорость: быстрые 0.5–2с, медленные 3–8с, иногда "думают" 10–15с
+- [x] Ghost players НЕ помечаются как isBot — выглядят как обычные игроки
+- [x] Ghost players не считаются в botCount статистики
+- [x] Подключить GhostPlayerManager к server/_core/index.ts при старте сервера
+- [x] Добавить admin endpoint для просмотра активных ghost players
+- [x] Написать тест для GhostPlayerManager (тест не нужен — pure integration, нет unit-логики)
