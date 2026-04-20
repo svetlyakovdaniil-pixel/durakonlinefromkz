@@ -213,7 +213,7 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     thinkMinMs,
     thinkMaxMs,
     longThinkProb,
-    ragequitProb: rand(0.01, 0.06),
+    ragequitProb: rand(0.0003, 0.0007),
     lobbyLeaveProb: rand(0.05, 0.20),
     emotionProb: rand(0.05, 0.30),
     temperament,
