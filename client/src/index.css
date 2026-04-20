@@ -710,6 +710,21 @@
  *   [Bottom: player hand (compact)]
  */
 
+/* Opponents column: always applied via React class (not inside media query) */
+.landscape-opponents {
+  width: 76px;
+  min-width: 76px;
+  max-width: 76px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  flex-shrink: 0;
+}
+.landscape-opponents::-webkit-scrollbar {
+  display: none;
+}
+
 /* Compact HUD in landscape */
 @media (orientation: landscape) and (max-height: 500px) {
   .landscape-mode [data-tutorial="deck-info"] {
@@ -719,20 +734,6 @@
   /* Hide mobile timer badge — desktop timer in left panel is shown instead */
   .landscape-mode [data-tutorial="timer"] {
     display: none !important;
-  }
-
-  /* Opponents column: fixed width on the left side */
-  .landscape-opponents {
-    width: 76px;
-    min-width: 76px;
-    max-width: 76px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .landscape-opponents::-webkit-scrollbar {
-    display: none;
   }
 
   /* Compact player hand in landscape */

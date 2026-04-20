@@ -21,6 +21,7 @@ import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import DemoGame from "./pages/DemoGame";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import LanguageSelectionModal from "./components/LanguageSelectionModal";
@@ -36,6 +37,7 @@ function Router() {
       <Route path={"/privacy"} component={PrivacyPolicy} />
       <Route path={"/terms"} component={TermsOfService} />
       <Route path={"/404"} component={NotFound} />
+      <Route path={"/demo-game"} component={DemoGame} />
       <Route component={NotFound} />
     </Switch>
   );
