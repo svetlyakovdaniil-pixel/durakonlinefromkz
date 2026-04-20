@@ -157,16 +157,16 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   let thinkMinMs: number, thinkMaxMs: number, longThinkProb: number;
   if (speedRoll < 0.25) {
     // Fast player
-    thinkMinMs = 400; thinkMaxMs = 1500; longThinkProb = 0.02;
+    thinkMinMs = 400; thinkMaxMs = 1500; longThinkProb = 0.0;
   } else if (speedRoll < 0.65) {
     // Normal player
-    thinkMinMs = 1000; thinkMaxMs = 3500; longThinkProb = 0.06;
+    thinkMinMs = 800; thinkMaxMs = 2500; longThinkProb = 0.0;
   } else if (speedRoll < 0.88) {
     // Slow player
-    thinkMinMs = 2500; thinkMaxMs = 7000; longThinkProb = 0.12;
+    thinkMinMs = 1500; thinkMaxMs = 4000; longThinkProb = 0.0;
   } else {
-    // Very slow / AFK-prone
-    thinkMinMs = 4000; thinkMaxMs = 10000; longThinkProb = 0.22;
+    // Slower player (no AFK — ghosts must always act within turn timer)
+    thinkMinMs = 2000; thinkMaxMs = 6000; longThinkProb = 0.0;
   }
 
   const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
@@ -508,7 +508,7 @@ function connectGhost(ghost: GhostPlayer): void {
   socket.on('roomUpdated', (room) => {
     if (ghost.currentRoomId === room.id) {
       // Room was updated — check if game started
-      if (room.hasActiveGame && ghost.state === 'in_lobby') {
+      if ((room.hasActiveGame || room.gameState !== null) && ghost.state === 'in_lobby') {
         // Game started — transition handled by gameStarted event
       }
     }
@@ -537,6 +537,10 @@ function connectGhost(ghost: GhostPlayer): void {
 
   socket.on('gameStateUpdate', (state) => {
     if (ghost.currentRoomId !== state.roomId) return;
+    // Transition to in_game if we receive gameStateUpdate while still in lobby
+    if (ghost.state === 'in_lobby' && state.gamePhase === 'playing') {
+      ghost.state = 'in_game';
+    }
     ghost.gameState = state;
     const prevActions = ghost.myActions;
     ghost.myActions = state.availableActions || [];
@@ -559,15 +563,22 @@ function connectGhost(ghost: GhostPlayer): void {
       return;
     }
 
-    // If we now have actions and didn't before, schedule action
-    if (ghost.myActions.length > 0 && prevActions.length === 0) {
-      clearGhostTimers(ghost);
-      scheduleGameAction(ghost);
+    // Schedule action whenever we have actions (cancel previous timer to avoid double-firing)
+    if (ghost.myActions.length > 0) {
+      // Only reschedule if we don't already have a pending action timer
+      if (!ghost.actionTimer) {
+        scheduleGameAction(ghost);
+      }
     }
   });
 
   socket.on('yourTurn', (actions) => {
-    if (ghost.state !== 'in_game') return;
+    // Accept yourTurn even if state is 'in_lobby' — game may have started but gameStarted event was missed
+    if (ghost.state !== 'in_game' && ghost.state !== 'in_lobby') return;
+    // Transition to in_game if we receive yourTurn while still in lobby
+    if (ghost.state === 'in_lobby' && actions.length > 0) {
+      ghost.state = 'in_game';
+    }
     ghost.myActions = actions;
     if (actions.length > 0) {
       clearGhostTimers(ghost);
@@ -718,7 +729,7 @@ function roomManagerTick(): void {
   // ── Step 1: Maintain bait rooms ──────────────────────────────────────────
   // Count current bait rooms: rooms hosted by a ghost with no active game
   const baitRooms = allRooms.filter(r =>
-    !r.hasActiveGame &&
+    r.gameState === null &&
     r.players.some(p => p.id.startsWith('ghost-') && ghosts.get(p.id)?.isHosting),
   );
 
@@ -734,7 +745,7 @@ function roomManagerTick(): void {
   // ── Step 2: Fill rooms that have real players ────────────────────────────
   // Find rooms that have at least 1 human, are not full, no active game
   const roomsNeedingFill = allRooms.filter(r =>
-    !r.hasActiveGame &&
+    r.gameState === null &&
     countHumans(r) >= 1 &&
     r.players.length < r.maxPlayers,
   );
@@ -765,7 +776,7 @@ function roomManagerTick(): void {
 
   // ── Step 3: Start games in rooms that are full and have humans ───────────
   for (const room of allRooms) {
-    if (room.hasActiveGame) continue;
+    if (room.gameState !== null) continue;
     if (countHumans(room) < 1) continue;
     if (room.players.length < 2) continue;
 
