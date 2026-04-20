@@ -202,13 +202,13 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span
                       className="font-bold text-sm leading-tight"
-                      style={{ color: isUnlocked ? '#c9a84c' : 'rgba(201,168,76,0.5)' }}
+                      style={{ color: isUnlocked ? '#c9a84c' : 'rgba(255,255,255,0.75)' }}
                     >
                       {getName(ach)}
                     </span>
                     {isClaimed && <CheckCircle className="w-3.5 h-3.5 shrink-0" style={{ color: '#4ade80' }} />}
                   </div>
-                  <p className="text-xs leading-tight mb-2" style={{ color: 'rgba(201,168,76,0.45)' }}>
+                  <p className="text-xs leading-tight mb-2" style={{ color: isUnlocked ? 'rgba(201,168,76,0.65)' : 'rgba(255,255,255,0.45)' }}>
                     {getDesc(ach)}
                   </p>
 
