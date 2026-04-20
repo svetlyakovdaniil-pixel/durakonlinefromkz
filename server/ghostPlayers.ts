@@ -992,19 +992,18 @@ function scheduleGameAction(ghost: GhostPlayer): void {
 
   const p = ghost.personality;
 
-  // Calculate think time — base + hand-size bonus
-  let thinkMs = rand(p.thinkMinMs, p.thinkMaxMs);
-
-  // More cards in hand = more time to "think" (looks human)
+  // Calculate think time based on hand size
   const handSize = ghost.gameState?.myHand?.length ?? 0;
-  if (handSize > 0) {
-    // +200ms per card above 4, capped at +3000ms
-    const handBonus = Math.min((handSize - 4) * 200, 3000);
-    if (handBonus > 0) thinkMs += rand(0, handBonus);
+  let thinkMs: number;
+  if (handSize > 20) {
+    // Many cards — takes longer to find the right one (2-8s, max 10s)
+    thinkMs = Math.min(rand(2000, 8000), 10000);
+  } else {
+    // Normal hand — quick decisions (1-4s)
+    thinkMs = rand(1000, 4000);
   }
-
-  // Ensure minimum 2 seconds always
-  thinkMs = Math.max(thinkMs, 2000);
+  // Hard minimum: 1s always, 2s if hand > 20
+  thinkMs = Math.max(thinkMs, handSize > 20 ? 2000 : 1000);
 
   // Long think (AFK moment)
   if (Math.random() < p.longThinkProb) {
