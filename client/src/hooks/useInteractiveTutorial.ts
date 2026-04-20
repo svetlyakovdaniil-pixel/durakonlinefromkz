@@ -176,6 +176,12 @@ export interface TutorialScenario {
   mobileTextUk?: string;
   /** Override text for mobile view in Azerbaijani */
   mobileTextAz?: string;
+  /** Override text for mobile view in Georgian */
+  mobileTextKa?: string;
+  /** Override text for mobile view in Uzbek */
+  mobileTextUz?: string;
+  /** Override text for mobile view in Polish */
+  mobileTextPl?: string;
   /** Override text position for mobile view: 'bottom' puts text near player hand */
   mobileTextPosition?: 'auto' | 'center' | 'top' | 'bottom';
   /** Additional highlight elements for mobile only */
@@ -1024,6 +1030,10 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     mobileTextKk: 'Камила 6-дан бастағандықтан, қадам сізге өтті. 6-ларды қоса аласыз, ондықтарды — жоқ.',
     mobileTextEn: 'Kamila started with a six, turn passed to you. Add sixes — not tens.',
     mobileTextUk: 'Каміла почала з 6-ки, хід перейшов до вас. Можна підкидати 6-ки, але не десятки.',
+    mobileTextKa: 'კამილამ 6-ით დაიწყო, სვლა თქვენზე გადავიდა. 6-ები — შეიძლება, ათეულები — არა.',
+    mobileTextAz: 'Kamila 6-dan başladı, növbə sizə keçdi. 6-lar ata bilərsiniz, onluqlar yox.',
+    mobileTextUz: "Kamila 6-dan boshladi, navbat sizga o'tdi. 6-larni tashlashingiz mumkin, o'nliklarni emas.",
+    mobileTextPl: 'Kamila zaczęła od szóstki, tura przeszła do ciebie. Możesz dorzucać szóstki, ale nie dziesiątki.',
     highlightElements: ['[data-tutorial="player-hand"]', '[data-tutorial="opponent-info"]:nth-of-type(2)', '[data-tutorial="table-area"]'],
     playerHand: STANDARD_PLAYER_HAND,
     botHand: STANDARD_BOT_HAND,
@@ -1082,6 +1092,10 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     mobileTextKk: 'Ойын басында қозыр жүрек масы болды. Колода №1 (Қ1) біткенде, қозыр өзгереді',
     mobileTextEn: 'At the start of the game, hearts became the trump suit. Once the cards in deck #1 (D1) run out, the trump will change.',
     mobileTextUk: 'На початку партії козирем стала масть червей. Як тільки карти в колоді №1 (К1) закінчаться, козир зміниться.',
+    mobileTextKa: 'თამაშის დასაწყისში კოზირი გულები გახდა. გემბანი №1 (გ1) ამოიწუროს, კოზირი შეიცვლება.',
+    mobileTextAz: 'Oyunun əvvəlində koz ürək oldu. Dəstə №1 (D1) bitdikdə koz dəyişəcək.',
+    mobileTextUz: "O'yin boshida kozir yurak bo'ldi. Toʻplam №1 (T1) tugaganda kozir o'zgaradi.",
+    mobileTextPl: 'Na początku gry atutem stały się kiery. Gdy karty w talii №1 (T1) się skończą, atut się zmieni.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -1126,6 +1140,10 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     mobileTextKk: 'Колода №1 біткенде, жасырын қозыр №1 ашылады және ойындағы қозыр өзгереді. Қозыр крестіге өзгерді',
     mobileTextEn: 'When deck #1 runs out, hidden trump #1 is revealed and the trump changes. The trump changed to clubs.',
     mobileTextUk: 'Коли колода №1 закінчується, відкривається прихований козир №1, і козир у грі змінюється. Козир змінився на трефи.',
+    mobileTextKa: 'გემბანი №1-ის ამოწურვისას იხსნება ფარული კოზირი №1 და კოზირი იცვლება. კოზირი ჩვენად შეიცვალა.',
+    mobileTextAz: 'Dəstə №1 bitdikdə gizli koz №1 açılır və koz dəyişir. Koz trefa dəyişdi.',
+    mobileTextUz: 'Toʻplam №1 tugaganda yashirin kozir №1 ochiladi va kozir oʻzgaradi. Kozir choʻpga oʻzgardi.',
+    mobileTextPl: 'Gdy talia №1 się kończy, odkrywa się ukryty atut №1 i atut się zmienia. Atut zmienił się na trefle.',
     instruction: 'Нажмите "Далее" чтобы продолжить',
     instructionKk: '"Келесі" басыңыз',
     instructionEn: 'Click "Next" to continue',
@@ -1172,6 +1190,10 @@ const TUTORIAL_SCENARIOS: TutorialScenario[] = [
     mobileTextKk: 'Колода №1 мен колода №2 біткенде, жасырын қозыр №2 ашылады, ойындағы қозыр соңғы рет өзгереді. Енді қозыр бүбі',
     mobileTextEn: 'When deck #1 and deck #2 run out, hidden trump #2 is revealed, changing the trump for the last time. Now the trump is diamonds.',
     mobileTextUk: 'Коли колода №1 і колода №2 закінчуються, відкривається прихований козир №2, змінюючи козир востаннє. Тепер козир — бубни.',
+    mobileTextKa: 'გემბანი №1 და №2-ის ამოწურვისას იხსნება ფარული კოზირი №2, ბოლოჯერ ცვლის კოზირს. ახლა კოზირი ბუბია.',
+    mobileTextAz: 'Dəstə №1 və №2 bitdikdə gizli koz №2 açılır, kozu son dəfə dəyişdirir. İndi koz sinirdir.',
+    mobileTextUz: 'Toʻplam №1 va №2 tugaganda yashirin kozir №2 ochiladi, kozirni oxirgi marta oʻzgartiradi. Endi kozir olmos.',
+    mobileTextPl: 'Gdy talia №1 i №2 się kończą, odkrywa się ukryty atut №2, zmieniając atut po raz ostatni. Teraz atutem są kara.',
     instruction: 'Нажмите "Завершить обучение"',
     instructionKk: '"Оқытуды аяқтау" басыңыз',
     instructionEn: 'Click "Finish Tutorial"',

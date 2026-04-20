@@ -210,6 +210,7 @@ export const ru = {
     frameCyberpunkVoid: 'Void circuit: неоновый глитч и матричный дождь',
     frameHiphopGold: 'Золотая цепь: виниловые бороздки и beat wave',
     frameAngelsDuality: 'Двойственность: крылья ангела и адский огонь',
+    adminAnnouncement: 'Объявление',
   },
 
   // Room creation

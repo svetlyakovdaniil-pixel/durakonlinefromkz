@@ -1574,7 +1574,7 @@ export function isSeasonSuffixedAvatar(avatarId: string | null | undefined): boo
  */
 export function getAvatarDisplayName(
   avatarId: string | null | undefined,
-  locale: 'ru' | 'kk' | 'en',
+  locale: string,
   seasonNumber?: number,
 ): string {
   if (!avatarId) return '';
@@ -1582,7 +1582,14 @@ export function getAvatarDisplayName(
   const opt = AVATAR_OPTIONS.find(a => a.id === baseId);
   let name = '';
   if (opt) {
-    name = locale === 'kk' ? (opt.nameKk ?? opt.name) : locale === 'en' ? (opt.nameEn ?? opt.name) : opt.name;
+    if (locale === 'kk') name = opt.nameKk ?? opt.name;
+    else if (locale === 'en') name = opt.nameEn ?? opt.name;
+    else if (locale === 'ka') name = opt.nameKa ?? opt.name;
+    else if (locale === 'az') name = opt.nameAz ?? opt.name;
+    else if (locale === 'uz') name = opt.nameUz ?? opt.name;
+    else if (locale === 'pl') name = opt.namePl ?? opt.name;
+    else if (locale === 'uk') name = opt.nameUk ?? opt.name;
+    else name = opt.name;
   } else {
     name = baseId;
   }

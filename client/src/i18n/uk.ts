@@ -211,6 +211,7 @@ export const uk = {
     frameCyberpunkVoid: 'Void circuit: неоновий гліч і матричний дощ',
     frameHiphopGold: 'Золотий ланцюг: вінілові борозни і beat wave',
     frameAngelsDuality: 'Двоїстість: крила ангела і пекельний вогонь',
+    adminAnnouncement: 'Оголошення',
   },
 
   // Room creation

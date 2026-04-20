@@ -210,6 +210,7 @@ export const ka = {
     frameCyberpunkVoid: 'Void circuit: ნეონური გლიჩი და მატრიქსის წვიმა',
     frameHiphopGold: 'ოქროს ჯაჭვი: ვინილის ბороздები და beat wave',
     frameAngelsDuality: 'ორმაგობა: ანგელოზის ფრთები და ჯოჯოხეთის ცეცხლი',
+    adminAnnouncement: 'განცხადება',
   },
 
   // Room creation

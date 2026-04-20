@@ -96,7 +96,7 @@ function RewardPopup({
     : reward.avatarId;
   const baseAvatarId = seasonAvatarId ? getBaseAvatarId(seasonAvatarId) : null;
   const avatarDisplayName = seasonAvatarId
-    ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber)
+    ? getAvatarDisplayName(seasonAvatarId, locale, seasonNumber)
     : null;
 
   const isAnimated = isCanvasAvatar(seasonAvatarId);
@@ -774,7 +774,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       : rewardDef.avatarId;
                     const baseAvatarId = seasonAvatarId ? getBaseAvatarId(seasonAvatarId) : null;
                     const avatarDisplayName = seasonAvatarId
-                      ? getAvatarDisplayName(seasonAvatarId, locale as 'ru' | 'kk' | 'en', seasonNumber ?? undefined)
+                      ? getAvatarDisplayName(seasonAvatarId, locale, seasonNumber ?? undefined)
                       : null;
 
                     const isAnimated = isCanvasAvatar(seasonAvatarId);
@@ -1308,30 +1308,55 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                         ru: 'Победа в партии — +очки (зависит от числа игроков)',
                         en: 'Win a game — +points (depends on number of players)',
                         kk: 'Ойында жеңу — +ұпай (ойыншылар санына байланысты)',
+                        ka: 'გამარჯვება პარტიაში — +ქულები (მოთამაშეთა რაოდენობის მიხედვით)',
+                        az: 'Oyunda qazanmaq — +xallar (oyunçu sayından asılı)',
+                        uz: "O'yinda g'alaba — +ball (o'yinchilar soniga qarab)",
+                        pl: 'Wygrana w grze — +punkty (zależy od liczby graczy)',
+                        uk: 'Перемога в партії — +очки (залежить від кількості гравців)',
                       },
                       {
                         icon: '❌',
                         ru: 'Поражение — -очки (незначительно)',
                         en: 'Loss — -points (small penalty)',
                         kk: 'Жеңілу — -ұпай (незде)',
+                        ka: 'წაგება — -ქულები (მცირე)',
+                        az: 'Məğlubiyyət — -xallar (az)',
+                        uz: "Mag'lubiyat — -ball (ozgina)",
+                        pl: 'Przegrana — -punkty (nieznacznie)',
+                        uk: 'Поразка — -очки (незначно)',
                       },
                       {
                         icon: '🤝',
                         ru: 'Партия против реальных игроков — очки засчитываются',
                         en: 'Games vs real players — points count',
                         kk: 'Нақты ойыншылармен ойын — ұпай есептеледі',
+                        ka: 'პარტია რეალური მოთამაშეების წინააღმდეგ — ქულები ითვლება',
+                        az: 'Real oyunçulara qarşı oyun — xallar sayılır',
+                        uz: "Haqiqiy o'yinchilarga qarshi o'yin — ball hisoblanadi",
+                        pl: 'Gra przeciwko prawdziwym graczom — punkty są liczone',
+                        uk: 'Партія проти реальних гравців — очки зараховуються',
                       },
                       {
                         icon: '🤖',
                         ru: 'Партия против ботов — очки не засчитываются',
                         en: 'Games vs bots — points do NOT count',
                         kk: 'Боттармен ойын — ұпай есептелмейді',
+                        ka: 'პარტია ბოტების წინააღმდეგ — ქულები არ ითვლება',
+                        az: 'Botlara qarşı oyun — xallar sayılmır',
+                        uz: "Botlarga qarshi o'yin — ball hisoblanmaydi",
+                        pl: 'Gra przeciwko botom — punkty NIE są liczone',
+                        uk: 'Партія проти ботів — очки не зараховуються',
                       },
                       {
                         icon: '🏆',
                         ru: 'Чем больше игроков в партии — тем больше очков за победу',
                         en: 'More players in a game — more points for winning',
                         kk: 'Ойында көп ойыншы — жеңуге көп ұпай',
+                        ka: 'რაც მეტი მოთამაშე პარტიაში — მით მეტი ქულა გამარჯვებისთვის',
+                        az: 'Oyunda nə qədər çox oyunçu — qazanmaq üçün bir o qədər çox xal',
+                        uz: "O'yinda qancha ko'p o'yinchi — g'alaba uchun shuncha ko'p ball",
+                        pl: 'Im więcej graczy w grze — tym więcej punktów za wygraną',
+                        uk: 'Чим більше гравців у партії — тим більше очків за перемогу',
                       },
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm">
