@@ -138,7 +138,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
       isSeasonReward: !!a.seasonReward,
       previewUrl: a.previewUrl,
       url: a.url,
-      displayName: locale === 'kk' ? (a.nameKk ?? a.name) : locale === 'en' ? (a.nameEn ?? a.name) : a.name,
+      displayName: locale === 'kk' ? (a.nameKk ?? a.name) : locale === 'en' ? (a.nameEn ?? a.name) : locale === 'uk' ? ((a as any).nameUk ?? a.name) : locale === 'ka' ? ((a as any).nameKa ?? a.name) : locale === 'az' ? ((a as any).nameAz ?? a.name) : locale === 'uz' ? ((a as any).nameUz ?? a.name) : locale === 'pl' ? ((a as any).namePl ?? a.name) : a.name,
     }));
 
     // Per-season owned avatars (suffixed IDs like 'neon_paw_2026Q2')
@@ -148,7 +148,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
         const baseId = getBaseAvatarId(id);
         const baseOption = AVATAR_OPTIONS.find(a => a.id === baseId);
         const seasonNumber = getSeasonNumberFromAvatarId(id);
-        const displayName = getAvatarDisplayName(id, locale as 'ru' | 'kk' | 'en', seasonNumber);
+        const displayName = getAvatarDisplayName(id, locale as any, seasonNumber);
         return {
           id,
           name: displayName,

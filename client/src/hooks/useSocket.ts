@@ -305,11 +305,11 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     // Achievement unlocked — show in-game toast
     socket.on('achievementUnlocked', (data) => {
-      const locale = (document.documentElement.lang || 'ru') as 'ru' | 'kk' | 'en';
-      const name = locale === 'kk' ? data.nameKk : locale === 'en' ? data.nameEn : data.nameRu;
+      const locale = (document.documentElement.lang || 'ru') as string;
+      const name = locale === 'kk' ? data.nameKk : locale === 'en' ? data.nameEn : locale === 'uk' ? (data as any).nameUk ?? data.nameRu : locale === 'ka' ? (data as any).nameKa ?? data.nameRu : locale === 'az' ? (data as any).nameAz ?? data.nameRu : locale === 'uz' ? (data as any).nameUz ?? data.nameRu : locale === 'pl' ? (data as any).namePl ?? data.nameRu : data.nameRu;
       const shanyrakText = data.shanyrakReward > 0 ? ` +${data.shanyrakReward} ш.` : '';
       toast.success(`🏆 ${name}${shanyrakText}`, {
-        description: locale === 'kk' ? 'Жетістік ашылды!' : locale === 'en' ? 'Achievement unlocked!' : 'Достижение разблокировано!',
+        description: locale === 'kk' ? 'Жетістік ашылды!' : locale === 'en' ? 'Achievement unlocked!' : locale === 'uk' ? 'Досягнення розблоковано!' : locale === 'ka' ? 'მიღწევა განბლოკილია!' : locale === 'az' ? 'Nailiyyət açıldı!' : locale === 'uz' ? 'Yutuq ochildi!' : locale === 'pl' ? 'Osiągnięcie odblokowane!' : 'Достижение разблокировано!',
         duration: 5000,
       });
       // Invalidate achievements so badge updates
@@ -320,11 +320,11 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     // Daily quest completed — show in-game toast
     socket.on('questCompleted', (data) => {
-      const locale = (document.documentElement.lang || 'ru') as 'ru' | 'kk' | 'en';
-      const title = locale === 'kk' ? data.titleKk : locale === 'en' ? data.titleEn : data.titleRu;
+      const locale = (document.documentElement.lang || 'ru') as string;
+      const title = locale === 'kk' ? data.titleKk : locale === 'en' ? data.titleEn : locale === 'uk' ? (data as any).titleUk ?? data.titleRu : locale === 'ka' ? (data as any).titleKa ?? data.titleRu : locale === 'az' ? (data as any).titleAz ?? data.titleRu : locale === 'uz' ? (data as any).titleUz ?? data.titleRu : locale === 'pl' ? (data as any).titlePl ?? data.titleRu : data.titleRu;
       const shanyrakText = data.shanyrakReward > 0 ? ` +${data.shanyrakReward} ш.` : '';
       toast.success(`✅ ${title}${shanyrakText}`, {
-        description: locale === 'kk' ? 'Күнделікті тапсырма орындалды!' : locale === 'en' ? 'Daily quest completed!' : 'Ежедневное задание выполнено!',
+        description: locale === 'kk' ? 'Күнделікті тапсырма орындалды!' : locale === 'en' ? 'Daily quest completed!' : locale === 'uk' ? 'Щоденне завдання виконано!' : locale === 'ka' ? 'ყოველდღიური დავალება შესრულდა!' : locale === 'az' ? 'Gündəlik tapşırıq tamamlandı!' : locale === 'uz' ? 'Kunlik topshiriq bajarildi!' : locale === 'pl' ? 'Dzienne zadanie ukończone!' : 'Ежедневное задание выполнено!',
         duration: 5000,
       });
       // Invalidate daily quests so badge updates

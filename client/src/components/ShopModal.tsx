@@ -687,8 +687,8 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const canAffordPlaylist = currentShanyrak >= effectivePrice;
                 const isPreviewPlaying = previewPlaylistId === playlist.id;
                 const trackCount = playlist.tracks?.length || 0;
-                const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : locale === 'en' && playlist.nameEn ? playlist.nameEn : playlist.name;
-                const displayDesc = locale === 'kk' && playlist.descriptionKk ? playlist.descriptionKk : locale === 'en' && playlist.descriptionEn ? playlist.descriptionEn : (playlist.description || '');
+                const displayName = locale === 'kk' && playlist.nameKk ? playlist.nameKk : locale === 'en' && playlist.nameEn ? playlist.nameEn : locale === 'uk' && (playlist as any).nameUk ? (playlist as any).nameUk : locale === 'ka' && (playlist as any).nameKa ? (playlist as any).nameKa : locale === 'az' && (playlist as any).nameAz ? (playlist as any).nameAz : locale === 'uz' && (playlist as any).nameUz ? (playlist as any).nameUz : locale === 'pl' && (playlist as any).namePl ? (playlist as any).namePl : playlist.name;
+                const displayDesc = locale === 'kk' && playlist.descriptionKk ? playlist.descriptionKk : locale === 'en' && playlist.descriptionEn ? playlist.descriptionEn : locale === 'uk' && (playlist as any).descriptionUk ? (playlist as any).descriptionUk : locale === 'ka' && (playlist as any).descriptionKa ? (playlist as any).descriptionKa : locale === 'az' && (playlist as any).descriptionAz ? (playlist as any).descriptionAz : locale === 'uz' && (playlist as any).descriptionUz ? (playlist as any).descriptionUz : locale === 'pl' && (playlist as any).descriptionPl ? (playlist as any).descriptionPl : (playlist.description || '');
                 return (
                   <div key={playlist.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-3">
@@ -779,8 +779,8 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 const effectivePrice = getPrice('emotionpack', pack.id, pack.price);
                 const isOwned = pack.price === 0 || ownedEmotionPacks.includes(pack.id);
                 const isActive = activeEmotionPack === pack.id;
-                const packName = locale === 'kk' && pack.nameKk ? pack.nameKk : locale === 'en' && pack.nameEn ? pack.nameEn : pack.name;
-                const packDesc = locale === 'kk' && pack.descriptionKk ? pack.descriptionKk : locale === 'en' && pack.descriptionEn ? pack.descriptionEn : (pack.description || '');
+                const packName = locale === 'kk' && pack.nameKk ? pack.nameKk : locale === 'en' && pack.nameEn ? pack.nameEn : locale === 'uk' && (pack as any).nameUk ? (pack as any).nameUk : locale === 'ka' && (pack as any).nameKa ? (pack as any).nameKa : locale === 'az' && (pack as any).nameAz ? (pack as any).nameAz : locale === 'uz' && (pack as any).nameUz ? (pack as any).nameUz : locale === 'pl' && (pack as any).namePl ? (pack as any).namePl : pack.name;
+                const packDesc = locale === 'kk' && pack.descriptionKk ? pack.descriptionKk : locale === 'en' && pack.descriptionEn ? pack.descriptionEn : locale === 'uk' && (pack as any).descriptionUk ? (pack as any).descriptionUk : locale === 'ka' && (pack as any).descriptionKa ? (pack as any).descriptionKa : locale === 'az' && (pack as any).descriptionAz ? (pack as any).descriptionAz : locale === 'uz' && (pack as any).descriptionUz ? (pack as any).descriptionUz : locale === 'pl' && (pack as any).descriptionPl ? (pack as any).descriptionPl : (pack.description || '');
                 const canAffordPack = currentTenge >= effectivePrice;
                 return (
                   <div key={pack.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
@@ -798,7 +798,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       {pack.emotions.map(em => (
                         <div key={em.id} className="flex flex-col items-center gap-0.5">
                           <img src={em.url} alt={em.label} className="w-10 h-10 object-contain" />
-                          <span className="text-[9px] text-amber-200/40 leading-none">{locale === 'kk' && em.labelKk ? em.labelKk : locale === 'en' && em.labelEn ? em.labelEn : em.label}</span>
+                          <span className="text-[9px] text-amber-200/40 leading-none">{locale === 'kk' && em.labelKk ? em.labelKk : locale === 'en' && em.labelEn ? em.labelEn : locale === 'uk' && (em as any).labelUk ? (em as any).labelUk : locale === 'ka' && (em as any).labelKa ? (em as any).labelKa : locale === 'az' && (em as any).labelAz ? (em as any).labelAz : locale === 'uz' && (em as any).labelUz ? (em as any).labelUz : locale === 'pl' && (em as any).labelPl ? (em as any).labelPl : em.label}</span>
                         </div>
                       ))}
                     </div>
@@ -878,14 +878,14 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   </div>
                 ) : (
                   <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
-                    <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name} className="w-full h-full object-cover" />
+                    <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : locale === 'uk' && (previewAvatar as any).nameUk ? (previewAvatar as any).nameUk : locale === 'ka' && (previewAvatar as any).nameKa ? (previewAvatar as any).nameKa : locale === 'az' && (previewAvatar as any).nameAz ? (previewAvatar as any).nameAz : locale === 'uz' && (previewAvatar as any).nameUz ? (previewAvatar as any).nameUz : locale === 'pl' && (previewAvatar as any).namePl ? (previewAvatar as any).namePl : previewAvatar.name} className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>
 
               {/* Avatar name */}
               <h3 className="text-amber-100 font-bold text-lg text-center mb-1">
-                {locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name}
+                {locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : locale === 'uk' && (previewAvatar as any).nameUk ? (previewAvatar as any).nameUk : locale === 'ka' && (previewAvatar as any).nameKa ? (previewAvatar as any).nameKa : locale === 'az' && (previewAvatar as any).nameAz ? (previewAvatar as any).nameAz : locale === 'uz' && (previewAvatar as any).nameUz ? (previewAvatar as any).nameUz : locale === 'pl' && (previewAvatar as any).namePl ? (previewAvatar as any).namePl : previewAvatar.name}
               </h3>
               <p className="text-amber-200/50 text-xs text-center mb-4">
                 {t('shop.premiumAvatar')}
@@ -921,7 +921,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                       setConfirmPurchase({
                         type: 'avatar',
                         id: previewAvatar.id,
-                        name: locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : previewAvatar.name,
+                        name: locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : locale === 'uk' && (previewAvatar as any).nameUk ? (previewAvatar as any).nameUk : locale === 'ka' && (previewAvatar as any).nameKa ? (previewAvatar as any).nameKa : locale === 'az' && (previewAvatar as any).nameAz ? (previewAvatar as any).nameAz : locale === 'uz' && (previewAvatar as any).nameUz ? (previewAvatar as any).nameUz : locale === 'pl' && (previewAvatar as any).namePl ? (previewAvatar as any).namePl : previewAvatar.name,
                         price: getPrice('avatar', previewAvatar.id, previewAvatar.price || 0),
                       });
                     }}

@@ -88,7 +88,7 @@ function RewardPopup({
 
   if (!reward) return null;
 
-  const rankName = locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu;
+  const rankName = locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : locale === 'uk' ? (rank as any).nameUk ?? rank.nameRu : locale === 'ka' ? (rank as any).nameKa ?? rank.nameRu : locale === 'az' ? (rank as any).nameAz ?? rank.nameRu : locale === 'uz' ? (rank as any).nameUz ?? rank.nameRu : locale === 'pl' ? (rank as any).namePl ?? rank.nameRu : rank.nameRu;
 
   // Build per-season avatar ID for display
   const seasonAvatarId = reward.avatarId && seasonKey
@@ -599,7 +599,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
 
   const seasonInfo = seasonData?.seasonInfo;
   const seasonName = seasonInfo
-    ? (locale === 'kk' ? seasonInfo.nameKk : locale === 'en' ? seasonInfo.nameEn : seasonInfo.nameRu)
+    ? (locale === 'kk' ? seasonInfo.nameKk : locale === 'en' ? seasonInfo.nameEn : locale === 'uk' ? (seasonInfo as any).nameUk ?? seasonInfo.nameRu : locale === 'ka' ? (seasonInfo as any).nameKa ?? seasonInfo.nameRu : locale === 'az' ? (seasonInfo as any).nameAz ?? seasonInfo.nameRu : locale === 'uz' ? (seasonInfo as any).nameUz ?? seasonInfo.nameRu : locale === 'pl' ? (seasonInfo as any).namePl ?? seasonInfo.nameRu : seasonInfo.nameRu)
     : '-';
   const seasonNumber = seasonInfo?.seasonNumber ?? null;
   const theme: SeasonTheme = seasonInfo?.theme ?? {
@@ -713,7 +713,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                         {t('season.currentRank')}
                       </div>
                       <div className="font-bold text-lg" style={{ color: currentRank.color }}>
-                        {locale === 'kk' ? currentRank.nameKk : locale === 'en' ? currentRank.nameEn : currentRank.nameRu}
+                        {locale === 'kk' ? currentRank.nameKk : locale === 'en' ? currentRank.nameEn : locale === 'uk' ? (currentRank as any).nameUk ?? currentRank.nameRu : locale === 'ka' ? (currentRank as any).nameKa ?? currentRank.nameRu : locale === 'az' ? (currentRank as any).nameAz ?? currentRank.nameRu : locale === 'uz' ? (currentRank as any).nameUz ?? currentRank.nameRu : locale === 'pl' ? (currentRank as any).namePl ?? currentRank.nameRu : currentRank.nameRu}
                       </div>
                       <div className="text-amber-100 font-mono text-sm mt-0.5">
                         {seasonData?.seasonRating ?? 0} {t('season.ptsAbbr')}
@@ -726,8 +726,8 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                 {nextRank && currentRank && (
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs text-amber-200/60">
-                      <span style={{ color: currentRank.color }}>{locale === 'kk' ? currentRank.nameKk : locale === 'en' ? currentRank.nameEn : currentRank.nameRu}</span>
-                      <span style={{ color: nextRank.color }}>{locale === 'kk' ? nextRank.nameKk : locale === 'en' ? nextRank.nameEn : nextRank.nameRu}</span>
+                      <span style={{ color: currentRank.color }}>{locale === 'kk' ? currentRank.nameKk : locale === 'en' ? currentRank.nameEn : locale === 'uk' ? (currentRank as any).nameUk ?? currentRank.nameRu : locale === 'ka' ? (currentRank as any).nameKa ?? currentRank.nameRu : locale === 'az' ? (currentRank as any).nameAz ?? currentRank.nameRu : locale === 'uz' ? (currentRank as any).nameUz ?? currentRank.nameRu : locale === 'pl' ? (currentRank as any).namePl ?? currentRank.nameRu : currentRank.nameRu}</span>
+                      <span style={{ color: nextRank.color }}>{locale === 'kk' ? nextRank.nameKk : locale === 'en' ? nextRank.nameEn : locale === 'uk' ? (nextRank as any).nameUk ?? nextRank.nameRu : locale === 'ka' ? (nextRank as any).nameKa ?? nextRank.nameRu : locale === 'az' ? (nextRank as any).nameAz ?? nextRank.nameRu : locale === 'uz' ? (nextRank as any).nameUz ?? nextRank.nameRu : locale === 'pl' ? (nextRank as any).namePl ?? nextRank.nameRu : nextRank.nameRu}</span>
                     </div>
                     <ProgressBar
                       current={seasonData?.seasonRating ?? 0}
@@ -1149,7 +1149,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                         {/* Name + "Ваш ранг" below */}
                         <div className="flex-1 min-w-0">
                           <div className="font-semibold text-sm" style={{ color: rank.color }}>
-                            {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
+                            {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : locale === 'uk' ? (rank as any).nameUk ?? rank.nameRu : locale === 'ka' ? (rank as any).nameKa ?? rank.nameRu : locale === 'az' ? (rank as any).nameAz ?? rank.nameRu : locale === 'uz' ? (rank as any).nameUz ?? rank.nameRu : locale === 'pl' ? (rank as any).namePl ?? rank.nameRu : rank.nameRu}
                           </div>
                           {isCurrent ? (
                             <div className="text-[10px] text-amber-300 mt-0.5 font-medium">
@@ -1251,12 +1251,12 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                   <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-amber-200/60">
                     <span>
                       {t('season.startLabel')}
-                      {' '}{startDate ? startDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+                      {' '}{startDate ? startDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : locale === 'uk' ? 'uk-UA' : locale === 'ka' ? 'ka-GE' : locale === 'az' ? 'az-AZ' : locale === 'uz' ? 'uz-UZ' : locale === 'pl' ? 'pl-PL' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                     </span>
                     <span>—</span>
                     <span>
                       {t('season.endLabel')}
-                      {' '}{endDate ? endDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
+                      {' '}{endDate ? endDate.toLocaleDateString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : locale === 'uk' ? 'uk-UA' : locale === 'ka' ? 'ka-GE' : locale === 'az' ? 'az-AZ' : locale === 'uz' ? 'uz-UZ' : locale === 'pl' ? 'pl-PL' : 'ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '—'}
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-xs" style={{ color: `${theme.accent}80` }}>
@@ -1336,7 +1336,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                     ].map((item, i) => (
                       <div key={i} className="flex items-start gap-2 text-sm">
                         <span className="text-base leading-5 flex-shrink-0">{item.icon}</span>
-                        <span>{locale === 'kk' ? item.kk : locale === 'en' ? item.en : item.ru}</span>
+                        <span>{locale === 'kk' ? item.kk : locale === 'en' ? item.en : locale === 'uk' ? (item as any).uk ?? item.ru : locale === 'ka' ? (item as any).ka ?? item.ru : locale === 'az' ? (item as any).az ?? item.ru : locale === 'uz' ? (item as any).uz ?? item.ru : locale === 'pl' ? (item as any).pl ?? item.ru : item.ru}</span>
                       </div>
                     ))}
                   </div>
@@ -1353,7 +1353,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                     <div key={rank.key} className="flex items-center gap-2 rounded-lg px-3 py-2" style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${rank.color}25` }}>
                       <DiamondRankIcon seasonRating={rank.minRating} size={24} />
                       <span className="font-semibold text-sm" style={{ color: rank.color }}>
-                        {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
+                        {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : locale === 'uk' ? (rank as any).nameUk ?? rank.nameRu : locale === 'ka' ? (rank as any).nameKa ?? rank.nameRu : locale === 'az' ? (rank as any).nameAz ?? rank.nameRu : locale === 'uz' ? (rank as any).nameUz ?? rank.nameRu : locale === 'pl' ? (rank as any).namePl ?? rank.nameRu : rank.nameRu}
                       </span>
                       <span className="text-xs text-amber-200/40 ml-auto">
                         {rank.minRating === 0
