@@ -174,13 +174,15 @@ jobs:
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision"
           echo "Provisioning profile installed"
           
-          # Get UUID from profile
-          PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" 2>/dev/null | \
-            /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin 2>/dev/null || \
-            grep -a -A1 '<key>UUID</key>' "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" | \
-            grep '<string>' | sed 's/.*<string>\(.*\)<\/string>.*/\1/')
+          # Get UUID from profile using PlistBuddy
+          PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" -o /tmp/profile.plist 2>/dev/null && \
+            /usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID=$(grep -a 'UUID' "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" | \
+              grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+          fi
           echo "Profile UUID: $PROFILE_UUID"
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+          printf 'PROFILE_UUID=%s\n' "$PROFILE_UUID" >> $GITHUB_ENV
 
       # ── 12. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
