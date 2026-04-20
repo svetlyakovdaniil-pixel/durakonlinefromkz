@@ -91,7 +91,14 @@ jobs:
       - name: Install CocoaPods
         run: |
           gem install cocoapods --no-document
-          cd ios/App
+          echo "=== iOS directory structure ==="
+          find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
+          echo "=== Contents of ios/App ==="
+          ls -la ios/App/ 2>/dev/null || echo "ios/App not found"
+          # Find the Podfile location
+          PODFILE_DIR=$(find ios -name "Podfile" -not -path "*/node_modules/*" | head -1 | xargs dirname 2>/dev/null || echo "ios/App")
+          echo "Podfile directory: $PODFILE_DIR"
+          cd "$PODFILE_DIR"
           pod install --repo-update
 
       # ── 9. Install Fastlane ────────────────────────────────────────────────
