@@ -19,5 +19,5 @@ jobs:
             git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
-            pm2 restart durak
+            GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
             echo "Deploy completed at $(date)"
