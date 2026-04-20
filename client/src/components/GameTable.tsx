@@ -66,6 +66,7 @@ const PlayerHand = memo(function PlayerHand({
   deckStyle,
   suppressPlayableStyle,
   isTutorial,
+  compact,
 }: {
   sortedHand: Card[];
   playableIds: Set<string>;
@@ -85,6 +86,8 @@ const PlayerHand = memo(function PlayerHand({
   suppressPlayableStyle?: boolean;
   /** In tutorial mode, allow cards to overflow vertically so raised cards are fully visible */
   isTutorial?: boolean;
+  /** When true, use smaller cards (landscape mobile mode) */
+  compact?: boolean;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
@@ -196,6 +199,7 @@ const PlayerHand = memo(function PlayerHand({
                     highlighted={isHighlighted}
                     isPassThrough={isPassThroughCard}
                     deckStyle={deckStyle}
+                    compact={compact}
                     onClick={() => onCardClick(card)}
                     onDrop={() => onCardDrop(card)}
                   />
@@ -225,6 +229,7 @@ const PlayerHand = memo(function PlayerHand({
                       selected={isSelected}
                       highlighted={isHighlighted || isTutorialHighlighted}
                       deckStyle={deckStyle}
+                      compact={compact}
                       onClick={() => onCardClick(card)}
                     />
                     {isPassThroughCard && !isSelected && (
@@ -1565,26 +1570,28 @@ export default function GameTable({
           </div>
         </div>
 
-        {/* Opponents — positioned below expanded HUD */}
+        {/* Landscape wrapper: opponents left column + main game area in flex-row */}
+        <div className="flex-1 flex flex-col min-h-0">
+        {/* Opponents — horizontal row in both portrait and landscape (compact in landscape) */}
         {(() => {
           const manyOpponents = opponents.length >= 4;
           const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex ${isLandscape ? 'flex-col overflow-y-auto max-h-full' : manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 ${isLandscape ? 'py-1 gap-1' : `py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`} ${isLandscape ? 'landscape-opponents' : 'w-full shrink-0'}`}>
+            <div className={`flex flex-nowrap justify-center overflow-x-auto scrollbar-none px-1 sm:px-3 ${isLandscape ? 'py-0.5 gap-0.5 shrink-0' : `py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 shrink-0`} w-full`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
                 const isOppDefender = pIdx === gs.currentDefenderIdx;
                 const oppRevealed = gs.revealedPassThroughs?.find(r => r.playerId === p.id);
                 return (
-                  <div key={p.id} data-tutorial="opponent-info" className={`flex flex-col items-center ${manyManyOpponents ? 'px-0.5 py-0.5' : manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1'} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
+                  <div key={p.id} data-tutorial="opponent-info" className={`flex ${isLandscape ? 'flex-row items-center gap-1 px-1 py-0.5' : 'flex-col items-center'} ${!isLandscape && (manyManyOpponents ? 'px-0.5 py-0.5' : manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-1')} sm:px-3 sm:py-2 rounded-lg sm:rounded-xl border transition-all shrink-0 ${
                     isOppAttacker ? 'bg-red-900/30 border-red-500/40' :
                     isOppDefender ? (gs.defenderTaking ? 'bg-orange-900/30 border-orange-500/40' : 'bg-blue-900/30 border-blue-500/40') :
                     'bg-black/30 border-amber-700/20'
                   }`}>
                     {/* Avatar — clickable for profile popup */}
                     {/* inline-block so div.relative wraps tightly around button, making absolute inset-0 align with avatar */}
-                    <div className="relative inline-block mb-0.5 sm:mb-1">
+                    <div className={`relative inline-block ${isLandscape ? '' : 'mb-0.5'} sm:mb-1`}>
                       <button
                         className="focus:outline-none block"
                         onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
@@ -1593,7 +1600,7 @@ export default function GameTable({
                          <PlayerAvatar
                            avatarId={p.avatarId}
                            frameId={p.equippedFrame}
-                           size={manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
+                           size={isLandscape ? 24 : manyManyOpponents ? 28 : manyOpponents ? 32 : 40}
                            alt={p.name}
                            className={p.isBot ? 'opacity-70' : ''}
                          />
@@ -2082,6 +2089,8 @@ export default function GameTable({
 
 
 
+        </div>{/* end landscape wrapper */}
+
         {/* Player hand */}
         {gs.players[myIdx]?.isOut ? (
           <div className="px-2 pb-2 sm:pb-3 pt-1">
@@ -2119,6 +2128,7 @@ export default function GameTable({
               deckStyle={gs.deckStyle}
               suppressPlayableStyle={isNonNeighborWithSixes}
               isTutorial={isTutorial}
+              compact={isLandscape}
             />
           </div>
           {/* Avatar row: avatar LEFT | action buttons RIGHT — hidden on tutorial step 20 */}
@@ -2130,7 +2140,7 @@ export default function GameTable({
               {/* Avatar wrapper with explicit size so EmotionBubble (absolute inset-0) fills it exactly */}
               <div
                 className="relative cursor-pointer"
-                style={{ width: 52, height: 52 }}
+                style={{ width: isLandscape ? 36 : 52, height: isLandscape ? 36 : 52 }}
                 onClick={() => { if (sendEmotion) emotionPicker.toggle(); }}
               >
                 {/* Emotion bubble covering my avatar */}
@@ -2140,7 +2150,7 @@ export default function GameTable({
                 <PlayerAvatar
                   avatarId={gs.players[myIdx]?.avatarId}
                   frameId={gs.players[myIdx]?.equippedFrame}
-                  size={52}
+                  size={isLandscape ? 36 : 52}
                   alt={gs.players[myIdx]?.name || ''}
                   className={sendEmotion ? 'cursor-pointer hover:brightness-110 active:scale-95 transition-all' : ''}
                 />
@@ -2159,8 +2169,8 @@ export default function GameTable({
                 </div>
               )}
 
-              {/* Blinking role notice — shown ONLY when there are no action buttons yet */}
-              {!hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && !isNonNeighborWithSixes && (
+              {/* Blinking role notice — shown ONLY when there are no action buttons yet, and NOT in landscape (shown in center already) */}
+              {!isLandscape && !hasAnyAction && (isAttacker || isDefender) && !isSixOnlySpectator && !isNonNeighborWithSixes && (
                 <div className="flex items-center justify-center h-full">
                   {isAttacker && !gs.defenderTaking && (
                     <span className="text-red-400 font-black text-xl animate-pulse tracking-wide">
