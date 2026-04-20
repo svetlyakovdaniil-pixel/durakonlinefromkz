@@ -799,15 +799,28 @@ function createBaitRoom(ghost: GhostPlayer): void {
       }
     }, rand(1500, 4000));
 
-    // Fill the room with additional ghost players, leaving exactly 1 free slot
-    // maxPlayers - 1 total ghosts needed (host + fillers)
-    const ghostsNeeded = maxPlayers - 1; // host is already 1
-    const fillersNeeded = ghostsNeeded - 1; // subtract the host
+    // Randomly decide how many ghosts to fill in (always leaving 1 free slot for real player)
+    // fillTarget: 0 = only host (1 ghost), up to maxPlayers-1 total ghosts
+    // Distribution: ~30% just host alone, ~40% partially filled, ~30% nearly full (1 slot free)
+    const maxGhostsAllowed = maxPlayers - 1; // always keep 1 slot free
+    const fillRoll = Math.random();
+    let fillTarget: number;
+    if (fillRoll < 0.30) {
+      fillTarget = 1; // just the host
+    } else if (fillRoll < 0.70) {
+      // partially filled: 2 to ceil(maxPlayers/2) ghosts
+      const partial = Math.ceil(maxPlayers / 2);
+      fillTarget = Math.min(Math.floor(rand(2, partial + 1)), maxGhostsAllowed);
+    } else {
+      // nearly full: fill all but 1 slot
+      fillTarget = maxGhostsAllowed;
+    }
+    const fillersNeeded = fillTarget - 1; // subtract the host already in room
     if (fillersNeeded > 0) {
       for (let i = 0; i < fillersNeeded; i++) {
-        const delay = rand(3000, 10000) * (i + 1);
+        const delay = rand(3000, 12000) * (i + 1);
         setTimeout(() => {
-          // Re-check room still exists and has space
+          // Re-check room still exists, no active game, and has space
           const currentRooms = getAvailableRooms();
           const targetRoom = currentRooms.find(r => r.id === room.id);
           if (!targetRoom || targetRoom.gameState !== null) return;
