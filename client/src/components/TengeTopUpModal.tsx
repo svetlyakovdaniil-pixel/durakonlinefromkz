@@ -101,6 +101,14 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         ? `+${formatBalance(data.credited)} тенге есептелді!`
         : locale === "en"
         ? `+${formatBalance(data.credited)} tenge credited!`
+        : locale === "ka"
+        ? `+${formatBalance(data.credited)} ტენგე ჩაირიცხა!`
+        : locale === "az"
+        ? `+${formatBalance(data.credited)} tenge hesablandı!`
+        : locale === "uz"
+        ? `+${formatBalance(data.credited)} tenge hisobga olindi!`
+        : locale === "pl"
+        ? `+${formatBalance(data.credited)} tenge naliczono!`
         : `+${formatBalance(data.credited)} тенге зачислено!`;
       setSuccessMessage(msg);
       setTimeout(() => setSuccessMessage(null), 4000);
@@ -144,7 +152,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         });
       }
     } catch (err) {
-      const msg = locale === "kk" ? "Сатып алу қатесі" : locale === "en" ? "Purchase failed" : "Ошибка покупки";
+      const msg = locale === "kk" ? "Сатып алу қатесі" : locale === "en" ? "Purchase failed" : locale === "ka" ? "შეძენა ვერ მოხერხდა" : locale === "az" ? "Alış uğursuz oldu" : locale === "uz" ? "Sotib olish muvaffaqiyatsiz" : locale === "pl" ? "Zakup nieudany" : "Ошибка покупки";
       toast.error(msg);
     } finally {
       setIsPurchasing(false);
@@ -156,10 +164,10 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
     setIsRestoring(true);
     try {
       await restorePurchases();
-      const msg = locale === "kk" ? "Сатып алулар қалпына келтірілді" : locale === "en" ? "Purchases restored" : "Покупки восстановлены";
+      const msg = locale === "kk" ? "Сатып алулар қалпына келтірілді" : locale === "en" ? "Purchases restored" : locale === "ka" ? "შეძენები აღდგა" : locale === "az" ? "Alışlar bərpa edildi" : locale === "uz" ? "Xaridlar tiklandi" : locale === "pl" ? "Zakupy przywrócone" : "Покупки восстановлены";
       toast.success(msg);
     } catch {
-      const msg = locale === "kk" ? "Қалпына келтіру қатесі" : locale === "en" ? "Restore failed" : "Ошибка восстановления";
+      const msg = locale === "kk" ? "Қалпына келтіру қатесі" : locale === "en" ? "Restore failed" : locale === "ka" ? "აღდგენა ვერ მოხერხდა" : locale === "az" ? "Bərpa uğursuz oldu" : locale === "uz" ? "Tiklash muvaffaqiyatsiz" : locale === "pl" ? "Przywracanie nieudane" : "Ошибка восстановления";
       toast.error(msg);
     } finally {
       setIsRestoring(false);
@@ -236,11 +244,7 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
               <div className="mb-4 bg-blue-900/30 border border-blue-600/30 rounded-xl p-3 flex items-start gap-2">
                 <Smartphone className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
                 <p className="text-blue-300 text-xs">
-                  {locale === "kk"
-                    ? "Тенге сатып алу тек мобильді қосымшада қолжетімді (iOS/Android)."
-                    : locale === "en"
-                    ? "Tenge purchases are only available in the mobile app (iOS/Android)."
-                    : "Покупка тенге доступна только в мобильном приложении (iOS/Android)."}
+                  {({ ru: 'Покупка тенге доступна только в мобильном приложении (iOS/Android).', kk: 'Тенге сатып алу тек мобильді қосымшада қолжетімді (iOS/Android).', en: 'Tenge purchases are only available in the mobile app (iOS/Android).', uk: 'Купівля тенге доступна лише в мобільному додатку (iOS/Android).', ka: 'ტენგეს შეძენა ხელმისაწვდომია მხოლოდ მობილურ აპლიკაციაში (iOS/Android).', az: 'Tenge alışı yalnız mobil tətbiqdə mövcuddur (iOS/Android).', uz: 'Tenge sotib olish faqat mobil ilovada mavjud (iOS/Android).', pl: 'Zakup tenge jest dostępny tylko w aplikacji mobilnej (iOS/Android).' } as Record<string,string>)[locale] ?? 'Покупка тенге доступна только в мобильном приложении (iOS/Android).'}
                 </p>
               </div>
             )}
@@ -321,6 +325,14 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                   ? "Сатып алуларды қалпына келтіру"
                   : locale === "en"
                   ? "Restore purchases"
+                  : locale === "ka"
+                  ? "შეძენების აღდგენა"
+                  : locale === "az"
+                  ? "Alışları bərpa et"
+                  : locale === "uz"
+                  ? "Xaridlarni tiklash"
+                  : locale === "pl"
+                  ? "Przywróć zakupy"
                   : "Восстановить покупки"}
               </button>
             )}
@@ -398,6 +410,14 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
                       ? "Жіберілуде..."
                       : locale === "en"
                       ? "Processing..."
+                      : locale === "ka"
+                      ? "მუშავდება..."
+                      : locale === "az"
+                      ? "İşlənir..."
+                      : locale === "uz"
+                      ? "Qayta ishlanmoqda..."
+                      : locale === "pl"
+                      ? "Przetwarzanie..."
                       : "Обработка..."
                     : t("topUp.buyBtn")}
                 </button>

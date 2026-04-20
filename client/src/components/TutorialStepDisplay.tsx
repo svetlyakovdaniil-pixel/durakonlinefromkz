@@ -1474,15 +1474,18 @@ export default function TutorialStepDisplay({
                 const nameAz = (scenario.transferMechanic as any).targetBotNameAz || nameRu;
                 const nameUz = (scenario.transferMechanic as any).targetBotNameUz || nameRu;
                 const namePl = (scenario.transferMechanic as any).targetBotNamePl || nameRu;
-                const displayName = locale === 'en' ? nameEn : locale === 'kk' ? nameKk : locale === 'az' ? nameAz : locale === 'uz' ? nameUz : locale === 'pl' ? namePl : nameRu;
+                const nameKa = (scenario.transferMechanic as any).targetBotNameKa || nameRu;
+                const displayName = locale === 'en' ? nameEn : locale === 'kk' ? nameKk : locale === 'ka' ? nameKa : locale === 'az' ? nameAz : locale === 'uz' ? nameUz : locale === 'pl' ? namePl : nameRu;
                 return locale === 'kk'
                   ? `Сіз жүрісті "${displayName}" ойыншысына аудардыңыз,\nенді осы ойыншы ұрады`
                   : locale === 'en'
                   ? `You transferred the turn to "${displayName}",\nnow this player defends`
+                  : locale === 'ka'
+                  ? `თქვენ გადასცეთ ჯერი "${displayName}" მოთამაშეს,\nახლა ეს მოთამაშე იცავს`
                   : locale === 'az'
                   ? `Siz növbəni "${displayName}" oyunçusuna ötürdünüz,\nindi bu oyunçu müdafiə edir`
                   : locale === 'uz'
-                  ? `Siz "${displayName}" oʻyinchiga navbatni oʻtkazdingiz,\nendi bu oʻyinchi himoya qiladi`
+                  ? `Siz "${displayName}" o'yinchiga navbatni o'tkazdingiz,\nendi bu o'yinchi himoya qiladi`
                   : locale === 'pl'
                   ? `Przekazałeś turę graczowi "${displayName}",\nteraz ten gracz się broni`
                   : `Вы перевели ход на игрока "${displayName}",\nтеперь бьется этот игрок`;

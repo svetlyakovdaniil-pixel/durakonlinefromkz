@@ -53,6 +53,11 @@ export interface SeasonInfo {
   nameRu: string;
   nameKk: string;
   nameEn: string;
+  nameKa?: string;
+  nameAz?: string;
+  nameUz?: string;
+  namePl?: string;
+  nameUk?: string;
   /** Visual theme for the Season page */
   theme: SeasonTheme;
   /** Per-season overrides for rank rewards (avatar/frame). Overrides SEASON_REWARD_DEFS for this season only. */
@@ -71,6 +76,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Подводный мир',
     nameKk: 'Су Асты Әлемі',
     nameEn: 'Underwater World',
+    nameKa: 'წყლის სამყარო',
+    nameAz: 'Su altı dünya',
+    nameUz: 'Suv osti dunyosi',
+    namePl: 'Świat podwodny',
+    nameUk: 'Підводний світ',
     theme: {
       accent: '#06b6d4',
       accentSecondary: '#0891b2',
@@ -96,6 +106,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Египетские боги',
     nameKk: 'Мысыр Құдайлары',
     nameEn: 'Egyptian Gods',
+    nameKa: 'ეგვიპტური ღმერთები',
+    nameAz: 'Mısir tanrıları',
+    nameUz: 'Misr xudolari',
+    namePl: 'Egipscy bogowie',
+    nameUk: 'Єгипетські боги',
     theme: {
       accent: '#f59e0b',
       accentSecondary: '#d97706',
@@ -121,6 +136,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Пиратские острова',
     nameKk: 'Пираттар Аралдары',
     nameEn: 'Pirate Islands',
+    nameKa: 'მეკობრეთა კუნძულები',
+    nameAz: 'Qorsan adaları',
+    nameUz: 'Qaroqchilar orollari',
+    namePl: 'Wyspy piratów',
+    nameUk: 'Піратські острови',
     theme: {
       accent: '#78716c',
       accentSecondary: '#0ea5e9',
@@ -146,6 +166,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Скандинавские боги',
     nameKk: 'Скандинавия Құдайлары',
     nameEn: 'Norse Gods',
+    nameKa: 'სკანდინავიური ღმერთები',
+    nameAz: 'Skandinav tanrıları',
+    nameUz: 'Skandinaviya xudolari',
+    namePl: 'Bogowie nordyccy',
+    nameUk: 'Скандинавські боги',
     theme: {
       accent: '#94a3b8',
       accentSecondary: '#64748b',
@@ -171,6 +196,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Космическая одиссея',
     nameKk: 'Ғарыштық Одиссея',
     nameEn: 'Space Odyssey',
+    nameKa: 'კოსმოსური ოდისეა',
+    nameAz: 'Kosmik Odisseya',
+    nameUz: 'Kosmik Odisseya',
+    namePl: 'Kosmiczna Odyseja',
+    nameUk: 'Космічна одіссея',
     theme: {
       accent: '#6366f1',
       accentSecondary: '#4f46e5',
@@ -196,6 +226,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Казахский колорит',
     nameKk: 'Қазақ Колоріті',
     nameEn: 'Kazakh Colors',
+    nameKa: 'ყაზახური კოლორიტი',
+    nameAz: 'Qazax rəngləri',
+    nameUz: 'Qozoq ranglari',
+    namePl: 'Kazachskie barwy',
+    nameUk: 'Казахський колорит',
     theme: {
       accent: '#f59e0b',
       accentSecondary: '#dc2626',
@@ -221,6 +256,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Неоновая эра',
     nameKk: 'Неон Дәуірі',
     nameEn: 'Neon Era',
+    nameKa: 'ნეონური ერა',
+    nameAz: 'Neon Çağı',
+    nameUz: 'Neon davri',
+    namePl: 'Era Neonowa',
+    nameUk: 'Неонова ера',
     theme: {
       accent: '#a855f7',
       accentSecondary: '#ec4899',
@@ -250,6 +290,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Апокалипсис',
     nameKk: 'Апокалипсис',
     nameEn: 'Apocalypse',
+    nameKa: 'აპოკალიფსი',
+    nameAz: 'Apokalipsis',
+    nameUz: 'Apokalipsis',
+    namePl: 'Apokalipsa',
+    nameUk: 'Апокаліпсис',
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'apocalypse_city' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_apocalypse' },
@@ -274,6 +319,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Японские мотивы',
     nameKk: 'Жапон Мотивтері',
     nameEn: 'Japanese Motifs',
+    nameKa: 'იაპონური მოტივები',
+    nameAz: 'Yapon motivləri',
+    nameUz: 'Yapon motivlari',
+    namePl: 'Motywy japońskie',
+    nameUk: 'Японські мотиви',
     rankRewardOverrides: [
       { rankKey: 'sky_eagle', avatarId: 'japanese_motifs_zircon' },
       { rankKey: 'steppe_khan', avatarId: 'ruby_japanese' },
@@ -298,6 +348,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Киберпанк',
     nameKk: 'Киберпанк',
     nameEn: 'Cyberpunk',
+    nameKa: 'კიბერპანკი',
+    nameAz: 'Kiberpank',
+    nameUz: 'Kiberpank',
+    namePl: 'Cyberpunk',
+    nameUk: 'Кіберпанк',
     theme: {
       accent: '#22c55e',
       accentSecondary: '#84cc16',
@@ -323,6 +378,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Хип-хоп 90-х',
     nameKk: '90-шы жылдар хип-хопы',
     nameEn: '90s Hip-Hop',
+    nameKa: '90-იანი თავის ჰიპ-ჰოპი',
+    nameAz: '90-cı illərin hip-hopu',
+    nameUz: '90-yillar hip-hopi',
+    namePl: 'Hip-hop lat 90.',
+    nameUk: 'Хіп-хоп 90-х',
     theme: {
       accent: '#fb923c',
       accentSecondary: '#facc15',
@@ -348,6 +408,11 @@ export const SEASONS: SeasonInfo[] = [
     nameRu: 'Ангелы и Демоны',
     nameKk: 'Періштелер мен Шайтандар',
     nameEn: 'Angels and Demons',
+    nameKa: 'ანგელოზი და დემონები',
+    nameAz: 'Mələklər və şəytanlar',
+    nameUz: 'Farishtalar va shaytanlar',
+    namePl: 'Anioły i Demony',
+    nameUk: 'Ангели і Демони',
     theme: {
       accent: '#e2e8f0',
       accentSecondary: '#7c3aed',
@@ -438,6 +503,11 @@ export interface SeasonRank {
   nameRu: string;
   nameKk: string;
   nameEn: string;
+  nameKa?: string;
+  nameAz?: string;
+  nameUz?: string;
+  namePl?: string;
+  nameUk?: string;
   minRating: number;
   maxRating: number; // Infinity for the last rank
   /** CSS color for the diamond icon */
@@ -452,6 +522,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Лунный камень',
     nameKk: 'Ай Тасы',
     nameEn: 'Moonstone',
+    nameKa: 'მთვარის ქვა',
+    nameAz: 'Ay Daşı',
+    nameUz: 'Oy toshi',
+    namePl: 'Księżycowy kamień',
+    nameUk: 'Місячний камінь',
     minRating: 0,
     maxRating: 200,
     color: '#9ca3af', // gray-400
@@ -462,6 +537,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Изумруд',
     nameKk: 'Зумруд',
     nameEn: 'Emerald',
+    nameKa: 'ზმუხი',
+    nameAz: 'Zümrüd',
+    nameUz: 'Zumrad',
+    namePl: 'Szmaragd',
+    nameUk: 'Смарагд',
     minRating: 201,
     maxRating: 500,
     color: '#22c55e', // green-500
@@ -472,6 +552,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Сапфир',
     nameKk: 'Сапфир',
     nameEn: 'Sapphire',
+    nameKa: 'საფირი',
+    nameAz: 'Sapfir',
+    nameUz: 'Safir',
+    namePl: 'Szafir',
+    nameUk: 'Сафір',
     minRating: 501,
     maxRating: 800,
     color: '#3b82f6', // blue-500
@@ -482,6 +567,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Аметист',
     nameKk: 'Аметист',
     nameEn: 'Amethyst',
+    nameKa: 'ამეთისტი',
+    nameAz: 'Ametist',
+    nameUz: 'Ametist',
+    namePl: 'Ametyst',
+    nameUk: 'Аметист',
     minRating: 801,
     maxRating: 1200,
     color: '#a855f7', // purple-500
@@ -492,6 +582,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Циркон',
     nameKk: 'Циркон',
     nameEn: 'Zircon',
+    nameKa: 'ცირკონი',
+    nameAz: 'Sirkon',
+    nameUz: 'Sirkon',
+    namePl: 'Cyrkon',
+    nameUk: 'Циркон',
     minRating: 1201,
     maxRating: 2000,
     color: '#f97316', // orange-500
@@ -502,6 +597,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Рубин',
     nameKk: 'Рубин',
     nameEn: 'Ruby',
+    nameKa: 'რუბი',
+    nameAz: 'Yaqut',
+    nameUz: 'Yoqut',
+    namePl: 'Rubin',
+    nameUk: 'Рубін',
     minRating: 2001,
     maxRating: 4000,
     color: '#ef4444', // red-500
@@ -512,6 +612,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Янтарь',
     nameKk: 'Янтар',
     nameEn: 'Amber',
+    nameKa: 'ყვიტელი',
+    nameAz: 'Kəhrəba',
+    nameUz: 'Qahrabo',
+    namePl: 'Bursztyn',
+    nameUk: 'Бурштин',
     minRating: 4001,
     maxRating: 10000,
     color: '#eab308', // yellow-500 (gold)
@@ -522,6 +627,11 @@ export const SEASON_RANKS: SeasonRank[] = [
     nameRu: 'Обсидиан',
     nameKk: 'Обсидиан',
     nameEn: 'Obsidian',
+    nameKa: 'ობსიდიანი',
+    nameAz: 'Obsidian',
+    nameUz: 'Obsidian',
+    namePl: 'Obsydian',
+    nameUk: 'Обсидіан',
     minRating: 10001,
     maxRating: Infinity,
     color: '#b8860b', // dark gold

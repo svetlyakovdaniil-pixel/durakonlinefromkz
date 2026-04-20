@@ -94,22 +94,26 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   if (!open) return null;
 
   const L = {
-    title: { ru: 'Ежедневные задания', kk: 'Күнделікті тапсырмалар', en: 'Daily Quests', uk: 'Щоденні завдання' }[locale as string] ?? 'Ежедневные задания',
-    reset: { ru: `Сброс через ${getTimeUntilReset()}`, kk: `${getTimeUntilReset()} кейін жаңарады`, en: `Resets in ${getTimeUntilReset()}`, uk: `Скидання через ${getTimeUntilReset()}` }[locale as string] ?? `Resets in ${getTimeUntilReset()}`,
-    claim: { ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати' }[locale as string] ?? 'Получить',
-    claimed: { ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано' }[locale as string] ?? 'Получено',
-    locked: { ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress', uk: 'В процесі' }[locale as string] ?? 'В процессе',
-    swap: { ru: 'Заменить', kk: 'Ауыстыру', en: 'Replace', uk: 'Замінити' }[locale as string] ?? 'Заменить',
-    swapsLeft: { ru: `Замен: ${swapsRemaining}/3`, kk: `Ауыстыру: ${swapsRemaining}/3`, en: `Swaps: ${swapsRemaining}/3`, uk: `Замін: ${swapsRemaining}/3` }[locale as string] ?? `Замен: ${swapsRemaining}/3`,
-    humanOnly: {
+    title: ({ ru: 'Ежедневные задания', kk: 'Күнделікті тапсырмалар', en: 'Daily Quests', uk: 'Щоденні завдання', ka: 'ყოველდღიური დავალება', az: 'Gündəlik tapşırıqlar', uz: 'Kunlik vazifalar', pl: 'Codzienne zadania' } as Record<string,string>)[locale] ?? 'Ежедневные задания',
+    reset: ({ ru: `Сброс через ${getTimeUntilReset()}`, kk: `${getTimeUntilReset()} кейін жаңарады`, en: `Resets in ${getTimeUntilReset()}`, uk: `Скидання через ${getTimeUntilReset()}`, ka: `გადაყენება ${getTimeUntilReset()}-ში`, az: `${getTimeUntilReset()} sonra sıfırlanır`, uz: `${getTimeUntilReset()} dan keyin yangilanadi`, pl: `Resetuje się za ${getTimeUntilReset()}` } as Record<string,string>)[locale] ?? `Resets in ${getTimeUntilReset()}`,
+    claim: ({ ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати', ka: 'მიღება', az: 'Al', uz: 'Olish', pl: 'Odbierz' } as Record<string,string>)[locale] ?? 'Получить',
+    claimed: ({ ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано', ka: 'მიღებულია', az: 'Alındı', uz: 'Olindi', pl: 'Odebrano' } as Record<string,string>)[locale] ?? 'Получено',
+    locked: ({ ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress', uk: 'В процесі', ka: 'მიმდინარეობაში', az: 'Davam edir', uz: 'Jarayonda', pl: 'W toku' } as Record<string,string>)[locale] ?? 'В процессе',
+    swap: ({ ru: 'Заменить', kk: 'Ауыстыру', en: 'Replace', uk: 'Замінити', ka: 'ჩანაცვლა', az: 'Əvəz et', uz: 'Almashtirish', pl: 'Zamień' } as Record<string,string>)[locale] ?? 'Заменить',
+    swapsLeft: ({ ru: `Замен: ${swapsRemaining}/3`, kk: `Ауыстыру: ${swapsRemaining}/3`, en: `Swaps: ${swapsRemaining}/3`, uk: `Замін: ${swapsRemaining}/3`, ka: `ჩანაცვლა: ${swapsRemaining}/3`, az: `Əvəzləmə: ${swapsRemaining}/3`, uz: `Almashtirish: ${swapsRemaining}/3`, pl: `Zamiany: ${swapsRemaining}/3` } as Record<string,string>)[locale] ?? `Замен: ${swapsRemaining}/3`,
+    humanOnly: ({
       ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
       kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
       en: 'Only counts in games with real players (less than 33.4% bots)',
       uk: 'Зараховується тільки в іграх з реальними людьми (менше 33.4% ботів)',
-    }[locale as string] ?? 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
-    loading: { ru: 'Загрузка...', kk: 'Жүктелуде...', en: 'Loading...', uk: 'Завантаження...' }[locale as string] ?? 'Загрузка...',
-    noQuests: { ru: 'Задания не назначены. Сыграйте партию, чтобы получить задания.', kk: 'Тапсырмалар берілмеген. Ойын ойнаңыз.', en: 'No quests assigned. Play a game to get quests.', uk: 'Завдання не призначені. Зіграйте партію, щоб отримати завдання.' }[locale as string] ?? 'Задания не назначены.',
-    completed: { ru: 'Выполнено', kk: 'Орындалды', en: 'Completed', uk: 'Виконано' }[locale as string] ?? 'Выполнено',
+      ka: 'კრედიტდება მიიღება მხოლოდ რეალურ ადამიანებთან თამაშებში (33.4%-ზე ნაკლები ბოტი)',
+      az: 'Yalnız real oyunçularla oyunlarda sayılır (33.4%-dən az bot)',
+      uz: 'Faqat haqiqiy o\'yinchilar bilan o\'yinlarda hisoblanadi (33.4% dan kam bot)',
+      pl: 'Liczy się tylko w grach z prawdziwymi graczami (mniej niż 33.4% botów)',
+    } as Record<string,string>)[locale] ?? 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
+    loading: ({ ru: 'Загрузка...', kk: 'Жүктелуде...', en: 'Loading...', uk: 'Завантаження...', ka: 'იტვირთება...', az: 'Yüklənir...', uz: 'Yuklanmoqda...', pl: 'Ładowanie...' } as Record<string,string>)[locale] ?? 'Загрузка...',
+    noQuests: ({ ru: 'Задания не назначены. Сыграйте партию, чтобы получить задания.', kk: 'Тапсырмалар берілмеген. Ойын ойнаңыз.', en: 'No quests assigned. Play a game to get quests.', uk: 'Завдання не призначені. Зіграйте партію, щоб отримати завдання.', ka: 'დავალები არ არის. თამაშის დასათავებლად თამაში თამაშეთ.', az: 'Tapşırıq təyin edilməyib. Tapşırıq almaq üçün oyun oynayın.', uz: 'Vazifalar tayinlanmagan. Vazifa olish uchun o\'yin o\'ynang.', pl: 'Brak zadań. Zagraj, aby otrzymać zadania.' } as Record<string,string>)[locale] ?? 'Задания не назначены.',
+    completed: ({ ru: 'Выполнено', kk: 'Орындалды', en: 'Completed', uk: 'Виконано', ka: 'შესრულია', az: 'Tamamlandı', uz: 'Bajarildi', pl: 'Ukończono' } as Record<string,string>)[locale] ?? 'Выполнено',
   };
 
   const getName = (q: typeof quests[0]) =>
