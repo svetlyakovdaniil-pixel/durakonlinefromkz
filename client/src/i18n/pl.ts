@@ -197,6 +197,7 @@ export const pl = {
     frameZircon: 'Cyrkon',
     frameExclusiveAnimated: 'Ekskluzywna animowana ramka',
     frameCrimsonFlare: 'Ekskluzywna szkarłatna ramka',
+    frameCrimsonFlash: 'Ekskluzywna ramka z karmazynowym błyskiem',
     frameSolarFlare: 'Ekskluzywna słoneczna ramka',
     frameCometTrail: 'Ekskluzywna ramka z ogonem komety',
     frameDualOrbit: 'Ekskluzywna ramka podwójnej orbity',

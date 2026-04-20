@@ -197,6 +197,7 @@ export const uz = {
     frameZircon: 'Sirkon',
     frameExclusiveAnimated: 'Eksklyuziv animatsiyali ramka',
     frameCrimsonFlare: 'Eksklyuziv qizil yaltiroq ramka',
+    frameCrimsonFlash: 'Eksklyuziv qirmizi chaqmoq ramkasi',
     frameSolarFlare: 'Eksklyuziv quyosh yaltiroq ramka',
     frameCometTrail: 'Eksklyuziv kometa izi ramkasi',
     frameDualOrbit: 'Eksklyuziv ikki orbitli ramka',

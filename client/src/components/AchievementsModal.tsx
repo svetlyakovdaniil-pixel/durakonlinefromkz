@@ -35,6 +35,10 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
         kk: `Алынды: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаңырақ` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} теңге` : ''}`,
         en: `Claimed: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} shanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
         uk: `Отримано: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} шаніраків` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} тенге` : ''}`,
+        ka: `მიღებულია: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} შანირაკი` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} თენგე` : ''}`,
+        az: `Alındı: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} şanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
+        uz: `Olindi: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} shanyrak` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
+        pl: `Odebrano: ${result.shanyrakAwarded ? `+${result.shanyrakAwarded.toLocaleString()} szaniraków` : ''}${result.tengeAwarded ? ` +${result.tengeAwarded} tenge` : ''}`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -42,7 +46,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
       setClaimingKey(null);
     },
     onError: () => {
-      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди' };
+      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди', ka: 'ჯილდოს მიღების შეცდომა', az: 'Mükafat alınmasında xəta', uz: 'Mukofot olishda xato', pl: 'Błąd przy odbieraniu nagrody' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setClaimingKey(null);
     },

@@ -197,6 +197,7 @@ export const az = {
     frameZircon: 'Sirkon',
     frameExclusiveAnimated: 'Eksklüziv animasiyalı çərçivə',
     frameCrimsonFlare: 'Eksklüziv qırmızı parıltılı çərçivə',
+    frameCrimsonFlash: 'Eksklüziv alı parlaqlı çərçivə',
     frameSolarFlare: 'Eksklüziv günəş parıltılı çərçivə',
     frameCometTrail: 'Eksklüziv kometa izli çərçivə',
     frameDualOrbit: 'Eksklüziv ikili orbitli çərçivə',
