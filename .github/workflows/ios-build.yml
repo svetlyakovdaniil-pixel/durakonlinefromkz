@@ -29,16 +29,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Setup Node.js ───────────────────────────────────────────────────
+      # ── 2. Setup pnpm ────────────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # ── 3. Setup Node.js ───────────────────────────────────────────────────
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-
-      # ── 3. Install pnpm ────────────────────────────────────────────────────
-      - name: Install pnpm
-        run: npm install -g pnpm
+          cache: 'pnpm'
 
       # ── 4. Install dependencies ────────────────────────────────────────────
       - name: Install dependencies
