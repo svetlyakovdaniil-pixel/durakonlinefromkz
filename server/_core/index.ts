@@ -67,6 +67,21 @@ async function startServer() {
   }
   const app = express();
   const server = createServer(app);
+  // Security headers — help browsers and Safe Browsing identify the site as legitimate
+  app.use((_req, res, next) => {
+    // Strict Transport Security (HTTPS only, 1 year)
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    // Prevent MIME type sniffing
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    // Prevent clickjacking
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    // XSS protection
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    // Referrer policy
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    next();
+  });
+
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -159,7 +174,7 @@ async function startServer() {
     if (ghostCount > 0) {
       // Small delay to let the server fully initialize before ghost connections
       setTimeout(() => {
-        initGhostPlayers(port, ghostCount);
+        initGhostPlayers(port, ghostCount).catch(e => console.error('[Ghost] Init error:', e));
       }, 3000);
     }
   });

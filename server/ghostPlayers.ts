@@ -13,6 +13,7 @@
 import { io as ioClient, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction, ClientGameState } from '../shared/gameTypes';
 import { getAvailableRooms } from './socketServer';
+import { provisionGhostPlayer, refillGhostShanyrak } from './db';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -46,7 +47,7 @@ interface GhostPersonality {
 }
 
 interface GhostPlayer {
-  id: string; // ghost-XXXX — used as odId
+  id: string; // ghost-<nick-slug> — matches DB openId
   personality: GhostPersonality;
   state: GhostState;
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
@@ -58,6 +59,8 @@ interface GhostPlayer {
   idleTimer: NodeJS.Timeout | null;
   lobbyTimer: NodeJS.Timeout | null;
   reconnectAttempts: number;
+  /** Real DB gameId for registerProfile (0 until provisioned) */
+  dbGameId: number;
 }
 
 // ─── Nicknames ───────────────────────────────────────────────────────────────
@@ -335,25 +338,40 @@ let serverPort = 3000;
 let ghostsEnabled = false;
 const ghosts = new Map<string, GhostPlayer>();
 let managerInterval: NodeJS.Timeout | null = null;
-let ghostIdCounter = 1000;
-
 /** Call this after the HTTP server starts listening */
-export function initGhostPlayers(port: number, count: number = 15): void {
+export async function initGhostPlayers(port: number, count: number = 15): Promise<void> {
   serverPort = port;
   ghostsEnabled = true;
-
   console.log(`[Ghost] Initializing ${count} ghost players on port ${port}`);
 
   // Shuffle nicks and create ghost players
   const shuffledNicks = [...GHOST_NICKS].sort(() => Math.random() - 0.5);
   const selectedNicks = shuffledNicks.slice(0, Math.min(count, shuffledNicks.length));
 
-  for (let i = 0; i < selectedNicks.length; i++) {
-    const nick = selectedNicks[i];
-    const id = `ghost-${ghostIdCounter++}`;
-    const personality = buildPersonality(nick, i);
+  // Provision DB accounts first (parallel)
+  const provisionResults = await Promise.allSettled(
+    selectedNicks.map(async (nick, i) => {
+      const personality = buildPersonality(nick, i);
+      const result = await provisionGhostPlayer(
+        nick,
+        personality.avatarId,
+        personality.equippedFrame,
+        personality.emotionPack,
+      );
+      if (!result) {
+        console.warn(`[Ghost] Failed to provision DB account for ${nick}`);
+        return null;
+      }
+      console.log(`[Ghost] Provisioned ${nick} → openId=${result.openId} gameId=${result.gameId}`);
+      return { nick, personality, openId: result.openId, gameId: result.gameId };
+    })
+  );
+
+  for (const res of provisionResults) {
+    if (res.status !== 'fulfilled' || !res.value) continue;
+    const { nick, personality, openId, gameId } = res.value;
     const ghost: GhostPlayer = {
-      id,
+      id: openId, // openId IS the ghost id (ghost-<nick-slug>)
       personality,
       state: 'idle',
       socket: null,
@@ -365,9 +383,12 @@ export function initGhostPlayers(port: number, count: number = 15): void {
       idleTimer: null,
       lobbyTimer: null,
       reconnectAttempts: 0,
+      dbGameId: gameId,
     };
-    ghosts.set(id, ghost);
+    ghosts.set(openId, ghost);
   }
+
+  console.log(`[Ghost] ${ghosts.size} ghost players ready. Connecting...`);
 
   // Stagger initial connections to avoid thundering herd
   let delay = 0;
@@ -428,9 +449,9 @@ function connectGhost(ghost: GhostPlayer): void {
   socket.on('connect', () => {
     ghost.reconnectAttempts = 0;
     ghost.state = 'browsing';
-    // Register profile (no gameId — ghost players have no DB profile)
+    // Register profile using real DB gameId
     socket.emit('registerProfile', {
-      gameId: 0,
+      gameId: ghost.dbGameId,
       displayName: ghost.personality.nick,
       avatarId: ghost.personality.avatarId,
       equippedFrame: ghost.personality.equippedFrame ?? null,
@@ -542,8 +563,17 @@ function connectGhost(ghost: GhostPlayer): void {
   });
 
   socket.on('error', (msg) => {
-    // Silently handle errors — ghost players don't crash on server errors
     console.debug(`[Ghost:${ghost.personality.nick}] Server error: ${msg}`);
+    // Auto-refill when out of shanyraks
+    if (typeof msg === 'string' && msg.includes('Недостаточно шаныраков')) {
+      refillGhostShanyrak(ghost.id, 10000).then(() => {
+        console.log(`[Ghost:${ghost.personality.nick}] Refilled to 10k shanyraks`);
+        // Retry idle action after refill
+        if (ghost.state === 'browsing' && ghost.socket?.connected) {
+          scheduleIdleAction(ghost, rand(2000, 6000));
+        }
+      }).catch(e => console.debug(`[Ghost] Refill error: ${e}`));
+    }
   });
 }
 

@@ -3862,3 +3862,85 @@ export async function getOwnedEmotionPacks(userId: number): Promise<string[]> {
     return [];
   }
 }
+
+// ============================================================
+// GHOST PLAYER helpers
+// ============================================================
+
+/**
+ * Provision a ghost player account in the database.
+ * Creates a user row (openId = "ghost-<slug>") and a player profile
+ * with the same starting balance as a new real player (5000 shanyraks, 25 tenge).
+ * If the account already exists, updates avatar/frame/emotionPack and returns existing data.
+ */
+export async function provisionGhostPlayer(nick: string, avatarId: string, equippedFrame?: string, emotionPack?: string): Promise<{
+  openId: string;
+  gameId: number;
+  profileId: number;
+  userId: number;
+} | null> {
+  const db = await getDb();
+  if (!db) return null;
+
+  const openId = `ghost-${nick.toLowerCase().replace(/[^a-z0-9_]/g, '_')}`;
+
+  await db.insert(users).values({
+    openId,
+    name: nick,
+    loginMethod: 'ghost',
+    lastSignedIn: new Date(),
+  }).onDuplicateKeyUpdate({
+    set: { name: nick, lastSignedIn: new Date() },
+  });
+
+  const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return null;
+
+  const [existingProfile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (existingProfile) {
+    await db.update(playerProfiles).set({
+      avatarId,
+      equippedFrame: equippedFrame ?? null,
+      activeEmotionPack: emotionPack ?? 'khan',
+    }).where(eq(playerProfiles.id, existingProfile.id));
+    return { openId, gameId: existingProfile.gameId, profileId: existingProfile.id, userId: user.id };
+  }
+
+  const [maxRow] = await db.select({ maxId: sql<number>`COALESCE(MAX(${playerProfiles.gameId}), 0)` }).from(playerProfiles);
+  const nextGameId = (maxRow?.maxId ?? 0) + 1;
+
+  await db.insert(playerProfiles).values({
+    userId: user.id,
+    gameId: nextGameId,
+    displayName: nick,
+    rating: 1000,
+    gamesPlayed: 0,
+    wins: 0,
+    losses: 0,
+    balanceTenge: 25,
+    balanceShanyrak: 5000,
+    avatarId,
+    equippedFrame: equippedFrame ?? null,
+    activeEmotionPack: emotionPack ?? 'khan',
+  });
+
+  const [created] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (!created) return null;
+
+  return { openId, gameId: created.gameId, profileId: created.id, userId: user.id };
+}
+
+/**
+ * Refill a ghost player's shanyraks to targetBalance if their current balance is below it.
+ */
+export async function refillGhostShanyrak(openId: string, targetBalance = 10000): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  const [user] = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  if (!user) return;
+  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
+  if (!profile) return;
+  if (profile.balanceShanyrak < targetBalance) {
+    await db.update(playerProfiles).set({ balanceShanyrak: targetBalance }).where(eq(playerProfiles.id, profile.id));
+  }
+}
