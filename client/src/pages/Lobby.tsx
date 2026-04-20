@@ -36,6 +36,7 @@ import PremiumModal from '@/components/PremiumModal';
 import SeasonPage from '@/pages/Season';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { toast } from 'sonner';
+import { useIsLandscape } from '@/hooks/useOrientation';
 
 interface LobbyProps {
   rooms: Room[];
@@ -64,6 +65,7 @@ interface LobbyProps {
 
 export default function Lobby({ rooms, connected, userName, userId, onCreateRoom, onJoinRoom, onLogout, profile, onlineFriendIds, refetchProfile, refreshRooms }: LobbyProps) {
   const { t, locale } = useTranslation();
+  const isLandscape = useIsLandscape();
   const { user: authUser } = useAuth();
   const [, setLocation] = useLocation();
   const isAdmin = authUser?.role === 'admin';
@@ -429,7 +431,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
-            <div className="relative flex items-start justify-between" style={{minHeight: (profile as any)?.equippedFrame ? '120px' : '90px'}}>
+            <div className="relative flex items-start justify-between" style={{minHeight: isLandscape ? '60px' : ((profile as any)?.equippedFrame ? '120px' : '90px')}}>
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20" style={{marginLeft: '-4px', width: '28px'}} />
               {/* Title — shifted right toward avatar, 20% larger */}
@@ -1121,7 +1123,7 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-        <div className="sm:hidden flex flex-col flex-1 overflow-hidden" style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
+        <div className="sm:hidden flex flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
             className="w-full flex flex-row items-center justify-center gap-3 transition-all active:scale-[0.98] shrink-0"
@@ -1829,10 +1831,10 @@ onClick={() => setShowTengeTopUp(true)}
         style={{
           background: 'linear-gradient(to top, #060e1a 0%, #0a1628 85%, #0a162800 100%)',
           borderTop: '1px solid rgba(180,130,30,0.18)',
-          paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+          paddingBottom: isLandscape ? '0px' : 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div className="flex items-center justify-between px-6 pt-2 pb-3">
+        <div className={`flex items-center justify-between ${isLandscape ? 'px-4 pt-1 pb-1' : 'px-6 pt-2 pb-3'}`}>
 
           {/* Profile — left */}
           <button
