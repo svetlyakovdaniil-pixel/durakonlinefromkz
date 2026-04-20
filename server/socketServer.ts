@@ -2171,17 +2171,19 @@ function handleTimeUp(roomId: string, gameState: GameState) {
   } else if (gameState.turnPhase === 'defend') {
     // Defender timed out — defender TAKES cards into hand
     engineTakeCards(gameState);
-    // Check if any human attacker can still add cards
+    // Check if any REAL human attacker (not ghost, not bot) can still add cards
+    // Ghost players (id starts with 'ghost-') are treated like bots here
     // If not, finalize take immediately so cards go to defender's hand right away
     const hasHumanAttackerWhoCanAdd = gameState.players.some((p, i) => {
       if (p.isBot || p.isOut || i === gameState.currentDefenderIdx) return false;
+      if (p.id.startsWith('ghost-')) return false; // ghost players don't block finalization
       return canPlayerAddCards(gameState, i);
     });
     if (!hasHumanAttackerWhoCanAdd) {
-      // No human attacker can add cards — finalize immediately
+      // No real human attacker can add cards — finalize immediately
       trackAndFinalizeTake(roomId, gameState);
     }
-    // Otherwise leave defenderTaking=true so human attackers can still add cards
+    // Otherwise leave defenderTaking=true so real human attackers can still add cards
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
       // Attacker timed out — auto "бито"
