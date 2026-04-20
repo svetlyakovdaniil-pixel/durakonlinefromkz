@@ -13,6 +13,7 @@
 import { io as ioClient, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction, ClientGameState } from '../shared/gameTypes';
 import { RANK_ORDER } from '../shared/gameTypes';
+import type { TableStyle } from '../shared/cardAssets';
 import { getAvailableRooms } from './socketServer';
 import { provisionGhostPlayer, refillGhostShanyrak } from './db';
 
@@ -45,6 +46,10 @@ interface GhostPersonality {
   betRange: [number, number];
   /** Preferred player count range */
   playerCountRange: [number, number];
+  /** Preferred deck style */
+  preferredDeckStyle: 'classic' | 'custom';
+  /** Preferred table style */
+  preferredTableStyle: TableStyle;
 }
 
 interface GhostPlayer {
@@ -173,25 +178,39 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
   const temperament = pickRandom(temperaments);
 
-  // Cosmetics: 70% use free avatar only, 20% use shop avatar, 10% use shop avatar + frame
+  // Cosmetics:
+  // 65% free avatar, no frame
+  // 20% shop avatar, no frame
+  // 10% free avatar + frame (small portion use frames)
+  //  5% shop avatar + frame
   const cosmeticRoll = Math.random();
   let avatarId: string;
   let equippedFrame: string | undefined;
   let emotionPack: string;
 
-  if (cosmeticRoll < 0.70) {
+  if (cosmeticRoll < 0.65) {
     avatarId = pickRandom(FREE_AVATARS);
     equippedFrame = undefined;
     emotionPack = 'khan'; // default pack
-  } else if (cosmeticRoll < 0.90) {
-    avatarId = pickRandom([...FREE_AVATARS, ...SHOP_AVATARS]);
+  } else if (cosmeticRoll < 0.85) {
+    avatarId = pickRandom(SHOP_AVATARS);
     equippedFrame = undefined;
+    emotionPack = pickRandom(EMOTION_PACKS);
+  } else if (cosmeticRoll < 0.95) {
+    avatarId = pickRandom(FREE_AVATARS);
+    equippedFrame = pickRandom(ALL_FRAMES);
     emotionPack = pickRandom(EMOTION_PACKS);
   } else {
     avatarId = pickRandom(SHOP_AVATARS);
     equippedFrame = pickRandom(ALL_FRAMES);
     emotionPack = pickRandom(EMOTION_PACKS);
   }
+
+  // Preferred deck and table style (small portion use custom/premium)
+  const deckStyleRoll = Math.random();
+  const preferredDeckStyle: 'classic' | 'custom' = deckStyleRoll < 0.88 ? 'classic' : 'custom';
+  const TABLE_STYLES: TableStyle[] = ['classic', 'classic', 'classic', 'dark_kazakh', 'neon', 'apocalypse'];
+  const preferredTableStyle = pickRandom(TABLE_STYLES);
 
   // Bet preferences — lower bets more common
   const betRoll = Math.random();
@@ -223,6 +242,8 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     emotionPack,
     betRange,
     playerCountRange,
+    preferredDeckStyle,
+    preferredTableStyle,
   };
 }
 
@@ -747,6 +768,8 @@ function getFreeGhost(): GhostPlayer | null {
 function createBaitRoom(ghost: GhostPlayer): void {
   if (!ghost.socket?.connected) return;
   const p = ghost.personality;
+  // maxPlayers: 2-6, but always leave 1 free slot for a real player
+  // So ghost count in room = maxPlayers - 1
   const maxPlayers = pickRandom([2, 3, 4, 4, 5, 6]);
   const betAmount = pickRandom(BAIT_ROOM_BET_OPTIONS);
   const roomName = generateRoomName(p.nick);
@@ -758,8 +781,8 @@ function createBaitRoom(ghost: GhostPlayer): void {
       turnTimer: pickRandom([20, 25, 30, 40]),
       withBots: false,
       botCount: 0,
-      deckStyle: Math.random() < 0.85 ? 'classic' : 'custom',
-      tableStyle: pickRandom(['classic', 'classic', 'classic', 'dark_kazakh', 'neon', 'apocalypse']),
+      deckStyle: p.preferredDeckStyle,
+      tableStyle: p.preferredTableStyle,
       betAmount,
       isPrivate: false,
     },
@@ -768,13 +791,35 @@ function createBaitRoom(ghost: GhostPlayer): void {
     ghost.currentRoomId = room.id;
     ghost.isHosting = true;
     ghost.state = 'in_lobby';
-    console.log(`[Ghost] Bait room created: ${room.id} by ${p.nick}`);
+    console.log(`[Ghost] Bait room created: ${room.id} by ${p.nick} (${maxPlayers} slots)`);
     // Host marks ready after a short delay
     setTimeout(() => {
       if (ghost.state === 'in_lobby' && ghost.socket?.connected && ghost.currentRoomId) {
         ghost.socket.emit('toggleReady', ghost.currentRoomId);
       }
     }, rand(1500, 4000));
+
+    // Fill the room with additional ghost players, leaving exactly 1 free slot
+    // maxPlayers - 1 total ghosts needed (host + fillers)
+    const ghostsNeeded = maxPlayers - 1; // host is already 1
+    const fillersNeeded = ghostsNeeded - 1; // subtract the host
+    if (fillersNeeded > 0) {
+      for (let i = 0; i < fillersNeeded; i++) {
+        const delay = rand(3000, 10000) * (i + 1);
+        setTimeout(() => {
+          // Re-check room still exists and has space
+          const currentRooms = getAvailableRooms();
+          const targetRoom = currentRooms.find(r => r.id === room.id);
+          if (!targetRoom || targetRoom.gameState !== null) return;
+          if (targetRoom.players.length >= maxPlayers - 1) return; // keep 1 slot free
+          const filler = getFreeGhost();
+          if (filler) {
+            filler.state = 'in_lobby'; // lock
+            sendGhostToRoom(filler, room.id);
+          }
+        }, delay);
+      }
+    }
   });
 }
 
