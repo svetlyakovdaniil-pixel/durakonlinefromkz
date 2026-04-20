@@ -12,6 +12,7 @@
 
 import { io as ioClient, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction, ClientGameState } from '../shared/gameTypes';
+import { RANK_ORDER } from '../shared/gameTypes';
 import { getAvailableRooms } from './socketServer';
 import { provisionGhostPlayer, refillGhostShanyrak } from './db';
 
@@ -152,21 +153,21 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   else if (skillRoll < 0.9) skill = rand(0.65, 0.82); // decent
   else skill = rand(0.82, 0.97);                        // strong
 
-  // Speed profile
+  // Speed profile — minimum 2s to avoid looking like a bot
   const speedRoll = Math.random();
   let thinkMinMs: number, thinkMaxMs: number, longThinkProb: number;
   if (speedRoll < 0.25) {
     // Fast player
-    thinkMinMs = 400; thinkMaxMs = 1500; longThinkProb = 0.0;
+    thinkMinMs = 2000; thinkMaxMs = 3500; longThinkProb = 0.0;
   } else if (speedRoll < 0.65) {
     // Normal player
-    thinkMinMs = 800; thinkMaxMs = 2500; longThinkProb = 0.0;
+    thinkMinMs = 2500; thinkMaxMs = 5000; longThinkProb = 0.0;
   } else if (speedRoll < 0.88) {
     // Slow player
-    thinkMinMs = 1500; thinkMaxMs = 4000; longThinkProb = 0.0;
+    thinkMinMs = 3000; thinkMaxMs = 7000; longThinkProb = 0.0;
   } else {
-    // Slower player (no AFK — ghosts must always act within turn timer)
-    thinkMinMs = 2000; thinkMaxMs = 6000; longThinkProb = 0.0;
+    // Slower player
+    thinkMinMs = 4000; thinkMaxMs = 9000; longThinkProb = 0.0;
   }
 
   const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
@@ -242,6 +243,52 @@ function pickEmotion(temperament: Temperament): string {
 }
 
 /**
+ * Returns true if a card is considered "valuable" — trump, King of Spades, or 777.
+ * Valuable cards should not be played carelessly.
+ */
+function isValuableCard(card: ClientGameState['myHand'][number], trumpSuit: ClientGameState['trumpInfo']['currentTrump']): boolean {
+  if (card.rank === '777') return true;
+  if (card.suit === trumpSuit) return true;
+  if (card.suit === 'spades' && card.rank === 'K') return true;
+  return false;
+}
+
+/**
+ * From a list of card IDs, pick the best one to play:
+ * - Prefer non-valuable cards
+ * - Among non-valuable, prefer lowest rank
+ * - Fall back to valuable cards only if no other option
+ */
+function pickBestAttackCard(
+  cardIds: string[],
+  hand: ClientGameState['myHand'],
+  trumpSuit: ClientGameState['trumpInfo']['currentTrump'],
+  skill: number,
+): string {
+  if (cardIds.length === 0) return cardIds[0];
+
+  const cardMap = new Map(hand.map(c => [c.id, c]));
+  const cards = cardIds.map(id => cardMap.get(id)).filter(Boolean) as ClientGameState['myHand'];
+
+  if (cards.length === 0) return pickRandom(cardIds);
+
+  // Separate valuable from non-valuable
+  const nonValuable = cards.filter(c => !isValuableCard(c, trumpSuit));
+  const pool = nonValuable.length > 0 ? nonValuable : cards;
+
+  if (Math.random() < skill) {
+    // Skilled: pick lowest rank from pool
+    const sorted = [...pool].sort((a, b) => {
+      const rankA = RANK_ORDER[a.rank] ?? 0;
+      const rankB = RANK_ORDER[b.rank] ?? 0;
+      return rankA - rankB;
+    });
+    return sorted[0].id;
+  }
+  return pickRandom(pool).id;
+}
+
+/**
  * Ghost skill-based action selection.
  * skill=1.0 → always optimal play
  * skill=0.0 → random/suboptimal play
@@ -264,6 +311,9 @@ function pickGhostAction(
   const skipTurn = actions.find(a => a.type === 'skipTurn');
 
   const roomId = gameState.roomId;
+  const trumpSuit = gameState.trumpInfo.currentTrump;
+  const myHand = gameState.myHand;
+  const cardMap = new Map(myHand.map(c => [c.id, c]));
 
   // Skip turn (non-active player)
   if (skipTurn) return { event: 'skipTurn', data: roomId };
@@ -278,42 +328,67 @@ function pickGhostAction(
   }
 
   if (takeCards && playCard) {
-    // Can defend or take — skill determines whether to try defending
-    const shouldDefend = Math.random() < (0.4 + skill * 0.55); // weak=40%, strong=95%
-    if (shouldDefend && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-      const cardId = pickRandom(playCard.cardIds);
-      // Find a valid target pair
-      const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
-      if (undefendedIdx >= 0) {
-        return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
+    // ── ALL-OR-NOTHING DEFENSE ──────────────────────────────────────────────
+    // Count undefended attack cards on the battlefield
+    const undefendedPairs = gameState.battleField
+      .map((pair, idx) => ({ pair, idx }))
+      .filter(({ pair }) => !pair.defense);
+
+    // Skill-based decision: weak bots sometimes try partial defense (looks human)
+    const useAllOrNothing = Math.random() < (0.5 + skill * 0.5); // weak=50%, strong=100%
+
+    if (useAllOrNothing && playCard.type === 'playCard') {
+      // Check if we can cover ALL undefended cards
+      // We have playCard.cardIds.length cards available to defend with
+      // If we have fewer defense cards than attack cards, we can't cover all → take
+      const canCoverAll = playCard.cardIds.length >= undefendedPairs.length;
+
+      if (!canCoverAll) {
+        // Can't cover everything — take immediately, don't defend any
+        return { event: 'takeCards', data: roomId };
       }
+
+      // Can cover all — pick best (non-valuable) defense card for first undefended pair
+      if (undefendedPairs.length > 0) {
+        const targetPairIdx = undefendedPairs[0].idx;
+        // Prefer non-valuable defense cards
+        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
+      }
+    } else {
+      // Partial defense (less skilled / random behavior)
+      const shouldDefend = Math.random() < (0.4 + skill * 0.55);
+      if (shouldDefend && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
+        const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
+        if (undefendedIdx >= 0) {
+          const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+          return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
+        }
+      }
+      return { event: 'takeCards', data: roomId };
     }
-    return { event: 'takeCards', data: roomId };
   }
 
   // Transfer (proezdnoy / pass-through)
   if (showPassThrough && showPassThrough.type === 'showPassThrough' && showPassThrough.cardIds.length > 0) {
-    // Use pass-through based on skill: skilled players use it more
     if (Math.random() < (0.3 + skill * 0.5)) {
-      return { event: 'showPassThrough', data: { roomId, cardId: pickRandom(showPassThrough.cardIds) } };
+      // Prefer non-valuable pass-through cards
+      const cardId = pickBestAttackCard(showPassThrough.cardIds, myHand, trumpSuit, skill);
+      return { event: 'showPassThrough', data: { roomId, cardId } };
     }
   }
 
   if (transferCard && transferCard.type === 'transferCard' && transferCard.cardIds.length > 0) {
-    // Transfer based on skill and temperament
     const transferChance = temperament === 'aggressive' ? 0.7 : (0.3 + skill * 0.4);
     if (Math.random() < transferChance) {
-      return { event: 'transferCard', data: { roomId, cardId: pickRandom(transferCard.cardIds) } };
+      const cardId = pickBestAttackCard(transferCard.cardIds, myHand, trumpSuit, skill);
+      return { event: 'transferCard', data: { roomId, cardId } };
     }
   }
 
-  // Play a card (attack)
+  // Play a card (attack) — avoid valuable cards
   if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-    // Skilled players play strategically (lowest value card), weak players play randomly
-    const cardId = Math.random() < skill
-      ? playCard.cardIds[0] // server already provides sorted options
-      : pickRandom(playCard.cardIds);
-
+    const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
     const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
     if (undefendedIdx >= 0) {
       return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
@@ -323,10 +398,10 @@ function pickGhostAction(
 
   // End attack
   if (endAttack) {
-    // Aggressive players add more cards before ending
+    // Aggressive players add more cards before ending (but still avoid valuable cards)
     if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0 && temperament === 'aggressive') {
       if (Math.random() < 0.6) {
-        const cardId = pickRandom(playCard.cardIds);
+        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
         return { event: 'playCard', data: { roomId, cardId } };
       }
     }
@@ -841,8 +916,19 @@ function scheduleGameAction(ghost: GhostPlayer): void {
 
   const p = ghost.personality;
 
-  // Calculate think time
+  // Calculate think time — base + hand-size bonus
   let thinkMs = rand(p.thinkMinMs, p.thinkMaxMs);
+
+  // More cards in hand = more time to "think" (looks human)
+  const handSize = ghost.gameState?.myHand?.length ?? 0;
+  if (handSize > 0) {
+    // +200ms per card above 4, capped at +3000ms
+    const handBonus = Math.min((handSize - 4) * 200, 3000);
+    if (handBonus > 0) thinkMs += rand(0, handBonus);
+  }
+
+  // Ensure minimum 2 seconds always
+  thinkMs = Math.max(thinkMs, 2000);
 
   // Long think (AFK moment)
   if (Math.random() < p.longThinkProb) {
