@@ -95,10 +95,39 @@ jobs:
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
           ls -la ios/App/ 2>/dev/null || echo "ios/App not found"
-          # Find the Podfile location
-          PODFILE_DIR=$(find ios -name "Podfile" -not -path "*/node_modules/*" | head -1 | xargs dirname 2>/dev/null || echo "ios/App")
-          echo "Podfile directory: $PODFILE_DIR"
-          cd "$PODFILE_DIR"
+          
+          # Create Podfile if it doesn't exist (Capacitor 8 doesn't auto-create it)
+          if [ ! -f "ios/App/Podfile" ]; then
+            echo "Creating Podfile for Capacitor 8..."
+            cat > ios/App/Podfile << 'PODFILE_EOF'
+          require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
+          
+          platform :ios, '15.0'
+          use_frameworks!
+          
+          # workaround to avoid Xcode 10 caching of Pods that requires
+          # Product -> Clean Build Folder after new Cordova plugins are installed
+          install! 'cocoapods', :disable_input_output_paths => true
+          
+          def capacitor_pods
+            pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
+            pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+            pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
+            pod 'CapacitorHaptics', :path => '../../node_modules/@capacitor/haptics'
+            pod 'CapacitorKeyboard', :path => '../../node_modules/@capacitor/keyboard'
+            pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
+            pod 'CapacitorSplashScreen', :path => '../../node_modules/@capacitor/splash-screen'
+            pod 'CapacitorStatusBar', :path => '../../node_modules/@capacitor/status-bar'
+          end
+          
+          target 'App' do
+            capacitor_pods
+          end
+          PODFILE_EOF
+            echo "Podfile created."
+          fi
+          
+          cd ios/App
           pod install --repo-update
 
       # ── 9. Install Fastlane ────────────────────────────────────────────────
