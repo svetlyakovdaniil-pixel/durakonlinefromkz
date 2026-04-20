@@ -15,6 +15,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { initSocketServer } from "../socketServer";
+import { initGhostPlayers } from "../ghostPlayers";
 import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls, fixAllPlaylistCloudFrontUrls, getDb } from "../db";
 import cron from "node-cron";
 import { sendDailyQuestPushToAll, sendSeasonEndingPushToAll, sendShanyrakRefillPushToEligible } from "../pushNotifications";
@@ -153,6 +154,14 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Start ghost players after server is ready (only in production or when enabled)
+    const ghostCount = parseInt(process.env.GHOST_PLAYER_COUNT || '0');
+    if (ghostCount > 0) {
+      // Small delay to let the server fully initialize before ghost connections
+      setTimeout(() => {
+        initGhostPlayers(port, ghostCount);
+      }, 3000);
+    }
   });
 }
 
