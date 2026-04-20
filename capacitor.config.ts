@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'online.durakonline.fromkz',
-  appName: 'Дурак KZ',
+  appId: 'com.durakonlinefromkz.app',
+  appName: 'Durak online from KZ',
   webDir: 'dist/public',
 
   // In development: point to your live server so hot-reload works

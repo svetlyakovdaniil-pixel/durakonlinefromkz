@@ -6,9 +6,9 @@
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
 	<key>CFBundleDisplayName</key>
-	<string>Дурак KZ</string>
+	<string>Durak online from KZ</string>
 	<key>CFBundleIdentifier</key>
-	<string>online.durakonline.fromkz</string>
+	<string>com.durakonlinefromkz.app</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.0</string>
 	<key>CFBundleVersion</key>
