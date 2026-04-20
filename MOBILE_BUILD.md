@@ -212,6 +212,50 @@ https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/
 
 ### Android (Google Play)
 
+#### 7.1 Создание Keystore (ОБЯЗАТЕЛЬНО — сделать один раз)
+
+> ⚠️ **Keystore нельзя потерять!** Без него невозможно обновить приложение в Google Play.
+> Храните файл `.jks` и пароли в надёжном месте (password manager, encrypted backup).
+
+```bash
+# Создать keystore (выполнить один раз)
+keytool -genkey -v \
+  -keystore android/app/durak-kz-release.jks \
+  -alias durak-kz \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 10000 \
+  -storepass YOUR_STORE_PASSWORD \
+  -keypass YOUR_KEY_PASSWORD \
+  -dname "CN=Durak KZ, OU=Mobile, O=DurakOnline, L=Almaty, ST=Almaty, C=KZ"
+```
+
+#### 7.2 Настройка signing в build.gradle
+
+Откройте `android/app/build.gradle` и добавьте блок `signingConfigs`:
+
+```groovy
+android {
+    signingConfigs {
+        release {
+            storeFile file('durak-kz-release.jks')
+            storePassword System.getenv('ANDROID_STORE_PASSWORD') ?: 'YOUR_STORE_PASSWORD'
+            keyAlias 'durak-kz'
+            keyPassword System.getenv('ANDROID_KEY_PASSWORD') ?: 'YOUR_KEY_PASSWORD'
+        }
+    }
+    buildTypes {
+        release {
+            signingConfig signingConfigs.release
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+```
+
+#### 7.3 Сборка подписанного AAB
+
 ```bash
 # В Android Studio: Build → Generate Signed Bundle/APK
 # Выбрать Android App Bundle (.aab) для Play Store
@@ -221,6 +265,8 @@ https://d2xsxph8kpxj0f.cloudfront.net/310519663508367403/gxeBaGYcbqtwBaadFUobUt/
 
 ```bash
 cd android
+export ANDROID_STORE_PASSWORD=YOUR_STORE_PASSWORD
+export ANDROID_KEY_PASSWORD=YOUR_KEY_PASSWORD
 ./gradlew bundleRelease
 ```
 

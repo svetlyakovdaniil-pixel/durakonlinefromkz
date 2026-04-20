@@ -3,6 +3,8 @@
 <plist version="1.0">
 <dict>
 	<!-- ── App Identity ──────────────────────────────────────────────────── -->
+	<key>CFBundleIconName</key>
+	<string>AppIcon</string>
 	<key>CFBundleDisplayName</key>
 	<string>Дурак KZ</string>
 	<key>CFBundleIdentifier</key>

@@ -3472,3 +3472,17 @@
 - [x] Gemfile — fastlane ~2.225, cocoapods ~1.15
 - [x] scripts/download_assets_ci.py — скачивает 84 ассета из Manus S3 в CI
 - [x] IOS_BUILD_GUIDE.md — пошаговая инструкция для пользователя без Mac
+
+## Pre-release audit (App Icons, Splash, PWA manifest)
+- [x] Сгенерировать брендированную иконку приложения (1024x1024, шаныраки + карты, тёмно-синий фон)
+- [x] Заменить Android иконки (mipmap-mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi) — ic_launcher, ic_launcher_round, ic_launcher_foreground
+- [x] Обновить цвет фона Android adaptive icon (#0a1628 вместо белого)
+- [x] Создать iOS Assets.xcassets/AppIcon.appiconset с 18 размерами иконок
+- [x] Добавить CFBundleIconName=AppIcon в ios/App/App/Info.plist
+- [x] Сгенерировать брендированный splash screen (шаныраки + карты + название)
+- [x] Заменить Android splash screens (portrait + landscape, все плотности)
+- [x] Создать client/public/manifest.json (PWA manifest)
+- [x] Добавить favicon.ico, favicon-32x32.png, favicon-16x16.png, apple-touch-icon.png в client/public/
+- [x] Добавить ссылки на manifest и favicon в client/index.html
+- [x] Добавить инструкции по созданию Android keystore в MOBILE_BUILD.md
+- [x] Добавить *.jks в .gitignore
