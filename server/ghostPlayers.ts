@@ -900,17 +900,65 @@ function executeGhostAction(ghost: GhostPlayer, action: { event: string; data?: 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function generateRoomName(nick: string): string {
-  const templates = [
-    `Комната ${nick}`,
-    `Игра ${nick}`,
-    `${nick} играет`,
-    `Заходите!`,
-    `Дурак онлайн`,
-    `Быстрая игра`,
-    `Для всех`,
-    `Новая игра`,
-    `Присоединяйтесь`,
-    `${nick}'s room`,
+  // 70% chance: no name (empty string)
+  if (Math.random() < 0.70) return '';
+
+  // 30% chance: named room — pick language by weight
+  const langRoll = Math.random();
+
+  // Russian 20%
+  if (langRoll < 0.20) {
+    const ru = [
+      `Комната ${nick}`, `Игра ${nick}`, `${nick} играет`,
+      `Заходите!`, `Дурак онлайн`, `Быстрая игра`,
+      `Для всех`, `Новая игра`, `Присоединяйтесь`, `Играем!`,
+    ];
+    return pickRandom(ru);
+  }
+
+  // English 20%
+  if (langRoll < 0.40) {
+    const en = [
+      `${nick}'s room`, `Join me!`, `Quick game`,
+      `Open room`, `Let's play`, `Durak online`,
+      `Anyone?`, `Come in!`, `New game`, `Play with me`,
+    ];
+    return pickRandom(en);
+  }
+
+  // Azerbaijani 20%
+  if (langRoll < 0.60) {
+    const az = [
+      `${nick}-in otağı`, `Oyuna gəlin`, `Tez oyun`,
+      `Açıq otaq`, `Oynayaq`, `Hamı üçün`,
+      `Qoşulun!`, `Yeni oyun`, `Daxil olun`, `Birlikdə oynayaq`,
+    ];
+    return pickRandom(az);
+  }
+
+  // Uzbek 20%
+  if (langRoll < 0.80) {
+    const uz = [
+      `${nick} xonasi`, `Keling o'ynaymiz`, `Tez o'yin`,
+      `Ochiq xona`, `O'ynaymiz`, `Hammaga`,
+      `Qo'shiling!`, `Yangi o'yin`, `Kiring`, `Birga o'ynaymiz`,
+    ];
+    return pickRandom(uz);
+  }
+
+  // Remaining 20% split between Kazakh, Polish, Ukrainian, Turkish, Georgian
+  const other: string[][] = [
+    // Kazakh
+    [`${nick} бөлмесі`, `Ойнайық!`, `Жылдам ойын`, `Кіріңіз`, `Жаңа ойын`],
+    // Polish
+    [`Pokój ${nick}`, `Zagrajmy!`, `Szybka gra`, `Dołącz!`, `Nowa gra`],
+    // Ukrainian
+    [`Кімната ${nick}`, `Грати!`, `Швидка гра`, `Заходьте`, `Нова гра`],
+    // Turkish
+    [`${nick} odası`, `Oynayalım!`, `Hızlı oyun`, `Katıl!`, `Yeni oyun`],
+    // Georgian
+    [`${nick}-ის ოთახი`, `ვითამაშოთ!`, `სწრაფი თამაში`, `შემოდი!`, `ახალი თამაში`],
   ];
-  return pickRandom(templates);
+  const group = other[Math.floor(Math.random() * other.length)];
+  return pickRandom(group);
 }
