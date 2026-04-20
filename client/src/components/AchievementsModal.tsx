@@ -69,28 +69,40 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
   const totalCount = achievements.length;
   const unclaimedCount = achievements.filter(a => a.unlocked && !a.claimed).length;
 
-  const titleLabel = { ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements', uk: 'Досягнення' }[locale as string] ?? 'Достижения';
-  const progressLabel = {
+  const titleLabel = ({ ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements', uk: 'Досягнення', ka: 'მიღწევები', az: 'Nailiyyətlər', uz: 'Yutuqlar', pl: 'Osiągnięcia' } as Record<string,string>)[locale] ?? 'Достижения';
+  const progressLabel = ({
     ru: `${unlockedCount}/${totalCount} открыто`,
     kk: `${unlockedCount}/${totalCount} ашылды`,
     en: `${unlockedCount}/${totalCount} unlocked`,
     uk: `${unlockedCount}/${totalCount} відкрито`,
-  }[locale as string] ?? `${unlockedCount}/${totalCount}`;
-  const claimLabel = { ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати' }[locale as string] ?? 'Получить';
-  const claimedLabel = { ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано' }[locale as string] ?? 'Получено';
-  const lockedLabel = { ru: 'Заблокировано', kk: 'Жабық', en: 'Locked', uk: 'Заблоковано' }[locale as string] ?? 'Заблокировано';
-  const humanOnlyLabel = {
+    ka: `${unlockedCount}/${totalCount} გახსნილი`,
+    az: `${unlockedCount}/${totalCount} açıldı`,
+    uz: `${unlockedCount}/${totalCount} ochildi`,
+    pl: `${unlockedCount}/${totalCount} odblokowano`,
+  } as Record<string,string>)[locale] ?? `${unlockedCount}/${totalCount}`;
+  const claimLabel = ({ ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати', ka: 'მიღება', az: 'Al', uz: 'Olish', pl: 'Odbierz' } as Record<string,string>)[locale] ?? 'Получить';
+  const claimedLabel = ({ ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано', ka: 'მიღებულია', az: 'Alındı', uz: 'Olindi', pl: 'Odebrano' } as Record<string,string>)[locale] ?? 'Получено';
+  const lockedLabel = ({ ru: 'Заблокировано', kk: 'Жабық', en: 'Locked', uk: 'Заблоковано', ka: 'დაბლოკილი', az: 'Kilidli', uz: 'Qulflangan', pl: 'Zablokowane' } as Record<string,string>)[locale] ?? 'Заблокировано';
+  const humanOnlyLabel = ({
     ru: 'Засчитывается только в играх с реальными людьми (менее 33.4% ботов)',
     kk: 'Тек нақты адамдармен ойындарда есептеледі (33.4%-дан аз бот)',
     en: 'Only counts in games with real people (less than 33.4% bots)',
     uk: 'Зараховується лише в іграх з реальними людьми (менше 33.4% ботів)',
-  }[locale as string] ?? '';
-  const unclaimedLabel = {
+    ka: 'ითვლება მხოლოდ რეალურ ადამიანებთან თამაშებში (33.4%-ზე ნაკლები ბოტი)',
+    az: 'Yalnız real insanlarla oyunlarda sayılır (33.4%-dən az bot)',
+    uz: 'Faqat haqiqiy odamlar bilan o\'yinlarda hisoblanadi (33.4% dan kam bot)',
+    pl: 'Liczy się tylko w grach z prawdziwymi ludźmi (mniej niż 33.4% botów)',
+  } as Record<string,string>)[locale] ?? '';
+  const unclaimedLabel = ({
     ru: `${unclaimedCount} награды ожидают получения`,
     kk: `${unclaimedCount} сыйлық күтуде`,
     en: `${unclaimedCount} rewards pending`,
     uk: `${unclaimedCount} нагород очікують отримання`,
-  }[locale as string] ?? '';
+    ka: `${unclaimedCount} ჯილდობა ლოდის მიღება`,
+    az: `${unclaimedCount} mükəfat gözləyir`,
+    uz: `${unclaimedCount} mukofot kutilmoqda`,
+    pl: `${unclaimedCount} nagród czeka`,
+  } as Record<string,string>)[locale] ?? '';
 
   const handleClaim = (key: string) => {
     setClaimingKey(key);

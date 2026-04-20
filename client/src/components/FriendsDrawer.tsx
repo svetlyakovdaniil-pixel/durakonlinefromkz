@@ -78,8 +78,8 @@ function FriendProfileView({
   const achievements = achievementsQuery.data ?? [];
 
   const tabLabels = {
-    stats: { ru: 'Статистика', kk: 'Статистика', en: 'Stats' }[locale as string] ?? 'Статистика',
-    achievements: { ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements' }[locale as string] ?? 'Достижения',
+    stats: ({ ru: 'Статистика', kk: 'Статистика', en: 'Stats', uk: 'Статистика', ka: 'სტატისტიკა', az: 'Statistika', uz: 'Statistika', pl: 'Statystyki' } as Record<string,string>)[locale] ?? 'Статистика',
+    achievements: ({ ru: 'Достижения', kk: 'Жетістіктер', en: 'Achievements', uk: 'Досягнення', ka: 'მიღწევები', az: 'Nailiyyətlər', uz: 'Yutuqlar', pl: 'Osiągnięcia' } as Record<string,string>)[locale] ?? 'Достижения',
   };
 
   const rankName = seasonData?.rank
@@ -118,7 +118,7 @@ function FriendProfileView({
               {rankName}
             </span>
             <span className="text-amber-200/40 text-xs">·</span>
-            <span className="text-amber-200/60 text-xs">{seasonData.seasonRating} {{ ru: 'очков', kk: 'ұпай', en: 'pts' }[locale as string]}</span>
+            <span className="text-amber-200/60 text-xs">{seasonData.seasonRating} {{ ru: 'очков', kk: 'ұпай', en: 'pts', uk: 'очків', ka: 'ქულა', az: 'xal', uz: 'ball', pl: 'pkt' }[locale as string]}</span>
           </div>
         )}
       </div>
@@ -150,7 +150,7 @@ function FriendProfileView({
               <DiamondRankIcon seasonRating={seasonData.seasonRating} size={18} />
               <div className="flex-1">
                 <div className="text-amber-200/60 text-[10px]">
-                  {{ ru: 'Сезонный рейтинг', kk: 'Маусымдық рейтинг', en: 'Season rating' }[locale as string]}
+                  {({ ru: 'Сезонный рейтинг', kk: 'Маусымдық рейтинг', en: 'Season rating', uk: 'Сезонний рейтинг', ka: 'სეზონური რეიტინგი', az: 'Mövsüm reytinqi', uz: 'Mavsum reytingi', pl: 'Ranking sezonowy' } as Record<string,string>)[locale] ?? 'Сезонный рейтинг'}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="font-bold" style={{ color: seasonData.rank.color }}>{seasonData.seasonRating}</span>
@@ -201,7 +201,7 @@ function FriendProfileView({
             </div>
           ) : achievements.length === 0 ? (
             <div className="text-center py-8 text-amber-200/30 text-sm">
-              {{ ru: 'Нет выполненных достижений', kk: 'Жетістіктер жоқ', en: 'No achievements yet' }[locale as string]}
+              {({ ru: 'Нет выполненных достижений', kk: 'Жетістіктер жоқ', en: 'No achievements yet', uk: 'Немає досягнень', ka: 'მიღწევები არ არის', az: 'Nailiyyət yoxdur', uz: 'Yutuqlar yo\'q', pl: 'Brak osiągnięć' } as Record<string,string>)[locale] ?? 'Нет выполненных достижений'}
             </div>
           ) : (
             <div className="space-y-1.5 max-h-64 overflow-y-auto pr-1">

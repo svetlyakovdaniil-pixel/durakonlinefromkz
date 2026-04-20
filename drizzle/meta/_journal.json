@@ -407,6 +407,13 @@
       "when": 1776615076640,
       "tag": "0057_colorful_professor_monster",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "5",
+      "when": 1776680953277,
+      "tag": "0058_stale_boomerang",
+      "breakpoints": true
     }
   ]
 }

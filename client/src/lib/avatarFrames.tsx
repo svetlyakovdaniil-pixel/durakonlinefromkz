@@ -15,6 +15,7 @@ export const AVATAR_FRAMES = [
     description: 'Реалистичная анимация огня вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы нақты от анимациясы',
     descriptionEn: 'Realistic fire animation around your avatar',
+    descriptionKa: 'რეალური ცეცხლის ანიმაცია ავატარის გარშემო',
     price: 500,
     icon: Flame,
     iconColor: 'text-orange-400',
@@ -33,6 +34,7 @@ export const AVATAR_FRAMES = [
     description: 'Яркое неоновое свечение с переливами цветов',
     descriptionKk: 'Түстердің ауысуымен жарқын неон жарқылы',
     descriptionEn: 'Bright neon glow with color transitions',
+    descriptionKa: 'ნათელი ნეონური განათება ფერის გადასვლებით',
     price: 800,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
@@ -56,6 +58,7 @@ export const AVATAR_FRAMES = [
     description: 'Электрические молнии и искры вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы электр найзағайлары мен ұшқындар',
     descriptionEn: 'Electric lightning bolts and sparks around your avatar',
+    descriptionKa: 'ელექტროული მეხითერი და ნაპიალები ავატარის გარშემო',
     price: 1200,
     icon: Zap,
     iconColor: 'text-blue-300',
@@ -74,6 +77,7 @@ export const AVATAR_FRAMES = [
     description: 'Ледяные кристаллы и снежинки вокруг аватарки',
     descriptionKk: 'Аватар айналасындағы мұз кристалдары мен қар ұшқындары',
     descriptionEn: 'Ice crystals and snowflakes around your avatar',
+    descriptionKa: 'ყინულის კრისტალები და სნეგის ფარჩები ავატარის გარშემო',
     price: 1000,
     icon: Snowflake,
     iconColor: 'text-sky-300',
@@ -92,6 +96,7 @@ export const AVATAR_FRAMES = [
     description: 'Эксклюзивная анимированная рамка с золотыми монетами. Только для подписчиков Premium.',
     descriptionKk: 'Алтын тиындармен эксклюзивті анимациялық жақтау. Тек Premium жазылушылары үшін.',
     descriptionEn: 'Exclusive animated frame with gold coins. Premium subscribers only.',
+    descriptionKa: 'ექსკლუზიური ანიმირებული ჩარჩო ოქროს მონეტებით. მხოლოდ Premium გამოწერებისთვის.',
     price: 0,
     icon: Crown,
     iconColor: 'text-yellow-400',
@@ -111,6 +116,10 @@ export const AVATAR_FRAMES = [
     description: 'Награда за ранг Обсидиан в сезоне 6 «Казахский колорит».',
     descriptionKk: '6-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
     descriptionEn: 'Reward for Obsidian rank in Season 6 «Kazakh Colorit».',
+    descriptionKa: 'ჯილდო ობსიდიანის რანგისთვის სეზონ 6-ში «ყაზახური კოლორიტი».',
+    descriptionAz: 'Mövsüm 6 «Qazax Rəngləri»ndə Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Mavsum 6 «Qozoq Ranglari»da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Nagroda za rangę Obsydian w sezonie 6 «Kazachskie barwy».',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-yellow-400">
@@ -136,6 +145,10 @@ export const AVATAR_FRAMES = [
     description: 'Двойная орбита: два кольца вращаются в противоположные стороны. Награда за ранг Обсидиан в сезоне 7 «Неоновая эра».',
     descriptionKk: 'Қос орбита: екі сақина қарама-қарсы бағытта айналады. 7-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
     descriptionEn: 'Dual orbit: two rings rotating in opposite directions. Reward for Obsidian rank in Season 7 «Neon Era».',
+    descriptionKa: 'ალმასისფერი ციმციმი: რგოლი მუქი წითლიდან ვარდისფრამდე იტენება.',
+    descriptionAz: 'Qırmızı parıltı: halqa tünd qırmızıdan parlaq çəhrayıya şarj olunur.',
+    descriptionUz: 'Qizil chaqnash: halqa to\'q qizildan yorqin pushtigacha zaryadlanadi.',
+    descriptionPl: 'Karmazynowy puls: pierścień ładuje się od głębokiej czerwieni do gorącego różu.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-cyan-400">
@@ -161,6 +174,10 @@ export const AVATAR_FRAMES = [
     description: 'Алая вспышка: кольцо заряжается от тёмно-красного до ярко-розового.',
     descriptionKk: 'Алқызыл жарқыл: сақина қою қызылдан ашық қызғылтқа дейін зарядталады.',
     descriptionEn: 'Crimson flash: ring charges from deep red to hot pink.',
+    descriptionKa: 'მზის ციმციმი: ორი ოქროს რგოლი ერთი მიმართულებით ბრუნავს.',
+    descriptionAz: 'Günəş parıltısı: iki qızıl halqa eyni istiqamətdə fırlanır.',
+    descriptionUz: 'Quyosh alovi: ikki oltin halqa bir yo\'nalishda aylanadi.',
+    descriptionPl: 'Rozbłysk słoneczny: dwa złote pierścienie obracają się w tym samym kierunku.',
     price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-red-400">
@@ -184,6 +201,10 @@ export const AVATAR_FRAMES = [
     description: 'Солнечная вспышка: два золотых кольца вращаются в одну сторону.',
     descriptionKk: 'Күн жарқылы: екі алтын сақина бір бағытта айналады.',
     descriptionEn: 'Solar flare: two golden rings rotating in the same direction.',
+    descriptionKa: 'კომეტის კვალი: ნარინჯისფერი რგოლი და მეწამული რკალი ერთმანეთისკენ ბრუნავს.',
+    descriptionAz: 'Kometa izi: narıncı halqa və bənövşəyi qövs bir-birinə doğru fırlanır.',
+    descriptionUz: 'Kometa izi: to\'q sariq halqa va binafsha yoy bir-biriga qarab aylanadi.',
+    descriptionPl: 'Ślad komety: pomarańczowy pierścień i fioletowy łuk obracają się ku sobie.',
     price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-amber-400">
@@ -207,6 +228,10 @@ export const AVATAR_FRAMES = [
     description: 'Хвост кометы: оранжевое кольцо и фиолетовая дуга вращаются навстречу.',
     descriptionKk: 'Комета құйрығы: қызғылт сары сақина мен күлгін доға бір-біріне қарсы айналады.',
     descriptionEn: 'Comet trail: orange ring and purple arc rotating toward each other.',
+    descriptionKa: 'ცირკონის ნეონი: ლურჯ-მწვანე ნაპიალები ავატარის გარშემო.',
+    descriptionAz: 'Sirkon neon: mavi-yaşıl qığılcımlar avatarın ətrafında.',
+    descriptionUz: 'Sirkon neon: ko\'k-yashil uchqunlar avatar atrofida.',
+    descriptionPl: 'Cyrkon neon: niebiesko-zielone iskry wokół awatara.',
     price: 1000,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-8 h-8 text-orange-400">
@@ -230,6 +255,10 @@ export const AVATAR_FRAMES = [
     description: 'Расплавленная лава: трещины в обсидиане светятся расплавленным огнём. Награда за ранг Обсидиан в сезоне 8 «Апокалипсис».',
     descriptionKk: 'Балқыған лава: обсидиандағы жарықтар балқыған отпен жарық етеді. 8-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
     descriptionEn: 'Molten lava: cracks in obsidian glow with liquid fire. Reward for Obsidian rank in Season 8 «Apocalypse».',
+    descriptionKa: 'გამდნარი ლავა: ობსიდიანის ბზარები გამდნარი ცეცხლით ანათებს. ჯილდო ობსიდიანის რანგისთვის სეზონ 8-ში «აპოკალიფსი».',
+    descriptionAz: 'Ərimiş lava: obsidiandakı çatlar ərimiş odla parıldayır. Mövsüm 8 «Apokalipsis»də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Eritilgan lava: obsidiandagi yoriqlar eritilgan olov bilan yonadi. Mavsum 8 «Apokalipsis»da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Stopiona lawa: pęknięcia w obsydianie świecą stopionym ogniem. Nagroda za rangę Obsydian w sezonie 8 «Apokalipsa».',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-orange-500">
@@ -257,6 +286,10 @@ export const AVATAR_FRAMES = [
     description: 'Японская рамка Они: красно-золотые узоры, пульсирующие рога демона. Награда за ранг Обсидиан в сезоне 9 «Японские мотивы».',
     descriptionKk: 'Жапондық Они жақтауы: қызыл-алтын өрнектер, демон мүйіздерінің пульсациясы. 9-маусымдағы Обсидиан дәрежесі үшін сыйлық.',
     descriptionEn: 'Japanese Oni frame: red-gold patterns, pulsing demon horns. Reward for Obsidian rank in Season 9 «Japanese Motifs».',
+    descriptionKa: 'იაპონური ონი ჩარჩო: წითელ-ოქროს ნახატები, დემონის რქების პულსაცია. ჯილდო ობსიდიანის რანგისთვის სეზონ 9-ში «იაპონური მოტივები».',
+    descriptionAz: 'Yapon Oni çərçivəsi: qırmızı-qızıl naxışlar, demon buynuzlarının döyüntüsü. Mövsüm 9 «Yapon Motivləri»ndə Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Yapon Oni ramkasi: qizil-oltin naqshlar, jin shoxlarining pulsatsiyasi. Mavsum 9 «Yapon Motivlari»da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Japońska ramka Oni: czerwono-złote wzory, pulsujące rogi demona. Nagroda za rangę Obsydian w sezonie 9 «Japońskie motywy».',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-8 h-8 text-red-400">
@@ -285,6 +318,10 @@ export const AVATAR_FRAMES = [
     description: 'Бездна океана: биолюминесцентные щупальца и тёмные воды. Награда за ранг Обсидиан в сезоне 1.',
     descriptionKk: 'Мұхит түбі: биолюминесцентті жыланбалықтар. 1-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Ocean abyss: bioluminescent tentacles. Reward for Obsidian rank in Season 1.',
+    descriptionKa: 'ოკეანის უფსკრული: ბიოლუმინესცენტური მაცივრები. ჯილდო ობსიდიანის რანგისთვის სეზონ 1-ში.',
+    descriptionAz: 'Okean dibi: biolüminesent çadırlar. Mövsüm 1-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Okean tubsizligi: biolüminesent tentakulalar. Mavsum 1-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Otchłań oceanu: bioluminescencyjne macki. Nagroda za rangę Obsydian w sezonie 1.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-teal-400">
@@ -312,6 +349,10 @@ export const AVATAR_FRAMES = [
     description: 'Тёмная магия фараонов: золотые иероглифы. Награда за ранг Обсидиан в сезоне 2.',
     descriptionKk: 'Фараондардың қара сиқыры. 2-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Dark pharaoh magic: golden hieroglyphs. Reward for Obsidian rank in Season 2.',
+    descriptionKa: 'ფარაონების შავი მაგია: ოქროს იეროგლიფები. ჯილდო ობსიდიანის რანგისთვის სეზონ 2-ში.',
+    descriptionAz: 'Fironların qaranlıq sehri: qızıl heroqliflər. Mövsüm 2-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Fir\'avnlarning qora sehri: oltin iyerogliflar. Mavsum 2-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Czarna magia faraonów: złote hieroglify. Nagroda za rangę Obsydian w sezonie 2.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-amber-400">
@@ -338,6 +379,10 @@ export const AVATAR_FRAMES = [
     description: 'Призрачный шторм: молнии и череп. Награда за ранг Обсидиан в сезоне 3.',
     descriptionKk: 'Елес дауылы: найзағайлар мен бас сүйек. 3-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Ghost storm: lightning and skull. Reward for Obsidian rank in Season 3.',
+    descriptionKa: 'მოჩვენების ქარიშხალი: ელვები და თავის ქალა. ჯილდო ობსიდიანის რანგისთვის სეზონ 3-ში.',
+    descriptionAz: 'Xəyal fırtınası: ildırımlar və kəllə. Mövsüm 3-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Arvoh bo\'roni: chaqmoqlar va bosh suyak. Mavsum 3-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Widmowa burza: pioruny i czaszka. Nagroda za rangę Obsydian w sezonie 3.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-blue-300">
@@ -365,6 +410,10 @@ export const AVATAR_FRAMES = [
     description: 'Руны Иггдрасиля: аврора и молот Тора. Награда за ранг Обсидиан в сезоне 4.',
     descriptionKk: 'Иггдрасиль рундары. 4-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Yggdrasil runes: aurora and Mjolnir. Reward for Obsidian rank in Season 4.',
+    descriptionKa: 'იგდრასილის რუნები: ავრორა და თორის ჩაქუჩი. ჯილდო ობსიდიანის რანგისთვის სეზონ 4-ში.',
+    descriptionAz: 'Yggdrasil runları: aurora və Tor çəkici. Mövsüm 4-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Yggdrasil runaları: aurora va Tor bolg\'isi. Mavsum 4-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Runy Yggdrasilu: zorza i Mjolnir. Nagroda za rangę Obsydian w sezonie 4.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-400">
@@ -392,6 +441,10 @@ export const AVATAR_FRAMES = [
     description: 'Чёрная дыра: галактическая спираль и сверхнова. Награда за ранг Обсидиан в сезоне 5.',
     descriptionKk: 'Қара тесік: галактикалық спираль. 5-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Black hole: galactic spiral and supernova. Reward for Obsidian rank in Season 5.',
+    descriptionKa: 'შავი ხვრელი: გალაქტიკური სპირალი და სუპერნოვა. ჯილდო ობსიდიანის რანგისთვის სეზონ 5-ში.',
+    descriptionAz: 'Qara dəlik: qalaktik spiral və supernova. Mövsüm 5-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Qora tuynuk: galaktik spiral va supernova. Mavsum 5-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Czarna dziura: galaktyczna spirala i supernowa. Nagroda za rangę Obsydian w sezonie 5.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-300">
@@ -419,6 +472,10 @@ export const AVATAR_FRAMES = [
     description: 'Void circuit: неоновый глитч и матричный дождь. Награда за ранг Обсидиан в сезоне 10.',
     descriptionKk: 'Void circuit: неон глитч пен матрица. 10-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Void circuit: neon glitch and matrix rain. Reward for Obsidian rank in Season 10.',
+    descriptionKa: 'Void circuit: ნეონური გლიჩი და მატრიქსის წვიმა. ჯილდო ობსიდიანის რანგისთვის სეზონ 10-ში.',
+    descriptionAz: 'Void circuit: neon glitch və matris yağışı. Mövsüm 10-da Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Void circuit: neon glitch va matritsa yomg\'iri. Mavsum 10-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Void circuit: neonowy glitch i deszcz matrycy. Nagroda za rangę Obsydian w sezonie 10.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-green-400">
@@ -445,6 +502,10 @@ export const AVATAR_FRAMES = [
     description: 'Золотая цепь: винил и beat wave. Награда за ранг Обсидиан в сезоне 11.',
     descriptionKk: 'Алтын тізбек: винил ойықтары. 11-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Gold chain: vinyl grooves and beat wave. Reward for Obsidian rank in Season 11.',
+    descriptionKa: 'ოქროს ჯაჭვი: ვინილის ღარები. ჯილდო ობსიდიანის რანგისთვის სეზონ 11-ში.',
+    descriptionAz: 'Qızıl zəncir: vinil yivləri. Mövsüm 11-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Oltin zanjir: vinil izlari. Mavsum 11-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Złoty łańcuch: rowki winylowe. Nagroda za rangę Obsydian w sezonie 11.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-yellow-400">
@@ -471,6 +532,10 @@ export const AVATAR_FRAMES = [
     description: 'Двойственность: крылья ангела и адский огонь. Награда за ранг Обсидиан в сезоне 12.',
     descriptionKk: 'Қосарлылық: періште қанаттары мен тозақ оты. 12-маусымдағы Обсидиан дәрежесі.',
     descriptionEn: 'Duality: angel wings and hellfire. Reward for Obsidian rank in Season 12.',
+    descriptionKa: 'ორმაგობა: ანგელოზის ფრთები და ჯოჯოხეთის ცეცხლი. ჯილდო ობსიდიანის რანგისთვის სეზონ 12-ში.',
+    descriptionAz: 'İkililik: mələk qanadları və cəhənnəm odu. Mövsüm 12-də Obsidian rütbəsi üçün mükafat.',
+    descriptionUz: 'Ikkilik: farishta qanotlari va do\'zax olovi. Mavsum 12-da Obsidian darajasi uchun mukofot.',
+    descriptionPl: 'Dualność: skrzydła anioła i ogień piekielny. Nagroda za rangę Obsydian w sezonie 12.',
     price: 0,
     icon: () => (
       <svg viewBox="0 0 24 24" fill="none" className="w-8 h-8 text-purple-300">

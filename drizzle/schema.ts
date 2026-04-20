@@ -328,6 +328,16 @@ export const musicPlaylists = mysqlTable("music_playlists", {
   nameKk: varchar("nameKk", { length: 100 }),
   /** English name */
   nameEn: varchar("nameEn", { length: 100 }),
+  /** Ukrainian name */
+  nameUk: varchar("nameUk", { length: 100 }),
+  /** Georgian name */
+  nameKa: varchar("nameKa", { length: 100 }),
+  /** Azerbaijani name */
+  nameAz: varchar("nameAz", { length: 100 }),
+  /** Uzbek name */
+  nameUz: varchar("nameUz", { length: 100 }),
+  /** Polish name */
+  namePl: varchar("namePl", { length: 100 }),
   /** JSON array of CDN track URLs in play order */
   tracksJson: text("tracksJson").notNull(),
   /** Price in shanyrak (0 = free) */
@@ -344,6 +354,16 @@ export const musicPlaylists = mysqlTable("music_playlists", {
   descriptionKk: text("descriptionKk"),
   /** English description */
   descriptionEn: text("descriptionEn"),
+  /** Ukrainian description */
+  descriptionUk: text("descriptionUk"),
+  /** Georgian description */
+  descriptionKa: text("descriptionKa"),
+  /** Azerbaijani description */
+  descriptionAz: text("descriptionAz"),
+  /** Uzbek description */
+  descriptionUz: text("descriptionUz"),
+  /** Polish description */
+  descriptionPl: text("descriptionPl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 

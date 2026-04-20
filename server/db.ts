@@ -2544,6 +2544,11 @@ export async function seedChinesePlaylist() {
     name: 'Chinese chill+hiphop motives',
     nameKk: 'Chinese chill+hiphop motives',
     nameEn: 'Chinese Chill+HipHop Vibes',
+    nameUk: 'Китайський Chill+HipHop',
+    nameKa: 'ჩინური Chill+HipHop',
+    nameAz: 'Çin Chill+HipHop',
+    nameUz: 'Xitoy Chill+HipHop',
+    namePl: 'Chiński Chill+HipHop',
     tracksJson: JSON.stringify(chineseTracks),
     priceShanyrak: 100000,
     isDefault: false,
@@ -2552,6 +2557,11 @@ export async function seedChinesePlaylist() {
     description: 'Чилл и хип-хоп мотивы в китайском стиле — 7 треков',
     descriptionKk: 'Қытай стиліндегі чилл және хип-хоп мотивтері — 7 трек',
     descriptionEn: 'Chinese-style chill and hip-hop vibes — 7 tracks',
+    descriptionUk: 'Чилл і хіп-хоп мотиви в китайському стилі — 7 треків',
+    descriptionKa: 'ჩინური სტილის ჩილ და ჰიპ-ჰოპ მოტივები — 7 ტრეკი',
+    descriptionAz: 'Çin üslubunda chill və hip-hop motivləri — 7 trek',
+    descriptionUz: 'Xitoy uslubidagi chill va hip-hop motivlari — 7 trek',
+    descriptionPl: 'Chillowe i hip-hopowe motywy w stylu chińskim — 7 utworów',
   });
 
   // Also update existing Chinese playlist to have volumeMultiplier 0.8
@@ -2582,6 +2592,11 @@ export async function seedLoFiChillhopPlaylist() {
     name: 'Lo-Fi Chillhop',
     nameKk: 'Lo-Fi Chillhop',
     nameEn: 'Lo-Fi Chillhop',
+    nameUk: 'Lo-Fi Chillhop',
+    nameKa: 'Lo-Fi Chillhop',
+    nameAz: 'Lo-Fi Chillhop',
+    nameUz: 'Lo-Fi Chillhop',
+    namePl: 'Lo-Fi Chillhop',
     tracksJson: JSON.stringify(lofiTracks),
     priceShanyrak: 100000,
     isDefault: false,
@@ -2590,6 +2605,11 @@ export async function seedLoFiChillhopPlaylist() {
     description: 'Lo-Fi чиллхоп — расслабляющие биты для игры — 6 треков',
     descriptionKk: 'Lo-Fi чиллхоп — ойын үшін демалдыратын биттер — 6 трек',
     descriptionEn: 'Lo-Fi Chillhop — relaxing beats for your game — 6 tracks',
+    descriptionUk: 'Lo-Fi Chillhop — розслаблюючі біти для гри — 6 треків',
+    descriptionKa: 'Lo-Fi Chillhop — დამამშვიდებელი ბიტები თამაშისთვის — 6 ტრეკი',
+    descriptionAz: 'Lo-Fi Chillhop — oyun üçün rahatlandırıcı ritmlər — 6 trek',
+    descriptionUz: "Lo-Fi Chillhop — o'yin uchun tinchlashtiruvchi bitlar — 6 trek",
+    descriptionPl: 'Lo-Fi Chillhop — relaksujące bity do gry — 6 utworów',
   });
 }
 
@@ -2616,6 +2636,11 @@ export async function seedDarkTrapPlaylist() {
     name: 'Dark trap electronic',
     nameKk: 'Dark trap electronic',
     nameEn: 'Dark Trap Electronic',
+    nameUk: 'Dark Trap Electronic',
+    nameKa: 'Dark Trap Electronic',
+    nameAz: 'Dark Trap Electronic',
+    nameUz: 'Dark Trap Electronic',
+    namePl: 'Dark Trap Electronic',
     tracksJson: JSON.stringify(darkTrapTracks),
     priceShanyrak: 100000,
     isDefault: false,
@@ -2624,6 +2649,11 @@ export async function seedDarkTrapPlaylist() {
     description: 'Тёмный трэп и электронные биты — 7 треков',
     descriptionKk: 'Қараңғы трэп және электронды биттер — 7 трек',
     descriptionEn: 'Dark trap and electronic beats — 7 tracks',
+    descriptionUk: 'Темний треп та електронні біти — 7 треків',
+    descriptionKa: 'ბნელი ტრეპი და ელექტრონული ბიტები — 7 ტრეკი',
+    descriptionAz: 'Qaranlıq trap və elektron ritmlər — 7 trek',
+    descriptionUz: "Qorong'u trap va elektron bitlar — 7 trek",
+    descriptionPl: 'Mroczny trap i elektroniczne bity — 7 utworów',
   });
 }
 
@@ -2652,7 +2682,7 @@ export async function cleanupOldPlaylists() {
   const oldStandard = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Стандартный'));
   for (const p of oldStandard) {
     await db.update(musicPlaylists)
-      .set({ name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', description: 'Классическая фоновая музыка — 7 треков', descriptionKk: 'Классикалық фондық музыка — 7 трек', descriptionEn: 'Classic background music — 7 tracks' })
+      .set({ name: 'Классический', nameKk: 'Классикалық', nameEn: 'Classic', nameUk: 'Класичний', nameKa: 'კლასიკური', nameAz: 'Klassik', nameUz: 'Klassik', namePl: 'Klasyczny', description: 'Классическая фоновая музыка — 7 треков', descriptionKk: 'Классикалық фондық музыка — 7 трек', descriptionEn: 'Classic background music — 7 tracks', descriptionUk: 'Класична фонова музика — 7 треків', descriptionKa: 'კლასიკური ფონური მუსიკა — 7 ტრეკი', descriptionAz: 'Klassik fon musiqisi — 7 trek', descriptionUz: 'Klassik fon musiqasi — 7 trek', descriptionPl: 'Klasyczna muzyka w tle — 7 utworów' })
       .where(eq(musicPlaylists.id, p.id));
   }
   // Update Классический playlist with English translations
@@ -2700,6 +2730,11 @@ export async function seedDefaultPlaylist() {
     name: 'Классический',
     nameKk: 'Классикалық',
     nameEn: 'Classic',
+    nameUk: 'Класичний',
+    nameKa: 'კლასიკური',
+    nameAz: 'Klassik',
+    nameUz: 'Klassik',
+    namePl: 'Klasyczny',
     tracksJson: JSON.stringify(standardTracks),
     priceShanyrak: 0,
     isDefault: true,
@@ -2707,6 +2742,11 @@ export async function seedDefaultPlaylist() {
     description: 'Классическая фоновая музыка — 7 треков',
     descriptionKk: 'Классикалық фондық музыка — 7 трек',
     descriptionEn: 'Classic background music — 7 tracks',
+    descriptionUk: 'Класична фонова музика — 7 треків',
+    descriptionKa: 'კლასიკური ფონური მუსიკა — 7 ტრეკი',
+    descriptionAz: 'Klassik fon musiqisi — 7 trek',
+    descriptionUz: 'Klassik fon musiqasi — 7 trek',
+    descriptionPl: 'Klasyczna muzyka w tle — 7 utworów',
   });
 }
 
