@@ -407,18 +407,29 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
     delay += rand(800, 3000);
   }
 
-  // Manager loop: every 30s check ghost health and lifecycle
+  // Manager loop: every 30s check ghost health (reconnect dead ghosts)
   managerInterval = setInterval(() => {
     if (!ghostsEnabled) return;
     for (const ghost of Array.from(ghosts.values())) {
       maintainGhost(ghost);
     }
   }, 30_000);
+
+  // Room manager loop: every 5s manage bait rooms and fill rooms with real players
+  // Start after initial connections settle (15s delay)
+  setTimeout(() => {
+    if (!ghostsEnabled) return;
+    roomManagerInterval = setInterval(roomManagerTick, 5_000);
+    // Run immediately once
+    roomManagerTick();
+    console.log('[Ghost] Room manager started');
+  }, 15_000);
 }
 
 export function stopGhostPlayers(): void {
   ghostsEnabled = false;
   if (managerInterval) { clearInterval(managerInterval); managerInterval = null; }
+  if (roomManagerInterval) { clearInterval(roomManagerInterval); roomManagerInterval = null; }
   for (const ghost of Array.from(ghosts.values())) {
     disconnectGhost(ghost);
   }
@@ -466,8 +477,8 @@ function connectGhost(ghost: GhostPlayer): void {
       isPremium: false,
       seasonRating: Math.floor(rand(800, 2200)),
     });
-    // Start browsing after a short delay
-    scheduleIdleAction(ghost, rand(2000, 8000));
+    // Ghost will be picked up by roomManagerTick automatically
+    ghost.state = 'browsing';
   });
 
   socket.on('disconnect', () => {
@@ -507,9 +518,7 @@ function connectGhost(ghost: GhostPlayer): void {
     if (ghost.currentRoomId === roomId) {
       ghost.currentRoomId = null;
       ghost.isHosting = false;
-      ghost.state = 'browsing';
-      clearGhostTimers(ghost);
-      scheduleIdleAction(ghost, rand(3000, 10000));
+      ghostReturnToBrowsing(ghost);
     }
   });
 
@@ -545,7 +554,7 @@ function connectGhost(ghost: GhostPlayer): void {
           ghost.currentRoomId = null;
           ghost.isHosting = false;
         }
-        scheduleIdleAction(ghost, rand(5000, 20000));
+        ghostReturnToBrowsing(ghost);
       }, rand(3000, 8000));
       return;
     }
@@ -577,9 +586,7 @@ function connectGhost(ghost: GhostPlayer): void {
       refillGhostShanyrak(ghost.id, 10000).then(() => {
         console.log(`[Ghost:${ghost.personality.nick}] Refilled to 10k shanyraks`);
         // Retry idle action after refill
-        if (ghost.state === 'browsing' && ghost.socket?.connected) {
-          scheduleIdleAction(ghost, rand(2000, 6000));
-        }
+        // Ghost will be picked up by roomManagerTick automatically
       }).catch(e => console.debug(`[Ghost] Refill error: ${e}`));
     }
   });
@@ -614,54 +621,48 @@ function maintainGhost(ghost: GhostPlayer): void {
     }
     return;
   }
-  // If ghost is stuck in browsing with no timer, nudge it
-  if (ghost.state === 'browsing' && !ghost.idleTimer && !ghost.actionTimer) {
-    scheduleIdleAction(ghost, rand(1000, 5000));
+  // Ghost state is managed by roomManagerTick — no nudge needed here
+}
+
+// ─── GhostRoomManager ────────────────────────────────────────────────────────
+// Central manager that runs every 5s:
+//  1. Maintains BAIT_ROOM_COUNT open bait rooms (ghost-hosted, waiting for players)
+//  2. Detects rooms with real players and fills them with bots gradually
+//  3. Bots NEVER start a game unless a real human is present
+
+const BAIT_ROOM_COUNT = 3; // how many bait rooms to keep open at all times
+const BAIT_ROOM_BET_OPTIONS = [100, 200, 500, 1000]; // bait rooms use small bets
+let roomManagerInterval: NodeJS.Timeout | null = null;
+
+/** Returns true if the player id belongs to a ghost or built-in bot */
+function isGhostOrBot(id: string): boolean {
+  return id.startsWith('ghost-') || id.startsWith('bot-');
+}
+
+/** Count real human players in a room */
+function countHumans(room: Room): number {
+  return room.players.filter(p => !isGhostOrBot(p.id)).length;
+}
+
+/** Count ghost players (not built-in bots) in a room */
+function countGhostsInRoom(room: Room): number {
+  return room.players.filter(p => p.id.startsWith('ghost-')).length;
+}
+
+/** Get a free ghost (not in lobby/game) that is connected */
+function getFreeGhost(): GhostPlayer | null {
+  for (const g of Array.from(ghosts.values())) {
+    if (g.socket?.connected && g.state === 'browsing') return g;
   }
+  return null;
 }
 
-// ─── Idle / Lobby Actions ────────────────────────────────────────────────────
-
-function scheduleIdleAction(ghost: GhostPlayer, delayMs: number): void {
-  if (!ghostsEnabled) return;
-  ghost.idleTimer = setTimeout(() => {
-    ghost.idleTimer = null;
-    if (!ghost.socket?.connected) return;
-    if (ghost.state === 'in_game' || ghost.state === 'in_lobby') return;
-    performIdleAction(ghost);
-  }, delayMs);
-}
-
-function performIdleAction(ghost: GhostPlayer): void {
+/** Create a bait room with the given ghost as host */
+function createBaitRoom(ghost: GhostPlayer): void {
   if (!ghost.socket?.connected) return;
   const p = ghost.personality;
-
-  // Decide: create room (30%) or join existing room (70%)
-  const shouldCreate = Math.random() < 0.30;
-
-  if (shouldCreate) {
-    createGhostRoom(ghost);
-  } else {
-    // Request room list and try to join
-    ghost.socket.emit('requestRoomList');
-    // Give server a moment to respond, then try joining
-    ghost.idleTimer = setTimeout(() => {
-      ghost.idleTimer = null;
-      if (!ghost.socket?.connected) return;
-      tryJoinRoom(ghost);
-    }, rand(500, 1500));
-  }
-}
-
-function createGhostRoom(ghost: GhostPlayer): void {
-  if (!ghost.socket?.connected) return;
-  const p = ghost.personality;
-
-  const maxPlayers = Math.floor(rand(p.playerCountRange[0], p.playerCountRange[1] + 1));
-  const betAmounts = [100, 200, 500, 1000, 3000, 5000];
-  const validBets = betAmounts.filter(b => b >= p.betRange[0] && b <= p.betRange[1]);
-  const betAmount = validBets.length > 0 ? pickRandom(validBets) : 100;
-
+  const maxPlayers = pickRandom([2, 3, 4, 4, 5, 6]);
+  const betAmount = pickRandom(BAIT_ROOM_BET_OPTIONS);
   const roomName = generateRoomName(p.nick);
 
   ghost.socket.emit('createRoom', {
@@ -677,119 +678,148 @@ function createGhostRoom(ghost: GhostPlayer): void {
       isPrivate: false,
     },
   }, (room) => {
-    if (!room) {
-      // Failed to create — try browsing instead
-      scheduleIdleAction(ghost, rand(5000, 15000));
-      return;
-    }
+    if (!room) return;
     ghost.currentRoomId = room.id;
     ghost.isHosting = true;
     ghost.state = 'in_lobby';
-
-    // Wait for players to join, then start or leave
-    scheduleLobbyAction(ghost);
+    console.log(`[Ghost] Bait room created: ${room.id} by ${p.nick}`);
+    // Host marks ready after a short delay
+    setTimeout(() => {
+      if (ghost.state === 'in_lobby' && ghost.socket?.connected && ghost.currentRoomId) {
+        ghost.socket.emit('toggleReady', ghost.currentRoomId);
+      }
+    }, rand(1500, 4000));
   });
 }
 
-function tryJoinRoom(ghost: GhostPlayer): void {
+/** Send a ghost into a specific room (used to fill rooms with real players) */
+function sendGhostToRoom(ghost: GhostPlayer, roomId: string): void {
   if (!ghost.socket?.connected) return;
-  const p = ghost.personality;
-
-  // Get available rooms from socketServer
-  const openRooms = getAvailableRooms();
-
-  // Filter: not private, no password, not full, not active game, not tutorial
-  const joinable = openRooms.filter(r =>
-    !r.settings.isPrivate &&
-    !r.settings.password &&
-    !r.hasActiveGame &&
-    !r.settings.isTutorial &&
-    r.players.length < r.maxPlayers &&
-    // Don't join rooms where we're already a player
-    !r.players.some(rp => rp.id === ghost.id) &&
-    // Prefer rooms with bet in our range
-    (r.settings.betAmount || 100) >= p.betRange[0] * 0.5 &&
-    (r.settings.betAmount || 100) <= p.betRange[1] * 2,
-  );
-
-  if (joinable.length === 0) {
-    // No rooms to join — create one or wait
-    if (Math.random() < 0.5) {
-      createGhostRoom(ghost);
-    } else {
-      scheduleIdleAction(ghost, rand(8000, 20000));
-    }
-    return;
-  }
-
-  const room = pickRandom(joinable);
-
-  ghost.socket.emit('joinRoom', { roomId: room.id }, (ok, joinedRoom) => {
-    if (!ok || !joinedRoom) {
-      scheduleIdleAction(ghost, rand(3000, 10000));
-      return;
-    }
-    ghost.currentRoomId = room.id;
+  ghost.socket.emit('joinRoom', { roomId }, (ok, joinedRoom) => {
+    if (!ok || !joinedRoom) return;
+    ghost.currentRoomId = roomId;
     ghost.isHosting = false;
     ghost.state = 'in_lobby';
-
-    // Maybe leave lobby early
-    if (Math.random() < p.lobbyLeaveProb) {
-      const leaveDelay = rand(3000, 15000);
-      ghost.lobbyTimer = setTimeout(() => {
-        ghost.lobbyTimer = null;
-        if (ghost.state === 'in_lobby' && ghost.socket?.connected && ghost.currentRoomId) {
-          ghost.socket.emit('leaveRoom', ghost.currentRoomId);
-          ghost.currentRoomId = null;
-          ghost.state = 'browsing';
-          scheduleIdleAction(ghost, rand(5000, 20000));
-        }
-      }, leaveDelay);
-    } else {
-      // Toggle ready
-      setTimeout(() => {
-        if (ghost.state === 'in_lobby' && ghost.socket?.connected && ghost.currentRoomId) {
-          ghost.socket.emit('toggleReady', ghost.currentRoomId);
-        }
-      }, rand(1000, 4000));
-    }
+    // Toggle ready after a human-like delay
+    setTimeout(() => {
+      if (ghost.state === 'in_lobby' && ghost.socket?.connected && ghost.currentRoomId) {
+        ghost.socket.emit('toggleReady', ghost.currentRoomId);
+      }
+    }, rand(2000, 6000));
   });
 }
 
-function scheduleLobbyAction(ghost: GhostPlayer): void {
+/** The main room management tick — runs every 5 seconds */
+function roomManagerTick(): void {
   if (!ghostsEnabled) return;
-  // Host waits for players, then starts game or closes room
-  const waitTime = rand(15000, 45000); // wait 15–45s for players
-  ghost.lobbyTimer = setTimeout(() => {
-    ghost.lobbyTimer = null;
-    if (!ghost.socket?.connected || ghost.state !== 'in_lobby') return;
 
-    const openRooms = getAvailableRooms();
-    const myRoom = openRooms.find(r => r.id === ghost.currentRoomId);
+  const allRooms = getAvailableRooms();
 
-    if (!myRoom) {
-      ghost.currentRoomId = null;
-      ghost.isHosting = false;
-      ghost.state = 'browsing';
-      scheduleIdleAction(ghost, rand(5000, 15000));
-      return;
+  // ── Step 1: Maintain bait rooms ──────────────────────────────────────────
+  // Count current bait rooms: rooms hosted by a ghost with no active game
+  const baitRooms = allRooms.filter(r =>
+    !r.hasActiveGame &&
+    r.players.some(p => p.id.startsWith('ghost-') && ghosts.get(p.id)?.isHosting),
+  );
+
+  const baitDeficit = BAIT_ROOM_COUNT - baitRooms.length;
+  for (let i = 0; i < baitDeficit; i++) {
+    const freeGhost = getFreeGhost();
+    if (!freeGhost) break;
+    // Mark as browsing→creating to avoid double-pick
+    freeGhost.state = 'in_lobby'; // temporary lock
+    setTimeout(() => createBaitRoom(freeGhost), rand(500, 2000) * (i + 1));
+  }
+
+  // ── Step 2: Fill rooms that have real players ────────────────────────────
+  // Find rooms that have at least 1 human, are not full, no active game
+  const roomsNeedingFill = allRooms.filter(r =>
+    !r.hasActiveGame &&
+    countHumans(r) >= 1 &&
+    r.players.length < r.maxPlayers,
+  );
+
+  for (const room of roomsNeedingFill) {
+    const ghostsInRoom = countGhostsInRoom(room);
+    const humans = countHumans(room);
+    const total = room.players.length;
+    const slots = room.maxPlayers - total;
+
+    // Add at most 1 ghost per tick per room to feel natural
+    if (slots > 0 && ghostsInRoom < humans + 2) {
+      const freeGhost = getFreeGhost();
+      if (freeGhost) {
+        // Stagger join with human-like delay
+        const delay = rand(3000, 10000);
+        freeGhost.state = 'in_lobby'; // lock to prevent double-pick
+        setTimeout(() => {
+          if (!freeGhost.socket?.connected) {
+            freeGhost.state = 'browsing';
+            return;
+          }
+          sendGhostToRoom(freeGhost, room.id);
+        }, delay);
+      }
     }
+  }
 
-    const humanCount = myRoom.players.filter(p => !p.id.startsWith('ghost-') && !p.id.startsWith('bot-')).length;
-    const totalCount = myRoom.players.length;
+  // ── Step 3: Start games in rooms that are full and have humans ───────────
+  for (const room of allRooms) {
+    if (room.hasActiveGame) continue;
+    if (countHumans(room) < 1) continue;
+    if (room.players.length < 2) continue;
 
-    if (totalCount >= 2) {
-      // Start the game
-      ghost.socket!.emit('startGame', ghost.currentRoomId!);
-    } else {
-      // No one joined — close room and try again
-      ghost.socket!.emit('closeRoom', ghost.currentRoomId!);
-      ghost.currentRoomId = null;
-      ghost.isHosting = false;
-      ghost.state = 'browsing';
-      scheduleIdleAction(ghost, rand(10000, 30000));
+    // Check if all players are ready
+    const allReady = room.players.every(p => p.ready);
+    if (!allReady) continue;
+
+    // Find the ghost host of this room
+    const hostGhost = Array.from(ghosts.values()).find(
+      g => g.currentRoomId === room.id && g.isHosting && g.socket?.connected,
+    );
+    if (hostGhost) {
+      console.log(`[Ghost] Starting game in room ${room.id} (${countHumans(room)} humans)`);
+      hostGhost.socket!.emit('startGame', room.id);
     }
-  }, waitTime);
+  }
+
+  // ── Step 4: Clean up bait rooms that have been waiting too long (>5 min) ─
+  for (const room of baitRooms) {
+    if (countHumans(room) > 0) continue; // real player joined, keep it
+    const hostGhost = Array.from(ghosts.values()).find(
+      g => g.currentRoomId === room.id && g.isHosting,
+    );
+    if (!hostGhost) continue;
+    // If ghost has been hosting for a long time with no humans, rotate
+    // We use lobbyTimer as a "created at" marker
+    if (!hostGhost.lobbyTimer) {
+      hostGhost.lobbyTimer = setTimeout(() => {
+        hostGhost.lobbyTimer = null;
+        if (hostGhost.state !== 'in_lobby' || !hostGhost.socket?.connected) return;
+        if (!hostGhost.currentRoomId) return;
+        // Check if humans joined in the meantime
+        const currentRooms = getAvailableRooms();
+        const myRoom = currentRooms.find(r => r.id === hostGhost.currentRoomId);
+        if (myRoom && countHumans(myRoom) > 0) return; // humans joined, keep it
+        // Close and recreate
+        hostGhost.socket.emit('closeRoom', hostGhost.currentRoomId);
+        hostGhost.currentRoomId = null;
+        hostGhost.isHosting = false;
+        hostGhost.state = 'browsing';
+        console.log(`[Ghost] Rotated stale bait room for ${hostGhost.personality.nick}`);
+      }, rand(3 * 60_000, 5 * 60_000)); // 3–5 minutes
+    }
+  }
+}
+
+/** Called when a ghost leaves a room (game ended or left) — resets state */
+function ghostReturnToBrowsing(ghost: GhostPlayer): void {
+  ghost.currentRoomId = null;
+  ghost.isHosting = false;
+  ghost.state = 'browsing';
+  ghost.gameState = null;
+  ghost.myActions = [];
+  clearGhostTimers(ghost);
 }
 
 // ─── In-Game Actions ─────────────────────────────────────────────────────────
@@ -821,7 +851,7 @@ function scheduleGameAction(ghost: GhostPlayer): void {
         ghost.state = 'browsing';
         ghost.gameState = null;
         ghost.myActions = [];
-        scheduleIdleAction(ghost, rand(10000, 40000));
+        ghostReturnToBrowsing(ghost);
       });
       return;
     }
