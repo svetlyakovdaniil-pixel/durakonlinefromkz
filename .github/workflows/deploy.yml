@@ -15,7 +15,8 @@ jobs:
           script: |
             set -e
             cd /root/app
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
             pm2 restart durak
