@@ -95,32 +95,39 @@ const GHOST_NICKS: string[] = [
   // Generic
   'qwerty', 'asdfg', 'zxcvbn', '123abc', 'helloThere',
   'shadow', 'nightowl', 'luckyone', 'fasthand', 'lastmove',
+  // More Russian/CIS
+  'kolya_nsk', 'petya_spb', 'seryoga', 'dimych', 'kostyan',
+  'vovan', 'sashok', 'leha_pro', 'zhenya_k', 'fedya',
+  // More Kazakh
+  'aibek', 'serik_kz', 'marat_kz', 'bauyrzhan', 'arman_kz',
+  'dauren', 'adil_kz', 'temirlan', 'yerlan', 'nurlan',
+  // More international
+  'kevin', 'chris', 'james_g', 'tyler', 'brandon',
+  'lucas', 'ethan', 'oliver', 'liam', 'mason',
 ];
 
 // ─── Cosmetics ───────────────────────────────────────────────────────────────
 
-// Free avatars (no premium/season requirement)
+// Standard/free avatars (no premium, no season reward)
 const FREE_AVATARS = [
   'wolf', 'eagle', 'bear', 'fox', 'snow-leopard',
-  'khan', 'golden_horde', 'diving_eagle', 'neon_paw', 'great_khan',
-  'neon_dino', 'neon_cat', 'apocalypse_city', 'toxic_storm', 'nuclear_mushroom',
-  'gasmask_amber', 'samurai_amber', 'oni_mask_obsidian', 'amaterasu_ruby',
-  'japanese_motifs_zircon', 'underwater_jellyfish', 'anubis_god', 'pirate_captain',
-  'norse_warrior', 'space_explorer', 'cyberpunk_warrior', 'hiphop_legend', 'angel_demon',
 ];
 
-// Shop avatars (premium — only a few ghosts use these)
+// Shop avatars (premium purchasable — only a few ghosts use these)
 const SHOP_AVATARS = [
   'nexus_bunny', 'goose_animated', 'kitsune_emerald', 'dragon_ryu_sapphire',
   'fox_smug', 'bear_angry', 'owl_wise', 'cat_lazy', 'wolf_fierce',
   'tiger_proud', 'panda_happy', 'eagle_determined', 'snow_leopard_calm', 'raccoon_mischievous',
 ];
 
-// All frames available
+// Frames available in shop (non-season only)
+// Free frames: fire, neon, lightning, ice, ruby_neon, amber_neon, zircon_neon
+// Shop frame: premium
+// Season-only frames excluded: great_khan, obsidian_neon, molten_lava, oni_japanese, obsidian_*
 const ALL_FRAMES = [
-  'fire', 'neon', 'lightning', 'ice', 'premium',
-  'great_khan', 'obsidian_neon', 'ruby_neon', 'amber_neon', 'zircon_neon',
-  'molten_lava', 'oni_japanese',
+  'fire', 'neon', 'lightning', 'ice',
+  'ruby_neon', 'amber_neon', 'zircon_neon',
+  'premium',
 ];
 
 // Emotion packs
@@ -357,6 +364,7 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
         personality.avatarId,
         personality.equippedFrame,
         personality.emotionPack,
+        i, // index used as fallback for Cyrillic nicks
       );
       if (!result) {
         console.warn(`[Ghost] Failed to provision DB account for ${nick}`);
