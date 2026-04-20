@@ -30,6 +30,7 @@ import TutorialStepDisplay from './TutorialStepDisplay';
 import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { hapticError } from '@/lib/haptics';
+import { useIsLandscape } from '@/hooks/useOrientation';
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -570,9 +571,10 @@ export default function GameTable({
   // Sound effects
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
   const { settings: gameSettings } = useSettings();
-  // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
+   // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
   const blurClass = gameSettings.batterySaverEnabled ? '' : '${blurClass}';
-
+  // Landscape orientation detection for adaptive layout
+  const isLandscape = useIsLandscape();
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
 
@@ -1521,7 +1523,7 @@ export default function GameTable({
         </div>
       )}
 
-      <div className="relative z-10 flex flex-col game-table-root">
+      <div className={`relative z-10 flex flex-col game-table-root${isLandscape ? ' landscape-mode' : ''}`}>
         {/* Top HUD — compact panel */}
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 ${blurClass} border-b border-amber-700/20 overflow-hidden">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -1568,7 +1570,7 @@ export default function GameTable({
           const manyOpponents = opponents.length >= 4;
           const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex ${manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 w-full shrink-0`}>
+            <div className={`flex ${isLandscape ? 'flex-col overflow-y-auto max-h-full' : manyManyOpponents ? 'flex-nowrap justify-center scrollbar-none' : 'flex-wrap justify-center'} px-1 sm:px-3 ${isLandscape ? 'py-1 gap-1' : `py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3`} ${isLandscape ? 'landscape-opponents' : 'w-full shrink-0'}`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
@@ -1699,8 +1701,8 @@ export default function GameTable({
 
         {/* Main game area */}
         <div className={`flex-1 flex relative min-h-0${isTutorial ? ' overflow-visible' : ' overflow-hidden'}`}>
-          {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY */}
-          <div className="hidden sm:flex flex-col justify-start items-center w-36 md:w-44 py-4 px-2 gap-4">
+          {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY (also shown in landscape mobile) */}
+          <div className={`${isLandscape ? 'flex' : 'hidden sm:flex'} flex-col justify-start items-center ${isLandscape ? 'w-16' : 'w-36 md:w-44'} py-4 px-2 gap-4`}>
             <TurnTimerDesktop seconds={turnTimer} secLabel={t('game.sec')} />
 
             {gs.discardCount > 0 && (
@@ -1784,8 +1786,8 @@ export default function GameTable({
             </div>
           </div>
 
-          {/* RIGHT PANEL — Decks — DESKTOP ONLY */}
-          <div data-tutorial="deck-area" className="hidden sm:flex flex-col justify-center items-center w-44 md:w-52 py-4 px-2 gap-3">
+          {/* RIGHT PANEL — Decks — DESKTOP ONLY (also shown in landscape mobile) */}
+          <div data-tutorial="deck-area" className={`${isLandscape ? 'flex' : 'hidden sm:flex'} flex-col justify-center items-center ${isLandscape ? 'w-20' : 'w-44 md:w-52'} py-4 px-2 gap-3`}>
             {bothDecksEmpty ? (
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" label={t('game.trumpSuit')} />
             ) : (
@@ -1863,8 +1865,8 @@ export default function GameTable({
             )}
           </div>
 
-          {/* MOBILE: Trump icon */}
-          <div data-tutorial="trump-indicator" className="sm:hidden absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 ${blurClass} rounded-lg px-2.5 py-2 border border-amber-700/40">
+          {/* MOBILE: Trump icon — hidden in landscape (deck panel shows trump) */}
+          <div data-tutorial="trump-indicator" className={`${isLandscape ? 'hidden' : 'sm:hidden'} absolute top-2 right-2 z-20 flex flex-col items-center bg-black/60 ${blurClass} rounded-lg px-2.5 py-2 border border-amber-700/40`}>
             <span className={`${mobileTrumpColor} text-3xl leading-none`}>{trumpSymbol}</span>
             <span className="text-amber-200/60 text-[8px] font-semibold">{t('game.trumpSuit')}</span>
 

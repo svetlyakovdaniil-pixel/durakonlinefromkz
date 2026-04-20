@@ -4,7 +4,7 @@
   "description": "Мультиплеерная карточная игра с уникальными казахскими правилами",
   "start_url": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "any",
   "background_color": "#0a1628",
   "theme_color": "#0a1628",
   "lang": "ru",

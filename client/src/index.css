@@ -699,3 +699,58 @@
 .battery-saver [data-tutorial="timer-desktop"] {
   animation: none !important;
 }
+
+/* ─── Landscape Orientation Support ─────────────────────────────────────────── */
+/*
+ * In landscape mode on mobile, the game layout switches from:
+ *   [Top HUD] [Opponents row] [Game center] [Player hand]
+ * to:
+ *   [Top HUD (compact)]
+ *   [Left: opponents column] [Center: game] [Right: decks]
+ *   [Bottom: player hand (compact)]
+ */
+
+/* Compact HUD in landscape */
+@media (orientation: landscape) and (max-height: 500px) {
+  .landscape-mode [data-tutorial="deck-info"] {
+    display: none;
+  }
+
+  /* Hide mobile timer badge — desktop timer in left panel is shown instead */
+  .landscape-mode [data-tutorial="timer"] {
+    display: none !important;
+  }
+
+  /* Opponents column: fixed width on the left side */
+  .landscape-opponents {
+    width: 76px;
+    min-width: 76px;
+    max-width: 76px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .landscape-opponents::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Compact player hand in landscape */
+  .landscape-mode .player-hand-area {
+    padding-top: 2px;
+    padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
+  }
+
+  /* Battlefield scroll max-height in landscape */
+  .battlefield-scroll.mobile-needs-scroll {
+    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Safe area for landscape (notch on left/right) */
+@media (orientation: landscape) {
+  .game-table-root {
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
+  }
+}
