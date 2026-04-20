@@ -116,7 +116,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'First Trump',
     nameUk: 'Перший козир',
     nameKa: 'პირველი კოზირი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'İlk köz',  // TODO: translate
     nameUz: 'Birinchi Koz',
     namePl: 'Pierwszy Atut',
     descRu: 'Побейся козырем в первой партии',
@@ -124,7 +124,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Beat an attack with a trump card in your first game',
     descUk: 'Відбийся козирем у першій партії',
     descKa: 'კოზირით დაიცვი თავდასხმა პირველ თამაშში',
-    descAz: '',  // TODO: translate
+    descAz: 'İlk oyunda köz ilə vur',  // TODO: translate
     descUz: 'Birinchi marta koz bilan urish',
     descPl: 'Zagraj swoją pierwszą kartę atutową',
     reward: { shanyrak: 100 },
@@ -139,7 +139,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Batyr Recruit',
     nameUk: 'Батир-новобранець',
     nameKa: 'ბატირი-ახალწვეული',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Batır-yeni çağırılmış',  // TODO: translate
     nameUz: 'Batyr Yangi Askar',
     namePl: 'Rekrut Batyr',
     descRu: 'Отбей 10 атак за одну партию',
@@ -147,7 +147,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Deflect 10 attacks in a single game',
     descUk: 'Відбий 10 атак за одну партію',
     descKa: 'ერთ თამაშში 10 თავდასხმა დაიცვი',
-    descAz: '',  // TODO: translate
+    descAz: 'Bir oyunda 10 hücumu dəf et',  // TODO: translate
     descUz: '5 ta oʻyin oʻynang',
     descPl: 'Zagraj 25 gier',
     reward: { shanyrak: 500 },
@@ -162,7 +162,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Bush Rabbit',
     nameUk: 'Заєць у кущах',
     nameKa: 'კურდღელი ბუჩქებში',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Kolluqdakı dovşan',  // TODO: translate
     nameUz: 'Buta Quyoni',
     namePl: 'Zając Stepowy',
     descRu: 'Займи предпоследнее место в партии',
@@ -170,7 +170,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish in second-to-last place in a game',
     descUk: 'Займи передостаннє місце в партії',
     descKa: 'თამაშში ბოლოდან მეორე ადგილი დაიკავე',
-    descAz: '',  // TODO: translate
+    descAz: 'Oyunda sondan ikinci yer tut',  // TODO: translate
     descUz: 'Birinchi oʻyiningizda yutqazing',
     descPl: 'Przegraj 10 gier',
     reward: { shanyrak: 500 },
@@ -185,7 +185,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'First Throw',
     nameUk: 'Перший підкид',
     nameKa: 'პირველი დამატება',
-    nameAz: '',  // TODO: translate
+    nameAz: 'İlk əlavə',  // TODO: translate
     nameUz: 'Birinchi Tashlash',
     namePl: 'Pierwsze Podrzucenie',
     descRu: 'Подкинь 5 карт за один ход',
@@ -193,7 +193,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Throw 5 cards in a single turn',
     descUk: 'Підкинь 5 карт за один хід',
     descKa: 'ერთი სვლის განმავლობაში 5 ბარათი გადაუდე',
-    descAz: '',  // TODO: translate
+    descAz: 'Bir gediş üçün 5 kart əlavə et',  // TODO: translate
     descUz: 'Birinchi marta karta tashlash',
     descPl: 'Podrzuć kartę po raz pierwszy',
     reward: { shanyrak: 300 },
@@ -208,7 +208,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Quick Win',
     nameUk: 'Швидка перемога',
     nameKa: 'სწრაფი გამარჯვება',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Sürətli qələbə',  // TODO: translate
     nameUz: 'Tezkor Gʻalaba',
     namePl: 'Szybkie Zwycięstwo',
     descRu: 'Выиграй партию за 10 минут',
@@ -216,7 +216,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Win a game in under 10 minutes',
     descUk: 'Виграй партію за 10 хвилин',
     descKa: 'მოიგე 10 წუთში',
-    descAz: '',  // TODO: translate
+    descAz: 'Oyunu 10 dəqiqəyə qazanın',  // TODO: translate
     descUz: '5 ta kartadan kam bilan gʻalaba qozonish',
     descPl: 'Wygraj grę w mniej niż 5 minut',
     reward: { shanyrak: 1500 },
@@ -231,7 +231,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Steppe Debut',
     nameUk: 'Степовий дебют',
     nameKa: 'სტეპის დებიუტი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Çöl debütü',  // TODO: translate
     nameUz: 'Dasht Debuti',
     namePl: 'Debiut na Stepie',
     descRu: 'Сыграй 50 партий',
@@ -239,7 +239,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 50 games',
     descUk: 'Зіграй 50 партій',
     descKa: 'ითამაშე 50 პარტია',
-    descAz: '',  // TODO: translate
+    descAz: '50 oyun oyna',  // TODO: translate
     descUz: 'Birinchi haqiqiy oʻyin',
     descPl: 'Zagraj swoją pierwszą grę w trybie klasycznym',
     reward: { shanyrak: 2000 },
@@ -254,7 +254,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Little Hero',
     nameUk: 'Маленький герой',
     nameKa: 'პატარა გმირი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Kiçik qəhrəman',  // TODO: translate
     nameUz: 'Kichik Qahramon',
     namePl: 'Mały Bohater',
     descRu: 'Отбей короля пики тузом пики',
@@ -262,7 +262,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Beat the King of Spades with the Ace of Spades',
     descUk: 'Відбий короля пік тузом пік',
     descKa: 'სპადების მეფე სპადების ტუზით გაარიე',
-    descAz: '',  // TODO: translate
+    descAz: 'Pik tutunu pik asla dəf et',  // TODO: translate
     descUz: 'Birinchi marta 2-chi oʻrinda tugatish',
     descPl: 'Wygraj grę z 4 kartami lub mniej na ręce',
     reward: { shanyrak: 500 },
@@ -277,7 +277,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'First Berkut',
     nameUk: 'Перший беркут',
     nameKa: 'პირველი ბერკუტი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'İlk berkut',  // TODO: translate
     nameUz: 'Birinchi Berkut',
     namePl: 'Pierwszy Berkut',
     descRu: 'Закончи партию с 1 картой на руках',
@@ -285,7 +285,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a game with exactly 1 card in hand',
     descUk: 'Закінчи партію з 1 картою на руках',
     descKa: 'დაასრულე თამაში ხელში 1 ბარათით',
-    descAz: '',  // TODO: translate
+    descAz: 'Oyunu əlində 1 kart ilə bitir',  // TODO: translate
     descUz: 'Birinchi marta berkut nishonini oling',
     descPl: 'Wygraj 5 gier',
     reward: { shanyrak: 1000 },
@@ -323,7 +323,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Triple Throw',
     nameUk: 'Три підкиди',
     nameKa: 'სამი გადაცემა',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Üç əlavə',  // TODO: translate
     nameUz: 'Uch Tashlash',
     namePl: 'Potrójne Podrzucenie',
     descRu: 'Переведи ход 10 раз за одну партию',
@@ -331,7 +331,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Transfer the attack 10 times in a single game',
     descUk: 'Переведи хід 10 разів за одну партію',
     descKa: 'ერთ თამაშში 10-ჯერ გადააციე',
-    descAz: '',  // TODO: translate
+    descAz: 'Bir oyunda 10 dəfə gedişi ötür',  // TODO: translate
     descUz: 'Bir oʻyinda 3 ta karta tashlash',
     descPl: 'Podrzuć 3 karty w jednej turze',
     reward: { shanyrak: 800 },
@@ -346,7 +346,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Steppe Warrior',
     nameUk: 'Степовий воїн',
     nameKa: 'სტეპის მებრძოლი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Çöl döyüşçüsü',  // TODO: translate
     nameUz: 'Dasht Jangchisi',
     namePl: 'Wojownik Stepu',
     descRu: 'Сыграй 100 партий',
@@ -354,7 +354,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 100 games',
     descUk: 'Зіграй 100 партій',
     descKa: 'ითამაშე 100 პარტია',
-    descAz: '',  // TODO: translate
+    descAz: '100 oyun oyna',  // TODO: translate
     descUz: '25 ta oʻyin oʻynang',
     descPl: 'Wygraj 10 gier',
     reward: { shanyrak: 4000 },
@@ -369,7 +369,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Trump Rookie',
     nameUk: 'Козирний новачок',
     nameKa: 'კოზირის ნოვიცი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Köz yeni başlayanı',  // TODO: translate
     nameUz: 'Koz Yangi Boshlovchi',
     namePl: 'Nowicjusz Atutów',
     descRu: 'Побей 20 карт козырем за одну партию',
@@ -377,7 +377,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Beat 20 cards with trumps in a single game',
     descUk: 'Побий 20 карт козирем за одну партію',
     descKa: 'ერთ თამაშში 20 ბარათი კოზირით გაარიე',
-    descAz: '',  // TODO: translate
+    descAz: 'Bir oyunda 20 kartı köz ilə dəf et',  // TODO: translate
     descUz: '10 ta oʻyinda koz bilan urish',
     descPl: 'Pobij 10 kart atutami',
     reward: { shanyrak: 1200 },
@@ -392,7 +392,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Clean Win',
     nameUk: 'Чиста перемога',
     nameKa: 'სუფთა გამარჯვება',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Təmiz qələbə',  // TODO: translate
     nameUz: 'Toza Gʻalaba',
     namePl: 'Czyste Zwycięstwo',
     descRu: 'Выиграй партию, не взяв ни одной карты',
@@ -400,7 +400,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Win a game without picking up any cards',
     descUk: 'Виграй партію, не взявши жодної карти',
     descKa: 'მოიგე თამაში არც ერთი ბარათის არ აღებით',
-    descAz: '',  // TODO: translate
+    descAz: 'Heç bir kart götürmədən oyunu qazanın',  // TODO: translate
     descUz: 'Hech qanday karta olmay gʻalaba qozonish',
     descPl: 'Wygraj grę bez brania kart',
     reward: { shanyrak: 1500 },
@@ -415,7 +415,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Quick Start',
     nameUk: 'Швидкий старт',
     nameKa: 'სწრაფი დასაწყისი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Sürətli başlanğıc',  // TODO: translate
     nameUz: 'Tezkor Boshlanish',
     namePl: 'Szybki Start',
     descRu: 'Займи первое место 5 раз подряд',
@@ -423,7 +423,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish first 5 times in a row',
     descUk: 'Займи перше місце 5 разів поспіль',
     descKa: 'ზედიზედ 5-ჯერ პირველი ადგილი დაიკავე',
-    descAz: '',  // TODO: translate
+    descAz: 'Ardıcıl 5 dəfə birinci yer tut',  // TODO: translate
     descUz: 'Oʻyin boshlanganidan 1 daqiqa ichida gʻalaba qozonish',
     descPl: 'Wygraj grę w mniej niż 3 minuty',
     reward: { shanyrak: 2000 },
@@ -438,7 +438,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'First Millionaire',
     nameUk: 'Перший мільйонер',
     nameKa: 'პირველი მილიონერი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'İlk milyonçu',  // TODO: translate
     nameUz: 'Birinchi Millioner',
     namePl: 'Pierwszy Milioner',
     descRu: 'Накопи 1 000 000 шаныраков',
@@ -446,7 +446,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Accumulate 1,000,000 shanyrak',
     descUk: 'Накопи 1 000 000 шаніраків',
     descKa: 'დააგროვე 1 000 000 შანირაქი',
-    descAz: '',  // TODO: translate
+    descAz: '1 000 000 şanyrak yığın',  // TODO: translate
     descUz: '1 000 000 tenge yigʻing',
     descPl: 'Zdobądź 1 000 000 szanyraków',
     reward: { shanyrak: 10000 },
@@ -484,7 +484,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'King of Spades',
     nameUk: 'Король пік',
     nameKa: 'სპადების მეფე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Pik padşahı',  // TODO: translate
     nameUz: 'Pichoq Qiroli',
     namePl: 'Król Pik',
     descRu: 'Побей козырной туз королём пики',
@@ -492,7 +492,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Beat a trump ace with the King of Spades',
     descUk: 'Побий козирний туз королем пік',
     descKa: 'კოზირის ტუზი სპადების მეფით გაარიე',
-    descAz: '',  // TODO: translate
+    descAz: 'Pik padşahı ilə köz tuzu dəf et',  // TODO: translate
     descUz: 'Qirgʻich bilan 10 ta karta urish',
     descPl: 'Pobij kartę Królem Pik',
     reward: { shanyrak: 500 },
@@ -507,7 +507,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Lucky Sevens',
     nameUk: 'Щасливі сімки',
     nameKa: 'იღბიანი შვიდოსნები',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Şanslı yeddilər',  // TODO: translate
     nameUz: 'Omadli Ettalar',
     namePl: 'Szczęśliwe Siódemki',
     descRu: 'В конце матча начни ход, имея на руке только карту 777',
@@ -515,7 +515,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Start a turn with only the 777 card in hand at the end of a match',
     descUk: 'Наприкінці матчу почни хід, маючи на руці лише карту 777',
     descKa: 'მატჩის ბოლოს სვლა დაიწყე მხოლოდ 777 ბარათით',
-    descAz: '',  // TODO: translate
+    descAz: 'Oyunun sonunda əlinizdə yalnız 777 kartı olsun',  // TODO: translate
     descUz: '777 karta bilan gʻalaba qozonish',
     descPl: 'Wygraj grę z trzema siódemkami na ręce',
     reward: { shanyrak: 2000 },
@@ -530,7 +530,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'King of Spades vs 777',
     nameUk: 'Король пік vs 777',
     nameKa: 'სპადების მეფე vs 777',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Padşah vs 777',  // TODO: translate
     nameUz: 'Pichoq Qiroli vs 777',
     namePl: 'Król Pik vs 777',
     descRu: 'Побей короля пики картой 777',
@@ -538,7 +538,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Beat the King of Spades with the 777 card',
     descUk: 'Побий короля пік картою 777',
     descKa: 'სპადების მეფე 777 ბარათით გაარიე',
-    descAz: '',  // TODO: translate
+    descAz: 'Pik padşahını 777 kartı ilə dəf et',  // TODO: translate
     descUz: 'Qirgʻich 777 kartasini urish',
     descPl: 'Pobij 777 Królem Pik',
     reward: { shanyrak: 500 },
@@ -553,7 +553,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'What Is Happening?',
     nameUk: 'Що відбувається?',
     nameKa: 'რა ხდება?',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Nə baş verir?',  // TODO: translate
     nameUz: 'Bu Nima Boʻlyapti?',
     namePl: 'Co Tu Się Dzieje?',
     descRu: 'Походи с 10-ки, перевернув ход игры',
@@ -561,7 +561,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play a 10 and reverse the direction of play',
     descUk: 'Походи з 10-ки, перевернувши хід гри',
     descKa: '10-ით ითამაშე და თამაშის მიმართულება შეაბრუნე',
-    descAz: '',  // TODO: translate
+    descAz: '10-luqla gedərək oyunun gedişini dəyişdir',  // TODO: translate
     descUz: 'Oʻyinda 20 ta karta yigʻish',
     descPl: 'Bądź świadkiem rzadkiej sytuacji w grze',
     reward: { shanyrak: 300 },
@@ -576,7 +576,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Spider-Man Meme',
     nameUk: 'Мем з Людиною-павуком',
     nameKa: 'სპაიდერმენის მემი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Hörümçək adam memi',  // TODO: translate
     nameUz: 'Spider-Man Memi',
     namePl: 'Mem Spider-Man',
     descRu: 'Переведи за один ход три раза подряд 10-ку на игрока, который походил с неё на тебя',
@@ -584,7 +584,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Transfer a 10 back to the player who played it on you, three times in a row in one turn',
     descUk: 'Переведи за один хід три рази поспіль 10-ку на гравця, який походив нею на тебе',
     descKa: 'ერთ სვლაში ზედიზედ სამჯერ 10 გადააციე მოთამაშეზე, ვინც ის შენზე ითამაშა',
-    descAz: '',  // TODO: translate
+    descAz: 'Bir gediş üçün ardıcıl üç dəfə 10-luğu sənə ötürən oyunçuya ötür',  // TODO: translate
     descUz: 'Ikki oʻyinchi bir vaqtda bir xil karta tashlaydi',
     descPl: 'Zagraj przeciwko graczowi o tej samej nazwie',
     reward: { shanyrak: 1000 },
@@ -603,7 +603,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Premium Player',
     nameUk: 'Преміум гравець',
     nameKa: 'პრემიუმ მოთამაშე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Premium oyunçu',  // TODO: translate
     nameUz: 'Premium Oʻyinchi',
     namePl: 'Gracz Premium',
     descRu: 'Приобретите PREMIUM хотя бы один раз',
@@ -611,7 +611,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Purchase PREMIUM at least once',
     descUk: 'Придбайте PREMIUM хоча б один раз',
     descKa: 'შეიძინეთ PREMIUM სულ მცირე ერთხელ',
-    descAz: '',  // TODO: translate
+    descAz: 'Ən azı bir dəfə PREMIUM alın',  // TODO: translate
     descUz: 'Premium obuna sotib olish',
     descPl: 'Kup subskrypcję Premium',
     reward: { shanyrak: 5000, tenge: 25 },
@@ -626,7 +626,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Legendary Player',
     nameUk: 'Легендарний гравець',
     nameKa: 'ლეგენდარული მოთამაშე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Əfsanəvi oyunçu',  // TODO: translate
     nameUz: 'Afsonaviy Oʻyinchi',
     namePl: 'Legendarny Gracz',
     descRu: 'Приобретите PREMIUM два месяца подряд',
@@ -634,7 +634,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Purchase PREMIUM two months in a row',
     descUk: 'Придбайте PREMIUM два місяці поспіль',
     descKa: 'შეიძინეთ PREMIUM ზედიზედ ორი თვის განმავლობაში',
-    descAz: '',  // TODO: translate
+    descAz: 'Ardıcıl iki ay PREMIUM alın',  // TODO: translate
     descUz: '100 ta oʻyin oʻynang',
     descPl: 'Zagraj 500 gier',
     reward: { shanyrak: 15000, tenge: 50 },
@@ -649,7 +649,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Gingerbread for Admin',
     nameUk: 'Адміну пряників',
     nameKa: 'ადმინისთვის ნამცხვარი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Adminə pryanik',  // TODO: translate
     nameUz: 'Admin Uchun Pryanik',
     namePl: 'Piernik dla Admina',
     descRu: 'Приобретите PREMIUM три месяца подряд',
@@ -657,7 +657,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Purchase PREMIUM three months in a row',
     descUk: 'Придбайте PREMIUM три місяці поспіль',
     descKa: 'შეიძინეთ PREMIUM ზედიზედ სამი თვის განმავლობაში',
-    descAz: '',  // TODO: translate
+    descAz: 'Ardıcıl üç ay PREMIUM alın',  // TODO: translate
     descUz: 'Administratorga xabar yuboring',
     descPl: 'Wyślij wiadomość do administracji',
     reward: { shanyrak: 30000, tenge: 100 },
@@ -672,7 +672,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Pride of Kazakhstan',
     nameUk: 'Гордість Казахстану',
     nameKa: 'ყაზახეთის სიამაყე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Qazaxıstan fəxri',  // TODO: translate
     nameUz: 'Qozogʻiston Gʻururi',
     namePl: 'Duma Kazachstanu',
     descRu: 'Приобретите PREMIUM шесть месяцев подряд',
@@ -680,7 +680,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Purchase PREMIUM six months in a row',
     descUk: 'Придбайте PREMIUM шість місяців поспіль',
     descKa: 'შეიძინეთ PREMIUM ზედიზედ ექვსი თვის განმავლობაში',
-    descAz: '',  // TODO: translate
+    descAz: 'Ardıcıl altı ay PREMIUM alın',  // TODO: translate
     descUz: 'Qozogʻiston bayrogʻi bilan 50 ta oʻyin oʻynang',
     descPl: 'Osiągnij rangę Obsydian w sezonie',
     reward: { shanyrak: 100000, tenge: 500 },
@@ -695,7 +695,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Elbasy',
     nameUk: 'Елбасы',
     nameKa: 'ელბასი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Elbası',  // TODO: translate
     nameUz: 'Elbasi',
     namePl: 'Elbasy',
     descRu: 'Приобретите PREMIUM 10 раз (не обязательно подряд)',
@@ -703,7 +703,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Purchase PREMIUM 10 times (not necessarily in a row)',
     descUk: 'Придбайте PREMIUM 10 разів (не обов\'язково поспіль)',
     descKa: 'შეიძინეთ PREMIUM 10-ჯერ (სავალდებულოდ არ არის ზედიზედ)',
-    descAz: '',  // TODO: translate
+    descAz: 'PREMIUM-u 10 dəfə alın (ardıcıl olmaq məcburi deyil)',  // TODO: translate
     descUz: 'Barcha yutuqlarni oling',
     descPl: 'Zajmij 1. miejsce w rankingu',
     reward: { shanyrak: 777777, tenge: 777 },
@@ -722,7 +722,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Daily Diary',
     nameUk: 'Щоденник',
     nameKa: 'ყოველდღიური დღიური',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Gündəlik',  // TODO: translate
     nameUz: 'Kundalik Daftar',
     namePl: 'Dziennik',
     descRu: 'Выполните 30 ежедневных заданий',
@@ -730,7 +730,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete 30 daily quests',
     descUk: 'Виконайте 30 щоденних завдань',
     descKa: 'შეასრულეთ 30 ყოველდღიური დავალება',
-    descAz: '',  // TODO: translate
+    descAz: '30 gündəlik tapşırıq yerinə yetirin',  // TODO: translate
     descUz: '7 kun ketma-ket kiring',
     descPl: 'Zaloguj się 7 dni z rzędu',
     reward: { shanyrak: 3000 },
@@ -745,7 +745,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Calendar',
     nameUk: 'Календар',
     nameKa: 'კალენდარი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Təqvim',  // TODO: translate
     nameUz: 'Taqvim',
     namePl: 'Kalendarz',
     descRu: 'Выполните 60 ежедневных заданий',
@@ -753,7 +753,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete 60 daily quests',
     descUk: 'Виконайте 60 щоденних завдань',
     descKa: 'შეასრულეთ 60 ყოველდღიური დავალება',
-    descAz: '',  // TODO: translate
+    descAz: '60 gündəlik tapşırıq yerinə yetirin',  // TODO: translate
     descUz: '30 kun ketma-ket kiring',
     descPl: 'Zaloguj się 30 dni z rzędu',
     reward: { shanyrak: 10000 },
@@ -768,7 +768,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Regular',
     nameUk: 'Постійний гравець',
     nameKa: 'მუდმივი მოთამაშე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Daimi',  // TODO: translate
     nameUz: 'Doimiy Foydalanuvchi',
     namePl: 'Stały Gracz',
     descRu: 'Выполните 120 ежедневных заданий',
@@ -776,7 +776,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete 120 daily quests',
     descUk: 'Виконайте 120 щоденних завдань',
     descKa: 'შეასრულეთ 120 ყოველდღიური დავალება',
-    descAz: '',  // TODO: translate
+    descAz: '120 gündəlik tapşırıq yerinə yetirin',  // TODO: translate
     descUz: '100 kun ketma-ket kiring',
     descPl: 'Zaloguj się 100 dni z rzędu',
     reward: { shanyrak: 30000 },
@@ -795,7 +795,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Enthusiast',
     nameUk: 'Любитель',
     nameKa: 'მოყვარული',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Həvəskar',  // TODO: translate
     nameUz: 'Yutuq Sevuvchi',
     namePl: 'Entuzjasta',
     descRu: 'Выполните 10 любых достижений',
@@ -803,7 +803,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Unlock any 10 achievements',
     descUk: 'Виконайте будь-які 10 досягнень',
     descKa: 'შეასრულეთ ნებისმიერი 10 მიღწევა',
-    descAz: '',  // TODO: translate
+    descAz: 'İstənilən 10 nailiyyəti tamamlayın',  // TODO: translate
     descUz: '10 ta yutuq oling',
     descPl: 'Odblokuj 10 osiągnięć',
     reward: { shanyrak: 5000 },
@@ -818,7 +818,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Expert',
     nameUk: 'Експерт',
     nameKa: 'ექსპერტი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Ekspert',  // TODO: translate
     nameUz: 'Yutuq Mutaxassisi',
     namePl: 'Ekspert',
     descRu: 'Выполните 20 любых достижений',
@@ -826,7 +826,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Unlock any 20 achievements',
     descUk: 'Виконайте будь-які 20 досягнень',
     descKa: 'შეასრულეთ ნებისმიერი 20 მიღწევა',
-    descAz: '',  // TODO: translate
+    descAz: 'İstənilən 20 nailiyyəti tamamlayın',  // TODO: translate
     descUz: '25 ta yutuq oling',
     descPl: 'Odblokuj 25 osiągnięć',
     reward: { shanyrak: 8000 },
@@ -841,7 +841,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Master',
     nameUk: 'Майстер',
     nameKa: 'ოსტატი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Usta',  // TODO: translate
     nameUz: 'Yutuq Ustasi',
     namePl: 'Mistrz',
     descRu: 'Выполните 30 любых достижений',
@@ -849,7 +849,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Unlock any 30 achievements',
     descUk: 'Виконайте будь-які 30 досягнень',
     descKa: 'შეასრულეთ ნებისმიერი 30 მიღწევა',
-    descAz: '',  // TODO: translate
+    descAz: 'İstənilən 30 nailiyyəti tamamlayın',  // TODO: translate
     descUz: '40 ta yutuq oling',
     descPl: 'Odblokuj 40 osiągnięć',
     reward: { shanyrak: 10000 },
@@ -864,7 +864,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Achiever',
     nameUk: 'Досягатор',
     nameKa: 'მიმღწევი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Nailiyyətçi',  // TODO: translate
     nameUz: 'Yutuq Egasi',
     namePl: 'Zdobywca',
     descRu: 'Выполните 50 любых достижений',
@@ -872,7 +872,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Unlock any 50 achievements',
     descUk: 'Виконайте будь-які 50 досягнень',
     descKa: 'შეასრულეთ ნებისმიერი 50 მიღწევა',
-    descAz: '',  // TODO: translate
+    descAz: 'İstənilən 50 nailiyyəti tamamlayın',  // TODO: translate
     descUz: 'Barcha yutuqlarni oling',
     descPl: 'Odblokuj wszystkie osiągnięcia',
     reward: { shanyrak: 50000, tenge: 25 },
@@ -891,7 +891,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Fashionista',
     nameUk: 'Модник',
     nameKa: 'მოდური',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Moda aşiqi',  // TODO: translate
     nameUz: 'Moda Ustasi',
     namePl: 'Fashionistka',
     descRu: 'Получите как минимум 3 разные рамки для аватарки',
@@ -899,7 +899,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Obtain at least 3 different avatar frames',
     descUk: 'Отримайте щонайменше 3 різні рамки для аватарки',
     descKa: 'მიიღეთ სულ მცირე 3 სხვადასხვა ავატარის ჩარჩო',
-    descAz: '',  // TODO: translate
+    descAz: 'Ən azı 3 müxtəlif avatar çərçivəsi əldə edin',  // TODO: translate
     descUz: '5 ta avatar ramkasini sotib oling',
     descPl: 'Kup przedmiot w sklepie',
     reward: { shanyrak: 10000, tenge: 25 },
@@ -914,7 +914,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Croupier',
     nameUk: 'Крупʼє',
     nameKa: 'კრუპიე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Krupye',  // TODO: translate
     nameUz: 'Krupye',
     namePl: 'Krupier',
     descRu: 'Получите как минимум 3 разные колоды карт (не считая классическую)',
@@ -922,7 +922,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Obtain at least 3 different card decks (excluding the classic)',
     descUk: 'Отримайте щонайменше 3 різні колоди карт (не рахуючи класичну)',
     descKa: 'მიიღეთ სულ მცირე 3 სხვადასხვა ბარათის კომპლექტი (კლასიკის გარდა)',
-    descAz: '',  // TODO: translate
+    descAz: 'Ən azı 3 müxtəlif kart dəsti əldə edin (klassik sayılmır)',  // TODO: translate
     descUz: '5 ta stol uslubini sotib oling',
     descPl: 'Kup styl stołu',
     reward: { shanyrak: 10000, tenge: 25 },
@@ -937,7 +937,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Meloman',
     nameUk: 'Меломан',
     nameKa: 'მელომანი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Meloman',  // TODO: translate
     nameUz: 'Meloman',
     namePl: 'Meloman',
     descRu: 'Получите как минимум 3 разных плейлиста (не считая классический)',
@@ -945,7 +945,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Obtain at least 3 different playlists (excluding the classic)',
     descUk: 'Отримайте щонайменше 3 різних плейлисти (не рахуючи класичний)',
     descKa: 'მიიღეთ სულ მცირე 3 სხვადასხვა პლეილისტი (კლასიკის გარდა)',
-    descAz: '',  // TODO: translate
+    descAz: 'Ən azı 3 müxtəlif pleylist əldə edin (klassik sayılmır)',  // TODO: translate
     descUz: 'Barcha musiqa pleylistlarini oching',
     descPl: 'Zmień muzykę w ustawieniach',
     reward: { shanyrak: 10000 },
@@ -960,7 +960,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Many Faces',
     nameUk: 'Багатоликий',
     nameKa: 'მრავალსახოვანი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Çoxüzlü',  // TODO: translate
     nameUz: 'Koʻp Yuzlar',
     namePl: 'Wiele Twarzy',
     descRu: 'Получите как минимум 5 разных аватарок (не считая классических)',
@@ -968,7 +968,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Obtain at least 5 different avatars (excluding the classic ones)',
     descUk: 'Отримайте щонайменше 5 різних аватарок (не рахуючи класичні)',
     descKa: 'მიიღეთ სულ მცირე 5 სხვადასხვა ავატარი (კლასიკების გარდა)',
-    descAz: '',  // TODO: translate
+    descAz: 'Ən azı 5 müxtəlif avatar əldə edin (klassiklər sayılmır)',  // TODO: translate
     descUz: '10 ta avatarni oching',
     descPl: 'Zmień awatar 5 razy',
     reward: { shanyrak: 10000, tenge: 10 },
@@ -987,7 +987,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Moonstone',
     nameUk: 'Місячний камінь',
     nameKa: 'მთვარის ქვა',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Ay daşı',  // TODO: translate
     nameUz: 'Oy Toshi',
     namePl: 'Kamień Księżycowy',
     descRu: 'Закончите сезон с рангом «Лунный камень»',
@@ -995,7 +995,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Moonstone',
     descUk: 'Закінчіть сезон з рангом «Місячний камінь»',
     descKa: 'სეზონი დაასრულეთ «მთვარის ქვა» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Ay daşı» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Oy toshi darajasiga yeting',
     descPl: 'Osiągnij rangę Kamień Księżycowy w sezonie',
     reward: { shanyrak: 1000 },
@@ -1010,7 +1010,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Emerald',
     nameUk: 'Смарагд',
     nameKa: 'ზმარაგდი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Zümrüd',  // TODO: translate
     nameUz: 'Zumrad',
     namePl: 'Szmaragd',
     descRu: 'Закончите сезон с рангом «Изумруд»',
@@ -1018,7 +1018,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Emerald',
     descUk: 'Закінчіть сезон з рангом «Смарагд»',
     descKa: 'სეზონი დაასრულეთ «ზმარაგდი» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Zümrüd» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Zumrad darajasiga yeting',
     descPl: 'Osiągnij rangę Szmaragd w sezonie',
     reward: { shanyrak: 2000 },
@@ -1033,7 +1033,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Sapphire',
     nameUk: 'Сапфір',
     nameKa: 'საფირი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Sapfir',  // TODO: translate
     nameUz: 'Zangori Tosh',
     namePl: 'Szafir',
     descRu: 'Закончите сезон с рангом «Сапфир»',
@@ -1041,7 +1041,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Sapphire',
     descUk: 'Закінчіть сезон з рангом «Сапфір»',
     descKa: 'სეზონი დაასრულეთ «საფირი» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Sapfir» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Zangori tosh darajasiga yeting',
     descPl: 'Osiągnij rangę Szafir w sezonie',
     reward: { shanyrak: 3000 },
@@ -1056,7 +1056,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Amethyst',
     nameUk: 'Аметист',
     nameKa: 'ამეთვისტო',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Ametist',  // TODO: translate
     nameUz: 'Ametist',
     namePl: 'Ametyst',
     descRu: 'Закончите сезон с рангом «Аметист»',
@@ -1064,7 +1064,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Amethyst',
     descUk: 'Закінчіть сезон з рангом «Аметист»',
     descKa: 'სეზონი დაასრულეთ «ამეთვისტო» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Ametist» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Ametist darajasiga yeting',
     descPl: 'Osiągnij rangę Ametyst w sezonie',
     reward: { shanyrak: 4000 },
@@ -1079,7 +1079,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Zircon',
     nameUk: 'Циркон',
     nameKa: 'ცირკონი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Sirkon',  // TODO: translate
     nameUz: 'Sirkon',
     namePl: 'Cyrkon',
     descRu: 'Закончите сезон с рангом «Циркон»',
@@ -1087,7 +1087,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Zircon',
     descUk: 'Закінчіть сезон з рангом «Циркон»',
     descKa: 'სეზონი დაასრულეთ «ცირკონი» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Sirkon» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Sirkon darajasiga yeting',
     descPl: 'Osiągnij rangę Cyrkon w sezonie',
     reward: { shanyrak: 5000 },
@@ -1102,7 +1102,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Ruby',
     nameUk: 'Рубін',
     nameKa: 'რუბინი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Yaqut',  // TODO: translate
     nameUz: 'Yoqut',
     namePl: 'Rubin',
     descRu: 'Закончите сезон с рангом «Рубин»',
@@ -1110,7 +1110,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Ruby',
     descUk: 'Закінчіть сезон з рангом «Рубін»',
     descKa: 'სეზონი დაასრულეთ «რუბინი» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Yaqut» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Yoqut darajasiga yeting',
     descPl: 'Osiągnij rangę Rubin w sezonie',
     reward: { shanyrak: 10000 },
@@ -1125,7 +1125,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Amber',
     nameUk: 'Бурштин',
     nameKa: 'ქარვა',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Kəhrəba',  // TODO: translate
     nameUz: 'Qahrabo',
     namePl: 'Bursztyn',
     descRu: 'Закончите сезон с рангом «Янтарь»',
@@ -1133,7 +1133,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Amber',
     descUk: 'Закінчіть сезон з рангом «Бурштин»',
     descKa: 'სეზონი დაასრულეთ «ქარვა» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Kəhrəba» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Qahrabo darajasiga yeting',
     descPl: 'Osiągnij rangę Bursztyn w sezonie',
     reward: { shanyrak: 25000 },
@@ -1148,7 +1148,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Obsidian',
     nameUk: 'Обсидіан',
     nameKa: 'ობსიდიანი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Obsidian',  // TODO: translate
     nameUz: 'Obsidian',
     namePl: 'Obsydian',
     descRu: 'Закончите сезон с рангом «Обсидиан»',
@@ -1156,7 +1156,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Finish a season with the rank Obsidian',
     descUk: 'Закінчіть сезон з рангом «Обсидіан»',
     descKa: 'სეზონი დაასრულეთ «ობსიდიანი» რანგით',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümü «Obsidian» rütbəsi ilə bitirin',  // TODO: translate
     descUz: 'Obsidian darajasiga yeting',
     descPl: 'Osiągnij rangę Obsydian w sezonie',
     reward: { shanyrak: 50000 },
@@ -1175,7 +1175,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Bot Lover',
     nameUk: 'Любитель ботів',
     nameKa: 'ბოტების მოყვარული',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Bot həvəskarı',  // TODO: translate
     nameUz: 'Bot Sevuvchi',
     namePl: 'Miłośnik Botów',
     descRu: 'Сыграйте 10 игр с ботами',
@@ -1183,7 +1183,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 10 games with bots',
     descUk: 'Зіграйте 10 ігор з ботами',
     descKa: 'ბოტებთან 10 თამაში ითამაშეთ',
-    descAz: '',  // TODO: translate
+    descAz: 'Botlarla 10 oyun oynayın',  // TODO: translate
     descUz: '10 ta bot oʻyini oʻynang',
     descPl: 'Zagraj 10 gier z botami',
     reward: { shanyrak: 1000 },
@@ -1198,7 +1198,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Bot Terror',
     nameUk: 'Гроза ботів',
     nameKa: 'ბოტების საშინელება',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Botların qorxusu',  // TODO: translate
     nameUz: 'Bot Terrori',
     namePl: 'Terror Botów',
     descRu: 'Сыграйте 25 игр с ботами',
@@ -1206,7 +1206,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 25 games with bots',
     descUk: 'Зіграйте 25 ігор з ботами',
     descKa: 'ბოტებთან 25 თამაში ითამაშეთ',
-    descAz: '',  // TODO: translate
+    descAz: 'Botlarla 25 oyun oynayın',  // TODO: translate
     descUz: '50 ta bot oʻyinida gʻalaba qozonish',
     descPl: 'Pokonaj boty 25 razy',
     reward: { shanyrak: 3000 },
@@ -1221,7 +1221,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Programmer',
     nameUk: 'Програміст',
     nameKa: 'პროგრამისტი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Proqramçı',  // TODO: translate
     nameUz: 'Dasturchi',
     namePl: 'Programista',
     descRu: 'Сыграйте 50 игр с ботами',
@@ -1229,7 +1229,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 50 games with bots',
     descUk: 'Зіграйте 50 ігор з ботами',
     descKa: 'ბოტებთან 50 თამაში ითამაშეთ',
-    descAz: '',  // TODO: translate
+    descAz: 'Botlarla 50 oyun oynayın',  // TODO: translate
     descUz: '100 ta bot oʻyini oʻynang',
     descPl: 'Zagraj 50 gier z botami',
     reward: { shanyrak: 5000 },
@@ -1244,7 +1244,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Bot Hater',
     nameUk: 'Ботоненависник',
     nameKa: 'ბოტების მოძულე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Bot düşməni',  // TODO: translate
     nameUz: 'Bot Yomon Koʻruvchi',
     namePl: 'Wróg Botów',
     descRu: 'Сыграйте 100 игр с ботами',
@@ -1252,7 +1252,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Play 100 games with bots',
     descUk: 'Зіграйте 100 ігор з ботами',
     descKa: 'ბოტებთან 100 თამაში ითამაშეთ',
-    descAz: '',  // TODO: translate
+    descAz: 'Botlarla 100 oyun oynayın',  // TODO: translate
     descUz: 'Botga qarshi 10 ta ketma-ket gʻalaba',
     descPl: 'Pokonaj boty 100 razy',
     reward: { shanyrak: 10000 },
@@ -1271,7 +1271,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: '#1',
     nameUk: '№1',
     nameKa: '№1',
-    nameAz: '',  // TODO: translate
+    nameAz: '№1',  // TODO: translate
     nameUz: '#1',
     namePl: '#1',
     descRu: 'Займите первое место в несезонном рейтинге',
@@ -1279,7 +1279,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Reach first place in the non-seasonal leaderboard',
     descUk: 'Займіть перше місце в несезонному рейтингу',
     descKa: 'პირველი ადგილი დაიკავეთ სეზონგარეშე რეიტინგში',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümsüz reytinqdə birinci yer tutun',  // TODO: translate
     descUz: 'Reyting jadvalida 1-chi oʻrinni egallash',
     descPl: 'Zajmij 1. miejsce w rankingu',
     reward: { shanyrak: 100000, tenge: 50 },
@@ -1294,7 +1294,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: '#2',
     nameUk: '№2',
     nameKa: '№2',
-    nameAz: '',  // TODO: translate
+    nameAz: '№2',  // TODO: translate
     nameUz: '#2',
     namePl: '#2',
     descRu: 'Займите второе место в несезонном рейтинге',
@@ -1302,7 +1302,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Reach second place in the non-seasonal leaderboard',
     descUk: 'Займіть друге місце в несезонному рейтингу',
     descKa: 'მეორე ადგილი დაიკავეთ სეზონგარეშე რეიტინგში',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümsüz reytinqdə ikinci yer tutun',  // TODO: translate
     descUz: 'Reyting jadvalida 2-chi oʻrinni egallash',
     descPl: 'Zajmij 2. miejsce w rankingu',
     reward: { shanyrak: 70000, tenge: 30 },
@@ -1317,7 +1317,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: '#3',
     nameUk: '№3',
     nameKa: '№3',
-    nameAz: '',  // TODO: translate
+    nameAz: '№3',  // TODO: translate
     nameUz: '#3',
     namePl: '#3',
     descRu: 'Займите третье место в несезонном рейтинге',
@@ -1325,7 +1325,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Reach third place in the non-seasonal leaderboard',
     descUk: 'Займіть третє місце в несезонному рейтингу',
     descKa: 'მესამე ადგილი დაიკავეთ სეზონგარეშე რეიტინგში',
-    descAz: '',  // TODO: translate
+    descAz: 'Mövsümsüz reytinqdə üçüncü yer tutun',  // TODO: translate
     descUz: 'Reyting jadvalida 3-chi oʻrinni egallash',
     descPl: 'Zajmij 3. miejsce w rankingu',
     reward: { shanyrak: 50000, tenge: 20 },
@@ -1344,7 +1344,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Student',
     nameUk: 'Учень',
     nameKa: 'მოსწავლე',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Şagird',  // TODO: translate
     nameUz: 'Talaba',
     namePl: 'Student',
     descRu: 'Пройдите обучение',
@@ -1352,7 +1352,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete the tutorial',
     descUk: 'Пройдіть навчання',
     descKa: 'გაიარეთ სწავლება',
-    descAz: '',  // TODO: translate
+    descAz: 'Öyrənməni tamamlayın',  // TODO: translate
     descUz: 'Oʻquv qoʻllanmani tugatish',
     descPl: 'Ukończ samouczek',
     reward: { shanyrak: 2000 },
@@ -1367,7 +1367,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Honor Student',
     nameUk: 'Відмінник',
     nameKa: 'ფრიადოსანი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Əlaçı',  // TODO: translate
     nameUz: 'Aʻlochi',
     namePl: 'Prymus',
     descRu: 'Пройдите обучение дважды',
@@ -1375,7 +1375,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete the tutorial twice',
     descUk: 'Пройдіть навчання двічі',
     descKa: 'გაიარეთ სწავლება ორჯერ',
-    descAz: '',  // TODO: translate
+    descAz: 'Öyrənməni iki dəfə tamamlayın',  // TODO: translate
     descUz: 'Oʻquv qoʻllanmani xatosiz tugatish',
     descPl: 'Ukończ samouczek bez błędów',
     reward: { shanyrak: 5000 },
@@ -1390,7 +1390,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Grinder',
     nameUk: 'Зубрила',
     nameKa: 'გამეორებელი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Əzbərçi',  // TODO: translate
     nameUz: 'Qattiq Ishlash',
     namePl: 'Pracowity',
     descRu: 'Пройдите обучение 5 раз',
@@ -1398,7 +1398,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Complete the tutorial 5 times',
     descUk: 'Пройдіть навчання 5 разів',
     descKa: 'გაიარეთ სწავლება 5-ჯერ',
-    descAz: '',  // TODO: translate
+    descAz: 'Öyrənməni 5 dəfə tamamlayın',  // TODO: translate
     descUz: 'Oʻquv qoʻllanmani 3 marta tugatish',
     descPl: 'Ukończ samouczek 3 razy',
     reward: { shanyrak: 10000 },
@@ -1463,7 +1463,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'Communicator',
     nameUk: 'Комунікатор',
     nameKa: 'კომუნიკატორი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'Kommunikator',  // TODO: translate
     nameUz: 'Muloqotchi',
     namePl: 'Komunikator',
     descRu: 'Пригласи 15 друзей в игру по реферальному коду',
@@ -1471,7 +1471,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Invite 15 friends to the game via referral code',
     descUk: 'Запроси 15 друзів в гру за реферальним кодом',
     descKa: 'მოიწვიეთ 15 მეგობარი თამაშში რეფერალური კოდით',
-    descAz: '',  // TODO: translate
+    descAz: 'Referral kodu ilə 15 dost dəvət edin',  // TODO: translate
     descUz: '15 ta doʻstni taklif qilish',
     descPl: 'Zaproś 15 przyjaciół',
     reward: { shanyrak: 15000 },
@@ -1486,7 +1486,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     nameEn: 'VIP Person',
     nameUk: 'VIP-персона',
     nameKa: 'VIP-პირი',
-    nameAz: '',  // TODO: translate
+    nameAz: 'VIP şəxsiyyət',  // TODO: translate
     nameUz: 'VIP Shaxs',
     namePl: 'VIP',
     descRu: 'Пригласи 50 друзей в игру по реферальному коду',
@@ -1494,7 +1494,7 @@ export const ACHIEVEMENTS: AchievementDef[] = [
     descEn: 'Invite 50 friends to the game via referral code',
     descUk: 'Запроси 50 друзів в гру за реферальним кодом',
     descKa: 'მოიწვიეთ 50 მეგობარი თამაშში რეფერალური კოდით',
-    descAz: '',  // TODO: translate
+    descAz: 'Referral kodu ilə 50 dost dəvət edin',  // TODO: translate
     descUz: '50 ta doʻstni taklif qilish',
     descPl: 'Zaproś 50 przyjaciół',
     reward: { shanyrak: 50000 },
