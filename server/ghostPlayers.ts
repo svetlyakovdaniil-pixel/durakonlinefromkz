@@ -159,20 +159,21 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   else skill = rand(0.82, 0.97);                        // strong
 
   // Speed profile — minimum 2s to avoid looking like a bot
+  // Only index=0 (first ghost player) gets the "very slow" profile
   const speedRoll = Math.random();
   let thinkMinMs: number, thinkMaxMs: number, longThinkProb: number;
-  if (speedRoll < 0.25) {
+  if (index === 0) {
+    // One special slow player (like a pensioner who thinks long)
+    thinkMinMs = 5000; thinkMaxMs = 14000; longThinkProb = 0.0;
+  } else if (speedRoll < 0.30) {
     // Fast player
     thinkMinMs = 2000; thinkMaxMs = 3500; longThinkProb = 0.0;
-  } else if (speedRoll < 0.65) {
+  } else if (speedRoll < 0.75) {
     // Normal player
-    thinkMinMs = 2500; thinkMaxMs = 5000; longThinkProb = 0.0;
-  } else if (speedRoll < 0.88) {
-    // Slow player
-    thinkMinMs = 3000; thinkMaxMs = 7000; longThinkProb = 0.0;
+    thinkMinMs = 2500; thinkMaxMs = 5500; longThinkProb = 0.0;
   } else {
-    // Slower player
-    thinkMinMs = 4000; thinkMaxMs = 9000; longThinkProb = 0.0;
+    // Slightly slower player
+    thinkMinMs = 3000; thinkMaxMs = 7000; longThinkProb = 0.0;
   }
 
   const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
@@ -338,6 +339,23 @@ function pickGhostAction(
 
   // Skip turn (non-active player)
   if (skipTurn) return { event: 'skipTurn', data: roomId };
+
+  // When defender is taking cards, ghost player should mostly pass (not pile on)
+  // Only aggressive ghosts with matching cards sometimes add more
+  if (gameState.defenderTaking) {
+    if (passTurn) {
+      // 80% chance to pass immediately; aggressive players sometimes add a card
+      const addCardChance = temperament === 'aggressive' ? 0.3 : 0.1;
+      if (Math.random() > addCardChance || !playCard || !playCard.cardIds.length) {
+        return { event: 'passTurn', data: roomId };
+      }
+      // Aggressive ghost adds one non-valuable card
+      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+      return { event: 'playCard', data: { roomId, cardId } };
+    }
+    // No passTurn available — endAttack or playCard only
+    if (endAttack) return { event: 'endAttack', data: roomId };
+  }
 
   // Pass turn (non-active edge player)
   if (passTurn && !playCard && !endAttack) return { event: 'passTurn', data: roomId };
