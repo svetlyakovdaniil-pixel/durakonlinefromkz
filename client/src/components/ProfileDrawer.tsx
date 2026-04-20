@@ -187,7 +187,7 @@ function ProfileTab({ profile }: { profile: ProfileDrawerProps['profile'] }) {
             <PlayerAvatar avatarId={profile.avatarId} frameId={equippedFrame} size={48} />
             <div className="text-amber-100 text-sm">
               {equippedFrame
-                ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : locale === 'uk' ? ((f as any)?.nameUk || f?.name) : locale === 'ka' ? ((f as any)?.nameKa || f?.name) : locale === 'az' ? ((f as any)?.nameAz || f?.name) : f?.name) || equippedFrame; })()
+                ? (() => { const baseId = equippedFrame?.replace(/_\d{4}Q[1-4]$/, ''); const f = AVATAR_FRAMES.find(f => f.id === equippedFrame || f.id === baseId); return (locale === 'kk' ? (f as any)?.nameKk : locale === 'en' ? (f as any)?.nameEn : locale === 'uk' ? ((f as any)?.nameUk || f?.name) : locale === 'ka' ? ((f as any)?.nameKa || f?.name) : locale === 'az' ? ((f as any)?.nameAz || f?.name) : locale === 'uz' ? ((f as any)?.nameUz || f?.name) : locale === 'pl' ? ((f as any)?.namePl || f?.name) : f?.name) || equippedFrame; })()
                 : t('profile.noFrame')}
             </div>
           </div>

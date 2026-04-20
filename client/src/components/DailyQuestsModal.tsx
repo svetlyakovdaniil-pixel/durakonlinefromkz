@@ -17,8 +17,8 @@ interface DailyQuestsModalProps {
   onRewardClaimed?: () => void;
 }
 
-/** Returns time until next Moscow midnight (00:00 UTC+3) */
-function getTimeUntilReset(): string {
+/** Returns time until next Moscow midnight (00:00 UTC+3), localized */
+function getTimeUntilReset(locale: string): string {
   const now = new Date();
   const moscowOffset = 3 * 60; // UTC+3 in minutes
   const moscowNow = new Date(now.getTime() + (moscowOffset - now.getTimezoneOffset()) * 60000);
@@ -27,7 +27,16 @@ function getTimeUntilReset(): string {
   const diffMs = nextMidnight.getTime() - moscowNow.getTime();
   const h = Math.floor(diffMs / 3600000);
   const m = Math.floor((diffMs % 3600000) / 60000);
-  return `${h}ч ${m}м`;
+  // Localized hour/minute abbreviations
+  const hLabel: Record<string, string> = {
+    ru: 'ч', kk: 'сағ', en: 'h', uk: 'год', ka: 'სთ', az: 's', uz: 'soat', pl: 'g'
+  };
+  const mLabel: Record<string, string> = {
+    ru: 'м', kk: 'мин', en: 'm', uk: 'хв', ka: 'წთ', az: 'dəq', uz: 'daq', pl: 'min'
+  };
+  const hl = hLabel[locale] ?? 'h';
+  const ml = mLabel[locale] ?? 'm';
+  return `${h}${hl} ${m}${ml}`;
 }
 
 export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: DailyQuestsModalProps) {
@@ -56,6 +65,10 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         kk: `Алынды: +${result.shanyrakAwarded?.toLocaleString() ?? 0} шаңырақ`,
         en: `Claimed: +${result.shanyrakAwarded?.toLocaleString() ?? 0} shanyrak`,
         uk: `Отримано: +${result.shanyrakAwarded?.toLocaleString() ?? 0} шаніраків`,
+        ka: `მიღებულია: +${result.shanyrakAwarded?.toLocaleString() ?? 0} შანირაკი`,
+        az: `Alındı: +${result.shanyrakAwarded?.toLocaleString() ?? 0} şanyrak`,
+        uz: `Olindi: +${result.shanyrakAwarded?.toLocaleString() ?? 0} shanyrak`,
+        pl: `Odebrano: +${result.shanyrakAwarded?.toLocaleString() ?? 0} szaniraków`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -63,7 +76,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
       setClaimingKey(null);
     },
     onError: () => {
-      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди' };
+      const msgs = { ru: 'Ошибка при получении награды', kk: 'Сыйлық алу қатесі', en: 'Failed to claim reward', uk: 'Помилка при отриманні нагороди', ka: 'ჯილდოს მიღების შეცდომა', az: 'Mükafat alınmasında xəta', uz: 'Mukofot olishda xato', pl: 'Błąd przy odbieraniu nagrody' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setClaimingKey(null);
     },
@@ -76,6 +89,10 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         kk: `Тапсырма ауыстырылды! Бүгін қалды: ${result.remaining}`,
         en: `Quest swapped! Swaps remaining today: ${result.remaining}`,
         uk: `Завдання замінено! Залишилось замін сьогодні: ${result.remaining}`,
+        ka: `დავალება შეიცვლა! დართა დარჩენის რაოდენობა: ${result.remaining}`,
+        az: `Tapşırıq dəyişdirildi! Bu gün qalan dəyişdirmə: ${result.remaining}`,
+        uz: `Vazifa almashtirildi! Bugun qolgan almashtirish: ${result.remaining}`,
+        pl: `Zadanie zamienione! Pozostałe zamiany dziś: ${result.remaining}`,
       };
       toast.success(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       refetch();
@@ -84,8 +101,8 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
     onError: (err) => {
       const isNoSwaps = err.message?.includes('No swaps');
       const msgs = isNoSwaps
-        ? { ru: 'Лимит замен на сегодня исчерпан (3/3)', kk: 'Бүгінгі ауыстыру лимиті таусылды (3/3)', en: 'Daily swap limit reached (3/3)', uk: 'Ліміт замін на сьогодні вичерпано (3/3)' }
-        : { ru: 'Ошибка замены задания', kk: 'Тапсырманы ауыстыру қатесі', en: 'Failed to swap quest', uk: 'Помилка заміни завдання' };
+        ? { ru: 'Лимит замен на сегодня исчерпан (3/3)', kk: 'Бүгінгі ауыстыру лимиті таусылды (3/3)', en: 'Daily swap limit reached (3/3)', uk: 'Ліміт замін на сьогодні вичерпано (3/3)', ka: 'დღიურობრივი დარჩენის ლიმიტი ამოიწურა (3/3)', az: 'Günlük dəyişdirmə limiti doldu (3/3)', uz: 'Kunlik almashtirish limiti tugadi (3/3)', pl: 'Dzienny limit zamian wyczerpany (3/3)' }
+        : { ru: 'Ошибка замены задания', kk: 'Тапсырманы ауыстыру қатесі', en: 'Failed to swap quest', uk: 'Помилка заміни завдання', ka: 'დავალების შეცვლის შეცდომა', az: 'Tapşırığı dəyişdirmək mümkün olmadı', uz: 'Vazifani almashtirish amalga oshmadi', pl: 'Nie udało się zamienić zadania' };
       toast.error(msgs[locale as keyof typeof msgs] ?? msgs.ru);
       setSwappingKey(null);
     },
@@ -95,7 +112,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
 
   const L = {
     title: ({ ru: 'Ежедневные задания', kk: 'Күнделікті тапсырмалар', en: 'Daily Quests', uk: 'Щоденні завдання', ka: 'ყოველდღიური დავალება', az: 'Gündəlik tapşırıqlar', uz: 'Kunlik vazifalar', pl: 'Codzienne zadania' } as Record<string,string>)[locale] ?? 'Ежедневные задания',
-    reset: ({ ru: `Сброс через ${getTimeUntilReset()}`, kk: `${getTimeUntilReset()} кейін жаңарады`, en: `Resets in ${getTimeUntilReset()}`, uk: `Скидання через ${getTimeUntilReset()}`, ka: `გადაყენება ${getTimeUntilReset()}-ში`, az: `${getTimeUntilReset()} sonra sıfırlanır`, uz: `${getTimeUntilReset()} dan keyin yangilanadi`, pl: `Resetuje się za ${getTimeUntilReset()}` } as Record<string,string>)[locale] ?? `Resets in ${getTimeUntilReset()}`,
+    reset: ({ ru: `Сброс через ${getTimeUntilReset(locale)}`, kk: `${getTimeUntilReset(locale)} кейін жаңарады`, en: `Resets in ${getTimeUntilReset(locale)}`, uk: `Скидання через ${getTimeUntilReset(locale)}`, ka: `გადაყენება ${getTimeUntilReset(locale)}-ში`, az: `${getTimeUntilReset(locale)} sonra sıfırlanır`, uz: `${getTimeUntilReset(locale)} dan keyin yangilanadi`, pl: `Resetuje się za ${getTimeUntilReset(locale)}` } as Record<string,string>)[locale] ?? `Resets in ${getTimeUntilReset(locale)}`,
     claim: ({ ru: 'Получить', kk: 'Алу', en: 'Claim', uk: 'Отримати', ka: 'მიღება', az: 'Al', uz: 'Olish', pl: 'Odbierz' } as Record<string,string>)[locale] ?? 'Получить',
     claimed: ({ ru: 'Получено', kk: 'Алынды', en: 'Claimed', uk: 'Отримано', ka: 'მიღებულია', az: 'Alındı', uz: 'Olindi', pl: 'Odebrano' } as Record<string,string>)[locale] ?? 'Получено',
     locked: ({ ru: 'В процессе', kk: 'Орындалуда', en: 'In Progress', uk: 'В процесі', ka: 'მიმდინარეობაში', az: 'Davam edir', uz: 'Jarayonda', pl: 'W toku' } as Record<string,string>)[locale] ?? 'В процессе',
@@ -119,7 +136,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
   const getName = (q: typeof quests[0]) =>
     locale === 'kk' ? q.def.nameKk : locale === 'en' ? q.def.nameEn : locale === 'uk' ? (q.def.nameUk ?? q.def.nameRu) : locale === 'ka' ? (q.def.nameKa ?? q.def.nameRu) : locale === 'az' ? ((q.def as any).nameAz ?? q.def.nameRu) : locale === 'uz' ? ((q.def as any).nameUz ?? q.def.nameRu) : locale === 'pl' ? ((q.def as any).namePl ?? q.def.nameRu) : q.def.nameRu;
   const getDesc = (q: typeof quests[0]) =>
-    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : locale === 'ka' ? (q.def.descKa ?? q.def.descRu) : locale === 'az' ? ((q.def as any).descAz ?? q.def.descRu) : q.def.descRu;
+    locale === 'kk' ? q.def.descKk : locale === 'en' ? q.def.descEn : locale === 'uk' ? (q.def.descUk ?? q.def.descRu) : locale === 'ka' ? (q.def.descKa ?? q.def.descRu) : locale === 'az' ? ((q.def as any).descAz ?? q.def.descRu) : locale === 'uz' ? ((q.def as any).descUz ?? q.def.descRu) : locale === 'pl' ? ((q.def as any).descPl ?? q.def.descRu) : q.def.descRu;
 
   // Sort: claimable first, then in-progress, then claimed
   const sorted = [...quests].sort((a, b) => {
