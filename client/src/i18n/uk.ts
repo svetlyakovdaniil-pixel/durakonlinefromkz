@@ -808,6 +808,7 @@ export const uk = {
     gameStarted: 'Гра почалася!',
     notEnoughBalance: 'Недостатньо коштів',
     connectionLost: 'З\'єднання втрачено',
+    connectionRestored: 'З\'єднання відновлено',
     featureComingSoon: 'Функція незабаром з\'явиться',
     copied: 'Скопійовано!',
     friendAdded: 'Друга додано',

@@ -998,7 +998,7 @@ onClick={() => setShowTengeTopUp(true)}
                     <SelectContent className="bg-[#1a2d45] border-amber-700/30">
                       {lobbyPlaylists.filter((p: any) => lobbyOwnedPlaylistIds.includes(p.id)).map((p: any) => (
                         <SelectItem key={p.id} value={String(p.id)} className="text-amber-100">
-                          {locale === 'kk' && p.nameKk ? p.nameKk : locale === 'en' && p.nameEn ? p.nameEn : p.name}
+                          {locale === 'kk' && p.nameKk ? p.nameKk : locale === 'en' && p.nameEn ? p.nameEn : locale === 'uk' && (p as any).nameUk ? (p as any).nameUk : locale === 'ka' && (p as any).nameKa ? (p as any).nameKa : locale === 'az' && (p as any).nameAz ? (p as any).nameAz : locale === 'uz' && (p as any).nameUz ? (p as any).nameUz : locale === 'pl' && (p as any).namePl ? (p as any).namePl : p.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1674,7 +1674,7 @@ onClick={() => setShowTengeTopUp(true)}
                                   {t('lobby.yourRank')}: 
                                 </span>
                                 <span className="text-sm font-bold" style={{ color: rank.color }}>
-                                  {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : rank.nameRu}
+                                  {locale === 'kk' ? rank.nameKk : locale === 'en' ? rank.nameEn : locale === 'uk' ? (rank as any).nameUk ?? rank.nameRu : locale === 'ka' ? (rank as any).nameKa ?? rank.nameRu : locale === 'az' ? (rank as any).nameAz ?? rank.nameRu : locale === 'uz' ? (rank as any).nameUz ?? rank.nameRu : locale === 'pl' ? (rank as any).namePl ?? rank.nameRu : rank.nameRu}
                                 </span>
                               </div>
                             )}
@@ -1714,7 +1714,7 @@ onClick={() => setShowTengeTopUp(true)}
                                 {notifFrameId && (() => {
                                   const frameOpt = AVATAR_FRAMES.find(f => f.id === notifFrameId || notifFrameId?.startsWith(f.id + '_'));
                                   const frameName = frameOpt
-                                    ? (locale === 'kk' ? (frameOpt as any).nameKk ?? frameOpt.name : locale === 'en' ? (frameOpt as any).nameEn ?? frameOpt.name : frameOpt.name)
+                                    ? (locale === 'kk' ? (frameOpt as any).nameKk ?? frameOpt.name : locale === 'en' ? (frameOpt as any).nameEn ?? frameOpt.name : locale === 'uk' ? (frameOpt as any).nameUk ?? frameOpt.name : locale === 'ka' ? (frameOpt as any).nameKa ?? frameOpt.name : locale === 'az' ? (frameOpt as any).nameAz ?? frameOpt.name : locale === 'uz' ? (frameOpt as any).nameUz ?? frameOpt.name : locale === 'pl' ? (frameOpt as any).namePl ?? frameOpt.name : frameOpt.name)
                                     : notifFrameId;
                                   return (
                                     <div className="flex items-center gap-1.5 text-xs text-amber-100">
@@ -1758,7 +1758,7 @@ onClick={() => setShowTengeTopUp(true)}
                         );
                       })()}
                       <span className="text-amber-200/30 text-[10px] mt-1 block">
-                        {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        {new Date(n.createdAt).toLocaleString(locale === 'kk' ? 'kk-KZ' : locale === 'en' ? 'en-US' : locale === 'uk' ? 'uk-UA' : locale === 'ka' ? 'ka-GE' : locale === 'az' ? 'az-AZ' : locale === 'uz' ? 'uz-UZ' : locale === 'pl' ? 'pl-PL' : 'ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
                     {/* Hide delete button for unclaimed season rewards */}

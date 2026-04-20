@@ -7,7 +7,7 @@ import { uk } from './uk';
 import { ka } from './ka';
 import { az } from './az';
 import { uz } from './uz';
-import pl from './pl';
+import { pl } from './pl';
 export type Locale = 'ru' | 'kk' | 'en' | 'uk' | 'ka' | 'az' | 'uz' | 'pl';
 // Flatten nested object keys with dot notation
 type FlattenKeys<T, Prefix extends string = ''> = T extends Record<string, unknown>

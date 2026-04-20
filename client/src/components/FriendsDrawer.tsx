@@ -83,13 +83,13 @@ function FriendProfileView({
   };
 
   const rankName = seasonData?.rank
-    ? (locale === 'kk' ? seasonData.rank.nameKk : locale === 'en' ? seasonData.rank.nameEn : seasonData.rank.nameRu)
+    ? (locale === 'kk' ? seasonData.rank.nameKk : locale === 'en' ? seasonData.rank.nameEn : locale === 'uk' ? (seasonData.rank as any).nameUk ?? seasonData.rank.nameRu : locale === 'ka' ? (seasonData.rank as any).nameKa ?? seasonData.rank.nameRu : locale === 'az' ? (seasonData.rank as any).nameAz ?? seasonData.rank.nameRu : locale === 'uz' ? (seasonData.rank as any).nameUz ?? seasonData.rank.nameRu : locale === 'pl' ? (seasonData.rank as any).namePl ?? seasonData.rank.nameRu : seasonData.rank.nameRu)
     : null;
 
   const getAchName = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : a.nameRu;
+    locale === 'kk' ? a.nameKk : locale === 'en' ? a.nameEn : locale === 'uk' ? (a as any).nameUk ?? a.nameRu : locale === 'ka' ? (a as any).nameKa ?? a.nameRu : locale === 'az' ? (a as any).nameAz ?? a.nameRu : locale === 'uz' ? (a as any).nameUz ?? a.nameRu : locale === 'pl' ? (a as any).namePl ?? a.nameRu : a.nameRu;
   const getAchDesc = (a: typeof achievements[0]) =>
-    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : a.descRu;
+    locale === 'kk' ? a.descKk : locale === 'en' ? a.descEn : locale === 'uk' ? (a as any).descUk ?? a.descRu : locale === 'ka' ? (a as any).descKa ?? a.descRu : locale === 'az' ? (a as any).descAz ?? a.descRu : locale === 'uz' ? (a as any).descUz ?? a.descRu : locale === 'pl' ? (a as any).descPl ?? a.descRu : a.descRu;
 
   return (
     <div className="space-y-4 mt-3">
