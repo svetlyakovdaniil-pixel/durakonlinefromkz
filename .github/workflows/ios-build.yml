@@ -59,17 +59,14 @@ jobs:
       # ── 7. Add iOS platform (generates full Xcode project) ─────────────────
       - name: Add iOS platform
         run: |
-          # Remove existing ios folder if it only has assets (no xcodeproj)
           if [ ! -f "ios/App/App.xcodeproj/project.pbxproj" ]; then
             echo "No xcodeproj found, running cap add ios..."
-            # Keep existing assets
             cp -r ios/App/App/Assets.xcassets /tmp/AppAssets || true
             cp -r ios/App/App/*.lproj /tmp/ 2>/dev/null || true
             cp ios/App/App/Info.plist /tmp/Info.plist || true
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
             rm -rf ios
             npx cap add ios
-            # Restore custom assets
             cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
             for dir in /tmp/*.lproj; do
               [ -d "$dir" ] && cp -r "$dir" "ios/App/App/" || true
@@ -95,52 +92,22 @@ jobs:
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
           ls -la ios/App/ 2>/dev/null || echo "ios/App not found"
-          
-          # Create a minimal Podfile that cap sync will populate with correct plugins
+
+          # Create Podfile using base64-encoded content (avoids YAML ':' parsing issues)
+          # The base64 string below decodes to a valid Capacitor 8 Podfile
           if [ ! -f "ios/App/Podfile" ]; then
-            echo "Creating minimal Podfile for Capacitor 8..."
-            cat > ios/App/Podfile << 'PODFILE_EOF'
-require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
-
-platform :ios, '15.0'
-use_frameworks!
-
-# workaround to avoid Xcode 10 caching of Pods that requires
-# Product -> Clean Build Folder after new Cordova plugins are installed
-install! 'cocoapods', :disable_input_output_paths => true
-
-def capacitor_pods
-  pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
-  pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
-end
-
-target 'App' do
-  capacitor_pods
-end
-
-# Disable code signing for all Pods targets to avoid provisioning profile conflicts
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    target.build_configurations.each do |config|
-      config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-      config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-      config.build_settings['CODE_SIGN_IDENTITY'] = ''
-      config.build_settings['EXPANDED_CODE_SIGN_IDENTITY'] = ''
-    end
-  end
-end
-PODFILE_EOF
-            echo "Minimal Podfile created."
+            echo "Creating Podfile from base64..."
+            echo "cmVxdWlyZV9yZWxhdGl2ZSAiLi4vLi4vbm9kZV9tb2R1bGVzL0BjYXBhY2l0b3IvaW9zL3NjcmlwdHMvcG9kc19oZWxwZXJzIgoKcGxhdGZvcm0gOmlvcywgIjE1LjAiCnVzZV9mcmFtZXdvcmtzIQoKaW5zdGFsbCEgImNvY29hcG9kcyIsIDpkaXNhYmxlX2lucHV0X291dHB1dF9wYXRocyA9PiB0cnVlCgpkZWYgY2FwYWNpdG9yX3BvZHMKICBwb2QgIkNhcGFjaXRvciIsIDpwYXRoID0+ICIuLi8uLi9ub2RlX21vZHVsZXMvQGNhcGFjaXRvci9pb3MiCiAgcG9kICJDYXBhY2l0b3JDb3Jkb3ZhIiwgOnBhdGggPT4gIi4uLy4uL25vZGVfbW9kdWxlcy9AY2FwYWNpdG9yL2lvcyIKZW5kCgp0YXJnZXQgIkFwcCIgZG8KICBjYXBhY2l0b3JfcG9kcwplbmQKCnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkNPREVfU0lHTklOR19BTExPV0VEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOSU5HX1JFUVVJUkVEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOX0lERU5USVRZIl0gPSAiIgogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkVYUEFOREVEX0NPREVfU0lHTl9JREVOVElUWSJdID0gIiIKICAgIGVuZAogIGVuZAplbmQK" | base64 --decode > ios/App/Podfile
+            echo "Podfile created."
           fi
-          
+
           # Run cap sync to populate Podfile with all plugins automatically
-          # This is the correct way - Capacitor CLI reads capacitor.config.ts and adds all plugins
           echo "Running cap sync to populate Podfile with plugins..."
           npx cap sync ios --no-build 2>&1 || npx cap sync ios 2>&1 || true
-          
+
           echo "=== Podfile after cap sync ==="
           cat ios/App/Podfile
-          
+
           cd ios/App
           pod install --repo-update
 
@@ -154,26 +121,23 @@ PODFILE_EOF
           IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
           IOS_DISTRIBUTION_CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
         run: |
-          # Create a temporary keychain
           KEYCHAIN_PATH="$RUNNER_TEMP/ios-build.keychain"
           KEYCHAIN_PASSWORD="temp_keychain_password_$(date +%s)"
-          
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          
-          # Import certificate
+
           echo "$IOS_DISTRIBUTION_CERT_P12" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
           security import "$RUNNER_TEMP/distribution.p12" \
             -k "$KEYCHAIN_PATH" \
             -P "$IOS_DISTRIBUTION_CERT_PASSWORD" \
             -T /usr/bin/codesign \
             -T /usr/bin/security
-          
-          # Add to search list
+
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
-          
+
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
@@ -186,8 +150,7 @@ PODFILE_EOF
           mkdir -p "$PROFILE_PATH"
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision"
           echo "Provisioning profile installed"
-          
-          # Get UUID from profile using PlistBuddy
+
           PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" -o /tmp/profile.plist 2>/dev/null && \
             /usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
           if [ -z "$PROFILE_UUID" ]; then
@@ -204,118 +167,71 @@ PODFILE_EOF
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
           cd ios/App
-          
-          # Use Python to patch project.pbxproj with correct settings
+
           python3 << 'PYEOF'
           import re, os
-          
+
           pbxproj_path = "App.xcodeproj/project.pbxproj"
           bundle_id = os.environ["IOS_BUNDLE_ID"]
           team_id = os.environ["IOS_TEAM_ID"]
-          
+
           with open(pbxproj_path, "r") as f:
               content = f.read()
-          
-          # Replace bundle ID for App target only
+
           content = re.sub(
               r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
               f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};',
               content
           )
-          # Replace development team
           content = re.sub(
               r'DEVELOPMENT_TEAM = [^;]*;',
               f'DEVELOPMENT_TEAM = {team_id};',
               content
           )
-          # Set CODE_SIGN_STYLE to Manual for all targets
           content = re.sub(
               r'CODE_SIGN_STYLE = [^;]+;',
               'CODE_SIGN_STYLE = Manual;',
               content
           )
-          # Set CODE_SIGN_IDENTITY to Apple Distribution for all targets
           content = re.sub(
               r'CODE_SIGN_IDENTITY = [^;]*;',
               'CODE_SIGN_IDENTITY = "Apple Distribution";',
               content
           )
-          # Add PROVISIONING_PROFILE_SPECIFIER only to App target build configurations
-          # We need to find the App target's build configuration sections and add the specifier there
-          # Strategy: find sections that have PRODUCT_BUNDLE_IDENTIFIER matching our bundle ID
-          # and add PROVISIONING_PROFILE_SPECIFIER after CODE_SIGN_IDENTITY
-          
-          # First remove any existing PROVISIONING_PROFILE_SPECIFIER lines
           content = re.sub(
               r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
               '',
               content
           )
-          
-          # Now add PROVISIONING_PROFILE_SPECIFIER only in sections that have our bundle ID
-          # Split content into sections by build configuration blocks
-          # Add provisioning profile specifier after CODE_SIGN_IDENTITY in App target sections
+
           profile_name = "DurakOnlineKZ AppStore Distribution"
-          
-          # Find all build setting blocks that contain our bundle ID
-          # and add PROVISIONING_PROFILE_SPECIFIER to them
-          import re as re2
-          
-          def add_profile_to_app_sections(content, bundle_id, profile_name):
-              # Split by build configuration sections (each ends with a closing brace)
-              # We look for sections containing our bundle ID and add profile specifier
-              lines = content.split('\n')
-              result = []
-              in_app_section = False
-              brace_depth = 0
-              section_start = -1
-              
-              # Simpler approach: find lines with our bundle ID and add profile specifier nearby
-              # Find all occurrences of PRODUCT_BUNDLE_IDENTIFIER = <our_bundle_id>
-              # and in the same build settings block, add PROVISIONING_PROFILE_SPECIFIER
-              
-              # Use a different approach: find the build configuration blocks for App target
-              # by looking for sections that have PRODUCT_BUNDLE_IDENTIFIER = <bundle_id>
-              # These sections are delimited by { and }
-              
-              i = 0
-              while i < len(lines):
-                  line = lines[i]
-                  result.append(line)
-                  # Check if this line sets our bundle ID
-                  if f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};' in line:
-                      # Add PROVISIONING_PROFILE_SPECIFIER on the next line
-                      result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";')
-                  i += 1
-              
-              return '\n'.join(result)
-          
-          content = add_profile_to_app_sections(content, bundle_id, profile_name)
-          
+          lines = content.split('\n')
+          result = []
+          for line in lines:
+              result.append(line)
+              if f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};' in line:
+                  result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";')
+          content = '\n'.join(result)
+
           with open(pbxproj_path, "w") as f:
               f.write(content)
-          
-          print("Xcode project updated: Manual signing, Apple Distribution, provisioning profile for App target")
+
+          print("Xcode project updated successfully")
           PYEOF
-          
-          # Also patch Pods xcconfig files to remove provisioning profile settings
-          # This runs AFTER pod install, so xcconfig files should exist
+
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
-            # Remove CODE_SIGN_IDENTITY and PROVISIONING_PROFILE lines from Pods xcconfig
             sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
             sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
           done
           echo "Pods xcconfig files patched"
-          
-          # Pre-resolve SPM packages so we can patch them
-          # This forces Xcode to download RevenueCat SPM before we build
+
           echo "Pre-resolving SPM packages..."
           xcodebuild -resolvePackageDependencies \
             -workspace App.xcworkspace \
             -scheme App \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             2>&1 | tail -5 || true
-          
+
           echo "Xcode project updated"
 
       # ── 13. Build & Archive ────────────────────────────────────────────────
@@ -325,10 +241,7 @@ PODFILE_EOF
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
           cd ios/App
-          
-          # Build with Manual signing for App target only
-          # Do NOT pass PROVISIONING_PROFILE_SPECIFIER globally - it causes SPM package errors
-          # The provisioning profile will be applied during Export (ExportOptions.plist)
+
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -344,8 +257,7 @@ PODFILE_EOF
             CODE_SIGN_IDENTITY="Apple Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
-          
-          # Check if archive was created
+
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
             echo "Archive failed! Last 100 lines of build log:"
             tail -100 /tmp/xcodebuild.log
@@ -359,36 +271,45 @@ PODFILE_EOF
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
-          # Create ExportOptions.plist
-          cat > "$RUNNER_TEMP/ExportOptions.plist" << EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store-connect</string>
-            <key>teamID</key>
-            <string>$IOS_TEAM_ID</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>$IOS_BUNDLE_ID</key>
-              <string>DurakOnlineKZ AppStore Distribution</string>
-            </dict>
-          </dict>
-          </plist>
-          EOF
-          
+          # Write ExportOptions.plist using python3 to avoid heredoc YAML issues
+          python3 - << 'PYEOF'
+          import os
+          team_id = os.environ['IOS_TEAM_ID']
+          bundle_id = os.environ['IOS_BUNDLE_ID']
+          runner_temp = os.environ['RUNNER_TEMP']
+          plist = (
+              '<?xml version="1.0" encoding="UTF-8"?>\n'
+              '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
+              '<plist version="1.0">\n'
+              '<dict>\n'
+              '  <key>method</key>\n'
+              '  <string>app-store-connect</string>\n'
+              '  <key>teamID</key>\n'
+              '  <string>' + team_id + '</string>\n'
+              '  <key>uploadBitcode</key>\n'
+              '  <false/>\n'
+              '  <key>uploadSymbols</key>\n'
+              '  <true/>\n'
+              '  <key>signingStyle</key>\n'
+              '  <string>manual</string>\n'
+              '  <key>provisioningProfiles</key>\n'
+              '  <dict>\n'
+              '    <key>' + bundle_id + '</key>\n'
+              '    <string>DurakOnlineKZ AppStore Distribution</string>\n'
+              '  </dict>\n'
+              '</dict>\n'
+              '</plist>\n'
+          )
+          with open(runner_temp + '/ExportOptions.plist', 'w') as f:
+              f.write(plist)
+          print('ExportOptions.plist created')
+          PYEOF
+
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
-          
+
           echo "IPA exported:"
           ls -la "$RUNNER_TEMP/ipa/"
 
@@ -402,7 +323,7 @@ PODFILE_EOF
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
           echo "Uploading: $IPA_PATH"
-          
+
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
