@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:825855589810:android:411bf68633a3028fbcf8ab",
+        "mobilesdk_app_id": "1:825855589810:android:9967b177fb0d47b3bcf8ab",
         "android_client_info": {
-          "package_name": "online.durakonline.fromkz"
+          "package_name": "kz.durak.online"
         }
       },
       "oauth_client": [
@@ -29,6 +29,13 @@
             {
               "client_id": "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "825855589810-p63edci1a8ehttgcgurcehlskpp8vnb3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "online.durakonline.fromkz"
+              }
             }
           ]
         }
