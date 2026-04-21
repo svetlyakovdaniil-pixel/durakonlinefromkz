@@ -239,17 +239,62 @@ jobs:
               'CODE_SIGN_IDENTITY = "Apple Distribution";',
               content
           )
-          # Remove any existing PROVISIONING_PROFILE_SPECIFIER lines
+          # Add PROVISIONING_PROFILE_SPECIFIER only to App target build configurations
+          # We need to find the App target's build configuration sections and add the specifier there
+          # Strategy: find sections that have PRODUCT_BUNDLE_IDENTIFIER matching our bundle ID
+          # and add PROVISIONING_PROFILE_SPECIFIER after CODE_SIGN_IDENTITY
+          
+          # First remove any existing PROVISIONING_PROFILE_SPECIFIER lines
           content = re.sub(
               r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
               '',
               content
           )
           
+          # Now add PROVISIONING_PROFILE_SPECIFIER only in sections that have our bundle ID
+          # Split content into sections by build configuration blocks
+          # Add provisioning profile specifier after CODE_SIGN_IDENTITY in App target sections
+          profile_name = "DurakOnlineKZ AppStore Distribution"
+          
+          # Find all build setting blocks that contain our bundle ID
+          # and add PROVISIONING_PROFILE_SPECIFIER to them
+          import re as re2
+          
+          def add_profile_to_app_sections(content, bundle_id, profile_name):
+              # Split by build configuration sections (each ends with a closing brace)
+              # We look for sections containing our bundle ID and add profile specifier
+              lines = content.split('\n')
+              result = []
+              in_app_section = False
+              brace_depth = 0
+              section_start = -1
+              
+              # Simpler approach: find lines with our bundle ID and add profile specifier nearby
+              # Find all occurrences of PRODUCT_BUNDLE_IDENTIFIER = <our_bundle_id>
+              # and in the same build settings block, add PROVISIONING_PROFILE_SPECIFIER
+              
+              # Use a different approach: find the build configuration blocks for App target
+              # by looking for sections that have PRODUCT_BUNDLE_IDENTIFIER = <bundle_id>
+              # These sections are delimited by { and }
+              
+              i = 0
+              while i < len(lines):
+                  line = lines[i]
+                  result.append(line)
+                  # Check if this line sets our bundle ID
+                  if f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};' in line:
+                      # Add PROVISIONING_PROFILE_SPECIFIER on the next line
+                      result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";')
+                  i += 1
+              
+              return '\n'.join(result)
+          
+          content = add_profile_to_app_sections(content, bundle_id, profile_name)
+          
           with open(pbxproj_path, "w") as f:
               f.write(content)
           
-          print("Xcode project updated: Manual signing, Apple Distribution for all targets")
+          print("Xcode project updated: Manual signing, Apple Distribution, provisioning profile for App target")
           PYEOF
           
           # Also patch Pods xcconfig files to remove provisioning profile settings
