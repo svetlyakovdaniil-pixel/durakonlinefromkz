@@ -1,4 +1,4 @@
-package online.durakonline.fromkz;
+package kz.durak.online;
 
 import com.getcapacitor.BridgeActivity;
 

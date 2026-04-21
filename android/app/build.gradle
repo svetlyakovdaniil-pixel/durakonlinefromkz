@@ -1,10 +1,10 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "online.durakonline.fromkz"
+    namespace = "kz.durak.online"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "online.durakonline.fromkz"
+        applicationId "kz.durak.online"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
