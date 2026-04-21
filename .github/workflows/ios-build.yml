@@ -261,6 +261,15 @@ jobs:
           done
           echo "Pods xcconfig files patched"
           
+          # Pre-resolve SPM packages so we can patch them
+          # This forces Xcode to download RevenueCat SPM before we build
+          echo "Pre-resolving SPM packages..."
+          xcodebuild -resolvePackageDependencies \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            2>&1 | tail -5 || true
+          
           echo "Xcode project updated"
 
       # ── 13. Build & Archive ────────────────────────────────────────────────
@@ -282,13 +291,13 @@ jobs:
             -destination "generic/platform=iOS" \
             -skipPackagePluginValidation \
             -skipMacroValidation \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            SWIFT_PACKAGE_MANAGER_CODE_SIGN_IDENTITY="" \
             2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
           
           # Check if archive was created
