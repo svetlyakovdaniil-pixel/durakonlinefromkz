@@ -218,37 +218,31 @@ jobs:
         run: |
           cd ios/App
           
+          # Build using xcodebuild with manual signing only for App target
+          # Pods targets use automatic signing to avoid "does not support provisioning profiles" errors
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            -allowProvisioningUpdates \
-            | xcpretty --color || true
+            PODS_DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
           
           # Check if archive was created
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
-            echo "Archive failed! Running without xcpretty for full output..."
-            xcodebuild archive \
-              -workspace App.xcworkspace \
-              -scheme App \
-              -configuration Release \
-              -archivePath "$RUNNER_TEMP/App.xcarchive" \
-              -destination "generic/platform=iOS" \
-              DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
-              PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-              CODE_SIGN_STYLE=Manual \
-              CODE_SIGN_IDENTITY="iPhone Distribution" \
-              PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
-              OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
+            echo "Archive failed! Last 100 lines of build log:"
+            tail -100 /tmp/xcodebuild.log
+            exit 1
           fi
+          echo "Archive created successfully!"
 
       # ── 14. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
