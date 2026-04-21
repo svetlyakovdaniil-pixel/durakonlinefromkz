@@ -273,18 +273,22 @@ jobs:
           
           # Build with Manual signing for App target
           # Pods have CODE_SIGNING_ALLOWED=NO set via post_install hook in Podfile
+          # SPM packages also need signing disabled via build settings
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            SWIFT_PACKAGE_MANAGER_CODE_SIGN_IDENTITY="" \
             2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
           
           # Check if archive was created
