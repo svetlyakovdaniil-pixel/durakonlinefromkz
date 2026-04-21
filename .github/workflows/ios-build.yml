@@ -192,10 +192,7 @@ jobs:
         run: |
           cd ios/App
           
-          PBXPROJ="App.xcodeproj/project.pbxproj"
-          
-          # Update PRODUCT_BUNDLE_IDENTIFIER only for App target (not Pods)
-          # We use a Python script to precisely target only the App target settings
+          # Use Python to patch project.pbxproj with correct settings
           python3 << 'PYEOF'
           import re, os
           
@@ -206,7 +203,7 @@ jobs:
           with open(pbxproj_path, "r") as f:
               content = f.read()
           
-          # Replace bundle ID
+          # Replace bundle ID for App target only
           content = re.sub(
               r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
               f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};',
@@ -218,18 +215,39 @@ jobs:
               f'DEVELOPMENT_TEAM = {team_id};',
               content
           )
-          # Set CODE_SIGN_STYLE to Automatic for all (Pods need this)
+          # Set CODE_SIGN_STYLE to Manual for all targets
           content = re.sub(
               r'CODE_SIGN_STYLE = [^;]+;',
-              'CODE_SIGN_STYLE = Automatic;',
+              'CODE_SIGN_STYLE = Manual;',
+              content
+          )
+          # Set CODE_SIGN_IDENTITY to Apple Distribution for all targets
+          content = re.sub(
+              r'CODE_SIGN_IDENTITY = [^;]*;',
+              'CODE_SIGN_IDENTITY = "Apple Distribution";',
+              content
+          )
+          # Remove any existing PROVISIONING_PROFILE_SPECIFIER lines
+          content = re.sub(
+              r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
+              '',
               content
           )
           
           with open(pbxproj_path, "w") as f:
               f.write(content)
           
-          print("Xcode project updated with bundle ID and team")
+          print("Xcode project updated: Manual signing, Apple Distribution for all targets")
           PYEOF
+          
+          # Also patch Pods xcconfig files to remove provisioning profile settings
+          # This runs AFTER pod install, so xcconfig files should exist
+          find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
+            # Remove CODE_SIGN_IDENTITY and PROVISIONING_PROFILE lines from Pods xcconfig
+            sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
+            sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
+          done
+          echo "Pods xcconfig files patched"
           
           echo "Xcode project updated"
 
@@ -241,18 +259,18 @@ jobs:
         run: |
           cd ios/App
           
-          # Build using automatic signing with Apple Distribution identity
+          # Build using Manual signing - all targets use Apple Distribution
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
           
