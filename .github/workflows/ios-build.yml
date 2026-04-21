@@ -192,21 +192,44 @@ jobs:
         run: |
           cd ios/App
           
-          # Use xcode-build-settings to update bundle ID and team
-          # Update project.pbxproj with correct bundle ID and team
           PBXPROJ="App.xcodeproj/project.pbxproj"
           
-          # Update PRODUCT_BUNDLE_IDENTIFIER
-          sed -i '' "s/PRODUCT_BUNDLE_IDENTIFIER = .*/PRODUCT_BUNDLE_IDENTIFIER = $IOS_BUNDLE_ID;/g" "$PBXPROJ"
+          # Update PRODUCT_BUNDLE_IDENTIFIER only for App target (not Pods)
+          # We use a Python script to precisely target only the App target settings
+          python3 << 'PYEOF'
+          import re, os
           
-          # Update DEVELOPMENT_TEAM
-          sed -i '' "s/DEVELOPMENT_TEAM = .*/DEVELOPMENT_TEAM = $IOS_TEAM_ID;/g" "$PBXPROJ"
+          pbxproj_path = "App.xcodeproj/project.pbxproj"
+          bundle_id = os.environ["IOS_BUNDLE_ID"]
+          team_id = os.environ["IOS_TEAM_ID"]
           
-          # Set CODE_SIGN_STYLE to Manual
-          sed -i '' "s/CODE_SIGN_STYLE = .*/CODE_SIGN_STYLE = Manual;/g" "$PBXPROJ"
+          with open(pbxproj_path, "r") as f:
+              content = f.read()
           
-          # Set provisioning profile
-          sed -i '' "s/PROVISIONING_PROFILE_SPECIFIER = .*/PROVISIONING_PROFILE_SPECIFIER = \"DurakOnlineKZ AppStore Distribution\";/g" "$PBXPROJ"
+          # Replace bundle ID
+          content = re.sub(
+              r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
+              f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};',
+              content
+          )
+          # Replace development team
+          content = re.sub(
+              r'DEVELOPMENT_TEAM = [^;]*;',
+              f'DEVELOPMENT_TEAM = {team_id};',
+              content
+          )
+          # Set CODE_SIGN_STYLE to Automatic for all (Pods need this)
+          content = re.sub(
+              r'CODE_SIGN_STYLE = [^;]+;',
+              'CODE_SIGN_STYLE = Automatic;',
+              content
+          )
+          
+          with open(pbxproj_path, "w") as f:
+              f.write(content)
+          
+          print("Xcode project updated with bundle ID and team")
+          PYEOF
           
           echo "Xcode project updated"
 
@@ -218,8 +241,7 @@ jobs:
         run: |
           cd ios/App
           
-          # Build using xcodebuild with manual signing only for App target
-          # Pods targets use automatic signing to avoid "does not support provisioning profiles" errors
+          # Build using automatic signing - Xcode will use the installed certificate and profile
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -229,11 +251,9 @@ jobs:
             -allowProvisioningUpdates \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_STYLE=Automatic \
             CODE_SIGN_IDENTITY="iPhone Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="DurakOnlineKZ AppStore Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            PODS_DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
           
           # Check if archive was created
