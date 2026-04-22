@@ -6,8 +6,8 @@ const urlCache = new Map<string, { url: string; expiresAt: number }>();
 const CACHE_TTL_MS = 50 * 60 * 1000; // 50 minutes (presigned URLs valid for 1 hour)
 
 export function registerStorageProxy(app: Express) {
-  app.get("/manus-storage/*", async (req, res) => {
-    const key = (req.params as Record<string, string>)[0] ?? req.path.replace(/^\/manus-storage\//, '');
+  app.get("/storage-proxy/*", async (req, res) => {
+    const key = (req.params as Record<string, string>)[0] ?? req.path.replace(/^\/storage-proxy\//, '');
     if (!key) {
       res.status(400).send("Missing storage key");
       return;
