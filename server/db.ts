@@ -1083,6 +1083,20 @@ export async function getPlayerProfileWithFriendStatus(targetGameId: number, myP
     }
   }
 
+  // Get current season rating
+  let seasonRating = 0;
+  try {
+    const { getCurrentSeasonKey } = await import('../shared/seasons');
+    const seasonKey = getCurrentSeasonKey();
+    const [sr] = await db.select({ seasonRating: seasonRatings.seasonRating })
+      .from(seasonRatings)
+      .where(and(eq(seasonRatings.profileId, target.id), eq(seasonRatings.seasonKey, seasonKey)))
+      .limit(1);
+    seasonRating = sr?.seasonRating ?? 0;
+  } catch {
+    // Non-critical
+  }
+
   return {
     profileId: target.id,
     gameId: target.gameId,
@@ -1093,6 +1107,7 @@ export async function getPlayerProfileWithFriendStatus(targetGameId: number, myP
     gamesPlayed: target.gamesPlayed,
     wins: target.wins,
     losses: target.losses,
+    seasonRating,
     friendStatus,
     friendshipId,
     isSelf: target.id === myProfileId,
@@ -3878,6 +3893,7 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
   gameId: number;
   profileId: number;
   userId: number;
+  seasonRating: number;
 } | null> {
   const db = await getDb();
   if (!db) return null;
@@ -3907,8 +3923,29 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
       equippedFrame: equippedFrame ?? null,
       activeEmotionPack: emotionPack ?? 'khan',
     }).where(eq(playerProfiles.id, existingProfile.id));
-    return { openId, gameId: existingProfile.gameId, profileId: existingProfile.id, userId: user.id };
+    // Read current season rating from DB
+    const { getCurrentSeasonKey } = await import('../shared/seasons');
+    const seasonKey = getCurrentSeasonKey();
+    const [sr] = await db.select({ seasonRating: seasonRatings.seasonRating })
+      .from(seasonRatings)
+      .where(and(eq(seasonRatings.profileId, existingProfile.id), eq(seasonRatings.seasonKey, seasonKey)))
+      .limit(1);
+    return { openId, gameId: existingProfile.gameId, profileId: existingProfile.id, userId: user.id, seasonRating: sr?.seasonRating ?? 0 };
   }
+
+  // ── Generate realistic fake history for new ghost player ──
+  // Random total games: 4–67
+  const totalGames = 4 + Math.floor(Math.random() * 64);
+  // Win rate: 15–65%
+  const winRate = 0.15 + Math.random() * 0.50;
+  const wins = Math.round(totalGames * winRate);
+  // Loss rate: 10–40% of games
+  const lossRate = 0.10 + Math.random() * 0.30;
+  const losses = Math.min(Math.round(totalGames * lossRate), totalGames - wins);
+  // ELO rating: start at 1000, wins add ~20, losses subtract ~20
+  const baseRating = Math.max(0, 1000 + wins * 20 - losses * 20 + Math.floor((Math.random() - 0.5) * 200));
+  // Season rating: 0–2000 range, correlated with win rate
+  const ghostSeasonRating = Math.max(0, Math.round(winRate * 2000 + (Math.random() - 0.5) * 400));
 
   const [maxRow] = await db.select({ maxId: sql<number>`COALESCE(MAX(${playerProfiles.gameId}), 0)` }).from(playerProfiles);
   const nextGameId = (maxRow?.maxId ?? 0) + 1;
@@ -3917,12 +3954,12 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
     userId: user.id,
     gameId: nextGameId,
     displayName: nick,
-    rating: 1000,
-    gamesPlayed: 0,
-    wins: 0,
-    losses: 0,
-    balanceTenge: 25,
-    balanceShanyrak: 5000,
+    rating: baseRating,
+    gamesPlayed: totalGames,
+    wins,
+    losses,
+    balanceTenge: 25 + Math.floor(Math.random() * 500),
+    balanceShanyrak: 1000 + Math.floor(Math.random() * 9000),
     avatarId,
     equippedFrame: equippedFrame ?? null,
     activeEmotionPack: emotionPack ?? 'khan',
@@ -3931,7 +3968,28 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
   const [created] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);
   if (!created) return null;
 
-  return { openId, gameId: created.gameId, profileId: created.id, userId: user.id };
+  // Create season rating entry for current season
+  try {
+    const { getCurrentSeasonKey } = await import('../shared/seasons');
+    const seasonKey = getCurrentSeasonKey();
+    const seasonWins = Math.round(wins * 0.6);
+    const seasonLosses = Math.round(losses * 0.6);
+    const seasonGames = seasonWins + seasonLosses + Math.floor(Math.random() * 5);
+    await db.insert(seasonRatings).values({
+      profileId: created.id,
+      seasonKey,
+      seasonRating: ghostSeasonRating,
+      gamesPlayed: seasonGames,
+      wins: seasonWins,
+      losses: seasonLosses,
+    }).onDuplicateKeyUpdate({
+      set: { seasonRating: ghostSeasonRating, gamesPlayed: seasonGames, wins: seasonWins, losses: seasonLosses },
+    });
+  } catch (e) {
+    console.error('[Ghost] Failed to create season rating:', e);
+  }
+
+  return { openId, gameId: created.gameId, profileId: created.id, userId: user.id, seasonRating: ghostSeasonRating };
 }
 
 /**
