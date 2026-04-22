@@ -725,3 +725,21 @@ export const ghostLearning = mysqlTable("ghost_learning", {
 });
 export type GhostLearning = typeof ghostLearning.$inferSelect;
 export type InsertGhostLearning = typeof ghostLearning.$inferInsert;
+
+/**
+ * Ghost strategy profile — LLM-generated strategy adjustments per ghost.
+ * Updated after each game via LLM analysis of move history.
+ */
+export const ghostStrategyProfile = mysqlTable("ghost_strategy_profile", {
+  id: int("id").autoincrement().primaryKey(),
+  ghostId: varchar("ghostId", { length: 64 }).notNull().unique(),
+  strategyJson: text("strategyJson").notNull().default('{}'),
+  gamesAnalyzed: int("gamesAnalyzed").notNull().default(0),
+  winRate: float("winRate").notNull().default(0),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GhostStrategyProfile = typeof ghostStrategyProfile.$inferSelect;
+export type InsertGhostStrategyProfile = typeof ghostStrategyProfile.$inferInsert;
+
+

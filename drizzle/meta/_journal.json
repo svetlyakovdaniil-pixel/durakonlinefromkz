@@ -421,6 +421,13 @@
       "when": 1776875049924,
       "tag": "0059_unique_stature",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "5",
+      "when": 1776901800332,
+      "tag": "0060_glorious_deadpool",
+      "breakpoints": true
     }
   ]
 }
