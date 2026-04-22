@@ -2356,7 +2356,11 @@ function scheduleBotAction(roomId: string) {
   }
 
   const activePlayer = gameState.players[activeIdx];
-  if (!activePlayer || !activePlayer.isBot) {
+  // Ghost players (id starts with 'ghost-') are treated as bots for turn scheduling.
+  // They are NOT marked isBot (they look like real players) but when it's their turn,
+  // the server must drive their action via getBotAction — they don't send socket events.
+  const isGhostOrBot = !activePlayer || activePlayer.isBot || activePlayer.id.startsWith('ghost-');
+  if (!isGhostOrBot) {
     // Human player's turn — check if edge bots can act
     scheduleEdgeBotActions(roomId);
     return;
@@ -2531,7 +2535,9 @@ function scheduleEdgeBotActions(roomId: string) {
 
   for (let i = 0; i < gameState.players.length; i++) {
     const p = gameState.players[i];
-    if (!p.isBot || p.isOut) continue;
+    // Ghost players are treated as bots for edge actions
+    const isGhostOrBot = p.isBot || p.id.startsWith('ghost-');
+    if (!isGhostOrBot || p.isOut) continue;
     if (i === gameState.currentDefenderIdx) continue;
     if (i === gameState.currentAttackerIdx) continue;
     if (!canPlayerAddCards(gameState, i)) continue;
