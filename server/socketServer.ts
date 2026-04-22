@@ -1382,17 +1382,29 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on('leaveGame', (roomId, ack) => {
       const gameState = games.get(roomId);
       if (!gameState || gameState.gamePhase !== 'playing') {
-        if (typeof ack === 'function') ack({ ok: false });
+        // Game not active — still mark as intentionally left to block reconnect
+        forfeitedFromRoom.add(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        socket.leave(roomId);
+        if (typeof ack === 'function') ack({ ok: true });
         return;
       }
 
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       if (playerIdx === -1) {
-        if (typeof ack === 'function') ack({ ok: false });
+        // Player not in game state — still mark as intentionally left to block reconnect
+        forfeitedFromRoom.add(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        socket.leave(roomId);
+        if (typeof ack === 'function') ack({ ok: true });
         return;
       }
       if (gameState.players[playerIdx].isOut) {
-        if (typeof ack === 'function') ack({ ok: false });
+        // Player already out — still mark as intentionally left so reconnect won't rejoin
+        forfeitedFromRoom.add(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        socket.leave(roomId);
+        if (typeof ack === 'function') ack({ ok: true });
         return;
       }
 
