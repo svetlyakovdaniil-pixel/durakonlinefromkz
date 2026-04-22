@@ -8,7 +8,7 @@ const config: CapacitorConfig = {
   // In development: point to your live server so hot-reload works
   // In production: remove the `server` block entirely so the app loads from webDir
   // server: {
-  //   url: 'https://your-dev-server.manus.space',
+  //   url: 'https://durakonlinefromkz.online',
   //   cleartext: true,
   // },
 
