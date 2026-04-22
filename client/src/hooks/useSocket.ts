@@ -201,6 +201,14 @@ export function useSocket(userId: string | null, userName: string | null) {
         console.log(`[Socket] Ignoring roomUpdated for blocked room ${r.id}`);
         return;
       }
+      // Only accept roomUpdated if we are actually in a room (not in lobby).
+      // This prevents a race condition where the server sends roomUpdated just
+      // before socket.leave(roomId) takes effect after leaveGame, which would
+      // pull the player back into the room view.
+      if (!currentRoomIdRef.current) {
+        console.log(`[Socket] Ignoring roomUpdated — not in any room (in lobby)`);
+        return;
+      }
       setCurrentRoom(r);
     });
     socket.on('roomClosed', () => {

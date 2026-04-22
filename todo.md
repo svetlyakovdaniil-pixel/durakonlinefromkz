@@ -3551,3 +3551,7 @@
 
 ## Баг: гост-плееры используют скрытый стол Апокалипсис
 - [x] Гост-плееры должны использовать только столы с isHidden=false (видимые в магазине)
+## Баг: игрок возвращается в игру после намеренного выхода через reconnect
+- [x] Диагностика: найти где leaveGame не блокирует reconnect при isOut/playerIdx=-1/no gameState
+- [x] Исправить сервер: при leaveGame всегда добавлять в forfeitedFromRoom (даже при isOut, playerIdx=-1, нет gameState)
+- [x] Исправить клиент: roomUpdated игнорировать если currentRoomIdRef=null (игрок в лобби)
