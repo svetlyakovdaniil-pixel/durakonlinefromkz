@@ -1,7 +1,7 @@
 import { ENV } from "./_core/env";
 
 const BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
-const FROM_EMAIL = "noreply@durakonlinefromkz.vip";
+const FROM_EMAIL = "noreply@durakonlinefromkz.online";
 const FROM_NAME = "Дурак Online";
 
 export async function sendVerificationEmail(toEmail: string, code: string): Promise<boolean> {
@@ -14,7 +14,7 @@ export async function sendVerificationEmail(toEmail: string, code: string): Prom
     <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; background: #0a0a1a; color: #fff; border-radius: 12px; overflow: hidden;">
       <div style="background: linear-gradient(135deg, #1a0a2e 0%, #0d1b3e 100%); padding: 32px; text-align: center;">
         <h1 style="color: #e63946; margin: 0; font-size: 28px; letter-spacing: 2px;">ДУРАК ONLINE</h1>
-        <p style="color: #aaa; margin: 8px 0 0; font-size: 14px;">durakonlinefromkz.vip</p>
+        <p style="color: #aaa; margin: 8px 0 0; font-size: 14px;">durakonlinefromkz.online</p>
       </div>
       <div style="padding: 32px; text-align: center;">
         <h2 style="color: #fff; margin: 0 0 16px; font-size: 20px;">Подтверждение регистрации</h2>

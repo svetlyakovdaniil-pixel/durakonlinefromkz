@@ -176,7 +176,7 @@ git push origin v1.0.0
    - Скриншоты (iPhone 6.7", 6.5", iPad 12.9" — обязательно)
    - Описание, ключевые слова
    - Возрастной рейтинг (4+)
-   - Политика конфиденциальности: `https://durakonlinefromkz.vip/privacy`
+   - Политика конфиденциальности: `https://durakonlinefromkz.online/privacy`
 3. Выбрать сборку из TestFlight
 4. **Отправить на проверку**
 

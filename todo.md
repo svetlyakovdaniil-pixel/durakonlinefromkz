@@ -3083,7 +3083,7 @@
 
 ## Batch 100 — Sign in with Apple (апрель 2026)
 - [x] Создан App ID com.durakonlinefromkz.app в Apple Developer (Team ID: CMP7AQ6386)
-- [x] Создан Service ID com.durakonlinefromkz.web с доменом durakonlinefromkz.vip и Return URL
+- [x] Создан Service ID com.durakonlinefromkz.web с доменом durakonlinefromkz.online и Return URL
 - [x] Создан Key ID SHTMB76CNK с поддержкой Sign in with Apple
 - [x] Создан server/appleAuth.ts: генерация client_secret JWT, обмен кода на токены, верификация id_token через JWKS
 - [x] Маршруты GET /api/auth/apple/init и POST /api/auth/apple/callback зарегистрированы в _core/index.ts
@@ -3091,9 +3091,9 @@
 - [x] 0 TypeScript ошибок, 520/520 тестов прошли
 
 ## Batch 101 — Google OAuth настройка
-- [x] Добавить durakonlinefromkz.vip в Firebase Authorized Domains
-- [x] Добавить durakonlinefromkz.vip в Google Cloud OAuth Authorized JavaScript origins
-- [x] Добавить https://durakonlinefromkz.vip/api/auth/google/callback в Authorized redirect URIs
+- [x] Добавить durakonlinefromkz.online в Firebase Authorized Domains
+- [x] Добавить durakonlinefromkz.online в Google Cloud OAuth Authorized JavaScript origins
+- [x] Добавить https://durakonlinefromkz.online/api/auth/google/callback в Authorized redirect URIs
 - [x] Создать новый Google Client Secret и добавить в env (GOOGLE_CLIENT_SECRET)
 
 ## Batch 102 — Ретроактивный пересчёт достижений + чистка

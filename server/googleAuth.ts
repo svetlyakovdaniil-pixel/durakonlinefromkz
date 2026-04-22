@@ -69,7 +69,7 @@ export function registerGoogleAuthRoutes(app: Express) {
    * Redirects user to Google OAuth consent screen
    */
   app.get("/api/auth/google/init", (req: Request, res: Response) => {
-    const origin = (req.query.origin as string) || "https://durakonlinefromkz.vip";
+    const origin = (req.query.origin as string) || "https://durakonlinefromkz.online";
     const referralCode = (req.query.referralCode as string) || "";
     const redirectUri = `${origin}/api/auth/google/callback`;
 
@@ -96,7 +96,7 @@ export function registerGoogleAuthRoutes(app: Express) {
     const { code, state, error } = req.query as Record<string, string>;
 
     // Decode state
-    let origin = "https://durakonlinefromkz.vip";
+    let origin = "https://durakonlinefromkz.online";
     let referralCode = "";
     try {
       if (state) {

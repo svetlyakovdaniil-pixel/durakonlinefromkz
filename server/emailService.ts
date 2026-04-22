@@ -22,7 +22,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Дурак Онлайн <noreply@durakonlinefromkz.vip>",
+        from: "Дурак Онлайн <noreply@durakonlinefromkz.online>",
         to: [options.to],
         subject: options.subject,
         html: options.html,
@@ -62,7 +62,7 @@ export async function sendVerificationCode(email: string, code: string, username
               <tr>
                 <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 32px; text-align: center; border-bottom: 2px solid #f59e0b;">
                   <h1 style="color: #f59e0b; margin: 0; font-size: 28px; font-weight: bold;">🃏 Дурак Онлайн</h1>
-                  <p style="color: #94a3b8; margin: 8px 0 0; font-size: 14px;">durakonlinefromkz.vip</p>
+                  <p style="color: #94a3b8; margin: 8px 0 0; font-size: 14px;">durakonlinefromkz.online</p>
                 </td>
               </tr>
               <!-- Body -->
