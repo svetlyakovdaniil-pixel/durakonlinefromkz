@@ -265,12 +265,16 @@ function pickEmotion(temperament: Temperament): string {
 }
 
 /**
- * Returns true if a card is considered "valuable" — trump, King of Spades, or 777.
- * Valuable cards should not be played carelessly.
+ * Returns true if a card is considered "valuable" — trump J/Q/K/A, King of Spades, or 777.
+ * Valuable cards should not be played carelessly (only as last resort).
  */
 function isValuableCard(card: ClientGameState['myHand'][number], trumpSuit: ClientGameState['trumpInfo']['currentTrump']): boolean {
   if (card.rank === '777') return true;
-  if (card.suit === trumpSuit) return true;
+  // Trump cards from Jack and above are valuable
+  if (card.suit === trumpSuit) {
+    const rank = RANK_ORDER[card.rank] ?? 0;
+    if (rank >= RANK_ORDER['J']) return true; // J, Q, K, A of trump
+  }
   if (card.suit === 'spades' && card.rank === 'K') return true;
   return false;
 }
@@ -408,24 +412,48 @@ function pickGhostAction(
     }
   }
 
-  // Transfer (proezdnoy / pass-through)
+  // ── Pass-through (проездной) — ALWAYS use it if available with non-valuable cards ──
   if (showPassThrough && showPassThrough.type === 'showPassThrough' && showPassThrough.cardIds.length > 0) {
-    if (Math.random() < (0.3 + skill * 0.5)) {
-      // Prefer non-valuable pass-through cards
+    const cardMap2 = new Map(myHand.map(c => [c.id, c]));
+    const ptCards = showPassThrough.cardIds.map(id => cardMap2.get(id)).filter(Boolean) as ClientGameState['myHand'];
+    const nonValPT = ptCards.filter(c => !isValuableCard(c, trumpSuit));
+    if (nonValPT.length > 0) {
+      // Always use pass-through if we have non-valuable cards for it
+      // Use batch event if multiple cards available (same rank), otherwise single
+      if (nonValPT.length > 1 && Math.random() < (0.4 + skill * 0.5)) {
+        // Send multiple pass-through cards at once (batch)
+        const batchIds = nonValPT.map(c => c.id);
+        return { event: 'showPassThroughs', data: { roomId, cardIds: batchIds } };
+      }
+      const cardId = pickBestAttackCard(nonValPT.map(c => c.id), myHand, trumpSuit, skill);
+      return { event: 'showPassThrough', data: { roomId, cardId } };
+    }
+    // Only valuable cards available for pass-through — use with low probability
+    if (Math.random() < 0.08) {
       const cardId = pickBestAttackCard(showPassThrough.cardIds, myHand, trumpSuit, skill);
       return { event: 'showPassThrough', data: { roomId, cardId } };
     }
   }
 
+  // ── Transfer (перевод) ──
   if (transferCard && transferCard.type === 'transferCard' && transferCard.cardIds.length > 0) {
-    const transferChance = temperament === 'aggressive' ? 0.7 : (0.3 + skill * 0.4);
+    const cardMap3 = new Map(myHand.map(c => [c.id, c]));
+    const trCards = transferCard.cardIds.map(id => cardMap3.get(id)).filter(Boolean) as ClientGameState['myHand'];
+    const nonValTr = trCards.filter(c => !isValuableCard(c, trumpSuit));
+    const transferChance = temperament === 'aggressive' ? 0.75 : (0.4 + skill * 0.45);
     if (Math.random() < transferChance) {
-      const cardId = pickBestAttackCard(transferCard.cardIds, myHand, trumpSuit, skill);
+      if (nonValTr.length > 1 && Math.random() < (0.3 + skill * 0.5)) {
+        // Batch transfer
+        const batchIds = nonValTr.map(c => c.id);
+        return { event: 'transferCards', data: { roomId, cardIds: batchIds } };
+      }
+      const pool = nonValTr.length > 0 ? nonValTr.map(c => c.id) : transferCard.cardIds;
+      const cardId = pickBestAttackCard(pool, myHand, trumpSuit, skill);
       return { event: 'transferCard', data: { roomId, cardId } };
     }
   }
 
-  // Play a card (attack) — avoid valuable cards
+  // ── Play a card (attack) — avoid valuable cards ──
   if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
     const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
     const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
@@ -435,11 +463,23 @@ function pickGhostAction(
     return { event: 'playCard', data: { roomId, cardId } };
   }
 
-  // End attack
+  // ── End attack — but only if all attack cards are covered ──
   if (endAttack) {
-    // Aggressive players add more cards before ending (but still avoid valuable cards)
-    if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0 && temperament === 'aggressive') {
-      if (Math.random() < 0.6) {
+    // Check if there are any uncovered attack cards on the battlefield
+    const uncoveredCount = gameState.battleField.filter(p => !p.defense).length;
+    if (uncoveredCount > 0) {
+      // There are uncovered cards — don't end attack yet, try to add more cards
+      if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
+        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        return { event: 'playCard', data: { roomId, cardId } };
+      }
+      // No cards to add but uncovered exist — wait (pass turn if available)
+      if (passTurn) return { event: 'passTurn', data: roomId };
+    }
+    // All covered — aggressive players try to add more cards before ending
+    if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
+      const addChance = temperament === 'aggressive' ? 0.65 : (0.2 + skill * 0.3);
+      if (Math.random() < addChance) {
         const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
         return { event: 'playCard', data: { roomId, cardId } };
       }
