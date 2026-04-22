@@ -15,7 +15,8 @@ import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction,
 import { RANK_ORDER } from '../shared/gameTypes';
 import type { TableStyle } from '../shared/cardAssets';
 import { getAvailableRooms } from './socketServer';
-import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats, getShopPriceOverrides } from './db';
+import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats, getShopPriceOverrides, getGhostStrategyProfile, saveGhostStrategyProfile } from './db';
+import { invokeLLM } from './_core/llm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,43 @@ interface GhostPlayer {
   dbGameId: number;
   /** Real DB season rating for registerProfile (0 until provisioned) */
   dbSeasonRating: number;
+  /**
+   * Cards seen on the battlefield this game (accumulated across tricks).
+   * Used for opponent hand estimation: cards not in seenCards and not in myHand
+   * are potentially still in opponent hands.
+   * Key: `${rank}-${suit}`, value: count seen
+   */
+  seenCards: Map<string, number>;
+  /** Previous discard count — used to detect when a trick was cleared */
+  prevDiscardCount: number;
+  /** Previous battlefield snapshot — used to extract cards when trick clears */
+  prevBattleField: ClientGameState['battleField'];
+  /**
+   * Move history for this game — recorded for LLM post-game analysis.
+   * Each entry: { action, handSize, trumpSuit, phase, won }
+   */
+  moveHistory: Array<{
+    action: string;
+    handSize: number;
+    phase: string;
+    isMultiCard: boolean;
+    timestamp: number;
+  }>;
+  /**
+   * Loaded strategy profile from DB (LLM-generated adjustments).
+   * Null until loaded after first game.
+   */
+  strategyProfile: {
+    aggressiveness: number;
+    trumpConservation: number;
+    transferPriority: number;
+    takeThreshold: number;
+    notes: string;
+  } | null;
+  /** Total games analyzed by LLM for this ghost */
+  gamesAnalyzed: number;
+  /** Win rate from analyzed games */
+  winRate: number;
 }
 
 // ─── Nicknames ───────────────────────────────────────────────────────────────
@@ -276,41 +314,101 @@ function pickEmotion(temperament: Temperament): string {
  * Returns true if a card is considered "valuable" — trump J/Q/K/A, King of Spades, or 777.
  * Valuable cards should not be played carelessly (only as last resort).
  */
-function isValuableCard(card: ClientGameState['myHand'][number], trumpSuit: ClientGameState['trumpInfo']['currentTrump']): boolean {
-  if (card.rank === '777') return true;
-  // Trump cards from Jack and above are valuable
-  if (card.suit === trumpSuit) {
-    const rank = RANK_ORDER[card.rank] ?? 0;
-    if (rank >= RANK_ORDER['J']) return true; // J, Q, K, A of trump
+/**
+ * Card value tier system (3 levels):
+ *   Tier 3 (most precious): 777, King of Spades — use ONLY as last resort
+ *   Tier 2 (precious): any trump card, J/Q/K/A of any suit — use only when no tier-1 available
+ *   Tier 1 (expendable): non-trump 6/7/8/9/10 — use first
+ */
+function cardTier(
+  card: ClientGameState['myHand'][number],
+  trumpSuit: ClientGameState['trumpInfo']['currentTrump'],
+): 1 | 2 | 3 {
+  if (card.rank === '777') return 3;
+  if (card.suit === 'spades' && card.rank === 'K') return 3;
+  if (card.suit === trumpSuit) return 2; // any trump card is precious
+  const rank = RANK_ORDER[card.rank] ?? 0;
+  if (rank >= RANK_ORDER['J']) return 2; // J, Q, K, A of any suit are precious
+  return 1; // ordinary non-trump low cards
+}
+
+/** Legacy helper — card is valuable if tier >= 2 */
+function isValuableCard(
+  card: ClientGameState['myHand'][number],
+  trumpSuit: ClientGameState['trumpInfo']['currentTrump'],
+): boolean {
+  return cardTier(card, trumpSuit) >= 2;
+}
+
+/**
+ * Estimate how many defense cards of a given rank are still in play
+ * (not seen yet = potentially in opponent's hand).
+ * Returns a score: lower = opponent less likely to beat this rank.
+ */
+function estimateDefenseStrength(
+  rank: string,
+  trumpSuit: ClientGameState['trumpInfo']['currentTrump'],
+  seenCards: Map<string, number>,
+): number {
+  const suits = ['hearts', 'diamonds', 'clubs', 'spades'] as const;
+  const ranks = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'] as const;
+  const rankIdx = ranks.indexOf(rank as typeof ranks[number]);
+  let potentialDefenders = 0;
+  for (const suit of suits) {
+    for (const r of ranks) {
+      const rIdx = ranks.indexOf(r);
+      const key = `${r}-${suit}`;
+      const seen = seenCards.get(key) ?? 0;
+      if (seen > 0) continue; // already out of game
+      const isTrumpCard = suit === trumpSuit;
+      const isSameSuitHigher = suit !== trumpSuit && rIdx > rankIdx;
+      if (isTrumpCard || isSameSuitHigher) {
+        potentialDefenders++;
+      }
+    }
   }
-  if (card.suit === 'spades' && card.rank === 'K') return true;
-  return false;
+  return potentialDefenders;
 }
 
 /**
  * From a list of card IDs, pick the best one to play:
- * - Prefer non-valuable cards
- * - Among non-valuable, prefer lowest rank
- * - Fall back to valuable cards only if no other option
+ * - Prefer tier-1 cards (ordinary low non-trump)
+ * - Then tier-2 (trump / J-A)
+ * - Then tier-3 (777 / K of spades) — absolute last resort
+ * - Within each tier, if seenCards available, prefer cards opponent is less likely to beat
+ * - Within each tier, prefer lowest rank as fallback
  */
 function pickBestAttackCard(
   cardIds: string[],
   hand: ClientGameState['myHand'],
   trumpSuit: ClientGameState['trumpInfo']['currentTrump'],
   skill: number,
+  seenCards?: Map<string, number>,
 ): string {
   if (cardIds.length === 0) return cardIds[0];
-
   const cardMap = new Map(hand.map(c => [c.id, c]));
   const cards = cardIds.map(id => cardMap.get(id)).filter(Boolean) as ClientGameState['myHand'];
-
   if (cards.length === 0) return pickRandom(cardIds);
 
-  // Separate valuable from non-valuable
-  const nonValuable = cards.filter(c => !isValuableCard(c, trumpSuit));
-  const pool = nonValuable.length > 0 ? nonValuable : cards;
+  // Build tier pools
+  const tier1 = cards.filter(c => cardTier(c, trumpSuit) === 1);
+  const tier2 = cards.filter(c => cardTier(c, trumpSuit) === 2);
+  const tier3 = cards.filter(c => cardTier(c, trumpSuit) === 3);
+
+  // Pick from lowest available tier
+  const pool = tier1.length > 0 ? tier1 : tier2.length > 0 ? tier2 : tier3;
 
   if (Math.random() < skill) {
+    if (seenCards && seenCards.size > 0) {
+      // Smart: pick card that opponent is least likely to beat
+      const sorted = [...pool].sort((a, b) => {
+        const strengthA = estimateDefenseStrength(a.rank, trumpSuit, seenCards);
+        const strengthB = estimateDefenseStrength(b.rank, trumpSuit, seenCards);
+        if (strengthA !== strengthB) return strengthA - strengthB;
+        return (RANK_ORDER[a.rank] ?? 0) - (RANK_ORDER[b.rank] ?? 0);
+      });
+      return sorted[0].id;
+    }
     // Skilled: pick lowest rank from pool
     const sorted = [...pool].sort((a, b) => {
       const rankA = RANK_ORDER[a.rank] ?? 0;
@@ -322,23 +420,14 @@ function pickBestAttackCard(
   return pickRandom(pool).id;
 }
 
-/**
- * Ghost skill-based action selection.
- * skill=1.0 → always optimal play
- * skill=0.0 → random/suboptimal play
- *
- * Priority order (mirrors real human behaviour):
- *  1. showPassThrough (проездной) — ALWAYS if non-valuable cards available
- *  2. transferCard   (перевод)    — ALWAYS if non-valuable cards available
- *  3. multi-attack   — if attacker has ≥2 cards of same rank on opening move
- *  4. single playCard / defense / endAttack / passTurn
- */
+
 function pickGhostAction(
   actions: AvailableAction[],
   skill: number,
   temperament: Temperament,
   gameState: ClientGameState,
   learningStats?: { transferRate: number; passThroughRate: number; multiAttackRate: number; takeRate: number; total: number },
+  seenCards?: Map<string, number>,
 ): { event: string; data?: unknown } | null {
   if (actions.length === 0) return null;
 
@@ -377,7 +466,7 @@ function pickGhostAction(
         return { event: 'passTurn', data: roomId };
       }
       // Aggressive ghost adds one non-valuable card
-      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
       return { event: 'playCard', data: { roomId, cardId } };
     }
     // No passTurn available — endAttack or playCard only
@@ -387,49 +476,32 @@ function pickGhostAction(
   // Pass turn (non-active edge player)
   if (passTurn && !playCard && !endAttack) return { event: 'passTurn', data: roomId };
 
-  // ── Pass-through (проездной) — HIGHEST PRIORITY: always use before defending/taking ──
-  // Real players ALWAYS use pass-through when available with non-valuable cards.
-  // This MUST come before the takeCards && playCard block.
+  // ── Pass-through (проездной) — HIGHEST PRIORITY: ALWAYS use when available ──
+  // showPassThrough.cardIds are trump cards matching the attack rank.
+  // We ALWAYS use pass-through — it's always better than defending or taking.
+  // Use all available pass-through cards at once (batch).
   if (showPassThrough && showPassThrough.type === 'showPassThrough' && showPassThrough.cardIds.length > 0) {
-    const cardMap2 = new Map(myHand.map(c => [c.id, c]));
-    const ptCards = showPassThrough.cardIds.map(id => cardMap2.get(id)).filter(Boolean) as ClientGameState['myHand'];
-    const nonValPT = ptCards.filter(c => !isValuableCard(c, trumpSuit));
-    if (nonValPT.length > 0) {
-      // ALWAYS use pass-through if we have non-valuable cards for it
-      if (nonValPT.length > 1) {
-        const batchIds = nonValPT.map(c => c.id);
-        return { event: 'showPassThroughs', data: { roomId, cardIds: batchIds } };
-      }
-      const cardId = pickBestAttackCard(nonValPT.map(c => c.id), myHand, trumpSuit, skill);
-      return { event: 'showPassThrough', data: { roomId, cardId } };
+    if (showPassThrough.cardIds.length > 1) {
+      return { event: 'showPassThroughs', data: { roomId, cardIds: showPassThrough.cardIds } };
     }
-    // Only valuable cards available for pass-through — use with low probability
-    if (Math.random() < 0.08) {
-      const cardId = pickBestAttackCard(showPassThrough.cardIds, myHand, trumpSuit, skill);
-      return { event: 'showPassThrough', data: { roomId, cardId } };
-    }
+    return { event: 'showPassThrough', data: { roomId, cardId: showPassThrough.cardIds[0] } };
   }
-  // ── Transfer (перевод) — HIGH PRIORITY: always use before defending/taking ──
-  // Real players ALWAYS transfer when available with non-valuable cards.
-  // This MUST come before the takeCards && playCard block.
+  // ── Transfer (перевод) — HIGH PRIORITY: ALWAYS transfer when available ──
+  // transferCard.cardIds are cards matching the attack rank.
+  // We ALWAYS transfer — passing the attack to the next player is better than defending/taking.
+  // Prefer non-valuable cards for transfer; use valuable only if no other option.
   if (transferCard && transferCard.type === 'transferCard' && transferCard.cardIds.length > 0) {
     const cardMap3 = new Map(myHand.map(c => [c.id, c]));
     const trCards = transferCard.cardIds.map(id => cardMap3.get(id)).filter(Boolean) as ClientGameState['myHand'];
-    const nonValTr = trCards.filter(c => !isValuableCard(c, trumpSuit));
-    if (nonValTr.length > 0) {
-      // ALWAYS transfer if we have non-valuable cards for it
-      if (nonValTr.length > 1) {
-        const batchIds = nonValTr.map(c => c.id);
-        return { event: 'transferCards', data: { roomId, cardIds: batchIds } };
-      }
-      const cardId = pickBestAttackCard(nonValTr.map(c => c.id), myHand, trumpSuit, skill);
-      return { event: 'transferCard', data: { roomId, cardId } };
+    // Sort by tier: use tier-1 cards first, then tier-2, then tier-3
+    const sortedTr = [...trCards].sort((a, b) => cardTier(a, trumpSuit) - cardTier(b, trumpSuit));
+    // Use all cards of the lowest tier available (multi-transfer)
+    const lowestTier = cardTier(sortedTr[0], trumpSuit);
+    const batchCards = sortedTr.filter(c => cardTier(c, trumpSuit) === lowestTier);
+    if (batchCards.length > 1) {
+      return { event: 'transferCards', data: { roomId, cardIds: batchCards.map(c => c.id) } };
     }
-    // Only valuable cards available for transfer — use with low probability
-    if (Math.random() < 0.12) {
-      const cardId = pickBestAttackCard(transferCard.cardIds, myHand, trumpSuit, skill);
-      return { event: 'transferCard', data: { roomId, cardId } };
-    }
+    return { event: 'transferCard', data: { roomId, cardId: batchCards[0].id } };
   }
   // ── Defender logic (only reached when no pass-through/transfer available) ──
   if (takeCards && !playCard) {
@@ -474,7 +546,7 @@ function pickGhostAction(
       if (shouldDefend) {
         // Defend: pick best (non-valuable) defense card for first undefended pair
         const targetPairIdx = undefendedPairs[0].idx;
-        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
       } else {
         return { event: 'takeCards', data: roomId };
@@ -482,7 +554,7 @@ function pickGhostAction(
     }
     // No undefended pairs — fallback
     if (undefendedPairs.length === 0 && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
       return { event: 'playCard', data: { roomId, cardId } };
     }
   }
@@ -518,7 +590,7 @@ function pickGhostAction(
       // Return special multi-attack action — executeGhostAction handles sequential emit
       return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
     }
-    const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+    const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
     if (undefendedIdx >= 0) {
       return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
     }
@@ -531,7 +603,7 @@ function pickGhostAction(
     if (uncoveredCount > 0) {
       // There are uncovered cards — don't end attack yet, try to add more cards
       if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId } };
       }
       // No cards to add but uncovered exist — wait (pass turn if available)
@@ -541,7 +613,7 @@ function pickGhostAction(
     if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
       const addChance = temperament === 'aggressive' ? 0.65 : (0.2 + skill * 0.3);
       if (Math.random() < addChance) {
-        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId } };
       }
     }
@@ -631,6 +703,13 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
       reconnectAttempts: 0,
       dbGameId: gameId,
       dbSeasonRating: seasonRating,
+      seenCards: new Map(),
+      prevDiscardCount: 0,
+      prevBattleField: [],
+      moveHistory: [],
+      strategyProfile: null,
+      gamesAnalyzed: 0,
+      winRate: 0,
     };
     ghosts.set(openId, ghost);
   }
@@ -767,6 +846,18 @@ function connectGhost(ghost: GhostPlayer): void {
       ghost.gameState = state;
       ghost.myActions = state.availableActions || [];
       clearGhostTimers(ghost);
+      // Load strategy profile from DB if not already loaded
+      if (!ghost.strategyProfile) {
+        getGhostStrategyProfile(ghost.id).then(profile => {
+          if (profile && profile.strategyJson && profile.strategyJson !== '{}') {
+            try {
+              ghost.strategyProfile = JSON.parse(profile.strategyJson);
+              ghost.gamesAnalyzed = profile.gamesAnalyzed;
+              ghost.winRate = profile.winRate;
+            } catch { /* ignore parse errors */ }
+          }
+        }).catch(() => {});
+      }
       // Schedule first action if it's our turn
       if (ghost.myActions.length > 0) {
         scheduleGameAction(ghost);
@@ -780,16 +871,57 @@ function connectGhost(ghost: GhostPlayer): void {
     if (ghost.state === 'in_lobby' && state.gamePhase === 'playing') {
       ghost.state = 'in_game';
     }
+    // ── Track seen cards for opponent hand estimation ──────────────────────
+    // When discardCount increases, cards were cleared from battlefield to discard.
+    // Record all those cards as "seen" so we can estimate what opponents might hold.
+    if (state.discardCount > ghost.prevDiscardCount && ghost.prevBattleField.length > 0) {
+      for (const pair of ghost.prevBattleField) {
+        const cardsToRecord = [pair.attack, pair.defense].filter(Boolean) as typeof pair.attack[];
+        for (const card of cardsToRecord) {
+          if (card.suit === null) continue; // skip hidden/777 special
+          const key = `${card.rank}-${card.suit}`;
+          ghost.seenCards.set(key, (ghost.seenCards.get(key) ?? 0) + 1);
+        }
+      }
+    }
+    // Also track cards currently on battlefield (visible to ghost)
+    for (const pair of state.battleField) {
+      const cardsToRecord = [pair.attack, pair.defense].filter(Boolean) as typeof pair.attack[];
+      for (const card of cardsToRecord) {
+        if (card.suit === null) continue;
+        const key = `${card.rank}-${card.suit}`;
+        ghost.seenCards.set(key, (ghost.seenCards.get(key) ?? 0) + 1);
+      }
+    }
+    ghost.prevDiscardCount = state.discardCount;
+    ghost.prevBattleField = state.battleField;
+    // ──────────────────────────────────────────────────────────────────────
     ghost.gameState = state;
     const prevActions = ghost.myActions;
     ghost.myActions = state.availableActions || [];
 
     if (state.gamePhase === 'finished') {
+      // Determine win/loss for this ghost using myIndex and loserId
+      const myPlayer = state.players[state.myIndex];
+      const myPlayerId = myPlayer?.id ?? '';
+      const didWin = myPlayer ? (myPlayer.winPlace !== null && myPlayer.winPlace !== undefined && myPlayer.winPlace > 0) : false;
+      const isDurak = myPlayerId !== '' && state.loserId === myPlayerId;
+
+      // Snapshot move history before reset
+      const moveHistorySnapshot = [...ghost.moveHistory];
+      const handSizeAtEnd = state.myHand?.length ?? 0;
+
       // Game over — go back to lobby after a delay
       ghost.state = 'browsing';
       ghost.gameState = null;
       ghost.myActions = [];
       clearGhostTimers(ghost);
+
+      // Trigger async LLM analysis (non-blocking)
+      if (moveHistorySnapshot.length > 0) {
+        analyzeGameWithLLM(ghost, moveHistorySnapshot, didWin, isDurak, handSizeAtEnd).catch(() => {});
+      }
+
       // Leave the room after seeing results
       setTimeout(() => {
         if (ghost.socket?.connected && ghost.currentRoomId) {
@@ -882,7 +1014,11 @@ function maintainGhost(ghost: GhostPlayer): void {
 
 const BAIT_ROOM_COUNT = 3; // how many bait rooms to keep open at all times
 const BAIT_ROOM_BET_OPTIONS = [100, 200, 500, 1000]; // bait rooms use small bets
+const MAX_TRAINING_GAMES = 1; // max simultaneous ghost-vs-ghost training games
+const TRAINING_GAME_COOLDOWN_MS = 3 * 60_000; // 3 min between starting new training games
 let roomManagerInterval: NodeJS.Timeout | null = null;
+let trainingGameInterval: NodeJS.Timeout | null = null;
+let lastTrainingGameStarted = 0; // timestamp
 
 /** Returns true if the player id belongs to a ghost or built-in bot */
 function isGhostOrBot(id: string): boolean {
@@ -1097,6 +1233,117 @@ function roomManagerTick(): void {
       }, rand(3 * 60_000, 5 * 60_000)); // 3–5 minutes
     }
   }
+
+  // ── Step 5: Ghost-vs-ghost training games ────────────────────────────────
+  // Only start if: cooldown passed, no active training game, enough free ghosts
+  // We always keep BAIT_ROOM_COUNT + 2 ghosts reserved for bait rooms
+  // Training uses only the surplus
+  const now = Date.now();
+  const cooldownOk = now - lastTrainingGameStarted > TRAINING_GAME_COOLDOWN_MS;
+  if (!cooldownOk) return;
+
+  // Count active training games (ghost-only rooms with active game)
+  const activeTrainingGames = allRooms.filter(r =>
+    r.gameState !== null &&
+    countHumans(r) === 0 &&
+    r.players.some(p => p.id.startsWith('ghost-')),
+  ).length;
+  if (activeTrainingGames >= MAX_TRAINING_GAMES) return;
+
+  // Count free ghosts
+  const freeGhosts = Array.from(ghosts.values()).filter(
+    g => g.socket?.connected && g.state === 'browsing',
+  );
+  // Reserve BAIT_ROOM_COUNT + 2 for bait rooms (buffer)
+  const reserved = BAIT_ROOM_COUNT + 2;
+  const surplus = freeGhosts.length - reserved;
+  if (surplus < 2) return; // need at least 2 for a training game
+
+  // Pick 2–4 ghosts for training (use surplus only)
+  const trainingCount = Math.min(Math.floor(rand(2, 5)), surplus);
+  const trainingGhosts = freeGhosts.slice(0, trainingCount);
+
+  // Mark them as locked
+  for (const g of trainingGhosts) g.state = 'in_lobby';
+
+  const host = trainingGhosts[0];
+  const fillers = trainingGhosts.slice(1);
+
+  lastTrainingGameStarted = now;
+  console.log(`[Ghost] Starting training game with ${trainingCount} ghosts`);
+
+  // Host creates a private room
+  if (!host.socket?.connected) {
+    for (const g of trainingGhosts) g.state = 'browsing';
+    return;
+  }
+  host.socket.emit('createRoom', {
+    name: '',
+    maxPlayers: trainingCount,
+    settings: {
+      turnTimer: 20,
+      withBots: false,
+      botCount: 0,
+      deckStyle: host.personality.preferredDeckStyle,
+      tableStyle: host.personality.preferredTableStyle,
+      betAmount: 0,
+      isPrivate: true, // private — won't show in lobby
+    },
+  }, (room) => {
+    if (!room) {
+      for (const g of trainingGhosts) g.state = 'browsing';
+      return;
+    }
+    host.currentRoomId = room.id;
+    host.isHosting = true;
+    host.state = 'in_lobby';
+    // Host marks ready
+    setTimeout(() => {
+      if (host.state === 'in_lobby' && host.socket?.connected) {
+        host.socket.emit('toggleReady', room.id);
+      }
+    }, rand(500, 1500));
+    // Fillers join one by one
+    for (let i = 0; i < fillers.length; i++) {
+      const filler = fillers[i];
+      const delay = rand(1000, 3000) * (i + 1);
+      setTimeout(() => {
+        if (!filler.socket?.connected) { filler.state = 'browsing'; return; }
+        filler.socket.emit('joinRoom', { roomId: room.id }, (ok: boolean, joinedRoom: unknown) => {
+          if (!ok) { filler.state = 'browsing'; return; }
+          filler.currentRoomId = room.id;
+          filler.isHosting = false;
+          filler.state = 'in_lobby';
+          setTimeout(() => {
+            if (filler.state === 'in_lobby' && filler.socket?.connected) {
+              filler.socket.emit('toggleReady', room.id);
+            }
+          }, rand(500, 2000));
+        });
+      }, delay);
+    }
+    // Host starts game after all fillers should have joined + ready
+    const startDelay = rand(1000, 3000) * (fillers.length + 1) + 5000;
+    setTimeout(() => {
+      if (!host.socket?.connected || host.state !== 'in_lobby') return;
+      // Check all in room are ready
+      const currentRooms = getAvailableRooms();
+      const trainingRoom = currentRooms.find(r => r.id === room.id);
+      if (!trainingRoom || trainingRoom.gameState !== null) return;
+      if (trainingRoom.players.length < 2) return;
+      const allReady = trainingRoom.players.every(p => p.ready);
+      if (allReady) {
+        console.log(`[Ghost] Training game starting in room ${room.id}`);
+        host.socket.emit('startGame', room.id);
+      } else {
+        // Force start anyway if at least 2 players
+        if (trainingRoom.players.length >= 2) {
+          console.log(`[Ghost] Training game force-starting in room ${room.id}`);
+          host.socket.emit('startGame', room.id);
+        }
+      }
+    }, startDelay);
+  });
 }
 
 /** Called when a ghost leaves a room (game ended or left) — resets state */
@@ -1106,6 +1353,10 @@ function ghostReturnToBrowsing(ghost: GhostPlayer): void {
   ghost.state = 'browsing';
   ghost.gameState = null;
   ghost.myActions = [];
+  ghost.seenCards = new Map();
+  ghost.prevDiscardCount = 0;
+  ghost.prevBattleField = [];
+  ghost.moveHistory = [];
   clearGhostTimers(ghost);
 }
 
@@ -1164,13 +1415,13 @@ function scheduleGameAction(ghost: GhostPlayer): void {
     // Asynchronously fetch learning stats and apply them to action selection
     getGhostLearningStats().then(stats => {
       if (!ghost.gameState) return;
-      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState, stats ?? undefined);
+      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState, stats ?? undefined, ghost.seenCards);
       if (!action) return;
       executeGhostAction(ghost, action);
     }).catch(() => {
       // Fallback: pick action without learning stats
       if (!ghost.gameState) return;
-      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState);
+      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState, undefined, ghost.seenCards);
       if (!action) return;
       executeGhostAction(ghost, action);
     });;
@@ -1181,6 +1432,20 @@ function executeGhostAction(ghost: GhostPlayer, action: { event: string; data?: 
   if (!ghost.socket?.connected) return;
 
   const s = ghost.socket as any;
+
+  // Record move in history for LLM analysis
+  const handSize = ghost.gameState?.myHand?.length ?? 0;
+  const phase = ghost.gameState?.gamePhase ?? 'unknown';
+  const isMultiCard = action.event === 'multiPlayCard';
+  let actionType = action.event;
+  if (action.event === 'takeCards') actionType = 'take';
+  else if (action.event === 'playCard' || action.event === 'multiPlayCard') actionType = 'attack';
+  else if (action.event === 'transferCard') actionType = 'transfer';
+  else if (action.event === 'showPassThrough') actionType = 'passThrough';
+  else if (action.event === 'endTurn') actionType = 'endTurn';
+  else if (action.event === 'defendCard') actionType = 'defense';
+  ghost.moveHistory.push({ action: actionType, handSize, phase, isMultiCard, timestamp: Date.now() });
+  if (ghost.moveHistory.length > 200) ghost.moveHistory.shift();
 
   // ── Multi-attack: send each card sequentially with a short human-like delay ──
   if (action.event === 'multiPlayCard') {
@@ -1208,6 +1473,133 @@ function executeGhostAction(ghost: GhostPlayer, action: { event: string; data?: 
     }
   } catch (e) {
     console.debug(`[Ghost:${ghost.personality.nick}] Action error: ${e}`);
+  }
+}
+
+// ─── LLM Post-Game Analysis ──────────────────────────────────────────────────
+/**
+ * Analyze a ghost's game performance using LLM and update strategy profile.
+ * Called asynchronously after game ends — does not block game flow.
+ */
+async function analyzeGameWithLLM(
+  ghost: GhostPlayer,
+  moveHistory: GhostPlayer['moveHistory'],
+  didWin: boolean,
+  isDurak: boolean,
+  handSizeAtEnd: number,
+): Promise<void> {
+  try {
+    const totalMoves = moveHistory.length;
+    const attacks = moveHistory.filter(m => m.action === 'attack').length;
+    const defenses = moveHistory.filter(m => m.action === 'defense').length;
+    const takes = moveHistory.filter(m => m.action === 'take').length;
+    const transfers = moveHistory.filter(m => m.action === 'transfer').length;
+    const passThroughs = moveHistory.filter(m => m.action === 'passThrough').length;
+    const multiAttacks = moveHistory.filter(m => m.isMultiCard).length;
+    const avgHandSize = totalMoves > 0
+      ? moveHistory.reduce((s, m) => s + m.handSize, 0) / totalMoves
+      : 0;
+
+    const currentProfile = ghost.strategyProfile;
+    const currentProfileStr = currentProfile
+      ? JSON.stringify(currentProfile)
+      : 'none (first analysis)';
+
+    const prompt = `You are analyzing a card game "Durak" (Russian card game) bot performance.
+
+Game result: ${didWin ? 'WON' : isDurak ? 'LOST (became Durak)' : 'finished mid-game'}
+Cards left in hand at end: ${handSizeAtEnd}
+Total moves: ${totalMoves}
+Attacks: ${attacks}, Defenses: ${defenses}, Takes (picked up cards): ${takes}
+Transfers: ${transfers}, Pass-throughs: ${passThroughs}
+Multi-card attacks: ${multiAttacks}
+Average hand size during game: ${avgHandSize.toFixed(1)}
+
+Current strategy profile: ${currentProfileStr}
+
+Based on this performance, provide updated strategy parameters as JSON. Rules:
+- aggressiveness (0.0-1.0): how often to attack. High = attack more
+- trumpConservation (0.0-1.0): how much to save trump cards. High = save trumps
+- transferPriority (0.0-1.0): how often to transfer/pass-through. High = transfer more
+- takeThreshold (0.0-1.0): when to take cards instead of defending. High = take more often
+- notes: brief advice in Russian (max 100 chars)
+
+If the bot lost (isDurak=true) or had many cards left, it should be more conservative.
+If the bot won, reinforce successful patterns.
+Respond with ONLY valid JSON, no markdown.`;
+
+    const response = await invokeLLM({
+      messages: [
+        { role: 'system', content: 'You are a card game strategy analyzer. Respond with valid JSON only.' },
+        { role: 'user', content: prompt },
+      ],
+      response_format: {
+        type: 'json_schema',
+        json_schema: {
+          name: 'ghost_strategy',
+          strict: true,
+          schema: {
+            type: 'object',
+            properties: {
+              aggressiveness: { type: 'number' },
+              trumpConservation: { type: 'number' },
+              transferPriority: { type: 'number' },
+              takeThreshold: { type: 'number' },
+              notes: { type: 'string' },
+            },
+            required: ['aggressiveness', 'trumpConservation', 'transferPriority', 'takeThreshold', 'notes'],
+            additionalProperties: false,
+          },
+        },
+      },
+    });
+
+    const rawContent = response?.choices?.[0]?.message?.content;
+    if (!rawContent) return;
+    const raw = typeof rawContent === 'string' ? rawContent : JSON.stringify(rawContent);
+
+    let parsed: {
+      aggressiveness: number;
+      trumpConservation: number;
+      transferPriority: number;
+      takeThreshold: number;
+      notes: string;
+    };
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      return;
+    }
+
+    // Clamp all values to [0, 1]
+    const clamp = (v: number) => Math.max(0, Math.min(1, v));
+    const newProfile = {
+      aggressiveness: clamp(parsed.aggressiveness ?? 0.5),
+      trumpConservation: clamp(parsed.trumpConservation ?? 0.7),
+      transferPriority: clamp(parsed.transferPriority ?? 0.8),
+      takeThreshold: clamp(parsed.takeThreshold ?? 0.4),
+      notes: (parsed.notes ?? '').slice(0, 200),
+    };
+
+    // Update in-memory profile
+    ghost.strategyProfile = newProfile;
+    ghost.gamesAnalyzed = (ghost.gamesAnalyzed || 0) + 1;
+    // Update win rate (exponential moving average)
+    const alpha = 0.2;
+    ghost.winRate = ghost.winRate * (1 - alpha) + (didWin ? 1 : 0) * alpha;
+
+    // Persist to DB
+    await saveGhostStrategyProfile(
+      ghost.id,
+      JSON.stringify(newProfile),
+      ghost.gamesAnalyzed,
+      ghost.winRate,
+    );
+
+    console.log(`[Ghost:${ghost.personality.nick}] LLM analysis done. Win=${didWin}, profile updated. Notes: ${newProfile.notes}`);
+  } catch (e) {
+    // LLM analysis is optional — never crash the ghost
+    console.debug(`[Ghost:${ghost.personality.nick}] LLM analysis failed:`, e);
   }
 }
 

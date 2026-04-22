@@ -4094,3 +4094,43 @@ export async function getGhostLearningStats(): Promise<GhostLearningStats | null
     return null;
   }
 }
+
+import { ghostStrategyProfile } from '../drizzle/schema';
+
+/**
+ * Load strategy profile for a ghost player.
+ */
+export async function getGhostStrategyProfile(ghostId: string): Promise<{ strategyJson: string; gamesAnalyzed: number; winRate: number } | null> {
+  try {
+    const db = await getDb();
+    const rows = await db
+      .select()
+      .from(ghostStrategyProfile)
+      .where(eq(ghostStrategyProfile.ghostId, ghostId))
+      .limit(1);
+    if (rows.length === 0) return null;
+    return { strategyJson: rows[0].strategyJson, gamesAnalyzed: rows[0].gamesAnalyzed, winRate: rows[0].winRate };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Save/update strategy profile for a ghost player.
+ */
+export async function saveGhostStrategyProfile(
+  ghostId: string,
+  strategyJson: string,
+  gamesAnalyzed: number,
+  winRate: number,
+): Promise<void> {
+  try {
+    const db = await getDb();
+    await db
+      .insert(ghostStrategyProfile)
+      .values({ ghostId, strategyJson, gamesAnalyzed, winRate })
+      .onDuplicateKeyUpdate({ set: { strategyJson, gamesAnalyzed, winRate } });
+  } catch (e) {
+    console.error('[Ghost] saveGhostStrategyProfile error:', e);
+  }
+}
