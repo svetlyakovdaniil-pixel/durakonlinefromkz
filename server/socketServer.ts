@@ -179,6 +179,15 @@ export async function emitNotificationToProfile(profileId: number, type: string)
 }
 
 /** Get open (non-private, non-password, non-tutorial) rooms for ghost player browsing */
+/** Force-close all rooms (admin use) */
+export function closeAllRooms() {
+  const roomIds = Array.from(rooms.keys());
+  for (const roomId of roomIds) {
+    try { closeRoom(roomId); } catch (e) {}
+  }
+  return roomIds.length;
+}
+
 export function getAvailableRooms(): Room[] {
   return Array.from(rooms.values()).filter(r =>
     !r.settings.isTutorial &&

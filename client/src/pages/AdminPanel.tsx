@@ -1367,6 +1367,11 @@ function MonitoringTab() {
     onError: (e) => toast.error(e.message),
   });
 
+  const closeAllRoomsMutation = trpc.admin.closeAllRooms.useMutation({
+    onSuccess: (res) => { toast.success(`Закрыто комнат: ${res.count}`); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
   return (
     <div className="space-y-6">
       {/* Stats cards */}
@@ -1416,9 +1421,23 @@ function MonitoringTab() {
       <div>
         <div className="flex items-center justify-between mb-3 gap-2">
           <h3 className="text-base sm:text-lg font-semibold text-amber-100">Активные комнаты</h3>
-          <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300 shrink-0">
-            <RefreshCw className="w-4 h-4" />
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline" size="sm"
+              onClick={() => {
+                if (confirm('Закрыть ВСЕ активные комнаты? Все игры будут прерваны.')) {
+                  closeAllRoomsMutation.mutate();
+                }
+              }}
+              disabled={closeAllRoomsMutation.isPending}
+              className="border-red-800 text-red-400 hover:bg-red-900/20 shrink-0"
+            >
+              Закрыть все
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="border-gray-700 text-gray-300 shrink-0">
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
 
         {isLoading ? (
