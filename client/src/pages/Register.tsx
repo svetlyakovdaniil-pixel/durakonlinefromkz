@@ -5,6 +5,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, User, ArrowLeft, Gift, ShieldCheck } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
+
+/**
+ * Returns the origin to use for OAuth redirect URIs.
+ * When running as a native Capacitor app (iOS/Android), window.location.origin
+ * returns "capacitor://localhost" which is NOT a valid OAuth redirect URI.
+ * In that case, we use the production domain instead.
+ */
+function getOAuthOrigin(): string {
+  if (Capacitor.isNativePlatform()) {
+    return "https://durakonlinefromkz.vip";
+  }
+  return window.location.origin;
+}
 
 type Step = "form" | "verify";
 
@@ -183,21 +197,25 @@ export default function Register() {
   const handleGoogleSignIn = () => {
     setError("");
     setGoogleLoading(true);
-    const origin = window.location.origin;
+    // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
+    // which is not a valid OAuth redirect URI — use the production domain instead.
+    const origin = getOAuthOrigin();
     const ref = referralCode.trim().toUpperCase();
     const params = new URLSearchParams({ origin });
     if (ref) params.set("referralCode", ref);
-    window.location.href = `/api/auth/google/init?${params.toString()}`;
+    window.location.href = `${origin}/api/auth/google/init?${params.toString()}`;
   };
 
   const handleAppleSignIn = async () => {
     setError("");
     setAppleLoading(true);
     try {
-      const origin = window.location.origin;
+      // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
+      // which is not a valid OAuth redirect URI — use the production domain instead.
+      const origin = getOAuthOrigin();
       const params = new URLSearchParams({ origin });
       if (referralCode.trim()) params.set("referralCode", referralCode.trim().toUpperCase());
-      const res = await fetch(`/api/auth/apple/init?${params.toString()}`, { credentials: "include" });
+      const res = await fetch(`${origin}/api/auth/apple/init?${params.toString()}`, { credentials: "include" });
       if (!res.ok) { setError(t("auth.appleError")); setAppleLoading(false); return; }
       const { url } = await res.json();
       window.location.href = url;

@@ -10,9 +10,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.durakonlinefromkz.app</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.0.1</string>
 	<key>CFBundleVersion</key>
-	<string>1</string>
+	<string>2</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleExecutable</key>
@@ -99,10 +99,16 @@
 		<true/>
 	</dict>
 
-	<!-- ── Capacitor: allow file access ──────────────────────────────────── -->
+	<!-- ── Capacitor: allowed navigation domains ─────────────────────────── -->
+	<!-- WKAppBoundDomains restricts which domains the WKWebView can navigate  -->
+	<!-- to. The production domain MUST be listed here so OAuth redirects      -->
+	<!-- (Google, Apple) work correctly when running as a native iOS app.      -->
+	<!-- Without this, the WebView cannot follow redirects to the server.      -->
 	<key>WKAppBoundDomains</key>
 	<array>
 		<string>localhost</string>
+		<string>durakonlinefromkz.vip</string>
+		<string>www.durakonlinefromkz.vip</string>
 	</array>
 
 	<!-- ── Privacy: no camera/microphone/location needed ─────────────────── -->
