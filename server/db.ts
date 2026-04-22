@@ -3888,7 +3888,7 @@ export async function getOwnedEmotionPacks(userId: number): Promise<string[]> {
  * with the same starting balance as a new real player (5000 shanyraks, 25 tenge).
  * If the account already exists, updates avatar/frame/emotionPack and returns existing data.
  */
-export async function provisionGhostPlayer(nick: string, avatarId: string, equippedFrame?: string, emotionPack?: string, index?: number): Promise<{
+export async function provisionGhostPlayer(nick: string, avatarId: string, equippedFrame?: string, emotionPack?: string): Promise<{
   openId: string;
   gameId: number;
   profileId: number;
@@ -3898,11 +3898,20 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
   const db = await getDb();
   if (!db) return null;
 
-  // Use ASCII slug if possible; fall back to numeric index for Cyrillic/special nicks
+  // Use ASCII slug if possible; fall back to stable hash for Cyrillic/special nicks.
+  // The hash is deterministic so the same nick always maps to the same openId,
+  // regardless of the order nicks are processed (prevents duplicate accounts on restart).
   const slug = nick.toLowerCase().replace(/[^a-z0-9]/g, '');
-  const openId = slug.length >= 3
-    ? `ghost-${slug}`
-    : `ghost-${String(index ?? 0).padStart(3, '0')}`;
+  let openId: string;
+  if (slug.length >= 3) {
+    openId = `ghost-${slug}`;
+  } else {
+    // Stable djb2-style hash of the nick string → 4-digit hex suffix
+    let h = 5381;
+    for (let i = 0; i < nick.length; i++) h = ((h << 5) + h) ^ nick.charCodeAt(i);
+    const suffix = (Math.abs(h) % 0x10000).toString(16).padStart(4, '0');
+    openId = `ghost-${suffix}`;
+  }
 
   await db.insert(users).values({
     openId,
