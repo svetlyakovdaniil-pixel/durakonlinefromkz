@@ -3504,3 +3504,8 @@
 - [x] Подключить GhostPlayerManager к server/_core/index.ts при старте сервера
 - [x] Добавить admin endpoint для просмотра активных ghost players
 - [x] Написать тест для GhostPlayerManager (тест не нужен — pure integration, нет unit-логики)
+
+## Исправление: изображения столов и колод не отображались на продакшне
+- [x] Диагностика: /manus-storage/ proxy не работает на durakonlinefromkz.online (нет BUILT_IN_FORGE_API_KEY)
+- [x] Загрузить все 84 файла через manus-upload-file (без --webdev) для получения прямых CDN URL (files.manuscdn.com)
+- [x] Заменить все /manus-storage/ пути в cardAssets.ts на прямые CDN URL
