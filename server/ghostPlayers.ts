@@ -387,67 +387,16 @@ function pickGhostAction(
   // Pass turn (non-active edge player)
   if (passTurn && !playCard && !endAttack) return { event: 'passTurn', data: roomId };
 
-  // Defender logic
-  if (takeCards && !playCard && !transferCard && !showPassThrough) {
-    // Only option is to take
-    return { event: 'takeCards', data: roomId };
-  }
-
-  if (takeCards && playCard) {
-    // ── ALL-OR-NOTHING DEFENSE ──────────────────────────────────────────────
-    // Count undefended attack cards on the battlefield
-    const undefendedPairs = gameState.battleField
-      .map((pair, idx) => ({ pair, idx }))
-      .filter(({ pair }) => !pair.defense);
-
-    // Skill-based decision: weak bots sometimes try partial defense (looks human)
-    // If we have learning data, blend the learned take rate into the decision
-    const baseTakeProb = learnedTakeRate !== null
-      ? learnedTakeRate * (1 - skill) + 0.3 * skill // blend: learned rate for weak, 30% for strong
-      : (0.5 - skill * 0.5); // default: weak=50% take, strong=0% take
-    const useAllOrNothing = Math.random() > baseTakeProb; // invert: high take prob → less all-or-nothing
-
-    if (useAllOrNothing && playCard.type === 'playCard') {
-      // Check if we can cover ALL undefended cards
-      // We have playCard.cardIds.length cards available to defend with
-      // If we have fewer defense cards than attack cards, we can't cover all → take
-      const canCoverAll = playCard.cardIds.length >= undefendedPairs.length;
-
-      if (!canCoverAll) {
-        // Can't cover everything — take immediately, don't defend any
-        return { event: 'takeCards', data: roomId };
-      }
-
-      // Can cover all — pick best (non-valuable) defense card for first undefended pair
-      if (undefendedPairs.length > 0) {
-        const targetPairIdx = undefendedPairs[0].idx;
-        // Prefer non-valuable defense cards
-        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
-        return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
-      }
-    } else {
-      // Partial defense (less skilled / random behavior)
-      const shouldDefend = Math.random() < (0.4 + skill * 0.55);
-      if (shouldDefend && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-        const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
-        if (undefendedIdx >= 0) {
-          const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
-          return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
-        }
-      }
-      return { event: 'takeCards', data: roomId };
-    }
-  }
-
-  // ── Pass-through (проездной) — ALWAYS use it first if non-valuable cards available ──
+  // ── Pass-through (проездной) — HIGHEST PRIORITY: always use before defending/taking ──
+  // Real players ALWAYS use pass-through when available with non-valuable cards.
+  // This MUST come before the takeCards && playCard block.
   if (showPassThrough && showPassThrough.type === 'showPassThrough' && showPassThrough.cardIds.length > 0) {
     const cardMap2 = new Map(myHand.map(c => [c.id, c]));
     const ptCards = showPassThrough.cardIds.map(id => cardMap2.get(id)).filter(Boolean) as ClientGameState['myHand'];
     const nonValPT = ptCards.filter(c => !isValuableCard(c, trumpSuit));
     if (nonValPT.length > 0) {
-      // ALWAYS use pass-through if we have non-valuable cards for it (mirrors real player behaviour)
+      // ALWAYS use pass-through if we have non-valuable cards for it
       if (nonValPT.length > 1) {
-        // Send all matching pass-through cards at once (batch)
         const batchIds = nonValPT.map(c => c.id);
         return { event: 'showPassThroughs', data: { roomId, cardIds: batchIds } };
       }
@@ -460,16 +409,16 @@ function pickGhostAction(
       return { event: 'showPassThrough', data: { roomId, cardId } };
     }
   }
-
-  // ── Transfer (перевод) — ALWAYS use it if non-valuable cards available ──
+  // ── Transfer (перевод) — HIGH PRIORITY: always use before defending/taking ──
+  // Real players ALWAYS transfer when available with non-valuable cards.
+  // This MUST come before the takeCards && playCard block.
   if (transferCard && transferCard.type === 'transferCard' && transferCard.cardIds.length > 0) {
     const cardMap3 = new Map(myHand.map(c => [c.id, c]));
     const trCards = transferCard.cardIds.map(id => cardMap3.get(id)).filter(Boolean) as ClientGameState['myHand'];
     const nonValTr = trCards.filter(c => !isValuableCard(c, trumpSuit));
     if (nonValTr.length > 0) {
-      // ALWAYS transfer if we have non-valuable cards for it (mirrors real player behaviour)
+      // ALWAYS transfer if we have non-valuable cards for it
       if (nonValTr.length > 1) {
-        // Batch transfer all same-rank non-valuable cards
         const batchIds = nonValTr.map(c => c.id);
         return { event: 'transferCards', data: { roomId, cardIds: batchIds } };
       }
@@ -482,50 +431,99 @@ function pickGhostAction(
       return { event: 'transferCard', data: { roomId, cardId } };
     }
   }
+  // ── Defender logic (only reached when no pass-through/transfer available) ──
+  if (takeCards && !playCard) {
+    // Only option is to take
+    return { event: 'takeCards', data: roomId };
+  }
 
+  if (takeCards && playCard) {
+    // ── ALL-OR-NOTHING DEFENSE ──────────────────────────────────────────────
+    // Count undefended attack cards on the battlefield
+    const undefendedPairs = gameState.battleField
+      .map((pair, idx) => ({ pair, idx }))
+      .filter(({ pair }) => !pair.defense);
+    if (playCard.type === 'playCard' && undefendedPairs.length > 0) {
+      // ── CAN WE ACTUALLY BEAT ALL UNDEFENDED CARDS? ──────────────────────
+      // Check each undefended attack card against our available defense cards.
+      // If we can't beat even one of them, take immediately — don't waste defense cards.
+      const defenseCards = playCard.cardIds
+        .map(id => cardMap.get(id))
+        .filter(Boolean) as ClientGameState['myHand'];
+      const canBeatCard = (attackCard: ClientGameState['myHand'][number]): boolean => {
+        for (const dc of defenseCards) {
+          if (dc.rank === '777') return true; // 777 beats everything
+          if (attackCard.rank === '777') continue; // 777 can only be beaten by 777
+          // Same suit, higher rank
+          if (dc.suit === attackCard.suit && (RANK_ORDER[dc.rank] ?? 0) > (RANK_ORDER[attackCard.rank] ?? 0)) return true;
+          // Trump beats non-trump
+          if (dc.suit === trumpSuit && attackCard.suit !== trumpSuit) return true;
+        }
+        return false;
+      };
+      const canBeatAll = undefendedPairs.every(({ pair }) => canBeatCard(pair.attack));
+      if (!canBeatAll) {
+        // Can't beat all attack cards — take immediately, don't waste any defense cards
+        return { event: 'takeCards', data: roomId };
+      }
+      // We CAN beat all cards. Now decide: defend or take based on skill/learning.
+      const baseTakeProb = learnedTakeRate !== null
+        ? learnedTakeRate * (1 - skill) + 0.3 * skill
+        : (0.5 - skill * 0.5);
+      const shouldDefend = Math.random() > baseTakeProb;
+      if (shouldDefend) {
+        // Defend: pick best (non-valuable) defense card for first undefended pair
+        const targetPairIdx = undefendedPairs[0].idx;
+        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+        return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
+      } else {
+        return { event: 'takeCards', data: roomId };
+      }
+    }
+    // No undefended pairs — fallback
+    if (undefendedPairs.length === 0 && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
+      const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+      return { event: 'playCard', data: { roomId, cardId } };
+    }
+  }
   // ── Play a card (attack) — prefer multi-attack if same-rank cards available ──
   if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
     const cardMap4 = new Map(myHand.map(c => [c.id, c]));
     const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
-
-    // Multi-attack: if attacker opens the round (battlefield empty) and has ≥2 same-rank cards,
-    // play all of them at once — exactly like real players do
-    const isOpeningAttack = gameState.battleField.length === 0;
-    if (isOpeningAttack) {
-      const availableCards = playCard.cardIds
-        .map(id => cardMap4.get(id))
-        .filter(Boolean) as ClientGameState['myHand'];
-      // Group by rank
-      const byRank = new Map<string, ClientGameState['myHand']>();
-      for (const c of availableCards) {
-        const group = byRank.get(c.rank) ?? [];
-        group.push(c);
-        byRank.set(c.rank, group);
-      }
-      // Find non-valuable groups with multiple cards
-      const multiGroups = Array.from(byRank.values())
-        .filter(g => g.length >= 2 && g.some(c => !isValuableCard(c, trumpSuit)));
-      if (multiGroups.length > 0) {
-        // Pick the group with the lowest rank (least valuable) for multi-attack
-        const bestGroup = multiGroups.sort((a, b) => {
-          const rankA = RANK_ORDER[a[0].rank] ?? 0;
-          const rankB = RANK_ORDER[b[0].rank] ?? 0;
-          return rankA - rankB;
-        })[0];
-        const nonValGroup = bestGroup.filter(c => !isValuableCard(c, trumpSuit));
-        const attackIds = nonValGroup.map(c => c.id);
-        // Return special multi-attack action — executeGhostAction handles sequential emit
-        return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
-      }
+    // Multi-attack: if attacker has ≥2 same-rank cards, play ALL of them at once.
+    // This applies both on opening move AND when adding cards to an existing attack.
+    // Real players always multi-attack with duplicate cards — it's a core strategy.
+    const availableCards = playCard.cardIds
+      .map(id => cardMap4.get(id))
+      .filter(Boolean) as ClientGameState['myHand'];
+    // Group by rank
+    const byRank = new Map<string, ClientGameState['myHand']>();
+    for (const c of availableCards) {
+      const group = byRank.get(c.rank) ?? [];
+      group.push(c);
+      byRank.set(c.rank, group);
     }
-
+    // Find non-valuable groups with multiple cards
+    const multiGroups = Array.from(byRank.values())
+      .filter(g => g.length >= 2 && g.some(c => !isValuableCard(c, trumpSuit)));
+    if (multiGroups.length > 0) {
+      // Pick the group with the lowest rank (least valuable) for multi-attack
+      const bestGroup = multiGroups.sort((a, b) => {
+        const rankA = RANK_ORDER[a[0].rank] ?? 0;
+        const rankB = RANK_ORDER[b[0].rank] ?? 0;
+        return rankA - rankB;
+      })[0];
+      const nonValGroup = bestGroup.filter(c => !isValuableCard(c, trumpSuit));
+      const attackIds = nonValGroup.map(c => c.id);
+      // Return special multi-attack action — executeGhostAction handles sequential emit
+      return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
+    }
     const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
     if (undefendedIdx >= 0) {
       return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
     }
     return { event: 'playCard', data: { roomId, cardId } };
   }
-
   // ── End attack — but only if all attack cards are covered ──
   if (endAttack) {
     // Check if there are any uncovered attack cards on the battlefield

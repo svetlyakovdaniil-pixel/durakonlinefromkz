@@ -648,6 +648,10 @@ export function useSocket(userId: string | null, userName: string | null) {
     // Also notify server so the room gets cleaned up when all players leave
     const roomId = currentRoomIdRef.current;
     if (roomId) {
+      // Block reconnect to this room permanently — same as leaveGame.
+      // Without this, a winner who clicks "exit to lobby" would be auto-rejoined
+      // as a spectator on the next reconnect/quickGame.
+      blockedRoomIdsRef.current.add(roomId);
       socketRef.current?.emit('leaveRoom', roomId);
     }
     currentRoomIdRef.current = null;
