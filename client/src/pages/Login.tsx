@@ -6,7 +6,23 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { getLoginUrl } from "@/const";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 
+/**
+ * Returns the origin to use for OAuth redirect URIs.
+ *
+ * When running as a native Capacitor app (iOS/Android), window.location.origin
+ * returns "capacitor://localhost" which is NOT a valid OAuth redirect URI —
+ * Google and Apple will reject it. In that case, we use the production domain
+ * so the OAuth callback goes to the real server, which sets the session cookie
+ * and redirects back to the production URL (loaded by the Capacitor web view).
+ */
+function getOAuthOrigin(): string {
+  if (Capacitor.isNativePlatform()) {
+    return "https://durakonlinefromkz.vip";
+  }
+  return window.location.origin;
+}
 
 export default function Login() {
   const { t } = useTranslation();
@@ -65,18 +81,22 @@ export default function Login() {
   const handleGoogleSignIn = () => {
     setError("");
     setGoogleLoading(true);
-    // Use server-side OAuth redirect flow (avoids COOP popup issues)
-    const origin = window.location.origin;
-    window.location.href = `/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
+    // Use server-side OAuth redirect flow (avoids COOP popup issues).
+    // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
+    // which is not a valid OAuth redirect URI — use the production domain instead.
+    const origin = getOAuthOrigin();
+    window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
   };
 
   const handleAppleSignIn = async () => {
     setError("");
     setAppleLoading(true);
     try {
-      // Get the Apple authorization URL from our server
-      const origin = window.location.origin;
-      const res = await fetch(`/api/auth/apple/init?origin=${encodeURIComponent(origin)}`, {
+      // Get the Apple authorization URL from our server.
+      // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
+      // which is not a valid OAuth redirect URI — use the production domain instead.
+      const origin = getOAuthOrigin();
+      const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`, {
         credentials: "include",
       });
       if (!res.ok) {
