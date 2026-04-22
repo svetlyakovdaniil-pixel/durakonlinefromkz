@@ -67,6 +67,8 @@ interface GhostPlayer {
   reconnectAttempts: number;
   /** Real DB gameId for registerProfile (0 until provisioned) */
   dbGameId: number;
+  /** Real DB season rating for registerProfile (0 until provisioned) */
+  dbSeasonRating: number;
 }
 
 // ─── Nicknames ───────────────────────────────────────────────────────────────
@@ -579,14 +581,14 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
         console.warn(`[Ghost] Failed to provision DB account for ${nick}`);
         return null;
       }
-      console.log(`[Ghost] Provisioned ${nick} → openId=${result.openId} gameId=${result.gameId}`);
-      return { nick, personality, openId: result.openId, gameId: result.gameId };
+      console.log(`[Ghost] Provisioned ${nick} → openId=${result.openId} gameId=${result.gameId} seasonRating=${result.seasonRating}`);
+      return { nick, personality, openId: result.openId, gameId: result.gameId, seasonRating: result.seasonRating };
     })
   );
 
   for (const res of provisionResults) {
     if (res.status !== 'fulfilled' || !res.value) continue;
-    const { nick, personality, openId, gameId } = res.value;
+    const { nick, personality, openId, gameId, seasonRating } = res.value;
     const ghost: GhostPlayer = {
       id: openId, // openId IS the ghost id (ghost-<nick-slug>)
       personality,
@@ -601,6 +603,7 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
       lobbyTimer: null,
       reconnectAttempts: 0,
       dbGameId: gameId,
+      dbSeasonRating: seasonRating,
     };
     ghosts.set(openId, ghost);
   }
@@ -677,14 +680,14 @@ function connectGhost(ghost: GhostPlayer): void {
   socket.on('connect', () => {
     ghost.reconnectAttempts = 0;
     ghost.state = 'browsing';
-    // Register profile using real DB gameId
+    // Register profile using real DB gameId and real season rating
     socket.emit('registerProfile', {
       gameId: ghost.dbGameId,
       displayName: ghost.personality.nick,
       avatarId: ghost.personality.avatarId,
       equippedFrame: ghost.personality.equippedFrame ?? null,
       isPremium: false,
-      seasonRating: Math.floor(rand(800, 2200)),
+      seasonRating: ghost.dbSeasonRating,
     });
     // Ghost will be picked up by roomManagerTick automatically
     ghost.state = 'browsing';

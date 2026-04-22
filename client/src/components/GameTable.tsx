@@ -2401,6 +2401,14 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
               <span className="text-amber-200/50 text-xs">ID {profile.gameId}</span>
             </div>
 
+            {/* Season rank badge */}
+            {(profile.seasonRating ?? 0) > 0 && (
+              <div className="flex items-center gap-1.5 bg-black/30 rounded-full px-3 py-1 border border-amber-700/20">
+                <DiamondRankIcon seasonRating={profile.seasonRating ?? 0} size={16} showTooltip />
+                <span className="text-amber-200 text-xs font-semibold">{profile.seasonRating} {t('season.ptsAbbr')}</span>
+              </div>
+            )}
+
             {/* Stats */}
             <div className="w-full grid grid-cols-2 gap-2 text-center">
               <div className="bg-black/30 rounded-lg px-2 py-1.5 border border-amber-700/20">
