@@ -2964,6 +2964,8 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     // After gameOver, also send final gameStateUpdate so client shows correct final state
     for (const p of gameState.players) {
       if (p.isBot) continue;
+      // Skip players who intentionally left — they are in the lobby
+      if (p.leftGame || p.isOut) continue;
       const sid = playerSockets.get(p.id);
       if (sid) {
         const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, finishedRoom?.settings.betAmount || 0, isTutorial, playerSeasonRatings);
@@ -2979,6 +2981,9 @@ function broadcastGameState(roomId: string, gameState: GameState) {
   const currentAttackerOdId = gameState.players[gameState.currentAttackerIdx]?.id;
   for (const p of gameState.players) {
     if (p.isBot) continue;
+    // Skip players who intentionally left or are out — they are in the lobby now
+    // and should NOT receive gameStateUpdate from this game anymore
+    if (p.leftGame || p.isOut) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
       const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false, playerSeasonRatings);
