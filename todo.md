@@ -3555,3 +3555,8 @@
 - [x] Диагностика: найти где leaveGame не блокирует reconnect при isOut/playerIdx=-1/no gameState
 - [x] Исправить сервер: при leaveGame всегда добавлять в forfeitedFromRoom (даже при isOut, playerIdx=-1, нет gameState)
 - [x] Исправить клиент: roomUpdated игнорировать если currentRoomIdRef=null (игрок в лобби)
+## Баг: аномалия с дублированием карт после выхода реального игрока
+- [x] Диагностика: scheduleBotAction не обрабатывал гост-плееров (не isBot) — игра зависала
+- [x] Исправить scheduleBotAction: гост-плееры (id starts with ghost-) обрабатываются как боты
+- [x] Исправить scheduleEdgeBotActions: гост-плееры тоже делают edge-ходы
+- [x] Исправить getBotAction: гост-плееры могут делать ходы через getBotAction

@@ -1630,7 +1630,10 @@ export function toClientState(
 
 export function getBotAction(state: GameState, botIdx: number): { action: string; cardId?: string; targetPairIdx?: number } | null {
   const player = state.players[botIdx];
-  if (player.isOut || !player.isBot) return null;
+  // Ghost players (id starts with 'ghost-') are treated as bots for action selection.
+  // They are real socket connections but when the server needs to drive their turn
+  // (e.g. after all real humans left), getBotAction must work for them too.
+  if (player.isOut || (!player.isBot && !player.id.startsWith('ghost-'))) return null;
 
   const actions = getAvailableActions(state, botIdx);
   if (actions.length === 0) return null;
