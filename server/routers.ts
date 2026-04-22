@@ -113,7 +113,7 @@ import { getCurrentSeasonKey, getSeasonInfo, getSeasonBounds, getSeasonRank, SEA
 import { processDonatorAchievement, processTutorialAchievements, processCollectorAchievements, processAchievementCountAchievements } from "./achievementsTriggers";
 import { getTodayQuestsWithDefs, claimDailyQuestReward, getUnclaimedDailyQuestCount, swapDailyQuest, incrementDailyQuestProgress } from "./dailyQuestsDb";
 import { getPremiumStatus, buyPremium, getPremiumStats, getDailyQuestSwapsRemaining, useDailyQuestSwap } from "./premiumDb";
-import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName, updatePlayerEmotionPack } from "./socketServer";
+import { emitNotificationToProfile, getAdminOnlineStats, adminKickPlayer, updatePlayerDisplayName, updatePlayerEmotionPack, closeAllRooms } from "./socketServer";
 import { getGhostStats, initGhostPlayers, stopGhostPlayers } from "./ghostPlayers";
 import { upsertPushToken, removePushToken, getPushSettings, updatePushSetting, sendNewUpdatePushToAll, sendFriendRequestPush, sendShanyrakRefillPush, sendRewardReceivedPush, PushNotifType } from "./pushNotifications";
 
@@ -1130,6 +1130,18 @@ export const appRouter = router({
         } else {
           return { success: true, stats: getGhostStats() };
         }
+      }),
+
+    closeAllRooms: adminProcedure
+      .mutation(async ({ ctx }) => {
+        const count = closeAllRooms();
+        await logAdminAction({
+          adminId: ctx.user.id,
+          adminName: ctx.user.name ?? null,
+          action: 'close_all_rooms',
+          details: { count },
+        });
+        return { success: true, count };
       }),
 
     kickPlayer: adminProcedure
