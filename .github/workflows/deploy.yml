@@ -12,7 +12,6 @@ jobs:
           host: 185.221.199.177
           username: root
           key: ${{ secrets.AEZA_SSH_PRIVATE_KEY }}
-          envs: BUILT_IN_FORGE_API_URL,BUILT_IN_FORGE_API_KEY
           script: |
             set -e
             cd /root/app
@@ -20,13 +19,5 @@ jobs:
             git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
-            # Restore card/table images from persistent storage (not tracked in git)
-            if [ -d /root/static_assets/cards ] && [ "$(ls -A /root/static_assets/cards)" ]; then
-              mkdir -p /root/app/dist/public/assets/cards
-              cp /root/static_assets/cards/*.webp /root/app/dist/public/assets/cards/
-              echo "Restored $(ls /root/static_assets/cards/*.webp | wc -l) card images"
-            else
-              echo "WARNING: /root/static_assets/cards is empty or missing!"
-            fi
-            GHOST_PLAYER_COUNT=100 BUILT_IN_FORGE_API_URL=$BUILT_IN_FORGE_API_URL BUILT_IN_FORGE_API_KEY=$BUILT_IN_FORGE_API_KEY pm2 restart durak --update-env
+            GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
             echo "Deploy completed at $(date)"
