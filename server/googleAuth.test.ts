@@ -128,7 +128,7 @@ describe("Google Auth - Init Redirect", () => {
 
   it("redirects to Google OAuth consent screen", async () => {
     const { req, res, getRedirectUrl } = createMockInitReqRes({
-      origin: "https://durakonlinefromkz.vip",
+      origin: "https://durakonlinefromkz.online",
     });
     routes["/api/auth/google/init"].handler(req, res);
     const url = getRedirectUrl();
@@ -157,7 +157,7 @@ describe("Google Auth - Callback Error Handling", () => {
   it("redirects to login with error when Google returns error", async () => {
     const { req, res, getRedirectUrl } = createMockCallbackReqRes({
       error: "access_denied",
-      state: Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url"),
+      state: Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url"),
     });
     await routes["/api/auth/google/callback"].handler(req, res);
     expect(getRedirectUrl()).toContain("/login?error=google_cancelled");
@@ -165,7 +165,7 @@ describe("Google Auth - Callback Error Handling", () => {
 
   it("redirects to login when no code provided", async () => {
     const { req, res, getRedirectUrl } = createMockCallbackReqRes({
-      state: Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url"),
+      state: Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url"),
     });
     await routes["/api/auth/google/callback"].handler(req, res);
     expect(getRedirectUrl()).toContain("/login?error=google_no_code");
@@ -173,7 +173,7 @@ describe("Google Auth - Callback Error Handling", () => {
 
   it("redirects to login on server error", async () => {
     mockFetch.mockRejectedValue(new Error("Network error"));
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res, getRedirectUrl } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
     expect(getRedirectUrl()).toContain("/login?error=google_server_error");
@@ -193,7 +193,7 @@ describe("Google Auth - New User Registration via Callback", () => {
     mockGetUserByOpenId.mockResolvedValue(null);
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res, cookies, getRedirectUrl } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 
@@ -207,7 +207,7 @@ describe("Google Auth - New User Registration via Callback", () => {
     );
     expect(cookies.length).toBe(1);
     expect(cookies[0].value).toBe("mock-session-token");
-    expect(getRedirectUrl()).toBe("https://durakonlinefromkz.vip/");
+    expect(getRedirectUrl()).toBe("https://durakonlinefromkz.online/");
   });
 
   it("truncates name to 12 characters for new users", async () => {
@@ -215,7 +215,7 @@ describe("Google Auth - New User Registration via Callback", () => {
     mockGetUserByOpenId.mockResolvedValue(null);
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 
@@ -229,7 +229,7 @@ describe("Google Auth - New User Registration via Callback", () => {
     mockGetUserByOpenId.mockResolvedValue(null);
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 
@@ -243,7 +243,7 @@ describe("Google Auth - New User Registration via Callback", () => {
     mockGetUserByOpenId.mockResolvedValue(null);
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 
@@ -270,7 +270,7 @@ describe("Google Auth - Existing User Login via Callback", () => {
     });
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res, cookies, getRedirectUrl } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 
@@ -285,7 +285,7 @@ describe("Google Auth - Existing User Login via Callback", () => {
       expect.objectContaining({ name: "OldName" })
     );
     expect(cookies.length).toBe(1);
-    expect(getRedirectUrl()).toBe("https://durakonlinefromkz.vip/");
+    expect(getRedirectUrl()).toBe("https://durakonlinefromkz.online/");
   });
 
   it("uses Google name when existing user has no name", async () => {
@@ -297,7 +297,7 @@ describe("Google Auth - Existing User Login via Callback", () => {
     });
     mockUpsertUser.mockResolvedValue(undefined);
 
-    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.vip" })).toString("base64url");
+    const state = Buffer.from(JSON.stringify({ origin: "https://durakonlinefromkz.online" })).toString("base64url");
     const { req, res } = createMockCallbackReqRes({ code: "auth-code", state });
     await routes["/api/auth/google/callback"].handler(req, res);
 

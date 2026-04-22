@@ -95,7 +95,7 @@ export function registerAppleAuthRoutes(app: Express) {
    * Returns the Apple authorization URL for the frontend to redirect to
    */
   app.get("/api/auth/apple/init", (req: Request, res: Response) => {
-    const origin = req.query.origin as string || "https://durakonlinefromkz.vip";
+    const origin = req.query.origin as string || "https://durakonlinefromkz.online";
     const referralCode = req.query.referralCode as string || "";
     const state = Buffer.from(JSON.stringify({ origin, referralCode })).toString("base64url");
     const redirectUri = `${origin}/api/auth/apple/callback`;
@@ -127,7 +127,7 @@ export function registerAppleAuthRoutes(app: Express) {
       }
 
       // Parse state to get origin and referral code
-      let origin = "https://durakonlinefromkz.vip";
+      let origin = "https://durakonlinefromkz.online";
       let referralCode = "";
       try {
         if (state) {

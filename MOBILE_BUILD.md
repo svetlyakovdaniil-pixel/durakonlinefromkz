@@ -279,8 +279,8 @@ AAB файл: `android/app/build/outputs/bundle/release/app-release.aab`
 ### App Store (Apple)
 
 - [ ] Apple Developer Program ($99/год)
-- [ ] Privacy Policy URL: `https://durakonlinefromkz.vip/privacy`
-- [ ] Terms of Service URL: `https://durakonlinefromkz.vip/terms`
+- [ ] Privacy Policy URL: `https://durakonlinefromkz.online/privacy`
+- [ ] Terms of Service URL: `https://durakonlinefromkz.online/terms`
 - [ ] Скриншоты: iPhone 6.7", 6.5", iPad 12.9"
 - [ ] Описание на русском/английском
 - [ ] Возрастной рейтинг: 4+ (карточная игра без насилия)
@@ -289,7 +289,7 @@ AAB файл: `android/app/build/outputs/bundle/release/app-release.aab`
 ### Google Play
 
 - [ ] Google Play Developer Account ($25 единоразово)
-- [ ] Privacy Policy URL: `https://durakonlinefromkz.vip/privacy`
+- [ ] Privacy Policy URL: `https://durakonlinefromkz.online/privacy`
 - [ ] Скриншоты: телефон + планшет
 - [ ] Описание на русском/английском
 - [ ] Возрастной рейтинг: PEGI 3 / Everyone

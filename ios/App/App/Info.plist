@@ -107,8 +107,8 @@
 	<key>WKAppBoundDomains</key>
 	<array>
 		<string>localhost</string>
-		<string>durakonlinefromkz.vip</string>
-		<string>www.durakonlinefromkz.vip</string>
+		<string>durakonlinefromkz.online</string>
+		<string>www.durakonlinefromkz.online</string>
 	</array>
 
 	<!-- ── Privacy: no camera/microphone/location needed ─────────────────── -->

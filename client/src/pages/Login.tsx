@@ -19,7 +19,7 @@ import { Capacitor } from "@capacitor/core";
  */
 function getOAuthOrigin(): string {
   if (Capacitor.isNativePlatform()) {
-    return "https://durakonlinefromkz.vip";
+    return "https://durakonlinefromkz.online";
   }
   return window.location.origin;
 }
