@@ -562,9 +562,10 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
   ghostsEnabled = true;
   console.log(`[Ghost] Initializing ${count} ghost players on port ${port}`);
 
-  // Shuffle nicks and create ghost players
-  const shuffledNicks = [...GHOST_NICKS].sort(() => Math.random() - 0.5);
-  const selectedNicks = shuffledNicks.slice(0, Math.min(count, shuffledNicks.length));
+  // Use a stable deterministic order (no shuffle) so the same nick always maps
+  // to the same openId in the DB. Shuffling caused index-based openIds to change
+  // on every restart, creating duplicate ghost accounts.
+  const selectedNicks = GHOST_NICKS.slice(0, Math.min(count, GHOST_NICKS.length));
 
   // Provision DB accounts first (parallel)
   const provisionResults = await Promise.allSettled(
@@ -575,7 +576,7 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
         personality.avatarId,
         personality.equippedFrame,
         personality.emotionPack,
-        i, // index used as fallback for Cyrillic nicks
+        // No index needed — openId is now derived from a stable hash of the nick
       );
       if (!result) {
         console.warn(`[Ghost] Failed to provision DB account for ${nick}`);
