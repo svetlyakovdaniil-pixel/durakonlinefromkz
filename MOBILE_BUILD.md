@@ -34,7 +34,7 @@ pnpm install
 
 ### 1.2 Настроить секреты (env vars)
 
-Создайте `.env.local` или задайте через Manus Secrets:
+Создайте `.env.local` или задайте через GitHub Secrets:
 
 ```env
 # AdMob (Google AdMob — https://admob.google.com)
@@ -361,7 +361,7 @@ npx cap update
 
 All card and table images (84 files, ~260MB) are stored in `/home/ubuntu/webdev-static-assets/card-table-assets/` on the build machine.
 
-For web deployment, images are served via `/manus-storage/` CDN paths (already configured in `shared/cardAssets.ts`).
+For web deployment, images are served via `/assets/cards/` paths (already configured in `shared/cardAssets.ts`).
 
 For iOS/Android builds, copy the assets into the Capacitor directories before building:
 

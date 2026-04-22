@@ -17,7 +17,7 @@ function createContext(overrides: Partial<AuthenticatedUser> = {}): TrpcContext 
     openId: "test-user-1",
     email: "test@example.com",
     name: "Test User",
-    loginMethod: "manus",
+    loginMethod: "email",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),

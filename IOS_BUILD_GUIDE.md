@@ -129,15 +129,15 @@ base64 -i DurakKZ_AppStore_Distribution.mobileprovision | tr -d '\n'
 | `P12_PASSWORD` | Пароль от `.p12` (например `mypassword123`) |
 | `BUILD_PROVISION_PROFILE_BASE64` | base64 из `.mobileprovision` (Шаг 3.4) |
 | `APPLE_PROFILE_NAME` | `DurakKZ AppStore Distribution` |
-| `VITE_APP_ID` | Из Manus Secrets |
-| `VITE_OAUTH_PORTAL_URL` | Из Manus Secrets |
-| `VITE_ADMOB_IOS_APP_ID` | Из Manus Secrets |
-| `VITE_ADMOB_REWARDED_AD_UNIT_ID` | Из Manus Secrets |
-| `VITE_REVENUECAT_IOS_KEY` | Из Manus Secrets |
-| `VITE_FRONTEND_FORGE_API_KEY` | Из Manus Secrets |
-| `VITE_FRONTEND_FORGE_API_URL` | Из Manus Secrets |
-| `BUILT_IN_FORGE_API_URL` | Из Manus Secrets |
-| `BUILT_IN_FORGE_API_KEY` | Из Manus Secrets |
+| `VITE_APP_ID` | Из GitHub Secrets |
+| `VITE_OAUTH_PORTAL_URL` | Из GitHub Secrets |
+| `VITE_ADMOB_IOS_APP_ID` | Из GitHub Secrets |
+| `VITE_ADMOB_REWARDED_AD_UNIT_ID` | Из GitHub Secrets |
+| `VITE_REVENUECAT_IOS_KEY` | Из GitHub Secrets |
+| `VITE_FRONTEND_FORGE_API_KEY` | Из GitHub Secrets |
+| `VITE_FRONTEND_FORGE_API_URL` | Из GitHub Secrets |
+| `BUILT_IN_FORGE_API_URL` | Из GitHub Secrets |
+| `BUILT_IN_FORGE_API_KEY` | Из GitHub Secrets |
 
 ---
 

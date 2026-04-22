@@ -11,7 +11,7 @@ import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 // =============================================================================
 
 const PROJECT_ROOT = import.meta.dirname;
-const LOG_DIR = path.join(PROJECT_ROOT, ".manus-logs");
+const LOG_DIR = path.join(PROJECT_ROOT, ".dev-logs");
 const MAX_LOG_SIZE_BYTES = 1 * 1024 * 1024; // 1MB per log file
 const TRIM_TARGET_BYTES = Math.floor(MAX_LOG_SIZE_BYTES * 0.6); // Trim to 60% to avoid constant re-trimming
 
@@ -181,13 +181,9 @@ export default defineConfig({
   server: {
     host: true,
     allowedHosts: [
-      ".manuspre.computer",
-      ".manus.computer",
-      ".manus-asia.computer",
-      ".manuscomputer.ai",
-      ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "durakonlinefromkz.online",
     ],
     fs: {
       strict: true,
