@@ -15,7 +15,7 @@ import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction,
 import { RANK_ORDER } from '../shared/gameTypes';
 import type { TableStyle } from '../shared/cardAssets';
 import { getAvailableRooms } from './socketServer';
-import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats } from './db';
+import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats, getShopPriceOverrides } from './db';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -212,8 +212,14 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   // Preferred deck and table style (small portion use custom/premium)
   const deckStyleRoll = Math.random();
   const preferredDeckStyle: 'classic' | 'custom' = deckStyleRoll < 0.88 ? 'classic' : 'custom';
-  const TABLE_STYLES: TableStyle[] = ['classic', 'classic', 'classic', 'dark_kazakh', 'neon', 'apocalypse'];
-  const preferredTableStyle = pickRandom(TABLE_STYLES);
+  // Use only table styles that are available (not hidden by admin via shop_price_overrides).
+  // availableTableStyles is refreshed from DB at init. Bias towards 'classic' (3x weight).
+  const weightedTableStyles: import('../shared/cardAssets').TableStyle[] = [
+    ...availableTableStyles,
+    ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
+    ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
+  ];
+  const preferredTableStyle = pickRandom(weightedTableStyles.length > 0 ? weightedTableStyles : ['classic' as import('../shared/cardAssets').TableStyle]);
 
   // Bet preferences — lower bets more common
   const betRoll = Math.random();
@@ -556,11 +562,33 @@ let serverPort = 3000;
 let ghostsEnabled = false;
 const ghosts = new Map<string, GhostPlayer>();
 let managerInterval: NodeJS.Timeout | null = null;
+/** Cache of table styles that are available (not hidden by admin). Updated at init. */
+let availableTableStyles: import('../shared/cardAssets').TableStyle[] = ['classic', 'dark_kazakh', 'neon', 'apocalypse', 'galaxy', 'sea_depths', 'stargazer', 'black_velvet'];
+/** Refresh the available table styles cache from DB shop_price_overrides */
+async function refreshAvailableTableStyles(): Promise<void> {
+  try {
+    const overrides = await getShopPriceOverrides();
+    const disabledTables = new Set(
+      overrides
+        .filter((o: any) => o.itemType === 'table' && !o.isAvailable)
+        .map((o: any) => o.itemId as string)
+    );
+    const allStyles: import('../shared/cardAssets').TableStyle[] = ['classic', 'dark_kazakh', 'neon', 'apocalypse', 'galaxy', 'sea_depths', 'stargazer', 'black_velvet'];
+    availableTableStyles = allStyles.filter(s => !disabledTables.has(s));
+    // Always keep 'classic' as fallback
+    if (availableTableStyles.length === 0) availableTableStyles = ['classic'];
+    console.log(`[Ghost] Available table styles: ${availableTableStyles.join(', ')}`);
+  } catch (err) {
+    console.warn('[Ghost] Failed to refresh table styles from DB, using defaults:', err);
+  }
+}
 /** Call this after the HTTP server starts listening */
 export async function initGhostPlayers(port: number, count: number = 15): Promise<void> {
   serverPort = port;
   ghostsEnabled = true;
   console.log(`[Ghost] Initializing ${count} ghost players on port ${port}`);
+  // Load available table styles from DB before building personalities
+  await refreshAvailableTableStyles();
 
   // Use a stable deterministic order (no shuffle) so the same nick always maps
   // to the same openId in the DB. Shuffling caused index-based openIds to change

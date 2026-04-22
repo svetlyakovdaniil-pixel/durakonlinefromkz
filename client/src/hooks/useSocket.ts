@@ -119,17 +119,25 @@ export function useSocket(userId: string | null, userName: string | null) {
               if (ok && room) {
                 setCurrentRoom(room);
                 toast.success(tRef.current('socket.reconnectSuccess'), { duration: 3000 });
-              } else if (attempt < 5) {
-                const delay = Math.min(attempt * 800, 3000);
+              } else if (attempt < 2) {
+                // Only retry once more — server may still be starting up
+                // Stop immediately if another room was joined in the meantime
+                if (currentRoomIdRef.current !== roomId) return;
+                const delay = 800;
                 console.log(`[Socket] Rejoin attempt ${attempt} failed, retrying in ${delay}ms...`);
                 setTimeout(() => attemptRejoin(attempt + 1), delay);
               } else {
-                console.log(`[Socket] Failed to rejoin room ${roomId} after ${attempt} attempts`);
-                toast.error(tRef.current('socket.reconnectFailed'), { duration: 6000 });
-                currentRoomIdRef.current = null;
-                setCurrentRoom(null);
-                setGameState(null);
-                setAvailableActions([]);
+                // Room no longer exists (server restarted or room expired) — clear state
+                // immediately so the player can freely join a new room without conflicts
+                console.log(`[Socket] Room ${roomId} not found — server may have restarted, clearing state`);
+                if (currentRoomIdRef.current === roomId) {
+                  currentRoomIdRef.current = null;
+                  persistActiveRoom(null, true); // clear localStorage too
+                  setCurrentRoom(null);
+                  setGameState(null);
+                  setAvailableActions([]);
+                  blockedRoomIdsRef.current.add(roomId); // block stale events for this room
+                }
               }
             });
           };
@@ -495,6 +503,15 @@ export function useSocket(userId: string | null, userName: string | null) {
   const joinRoom = useCallback((roomId: string, password?: string): Promise<boolean> => {
     return new Promise((resolve) => {
       leavingRef.current = false;
+      // If we were trying to rejoin a different room (e.g. after server restart),
+      // block that old room so stale events from it don't interfere with the new room.
+      const prevRoomId = currentRoomIdRef.current;
+      if (prevRoomId && prevRoomId !== roomId) {
+        console.log(`[Socket] joinRoom: blocking stale room ${prevRoomId} before joining ${roomId}`);
+        blockedRoomIdsRef.current.add(prevRoomId);
+        currentRoomIdRef.current = null;
+        persistActiveRoom(null, true);
+      }
       blockedRoomIdsRef.current.delete(roomId);
       socketRef.current?.emit('joinRoom', { roomId, password }, (ok, room) => {
         if (ok && room) {
