@@ -3560,3 +3560,4 @@
 - [x] Исправить scheduleBotAction: гост-плееры (id starts with ghost-) обрабатываются как боты
 - [x] Исправить scheduleEdgeBotActions: гост-плееры тоже делают edge-ходы
 - [x] Исправить getBotAction: гост-плееры могут делать ходы через getBotAction
+- [x] Fix: broadcastGameState was sending gameStateUpdate to players who left (leftGame/isOut) — they received game events from old games after returning to lobby
