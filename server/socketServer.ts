@@ -653,7 +653,9 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     socket.on('leaveRoom', (roomId) => {
-      // Explicit leave — no grace period
+      // Explicit leave (e.g. winner clicking "exit to lobby" while game still in progress).
+      // Mark as intentionally left so reconnect/auto-rejoin won't pull them back.
+      forfeitedFromRoom.add(`${odId}:${roomId}`);
       untrackPlayerRoom(odId, roomId);
       handlePlayerLeaveRoom(odId, roomId);
     });
