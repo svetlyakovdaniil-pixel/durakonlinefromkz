@@ -3948,3 +3948,82 @@ export async function refillGhostShanyrak(openId: string, targetBalance = 10000)
     await db.update(playerProfiles).set({ balanceShanyrak: targetBalance }).where(eq(playerProfiles.id, profile.id));
   }
 }
+
+// ─── Ghost Learning ───────────────────────────────────────────────────────────
+
+import { ghostLearning, InsertGhostLearning } from "../drizzle/schema";
+
+/**
+ * Record a real human player's move for ghost AI learning.
+ * Called from socketServer whenever a non-ghost, non-bot player makes a move.
+ * Writes are fire-and-forget (no await needed at call site).
+ */
+export async function recordHumanMove(move: InsertGhostLearning): Promise<void> {
+  try {
+    const db = await getDb();
+    if (!db) return;
+    await db.insert(ghostLearning).values(move);
+  } catch {
+    // Non-critical — learning data loss is acceptable
+  }
+}
+
+/**
+ * Aggregated stats for ghost AI decision-making.
+ */
+export interface GhostLearningStats {
+  total: number;
+  transferRate: number;
+  passThroughRate: number;
+  multiAttackRate: number;
+  takeRate: number;
+  avgHandSizeOnTransfer: number;
+}
+
+let _learningStatsCache: GhostLearningStats | null = null;
+let _learningStatsCacheTime = 0;
+const LEARNING_CACHE_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Load aggregated ghost learning stats (cached for 5 minutes).
+ */
+export async function getGhostLearningStats(): Promise<GhostLearningStats | null> {
+  const now = Date.now();
+  if (_learningStatsCache && now - _learningStatsCacheTime < LEARNING_CACHE_TTL_MS) {
+    return _learningStatsCache;
+  }
+  try {
+    const db = await getDb();
+    if (!db) return null;
+    const rows = await db
+      .select({ actionType: ghostLearning.actionType, isMultiCard: ghostLearning.isMultiCard, handSize: ghostLearning.handSize })
+      .from(ghostLearning)
+      .orderBy(desc(ghostLearning.id))
+      .limit(10000);
+    if (rows.length === 0) return null;
+    const total = rows.length;
+    const transfers = rows.filter((r: { actionType: string }) => r.actionType === 'transfer').length;
+    const passThroughs = rows.filter((r: { actionType: string }) => r.actionType === 'passThrough').length;
+    const attacks = rows.filter((r: { actionType: string }) => r.actionType === 'attack');
+    const multiAttacks = attacks.filter((r: { isMultiCard: boolean }) => r.isMultiCard).length;
+    const takes = rows.filter((r: { actionType: string }) => r.actionType === 'take').length;
+    const defenses = rows.filter((r: { actionType: string }) => r.actionType === 'defense' || r.actionType === 'take').length;
+    const transferRows = rows.filter((r: { actionType: string }) => r.actionType === 'transfer');
+    const avgHandSizeOnTransfer = transferRows.length > 0
+      ? transferRows.reduce((sum: number, r: { handSize: number }) => sum + r.handSize, 0) / transferRows.length
+      : 6;
+    const stats: GhostLearningStats = {
+      total,
+      transferRate: transfers / total,
+      passThroughRate: passThroughs / total,
+      multiAttackRate: attacks.length > 0 ? multiAttacks / attacks.length : 0,
+      takeRate: defenses > 0 ? takes / defenses : 0.3,
+      avgHandSizeOnTransfer,
+    };
+    _learningStatsCache = stats;
+    _learningStatsCacheTime = now;
+    return stats;
+  } catch {
+    return null;
+  }
+}

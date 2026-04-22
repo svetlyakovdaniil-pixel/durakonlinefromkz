@@ -21,7 +21,7 @@ import {
   endAttack as engineEndAttack, getBotAction, resetTurnTimer,
   canPlayerAddCards, forfeitPlayer, transferMultipleCards, checkGameOver,
 } from './gameEngine';
-import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban } from './db';
+import { recordGameResult, recordForfeitLoss, checkShanyrakBalance, deductShanyrakBet, creditShanyrakPrize, getProfileByUserId, getUserByOpenId, checkAndAutoUnban, recordHumanMove } from './db';
 import {
   initGameTracking, cleanupGameTracking,
   trackTrumpDefense, trackThrow, trackTransfer, trackCardsTaken, track10Transfer,
@@ -845,12 +845,11 @@ export function initSocketServer(httpServer: HttpServer) {
       const prePlayHandSize = gameState.players[playerIdx]?.hand.length ?? 0;
       trackBerkutHandSize(data.roomId, odId, prePlayHandSize);
 
-      if (isDefender && gameState.turnPhase === 'defend' && !gameState.defenderTaking) {
+       if (isDefender && gameState.turnPhase === 'defend' && !gameState.defenderTaking) {
         error = playDefenseCard(gameState, playerIdx, data.cardId, data.targetPairIdx);
       } else {
         error = playAttackCard(gameState, playerIdx, data.cardId);
       }
-
       if (error) {
         socket.emit('error', error);
         // Re-send current available actions so client UI stays in sync
@@ -858,6 +857,26 @@ export function initSocketServer(httpServer: HttpServer) {
         const actions = getAvailableActions(gameState, playerIdx);
         socket.emit('yourTurn', actions);
         return;
+      }
+      // ── Ghost learning: record real human move (fire-and-forget) ──
+      if (!odId.startsWith('ghost-') && !odId.startsWith('bot-') && prePlayCard) {
+        const trumpSuit = gameState.trumpInfo.currentTrump;
+        const isTrumpCard = prePlayCard.suit === trumpSuit;
+        const isValuableCard = prePlayCard.rank === '777' ||
+          (isTrumpCard && ['J', 'Q', 'K', 'A'].includes(prePlayCard.rank)) ||
+          (prePlayCard.suit === 'spades' && prePlayCard.rank === 'K');
+        const actionType = isDefender ? 'defense' : 'attack';
+        recordHumanMove({
+          actionType,
+          cardRank: prePlayCard.rank,
+          isTrump: isTrumpCard,
+          isValuable: isValuableCard,
+          handSize: prePlayHandSize,
+          battlefieldSize: prePlayBattlefieldLength,
+          isMultiCard: false,
+          multiCardCount: 1,
+          playerCount: gameState.players.length,
+        }).catch(() => { /* non-critical */ });
       }
 
       // --- Achievement tracking ---
@@ -1051,6 +1070,25 @@ export function initSocketServer(httpServer: HttpServer) {
         gameState.consecutiveTimeouts[odId] = 0;
       }
 
+      // ── Ghost learning: record transfer move ──
+      if (!odId.startsWith('ghost-') && !odId.startsWith('bot-') && preTransferCard) {
+        const trumpSuit = gameState.trumpInfo.currentTrump;
+        const isTrumpCard = preTransferCard.suit === trumpSuit;
+        const isValuableCard = preTransferCard.rank === '777' ||
+          (isTrumpCard && ['J', 'Q', 'K', 'A'].includes(preTransferCard.rank)) ||
+          (preTransferCard.suit === 'spades' && preTransferCard.rank === 'K');
+        recordHumanMove({
+          actionType: 'transfer',
+          cardRank: preTransferCard.rank,
+          isTrump: isTrumpCard,
+          isValuable: isValuableCard,
+          handSize: gameState.players[playerIdx]?.hand.length ?? 0,
+          battlefieldSize: gameState.battleField.length,
+          isMultiCard: false,
+          multiCardCount: 1,
+          playerCount: gameState.players.length,
+        }).catch(() => { /* non-critical */ });
+      }
       // Achievement tracking for transfers
       trackTransfer(data.roomId, odId);
       if (preTransferCard?.rank === '10' && preTransferAttackerOdId) {
@@ -1106,11 +1144,32 @@ export function initSocketServer(httpServer: HttpServer) {
       const gameState = games.get(data.roomId);
       if (!gameState) return;
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
+      const prePassCard = gameState.players[playerIdx]?.hand.find(c => c.id === data.cardId);
+      const prePassHandSize = gameState.players[playerIdx]?.hand.length ?? 0;
       const error = showPassThrough(gameState, playerIdx, data.cardId);
       if (error) {
         socket.emit('error', error);
         socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
         return;
+      }
+      // ── Ghost learning: record pass-through move ──
+      if (!odId.startsWith('ghost-') && !odId.startsWith('bot-') && prePassCard) {
+        const trumpSuit = gameState.trumpInfo.currentTrump;
+        const isTrumpCard = prePassCard.suit === trumpSuit;
+        const isValuableCard = prePassCard.rank === '777' ||
+          (isTrumpCard && ['J', 'Q', 'K', 'A'].includes(prePassCard.rank)) ||
+          (prePassCard.suit === 'spades' && prePassCard.rank === 'K');
+        recordHumanMove({
+          actionType: 'passThrough',
+          cardRank: prePassCard.rank,
+          isTrump: isTrumpCard,
+          isValuable: isValuableCard,
+          handSize: prePassHandSize,
+          battlefieldSize: gameState.battleField.length,
+          isMultiCard: false,
+          multiCardCount: 1,
+          playerCount: gameState.players.length,
+        }).catch(() => { /* non-critical */ });
       }
       // Track pass card shown
       trackPassCardShown(data.roomId, odId);
@@ -1150,16 +1209,27 @@ export function initSocketServer(httpServer: HttpServer) {
     socket.on('takeCards', (roomId) => {
       const gameState = games.get(roomId);
       if (!gameState) return;
-
       const playerIdx = gameState.players.findIndex(p => p.id === odId);
       if (playerIdx !== gameState.currentDefenderIdx) return;
       if (gameState.defenderTaking) return; // Already taking
-
       // Reset consecutive timeout counter — player took action (voluntary take)
       if (gameState.consecutiveTimeouts[odId]) {
         gameState.consecutiveTimeouts[odId] = 0;
       }
-
+      // ── Ghost learning: record take action ──
+      if (!odId.startsWith('ghost-') && !odId.startsWith('bot-')) {
+        recordHumanMove({
+          actionType: 'take',
+          cardRank: null,
+          isTrump: false,
+          isValuable: false,
+          handSize: gameState.players[playerIdx]?.hand.length ?? 0,
+          battlefieldSize: gameState.battleField.length,
+          isMultiCard: false,
+          multiCardCount: 1,
+          playerCount: gameState.players.length,
+        }).catch(() => { /* non-critical */ });
+      }
       engineTakeCards(gameState);
       markProgress(roomId);
       restartTurnTimer(roomId);
