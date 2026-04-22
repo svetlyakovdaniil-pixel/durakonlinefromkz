@@ -674,3 +674,54 @@ export const pushNotificationSettings = mysqlTable("push_notification_settings",
 });
 export type PushNotificationSetting = typeof pushNotificationSettings.$inferSelect;
 export type InsertPushNotificationSetting = typeof pushNotificationSettings.$inferInsert;
+
+/**
+ * Ghost player learning table — records real human moves for AI training.
+ * Ghost players use this data to improve their decision-making over time.
+ *
+ * Each row represents one decision made by a real (non-ghost, non-bot) player.
+ * The ghost AI periodically loads aggregated stats from this table to bias
+ * its action selection probabilities toward what real players actually do.
+ */
+export const ghostLearning = mysqlTable("ghost_learning", {
+  id: int("id").autoincrement().primaryKey(),
+  /**
+   * Action type: 'attack' | 'defense' | 'transfer' | 'passThrough' | 'take' | 'endAttack'
+   */
+  actionType: varchar("actionType", { length: 32 }).notNull(),
+  /**
+   * Card rank played (6–A, J, Q, K, 777) — null for non-card actions (take, endAttack)
+   */
+  cardRank: varchar("cardRank", { length: 8 }),
+  /**
+   * Whether the played card was a trump card
+   */
+  isTrump: boolean("isTrump").notNull().default(false),
+  /**
+   * Whether the played card was a valuable card (trump J+ or K of spades or 777)
+   */
+  isValuable: boolean("isValuable").notNull().default(false),
+  /**
+   * Number of cards in hand at the time of the action
+   */
+  handSize: int("handSize").notNull(),
+  /**
+   * Number of cards on the battlefield at the time of the action
+   */
+  battlefieldSize: int("battlefieldSize").notNull(),
+  /**
+   * Whether this was a multi-card action (multi-attack, batch transfer, batch pass-through)
+   */
+  isMultiCard: boolean("isMultiCard").notNull().default(false),
+  /**
+   * Number of cards in the multi-card action (1 for single card actions)
+   */
+  multiCardCount: int("multiCardCount").notNull().default(1),
+  /**
+   * Player count in the game (2–6)
+   */
+  playerCount: int("playerCount").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type GhostLearning = typeof ghostLearning.$inferSelect;
+export type InsertGhostLearning = typeof ghostLearning.$inferInsert;

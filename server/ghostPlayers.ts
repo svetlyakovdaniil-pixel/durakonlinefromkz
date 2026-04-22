@@ -15,7 +15,7 @@ import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction,
 import { RANK_ORDER } from '../shared/gameTypes';
 import type { TableStyle } from '../shared/cardAssets';
 import { getAvailableRooms } from './socketServer';
-import { provisionGhostPlayer, refillGhostShanyrak } from './db';
+import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats } from './db';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -318,14 +318,29 @@ function pickBestAttackCard(
  * Ghost skill-based action selection.
  * skill=1.0 → always optimal play
  * skill=0.0 → random/suboptimal play
+ *
+ * Priority order (mirrors real human behaviour):
+ *  1. showPassThrough (проездной) — ALWAYS if non-valuable cards available
+ *  2. transferCard   (перевод)    — ALWAYS if non-valuable cards available
+ *  3. multi-attack   — if attacker has ≥2 cards of same rank on opening move
+ *  4. single playCard / defense / endAttack / passTurn
  */
 function pickGhostAction(
   actions: AvailableAction[],
   skill: number,
   temperament: Temperament,
   gameState: ClientGameState,
+  learningStats?: { transferRate: number; passThroughRate: number; multiAttackRate: number; takeRate: number; total: number },
 ): { event: string; data?: unknown } | null {
   if (actions.length === 0) return null;
+
+  // ── Apply learning stats to adjust probabilities (if enough data) ──
+  // When we have 100+ real human moves, use their patterns to bias ghost decisions.
+  // This makes ghosts gradually mirror how real players in this community actually play.
+  const hasLearningData = (learningStats?.total ?? 0) >= 100;
+  // Learned take rate: how often real defenders choose to take vs defend
+  // Used below in the takeCards decision block
+  const learnedTakeRate = hasLearningData ? learningStats!.takeRate : null;
 
   // Check what types of actions are available
   const playCard = actions.find(a => a.type === 'playCard');
@@ -378,7 +393,11 @@ function pickGhostAction(
       .filter(({ pair }) => !pair.defense);
 
     // Skill-based decision: weak bots sometimes try partial defense (looks human)
-    const useAllOrNothing = Math.random() < (0.5 + skill * 0.5); // weak=50%, strong=100%
+    // If we have learning data, blend the learned take rate into the decision
+    const baseTakeProb = learnedTakeRate !== null
+      ? learnedTakeRate * (1 - skill) + 0.3 * skill // blend: learned rate for weak, 30% for strong
+      : (0.5 - skill * 0.5); // default: weak=50% take, strong=0% take
+    const useAllOrNothing = Math.random() > baseTakeProb; // invert: high take prob → less all-or-nothing
 
     if (useAllOrNothing && playCard.type === 'playCard') {
       // Check if we can cover ALL undefended cards
@@ -412,16 +431,15 @@ function pickGhostAction(
     }
   }
 
-  // ── Pass-through (проездной) — ALWAYS use it if available with non-valuable cards ──
+  // ── Pass-through (проездной) — ALWAYS use it first if non-valuable cards available ──
   if (showPassThrough && showPassThrough.type === 'showPassThrough' && showPassThrough.cardIds.length > 0) {
     const cardMap2 = new Map(myHand.map(c => [c.id, c]));
     const ptCards = showPassThrough.cardIds.map(id => cardMap2.get(id)).filter(Boolean) as ClientGameState['myHand'];
     const nonValPT = ptCards.filter(c => !isValuableCard(c, trumpSuit));
     if (nonValPT.length > 0) {
-      // Always use pass-through if we have non-valuable cards for it
-      // Use batch event if multiple cards available (same rank), otherwise single
-      if (nonValPT.length > 1 && Math.random() < (0.4 + skill * 0.5)) {
-        // Send multiple pass-through cards at once (batch)
+      // ALWAYS use pass-through if we have non-valuable cards for it (mirrors real player behaviour)
+      if (nonValPT.length > 1) {
+        // Send all matching pass-through cards at once (batch)
         const batchIds = nonValPT.map(c => c.id);
         return { event: 'showPassThroughs', data: { roomId, cardIds: batchIds } };
       }
@@ -435,28 +453,65 @@ function pickGhostAction(
     }
   }
 
-  // ── Transfer (перевод) ──
+  // ── Transfer (перевод) — ALWAYS use it if non-valuable cards available ──
   if (transferCard && transferCard.type === 'transferCard' && transferCard.cardIds.length > 0) {
     const cardMap3 = new Map(myHand.map(c => [c.id, c]));
     const trCards = transferCard.cardIds.map(id => cardMap3.get(id)).filter(Boolean) as ClientGameState['myHand'];
     const nonValTr = trCards.filter(c => !isValuableCard(c, trumpSuit));
-    const transferChance = temperament === 'aggressive' ? 0.75 : (0.4 + skill * 0.45);
-    if (Math.random() < transferChance) {
-      if (nonValTr.length > 1 && Math.random() < (0.3 + skill * 0.5)) {
-        // Batch transfer
+    if (nonValTr.length > 0) {
+      // ALWAYS transfer if we have non-valuable cards for it (mirrors real player behaviour)
+      if (nonValTr.length > 1) {
+        // Batch transfer all same-rank non-valuable cards
         const batchIds = nonValTr.map(c => c.id);
         return { event: 'transferCards', data: { roomId, cardIds: batchIds } };
       }
-      const pool = nonValTr.length > 0 ? nonValTr.map(c => c.id) : transferCard.cardIds;
-      const cardId = pickBestAttackCard(pool, myHand, trumpSuit, skill);
+      const cardId = pickBestAttackCard(nonValTr.map(c => c.id), myHand, trumpSuit, skill);
+      return { event: 'transferCard', data: { roomId, cardId } };
+    }
+    // Only valuable cards available for transfer — use with low probability
+    if (Math.random() < 0.12) {
+      const cardId = pickBestAttackCard(transferCard.cardIds, myHand, trumpSuit, skill);
       return { event: 'transferCard', data: { roomId, cardId } };
     }
   }
 
-  // ── Play a card (attack) — avoid valuable cards ──
+  // ── Play a card (attack) — prefer multi-attack if same-rank cards available ──
   if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-    const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
+    const cardMap4 = new Map(myHand.map(c => [c.id, c]));
     const undefendedIdx = gameState.battleField.findIndex(p => !p.defense);
+
+    // Multi-attack: if attacker opens the round (battlefield empty) and has ≥2 same-rank cards,
+    // play all of them at once — exactly like real players do
+    const isOpeningAttack = gameState.battleField.length === 0;
+    if (isOpeningAttack) {
+      const availableCards = playCard.cardIds
+        .map(id => cardMap4.get(id))
+        .filter(Boolean) as ClientGameState['myHand'];
+      // Group by rank
+      const byRank = new Map<string, ClientGameState['myHand']>();
+      for (const c of availableCards) {
+        const group = byRank.get(c.rank) ?? [];
+        group.push(c);
+        byRank.set(c.rank, group);
+      }
+      // Find non-valuable groups with multiple cards
+      const multiGroups = Array.from(byRank.values())
+        .filter(g => g.length >= 2 && g.some(c => !isValuableCard(c, trumpSuit)));
+      if (multiGroups.length > 0) {
+        // Pick the group with the lowest rank (least valuable) for multi-attack
+        const bestGroup = multiGroups.sort((a, b) => {
+          const rankA = RANK_ORDER[a[0].rank] ?? 0;
+          const rankB = RANK_ORDER[b[0].rank] ?? 0;
+          return rankA - rankB;
+        })[0];
+        const nonValGroup = bestGroup.filter(c => !isValuableCard(c, trumpSuit));
+        const attackIds = nonValGroup.map(c => c.id);
+        // Return special multi-attack action — executeGhostAction handles sequential emit
+        return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
+      }
+    }
+
+    const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill);
     if (undefendedIdx >= 0) {
       return { event: 'playCard', data: { roomId, cardId, targetPairIdx: undefendedIdx } };
     }
@@ -1074,12 +1129,21 @@ function scheduleGameAction(ghost: GhostPlayer): void {
       ghost.socket.emit('sendEmotion', { roomId: ghost.currentRoomId, emotionId });
     }
 
-    // Pick and execute action
+    // Pick and execute action (with learning stats if available)
     if (!ghost.gameState) return;
-    const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState);
-    if (!action) return;
-
-    executeGhostAction(ghost, action);
+    // Asynchronously fetch learning stats and apply them to action selection
+    getGhostLearningStats().then(stats => {
+      if (!ghost.gameState) return;
+      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState, stats ?? undefined);
+      if (!action) return;
+      executeGhostAction(ghost, action);
+    }).catch(() => {
+      // Fallback: pick action without learning stats
+      if (!ghost.gameState) return;
+      const action = pickGhostAction(ghost.myActions, p.skill, p.temperament, ghost.gameState);
+      if (!action) return;
+      executeGhostAction(ghost, action);
+    });;
   }, thinkMs);
 }
 
@@ -1087,6 +1151,25 @@ function executeGhostAction(ghost: GhostPlayer, action: { event: string; data?: 
   if (!ghost.socket?.connected) return;
 
   const s = ghost.socket as any;
+
+  // ── Multi-attack: send each card sequentially with a short human-like delay ──
+  if (action.event === 'multiPlayCard') {
+    const { roomId, cardIds } = action.data as { roomId: string; cardIds: string[] };
+    if (!cardIds || cardIds.length === 0) return;
+    // Send first card immediately
+    try { s.emit('playCard', { roomId, cardId: cardIds[0] }); } catch (e) { /* ignore */ }
+    // Send remaining cards with 200–450ms gaps (looks like rapid human tapping)
+    for (let i = 1; i < cardIds.length; i++) {
+      const delay = rand(200, 450) * i;
+      const cardId = cardIds[i];
+      setTimeout(() => {
+        if (!ghost.socket?.connected) return;
+        try { (ghost.socket as any).emit('playCard', { roomId, cardId }); } catch (e) { /* ignore */ }
+      }, delay);
+    }
+    return;
+  }
+
   try {
     if (action.data !== undefined) {
       s.emit(action.event, action.data);
