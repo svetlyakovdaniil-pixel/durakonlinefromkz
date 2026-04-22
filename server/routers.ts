@@ -605,45 +605,13 @@ export const appRouter = router({
       return result;
     }),
 
-    /** Buy shanyrak with tenge */
+    /** Buy shanyrak with tenge — DISABLED (removed for App Store compliance) */
     buyShanyrak: protectedProcedure
       .input(z.object({
         tier: z.enum(['10k', '50k', '100k', '500k']),
       }))
-      .mutation(async ({ ctx, input }) => {
-        const tiers: Record<string, { shanyrak: number; tenge: number }> = {
-          '10k': { shanyrak: 10000, tenge: 50 },
-          '50k': { shanyrak: 50000, tenge: 220 },
-          '100k': { shanyrak: 100000, tenge: 400 },
-          '500k': { shanyrak: 500000, tenge: 1500 },
-        };
-        const t = tiers[input.tier];
-        if (!t) return { success: false, reason: 'invalid_tier' as const };
-        const result = await buyShanyrakWithTenge(ctx.user.id, t.shanyrak, t.tenge);
-        if (result.success) {
-          const profile = await getProfileByUserId(ctx.user.id);
-          if (profile) {
-            // Record shanyrak gain
-            await recordTransaction({
-              profileId: profile.id,
-              type: 'buy_shanyrak',
-              amount: t.shanyrak,
-              currency: 'shanyrak',
-              description: `Куплено ${(t.shanyrak / 1000)}K шаныраков за ${t.tenge} тенге`,
-              balanceAfter: result.newShanyrak ?? 0,
-            });
-            // Record tenge spend
-            await recordTransaction({
-              profileId: profile.id,
-              type: 'buy_shanyrak',
-              amount: -t.tenge,
-              currency: 'tenge',
-              description: `Оплата за ${(t.shanyrak / 1000)}K шаныраков`,
-              balanceAfter: result.newTenge ?? 0,
-            });
-          }
-        }
-        return result;
+      .mutation(async () => {
+        return { success: false, reason: 'feature_disabled' as const };
       }),
     /** Complete tutorial and receive 2000 shanyrak reward (one-time) */
     completeTutorial: protectedProcedure.mutation(async ({ ctx }) => {
