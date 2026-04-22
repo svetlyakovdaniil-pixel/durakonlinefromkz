@@ -3509,3 +3509,8 @@
 - [x] Диагностика: /manus-storage/ proxy не работает на durakonlinefromkz.online (нет BUILT_IN_FORGE_API_KEY)
 - [x] Загрузить все 84 файла через manus-upload-file (без --webdev) для получения прямых CDN URL (files.manuscdn.com)
 - [x] Заменить все /manus-storage/ пути в cardAssets.ts на прямые CDN URL
+
+## Очистка упоминаний Manus и vip-домена
+- [x] Удалить все упоминания durakonlinefromkz.vip из кода (не найдено в коде — только в todo.md)
+- [x] Удалить все упоминания Manus (бренд) с публичных страниц сайта (не найдено — сайт уже чистый)
+- [ ] Задеплоить изменения на GitHub
