@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { X, Clock, Play, ArrowRightLeft, AlertTriangle } from "lucide-react";
+import { X, Clock, Play } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
@@ -17,12 +17,7 @@ interface ShanyrakTopUpModalProps {
   onBalanceUpdated: () => void;
 }
 
-const TIERS = [
-  { id: '10k' as const, shanyrak: 10000, tenge: 50 },
-  { id: '50k' as const, shanyrak: 50000, tenge: 220 },
-  { id: '100k' as const, shanyrak: 100000, tenge: 400 },
-  { id: '500k' as const, shanyrak: 500000, tenge: 1500 },
-];
+
 
 function formatTime(ms: number): string {
   if (ms <= 0) return "00:00:00";
@@ -35,8 +30,6 @@ function formatTime(ms: number): string {
 
 export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTenge, onBalanceUpdated }: ShanyrakTopUpModalProps) {
   const { t, locale } = useTranslation();
-  const [confirmTier, setConfirmTier] = useState<string | null>(null);
-  const [showInsufficientTenge, setShowInsufficientTenge] = useState(false);
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'buy' | 'history'>('buy');
@@ -103,21 +96,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     }
   }, [adWatching, adCooldownRemaining, adWatchTopupMutation]);
 
-  const buyShanyrakMutation = trpc.balance.buyShanyrak.useMutation({
-    onSuccess: (data) => {
-      if (data.success) {
-        const tier = TIERS.find(t => t.id === confirmTier);
-        setSuccessMessage(`+${formatBalance(tier?.shanyrak ?? 0)} ${t('topUp.shanyrakUnit')}!`);
-        setConfirmTier(null);
-        onBalanceUpdated();
-        utils.profile.me.invalidate();
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } else if (data.reason === 'insufficient_tenge') {
-        setConfirmTier(null);
-        setShowInsufficientTenge(true);
-      }
-    },
-  });
+
 
   // Cooldown timer
   useEffect(() => {
@@ -140,18 +119,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     freeTopupMutation.mutate();
   }, [freeTopupMutation]);
 
-  const handleBuyConfirm = useCallback(() => {
-    if (!confirmTier) return;
-    buyShanyrakMutation.mutate({ tier: confirmTier as '10k' | '50k' | '100k' | '500k' });
-  }, [confirmTier, buyShanyrakMutation]);
 
-  const handleBuyClick = useCallback((tierId: string, tengeCost: number) => {
-    if (currentTenge < tengeCost) {
-      setShowInsufficientTenge(true);
-      return;
-    }
-    setConfirmTier(tierId);
-  }, [currentTenge]);
 
   if (!open) return null;
 
@@ -282,43 +250,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
               </p>
             </div>
 
-            {/* Divider */}
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex-1 h-px bg-slate-600/50" />
-              <div className="flex items-center gap-1 text-xs text-gray-400">
-                <ArrowRightLeft className="w-3 h-3" />
-                <span>{t('topUp.exchangeTitle')}</span>
-              </div>
-              <div className="flex-1 h-px bg-slate-600/50" />
-            </div>
 
-            {/* Options 3-6: Buy with tenge */}
-            <div className="space-y-2 mb-2">
-              {TIERS.map((tier) => {
-                const canAfford = currentTenge >= tier.tenge;
-                return (
-                  <button
-                    key={tier.id}
-                    className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
-                      canAfford
-                        ? 'bg-amber-900/30 hover:bg-amber-800/40 text-amber-100 border border-amber-600/30'
-                        : 'bg-slate-700/30 hover:bg-slate-700/40 text-gray-400 border border-slate-600/20'
-                    }`}
-                    onClick={() => handleBuyClick(tier.id, tier.tenge)}
-                  >
-                    <div className="flex-1 flex items-center gap-1.5 justify-start">
-                      <span>{formatBalance(tier.shanyrak)}</span>
-                      <img src={SHANYRAK_ICON} alt="" className="h-6 object-contain" />
-                    </div>
-                    <span className="text-gray-400 text-xs shrink-0">{t('topUp.for')}</span>
-                    <div className="flex-1 flex items-center gap-1 justify-end">
-                      <span>{formatBalance(tier.tenge)}</span>
-                      <img src={TENGE_ICON} alt="" className="h-6 w-6 rounded-full object-contain" />
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
           </>
         )}
 
@@ -351,75 +283,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
           </div>
         )}
 
-        {/* Confirm purchase dialog */}
-        {confirmTier && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50" onClick={() => setConfirmTier(null)}>
-            <div className="bg-slate-800 border border-amber-600/40 rounded-2xl p-5 max-w-xs w-[90vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-amber-100 font-bold text-center mb-3">{t('topUp.confirmTitle')}</h3>
-              {(() => {
-                const tier = TIERS.find(t => t.id === confirmTier);
-                if (!tier) return null;
-                return (
-                  <div className="text-center mb-4">
-                    <div className="flex items-center justify-center gap-1.5 text-lg mb-1">
-                      <span className="text-green-400 font-bold">{formatBalance(tier.shanyrak)}</span>
-                      <img src={SHANYRAK_ICON} alt="" className="h-5 object-contain" />
-                    </div>
-                    <div className="flex items-center justify-center gap-1.5 text-sm text-gray-300">
-                      <span>{t('topUp.for')}</span>
-                      <span className="text-amber-300 font-bold">{formatBalance(tier.tenge)}</span>
-                      <img src={TENGE_ICON} alt="" className="h-4 w-4 rounded-full object-contain" />
-                    </div>
-                  </div>
-                );
-              })()}
-              <div className="flex gap-3">
-                <button
-                  className="flex-1 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold text-sm transition-colors"
-                  onClick={() => setConfirmTier(null)}
-                >
-                  {t('common.no')}
-                </button>
-                <button
-                  className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-sm transition-colors"
-                  onClick={handleBuyConfirm}
-                  disabled={buyShanyrakMutation.isPending}
-                >
-                  {buyShanyrakMutation.isPending ? '...' : t('common.yes')}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* Insufficient tenge dialog */}
-        {showInsufficientTenge && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/50" onClick={() => setShowInsufficientTenge(false)}>
-            <div className="bg-slate-800 border border-red-600/40 rounded-2xl p-5 max-w-xs w-[90vw] shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center justify-center gap-2 mb-3">
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-                <h3 className="text-red-300 font-bold">{t('topUp.insufficientTenge')}</h3>
-              </div>
-              <p className="text-gray-400 text-sm text-center mb-4">
-                {t('topUp.insufficientTengeDesc')}
-              </p>
-              <button
-                className="w-full py-2.5 rounded-xl bg-amber-600/30 hover:bg-amber-600/40 text-amber-200 font-semibold text-sm transition-colors border border-amber-600/30 mb-2"
-                onClick={() => {
-                  setShowInsufficientTenge(false);
-                }}
-              >
-                {t('topUp.buyTenge')}
-              </button>
-              <button
-                className="w-full py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-gray-300 font-semibold text-sm transition-colors"
-                onClick={() => setShowInsufficientTenge(false)}
-              >
-                {t('common.close')}
-              </button>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
