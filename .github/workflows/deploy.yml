@@ -12,6 +12,7 @@ jobs:
           host: 185.221.199.177
           username: root
           key: ${{ secrets.AEZA_SSH_PRIVATE_KEY }}
+          envs: BUILT_IN_FORGE_API_URL,BUILT_IN_FORGE_API_KEY
           script: |
             set -e
             cd /root/app
@@ -19,5 +20,11 @@ jobs:
             git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
-            GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
+            GHOST_PLAYER_COUNT=100 \
+            BUILT_IN_FORGE_API_URL=$BUILT_IN_FORGE_API_URL \
+            BUILT_IN_FORGE_API_KEY=$BUILT_IN_FORGE_API_KEY \
+            pm2 restart durak --update-env
             echo "Deploy completed at $(date)"
+        env:
+          BUILT_IN_FORGE_API_URL: ${{ secrets.BUILT_IN_FORGE_API_URL }}
+          BUILT_IN_FORGE_API_KEY: ${{ secrets.BUILT_IN_FORGE_API_KEY }}
