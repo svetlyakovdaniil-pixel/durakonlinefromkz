@@ -594,18 +594,23 @@ function pickGhostAction(
       group.push(c);
       byRank.set(c.rank, group);
     }
-    // Find non-valuable groups with multiple cards
+    // Find groups with multiple cards (include tier-1 and tier-2; exclude tier-3 like 777/pike-K)
+    // Tier-1 = ordinary non-trump low cards, Tier-2 = trumps / J-A, Tier-3 = ultra-rare (777, pike-K)
     const multiGroups = Array.from(byRank.values())
-      .filter(g => g.length >= 2 && g.some(c => !isValuableCard(c, trumpSuit)));
+      .filter(g => g.length >= 2 && g.some(c => cardTier(c, trumpSuit) < 3));
     if (multiGroups.length > 0) {
-      // Pick the group with the lowest rank (least valuable) for multi-attack
+      // Pick the group with the lowest average tier, then lowest rank (least valuable first)
       const bestGroup = multiGroups.sort((a, b) => {
+        const tierA = Math.min(...a.map(c => cardTier(c, trumpSuit)));
+        const tierB = Math.min(...b.map(c => cardTier(c, trumpSuit)));
+        if (tierA !== tierB) return tierA - tierB;
         const rankA = RANK_ORDER[a[0].rank] ?? 0;
         const rankB = RANK_ORDER[b[0].rank] ?? 0;
         return rankA - rankB;
       })[0];
-      const nonValGroup = bestGroup.filter(c => !isValuableCard(c, trumpSuit));
-      const attackIds = nonValGroup.map(c => c.id);
+      // Include all cards in the group that are not tier-3 (don't waste ultra-rare cards)
+      const attackCards = bestGroup.filter(c => cardTier(c, trumpSuit) < 3);
+      const attackIds = attackCards.map(c => c.id);
       // Return special multi-attack action — executeGhostAction handles sequential emit
       return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
     }
@@ -617,11 +622,39 @@ function pickGhostAction(
   }
   // ── End attack — but only if all attack cards are covered ──
   if (endAttack) {
+    // Helper: try multi-attack from available playCard actions
+    const tryMultiAttack = (): { event: string; data?: unknown } | null => {
+      if (!playCard || playCard.type !== 'playCard' || !playCard.cardIds.length) return null;
+      const cardMap5 = new Map(myHand.map(c => [c.id, c]));
+      const addCards = playCard.cardIds.map(id => cardMap5.get(id)).filter(Boolean) as ClientGameState['myHand'];
+      const byRankAdd = new Map<string, ClientGameState['myHand']>();
+      for (const c of addCards) {
+        const grp = byRankAdd.get(c.rank) ?? [];
+        grp.push(c);
+        byRankAdd.set(c.rank, grp);
+      }
+      const multiGroupsAdd = Array.from(byRankAdd.values())
+        .filter(g => g.length >= 2 && g.some(c => cardTier(c, trumpSuit) < 3));
+      if (multiGroupsAdd.length > 0) {
+        const bestGroupAdd = multiGroupsAdd.sort((a, b) => {
+          const tierA = Math.min(...a.map(c => cardTier(c, trumpSuit)));
+          const tierB = Math.min(...b.map(c => cardTier(c, trumpSuit)));
+          if (tierA !== tierB) return tierA - tierB;
+          return (RANK_ORDER[a[0].rank] ?? 0) - (RANK_ORDER[b[0].rank] ?? 0);
+        })[0];
+        const attackCardsAdd = bestGroupAdd.filter(c => cardTier(c, trumpSuit) < 3);
+        return { event: 'multiPlayCard', data: { roomId, cardIds: attackCardsAdd.map(c => c.id) } };
+      }
+      return null;
+    };
     // Check if there are any uncovered attack cards on the battlefield
     const uncoveredCount = gameState.battleField.filter(p => !p.defense).length;
     if (uncoveredCount > 0) {
       // There are uncovered cards — don't end attack yet, try to add more cards
       if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
+        // Try multi-attack first
+        const multiAction = tryMultiAttack();
+        if (multiAction) return multiAction;
         const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId } };
       }
@@ -632,6 +665,9 @@ function pickGhostAction(
     if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
       const addChance = temperament === 'aggressive' ? 0.65 : (0.2 + skill * 0.3);
       if (Math.random() < addChance) {
+        // Try multi-attack first
+        const multiAction = tryMultiAttack();
+        if (multiAction) return multiAction;
         const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId } };
       }
