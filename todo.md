@@ -3603,3 +3603,4 @@
 - [x] Admin API: ghost player max count increased from 90 to 130, default now uses GHOST_PLAYER_COUNT env var
 - [x] Ghost AI: fix premature 'bito' — attacker ghosts must wait until defender has beaten all cards before pressing bito (return null when uncovered cards exist and no cards to add)
 - [x] Ghost AI: premium ghosts (with frames) now use SHOP_AVATARS instead of FREE_AVATARS (wolf excluded)
+- [x] Bug: 777 card freeze when multiple undefended cards on table — removed 777 from "special cards" requiring target selection, now auto-plays on first valid target (no need to click on battlefield card)
