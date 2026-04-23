@@ -44,7 +44,23 @@ export function useSocket(userId: string | null, userName: string | null) {
   // Flag to prevent game state updates after leaving (temporary)
   const leavingRef = useRef(false);
   // Persistent set of room IDs we intentionally left — blocks rejoin/updates permanently
-  const blockedRoomIdsRef = useRef<Set<string>>(new Set());
+  // Loaded from localStorage on init so page refresh doesn't lose the block
+  const getBlockedRoomsKey = () => `durak_blocked_rooms_${userId || 'anon'}`;
+  const loadBlockedRooms = (): Set<string> => {
+    try {
+      const raw = localStorage.getItem(`durak_blocked_rooms_${userId || 'anon'}`);
+      if (raw) return new Set(JSON.parse(raw) as string[]);
+    } catch {}
+    return new Set();
+  };
+  const saveBlockedRooms = (set: Set<string>) => {
+    try {
+      // Keep only last 20 blocked rooms to avoid unbounded growth
+      const arr = Array.from(set).slice(-20);
+      localStorage.setItem(`durak_blocked_rooms_${userId || 'anon'}`, JSON.stringify(arr));
+    } catch {}
+  };
+  const blockedRoomIdsRef = useRef<Set<string>>(loadBlockedRooms());
 
   // ─── localStorage helpers for cross-page-reload reconnect ─────────────────────────────
   // When the page is closed/refreshed (e.g. Safari on iPhone kills the tab),
@@ -102,6 +118,14 @@ export function useSocket(userId: string | null, userName: string | null) {
         );
         const cleared = before - (socket as any).sendBuffer.length;
         if (cleared > 0) console.log(`[Socket] Cleared ${cleared} stale game action(s) from sendBuffer on reconnect`);
+      }
+      // CRITICAL FIX: Tell server about rooms we intentionally left (persisted in localStorage).
+      // This handles the case where leaveGame emit didn't reach server before page refresh.
+      // Server will forfeit the player from those rooms so auto-rejoin doesn't pull them back.
+      const blocked = Array.from(blockedRoomIdsRef.current);
+      if (blocked.length > 0) {
+        console.log(`[Socket] Notifying server of ${blocked.length} blocked room(s) on connect:`, blocked);
+        socket.emit('notifyLeave' as any, blocked);
       }
       // On reconnect, try to rejoin the room we were in
       const roomId = currentRoomIdRef.current;
@@ -529,10 +553,13 @@ export function useSocket(userId: string | null, userName: string | null) {
       if (prevRoomId && prevRoomId !== roomId) {
         console.log(`[Socket] joinRoom: blocking stale room ${prevRoomId} before joining ${roomId}`);
         blockedRoomIdsRef.current.add(prevRoomId);
+        saveBlockedRooms(blockedRoomIdsRef.current); // persist the block
         currentRoomIdRef.current = null;
         persistActiveRoom(null, true);
       }
+      // Remove new room from blocked list (player is intentionally joining it)
       blockedRoomIdsRef.current.delete(roomId);
+      saveBlockedRooms(blockedRoomIdsRef.current);
       socketRef.current?.emit('joinRoom', { roomId, password }, (ok, room) => {
         if (ok && room) {
           setCurrentRoom(room);
@@ -559,6 +586,7 @@ export function useSocket(userId: string | null, userName: string | null) {
   const leaveGame = useCallback((roomId: string) => {
     leavingRef.current = true;
     blockedRoomIdsRef.current.add(roomId);
+    saveBlockedRooms(blockedRoomIdsRef.current); // persist so page refresh keeps the block
     persistActiveRoom(null, true); // intentional leave
 
     const doReturnToLobby = () => {

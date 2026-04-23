@@ -311,6 +311,11 @@ export function initSocketServer(httpServer: HttpServer) {
     }
 
     // Rejoin all rooms this player was in (skip rooms they forfeited from)
+    // CRITICAL FIX: Delay auto-rejoin by 150ms so that any 'notifyLeave' event from the client
+    // (sent right after connect) can be processed first. Without this delay, the server would
+    // rejoin the player into a room they intentionally left, then immediately forfeit them
+    // when notifyLeave arrives — causing a brief flash of the old game.
+    setTimeout(() => {
     const roomSet = playerRooms.get(odId);
     if (roomSet) {
       for (const roomId of Array.from(roomSet)) {
@@ -375,8 +380,8 @@ export function initSocketServer(httpServer: HttpServer) {
         }
       }
     }
-
     socket.emit('roomList', Array.from(rooms.values()).filter(r => !r.settings.isTutorial).map(sanitizeRoom));
+    }, 150); // end of delayed auto-rejoin block
 
     // --- ping_check: client sends this to verify connection is alive (e.g. after tab becomes visible) ---
     socket.on('ping_check' as any, () => {
@@ -388,6 +393,53 @@ export function initSocketServer(httpServer: HttpServer) {
     // --- requestRoomList: client explicitly requests a fresh room list ---
     socket.on('requestRoomList', () => {
       socket.emit('roomList', Array.from(rooms.values()).filter(r => !r.settings.isTutorial).map(sanitizeRoom));
+    });
+
+    // --- notifyLeave: client tells server which rooms it intentionally left (persisted in localStorage) ---
+    // This handles the case where leaveGame emit didn't reach server before page refresh.
+    // Server forfeits the player from those rooms so auto-rejoin doesn't pull them back.
+    socket.on('notifyLeave' as any, (roomIds: string[]) => {
+      if (!Array.isArray(roomIds)) return;
+      for (const roomId of roomIds) {
+        if (typeof roomId !== 'string') continue;
+        // Skip if already forfeited
+        if (forfeitedFromRoom.has(`${odId}:${roomId}`)) continue;
+        const room = rooms.get(roomId);
+        const gameState = games.get(roomId);
+        // Only forfeit if player is actually in this room/game
+        const isInRoom = room && room.players.some(p => p.id === odId);
+        const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame && !p.isOut);
+        if (isInRoom || isInGame) {
+          dbg(`[Socket] notifyLeave: forfeiting ${odId} from room ${roomId}`);
+          // Forfeit player from game if in progress
+          if (isInGame && gameState) {
+            const playerIdx = gameState.players.findIndex(p => p.id === odId);
+            if (playerIdx !== -1) {
+              forfeitPlayer(gameState, playerIdx);
+              markProgress(roomId);
+            }
+          }
+          // Remove from room.players
+          if (room) {
+            room.players = room.players.filter(p => p.id !== odId);
+            socket.leave(roomId);
+            // If no human players left, close the room
+            if (room.players.filter(p => !p.isBot).length === 0) {
+              closeRoom(roomId);
+            } else {
+              io.to(roomId).emit('roomUpdated', sanitizeRoom(room));
+              if (gameState && gameState.gamePhase === 'playing') {
+                broadcastGameState(roomId, gameState);
+                scheduleBotAction(roomId);
+              }
+            }
+          }
+        }
+        // Always mark as forfeited and untrack
+        forfeitedFromRoom.add(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        dbg(`[Socket] notifyLeave: blocked ${odId} from room ${roomId} permanently`);
+      }
     });
 
     // --- rejoinRoom: client explicitly requests to rejoin after reconnect ---
@@ -408,7 +460,16 @@ export function initSocketServer(httpServer: HttpServer) {
       // but removed from room.players due to a race condition
       const isInRoom = room.players.some(p => p.id === odId);
       const gameState = games.get(roomId);
-      const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame);
+      const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame && !p.isOut);
+      // If player has leftGame or isOut, they already forfeited — block rejoin permanently
+      const hasForfeited = gameState && gameState.players.some(p => p.id === odId && (p.leftGame || p.isOut));
+      if (hasForfeited) {
+        dbg(`[Socket] Blocking rejoin for ${odId} in room ${roomId} (leftGame/isOut in gameState)`);
+        forfeitedFromRoom.add(`${odId}:${roomId}`);
+        untrackPlayerRoom(odId, roomId);
+        cb(false);
+        return;
+      }
       if (!isInRoom && !isInGame) { cb(false); return; }
 
       // If player is in game but not in room.players, re-add them
