@@ -1202,22 +1202,20 @@ export default function GameTable({
           setPendingCardId(card.id);
           onPlayCard(card.id, undefended[0].idx);
         } else {
-          // Only show target selection for special cards (trump, king of spades)
-          // 777 always beats any card so auto-play it on the first valid target (no target selection needed)
-          // Normal cards auto-find the first valid target
+          // King of Spades and 777 beat any card — auto-play on first valid target (no target selection needed)
+          // Trump cards can beat multiple different cards, so show target selection for them
           const isTrump = card.suit === gs.trumpInfo.currentTrump;
           const isKingSpades = card.rank === 'K' && card.suit === 'spades';
-          const isSpecialCard = isTrump || isKingSpades;
 
-          if (isSpecialCard) {
-            // Show highlight on battlefield pairs so player can choose which to beat
+          if (isTrump && !isKingSpades) {
+            // Trump (non-King-of-Spades): show highlight on battlefield pairs so player can choose which to beat
             if (selectedCardId === card.id) {
               setSelectedCardId(null);
             } else {
               setSelectedCardId(card.id);
             }
           } else {
-            // Auto-play on first valid undefended pair
+            // King of Spades and normal cards: auto-play on first valid undefended pair
             if (pendingCardId === card.id) return; // Prevent double-tap
             setPendingCardId(card.id);
             onPlayCard(card.id);
@@ -1288,16 +1286,16 @@ export default function GameTable({
           setSelectedCardId(null);
           return true;
         }
-        // Check if special card (trump, king of spades) — needs target selection
-        // 777 always beats any card so auto-play it on the first valid target (no target selection needed)
+        // Check if trump (non-King-of-Spades) — needs target selection
+        // King of Spades and 777 beat any card so auto-play on first valid target (no target selection needed)
         const isTrump = card.suit === gs.trumpInfo.currentTrump;
         const isKingSpades = card.rank === 'K' && card.suit === 'spades';
-        if (isTrump || isKingSpades) {
-          // Special card — select and let player click target
+        if (isTrump && !isKingSpades) {
+          // Trump card (not King of Spades) — select and let player click target
           setSelectedCardId(card.id);
           return false;
         }
-        // Normal card (including 777) — auto-play on first valid target
+        // King of Spades, 777, and normal cards — auto-play on first valid target
         onPlayCard(card.id);
         setSelectedCardId(null);
         return true;
