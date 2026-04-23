@@ -1115,14 +1115,23 @@ export function initSocketServer(httpServer: HttpServer) {
       }
 
       if (gameState._autoCompleteDefense) {
-        // All attackers have no matching cards — auto-complete defense
+        // All attackers have no matching cards — auto-complete defense after 2s delay
+        // so players can see the final state before cards go to bito
         gameState._autoCompleteDefense = false;
-        const defOdId2 = gameState.players[gameState.currentDefenderIdx]?.id;
-        if (defOdId2) trackSuccessfulRound(data.roomId, defOdId2);
-        successfulDefense(gameState);
         broadcastGameState(data.roomId, gameState);
-        restartTurnTimer(data.roomId);
-        scheduleBotAction(data.roomId);
+        stopTurnTimer(data.roomId);
+        const savedTrickCountAuto = gameState.trickCount;
+        setTimeout(() => {
+          const gs = games.get(data.roomId);
+          if (!gs || gs.gamePhase === 'finished') return;
+          if (gs.trickCount !== savedTrickCountAuto) return;
+          const defOdId2 = gs.players[gs.currentDefenderIdx]?.id;
+          if (defOdId2) trackSuccessfulRound(data.roomId, defOdId2);
+          successfulDefense(gs);
+          broadcastGameState(data.roomId, gs);
+          restartTurnTimer(data.roomId);
+          scheduleBotAction(data.roomId);
+        }, 2000);
         return;
       }
 
@@ -2623,13 +2632,22 @@ function scheduleBotAction(roomId: string) {
     }
 
     if (gs._autoCompleteDefense) {
+      // All attackers have no matching cards — auto-complete defense after 2s delay
       gs._autoCompleteDefense = false;
-      const defOdIdBotAuto = gs.players[gs.currentDefenderIdx]?.id;
-      if (defOdIdBotAuto) trackSuccessfulRound(roomId, defOdIdBotAuto);
-      successfulDefense(gs);
       broadcastGameState(roomId, gs);
-      restartTurnTimer(roomId);
-      scheduleBotAction(roomId);
+      stopTurnTimer(roomId);
+      const savedTrickCountBotAuto = gs.trickCount;
+      setTimeout(() => {
+        const gs3 = games.get(roomId);
+        if (!gs3 || gs3.gamePhase === 'finished') return;
+        if (gs3.trickCount !== savedTrickCountBotAuto) return;
+        const defOdIdBotAuto = gs3.players[gs3.currentDefenderIdx]?.id;
+        if (defOdIdBotAuto) trackSuccessfulRound(roomId, defOdIdBotAuto);
+        successfulDefense(gs3);
+        broadcastGameState(roomId, gs3);
+        restartTurnTimer(roomId);
+        scheduleBotAction(roomId);
+      }, 2000);
       return;
     }
 
