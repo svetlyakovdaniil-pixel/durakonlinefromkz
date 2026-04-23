@@ -3594,3 +3594,5 @@
 - [x] Add 2-second delay before auto-bito when defender beats last card and attackers have nothing to add
 - [x] Fix game freeze when player beats last card (timer freezes, UI unresponsive, trump ace beating 8)
 - [x] Add 2-second delay before auto-bito when defender beats last card and attackers have nothing to add
+- [x] Ghost player AI: never use trump cards for attack or add-cards (multiattack), only use trumps for defense or pass-through
+- [x] Ghost player AI: when adding cards to a defender who (if they succeed) will attack the ghost player next, prefer low-value non-trump cards; save high-value cards (J/Q/K/A, trumps)

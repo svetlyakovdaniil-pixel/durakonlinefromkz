@@ -608,11 +608,26 @@ function pickGhostAction(
         const rankB = RANK_ORDER[b[0].rank] ?? 0;
         return rankA - rankB;
       })[0];
-      // Include all cards in the group that are not tier-3 (don't waste ultra-rare cards)
-      const attackCards = bestGroup.filter(c => cardTier(c, trumpSuit) < 3);
+      // ── TRUMP CONSERVATION: never include trump cards in multi-attack if non-trump cards
+      // of the same rank are available. Trumps are precious — save them for defense/pass-through.
+      // Only use all-trump group if every card in the group is a trump (no non-trump alternative).
+      const nonTrumpInGroup = bestGroup.filter(c => c.suit !== trumpSuit && cardTier(c, trumpSuit) < 3);
+      const attackCards = nonTrumpInGroup.length > 0
+        ? nonTrumpInGroup  // prefer non-trump cards only
+        : bestGroup.filter(c => cardTier(c, trumpSuit) < 3); // all-trump group: use all
       const attackIds = attackCards.map(c => c.id);
-      // Return special multi-attack action — executeGhostAction handles sequential emit
-      return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
+      if (attackIds.length >= 2) {
+        // Return special multi-attack action — executeGhostAction handles sequential emit
+        return { event: 'multiPlayCard', data: { roomId, cardIds: attackIds } };
+      }
+      // Only 1 card after trump filtering — fall through to single card play
+      if (attackIds.length === 1) {
+        const singleId = attackIds[0];
+        if (undefendedIdx >= 0) {
+          return { event: 'playCard', data: { roomId, cardId: singleId, targetPairIdx: undefendedIdx } };
+        }
+        return { event: 'playCard', data: { roomId, cardId: singleId } };
+      }
     }
     const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
     if (undefendedIdx >= 0) {
@@ -622,19 +637,52 @@ function pickGhostAction(
   }
   // ── End attack — but only if all attack cards are covered ──
   if (endAttack) {
+    // ── STRATEGIC CONTEXT: should we pressure the defender?
+    // If the defender successfully defends, they become the next attacker.
+    // Figure out who they will attack next (their neighbor in play direction).
+    // If that neighbor is ME, I should pile on with cheap cards to make their life harder.
+    // If that neighbor is someone else, I should be more conservative with my cards.
+    const defIdx = gameState.currentDefenderIdx;
+    const players = gameState.players;
+    const activePlayers = players.filter(p => !p.isOut && !p.leftGame);
+    // Find the next active player after defender (in current direction) — that's who defender attacks
+    let nextAttackTarget: number | null = null;
+    if (activePlayers.length > 0) {
+      const dir = gameState.direction;
+      const totalPlayers = players.length;
+      let step = dir === 'cw' ? 1 : -1;
+      for (let i = 1; i < totalPlayers; i++) {
+        const candidateIdx = ((defIdx + step * i) % totalPlayers + totalPlayers) % totalPlayers;
+        const candidate = players[candidateIdx];
+        if (candidate && !candidate.isOut && !candidate.leftGame) {
+          nextAttackTarget = candidateIdx;
+          break;
+        }
+      }
+    }
+    // If defender succeeds and attacks ME next, I want to pile on with cheap cards
+    const defenderWillAttackMe = nextAttackTarget === gameState.myIndex;
+
     // Helper: try multi-attack from available playCard actions
-    const tryMultiAttack = (): { event: string; data?: unknown } | null => {
+    // When adding cards, respect trump conservation: prefer non-trump cards.
+    // When defenderWillAttackMe, only use tier-1 (cheap) cards for add-cards.
+    const tryMultiAttack = (onlyCheap = false): { event: string; data?: unknown } | null => {
       if (!playCard || playCard.type !== 'playCard' || !playCard.cardIds.length) return null;
       const cardMap5 = new Map(myHand.map(c => [c.id, c]));
       const addCards = playCard.cardIds.map(id => cardMap5.get(id)).filter(Boolean) as ClientGameState['myHand'];
+      // When defenderWillAttackMe (or onlyCheap), only consider tier-1 cards for adding
+      const eligibleAdd = onlyCheap
+        ? addCards.filter(c => cardTier(c, trumpSuit) === 1)
+        : addCards.filter(c => cardTier(c, trumpSuit) < 3);
+      if (eligibleAdd.length === 0) return null;
       const byRankAdd = new Map<string, ClientGameState['myHand']>();
-      for (const c of addCards) {
+      for (const c of eligibleAdd) {
         const grp = byRankAdd.get(c.rank) ?? [];
         grp.push(c);
         byRankAdd.set(c.rank, grp);
       }
       const multiGroupsAdd = Array.from(byRankAdd.values())
-        .filter(g => g.length >= 2 && g.some(c => cardTier(c, trumpSuit) < 3));
+        .filter(g => g.length >= 2);
       if (multiGroupsAdd.length > 0) {
         const bestGroupAdd = multiGroupsAdd.sort((a, b) => {
           const tierA = Math.min(...a.map(c => cardTier(c, trumpSuit)));
@@ -642,8 +690,12 @@ function pickGhostAction(
           if (tierA !== tierB) return tierA - tierB;
           return (RANK_ORDER[a[0].rank] ?? 0) - (RANK_ORDER[b[0].rank] ?? 0);
         })[0];
-        const attackCardsAdd = bestGroupAdd.filter(c => cardTier(c, trumpSuit) < 3);
-        return { event: 'multiPlayCard', data: { roomId, cardIds: attackCardsAdd.map(c => c.id) } };
+        // Trump conservation: prefer non-trump cards in the group
+        const nonTrumpAdd = bestGroupAdd.filter(c => c.suit !== trumpSuit);
+        const attackCardsAdd = nonTrumpAdd.length >= 2 ? nonTrumpAdd : bestGroupAdd;
+        if (attackCardsAdd.length >= 2) {
+          return { event: 'multiPlayCard', data: { roomId, cardIds: attackCardsAdd.map(c => c.id) } };
+        }
       }
       return null;
     };
@@ -652,11 +704,19 @@ function pickGhostAction(
     if (uncoveredCount > 0) {
       // There are uncovered cards — don't end attack yet, try to add more cards
       if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
-        // Try multi-attack first
-        const multiAction = tryMultiAttack();
+        // Try multi-attack first (only cheap cards if defender will attack me)
+        const multiAction = tryMultiAttack(defenderWillAttackMe);
         if (multiAction) return multiAction;
-        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
-        return { event: 'playCard', data: { roomId, cardId } };
+        // Single card: if defender will attack me, only use tier-1 cards
+        const eligibleIds = defenderWillAttackMe
+          ? playCard.cardIds.filter(id => { const c = cardMap.get(id); return c && cardTier(c, trumpSuit) === 1; })
+          : playCard.cardIds;
+        if (eligibleIds.length > 0) {
+          const cardId = pickBestAttackCard(eligibleIds, myHand, trumpSuit, skill, seenCards);
+          return { event: 'playCard', data: { roomId, cardId } };
+        }
+        // No eligible cheap cards — end attack to preserve valuable cards
+        return { event: 'endAttack', data: roomId };
       }
       // No cards to add but uncovered exist — wait (pass turn if available)
       if (passTurn) return { event: 'passTurn', data: roomId };
@@ -665,11 +725,18 @@ function pickGhostAction(
     if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
       const addChance = temperament === 'aggressive' ? 0.65 : (0.2 + skill * 0.3);
       if (Math.random() < addChance) {
-        // Try multi-attack first
-        const multiAction = tryMultiAttack();
+        // Try multi-attack first (only cheap cards if defender will attack me)
+        const multiAction = tryMultiAttack(defenderWillAttackMe);
         if (multiAction) return multiAction;
-        const cardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
-        return { event: 'playCard', data: { roomId, cardId } };
+        // Single card: if defender will attack me, only use tier-1 cards
+        const eligibleIds = defenderWillAttackMe
+          ? playCard.cardIds.filter(id => { const c = cardMap.get(id); return c && cardTier(c, trumpSuit) === 1; })
+          : playCard.cardIds;
+        if (eligibleIds.length > 0) {
+          const cardId = pickBestAttackCard(eligibleIds, myHand, trumpSuit, skill, seenCards);
+          return { event: 'playCard', data: { roomId, cardId } };
+        }
+        // No cheap cards to add — end attack
       }
     }
     return { event: 'endAttack', data: roomId };
