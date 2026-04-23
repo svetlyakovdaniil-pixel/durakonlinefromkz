@@ -1202,12 +1202,12 @@ export default function GameTable({
           setPendingCardId(card.id);
           onPlayCard(card.id, undefended[0].idx);
         } else {
-          // Only show target selection for special cards (trump, king of spades, 777)
+          // Only show target selection for special cards (trump, king of spades)
+          // 777 always beats any card so auto-play it on the first valid target (no target selection needed)
           // Normal cards auto-find the first valid target
           const isTrump = card.suit === gs.trumpInfo.currentTrump;
           const isKingSpades = card.rank === 'K' && card.suit === 'spades';
-          const is777Card = card.rank === '777';
-          const isSpecialCard = isTrump || isKingSpades || is777Card;
+          const isSpecialCard = isTrump || isKingSpades;
 
           if (isSpecialCard) {
             // Show highlight on battlefield pairs so player can choose which to beat
