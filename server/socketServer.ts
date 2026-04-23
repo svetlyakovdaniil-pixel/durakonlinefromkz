@@ -3226,11 +3226,15 @@ function sanitizeRoom(room: Room): Room {
   const sanitizedSettings = { ...room.settings, password: undefined };
   // Add premium host flag
   const isPremiumHost = playerIsPremium.get(room.hostId) === true;
-  // Inject season ratings and gameIds into players
+  // Inject season ratings, gameIds, and avatarIds into players
+  // playerAvatarIds/playerEquippedFrames are the authoritative source (set via registerProfile)
+  // This ensures ghost players and reconnecting players show the correct avatar in the lobby
   const playersWithRank = room.players.map(p => ({
     ...p,
     seasonRating: p.isBot ? 0 : (playerSeasonRatings.get(p.id) ?? 0),
     gameId: p.isBot ? p.gameId : (playerGameIds.get(p.id) ?? p.gameId),
+    avatarId: p.isBot ? p.avatarId : (playerAvatarIds.get(p.id) ?? p.avatarId),
+    equippedFrame: p.isBot ? p.equippedFrame : (playerEquippedFrames.get(p.id) ?? p.equippedFrame),
   }));
   return { ...room, players: playersWithRank, gameState: null, hasActiveGame, activeGamePlayerIds, hasPassword, isPremiumHost, settings: sanitizedSettings };
 }
