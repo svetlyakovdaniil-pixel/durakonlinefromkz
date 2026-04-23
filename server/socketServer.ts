@@ -1958,6 +1958,63 @@ export function initSocketServer(httpServer: HttpServer) {
     return null;
   }
 
+  // ---- Global stale-room cleanup ----
+  // Every 5 minutes, scan all rooms and close any that have had no connected
+  // human player for more than 10 minutes. This handles the case where all
+  // players disconnected without sending leaveGame (e.g. browser crash, mobile
+  // app killed) and the freeze timer somehow didn't fire or the room was left
+  // in a waiting state with no active players.
+  const STALE_ROOM_CHECK_INTERVAL_MS = 5 * 60 * 1000;  // 5 minutes
+  const STALE_ROOM_MAX_IDLE_MS       = 10 * 60 * 1000; // 10 minutes idle = close
+  // Track when each room last had a connected human player
+  const roomLastHumanSeen = new Map<string, number>();
+
+  // Initialise timestamps for rooms that already exist when server starts
+  for (const roomId of Array.from(rooms.keys())) {
+    roomLastHumanSeen.set(roomId, Date.now());
+  }
+
+  // Update timestamp whenever a human player is present
+  // (piggy-back on broadcastRoomList which is called on every state change)
+  const _origBroadcastRoomList = broadcastRoomList;
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [roomId, room] of Array.from(rooms.entries())) {
+      // Skip tutorial rooms
+      if (room.settings?.isTutorial) continue;
+
+      // Check if any human player in this room is currently connected
+      const humanPlayers = room.players.filter(p => !p.isBot && !p.id.startsWith('ghost-'));
+      const hasConnectedHuman = humanPlayers.some(p => {
+        const sid = playerSockets.get(p.id);
+        if (!sid) return false;
+        const s = io.sockets.sockets.get(sid);
+        return s && s.connected;
+      });
+
+      if (hasConnectedHuman) {
+        // Reset idle timer
+        roomLastHumanSeen.set(roomId, now);
+      } else {
+        // No connected human — check how long it's been idle
+        const lastSeen = roomLastHumanSeen.get(roomId) ?? now;
+        const idleMs = now - lastSeen;
+        if (idleMs >= STALE_ROOM_MAX_IDLE_MS) {
+          console.log(`[Cleanup] Closing stale room ${roomId} ("${room.name}") — idle for ${Math.round(idleMs / 60000)}min with no connected humans`);
+          closeRoom(roomId);
+          roomLastHumanSeen.delete(roomId);
+        }
+      }
+    }
+    // Also initialise timestamps for any newly created rooms not yet tracked
+    for (const roomId of Array.from(rooms.keys())) {
+      if (!roomLastHumanSeen.has(roomId)) {
+        roomLastHumanSeen.set(roomId, now);
+      }
+    }
+  }, STALE_ROOM_CHECK_INTERVAL_MS);
+
   return io;
 }
 // ---- Player-Room tracking ----
