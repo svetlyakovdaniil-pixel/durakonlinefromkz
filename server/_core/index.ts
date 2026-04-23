@@ -58,12 +58,31 @@ function copyDirRecursive(src: string, dest: string): number {
 
 function restoreStaticAssets() {
   const persistentDir = "/root/static_assets";
+  if (!fs.existsSync(persistentDir)) return;
+
+  let totalCopied = 0;
+
+  // Copy top-level files to dist/public/assets/static/
   const staticDir = path.join(process.cwd(), "dist", "public", "assets", "static");
-  if (fs.existsSync(persistentDir)) {
-    const copied = copyDirRecursive(persistentDir, staticDir);
-    if (copied > 0) {
-      console.log(`[Static] Restored ${copied} assets from ${persistentDir}`);
+  fs.mkdirSync(staticDir, { recursive: true });
+  const entries = fs.readdirSync(persistentDir, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(persistentDir, entry.name);
+    if (entry.isDirectory()) {
+      // Subdirectories (e.g. cards/) are served at /assets/{name}/ not /assets/static/{name}/
+      const destSubDir = path.join(process.cwd(), "dist", "public", "assets", entry.name);
+      totalCopied += copyDirRecursive(srcPath, destSubDir);
+    } else {
+      const destPath = path.join(staticDir, entry.name);
+      if (!fs.existsSync(destPath)) {
+        fs.copyFileSync(srcPath, destPath);
+        totalCopied++;
+      }
     }
+  }
+
+  if (totalCopied > 0) {
+    console.log(`[Static] Restored ${totalCopied} assets from ${persistentDir}`);
   }
 }
 

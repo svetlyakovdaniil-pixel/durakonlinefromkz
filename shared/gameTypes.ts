@@ -244,6 +244,8 @@ export interface ClientToServerEvents {
   toggleReady: (roomId: string) => void;
   startGame: (roomId: string) => void;
   playCard: (data: { roomId: string; cardId: string; targetPairIdx?: number }) => void;
+  /** Batch attack: play multiple cards at once (ghost multi-attack) */
+  playCards: (data: { roomId: string; cardIds: string[] }) => void;
   transferCard: (data: { roomId: string; cardId: string }) => void;
   transferCards: (data: { roomId: string; cardIds: string[] }) => void;
   showPassThrough: (data: { roomId: string; cardId: string }) => void;

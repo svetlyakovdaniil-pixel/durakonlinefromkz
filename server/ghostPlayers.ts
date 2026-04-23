@@ -1514,20 +1514,16 @@ function executeGhostAction(ghost: GhostPlayer, action: { event: string; data?: 
   ghost.moveHistory.push({ action: actionType, handSize, phase, isMultiCard, timestamp: Date.now() });
   if (ghost.moveHistory.length > 200) ghost.moveHistory.shift();
 
-  // ── Multi-attack: send each card sequentially with a short human-like delay ──
+  // ── Multi-attack: send all cards as a single batch event (appears instantaneous like a real player) ──
   if (action.event === 'multiPlayCard') {
     const { roomId, cardIds } = action.data as { roomId: string; cardIds: string[] };
     if (!cardIds || cardIds.length === 0) return;
-    // Send first card immediately
-    try { s.emit('playCard', { roomId, cardId: cardIds[0] }); } catch (e) { /* ignore */ }
-    // Send remaining cards with 200–450ms gaps (looks like rapid human tapping)
-    for (let i = 1; i < cardIds.length; i++) {
-      const delay = rand(200, 450) * i;
-      const cardId = cardIds[i];
-      setTimeout(() => {
-        if (!ghost.socket?.connected) return;
-        try { (ghost.socket as any).emit('playCard', { roomId, cardId }); } catch (e) { /* ignore */ }
-      }, delay);
+    if (cardIds.length === 1) {
+      // Single card — use regular playCard
+      try { s.emit('playCard', { roomId, cardId: cardIds[0] }); } catch (e) { /* ignore */ }
+    } else {
+      // Multiple cards — send as one batch event so they all appear at once
+      try { s.emit('playCards', { roomId, cardIds }); } catch (e) { /* ignore */ }
     }
     return;
   }
