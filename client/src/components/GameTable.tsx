@@ -867,6 +867,27 @@ export default function GameTable({
     setPendingCardId(null);
   }, [availableActions]);
 
+  // Auto-play selected card when state updates and only 1 undefended card remains
+  // This fixes the race condition where player selects a trump/special card
+  // (entering target-selection mode) while the previous defense was still in flight.
+  // When the server confirms the previous defense and sends new state with 1 undefended,
+  // we automatically play the already-selected card on that last undefended pair.
+  useEffect(() => {
+    if (!selectedCardId) return;
+    if (!isDefender || gs.turnPhase !== 'defend' || gs.defenderTaking) return;
+    if (!playableIds.has(selectedCardId)) return;
+    const undefended = gs.battleField
+      .map((p, i) => ({ pair: p, idx: i }))
+      .filter(x => !x.pair.defense);
+    if (undefended.length !== 1) return;
+    // Only 1 undefended card left and we have a card selected — auto-play it
+    const cardId = selectedCardId;
+    setSelectedCardId(null);
+    setPendingCardId(cardId);
+    onPlayCard(cardId, undefended[0].idx);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gs.battleField, gs.turnPhase, gs.defenderTaking, selectedCardId, isDefender]);
+
   // Auto-skip turn when player has only 777 in hand (lucky sevens rule)
   // This ensures the achievement is tracked server-side via the skipTurn event
   const autoSkipSentRef = useRef<string | null>(null);

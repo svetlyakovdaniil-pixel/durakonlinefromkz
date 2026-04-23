@@ -3607,3 +3607,4 @@
 - [x] Bug: last defense card (King of Spades) cannot be played when defending against multiple undefended cards — King of Spades now auto-plays on first valid target (same as 777), no target selection required
 - [x] Revert: 777 drag-and-drop should keep 'special card' behavior (require target selection), not auto-play — user did not request this change
 - [x] Bug: ghost player defends 1 card then takes — ghost should check if it can beat ALL undefended cards before starting defense; if not, take immediately without defending any
+- [x] Bug: last defense card freezes when player has 1 card left and tries to beat last attack card — card raises slightly then freezes, game hangs (seen with King of Clubs beating King of Diamonds as final card)
