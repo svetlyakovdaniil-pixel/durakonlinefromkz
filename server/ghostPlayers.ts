@@ -1125,9 +1125,11 @@ function clearGhostTimers(ghost: GhostPlayer): void {
 function maintainGhost(ghost: GhostPlayer): void {
   if (!ghostsEnabled) return;
   if (!ghost.socket?.connected) {
-    if (ghost.state !== 'disconnected' || ghost.reconnectAttempts < 5) {
-      connectGhost(ghost);
-    }
+    // Always reconnect — reset attempts counter so the periodic health check
+    // can revive ghosts that exhausted their immediate backoff retries
+    // (e.g. after a server restart or network blip)
+    ghost.reconnectAttempts = 0;
+    connectGhost(ghost);
     return;
   }
   // Ghost state is managed by roomManagerTick — no nudge needed here
