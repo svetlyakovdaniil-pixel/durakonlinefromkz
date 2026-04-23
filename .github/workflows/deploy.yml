@@ -12,40 +12,12 @@ jobs:
           host: 185.221.199.177
           username: root
           key: ${{ secrets.AEZA_SSH_PRIVATE_KEY }}
-          envs: BUILT_IN_FORGE_API_URL,BUILT_IN_FORGE_API_KEY
           script: |
             set -e
             cd /root/app
-
-            # 1. Pull latest code
             git fetch origin main
             git reset --hard origin/main
-
-            # 2. Install dependencies
             pnpm install --frozen-lockfile
-
-            # 3. Build
             pnpm run build
-
-            # 4. Restore static assets (cards, tables, etc.) into correct paths
-            bash /root/post-deploy.sh
-
-            # 5. Clear old PM2 logs so they don't accumulate across deploys
-            pm2 flush
-
-            # 6. Full PM2 reset: delete old process and start fresh with all env vars
-            pm2 delete durak 2>/dev/null || true
-            NODE_ENV=production \
-              PORT=3000 \
-              GHOST_PLAYER_COUNT=100 \
-              BUILT_IN_FORGE_API_URL=$BUILT_IN_FORGE_API_URL \
-              BUILT_IN_FORGE_API_KEY=$BUILT_IN_FORGE_API_KEY \
-              pm2 start /root/app/dist/index.js \
-                --name durak \
-                -i 1 \
-                --cwd /root/app
-
-            # 7. Save PM2 process list so it survives server reboots
-            pm2 save
-
+            GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
             echo "Deploy completed at $(date)"
