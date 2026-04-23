@@ -616,7 +616,18 @@ function pickGhostAction(
         // Can't beat all attack cards with one-to-one assignment — take immediately
         return { event: 'takeCards', data: roomId };
       }
-      // We CAN beat all cards. Now decide: defend or take based on skill/learning.
+      // We CAN beat all cards.
+      // If ghost has ALREADY started defending (some pairs are defended),
+      // ALWAYS continue defending — never randomly switch to taking mid-defense.
+      // The take/defend decision is made only ONCE at the start of defense.
+      const alreadyDefending = gameState.battleField.some(p => p.defense !== null);
+      if (alreadyDefending) {
+        // Continue defending: pick best card for next undefended pair
+        const targetPairIdx = undefendedPairs[0].idx;
+        const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
+        return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
+      }
+      // First defense action: decide whether to defend or take based on skill/learning.
       const baseTakeProb = learnedTakeRate !== null
         ? learnedTakeRate * (1 - skill) + 0.3 * skill
         : (0.5 - skill * 0.5);

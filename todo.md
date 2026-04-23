@@ -3608,3 +3608,7 @@
 - [x] Revert: 777 drag-and-drop should keep 'special card' behavior (require target selection), not auto-play — user did not request this change
 - [x] Bug: ghost player defends 1 card then takes — ghost should check if it can beat ALL undefended cards before starting defense; if not, take immediately without defending any
 - [x] Bug: last defense card freezes when player has 1 card left and tries to beat last attack card — card raises slightly then freezes, game hangs (seen with King of Clubs beating King of Diamonds as final card)
+- [ ] Bug: ghost players partially defend (beat 1 card then take) — should take immediately if cannot beat ALL cards
+- [ ] UX: landscape (horizontal) mode layout broken — opponent names should be at top, player avatar+buttons at bottom
+- [x] Bug: ghost players beat 1 card then take — fixed by committing to defend/take decision once at start (alreadyDefending check)
+- [x] Landscape layout: opponents at top, battlefield in middle, hand+buttons at bottom — fixed with CSS height budget

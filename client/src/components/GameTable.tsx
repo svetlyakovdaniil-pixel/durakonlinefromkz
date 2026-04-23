@@ -1553,7 +1553,7 @@ export default function GameTable({
 
       <div className={`relative z-10 flex flex-col game-table-root${isLandscape ? ' landscape-mode' : ''}`}>
         {/* Top HUD — compact panel */}
-        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 ${blurClass} border-b border-amber-700/20 overflow-hidden">
+        <div className={`flex items-center justify-between px-2 sm:px-4 py-2 sm:py-3 bg-black/60 ${blurClass} border-b border-amber-700/20 overflow-hidden landscape-top-hud`}>
           <div className="flex items-center gap-2 sm:gap-3">
             <Badge data-tutorial="deck-info" variant="outline" className="sm:hidden border-amber-700/30 text-white text-sm px-2 py-1">
               <span data-tutorial="mobile-decks">{t('game.deck1Abbr')}:<span className={`font-bold ${gs.deck1Count < 5 ? 'text-red-400' : ''}`}>{gs.deck1Count}</span>
@@ -1600,7 +1600,7 @@ export default function GameTable({
           const manyOpponents = opponents.length >= 4;
           const manyManyOpponents = opponents.length >= 7;
           return (
-            <div className={`flex flex-nowrap justify-center overflow-x-auto scrollbar-none px-1 sm:px-3 ${isLandscape ? 'py-0.5 gap-0.5 shrink-0' : `py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 shrink-0`} w-full`}>
+            <div className={`flex flex-nowrap justify-center overflow-x-auto scrollbar-none px-1 sm:px-3 ${isLandscape ? 'py-0.5 gap-0.5 shrink-0 landscape-opponents-row' : `py-1 sm:py-2.5 ${manyOpponents ? 'gap-1' : 'gap-1.5'} sm:gap-3 shrink-0`} w-full`}>
               {opponents.map(p => {
                 const pIdx = gs.players.findIndex(pp => pp.id === p.id);
                 const isOppAttacker = pIdx === gs.currentAttackerIdx;
@@ -1732,7 +1732,7 @@ export default function GameTable({
         {/* Main game area */}
         <div className={`flex-1 flex relative min-h-0${isTutorial ? ' overflow-visible' : ' overflow-hidden'}`}>
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY (also shown in landscape mobile) */}
-          <div className={`${isLandscape ? 'flex' : 'hidden sm:flex'} flex-col justify-start items-center ${isLandscape ? 'w-16' : 'w-36 md:w-44'} py-4 px-2 gap-4`}>
+          <div className={`${isLandscape ? 'flex landscape-left-panel' : 'hidden sm:flex'} flex-col justify-start items-center ${isLandscape ? 'w-16' : 'w-36 md:w-44'} py-4 px-2 gap-4`}>
             <TurnTimerDesktop seconds={turnTimer} secLabel={t('game.sec')} />
 
             {gs.discardCount > 0 && (
@@ -1741,7 +1741,7 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className={`flex-1 flex justify-center px-2 sm:px-4 ${
+          <div className={`flex-1 flex justify-center px-2 sm:px-4 landscape-battlefield-area ${
             // Mobile: allow scroll when ≥15 pairs; Desktop: allow scroll when >36 pairs
             (gs.battleField.length >= 15 || gs.battleField.length > 36)
               ? 'overflow-y-auto overflow-x-hidden items-start pt-2'
@@ -1817,7 +1817,7 @@ export default function GameTable({
           </div>
 
           {/* RIGHT PANEL — Decks — DESKTOP ONLY (also shown in landscape mobile) */}
-          <div data-tutorial="deck-area" className={`${isLandscape ? 'flex' : 'hidden sm:flex'} flex-col justify-center items-center ${isLandscape ? 'w-20' : 'w-44 md:w-52'} py-4 px-2 gap-3`}>
+          <div data-tutorial="deck-area" className={`${isLandscape ? 'flex landscape-right-panel' : 'hidden sm:flex'} flex-col justify-center items-center ${isLandscape ? 'w-20' : 'w-44 md:w-52'} py-4 px-2 gap-3`}>
             {bothDecksEmpty ? (
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" label={t('game.trumpSuit')} />
             ) : (
