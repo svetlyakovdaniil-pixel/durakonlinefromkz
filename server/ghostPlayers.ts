@@ -257,7 +257,8 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     equippedFrame = undefined;
     emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
   } else if (cosmeticRoll < 0.95) {
-    avatarId = pickSeeded(FREE_AVATARS, nick, 5);
+    // Ghost with frame: use SHOP_AVATARS (not wolf/free) — premium items go together
+    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
     equippedFrame = pickSeeded(ALL_FRAMES, nick, 7);
     emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
   } else {
@@ -739,11 +740,12 @@ function pickGhostAction(
           const cardId = pickBestAttackCard(eligibleIds, myHand, trumpSuit, skill, seenCards);
           return { event: 'playCard', data: { roomId, cardId } };
         }
-        // No eligible cheap cards — end attack to preserve valuable cards
-        return { event: 'endAttack', data: roomId };
+        // No eligible cheap cards — wait for defender to beat the cards (don't press бито yet)
+        return null;
       }
-      // No cards to add but uncovered exist — wait (pass turn if available)
-      if (passTurn) return { event: 'passTurn', data: roomId };
+      // No cards to add but uncovered exist — wait for defender to respond
+      // Do NOT press бито while defender hasn't beaten all cards yet
+      return null;
     }
     // All covered — aggressive players try to add more cards before ending
     if (playCard && playCard.type === 'playCard' && playCard.cardIds.length > 0) {
