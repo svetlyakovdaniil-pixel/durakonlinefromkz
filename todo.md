@@ -3596,3 +3596,7 @@
 - [x] Add 2-second delay before auto-bito when defender beats last card and attackers have nothing to add
 - [x] Ghost player AI: never use trump cards for attack or add-cards (multiattack), only use trumps for defense or pass-through
 - [x] Ghost player AI: when adding cards to a defender who (if they succeed) will attack the ghost player next, prefer low-value non-trump cards; save high-value cards (J/Q/K/A, trumps)
+
+## Bug Fixes
+- [x] Fix ghost player deactivation: maintainGhost() now resets reconnectAttempts before reconnecting (ghosts were permanently stuck in 'disconnected' state after 5 failed attempts)
+- [x] Set GHOST_PLAYER_COUNT=100 in production environment
