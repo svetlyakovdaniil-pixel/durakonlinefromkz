@@ -1132,6 +1132,37 @@ export function initSocketServer(httpServer: HttpServer) {
       scheduleBotAction(data.roomId);
     });
 
+    // ── Batch attack: play multiple cards at once (used by ghost players for multi-attack) ──
+    socket.on('playCards', (data: { roomId: string; cardIds: string[] }) => {
+      const gameState = games.get(data.roomId);
+      if (!gameState || gameState.gamePhase !== 'playing') return;
+      if (!data.cardIds || data.cardIds.length === 0) return;
+
+      const playerIdx = gameState.players.findIndex(p => p.id === odId);
+      if (playerIdx === -1) return;
+
+      // Apply all attack cards in sequence — stop on first error
+      for (const cardId of data.cardIds) {
+        const error = playAttackCard(gameState, playerIdx, cardId);
+        if (error) {
+          socket.emit('error', error);
+          socket.emit('yourTurn', getAvailableActions(gameState, playerIdx));
+          return;
+        }
+      }
+
+      // Reset consecutive timeout counter
+      if (gameState.consecutiveTimeouts[odId]) {
+        gameState.consecutiveTimeouts[odId] = 0;
+      }
+
+      markProgress(data.roomId);
+      resetTurnTimer(gameState);
+      restartTurnTimer(data.roomId);
+      broadcastGameState(data.roomId, gameState);
+      scheduleBotAction(data.roomId);
+    });
+
     socket.on('transferCard', (data) => {
       const gameState = games.get(data.roomId);
       if (!gameState) return;
