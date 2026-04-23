@@ -1090,6 +1090,14 @@ function autoPassAttackersWithNoCards(state: GameState): void {
         continue;
       }
     }
+    // Auto-pass currentAttacker if they have an empty hand (can't add any cards)
+    // This fixes the freeze when currentAttacker runs out of cards mid-defense
+    if (i === state.currentAttackerIdx && state.players[i].hand.length === 0) {
+      if (!state.passedAttackers.includes(state.players[i].id)) {
+        state.passedAttackers.push(state.players[i].id);
+      }
+      continue;
+    }
     // Check if this player has any matching cards to add
     // For non-neighbors in six-exception, only check for sixes
     const hasMatchingCards = state.players[i].hand.some(c => 
