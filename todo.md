@@ -3580,8 +3580,8 @@
 - [x] Применять strategyProfile при принятии решений в pickGhostAction
 
 ## Исправления гост-плееров (апрель 2026)
-- [ ] Аватарка гост-плеера в профиле не совпадает с аватаркой в игре — синхронизировать
-- [ ] Баг перевода хода: гост-плеер не переводит даже когда есть карта того же номинала — окончательно исправить
+- [x] Аватарка гост-плеера в профиле не совпадает с аватаркой в игре — синхронизировать (sanitizeRoom теперь использует playerAvatarIds)
+- [x] Баг перевода хода: гост-плеер не переводит даже когда есть карта того же номинала — окончательно исправить (мульти-перевод ограничен по кол-ву карт у следующего игрока)
 - [x] Баг: таймер зависает, гост-плеер не делает ход (постоянно обновляется)
 - [x] Баг: после выхода из игры и быстрой игры — кидает между старой и новой комнатой
 - [x] Гост-плееры: мультиатака — если 2+ карт одного номинала при атаке/переводе, ходить всеми сразу
@@ -3600,3 +3600,4 @@
 ## Bug Fixes
 - [x] Fix ghost player deactivation: maintainGhost() now resets reconnectAttempts before reconnecting (ghosts were permanently stuck in 'disconnected' state after 5 failed attempts)
 - [x] Set GHOST_PLAYER_COUNT=100 in production environment
+- [x] Admin API: ghost player max count increased from 90 to 130, default now uses GHOST_PLAYER_COUNT env var

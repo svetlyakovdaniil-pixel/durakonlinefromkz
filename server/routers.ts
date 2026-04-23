@@ -1116,13 +1116,14 @@ export const appRouter = router({
     ghostPlayers: adminProcedure
       .input(z.object({
         action: z.enum(['start', 'stop', 'stats']),
-        count: z.number().min(1).max(90).optional(),
+        count: z.number().min(1).max(130).optional(),
         port: z.number().optional(),
       }))
       .mutation(async ({ input }) => {
         if (input.action === 'start') {
           const port = input.port ?? parseInt(process.env.PORT ?? '3000');
-          initGhostPlayers(port, input.count ?? 15);
+          const defaultCount = parseInt(process.env.GHOST_PLAYER_COUNT || '15');
+          initGhostPlayers(port, input.count ?? defaultCount);
           return { success: true, stats: getGhostStats() };
         } else if (input.action === 'stop') {
           stopGhostPlayers();

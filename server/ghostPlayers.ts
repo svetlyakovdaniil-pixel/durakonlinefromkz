@@ -517,10 +517,34 @@ function pickGhostAction(
     // Use all cards of the lowest tier available (multi-transfer)
     const lowestTier = cardTier(sortedTr[0], trumpSuit);
     const batchCards = sortedTr.filter(c => cardTier(c, trumpSuit) === lowestTier);
-    if (batchCards.length > 1) {
-      return { event: 'transferCards', data: { roomId, cardIds: batchCards.map(c => c.id) } };
+    // ── Feasibility check for multi-transfer ──
+    // Server rule: nextDef.hand.length >= battleField.length + cardsToTransfer
+    // Without this check, multi-transfer gets rejected by server causing an infinite retry loop.
+    // Find the next active defender in game direction
+    const trDefIdx = gameState.currentDefenderIdx;
+    const trPlayers = gameState.players;
+    const trDir = gameState.direction;
+    const trTotal = trPlayers.length;
+    let trNextDefIdx = trDefIdx;
+    const trStep = trDir === 'cw' ? 1 : -1;
+    for (let i = 1; i < trTotal; i++) {
+      const candidateIdx = ((trDefIdx + trStep * i) % trTotal + trTotal) % trTotal;
+      const candidate = trPlayers[candidateIdx];
+      if (candidate && !candidate.isOut && !candidate.leftGame) {
+        trNextDefIdx = candidateIdx;
+        break;
+      }
     }
-    return { event: 'transferCard', data: { roomId, cardId: batchCards[0].id } };
+    const trNextDefCardCount = trPlayers[trNextDefIdx]?.cardCount ?? 0;
+    const trBattleFieldSize = gameState.battleField.length;
+    // Max cards we can transfer = nextDef.cardCount - battleField.length (must be >= 1)
+    const trMaxTransfer = Math.max(1, trNextDefCardCount - trBattleFieldSize);
+    // Limit batch to what next player can handle
+    const feasibleBatch = batchCards.slice(0, trMaxTransfer);
+    if (feasibleBatch.length > 1) {
+      return { event: 'transferCards', data: { roomId, cardIds: feasibleBatch.map(c => c.id) } };
+    }
+    return { event: 'transferCard', data: { roomId, cardId: feasibleBatch[0].id } };
   }
   // ── Defender logic (only reached when no pass-through/transfer available) ──
   if (takeCards && !playCard) {
