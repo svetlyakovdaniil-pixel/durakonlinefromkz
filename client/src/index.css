@@ -755,3 +755,52 @@
     padding-right: env(safe-area-inset-right, 0px);
   }
 }
+
+/* ─── Landscape Mobile: strict height budget ─────────────────────────────────
+ * Total height in landscape on mobile is ~400-500px after browser chrome.
+ * We allocate fixed heights to each zone so nothing overflows.
+ */
+@media (orientation: landscape) and (max-height: 500px) {
+  /* Opponents row: ultra-compact, fixed height */
+  .landscape-mode .landscape-opponents-row {
+    max-height: 36px;
+    min-height: 28px;
+    overflow: hidden;
+  }
+
+  /* Player hand area: fixed max height so it doesn't push battlefield off screen */
+  .landscape-mode .player-hand-area {
+    max-height: 130px;
+    overflow: hidden;
+  }
+
+  /* Battlefield: takes remaining space, must scroll if needed */
+  .landscape-mode .landscape-battlefield-area {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Left and right panels in landscape: narrower */
+  .landscape-mode .landscape-left-panel {
+    width: 52px !important;
+    min-width: 52px !important;
+  }
+  .landscape-mode .landscape-right-panel {
+    width: 60px !important;
+    min-width: 60px !important;
+  }
+
+  /* Top HUD: hide deck info badge to save space */
+  .landscape-mode .landscape-top-hud {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    min-height: 0;
+  }
+
+  /* Avatar in action row: smaller in landscape */
+  .landscape-mode .avatar-action-row {
+    min-height: 40px;
+  }
+}
