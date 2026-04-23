@@ -189,18 +189,37 @@ function rand(min: number, max: number): number {
   return min + Math.random() * (max - min);
 }
 
+
+/** Deterministic seeded pseudo-random based on nick + salt.
+ *  Returns a float in [0, 1). Same nick always produces the same sequence. */
+function nickHash(nick: string, salt: number): number {
+  let h = (5381 ^ salt) >>> 0;
+  for (let i = 0; i < nick.length; i++) {
+    h = Math.imul(h ^ nick.charCodeAt(i), 0x9e3779b9) >>> 0;
+    h ^= h >>> 16;
+  }
+  return (h >>> 0) / 0x100000000;
+}
+function pickSeeded<T>(arr: T[], nick: string, salt: number): T {
+  return arr[Math.floor(nickHash(nick, salt) * arr.length)];
+}
+function randSeeded(min: number, max: number, nick: string, salt: number): number {
+  return min + nickHash(nick, salt) * (max - min);
+}
+
 function buildPersonality(nick: string, index: number): GhostPersonality {
   // Distribute skill: 60% weak/medium, 30% decent, 10% strong
-  const skillRoll = Math.random();
+  // Use deterministic hash so personality is stable across restarts
+  const skillRoll = nickHash(nick, 1);
   let skill: number;
-  if (skillRoll < 0.3) skill = rand(0.1, 0.35);       // weak
-  else if (skillRoll < 0.7) skill = rand(0.35, 0.65); // medium
-  else if (skillRoll < 0.9) skill = rand(0.65, 0.82); // decent
-  else skill = rand(0.82, 0.97);                        // strong
+  if (skillRoll < 0.3) skill = randSeeded(0.1, 0.35, nick, 15);       // weak
+  else if (skillRoll < 0.7) skill = randSeeded(0.35, 0.65, nick, 16); // medium
+  else if (skillRoll < 0.9) skill = randSeeded(0.65, 0.82, nick, 17); // decent
+  else skill = randSeeded(0.82, 0.97, nick, 18);                       // strong
 
   // Speed profile — minimum 2s to avoid looking like a bot
   // Only index=0 (first ghost player) gets the "very slow" profile
-  const speedRoll = Math.random();
+  const speedRoll = nickHash(nick, 2);
   let thinkMinMs: number, thinkMaxMs: number, longThinkProb: number;
   if (index === 0) {
     // One special slow player (like a pensioner who thinks long)
@@ -217,38 +236,38 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   }
 
   const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
-  const temperament = pickRandom(temperaments);
+  const temperament = pickSeeded(temperaments, nick, 3);
 
   // Cosmetics:
   // 65% free avatar, no frame
   // 20% shop avatar, no frame
   // 10% free avatar + frame (small portion use frames)
   //  5% shop avatar + frame
-  const cosmeticRoll = Math.random();
+  const cosmeticRoll = nickHash(nick, 4);
   let avatarId: string;
   let equippedFrame: string | undefined;
   let emotionPack: string;
 
   if (cosmeticRoll < 0.65) {
-    avatarId = pickRandom(FREE_AVATARS);
+    avatarId = pickSeeded(FREE_AVATARS, nick, 5);
     equippedFrame = undefined;
     emotionPack = 'khan'; // default pack
   } else if (cosmeticRoll < 0.85) {
-    avatarId = pickRandom(SHOP_AVATARS);
+    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
     equippedFrame = undefined;
-    emotionPack = pickRandom(EMOTION_PACKS);
+    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
   } else if (cosmeticRoll < 0.95) {
-    avatarId = pickRandom(FREE_AVATARS);
-    equippedFrame = pickRandom(ALL_FRAMES);
-    emotionPack = pickRandom(EMOTION_PACKS);
+    avatarId = pickSeeded(FREE_AVATARS, nick, 5);
+    equippedFrame = pickSeeded(ALL_FRAMES, nick, 7);
+    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
   } else {
-    avatarId = pickRandom(SHOP_AVATARS);
-    equippedFrame = pickRandom(ALL_FRAMES);
-    emotionPack = pickRandom(EMOTION_PACKS);
+    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
+    equippedFrame = pickSeeded(ALL_FRAMES, nick, 7);
+    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
   }
 
   // Preferred deck and table style (small portion use custom/premium)
-  const deckStyleRoll = Math.random();
+  const deckStyleRoll = nickHash(nick, 8);
   const preferredDeckStyle: 'classic' | 'custom' = deckStyleRoll < 0.88 ? 'classic' : 'custom';
   // Use only table styles that are available (not hidden by admin via shop_price_overrides).
   // availableTableStyles is refreshed from DB at init. Bias towards 'classic' (3x weight).
@@ -257,10 +276,10 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
     ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
   ];
-  const preferredTableStyle = pickRandom(weightedTableStyles.length > 0 ? weightedTableStyles : ['classic' as import('../shared/cardAssets').TableStyle]);
+  const preferredTableStyle = pickSeeded(weightedTableStyles.length > 0 ? weightedTableStyles : ['classic' as import('../shared/cardAssets').TableStyle], nick, 9);
 
   // Bet preferences — lower bets more common
-  const betRoll = Math.random();
+  const betRoll = nickHash(nick, 10);
   let betRange: [number, number];
   if (betRoll < 0.40) betRange = [100, 500];
   else if (betRoll < 0.70) betRange = [200, 1000];
@@ -268,7 +287,7 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
   else betRange = [1000, 10000];
 
   // Player count preferences
-  const pcRoll = Math.random();
+  const pcRoll = nickHash(nick, 11);
   let playerCountRange: [number, number];
   if (pcRoll < 0.35) playerCountRange = [2, 3];
   else if (pcRoll < 0.70) playerCountRange = [3, 5];
@@ -280,9 +299,9 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     thinkMinMs,
     thinkMaxMs,
     longThinkProb,
-    ragequitProb: rand(0.0003, 0.0007),
-    lobbyLeaveProb: rand(0.05, 0.20),
-    emotionProb: rand(0.05, 0.30),
+    ragequitProb: randSeeded(0.0003, 0.0007, nick, 12),
+    lobbyLeaveProb: randSeeded(0.05, 0.20, nick, 13),
+    emotionProb: randSeeded(0.05, 0.30, nick, 14),
     temperament,
     avatarId,
     equippedFrame,
@@ -950,6 +969,11 @@ function connectGhost(ghost: GhostPlayer): void {
     if (ghost.state === 'in_lobby' && actions.length > 0) {
       ghost.state = 'in_game';
     }
+    // DEBUG: log yourTurn for defenders
+    const isDefNow = ghost.gameState && ghost.gameState.myIndex === ghost.gameState.currentDefenderIdx;
+    if (isDefNow || actions.some(a => a.type === 'transferCard' || a.type === 'showPassThrough')) {
+      console.log(`[Ghost YourTurn] ${ghost.personality.nick}: actions=[${actions.map(a=>a.type).join(',')}] isDefender=${isDefNow} prevMyActions=[${ghost.myActions.map(a=>a.type).join(',')}]`);
+    }
     ghost.myActions = actions;
     if (actions.length > 0) {
       clearGhostTimers(ghost);
@@ -1412,6 +1436,13 @@ function scheduleGameAction(ghost: GhostPlayer): void {
 
     // Pick and execute action (with learning stats if available)
     if (!ghost.gameState) return;
+    // DEBUG: log actions when defender has transfer option
+    const hasTransfer = ghost.myActions.some(a => a.type === 'transferCard');
+    const hasPassThrough = ghost.myActions.some(a => a.type === 'showPassThrough');
+    const isDefender = ghost.gameState.myIndex === ghost.gameState.currentDefenderIdx;
+    if (isDefender) {
+      console.log(`[Ghost DEBUG] ${ghost.personality.nick} is DEFENDER. Actions: ${ghost.myActions.map(a => a.type).join(', ')}. hasTransfer=${hasTransfer}, hasPassThrough=${hasPassThrough}. Hand: ${ghost.gameState.myHand?.map(c => c.rank+c.suit).join(',')}, BF: ${ghost.gameState.battleField?.map(p => p.attack.rank+p.attack.suit+(p.defense?'→'+p.defense.rank+p.defense.suit:'')).join(',')}`);
+    }
     // Asynchronously fetch learning stats and apply them to action selection
     getGhostLearningStats().then(stats => {
       if (!ghost.gameState) return;

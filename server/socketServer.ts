@@ -774,7 +774,9 @@ export function initSocketServer(httpServer: HttpServer) {
         odId: p.id,
         name: p.name,
         isBot: p.isBot,
-        avatarId: p.avatarId,
+        // Use playerAvatarIds map as authoritative source (set via registerProfile),
+        // fall back to room.players entry (set when player joined or registerProfile updated it)
+        avatarId: playerAvatarIds.get(p.id) ?? p.avatarId,
       }));
 
       const betAmount = room.settings.betAmount || 100;
@@ -1632,6 +1634,9 @@ export function initSocketServer(httpServer: HttpServer) {
                 const player = room.players.find(p => p.id === odId);
                 if (player) {
                   player.name = data.displayName;
+                  // Also sync avatarId and equippedFrame so game start uses correct values
+                  if (data.avatarId) player.avatarId = data.avatarId;
+                  player.equippedFrame = data.equippedFrame ?? undefined;
                 }
               }
               // Also update name in active game state
@@ -2219,19 +2224,22 @@ function handleTimeUp(roomId: string, gameState: GameState) {
     // In pickup mode, the timer is on the attackers (they can add cards)
     // The current attacker is the one who timed out
     const attacker = gameState.players[gameState.currentAttackerIdx];
-    if (attacker && !attacker.isBot && !attacker.isOut) {
+    // Ghost players are not tracked for timeouts — they manage themselves via socket
+    if (attacker && !attacker.isBot && !attacker.isOut && !attacker.id.startsWith('ghost-')) {
       timeoutPlayerId = attacker.id;
       timeoutPlayerIdx = gameState.currentAttackerIdx;
     }
   } else if (gameState.turnPhase === 'defend') {
     const defender = gameState.players[gameState.currentDefenderIdx];
-    if (defender && !defender.isBot && !defender.isOut) {
+    // Ghost players are not tracked for timeouts — they manage themselves via socket
+    if (defender && !defender.isBot && !defender.isOut && !defender.id.startsWith('ghost-')) {
       timeoutPlayerId = defender.id;
       timeoutPlayerIdx = gameState.currentDefenderIdx;
     }
   } else if (gameState.turnPhase === 'attack') {
     const attacker = gameState.players[gameState.currentAttackerIdx];
-    if (attacker && !attacker.isBot && !attacker.isOut) {
+    // Ghost players are not tracked for timeouts — they manage themselves via socket
+    if (attacker && !attacker.isBot && !attacker.isOut && !attacker.id.startsWith('ghost-')) {
       timeoutPlayerId = attacker.id;
       timeoutPlayerIdx = gameState.currentAttackerIdx;
     }
@@ -2367,10 +2375,17 @@ function scheduleBotAction(roomId: string) {
   }
 
   const activePlayer = gameState.players[activeIdx];
-  // Ghost players (id starts with 'ghost-') are treated as bots for turn scheduling.
-  // They are NOT marked isBot (they look like real players) but when it's their turn,
-  // the server must drive their action via getBotAction — they don't send socket events.
-  const isGhostOrBot = !activePlayer || activePlayer.isBot || activePlayer.id.startsWith('ghost-');
+  // Ghost players (id starts with 'ghost-') manage their own turns via socket.io-client.
+  // They are NOT marked isBot and should NOT be driven by server-side scheduleBotAction.
+  // Driving them from both sides causes double-action races and timer flicker.
+  const isGhost = activePlayer && activePlayer.id.startsWith('ghost-');
+  if (isGhost) {
+    // Ghost player — they will act via their own socket client (ghostPlayers.ts)
+    // Just schedule edge bot actions for non-ghost non-active players
+    scheduleEdgeBotActions(roomId);
+    return;
+  }
+  const isGhostOrBot = !activePlayer || activePlayer.isBot;
   if (!isGhostOrBot) {
     // Human player's turn — check if edge bots can act
     scheduleEdgeBotActions(roomId);
@@ -2546,9 +2561,10 @@ function scheduleEdgeBotActions(roomId: string) {
 
   for (let i = 0; i < gameState.players.length; i++) {
     const p = gameState.players[i];
-    // Ghost players are treated as bots for edge actions
-    const isGhostOrBot = p.isBot || p.id.startsWith('ghost-');
-    if (!isGhostOrBot || p.isOut) continue;
+    // Ghost players manage their own edge actions via socket.io-client (ghostPlayers.ts).
+    // Do NOT drive them server-side to avoid double-action races.
+    const isBot = p.isBot && !p.id.startsWith('ghost-');
+    if (!isBot || p.isOut) continue;
     if (i === gameState.currentDefenderIdx) continue;
     if (i === gameState.currentAttackerIdx) continue;
     if (!canPlayerAddCards(gameState, i)) continue;
