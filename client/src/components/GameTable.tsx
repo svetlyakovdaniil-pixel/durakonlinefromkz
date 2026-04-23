@@ -1286,16 +1286,17 @@ export default function GameTable({
           setSelectedCardId(null);
           return true;
         }
-        // Check if trump (non-King-of-Spades) — needs target selection
-        // King of Spades and 777 beat any card so auto-play on first valid target (no target selection needed)
+        // Check if special card (trump or King of Spades) — needs target selection
+        // 777 also needs target selection when dragged (same as tap behavior)
         const isTrump = card.suit === gs.trumpInfo.currentTrump;
         const isKingSpades = card.rank === 'K' && card.suit === 'spades';
-        if (isTrump && !isKingSpades) {
-          // Trump card (not King of Spades) — select and let player click target
+        if (isTrump || isKingSpades) {
+          // Special card — select and let player click target
           setSelectedCardId(card.id);
           return false;
         }
-        // King of Spades, 777, and normal cards — auto-play on first valid target
+        // Normal cards (including 777 — 777 has its own special handling via tap)
+        // Auto-play on first valid target
         onPlayCard(card.id);
         setSelectedCardId(null);
         return true;

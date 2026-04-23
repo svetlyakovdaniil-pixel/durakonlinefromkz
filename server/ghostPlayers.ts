@@ -560,26 +560,60 @@ function pickGhostAction(
       .map((pair, idx) => ({ pair, idx }))
       .filter(({ pair }) => !pair.defense);
     if (playCard.type === 'playCard' && undefendedPairs.length > 0) {
-      // ── CAN WE ACTUALLY BEAT ALL UNDEFENDED CARDS? ──────────────────────
-      // Check each undefended attack card against our available defense cards.
-      // If we can't beat even one of them, take immediately — don't waste defense cards.
+      // ── CAN WE ACTUALLY BEAT ALL UNDEFENDED CARDS? ──────────────────────────────────────
+      // Use greedy assignment: each defense card can only be used ONCE.
+      // This prevents the bug where ghost thinks it can beat 6 nines with 1 ten
+      // (because the ten "can beat" each nine individually, but only one at a time).
       const defenseCards = playCard.cardIds
         .map(id => cardMap.get(id))
         .filter(Boolean) as ClientGameState['myHand'];
-      const canBeatCard = (attackCard: ClientGameState['myHand'][number]): boolean => {
-        for (const dc of defenseCards) {
+
+      // Greedy bipartite matching: assign defense cards to attack cards one-by-one
+      // Sort attack cards: hardest to beat first (777, then by suit/rank)
+      const sortedAttacks = [...undefendedPairs].sort((a, b) => {
+        // 777 is hardest to beat (only 777 can beat it)
+        if (a.pair.attack.rank === '777') return -1;
+        if (b.pair.attack.rank === '777') return 1;
+        return 0;
+      });
+      const usedDefenseIds = new Set<number>();
+      const canBeatOneCard = (
+        attackCard: ClientGameState['myHand'][number],
+        available: ClientGameState['myHand']
+      ): ClientGameState['myHand'][number] | null => {
+        // Find the weakest defense card that can beat this attack card
+        // (save stronger cards for harder attacks)
+        const candidates = available.filter(dc => {
           if (dc.rank === '777') return true; // 777 beats everything
-          if (attackCard.rank === '777') continue; // 777 can only be beaten by 777
-          // Same suit, higher rank
+          if (attackCard.rank === '777') return false; // 777 can only be beaten by 777
+          if (dc.rank === 'K' && dc.suit === 'spades') return attackCard.rank !== '777'; // King of Spades beats anything except 777
           if (dc.suit === attackCard.suit && (RANK_ORDER[dc.rank] ?? 0) > (RANK_ORDER[attackCard.rank] ?? 0)) return true;
-          // Trump beats non-trump
           if (dc.suit === trumpSuit && attackCard.suit !== trumpSuit) return true;
-        }
-        return false;
+          return false;
+        });
+        if (candidates.length === 0) return null;
+        // Pick weakest candidate (lowest rank, prefer non-trump)
+        return candidates.sort((a, b) => {
+          const tierA = a.suit === trumpSuit ? 10 : 0;
+          const tierB = b.suit === trumpSuit ? 10 : 0;
+          if (tierA !== tierB) return tierA - tierB;
+          return (RANK_ORDER[a.rank] ?? 0) - (RANK_ORDER[b.rank] ?? 0);
+        })[0];
       };
-      const canBeatAll = undefendedPairs.every(({ pair }) => canBeatCard(pair.attack));
+
+      let canBeatAll = true;
+      for (const { pair } of sortedAttacks) {
+        const available = defenseCards.filter(dc => !usedDefenseIds.has(dc.id));
+        const chosen = canBeatOneCard(pair.attack, available);
+        if (!chosen) {
+          canBeatAll = false;
+          break;
+        }
+        usedDefenseIds.add(chosen.id);
+      }
+
       if (!canBeatAll) {
-        // Can't beat all attack cards — take immediately, don't waste any defense cards
+        // Can't beat all attack cards with one-to-one assignment — take immediately
         return { event: 'takeCards', data: roomId };
       }
       // We CAN beat all cards. Now decide: defend or take based on skill/learning.
