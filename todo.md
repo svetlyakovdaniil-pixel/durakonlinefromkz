@@ -3601,3 +3601,5 @@
 - [x] Fix ghost player deactivation: maintainGhost() now resets reconnectAttempts before reconnecting (ghosts were permanently stuck in 'disconnected' state after 5 failed attempts)
 - [x] Set GHOST_PLAYER_COUNT=100 in production environment
 - [x] Admin API: ghost player max count increased from 90 to 130, default now uses GHOST_PLAYER_COUNT env var
+- [x] Ghost AI: fix premature 'bito' — attacker ghosts must wait until defender has beaten all cards before pressing bito (return null when uncovered cards exist and no cards to add)
+- [x] Ghost AI: premium ghosts (with frames) now use SHOP_AVATARS instead of FREE_AVATARS (wolf excluded)
