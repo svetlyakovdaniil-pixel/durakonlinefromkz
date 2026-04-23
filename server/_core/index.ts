@@ -39,20 +39,28 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 // Restore static assets from persistent storage after each deploy
+function copyDirRecursive(src: string, dest: string): number {
+  let copied = 0;
+  fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copied += copyDirRecursive(srcPath, destPath);
+    } else if (!fs.existsSync(destPath)) {
+      fs.copyFileSync(srcPath, destPath);
+      copied++;
+    }
+  }
+  return copied;
+}
+
 function restoreStaticAssets() {
   const persistentDir = "/root/static_assets";
   const staticDir = path.join(process.cwd(), "dist", "public", "assets", "static");
   if (fs.existsSync(persistentDir)) {
-    fs.mkdirSync(staticDir, { recursive: true });
-    const files = fs.readdirSync(persistentDir);
-    let copied = 0;
-    for (const file of files) {
-      const dest = path.join(staticDir, file);
-      if (!fs.existsSync(dest)) {
-        fs.copyFileSync(path.join(persistentDir, file), dest);
-        copied++;
-      }
-    }
+    const copied = copyDirRecursive(persistentDir, staticDir);
     if (copied > 0) {
       console.log(`[Static] Restored ${copied} assets from ${persistentDir}`);
     }
