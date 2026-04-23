@@ -797,6 +797,11 @@ export function showPassThrough(state: GameState, playerIdx: number, cardId: str
   state.passedAttackers = [];
   state.attackerHasPriority = true;
   state.defenderTaking = false;
+  // CRITICAL FIX: set turnPhase to 'defend' so the new defender gets proper actions
+  // Without this, getAvailableActions returns [] for the new defender (it only gives
+  // defense actions when turnPhase === 'defend'), causing the ghost to do nothing
+  // and the timer to expire with turnPhase='attack', sending cards to bito instead of hand.
+  state.turnPhase = 'defend';
   resetTurnTimer(state);
   return null;
 }

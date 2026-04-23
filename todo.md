@@ -3612,3 +3612,7 @@
 - [ ] UX: landscape (horizontal) mode layout broken — opponent names should be at top, player avatar+buttons at bottom
 - [x] Bug: ghost players beat 1 card then take — fixed by committing to defend/take decision once at start (alreadyDefending check)
 - [x] Landscape layout: opponents at top, battlefield in middle, hand+buttons at bottom — fixed with CSS height budget
+- [ ] Bug: ghost player doesn't defend after pass-through (переводной ход) — timer expires and cards go to discard instead of defender's hand
+- [ ] Bug: timer expiry sends cards to discard pile instead of defender's hand when defender doesn't respond
+- [x] Bug: ghost player does nothing after pass-through chain (showPassThrough) — turnPhase stayed 'attack' so new defender got no actions
+- [x] Bug: cards go to bito instead of defender's hand after timer expiry following pass-through chain — same root cause: showPassThrough didn't set turnPhase='defend'
