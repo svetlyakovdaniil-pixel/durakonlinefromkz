@@ -1313,7 +1313,10 @@ export default function GameTable({
   const [showLeaveConfirm, setShowLeaveConfirm] = useState(false);
 
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [profilePopupGameId, setProfilePopupGameId] = useState<number | null>(null);
+  const [profilePopupPlayer, setProfilePopupPlayer] = useState<{ gameId: number; avatarId?: string; equippedFrame?: string | null } | null>(null);
+  // Keep backward-compat alias
+  const profilePopupGameId = profilePopupPlayer?.gameId ?? null;
+  const setProfilePopupGameId = (id: number | null) => setProfilePopupPlayer(id === null ? null : { gameId: id });
   const emotionPicker = useEmotionPicker(2000);
 
   // Sort opponents in turn order starting from the player after myIdx (in direction of play).
@@ -1594,7 +1597,7 @@ export default function GameTable({
                     <div className={`relative inline-block ${isLandscape ? '' : 'mb-0.5'} sm:mb-1`}>
                       <button
                         className="focus:outline-none block"
-                        onClick={() => p.gameId && !p.isBot ? setProfilePopupGameId(p.gameId) : undefined}
+                        onClick={() => p.gameId && !p.isBot ? setProfilePopupPlayer({ gameId: p.gameId, avatarId: p.avatarId, equippedFrame: p.equippedFrame }) : undefined}
                         disabled={p.isBot || !p.gameId}
                       >
                          <PlayerAvatar
@@ -2289,8 +2292,10 @@ export default function GameTable({
       {/* Player Profile Popup */}
       {profilePopupGameId !== null && (
         <PlayerProfilePopup
-          gameId={profilePopupGameId}
-          onClose={() => setProfilePopupGameId(null)}
+          gameId={profilePopupPlayer!.gameId}
+          avatarIdOverride={profilePopupPlayer!.avatarId}
+          equippedFrameOverride={profilePopupPlayer!.equippedFrame}
+          onClose={() => setProfilePopupPlayer(null)}
         />
       )}
 
@@ -2328,7 +2333,7 @@ export default function GameTable({
 }
 
 // ---- Player Profile Popup ----
-function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () => void }) {
+function PlayerProfilePopup({ gameId, avatarIdOverride, equippedFrameOverride, onClose }: { gameId: number; avatarIdOverride?: string; equippedFrameOverride?: string | null; onClose: () => void }) {
   const { t } = useTranslation();
   const { data: profile, isLoading } = trpc.profile.withFriendStatus.useQuery({ targetGameId: gameId });
   const sendRequest = trpc.friends.sendRequest.useMutation();
@@ -2391,8 +2396,8 @@ function PlayerProfilePopup({ gameId, onClose }: { gameId: number; onClose: () =
           <div className="flex flex-col items-center gap-3">
             {/* Avatar & Name */}
             <PlayerAvatar
-              avatarId={profile.avatarId}
-              frameId={profile.equippedFrame}
+              avatarId={avatarIdOverride ?? profile.avatarId}
+              frameId={avatarIdOverride !== undefined ? equippedFrameOverride : profile.equippedFrame}
               size={64}
               alt={profile.displayName || 'Player'}
             />

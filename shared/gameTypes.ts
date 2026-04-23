@@ -170,7 +170,7 @@ export interface Room {
   name: string;
   hostId: string;
   maxPlayers: number;
-  players: { id: string; name: string; ready: boolean; isBot: boolean; gameId?: number; avatarId?: string; seasonRating?: number }[];
+  players: { id: string; name: string; ready: boolean; isBot: boolean; gameId?: number; avatarId?: string; equippedFrame?: string; seasonRating?: number }[];
   gameState: GameState | null;
   settings: RoomSettings;
   createdAt: number;

@@ -209,6 +209,11 @@ export function useSocket(userId: string | null, userName: string | null) {
         console.log(`[Socket] Ignoring roomUpdated — not in any room (in lobby)`);
         return;
       }
+      // CRITICAL FIX: Reject room updates from rooms that don't match our current room.
+      if (r && r.id && currentRoomIdRef.current && r.id !== currentRoomIdRef.current) {
+        console.log(`[Socket] Ignoring roomUpdated from room ${r.id} — current room is ${currentRoomIdRef.current}`);
+        return;
+      }
       setCurrentRoom(r);
     });
     socket.on('roomClosed', () => {
@@ -240,6 +245,13 @@ export function useSocket(userId: string | null, userName: string | null) {
       }
       if (!currentRoomIdRef.current) {
         console.log(`[Socket] Ignoring gameStateUpdate — no current room (in lobby)`);
+        return;
+      }
+      // CRITICAL FIX: Reject state updates from rooms that don't match our current room.
+      // This prevents stale updates from an old room overwriting the new room's state
+      // when the player quickly leaves one game and joins another.
+      if (s && s.roomId && currentRoomIdRef.current && s.roomId !== currentRoomIdRef.current) {
+        console.log(`[Socket] Ignoring gameStateUpdate from room ${s.roomId} — current room is ${currentRoomIdRef.current}`);
         return;
       }
       setGameState(s);
@@ -550,6 +562,15 @@ export function useSocket(userId: string | null, userName: string | null) {
     persistActiveRoom(null, true); // intentional leave
 
     const doReturnToLobby = () => {
+      // CRITICAL FIX: Only clear state if the player hasn't already joined a new room.
+      // If joinRoom() was called before this ack arrives, currentRoomIdRef will already
+      // point to the new room — clearing it would destroy the new room's state.
+      if (currentRoomIdRef.current && currentRoomIdRef.current !== roomId) {
+        // Player already joined a new room — don't wipe their state
+        console.log(`[Socket] leaveGame ack: player already in new room ${currentRoomIdRef.current}, skipping state clear`);
+        leavingRef.current = false;
+        return;
+      }
       currentRoomIdRef.current = null;
       setCurrentRoom(null);
       setGameState(null);
@@ -557,7 +578,7 @@ export function useSocket(userId: string | null, userName: string | null) {
       setChatMessages([]);
       setGameOverData(null);
       setPrizeData(null);
-      setTimeout(() => { leavingRef.current = false; }, 10000);
+      setTimeout(() => { leavingRef.current = false; }, 3000);
     };
 
     socketRef.current?.emit('leaveGame', roomId, (result: { ok: boolean }) => {
