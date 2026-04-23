@@ -2459,9 +2459,26 @@ function handleTimeUp(roomId: string, gameState: GameState) {
     // Otherwise leave defenderTaking=true so real human attackers can still add cards
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
-      // Attacker timed out — auto "бито"
-      const activeIdx = gameState.currentAttackerIdx;
-      engineEndAttack(gameState, activeIdx);
+      const hasUndefended = gameState.battleField.some(p => !p.defense);
+      if (hasUndefended) {
+        // Attacker timed out with undefended cards on table — defender must take
+        // Rule: cards only go to bito if defender beats ALL cards AND no more are added
+        // If attacker didn't finish their attack and there are undefended cards,
+        // force defender to take (same as defender timing out)
+        engineTakeCards(gameState);
+        const hasHumanAttackerWhoCanAdd = gameState.players.some((p, i) => {
+          if (p.isBot || p.isOut || i === gameState.currentDefenderIdx) return false;
+          if (p.id.startsWith('ghost-')) return false;
+          return canPlayerAddCards(gameState, i);
+        });
+        if (!hasHumanAttackerWhoCanAdd) {
+          trackAndFinalizeTake(roomId, gameState);
+        }
+      } else {
+        // All cards are defended — auto "бито" (successful defense)
+        const activeIdx = gameState.currentAttackerIdx;
+        engineEndAttack(gameState, activeIdx);
+      }
     }
   }
 
@@ -3173,7 +3190,8 @@ function broadcastGameState(roomId: string, gameState: GameState) {
     for (const p of gameState.players) {
       if (p.isBot) continue;
       // Skip players who intentionally left — they are in the lobby
-      if (p.leftGame || p.isOut) continue;
+      // NOTE: Do NOT skip p.isOut here — winners have isOut=true and need the final state!
+      if (p.leftGame) continue;
       const sid = playerSockets.get(p.id);
       if (sid) {
         const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, finishedRoom?.settings.betAmount || 0, isTutorial, playerSeasonRatings);
@@ -3189,9 +3207,12 @@ function broadcastGameState(roomId: string, gameState: GameState) {
   const currentAttackerOdId = gameState.players[gameState.currentAttackerIdx]?.id;
   for (const p of gameState.players) {
     if (p.isBot) continue;
-    // Skip players who intentionally left or are out — they are in the lobby now
-    // and should NOT receive gameStateUpdate from this game anymore
-    if (p.leftGame || p.isOut) continue;
+    // Skip players who intentionally left — they are in the lobby now
+    if (p.leftGame) continue;
+    // Skip players who are out UNLESS they just won (have a winPlace)
+    // Players who just played their last card have isOut=true but need to see the
+    // 3-second reveal animation before the game ends
+    if (p.isOut && !p.winPlace) continue;
     const sid = playerSockets.get(p.id);
     if (sid) {
       const clientState = toClientState(gameState, p.id, playerGameIds, playerAvatarIds, playerEquippedFrames, room?.settings.betAmount || 0, room?.settings.isTutorial || false, playerSeasonRatings);
