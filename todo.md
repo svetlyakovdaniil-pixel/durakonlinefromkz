@@ -3616,3 +3616,6 @@
 - [ ] Bug: timer expiry sends cards to discard pile instead of defender's hand when defender doesn't respond
 - [x] Bug: ghost player does nothing after pass-through chain (showPassThrough) — turnPhase stayed 'attack' so new defender got no actions
 - [x] Bug: cards go to bito instead of defender's hand after timer expiry following pass-through chain — same root cause: showPassThrough didn't set turnPhase='defend'
+- [ ] Rule change: cards go to bito ONLY when defender beats all cards and no more are added; in all other cases (inaction, timer expiry) cards go to defender's hand
+- [ ] Bug: last card defense freeze - when player plays their last card to beat last attack card, they should become winner but game freezes
+- [ ] Bug: card disappears from hand when taking cards (6 of Hearts disappears after taking, game freezes)
