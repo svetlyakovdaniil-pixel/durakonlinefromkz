@@ -325,7 +325,15 @@ export function initSocketServer(httpServer: HttpServer) {
         const gameState = games.get(roomId);
         // Check both room.players AND gameState.players for reconnect
         const isInRoom = room && room.players.some(p => p.id === odId);
-        const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame);
+        const isInGame = gameState && gameState.players.some(p => p.id === odId && !p.leftGame && !p.isOut);
+        // If player has leftGame/isOut in gameState, they intentionally left — block rejoin
+        const hasLeftGame = gameState && gameState.players.some(p => p.id === odId && (p.leftGame || p.isOut));
+        if (hasLeftGame) {
+          dbg(`[Socket] Skipping auto-rejoin for ${odId} in room ${roomId} (leftGame/isOut in gameState)`);
+          forfeitedFromRoom.add(`${odId}:${roomId}`);
+          untrackPlayerRoom(odId, roomId);
+          continue;
+        }
         if (isInRoom || isInGame) {
           // If player is in game but not in room.players, re-add them
           if (!isInRoom && isInGame && room) {
@@ -1751,6 +1759,8 @@ export function initSocketServer(httpServer: HttpServer) {
             playerSockets.delete(odId);
 
             forfeitedFromRoom.add(`${odId}:${rid}`);
+            // Always remove from playerRooms so reconnect won't try to rejoin
+            untrackPlayerRoom(odId, rid);
             const gameState = games.get(rid);
             if (gameState && gameState.gamePhase === 'playing') {
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
@@ -1932,6 +1942,8 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
         const s = io.sockets.sockets.get(sid);
         if (s) s.leave(roomId);
       }
+      // Always remove from playerRooms so reconnect won't try to rejoin
+      untrackPlayerRoom(playerId, roomId);
       // Close if only bots remain (regardless of active game)
       if (onlyBotsRemain) {
         closeRoom(roomId);
@@ -1952,6 +1964,8 @@ function handlePlayerLeaveRoom(playerId: string, roomId: string) {
     const s = io.sockets.sockets.get(sid);
     if (s) s.leave(roomId);
   }
+  // Always remove from playerRooms so reconnect won't try to rejoin
+  untrackPlayerRoom(playerId, roomId);
   // Close if only bots remain (regardless of active game)
   if (onlyBotsRemain) {
     closeRoom(roomId);
