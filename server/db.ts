@@ -1426,7 +1426,7 @@ export async function adminGetPlayers(opts: {
   const limit = opts.limit ?? 20;
   const offset = opts.offset ?? 0;
 
-  // Build where condition
+  // Build where condition — search by displayName, users.name, or gameId
   let whereCondition = undefined;
   if (opts.search) {
     const searchTerm = `%${opts.search}%`;
@@ -1434,44 +1434,57 @@ export async function adminGetPlayers(opts: {
     if (!isNaN(numericSearch)) {
       whereCondition = or(
         like(playerProfiles.displayName, searchTerm),
+        like(users.name, searchTerm),
         eq(playerProfiles.gameId, numericSearch)
       );
     } else {
-      whereCondition = like(playerProfiles.displayName, searchTerm);
+      whereCondition = or(
+        like(playerProfiles.displayName, searchTerm),
+        like(users.name, searchTerm)
+      );
     }
   }
 
+  // Base join: playerProfiles LEFT JOIN users
+  const joined = db
+    .select({
+      id: playerProfiles.id,
+      userId: playerProfiles.userId,
+      gameId: playerProfiles.gameId,
+      displayName: playerProfiles.displayName,
+      userName: users.name,
+      openId: users.openId,
+      avatarId: playerProfiles.avatarId,
+      equippedFrame: playerProfiles.equippedFrame,
+      rating: playerProfiles.rating,
+      gamesPlayed: playerProfiles.gamesPlayed,
+      wins: playerProfiles.wins,
+      losses: playerProfiles.losses,
+      balanceTenge: playerProfiles.balanceTenge,
+      balanceShanyrak: playerProfiles.balanceShanyrak,
+      isBanned: playerProfiles.isBanned,
+      banReason: playerProfiles.banReason,
+      bannedAt: playerProfiles.bannedAt,
+      tutorialCompleted: playerProfiles.tutorialCompleted,
+      createdAt: playerProfiles.createdAt,
+      updatedAt: playerProfiles.updatedAt,
+    })
+    .from(playerProfiles)
+    .leftJoin(users, eq(playerProfiles.userId, users.id));
+
   // Get total count (with filter)
-  const countQuery = whereCondition
-    ? db.select({ count: sql<number>`COUNT(*)` }).from(playerProfiles).where(whereCondition)
-    : db.select({ count: sql<number>`COUNT(*)` }).from(playerProfiles);
-  const countResult = await countQuery;
+  const countBase = db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(playerProfiles)
+    .leftJoin(users, eq(playerProfiles.userId, users.id));
+  const countResult = whereCondition
+    ? await countBase.where(whereCondition)
+    : await countBase;
   const total = countResult[0]?.count ?? 0;
 
-  const baseQuery = db.select({
-    id: playerProfiles.id,
-    userId: playerProfiles.userId,
-    gameId: playerProfiles.gameId,
-    displayName: playerProfiles.displayName,
-    avatarId: playerProfiles.avatarId,
-    equippedFrame: playerProfiles.equippedFrame,
-    rating: playerProfiles.rating,
-    gamesPlayed: playerProfiles.gamesPlayed,
-    wins: playerProfiles.wins,
-    losses: playerProfiles.losses,
-    balanceTenge: playerProfiles.balanceTenge,
-    balanceShanyrak: playerProfiles.balanceShanyrak,
-    isBanned: playerProfiles.isBanned,
-    banReason: playerProfiles.banReason,
-    bannedAt: playerProfiles.bannedAt,
-    tutorialCompleted: playerProfiles.tutorialCompleted,
-    createdAt: playerProfiles.createdAt,
-    updatedAt: playerProfiles.updatedAt,
-  }).from(playerProfiles);
-
   const players = whereCondition
-    ? await baseQuery.where(whereCondition).orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset)
-    : await baseQuery.orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset);
+    ? await joined.where(whereCondition).orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset)
+    : await joined.orderBy(desc(playerProfiles.createdAt)).limit(limit).offset(offset);
 
   return { players, total };
 }

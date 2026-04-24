@@ -113,12 +113,12 @@ interface GhostPlayer {
 
 const GHOST_NICKS: string[] = [
   // Russian/Ukrainian
-  'dimon1997', 'Ветерок', 'katya_kyiv98', '4elovek', 'nikita_pro',
+  'dimon1997','nkkk83','katya_kyiv98','4elovek','nikita_pro',
   'Roma90', '_andruha', 'igorOK', 'алёна_м', 'MAX_power',
   'zheka_d', 'Юра77', 'slavik', 'tolian', 'misha_ru',
-  'olegdn', 'Vitalik', 'danchik', 'rus_34', 'Женёк',
+  'olegdn','Vitalik','danchik','rus_34','Саид Каирбеков',
   // Kazakh
-  'Айдос', 'nurs_alive', 'Әлібек', 'erlan88', 'bekzat',
+  'Mantas Ruckis','nurs_alive','Әлібек','erlan88','bekzat',
   'aru_05', 'daniyar', 'zhandos', 'askar90', 'nomad_kz',
   // Uzbek/Central Asian
   'Aziz_94', 'dilshodlive', 'sardor', 'nodirbek', 'jasur_aka',
@@ -136,8 +136,8 @@ const GHOST_NICKS: string[] = [
   'John', 'mike', 'Alex', 'chill_dude', 'noah',
   'david', 'justin', 'player1', 'randomUser', 'realgamer',
   // Female names
-  'Катя', 'Алина', 'Даша', 'Милана', 'Аня',
-  'Дана', 'Сабина', 'Зарина', 'Мадина', 'Яна',
+  'Катя','Fayzi','Даша','Милана','Анна Гобельц',
+  'blazer666','SabinA.M','Zarina Ulaeva','DeLOVEaYA','shaxnoza abdurasulova',
   // Generic
   'qwerty', 'asdfg', 'zxcvbn', '123abc', 'helloThere',
   'shadow', 'nightowl', 'luckyone', 'fasthand', 'lastmove',
@@ -145,7 +145,7 @@ const GHOST_NICKS: string[] = [
   'kolya_nsk', 'petya_spb', 'seryoga', 'dimych', 'kostyan',
   'vovan', 'sashok', 'leha_pro', 'zhenya_k', 'fedya',
   // More Kazakh
-  'aibek', 'serik_kz', 'marat_kz', 'bauyrzhan', 'arman_kz',
+  'aibek','serik_kz','marat_kz','bauyrzhan','Arman Alibelov',
   'dauren', 'adil_kz', 'temirlan', 'yerlan', 'nurlan',
   // More international
   'kevin', 'chris', 'james_g', 'tyler', 'brandon',

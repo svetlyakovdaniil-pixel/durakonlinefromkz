@@ -340,7 +340,12 @@ function PlayersTab({ isGM = false }: { isGM?: boolean }) {
               data.players.map((p: any) => (
                 <tr key={p.id} className="hover:bg-gray-900/30 transition-colors">
                   <td className="px-4 py-3 text-gray-400">#{p.gameId}</td>
-                  <td className="px-4 py-3 font-medium text-amber-100">{p.displayName || "—"}</td>
+                  <td className="px-4 py-3 font-medium text-amber-100">
+                    {p.displayName || p.userName || "—"}
+                    {p.displayName && p.userName && p.displayName !== p.userName && (
+                      <span className="ml-1 text-xs text-gray-500">({p.userName})</span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{formatNumber(p.rating)}</td>
                   <td className="px-4 py-3">{formatNumber(p.gamesPlayed)}</td>
                   <td className="px-4 py-3">

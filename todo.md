@@ -3621,3 +3621,6 @@
 - [ ] Bug: card disappears from hand when taking cards (6 of Hearts disappears after taking, game freezes)
 
 - [x] Hourly rotation of bait room creators: each hour randomly select different ghost players from the pool to create bait rooms, so the same ghosts don't always appear as room hosts
+
+- [x] Rename 11 ghost players in GHOST_NICKS: Сабина→SabinA.M, Ветерок→nkkk83, Яна→shaxnoza abdurasulova, Мадина→DeLOVEaYA, Зарина→Zarina Ulaeva, Аня→Анна Гобельц, Дана→blazer666, Алина→Fayzi, Женёк→Саид Каирбеков, Айдос→Mantas Ruckis, arman_kz→Arman Alibelov
+- [x] Fix admin panel player list pagination: same names appear on every page
