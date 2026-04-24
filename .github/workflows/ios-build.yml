@@ -21,7 +21,7 @@ on:
 jobs:
   build-ios:
     name: Build iOS App
-    runs-on: macos-15
+    runs-on: self-hosted
     timeout-minutes: 60
 
     steps:
