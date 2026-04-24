@@ -97,8 +97,11 @@ export function registerAppleAuthRoutes(app: Express) {
   app.get("/api/auth/apple/init", (req: Request, res: Response) => {
     const origin = req.query.origin as string || "https://durakonlinefromkz.online";
     const referralCode = req.query.referralCode as string || "";
-    const state = Buffer.from(JSON.stringify({ origin, referralCode })).toString("base64url");
-    const redirectUri = `${origin}/api/auth/apple/callback`;
+    const native = req.query.native === "true";
+    const state = Buffer.from(JSON.stringify({ origin, referralCode, native })).toString("base64url");
+    // For native apps, always use production domain as redirect_uri (must be registered with Apple)
+    const webOrigin = "https://durakonlinefromkz.online";
+    const redirectUri = `${webOrigin}/api/auth/apple/callback`;
 
     const params = new URLSearchParams({
       client_id: APPLE_SERVICE_ID,
@@ -118,6 +121,7 @@ export function registerAppleAuthRoutes(app: Express) {
    * Apple sends a form_post to this endpoint after user authenticates
    */
   app.post("/api/auth/apple/callback", async (req: Request, res: Response) => {
+    let isNative = false;
     try {
       const { code, id_token, state, user: userJson } = req.body;
 
@@ -126,7 +130,7 @@ export function registerAppleAuthRoutes(app: Express) {
         return;
       }
 
-      // Parse state to get origin and referral code
+      // Parse state to get origin, referral code and native flag
       let origin = "https://durakonlinefromkz.online";
       let referralCode = "";
       try {
@@ -134,10 +138,13 @@ export function registerAppleAuthRoutes(app: Express) {
           const parsed = JSON.parse(Buffer.from(state, "base64url").toString());
           origin = parsed.origin || origin;
           referralCode = parsed.referralCode || "";
+          isNative = parsed.native === true;
         }
       } catch {
         // Use defaults
       }
+      // For native apps, always use production domain for redirect_uri
+      const webOrigin = "https://durakonlinefromkz.online";
 
       // Parse user info from first-time sign in (Apple only sends this once)
       let appleUserName: string | null = null;
@@ -159,7 +166,7 @@ export function registerAppleAuthRoutes(app: Express) {
           appleUser = await verifyAppleIdToken(id_token);
         } else {
           // Exchange code for tokens
-          const redirectUri = `${origin}/api/auth/apple/callback`;
+          const redirectUri = `${webOrigin}/api/auth/apple/callback`;
           const tokens = await exchangeCodeForTokens(code, redirectUri);
           appleUser = await verifyAppleIdToken(tokens.id_token);
         }
@@ -181,6 +188,9 @@ export function registerAppleAuthRoutes(app: Express) {
         });
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        if (isNative) {
+          return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+        }
         res.redirect(`${origin}/`);
       } else {
         // New user
@@ -211,10 +221,14 @@ export function registerAppleAuthRoutes(app: Express) {
         });
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        if (isNative) {
+          return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+        }
         res.redirect(`${origin}/`);
       }
     } catch (error) {
       console.error("[AppleAuth] Login failed:", error);
+      if (isNative) return res.redirect(`durak://auth/error?reason=apple_server_error`);
       res.redirect("/?error=apple_server_error");
     }
   });

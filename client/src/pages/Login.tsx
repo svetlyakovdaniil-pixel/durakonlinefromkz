@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
-import { getLoginUrl } from "@/const";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
+import { App } from "@capacitor/app";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
  *
  * When running as a native Capacitor app (iOS/Android), window.location.origin
- * returns "capacitor://localhost" which is NOT a valid OAuth redirect URI —
- * Google and Apple will reject it. In that case, we use the production domain
- * so the OAuth callback goes to the real server, which sets the session cookie
- * and redirects back to the production URL (loaded by the Capacitor web view).
+ * returns "capacitor://localhost" which is NOT a valid OAuth redirect URI.
+ * In that case, we use the production domain so the OAuth callback goes to
+ * the real server, which then redirects to durak:// deep link.
  */
 function getOAuthOrigin(): string {
   if (Capacitor.isNativePlatform()) {
@@ -33,6 +33,58 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // Listen for deep link callbacks on native platforms (durak://auth/success?token=...)
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    const handleAppUrl = App.addListener("appUrlOpen", async (event) => {
+      const url = event.url;
+      if (!url.startsWith("durak://auth/")) return;
+
+      // Close the SFSafariViewController
+      await Browser.close();
+
+      if (url.startsWith("durak://auth/success")) {
+        const params = new URLSearchParams(url.split("?")[1] || "");
+        const token = params.get("token");
+        if (token) {
+          try {
+            // Exchange token for a session cookie via server endpoint
+            const res = await fetch("https://durakonlinefromkz.online/api/auth/native/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ token }),
+              credentials: "include",
+            });
+            if (res.ok) {
+              // Session cookie is now set — navigate to home
+              window.location.href = "/";
+            } else {
+              setError(t("auth.serverError"));
+              setGoogleLoading(false);
+              setAppleLoading(false);
+            }
+          } catch {
+            setError(t("auth.serverError"));
+            setGoogleLoading(false);
+            setAppleLoading(false);
+          }
+        }
+      } else if (url.startsWith("durak://auth/error")) {
+        const params = new URLSearchParams(url.split("?")[1] || "");
+        const reason = params.get("reason") || "unknown";
+        console.error("[Login] OAuth error from deep link:", reason);
+        setError(t("auth.serverError"));
+        setGoogleLoading(false);
+        setAppleLoading(false);
+      }
+    });
+
+    return () => {
+      handleAppUrl.then((listener) => listener.remove());
+    };
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,35 +130,58 @@ export default function Login() {
     }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setError("");
     setGoogleLoading(true);
-    // Use server-side OAuth redirect flow (avoids COOP popup issues).
-    // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
-    // which is not a valid OAuth redirect URI — use the production domain instead.
+
     const origin = getOAuthOrigin();
-    window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
+
+    if (Capacitor.isNativePlatform()) {
+      // On native: open SFSafariViewController (iOS) / Chrome Custom Tab (Android)
+      // Pass native=true so server redirects to durak:// URL scheme after auth
+      const authUrl = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}&native=true`;
+      await Browser.open({ url: authUrl, presentationStyle: "popover" });
+      // Loading state will be cleared when deep link callback fires
+    } else {
+      // On web: use server-side redirect flow
+      window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
+    }
   };
 
   const handleAppleSignIn = async () => {
     setError("");
     setAppleLoading(true);
+
+    const origin = getOAuthOrigin();
+
     try {
-      // Get the Apple authorization URL from our server.
-      // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
-      // which is not a valid OAuth redirect URI — use the production domain instead.
-      const origin = getOAuthOrigin();
-      const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`, {
-        credentials: "include",
-      });
-      if (!res.ok) {
-        setError(t("auth.appleError"));
-        setAppleLoading(false);
-        return;
+      if (Capacitor.isNativePlatform()) {
+        // On native: get Apple auth URL then open in SFSafariViewController
+        const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`, {
+          credentials: "include",
+        });
+        if (!res.ok) {
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+        const { url } = await res.json();
+        // Open in SFSafariViewController — Apple requires this for Sign in with Apple
+        await Browser.open({ url, presentationStyle: "popover" });
+        // Loading state will be cleared when deep link callback fires
+      } else {
+        // On web: get Apple auth URL and redirect
+        const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`, {
+          credentials: "include",
+        });
+        if (!res.ok) {
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+        const { url } = await res.json();
+        window.location.href = url;
       }
-      const { url } = await res.json();
-      // Redirect to Apple's authorization page
-      window.location.href = url;
     } catch (err) {
       console.error("[AppleAuth] Sign-in failed:", err);
       setError(t("auth.appleError"));

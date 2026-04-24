@@ -70,8 +70,11 @@
 	<key>NSUserTrackingUsageDescription</key>
 	<string>Мы используем данные для показа персонализированной рекламы и улучшения игрового опыта.</string>
 
-	<!-- ── Google Sign-In URL scheme ─────────────────────────────────────── -->
-	<!-- REVERSED_CLIENT_ID from GoogleService-Info.plist -->
+	<!-- ── URL Schemes ──────────────────────────────────────────────────── -->
+	<!-- 1. Google Sign-In: REVERSED_CLIENT_ID from GoogleService-Info.plist -->
+	<!-- 2. durak://  — custom scheme for OAuth deep link callbacks          -->
+	<!--    After Google/Apple OAuth, server redirects to durak://auth/...   -->
+	<!--    iOS intercepts this and returns control to the app               -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -80,6 +83,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.googleusercontent.apps.825855589810-p63edci1a8ehttgcgurcehlskpp8vnb3</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>durak-oauth-callback</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>durak</string>
 			</array>
 		</dict>
 	</array>
