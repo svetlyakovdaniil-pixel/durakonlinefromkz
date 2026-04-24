@@ -81,38 +81,39 @@ jobs:
       # ── 8. Setup Ruby & CocoaPods ──────────────────────────────────────────
       - name: Setup Ruby
         run: |
-          # Use system Ruby on self-hosted Mac runner
-          # Try Homebrew Ruby first for better compatibility
+          # Try Homebrew Ruby first (Apple Silicon)
           if [ -f "/opt/homebrew/opt/ruby/bin/ruby" ]; then
-            echo "Using Homebrew Ruby"
-            echo "/opt/homebrew/opt/ruby/bin" >> $GITHUB_PATH
-            echo "GEM_HOME=$HOME/.gem" >> $GITHUB_ENV
-            echo "PATH=$HOME/.gem/bin:/opt/homebrew/opt/ruby/bin:$PATH" >> $GITHUB_ENV
+            RUBY_BIN="/opt/homebrew/opt/ruby/bin"
+            echo "Using Homebrew Ruby (Apple Silicon): $RUBY_BIN"
           elif [ -f "/usr/local/opt/ruby/bin/ruby" ]; then
-            echo "Using Homebrew Ruby (Intel)"
-            echo "/usr/local/opt/ruby/bin" >> $GITHUB_PATH
-            echo "GEM_HOME=$HOME/.gem" >> $GITHUB_ENV
+            RUBY_BIN="/usr/local/opt/ruby/bin"
+            echo "Using Homebrew Ruby (Intel): $RUBY_BIN"
           else
-            echo "Using system Ruby"
+            echo "Homebrew Ruby not found, installing via brew..."
+            brew install ruby
+            # After install, find the new ruby
+            if [ -f "/opt/homebrew/opt/ruby/bin/ruby" ]; then
+              RUBY_BIN="/opt/homebrew/opt/ruby/bin"
+            elif [ -f "/usr/local/opt/ruby/bin/ruby" ]; then
+              RUBY_BIN="/usr/local/opt/ruby/bin"
+            else
+              echo "ERROR: Could not find Ruby after brew install"
+              exit 1
+            fi
           fi
-          ruby --version
-          gem --version
+          echo "RUBY_BIN=$RUBY_BIN" >> $GITHUB_ENV
+          echo "$RUBY_BIN" >> $GITHUB_PATH
+          echo "GEM_HOME=$HOME/.gem" >> $GITHUB_ENV
+          echo "GEM_PATH=$HOME/.gem:$($RUBY_BIN/ruby -e 'puts Gem.default_dir')" >> $GITHUB_ENV
+          $RUBY_BIN/ruby --version
+          $RUBY_BIN/gem --version
 
       - name: Install CocoaPods
         run: |
-          # Use sudo for system Ruby (self-hosted Mac runner)
-          # If Homebrew Ruby is available, use it with user gem dir
-          if [ -f "/opt/homebrew/opt/ruby/bin/gem" ]; then
-            export GEM_HOME="$HOME/.gem"
-            export PATH="$HOME/.gem/bin:/opt/homebrew/opt/ruby/bin:$PATH"
-            /opt/homebrew/opt/ruby/bin/gem install cocoapods --no-document
-          elif [ -f "/usr/local/opt/ruby/bin/gem" ]; then
-            export GEM_HOME="$HOME/.gem"
-            export PATH="$HOME/.gem/bin:/usr/local/opt/ruby/bin:$PATH"
-            /usr/local/opt/ruby/bin/gem install cocoapods --no-document
-          else
-            sudo gem install cocoapods --no-document
-          fi
+          # Use the Homebrew Ruby set up in the previous step
+          export GEM_HOME="$HOME/.gem"
+          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
+          $RUBY_BIN/gem install cocoapods --no-document
           echo "=== iOS directory structure ==="
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
@@ -134,31 +135,17 @@ jobs:
           cat ios/App/Podfile
 
           cd ios/App
-          # Use full path to pod if installed via Homebrew Ruby
-          if [ -f "/opt/homebrew/opt/ruby/bin/pod" ]; then
-            /opt/homebrew/opt/ruby/bin/pod install --repo-update
-          elif [ -f "/usr/local/opt/ruby/bin/pod" ]; then
-            /usr/local/opt/ruby/bin/pod install --repo-update
-          elif [ -f "$HOME/.gem/bin/pod" ]; then
-            $HOME/.gem/bin/pod install --repo-update
-          else
-            pod install --repo-update
-          fi
+          # Use pod from GEM_HOME/bin (installed by Homebrew Ruby)
+          export GEM_HOME="$HOME/.gem"
+          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
+          pod install --repo-update
 
       # ── 9. Install Fastlane ────────────────────────────────────────────────
       - name: Install Fastlane
         run: |
-          if [ -f "/opt/homebrew/opt/ruby/bin/gem" ]; then
-            export GEM_HOME="$HOME/.gem"
-            export PATH="$HOME/.gem/bin:/opt/homebrew/opt/ruby/bin:$PATH"
-            /opt/homebrew/opt/ruby/bin/gem install fastlane --no-document
-          elif [ -f "/usr/local/opt/ruby/bin/gem" ]; then
-            export GEM_HOME="$HOME/.gem"
-            export PATH="$HOME/.gem/bin:/usr/local/opt/ruby/bin:$PATH"
-            /usr/local/opt/ruby/bin/gem install fastlane --no-document
-          else
-            sudo gem install fastlane --no-document
-          fi
+          export GEM_HOME="$HOME/.gem"
+          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
+          $RUBY_BIN/gem install fastlane --no-document
 
       # ── 10. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
