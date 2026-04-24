@@ -3619,3 +3619,5 @@
 - [ ] Rule change: cards go to bito ONLY when defender beats all cards and no more are added; in all other cases (inaction, timer expiry) cards go to defender's hand
 - [ ] Bug: last card defense freeze - when player plays their last card to beat last attack card, they should become winner but game freezes
 - [ ] Bug: card disappears from hand when taking cards (6 of Hearts disappears after taking, game freezes)
+
+- [x] Hourly rotation of bait room creators: each hour randomly select different ghost players from the pool to create bait rooms, so the same ghosts don't always appear as room hosts

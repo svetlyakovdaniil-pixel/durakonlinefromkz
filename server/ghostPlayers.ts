@@ -934,6 +934,35 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
     // Run immediately once
     roomManagerTick();
     console.log('[Ghost] Room manager started');
+
+    // Initial bait creator pool shuffle (after ghosts are connected)
+    rotateBaitCreators();
+
+    // Hourly rotation: reshuffle the bait creator pool every hour so different
+    // ghost names appear as room hosts in the lobby.
+    baitRotationInterval = setInterval(() => {
+      if (!ghostsEnabled) return;
+      rotateBaitCreators();
+      // Close all current bait rooms so they get recreated by new hosts
+      const allRooms = getAvailableRooms();
+      const currentBaitRooms = allRooms.filter(r =>
+        r.gameState === null &&
+        r.players.some(p => p.id.startsWith('ghost-') && ghosts.get(p.id)?.isHosting),
+      );
+      for (const room of currentBaitRooms) {
+        const hostGhost = Array.from(ghosts.values()).find(
+          g => g.currentRoomId === room.id && g.isHosting && g.socket?.connected,
+        );
+        if (!hostGhost) continue;
+        // Only close rooms with no real players — don't disrupt active sessions
+        if (room.players.some(p => !isGhostOrBot(p.id))) continue;
+        hostGhost.socket!.emit('closeRoom', room.id);
+        hostGhost.currentRoomId = null;
+        hostGhost.isHosting = false;
+        hostGhost.state = 'browsing';
+        console.log(`[Ghost] Hourly rotation: closed bait room for ${hostGhost.personality.nick}`);
+      }
+    }, 60 * 60_000); // every 1 hour
   }, 15_000);
 }
 
@@ -941,6 +970,7 @@ export function stopGhostPlayers(): void {
   ghostsEnabled = false;
   if (managerInterval) { clearInterval(managerInterval); managerInterval = null; }
   if (roomManagerInterval) { clearInterval(roomManagerInterval); roomManagerInterval = null; }
+  if (baitRotationInterval) { clearInterval(baitRotationInterval); baitRotationInterval = null; }
   for (const ghost of Array.from(ghosts.values())) {
     disconnectGhost(ghost);
   }
@@ -1220,6 +1250,54 @@ let roomManagerInterval: NodeJS.Timeout | null = null;
 let trainingGameInterval: NodeJS.Timeout | null = null;
 let lastTrainingGameStarted = 0; // timestamp
 
+// ─── Bait Room Creator Rotation ──────────────────────────────────────────────
+// Every hour we shuffle the ghost pool and pick a fresh set of ghosts that are
+// allowed to CREATE bait rooms. This ensures the lobby always shows different
+// host names instead of the same handful of ghosts every time.
+//
+// Implementation: maintain a shuffled ordered list `baitCreatorPool`. The
+// getFreeGhostForBait() helper draws from this list (round-robin) so that the
+// first BAIT_ROOM_COUNT slots rotate across the full ghost population.
+
+let baitCreatorPool: string[] = []; // openIds in shuffled order
+let baitCreatorIndex = 0;           // current position in pool (round-robin)
+let baitRotationInterval: NodeJS.Timeout | null = null;
+
+/** Shuffle the bait creator pool — called once at startup and every hour. */
+function rotateBaitCreators(): void {
+  const allIds = Array.from(ghosts.keys());
+  // Fisher-Yates shuffle
+  for (let i = allIds.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allIds[i], allIds[j]] = [allIds[j], allIds[i]];
+  }
+  baitCreatorPool = allIds;
+  baitCreatorIndex = 0;
+  console.log(`[Ghost] Bait creator pool rotated — ${allIds.length} ghosts, first 5: ${allIds.slice(0, 5).map(id => ghosts.get(id)?.personality.nick).join(', ')}`);
+}
+
+/**
+ * Like getFreeGhost() but draws from the rotated bait creator pool.
+ * Iterates round-robin through the shuffled pool to find a connected,
+ * browsing ghost. Falls back to getFreeGhost() if pool is exhausted.
+ */
+function getFreeGhostForBait(): GhostPlayer | null {
+  if (baitCreatorPool.length === 0) return getFreeGhost();
+  // Try up to pool.length candidates starting from baitCreatorIndex
+  for (let attempt = 0; attempt < baitCreatorPool.length; attempt++) {
+    const idx = (baitCreatorIndex + attempt) % baitCreatorPool.length;
+    const id = baitCreatorPool[idx];
+    const g = ghosts.get(id);
+    if (g && g.socket?.connected && g.state === 'browsing') {
+      // Advance index past this ghost so next bait room uses a different one
+      baitCreatorIndex = (idx + 1) % baitCreatorPool.length;
+      return g;
+    }
+  }
+  // All pool members busy — fall back to any free ghost
+  return getFreeGhost();
+}
+
 /** Returns true if the player id belongs to a ghost or built-in bot */
 function isGhostOrBot(id: string): boolean {
   return id.startsWith('ghost-') || id.startsWith('bot-');
@@ -1347,7 +1425,7 @@ function roomManagerTick(): void {
 
   const baitDeficit = BAIT_ROOM_COUNT - baitRooms.length;
   for (let i = 0; i < baitDeficit; i++) {
-    const freeGhost = getFreeGhost();
+    const freeGhost = getFreeGhostForBait(); // use rotated pool for bait room creators
     if (!freeGhost) break;
     // Mark as browsing→creating to avoid double-pick
     freeGhost.state = 'in_lobby'; // temporary lock
