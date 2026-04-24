@@ -79,41 +79,29 @@ jobs:
           npx cap sync ios
 
       # ── 8. Setup Ruby & CocoaPods ──────────────────────────────────────────
-      - name: Setup Ruby
-        run: |
-          # Try Homebrew Ruby first (Apple Silicon)
-          if [ -f "/opt/homebrew/opt/ruby/bin/ruby" ]; then
-            RUBY_BIN="/opt/homebrew/opt/ruby/bin"
-            echo "Using Homebrew Ruby (Apple Silicon): $RUBY_BIN"
-          elif [ -f "/usr/local/opt/ruby/bin/ruby" ]; then
-            RUBY_BIN="/usr/local/opt/ruby/bin"
-            echo "Using Homebrew Ruby (Intel): $RUBY_BIN"
-          else
-            echo "Homebrew Ruby not found, installing via brew..."
-            brew install ruby
-            # After install, find the new ruby
-            if [ -f "/opt/homebrew/opt/ruby/bin/ruby" ]; then
-              RUBY_BIN="/opt/homebrew/opt/ruby/bin"
-            elif [ -f "/usr/local/opt/ruby/bin/ruby" ]; then
-              RUBY_BIN="/usr/local/opt/ruby/bin"
-            else
-              echo "ERROR: Could not find Ruby after brew install"
-              exit 1
-            fi
-          fi
-          echo "RUBY_BIN=$RUBY_BIN" >> $GITHUB_ENV
-          echo "$RUBY_BIN" >> $GITHUB_PATH
-          echo "GEM_HOME=$HOME/.gem" >> $GITHUB_ENV
-          echo "GEM_PATH=$HOME/.gem:$($RUBY_BIN/ruby -e 'puts Gem.default_dir')" >> $GITHUB_ENV
-          $RUBY_BIN/ruby --version
-          $RUBY_BIN/gem --version
-
       - name: Install CocoaPods
         run: |
-          # Use the Homebrew Ruby set up in the previous step
-          export GEM_HOME="$HOME/.gem"
-          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
-          $RUBY_BIN/gem install cocoapods --no-document
+          # Use system Ruby with sudo - most reliable for self-hosted Mac runners
+          echo "=== Ruby version ==="
+          /usr/bin/ruby --version || ruby --version
+          echo "=== Trying to install CocoaPods ==="
+          # Try sudo gem install first (works if user has sudo without password)
+          if sudo /usr/bin/gem install cocoapods --no-document 2>&1; then
+            echo "CocoaPods installed via sudo system Ruby"
+            COCOAPODS_CMD="/usr/local/bin/pod"
+          elif sudo gem install cocoapods --no-document 2>&1; then
+            echo "CocoaPods installed via sudo gem"
+            COCOAPODS_CMD="pod"
+          else
+            # Try user gem install (no sudo)
+            echo "sudo failed, trying user gem install..."
+            gem install cocoapods --no-document --user-install
+            COCOAPODS_CMD="$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin/pod"
+            echo "$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin" >> $GITHUB_PATH
+          fi
+          echo "COCOAPODS_CMD=$COCOAPODS_CMD" >> $GITHUB_ENV
+          echo "CocoaPods version:"
+          $COCOAPODS_CMD --version || pod --version
           echo "=== iOS directory structure ==="
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
@@ -135,17 +123,20 @@ jobs:
           cat ios/App/Podfile
 
           cd ios/App
-          # Use pod from GEM_HOME/bin (installed by Homebrew Ruby)
-          export GEM_HOME="$HOME/.gem"
-          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
-          pod install --repo-update
+          ${COCOAPODS_CMD:-pod} install --repo-update
 
       # ── 9. Install Fastlane ────────────────────────────────────────────────
       - name: Install Fastlane
         run: |
-          export GEM_HOME="$HOME/.gem"
-          export PATH="$HOME/.gem/bin:$RUBY_BIN:$PATH"
-          $RUBY_BIN/gem install fastlane --no-document
+          if sudo /usr/bin/gem install fastlane --no-document 2>&1; then
+            echo "Fastlane installed via sudo system Ruby"
+          elif sudo gem install fastlane --no-document 2>&1; then
+            echo "Fastlane installed via sudo gem"
+          else
+            gem install fastlane --no-document --user-install
+            echo "$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin" >> $GITHUB_PATH
+          fi
+          fastlane --version || true
 
       # ── 10. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
@@ -266,7 +257,7 @@ jobs:
 
           echo "Xcode project updated"
 
-      # ── 13. Build & Archive ────────────────────────────────────────────────
+      # ── 13. Build & Archive ────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -297,7 +288,7 @@ jobs:
           fi
           echo "Archive created successfully!"
 
-      # ── 14. Export IPA ─────────────────────────────────────────────────────
+      # ── 14. Export IPA ──────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -345,7 +336,7 @@ jobs:
           echo "IPA exported:"
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 15. Upload to App Store Connect ───────────────────────────────────
+      # ── 15. Upload to App Store Connect ─────────────────────────────────────
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
@@ -369,7 +360,7 @@ jobs:
             --password "@env:APPLE_APP_SPECIFIC_PASSWORD" \
             --verbose
 
-      # ── 16. Upload IPA as artifact (always) ───────────────────────────────
+      # ── 16. Upload IPA as artifact (always) ─────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -378,7 +369,7 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 17. Cleanup keychain ───────────────────────────────────────────────
+      # ── 17. Cleanup keychain ─────────────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
