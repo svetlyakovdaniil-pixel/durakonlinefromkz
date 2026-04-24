@@ -18,6 +18,9 @@ import { initGhostPlayers } from "../ghostPlayers";
 import { seedDefaultPlaylist, seedChinesePlaylist, seedLoFiChillhopPlaylist, seedDarkTrapPlaylist, cleanupOldPlaylists, fixChinesePlaylistUrls, fixAllPlaylistCloudFrontUrls, getDb } from "../db";
 import cron from "node-cron";
 import { sendDailyQuestPushToAll, sendSeasonEndingPushToAll, sendShanyrakRefillPushToEligible } from "../pushNotifications";
+import { sdk as nativeSdk } from "./sdk";
+import { COOKIE_NAME as NATIVE_COOKIE_NAME, ONE_YEAR_MS as NATIVE_ONE_YEAR_MS } from "@shared/const";
+import { getSessionCookieOptions } from "./cookies";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -119,6 +122,25 @@ async function startServer() {
   registerAppleAuthRoutes(app);
   // IAP verification endpoint
   registerIAPRoutes(app);
+
+  // Native app session endpoint: receives JWT token from deep link and sets session cookie
+  // This is called by the Capacitor app after OAuth completes via SFSafariViewController
+  app.post("/api/auth/native/session", async (req, res) => {
+    try {
+      const { token } = req.body as { token?: string };
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "missing_token" });
+      }
+      // Verify the token is valid before setting the cookie
+      await nativeSdk.verifySession(token);
+      const cookieOptions = getSessionCookieOptions(req);
+      res.cookie(NATIVE_COOKIE_NAME, token, { ...cookieOptions, maxAge: NATIVE_ONE_YEAR_MS });
+      return res.json({ ok: true });
+    } catch (err) {
+      console.error("[NativeSession] Failed to set session:", err);
+      return res.status(401).json({ error: "invalid_token" });
+    }
+  });
   // tRPC API
   app.use(
     "/api/trpc",

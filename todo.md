@@ -3624,3 +3624,7 @@
 
 - [x] Rename 11 ghost players in GHOST_NICKS: Сабина→SabinA.M, Ветерок→nkkk83, Яна→shaxnoza abdurasulova, Мадина→DeLOVEaYA, Зарина→Zarina Ulaeva, Аня→Анна Гобельц, Дана→blazer666, Алина→Fayzi, Женёк→Саид Каирбеков, Айдос→Mantas Ruckis, arman_kz→Arman Alibelov
 - [x] Fix admin panel player list pagination: same names appear on every page
+
+- [x] Fix App Store rejection 2.1(a) + 4.0: use SFSafariViewController via @capacitor/browser for Apple/Google OAuth login
+- [x] Configure deep link URL scheme (durak://) for OAuth callback to return to app after login
+- [x] Update server Apple/Google OAuth callbacks to redirect to app URL scheme after auth

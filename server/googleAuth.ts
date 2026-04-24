@@ -71,9 +71,13 @@ export function registerGoogleAuthRoutes(app: Express) {
   app.get("/api/auth/google/init", (req: Request, res: Response) => {
     const origin = (req.query.origin as string) || "https://durakonlinefromkz.online";
     const referralCode = (req.query.referralCode as string) || "";
-    const redirectUri = `${origin}/api/auth/google/callback`;
+    const native = req.query.native === "true";
 
-    const state = Buffer.from(JSON.stringify({ origin, referralCode })).toString("base64url");
+    // For native apps, always use production domain as redirect_uri (must be registered in Google Console)
+    const webOrigin = "https://durakonlinefromkz.online";
+    const redirectUri = `${webOrigin}/api/auth/google/callback`;
+
+    const state = Buffer.from(JSON.stringify({ origin, referralCode, native })).toString("base64url");
 
     const params = new URLSearchParams({
       client_id: GOOGLE_CLIENT_ID,
@@ -98,27 +102,34 @@ export function registerGoogleAuthRoutes(app: Express) {
     // Decode state
     let origin = "https://durakonlinefromkz.online";
     let referralCode = "";
+    let isNative = false;
     try {
       if (state) {
         const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
         origin = decoded.origin || origin;
         referralCode = decoded.referralCode || "";
+        isNative = decoded.native === true;
       }
     } catch {
       console.warn("[GoogleAuth] Failed to decode state");
     }
 
+    // For native apps, always use production domain for redirect_uri (registered in Google Console)
+    const webOrigin = "https://durakonlinefromkz.online";
+
     if (error) {
       console.error("[GoogleAuth] OAuth error:", error);
+      if (isNative) return res.redirect(`durak://auth/error?reason=google_cancelled`);
       return res.redirect(`${origin}/login?error=google_cancelled`);
     }
 
     if (!code) {
+      if (isNative) return res.redirect(`durak://auth/error?reason=google_no_code`);
       return res.redirect(`${origin}/login?error=google_no_code`);
     }
 
     try {
-      const redirectUri = `${origin}/api/auth/google/callback`;
+      const redirectUri = `${webOrigin}/api/auth/google/callback`;
 
       // Exchange code for tokens
       const tokens = await exchangeCodeForTokens(code, redirectUri);
@@ -130,11 +141,12 @@ export function registerGoogleAuthRoutes(app: Express) {
 
       // Check if user already exists
       const existingUser = await db.getUserByOpenId(openId);
+      let sessionToken: string;
 
       if (existingUser) {
         await db.upsertUser({ openId, lastSignedIn: new Date() });
 
-        const sessionToken = await sdk.createSessionToken(openId, {
+        sessionToken = await sdk.createSessionToken(openId, {
           name: existingUser.name || googleUser.name || "",
           expiresInMs: ONE_YEAR_MS,
         });
@@ -163,7 +175,7 @@ export function registerGoogleAuthRoutes(app: Express) {
           }
         }
 
-        const sessionToken = await sdk.createSessionToken(openId, {
+        sessionToken = await sdk.createSessionToken(openId, {
           name: truncatedName,
           expiresInMs: ONE_YEAR_MS,
         });
@@ -172,10 +184,16 @@ export function registerGoogleAuthRoutes(app: Express) {
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       }
 
-      // Redirect to home after successful login
+      // For native apps: redirect to custom URL scheme so the app can pick up the token
+      if (isNative) {
+        return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+      }
+
+      // Web: redirect to home after successful login
       res.redirect(`${origin}/`);
     } catch (err) {
       console.error("[GoogleAuth] Callback failed:", err);
+      if (isNative) return res.redirect(`durak://auth/error?reason=google_server_error`);
       res.redirect(`${origin}/login?error=google_server_error`);
     }
   });
