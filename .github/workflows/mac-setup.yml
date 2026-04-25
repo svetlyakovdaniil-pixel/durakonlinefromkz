@@ -19,6 +19,27 @@ jobs:
           echo "=== Available Xcodes ==="
           ls /Applications/ | grep -i xcode || echo "No Xcode in /Applications"
 
+      - name: Move Xcode to Applications if needed
+        run: |
+          # Check if Xcode is already in /Applications
+          if [ -d "/Applications/Xcode.app" ] || ls /Applications/Xcode*.app 2>/dev/null | head -1; then
+            echo "Xcode already in /Applications"
+          elif [ -d "/Users/yan/Downloads/Xcode.app" ]; then
+            echo "Moving Xcode from Downloads to /Applications..."
+            sudo mv /Users/yan/Downloads/Xcode.app /Applications/Xcode.app
+            echo "Xcode moved successfully"
+          else
+            echo "Searching for Xcode..."
+            XCODE_FOUND=$(find /Users -name "Xcode.app" -maxdepth 4 2>/dev/null | head -1)
+            if [ -n "$XCODE_FOUND" ]; then
+              echo "Found Xcode at: $XCODE_FOUND — moving to /Applications"
+              sudo mv "$XCODE_FOUND" /Applications/Xcode.app
+            else
+              echo "ERROR: Xcode.app not found anywhere!"
+              exit 1
+            fi
+          fi
+
       - name: Set Xcode developer directory
         run: |
           # Find Xcode.app
