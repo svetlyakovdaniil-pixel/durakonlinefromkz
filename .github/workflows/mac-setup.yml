@@ -1,0 +1,162 @@
+name: Mac Runner Setup
+
+on:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    timeout-minutes: 60
+    steps:
+      - name: System Info
+        run: |
+          echo "=== macOS Version ==="
+          sw_vers
+          echo "=== Xcode select path ==="
+          xcode-select -p
+          echo "=== xcodebuild version ==="
+          xcodebuild -version || echo "xcodebuild failed"
+          echo "=== Available Xcodes ==="
+          ls /Applications/ | grep -i xcode || echo "No Xcode in /Applications"
+
+      - name: Set Xcode developer directory
+        run: |
+          # Find Xcode.app
+          XCODE_PATH=$(find /Applications -name "Xcode*.app" -maxdepth 1 2>/dev/null | head -1)
+          if [ -z "$XCODE_PATH" ]; then
+            echo "ERROR: Xcode.app not found in /Applications"
+            ls /Applications/
+            exit 1
+          fi
+          echo "Found Xcode at: $XCODE_PATH"
+          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "=== Xcode version ==="
+          xcodebuild -version
+          echo "=== Accept Xcode license ==="
+          sudo xcodebuild -license accept || echo "License already accepted"
+
+      - name: Install Homebrew if needed
+        run: |
+          if command -v brew &>/dev/null; then
+            echo "Homebrew already installed: $(brew --version)"
+          else
+            echo "Installing Homebrew..."
+            NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            # Add to PATH
+            if [ -f /opt/homebrew/bin/brew ]; then
+              eval "$(/opt/homebrew/bin/brew shellenv)"
+            elif [ -f /usr/local/bin/brew ]; then
+              eval "$(/usr/local/bin/brew shellenv)"
+            fi
+            brew --version
+          fi
+
+      - name: Install Ruby via rbenv
+        run: |
+          # Check if rbenv is available
+          if command -v rbenv &>/dev/null; then
+            echo "rbenv already installed"
+          else
+            echo "Installing rbenv via brew..."
+            if command -v brew &>/dev/null; then
+              brew install rbenv ruby-build
+            else
+              echo "brew not available, using system ruby"
+            fi
+          fi
+          
+          # Check Ruby version
+          ruby --version || /usr/bin/ruby --version
+          
+          # Use system ruby if rbenv not available
+          RUBY_BIN=$(command -v ruby || echo "/usr/bin/ruby")
+          GEM_BIN=$(command -v gem || echo "/usr/bin/gem")
+          echo "Using Ruby: $RUBY_BIN"
+          echo "Using Gem: $GEM_BIN"
+
+      - name: Install CocoaPods
+        run: |
+          # Try to find pod
+          if command -v pod &>/dev/null; then
+            echo "CocoaPods already installed: $(pod --version)"
+            exit 0
+          fi
+          
+          # Check gem locations
+          echo "=== Gem environment ==="
+          gem environment
+          
+          # Install CocoaPods with sudo (system ruby)
+          echo "Installing CocoaPods..."
+          sudo gem install cocoapods --no-document 2>&1
+          
+          # Verify installation
+          if command -v pod &>/dev/null; then
+            echo "CocoaPods installed: $(pod --version)"
+          else
+            # Try to find pod in gem bin dirs
+            POD_PATH=$(gem environment | grep "EXECUTABLE DIRECTORY" | awk '{print $NF}')
+            echo "Pod should be at: $POD_PATH/pod"
+            ls "$POD_PATH/" | grep pod || echo "pod not found in gem bin"
+            # Add to PATH and verify
+            export PATH="$POD_PATH:$PATH"
+            pod --version || echo "pod still not found"
+          fi
+
+      - name: Install Fastlane
+        run: |
+          # Try to find fastlane
+          if command -v fastlane &>/dev/null; then
+            echo "Fastlane already installed: $(fastlane --version)"
+            exit 0
+          fi
+          
+          echo "Installing Fastlane..."
+          sudo gem install fastlane --no-document 2>&1
+          
+          # Verify
+          if command -v fastlane &>/dev/null; then
+            echo "Fastlane installed: $(fastlane --version)"
+          else
+            GEM_BIN=$(gem environment | grep "EXECUTABLE DIRECTORY" | awk '{print $NF}')
+            export PATH="$GEM_BIN:$PATH"
+            fastlane --version || echo "fastlane not found after install"
+          fi
+
+      - name: Verify all tools
+        run: |
+          echo "=== Final verification ==="
+          echo "Xcode:"
+          xcodebuild -version
+          echo ""
+          echo "Ruby:"
+          ruby --version
+          echo ""
+          echo "Gem:"
+          gem --version
+          echo ""
+          echo "CocoaPods:"
+          GEM_BIN=$(gem environment | grep "EXECUTABLE DIRECTORY" | awk '{print $NF}')
+          export PATH="$GEM_BIN:$PATH"
+          pod --version || echo "pod not found"
+          echo ""
+          echo "Fastlane:"
+          fastlane --version || echo "fastlane not found"
+          echo ""
+          echo "=== PATH ==="
+          echo $PATH
+          echo ""
+          echo "=== Gem bin dir ==="
+          echo $GEM_BIN
+          echo ""
+          echo "=== All gems ==="
+          gem list | grep -E "cocoapods|fastlane"
+
+      - name: Setup complete
+        run: |
+          echo "✅ Mac runner setup complete!"
+          echo "Xcode: $(xcodebuild -version | head -1)"
+          GEM_BIN=$(gem environment | grep "EXECUTABLE DIRECTORY" | awk '{print $NF}')
+          export PATH="$GEM_BIN:$PATH"
+          echo "CocoaPods: $(pod --version 2>/dev/null || echo 'not found')"
+          echo "Fastlane: $(fastlane --version 2>/dev/null | head -1 || echo 'not found')"
