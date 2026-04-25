@@ -7,7 +7,7 @@ jobs:
   diagnose:
     name: Check Mac Runner Environment
     runs-on: self-hosted
-    timeout-minutes: 5
+    timeout-minutes: 10
 
     steps:
       - name: System Info
@@ -21,7 +21,39 @@ jobs:
           echo "=== Architecture ==="
           uname -m
 
-      - name: Ruby versions
+      - name: Find Xcode everywhere
+        run: |
+          echo "=== xcode-select path ==="
+          xcode-select -p 2>/dev/null || echo "xcode-select failed"
+          echo "=== xcodebuild version ==="
+          xcodebuild -version 2>&1 || echo "xcodebuild failed"
+          echo "=== /Applications contents ==="
+          ls /Applications/ 2>/dev/null | head -30
+          echo "=== Find Xcode.app anywhere ==="
+          find / -name "Xcode.app" -maxdepth 5 2>/dev/null | head -10
+          echo "=== Find xcodebuild binary ==="
+          find / -name "xcodebuild" -maxdepth 10 2>/dev/null | head -10
+          echo "=== /Volumes contents ==="
+          ls /Volumes/ 2>/dev/null || echo "no /Volumes"
+          echo "=== /Developer ==="
+          ls /Developer/ 2>/dev/null || echo "no /Developer"
+
+      - name: Find Homebrew everywhere
+        run: |
+          echo "=== brew in PATH ==="
+          which brew 2>/dev/null && brew --version || echo "brew not in PATH"
+          echo "=== Find brew binary ==="
+          find /usr /opt /home $HOME 2>/dev/null -name "brew" -type f 2>/dev/null | head -20
+          echo "=== /usr/local/bin contents ==="
+          ls /usr/local/bin/ 2>/dev/null | head -30
+          echo "=== /opt contents ==="
+          ls /opt/ 2>/dev/null || echo "no /opt"
+          echo "=== /opt/homebrew contents ==="
+          ls /opt/homebrew/ 2>/dev/null || echo "no /opt/homebrew"
+          echo "=== /opt/homebrew/bin contents ==="
+          ls /opt/homebrew/bin/ 2>/dev/null | head -30 || echo "no /opt/homebrew/bin"
+
+      - name: Ruby and CocoaPods
         run: |
           echo "=== System Ruby ==="
           /usr/bin/ruby --version 2>/dev/null || echo "No system ruby"
@@ -29,49 +61,26 @@ jobs:
           which ruby 2>/dev/null && ruby --version || echo "No ruby in PATH"
           echo "=== rbenv ==="
           which rbenv 2>/dev/null && rbenv versions || echo "rbenv not found"
-          echo "=== rvm ==="
-          which rvm 2>/dev/null && rvm list || echo "rvm not found"
-          echo "=== All ruby binaries ==="
-          find /usr/local/bin /usr/bin /opt/homebrew/bin $HOME/.rbenv/shims 2>/dev/null -name "ruby*" | head -20
-
-      - name: Gem environment
-        run: |
-          echo "=== System gem ==="
-          /usr/bin/gem environment 2>/dev/null || echo "No system gem"
-          echo "=== PATH gem ==="
-          which gem 2>/dev/null && gem environment || echo "No gem in PATH"
-
-      - name: CocoaPods
-        run: |
+          echo "=== Find all ruby binaries ==="
+          find /usr /opt $HOME 2>/dev/null -name "ruby" -type f 2>/dev/null | head -10
           echo "=== pod in PATH ==="
           which pod 2>/dev/null && pod --version || echo "pod not found in PATH"
-          echo "=== pod locations ==="
-          find /usr/local/bin /usr/bin /opt/homebrew/bin $HOME/.gem $HOME/.rbenv 2>/dev/null -name "pod" | head -10
-          echo "=== gem list cocoapods ==="
-          /usr/bin/gem list 2>/dev/null | grep -i cocoapods || gem list 2>/dev/null | grep -i cocoapods || echo "cocoapods not in gem list"
+          echo "=== Find pod binary ==="
+          find /usr /opt $HOME 2>/dev/null -name "pod" -type f 2>/dev/null | head -10
+          echo "=== gem list ==="
+          /usr/bin/gem list 2>/dev/null | grep -E "cocoapods|fastlane" || echo "No cocoapods/fastlane in system gems"
+          echo "=== User gem dir ==="
+          ls $HOME/.gem/ 2>/dev/null || echo "no ~/.gem"
+          ls $HOME/.gem/ruby/ 2>/dev/null || echo "no ~/.gem/ruby"
+          echo "=== sudo gem install test (dry run) ==="
+          sudo /usr/bin/gem list 2>/dev/null | grep cocoapods || echo "cocoapods not installed via sudo gem"
 
       - name: Fastlane
         run: |
           echo "=== fastlane in PATH ==="
           which fastlane 2>/dev/null && fastlane --version || echo "fastlane not found in PATH"
-          echo "=== fastlane locations ==="
-          find /usr/local/bin /usr/bin /opt/homebrew/bin $HOME/.gem $HOME/.rbenv 2>/dev/null -name "fastlane" | head -10
-          echo "=== gem list fastlane ==="
-          /usr/bin/gem list 2>/dev/null | grep -i fastlane || gem list 2>/dev/null | grep -i fastlane || echo "fastlane not in gem list"
-
-      - name: Homebrew
-        run: |
-          echo "=== brew locations ==="
-          which brew 2>/dev/null && brew --version || echo "brew not found in PATH"
-          ls /usr/local/bin/brew 2>/dev/null && echo "brew at /usr/local/bin/brew" || echo "no brew at /usr/local/bin/brew"
-          ls /opt/homebrew/bin/brew 2>/dev/null && echo "brew at /opt/homebrew/bin/brew" || echo "no brew at /opt/homebrew/bin/brew"
-
-      - name: Xcode
-        run: |
-          echo "=== Xcode version ==="
-          xcodebuild -version
-          echo "=== xcode-select ==="
-          xcode-select -p
+          echo "=== Find fastlane binary ==="
+          find /usr /opt $HOME 2>/dev/null -name "fastlane" -type f 2>/dev/null | head -10
 
       - name: Node & pnpm
         run: |
@@ -80,7 +89,15 @@ jobs:
           echo "=== pnpm ==="
           which pnpm && pnpm --version || echo "pnpm not found"
 
-      - name: PATH
+      - name: Full PATH
         run: |
           echo "=== Full PATH ==="
           echo $PATH | tr ':' '\n'
+          echo "=== /etc/paths ==="
+          cat /etc/paths 2>/dev/null || echo "no /etc/paths"
+          echo "=== /etc/paths.d ==="
+          ls /etc/paths.d/ 2>/dev/null && cat /etc/paths.d/* 2>/dev/null || echo "no /etc/paths.d"
+          echo "=== ~/.zshrc ==="
+          cat $HOME/.zshrc 2>/dev/null | head -30 || echo "no ~/.zshrc"
+          echo "=== ~/.bash_profile ==="
+          cat $HOME/.bash_profile 2>/dev/null | head -30 || echo "no ~/.bash_profile"
