@@ -117,7 +117,10 @@ jobs:
             echo "CocoaPods already installed: $(pod --version)"
           else
             echo "Installing CocoaPods via brew..."
-            brew install cocoapods
+            # Use --overwrite to handle existing conflicting files
+            brew install cocoapods || brew link --overwrite cocoapods
+            # Force link in case of symlink conflicts
+            brew link --overwrite cocoapods 2>/dev/null || true
             echo "CocoaPods installed: $(pod --version)"
           fi
 
