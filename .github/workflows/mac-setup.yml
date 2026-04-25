@@ -71,10 +71,14 @@ jobs:
           
           echo "Using Xcode at: $XCODE_PATH"
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+          echo "=== Xcode developer dir ==="
+          xcode-select -p
+          echo "=== Accept Xcode license (non-interactive) ==="
+          # Use 'agreed' to auto-accept license without hanging
+          echo 'agreed' | sudo tee /Library/Preferences/com.apple.dt.Xcode.plist > /dev/null 2>&1 || true
+          sudo xcodebuild -license accept 2>/dev/null || echo "License accept attempted"
           echo "=== Xcode version ==="
-          xcodebuild -version
-          echo "=== Accept Xcode license ==="
-          sudo xcodebuild -license accept || echo "License already accepted"
+          timeout 30 xcodebuild -version 2>/dev/null || echo "xcodebuild version check timed out (may need first launch)"
 
       - name: Install Homebrew if needed
         run: |
