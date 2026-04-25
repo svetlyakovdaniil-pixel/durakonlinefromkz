@@ -103,56 +103,84 @@ jobs:
             brew --version
           fi
 
-      - name: Install Ruby via rbenv
+      - name: Install Ruby 3.x via rbenv
         run: |
-          # Check if rbenv is available
-          if command -v rbenv &>/dev/null; then
-            echo "rbenv already installed"
-          else
-            echo "Installing rbenv via brew..."
-            if command -v brew &>/dev/null; then
-              brew install rbenv ruby-build
-            else
-              echo "brew not available, using system ruby"
-            fi
+          # Setup brew PATH
+          if [ -f /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          elif [ -f /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
           fi
           
-          # Check Ruby version
-          ruby --version || /usr/bin/ruby --version
+          echo "=== Current Ruby ==="
+          ruby --version
           
-          # Use system ruby if rbenv not available
-          RUBY_BIN=$(command -v ruby || echo "/usr/bin/ruby")
-          GEM_BIN=$(command -v gem || echo "/usr/bin/gem")
-          echo "Using Ruby: $RUBY_BIN"
-          echo "Using Gem: $GEM_BIN"
+          # Install rbenv if not available
+          if ! command -v rbenv &>/dev/null; then
+            echo "Installing rbenv..."
+            brew install rbenv ruby-build
+          fi
+          
+          # Initialize rbenv
+          eval "$(rbenv init -)"
+          
+          # Check if Ruby 3.x is already installed
+          RUBY3=$(rbenv versions | grep -E '3\.[0-9]' | tail -1 | tr -d ' *')
+          if [ -z "$RUBY3" ]; then
+            echo "Installing Ruby 3.3.0 via rbenv..."
+            rbenv install 3.3.0
+            RUBY3="3.3.0"
+          fi
+          
+          echo "Setting global Ruby to $RUBY3"
+          rbenv global "$RUBY3"
+          rbenv rehash
+          
+          echo "=== Ruby after rbenv ==="
+          ruby --version
+          gem --version
 
       - name: Install CocoaPods
         run: |
+          # Setup brew PATH
+          if [ -f /opt/homebrew/bin/brew ]; then
+            eval "$(/opt/homebrew/bin/brew shellenv)"
+          elif [ -f /usr/local/bin/brew ]; then
+            eval "$(/usr/local/bin/brew shellenv)"
+          fi
+          
+          # Initialize rbenv
+          if command -v rbenv &>/dev/null; then
+            eval "$(rbenv init -)"
+          fi
+          
+          echo "=== Ruby version ==="
+          ruby --version
+          
           # Try to find pod
           if command -v pod &>/dev/null; then
             echo "CocoaPods already installed: $(pod --version)"
             exit 0
           fi
           
-          # Check gem locations
-          echo "=== Gem environment ==="
-          gem environment
+          echo "Installing CocoaPods with current Ruby..."
+          gem install cocoapods --no-document 2>&1
           
-          # Install CocoaPods with sudo (system ruby)
-          echo "Installing CocoaPods..."
-          sudo gem install cocoapods --no-document 2>&1
+          # Rehash to find pod
+          if command -v rbenv &>/dev/null; then
+            rbenv rehash
+          fi
           
           # Verify installation
           if command -v pod &>/dev/null; then
             echo "CocoaPods installed: $(pod --version)"
           else
-            # Try to find pod in gem bin dirs
-            POD_PATH=$(gem environment | grep "EXECUTABLE DIRECTORY" | awk '{print $NF}')
-            echo "Pod should be at: $POD_PATH/pod"
-            ls "$POD_PATH/" | grep pod || echo "pod not found in gem bin"
-            # Add to PATH and verify
-            export PATH="$POD_PATH:$PATH"
-            pod --version || echo "pod still not found"
+            echo "pod not in PATH, checking gem bin..."
+            GEM_BIN=$(gem environment | grep 'EXECUTABLE DIRECTORY' | awk -F': ' '{print $2}' | tr -d ' ')
+            echo "Gem bin dir: $GEM_BIN"
+            ls "$GEM_BIN/" | grep pod || echo "pod not in gem bin"
+            export PATH="$GEM_BIN:$PATH"
+            pod --version || echo "ERROR: pod still not found"
           fi
 
       - name: Install Fastlane
