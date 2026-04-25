@@ -19,42 +19,73 @@ jobs:
           echo "=== Available Xcodes ==="
           ls /Applications/ | grep -i xcode || echo "No Xcode in /Applications"
 
-      - name: Move Xcode to Applications if needed
+      - name: Find and setup Xcode
         run: |
-          # Check if Xcode is already in /Applications
-          if [ -d "/Applications/Xcode.app" ] || ls /Applications/Xcode*.app 2>/dev/null | head -1; then
-            echo "Xcode already in /Applications"
-          elif [ -d "/Users/yan/Downloads/Xcode.app" ]; then
-            echo "Moving Xcode from Downloads to /Applications..."
-            sudo mv /Users/yan/Downloads/Xcode.app /Applications/Xcode.app
-            echo "Xcode moved successfully"
-          else
-            echo "Searching for Xcode..."
-            XCODE_FOUND=$(find /Users -name "Xcode.app" -maxdepth 4 2>/dev/null | head -1)
-            if [ -n "$XCODE_FOUND" ]; then
-              echo "Found Xcode at: $XCODE_FOUND — moving to /Applications"
-              sudo mv "$XCODE_FOUND" /Applications/Xcode.app
-            else
-              echo "ERROR: Xcode.app not found anywhere!"
-              exit 1
+          echo "=== Searching for Xcode everywhere ==="
+          # Search common locations
+          XCODE_PATH=""
+          
+          # Check /Applications first
+          for app in /Applications/Xcode*.app /Applications/Xcode.app; do
+            if [ -d "$app" ]; then
+              XCODE_PATH="$app"
+              echo "Found in /Applications: $XCODE_PATH"
+              break
+            fi
+          done
+          
+          # Check Downloads
+          if [ -z "$XCODE_PATH" ]; then
+            for app in /Users/*/Downloads/Xcode*.app /Users/*/Downloads/Xcode.app; do
+              if [ -d "$app" ]; then
+                XCODE_PATH="$app"
+                echo "Found in Downloads: $XCODE_PATH"
+                break
+              fi
+            done
+          fi
+          
+          # Check Desktop
+          if [ -z "$XCODE_PATH" ]; then
+            for app in /Users/*/Desktop/Xcode*.app; do
+              if [ -d "$app" ]; then
+                XCODE_PATH="$app"
+                echo "Found on Desktop: $XCODE_PATH"
+                break
+              fi
+            done
+          fi
+          
+          # Use find as last resort
+          if [ -z "$XCODE_PATH" ]; then
+            XCODE_PATH=$(find /Users /Volumes -name "Xcode*.app" -maxdepth 5 -type d 2>/dev/null | head -1)
+            if [ -n "$XCODE_PATH" ]; then
+              echo "Found via find: $XCODE_PATH"
             fi
           fi
-
-      - name: Set Xcode developer directory
-        run: |
-          # Find Xcode.app
-          XCODE_PATH=$(find /Applications -name "Xcode*.app" -maxdepth 1 2>/dev/null | head -1)
+          
           if [ -z "$XCODE_PATH" ]; then
-            echo "ERROR: Xcode.app not found in /Applications"
-            ls /Applications/
+            echo "ERROR: Xcode not found anywhere!"
+            echo "Please install Xcode from App Store or place Xcode.app in /Applications"
             exit 1
           fi
-          echo "Found Xcode at: $XCODE_PATH"
+          
+          # Move to /Applications if not already there
+          if [[ "$XCODE_PATH" != /Applications/* ]]; then
+            echo "Moving $XCODE_PATH to /Applications/Xcode.app..."
+            sudo mv "$XCODE_PATH" /Applications/Xcode.app
+            XCODE_PATH="/Applications/Xcode.app"
+            echo "Moved successfully"
+          fi
+          
+          echo "Using Xcode at: $XCODE_PATH"
+          
+          # Set developer directory
           sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
           echo "=== Xcode version ==="
           xcodebuild -version
           echo "=== Accept Xcode license ==="
-          sudo xcodebuild -license accept || echo "License already accepted"
+          sudo xcodebuild -license accept || echo "License already accepted or requires manual acceptance"
 
       - name: Install Homebrew if needed
         run: |
