@@ -22,29 +22,71 @@ jobs:
   build-ios:
     name: Build iOS App
     runs-on: self-hosted
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     steps:
-      # ── 1. Checkout ────────────────────────────────────────────────────────
+      # ── 0. Setup PATH (Homebrew is at /opt/homebrew on this runner) ────────
+      - name: Setup PATH for Homebrew
+        run: |
+          echo "/opt/homebrew/bin" >> $GITHUB_PATH
+          echo "/opt/homebrew/sbin" >> $GITHUB_PATH
+          echo "/usr/local/bin" >> $GITHUB_PATH
+          echo "PATH set: /opt/homebrew/bin added"
+          ls /opt/homebrew/bin/brew && echo "brew found at /opt/homebrew/bin/brew" || echo "brew NOT found"
+
+      # ── 1. Fix Xcode developer directory ──────────────────────────────────
+      - name: Fix Xcode developer directory
+        run: |
+          echo "=== Current xcode-select path ==="
+          xcode-select -p || true
+          echo "=== Looking for Xcode.app ==="
+          ls /Applications/ | grep -i xcode || echo "No Xcode in /Applications"
+          find /Applications -name "Xcode.app" -maxdepth 2 2>/dev/null || echo "Xcode.app not found in /Applications"
+          # Fix xcode-select to point to Xcode.app instead of CommandLineTools
+          if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
+            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+            echo "xcode-select fixed to Xcode.app"
+          elif [ -d "/Applications/Xcode_16.app/Contents/Developer" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
+            echo "xcode-select fixed to Xcode_16.app"
+          elif [ -d "/Applications/Xcode_15.app/Contents/Developer" ]; then
+            sudo xcode-select -s /Applications/Xcode_15.app/Contents/Developer
+            echo "xcode-select fixed to Xcode_15.app"
+          else
+            XCODE_PATH=$(find /Applications -name "*.app" -maxdepth 1 | xargs -I{} find {} -name "xcodebuild" -maxdepth 5 2>/dev/null | head -1 | sed 's|/usr/bin/xcodebuild||' | sed 's|/Contents/Developer.*||')
+            if [ -n "$XCODE_PATH" ]; then
+              sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
+              echo "xcode-select fixed to $XCODE_PATH"
+            else
+              echo "ERROR: Could not find Xcode.app! xcodebuild will fail."
+              xcode-select -p
+            fi
+          fi
+          echo "=== xcode-select after fix ==="
+          xcode-select -p
+          echo "=== xcodebuild version ==="
+          xcodebuild -version || echo "xcodebuild failed - Xcode not properly configured"
+
+      # ── 2. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Setup pnpm ────────────────────────────────────────────────────
+      # ── 3. Setup pnpm ────────────────────────────────────────────────────
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
-      # ── 3. Setup Node.js ───────────────────────────────────────────────────
+      # ── 4. Setup Node.js ───────────────────────────────────────────────────
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'pnpm'
 
-      # ── 4. Install dependencies ────────────────────────────────────────────
+      # ── 5. Install dependencies ────────────────────────────────────────────
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # ── 5. Build web app ───────────────────────────────────────────────────
+      # ── 6. Build web app ───────────────────────────────────────────────────
       - name: Build web app
         env:
           NODE_ENV: production
@@ -52,11 +94,11 @@ jobs:
           VITE_ADMOB_IOS_APP_ID: "ca-app-pub-3940256099942544~1458002511"
         run: pnpm run build
 
-      # ── 6. Install Capacitor CLI ───────────────────────────────────────────
+      # ── 7. Install Capacitor CLI ───────────────────────────────────────────
       - name: Install Capacitor CLI globally
         run: npm install -g @capacitor/cli@8
 
-      # ── 7. Add iOS platform (generates full Xcode project) ─────────────────
+      # ── 8. Add iOS platform (generates full Xcode project) ─────────────────
       - name: Add iOS platform
         run: |
           if [ ! -f "ios/App/App.xcodeproj/project.pbxproj" ]; then
@@ -78,37 +120,39 @@ jobs:
           fi
           npx cap sync ios
 
-      # ── 8. Setup Ruby & CocoaPods ──────────────────────────────────────────
+      # ── 9. Install CocoaPods via Homebrew ──────────────────────────────────
       - name: Install CocoaPods
         run: |
-          # Use system Ruby with sudo - most reliable for self-hosted Mac runners
-          echo "=== Ruby version ==="
-          /usr/bin/ruby --version || ruby --version
-          echo "=== Trying to install CocoaPods ==="
-          # Try sudo gem install first (works if user has sudo without password)
-          if sudo /usr/bin/gem install cocoapods --no-document 2>&1; then
-            echo "CocoaPods installed via sudo system Ruby"
-            COCOAPODS_CMD="/usr/local/bin/pod"
-          elif sudo gem install cocoapods --no-document 2>&1; then
-            echo "CocoaPods installed via sudo gem"
-            COCOAPODS_CMD="pod"
-          else
-            # Try user gem install (no sudo)
-            echo "sudo failed, trying user gem install..."
-            gem install cocoapods --no-document --user-install
-            COCOAPODS_CMD="$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin/pod"
-            echo "$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin" >> $GITHUB_PATH
-          fi
-          echo "COCOAPODS_CMD=$COCOAPODS_CMD" >> $GITHUB_ENV
-          echo "CocoaPods version:"
-          $COCOAPODS_CMD --version || pod --version
+          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
+          echo "=== Checking for pod ==="
+          which pod && pod --version && echo "CocoaPods already installed, skipping" && exit 0 || true
+          echo "=== Installing CocoaPods via Homebrew ==="
+          /opt/homebrew/bin/brew install cocoapods
+          echo "=== Verifying pod installation ==="
+          which pod || /opt/homebrew/bin/pod --version
+          pod --version || /opt/homebrew/bin/pod --version
+
+      # ── 10. Install Fastlane via Homebrew ──────────────────────────────────
+      - name: Install Fastlane
+        run: |
+          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
+          echo "=== Checking for fastlane ==="
+          which fastlane && fastlane --version && echo "Fastlane already installed, skipping" && exit 0 || true
+          echo "=== Installing Fastlane via Homebrew ==="
+          /opt/homebrew/bin/brew install fastlane
+          echo "=== Verifying fastlane installation ==="
+          fastlane --version || /opt/homebrew/bin/fastlane --version
+
+      # ── 11. Install CocoaPods dependencies ─────────────────────────────────
+      - name: Install CocoaPods dependencies
+        run: |
+          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
           echo "=== iOS directory structure ==="
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
           ls -la ios/App/ 2>/dev/null || echo "ios/App not found"
 
           # Create Podfile using base64-encoded content (avoids YAML ':' parsing issues)
-          # The base64 string below decodes to a valid Capacitor 8 Podfile
           if [ ! -f "ios/App/Podfile" ]; then
             echo "Creating Podfile from base64..."
             echo "cmVxdWlyZV9yZWxhdGl2ZSAiLi4vLi4vbm9kZV9tb2R1bGVzL0BjYXBhY2l0b3IvaW9zL3NjcmlwdHMvcG9kc19oZWxwZXJzIgoKcGxhdGZvcm0gOmlvcywgIjE1LjAiCnVzZV9mcmFtZXdvcmtzIQoKaW5zdGFsbCEgImNvY29hcG9kcyIsIDpkaXNhYmxlX2lucHV0X291dHB1dF9wYXRocyA9PiB0cnVlCgpkZWYgY2FwYWNpdG9yX3BvZHMKICBwb2QgIkNhcGFjaXRvciIsIDpwYXRoID0+ICIuLi8uLi9ub2RlX21vZHVsZXMvQGNhcGFjaXRvci9pb3MiCiAgcG9kICJDYXBhY2l0b3JDb3Jkb3ZhIiwgOnBhdGggPT4gIi4uLy4uL25vZGVfbW9kdWxlcy9AY2FwYWNpdG9yL2lvcyIKZW5kCgp0YXJnZXQgIkFwcCIgZG8KICBjYXBhY2l0b3JfcG9kcwplbmQKCnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkNPREVfU0lHTklOR19BTExPV0VEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOSU5HX1JFUVVJUkVEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOX0lERU5USVRZIl0gPSAiIgogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkVYUEFOREVEX0NPREVfU0lHTl9JREVOVElUWSJdID0gIiIKICAgIGVuZAogIGVuZAplbmQK" | base64 --decode > ios/App/Podfile
@@ -123,22 +167,9 @@ jobs:
           cat ios/App/Podfile
 
           cd ios/App
-          ${COCOAPODS_CMD:-pod} install --repo-update
+          pod install --repo-update
 
-      # ── 9. Install Fastlane ────────────────────────────────────────────────
-      - name: Install Fastlane
-        run: |
-          if sudo /usr/bin/gem install fastlane --no-document 2>&1; then
-            echo "Fastlane installed via sudo system Ruby"
-          elif sudo gem install fastlane --no-document 2>&1; then
-            echo "Fastlane installed via sudo gem"
-          else
-            gem install fastlane --no-document --user-install
-            echo "$HOME/.gem/ruby/$(ruby -e 'puts RUBY_VERSION')/bin" >> $GITHUB_PATH
-          fi
-          fastlane --version || true
-
-      # ── 10. Import Distribution Certificate ───────────────────────────────
+      # ── 12. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
         env:
           IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
@@ -164,7 +195,7 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-      # ── 11. Install Provisioning Profile ──────────────────────────────────
+      # ── 13. Install Provisioning Profile ──────────────────────────────────
       - name: Install Provisioning Profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
@@ -183,7 +214,7 @@ jobs:
           echo "Profile UUID: $PROFILE_UUID"
           printf 'PROFILE_UUID=%s\n' "$PROFILE_UUID" >> $GITHUB_ENV
 
-      # ── 12. Update Xcode project settings ─────────────────────────────────
+      # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -257,13 +288,20 @@ jobs:
 
           echo "Xcode project updated"
 
-      # ── 13. Build & Archive ────────────────────────────────────────────
+      # ── 15. Build & Archive ────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
+          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
           cd ios/App
+
+          # Install xcpretty if not present (via gem user install)
+          if ! command -v xcpretty &>/dev/null; then
+            gem install xcpretty --no-document --user-install 2>/dev/null || true
+            export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
+          fi
 
           xcodebuild archive \
             -workspace App.xcworkspace \
@@ -279,7 +317,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            2>&1 | tee /tmp/xcodebuild.log | xcpretty --color || true
+            2>&1 | tee /tmp/xcodebuild.log | (xcpretty --color 2>/dev/null || cat)
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
             echo "Archive failed! Last 100 lines of build log:"
@@ -288,7 +326,7 @@ jobs:
           fi
           echo "Archive created successfully!"
 
-      # ── 14. Export IPA ──────────────────────────────────────────────────────
+      # ── 16. Export IPA ──────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -336,7 +374,7 @@ jobs:
           echo "IPA exported:"
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 15. Upload to App Store Connect ─────────────────────────────────────
+      # ── 17. Upload to App Store Connect ─────────────────────────────────────
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
@@ -360,7 +398,7 @@ jobs:
             --password "@env:APPLE_APP_SPECIFIC_PASSWORD" \
             --verbose
 
-      # ── 16. Upload IPA as artifact (always) ─────────────────────────────────
+      # ── 18. Upload IPA as artifact (always) ─────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -369,7 +407,7 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 17. Cleanup keychain ─────────────────────────────────────────────────────
+      # ── 19. Cleanup keychain ─────────────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
