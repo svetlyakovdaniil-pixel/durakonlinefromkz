@@ -173,7 +173,7 @@ jobs:
           cd ios/App
           # Try without repo update first (faster, avoids CDN timeout)
           # If it fails, try with repo update
-          pod install --skip-repo-update 2>&1 || pod install --repo-update 2>&1
+          pod install --no-repo-update 2>&1 || pod install 2>&1
 
       # ── 12. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
