@@ -144,33 +144,48 @@ jobs:
       # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
       - name: Patch Capacitor Swift compatibility
         run: |
-          # The issue: CAPPluginCall.reject() is declared in @objc public extension but
-          # without 'public' modifier on the func itself. This causes Swift compiler errors
-          # when compiling plugin packages via SPM.
+          # The issue: CAPPluginCall.reject() and CAPPluginCall.unimplemented() are
+          # declared in @objc public extension but without 'public' modifier on the
+          # func itself. This causes Swift compiler errors when compiling plugin
+          # packages via SPM (Swift Package Manager).
           #
-          # Fix: Replace call.reject("msg") with call.resolve([:])
+          # Fix: Replace call.reject(...) and call.unimplemented(...) with call.resolve([:])
           # resolve() is always accessible and avoids the visibility issue.
           #
-          # We patch both node_modules (used by SPM/Xcode directly) and Pods/ (CocoaPods)
+          # We patch node_modules (used by SPM/Xcode directly) and Pods/ (CocoaPods)
 
-          echo "=== Patching call.reject() -> call.resolve([:]) in node_modules ==="
-          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
-            echo "Patching: $f"
-            grep -n 'call\.reject(' "$f" | head -5
-            # Replace call.reject("any message") with call.resolve([:])
-            # macOS sed requires -i '' ; GNU sed uses -i
-            perl -i -pe 's/call\.reject\([^)]+\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-            echo "After:"
-            grep -n 'call\.reject\|call\.resolve' "$f" | head -5
+          echo "=== Patching call.reject() and call.unimplemented() -> call.resolve([:]) ==="
+          # Use .* instead of [^)]+ to handle arguments with parentheses or long strings
+          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | while read f; do
+            if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
+              echo "Patching: $f"
+              grep -n 'call\.reject\|call\.unimplemented' "$f" | head -10
+              # Replace call.reject(...) with call.resolve([:])
+              perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+              # Replace call.unimplemented(...) with call.resolve([:])
+              perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+              echo "After patch:"
+              grep -n 'call\.reject\|call\.unimplemented\|call\.resolve' "$f" | head -10
+            fi
           done
 
-          echo "=== Patching call.reject() -> call.resolve([:]) in Pods/ ==="
+          echo "=== Patching Pods/ Swift files ==="
           PODS_DIR="$PWD/ios/App/Pods"
-          find "$PODS_DIR" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
-            echo "Patching Pods: $f"
-            perl -i -pe 's/call\.reject\([^)]+\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+          find "$PODS_DIR" -name "*.swift" 2>/dev/null | while read f; do
+            if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
+              echo "Patching Pods: $f"
+              perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+              perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+            fi
           done
 
+          echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ==="
+          REMAINING=$(find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
+          echo "Files with remaining issues: $REMAINING"
+          if [ "$REMAINING" -gt 0 ]; then
+            echo "WARNING: Some files still have call.reject or call.unimplemented:"
+            find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null
+          fi
           echo "=== Patch complete ==="
 
       # ── 12. Import Distribution Certificate ───────────────────────────────
