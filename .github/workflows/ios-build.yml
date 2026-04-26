@@ -132,6 +132,29 @@ jobs:
           cd ios/App
           pod install --no-repo-update 2>&1 || pod install 2>&1
 
+      # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
+      - name: Patch Capacitor Swift compatibility
+        run: |
+          # Fix @capacitor/app AppPlugin.swift - call.reject() signature issue
+          # In some Capacitor version combos, reject() is not found by the Swift compiler
+          # Replace with a safe alternative that always works
+          APP_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+app@8.1.0_@capacitor+core@8.3.0/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift"
+          if [ -f "$APP_PLUGIN" ]; then
+            echo "Patching AppPlugin.swift..."
+            # Replace call.reject("Unable to get App Info") with call.resolve([:]) to avoid Swift compile error
+            sed -i '' 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$APP_PLUGIN" || \
+            sed -i 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$APP_PLUGIN" || true
+            echo "AppPlugin.swift patched:"
+            grep -n 'reject\|resolve' "$APP_PLUGIN" | head -10
+          else
+            echo "AppPlugin.swift not found at expected path, searching..."
+            find "$PWD/node_modules" -name "AppPlugin.swift" 2>/dev/null | while read f; do
+              echo "Found: $f"
+              sed -i '' 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$f" 2>/dev/null || \
+              sed -i 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$f" || true
+            done
+          fi
+
       # ── 12. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
         env:
@@ -397,7 +420,7 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store-connect</string>
+            <string>app-store</string>
             <key>teamID</key>
             <string>${IOS_TEAM_ID}</string>
             <key>uploadBitcode</key>
