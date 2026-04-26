@@ -144,8 +144,25 @@ jobs:
       # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
       - name: Patch Capacitor Swift compatibility
         run: |
-          # The issue: CAPPluginCall.reject() and CAPPluginCall.unimplemented() are
-          # declared in @objc public extension but without 'public' modifier on the
+          # PATCH 1: Pin capacitor-swift-pm to exact version 8.1.0 in all Package.swift files.
+          # Without pinning, SPM resolves "from: 8.0.0" to the latest (currently 8.3.1),
+          # which has breaking API changes incompatible with push-notifications@8.0.3:
+          #   - PluginConfig.getArray signature changed
+          #   - JSTypes.coerceDictionaryToJSObject removed
+          #   - call.getArray overload changed
+          echo "=== Pinning capacitor-swift-pm to exact version 8.1.0 in all Package.swift files ==="
+          find "$PWD/node_modules" -name "Package.swift" 2>/dev/null | while read f; do
+            if grep -q 'capacitor-swift-pm' "$f" 2>/dev/null; then
+              echo "Pinning: $f"
+              # Replace 'from: "8.0.0"' with '.exact("8.1.0")' for capacitor-swift-pm
+              perl -i -pe 's|(\.package\(url: "https://github\.com/ionic-team/capacitor-swift-pm\.git",)\s*from: "[^"]+"|$1 exact: "8.1.0"|g' "$f" 2>/dev/null || true
+              grep 'capacitor-swift-pm' "$f"
+            fi
+          done
+          echo "=== Package.swift pinning complete ==="
+
+          # PATCH 2: Fix CAPPluginCall.reject() and CAPPluginCall.unimplemented() visibility.
+          # These are declared in @objc public extension but without 'public' modifier on the
           # func itself. This causes Swift compiler errors when compiling plugin
           # packages via SPM (Swift Package Manager).
           #
