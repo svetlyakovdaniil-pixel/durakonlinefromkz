@@ -70,10 +70,9 @@ jobs:
           fi
           
           echo "Using Xcode at: $XCODE_PATH"
-          sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-          echo "=== Xcode developer dir ==="
+          echo "=== Current Xcode developer dir ==="
           xcode-select -p
-          echo "=== Xcode setup complete (license already accepted manually) ==="
+          echo "=== Xcode setup complete (xcode-select and license already set manually) ==="
           echo "Xcode path: $XCODE_PATH"
 
       - name: Install Homebrew if needed
