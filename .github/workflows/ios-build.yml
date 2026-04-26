@@ -223,32 +223,7 @@ jobs:
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
 
-      # ── 14. Setup App Store Connect API Key ───────────────────────────────
-      - name: Setup App Store Connect API Key
-        env:
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: |
-          # xcodebuild -allowProvisioningUpdates looks for API keys in:
-          # ~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8
-          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
-          mkdir -p "$API_KEY_DIR"
-          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
-
-          # Try base64 decode first, fall back to raw content
-          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
-            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
-
-          echo "API key written to: $API_KEY_PATH"
-          echo "API key size: $(wc -c < "$API_KEY_PATH") bytes"
-
-          # Verify it looks like a PEM key
-          head -1 "$API_KEY_PATH"
-
-          echo "API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
-
-      # ── 15. Update Xcode project settings ─────────────────────────────────
+      # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -266,10 +241,12 @@ jobs:
           bundle_id = os.environ['IOS_BUNDLE_ID']
           team_id = os.environ['IOS_TEAM_ID']
           profile_uuid = os.environ.get('PROFILE_UUID', '')
+          profile_name = os.environ.get('PROFILE_NAME', '')
 
           print(f"Bundle ID: {bundle_id}")
           print(f"Team ID: {team_id}")
           print(f"Profile UUID: {profile_uuid}")
+          print(f"Profile Name: {profile_name}")
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
@@ -299,13 +276,11 @@ jobs:
           done
           echo "Pods xcconfig files patched"
 
-      # ── 16. Build & Archive ────────────────────────────────────────────────
+      # ── 15. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios/App
 
@@ -315,7 +290,6 @@ jobs:
           echo "Team ID: $IOS_TEAM_ID"
           echo "Bundle ID: $IOS_BUNDLE_ID"
           echo "Keychain: $KEYCHAIN_PATH"
-          echo "API Key ID: $APP_STORE_CONNECT_API_KEY_ID"
 
           # Verify profile is installed
           echo "=== Installed profiles ==="
@@ -328,8 +302,8 @@ jobs:
             XCPRETTY_CMD="cat"
           fi
 
-          # Build with -allowProvisioningUpdates so Xcode can download/register
-          # the provisioning profile from Apple using the API key
+          # Build with manual signing - pass profile UUID directly
+          # Do NOT use -allowProvisioningUpdates (requires API key)
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -339,10 +313,6 @@ jobs:
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
@@ -359,13 +329,11 @@ jobs:
           fi
           echo "Archive created successfully!"
 
-      # ── 17. Export IPA ─────────────────────────────────────────────────────
+      # ── 16. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
-          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
-          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -400,21 +368,18 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             2>&1 | tee /tmp/export.log
 
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 18. Upload to App Store Connect ────────────────────────────────────
+      # ── 17. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
-        if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
+        if: ${{ github.event.inputs.upload_to_appstore != 'false' && secrets.APP_STORE_CONNECT_API_KEY_ID != '' }}
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
           if [ -z "$IPA_PATH" ]; then
@@ -423,6 +388,13 @@ jobs:
             exit 1
           fi
           echo "Uploading: $IPA_PATH"
+
+          # Setup API key for upload
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$API_KEY_DIR"
+          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
           # Upload using xcrun altool with API key authentication
           xcrun altool --upload-app \
@@ -433,7 +405,10 @@ jobs:
             --verbose \
             2>&1
 
-      # ── 19. Upload IPA as artifact ─────────────────────────────────────────
+          # Cleanup API key
+          rm -f "$API_KEY_PATH" 2>/dev/null || true
+
+      # ── 18. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -442,10 +417,8 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 20. Cleanup ────────────────────────────────────────────────────────
+      # ── 19. Cleanup ────────────────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
           security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
-          # Cleanup API key
-          rm -f "$API_KEY_PATH" 2>/dev/null || true
