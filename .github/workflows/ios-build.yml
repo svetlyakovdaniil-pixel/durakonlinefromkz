@@ -535,16 +535,7 @@ jobs:
           echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
           echo "Keychain: $KEYCHAIN_PATH"
 
-          # Use xcpretty if available for cleaner output
-          if command -v xcpretty &>/dev/null; then
-            XCPRETTY_CMD="xcpretty --color"
-          else
-            XCPRETTY_CMD="cat"
-          fi
-
-          # Build with AUTOMATIC signing + API key
-          # -allowProvisioningUpdates tells Xcode to download/register profiles from Apple servers
-          # This completely bypasses the local profile database lookup issue
+          # Run xcodebuild WITHOUT xcpretty so all errors appear raw in the log
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -562,13 +553,17 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Automatic \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
+            2>&1 | tee /tmp/xcodebuild.log
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
-            echo "=== Archive FAILED! Actual Swift errors: ==="
-            grep -n 'error:' /tmp/xcodebuild.log | head -50 || true
-            echo "=== Last 100 lines of build log: ==="
-            tail -100 /tmp/xcodebuild.log
+            echo ""
+            echo "========================================"
+            echo "=== ARCHIVE FAILED — ALL SWIFT ERRORS ==="
+            echo "========================================"
+            grep ' error:' /tmp/xcodebuild.log || true
+            echo ""
+            echo "=== FAILED BUILD COMMANDS ==="
+            grep 'error\|failed\|FAILED' /tmp/xcodebuild.log | tail -30 || true
             exit 1
           fi
           echo "Archive created successfully!"
