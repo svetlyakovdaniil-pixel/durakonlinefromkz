@@ -291,110 +291,20 @@ jobs:
 
           # PATCH 4: Replace SplashScreenPlugin.swift entirely with a version compatible with
           # capacitor-swift-pm@8.3.x binary XCFramework API.
+          # Using base64-encoded content to avoid YAML parsing issues with @ symbols.
           # Changes from original:
           # - bridge?.viewController?.view -> self.webView?.superview
-          # - call.getInt("key") -> (call.options["key"] as? Int)
-          # - call.getBool("key") -> (call.options["key"] as? Bool)
+          # - call.getInt/getBool -> call.options[key] as? Int/Bool
           # - call.reject(...) -> call.resolve([:])
-          # - getConfig().getString("key") -> (getConfig().getConfigJSON()["key"] as? String)
-          # - UIColor.capacitor.color(fromHex: x) -> inline hex->UInt32 conversion
+          # - getConfig().getString(key) -> getConfig().getConfigJSON()[key] as? String
+          # - UIColor.capacitor.color(fromHex:) -> argb: with hex->UInt32 conversion
+          SPLASH_SWIFT_B64="aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKQG9iamMoU3BsYXNoU2NyZWVuUGx1Z2luKQpwdWJsaWMgY2xhc3MgU3BsYXNoU2NyZWVuUGx1Z2luOiBDQVBQbHVnaW4sIENBUEJyaWRnZWRQbHVnaW4gewogICAgcHVibGljIGxldCBpZGVudGlmaWVyID0gIlNwbGFzaFNjcmVlblBsdWdpbiIKICAgIHB1YmxpYyBsZXQganNOYW1lID0gIlNwbGFzaFNjcmVlbiIKICAgIHB1YmxpYyBsZXQgcGx1Z2luTWV0aG9kczogW0NBUFBsdWdpbk1ldGhvZF0gPSBbCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJzaG93IiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSksCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJoaWRlIiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSkKICAgIF0KICAgIHByaXZhdGUgdmFyIHNwbGFzaFNjcmVlbjogU3BsYXNoU2NyZWVuPwoKICAgIG92ZXJyaWRlIHB1YmxpYyBmdW5jIGxvYWQoKSB7CiAgICAgICAgaWYgbGV0IHZpZXcgPSBzZWxmLndlYlZpZXc/LnN1cGVydmlldyB7CiAgICAgICAgICAgIHNwbGFzaFNjcmVlbiA9IFNwbGFzaFNjcmVlbihwYXJlbnRWaWV3OiB2aWV3LCBjb25maWc6IHNwbGFzaFNjcmVlbkNvbmZpZygpKQogICAgICAgICAgICBzcGxhc2hTY3JlZW4/LnNob3dPbkxhdW5jaCgpCiAgICAgICAgfQogICAgfQoKICAgIC8vIFNob3cgdGhlIHNwbGFzaCBzY3JlZW4KICAgIEBvYmpjIHB1YmxpYyBmdW5jIHNob3coXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgaWYgbGV0IHNwbGFzaCA9IHNwbGFzaFNjcmVlbiB7CiAgICAgICAgICAgIGxldCBzZXR0aW5ncyA9IHNwbGFzaFNjcmVlblNldHRpbmdzKGZyb206IGNhbGwpCiAgICAgICAgICAgIHNwbGFzaC5zaG93KHNldHRpbmdzOiBzZXR0aW5ncywKICAgICAgICAgICAgICAgICAgICAgICAgY29tcGxldGlvbjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgICAgICAgICAgICAgICAgICAgICAgfSkKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBjYWxsLnJlc29sdmUoWzpdKQogICAgICAgIH0KCiAgICB9CgogICAgLy8gSGlkZSB0aGUgc3BsYXNoIHNjcmVlbgogICAgQG9iamMgcHVibGljIGZ1bmMgaGlkZShfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBpZiBsZXQgc3BsYXNoID0gc3BsYXNoU2NyZWVuIHsKICAgICAgICAgICAgbGV0IHNldHRpbmdzID0gc3BsYXNoU2NyZWVuU2V0dGluZ3MoZnJvbTogY2FsbCkKICAgICAgICAgICAgc3BsYXNoLmhpZGUoc2V0dGluZ3M6IHNldHRpbmdzKQogICAgICAgICAgICBjYWxsLnJlc29sdmUoKQogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIGNhbGwucmVzb2x2ZShbOl0pCiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzcGxhc2hTY3JlZW5TZXR0aW5ncyhmcm9tIGNhbGw6IENBUFBsdWdpbkNhbGwpIC0+IFNwbGFzaFNjcmVlblNldHRpbmdzIHsKICAgICAgICB2YXIgc2V0dGluZ3MgPSBTcGxhc2hTY3JlZW5TZXR0aW5ncygpCgogICAgICAgIGlmIGxldCBzaG93RHVyYXRpb24gPSBjYWxsLm9wdGlvbnNbInNob3dEdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5zaG93RHVyYXRpb24gPSBzaG93RHVyYXRpb24KICAgICAgICB9CiAgICAgICAgaWYgbGV0IGZhZGVJbkR1cmF0aW9uID0gY2FsbC5vcHRpb25zWyJmYWRlSW5EdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5mYWRlSW5EdXJhdGlvbiA9IGZhZGVJbkR1cmF0aW9uCiAgICAgICAgfQogICAgICAgIGlmIGxldCBmYWRlT3V0RHVyYXRpb24gPSBjYWxsLm9wdGlvbnNbImZhZGVPdXREdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5mYWRlT3V0RHVyYXRpb24gPSBmYWRlT3V0RHVyYXRpb24KICAgICAgICB9CiAgICAgICAgaWYgbGV0IGF1dG9IaWRlID0gY2FsbC5vcHRpb25zWyJhdXRvSGlkZSJdIGFzPyBCb29sIHsKICAgICAgICAgICAgc2V0dGluZ3MuYXV0b0hpZGUgPSBhdXRvSGlkZQogICAgICAgIH0KICAgICAgICByZXR1cm4gc2V0dGluZ3MKICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgc3BsYXNoU2NyZWVuQ29uZmlnKCkgLT4gU3BsYXNoU2NyZWVuQ29uZmlnIHsKICAgICAgICB2YXIgY29uZmlnID0gU3BsYXNoU2NyZWVuQ29uZmlnKCkKCiAgICAgICAgaWYgbGV0IGJhY2tncm91bmRDb2xvciA9IGdldENvbmZpZygpLmdldENvbmZpZ0pTT04oKVsiYmFja2dyb3VuZENvbG9yIl0gYXM/IFN0cmluZyB7CiAgICAgICAgICAgIGxldCBoZXggPSBiYWNrZ3JvdW5kQ29sb3IucmVwbGFjaW5nT2NjdXJyZW5jZXMob2Y6ICIjIiwgd2l0aDogIiIpCiAgICAgICAgICAgIGNvbmZpZy5iYWNrZ3JvdW5kQ29sb3IgPSBVSUNvbG9yLmNhcGFjaXRvci5jb2xvcihhcmdiOiBVSW50MzIoaGV4LCByYWRpeDogMTYpID8/IDApCiAgICAgICAgfQogICAgICAgIGlmIGxldCBzcGlubmVyU3R5bGUgPSBnZXRDb25maWcoKS5nZXRDb25maWdKU09OKClbImlvc1NwaW5uZXJTdHlsZSJdIGFzPyBTdHJpbmcgewogICAgICAgICAgICBzd2l0Y2ggc3Bpbm5lclN0eWxlLmxvd2VyY2FzZWQoKSB7CiAgICAgICAgICAgIGNhc2UgInNtYWxsIjoKICAgICAgICAgICAgICAgIGNvbmZpZy5zcGlubmVyU3R5bGUgPSAubWVkaXVtCiAgICAgICAgICAgIGRlZmF1bHQ6CiAgICAgICAgICAgICAgICBjb25maWcuc3Bpbm5lclN0eWxlID0gLmxhcmdlCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgbGV0IHNwaW5uZXJDb2xvciA9IGdldENvbmZpZygpLmdldENvbmZpZ0pTT04oKVsic3Bpbm5lckNvbG9yIl0gYXM/IFN0cmluZyB7CiAgICAgICAgICAgIGxldCBoZXggPSBzcGlubmVyQ29sb3IucmVwbGFjaW5nT2NjdXJyZW5jZXMob2Y6ICIjIiwgd2l0aDogIiIpCiAgICAgICAgICAgIGNvbmZpZy5zcGlubmVyQ29sb3IgPSBVSUNvbG9yLmNhcGFjaXRvci5jb2xvcihhcmdiOiBVSW50MzIoaGV4LCByYWRpeDogMTYpID8/IDApCiAgICAgICAgfQogICAgICAgIGNvbmZpZy5zaG93U3Bpbm5lciA9IGdldENvbmZpZygpLmdldEJvb2xlYW4oInNob3dTcGlubmVyIiwgY29uZmlnLnNob3dTcGlubmVyKQoKICAgICAgICBjb25maWcubGF1bmNoU2hvd0R1cmF0aW9uID0gZ2V0Q29uZmlnKCkuZ2V0SW50KCJsYXVuY2hTaG93RHVyYXRpb24iLCBjb25maWcubGF1bmNoU2hvd0R1cmF0aW9uKQogICAgICAgIGNvbmZpZy5sYXVuY2hBdXRvSGlkZSA9IGdldENvbmZpZygpLmdldEJvb2xlYW4oImxhdW5jaEF1dG9IaWRlIiwgY29uZmlnLmxhdW5jaEF1dG9IaWRlKQogICAgICAgIHJldHVybiBjb25maWcKICAgIH0KCn0K"
           echo "=== Replacing SplashScreenPlugin.swift with capacitor-swift-pm@8.3.x compatible version ==="
           SPLASH_PLUGIN=$(find "$PWD/node_modules" -name "SplashScreenPlugin.swift" -path "*/splash-screen/*" 2>/dev/null | head -1)
           echo "Found SplashScreenPlugin: $SPLASH_PLUGIN"
           if [ -n "$SPLASH_PLUGIN" ] && [ -f "$SPLASH_PLUGIN" ]; then
             echo "Replacing: $SPLASH_PLUGIN"
-            cat > "$SPLASH_PLUGIN" << 'SWIFT_EOF'
-import Foundation
-import Capacitor
-
-@objc(SplashScreenPlugin)
-public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "SplashScreenPlugin"
-    public let jsName = "SplashScreen"
-    public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "show", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "hide", returnType: CAPPluginReturnPromise)
-    ]
-    private var splashScreen: SplashScreen?
-
-    override public func load() {
-        if let view = self.webView?.superview {
-            splashScreen = SplashScreen(parentView: view, config: splashScreenConfig())
-            splashScreen?.showOnLaunch()
-        }
-    }
-
-    // Show the splash screen
-    @objc public func show(_ call: CAPPluginCall) {
-        if let splash = splashScreen {
-            let settings = splashScreenSettings(from: call)
-            splash.show(settings: settings,
-                        completion: {
-                            call.resolve()
-                        })
-        } else {
-            call.resolve([:])
-        }
-
-    }
-
-    // Hide the splash screen
-    @objc public func hide(_ call: CAPPluginCall) {
-        if let splash = splashScreen {
-            let settings = splashScreenSettings(from: call)
-            splash.hide(settings: settings)
-            call.resolve()
-        } else {
-            call.resolve([:])
-        }
-    }
-
-    private func splashScreenSettings(from call: CAPPluginCall) -> SplashScreenSettings {
-        var settings = SplashScreenSettings()
-
-        if let showDuration = call.options["showDuration"] as? Int {
-            settings.showDuration = showDuration
-        }
-        if let fadeInDuration = call.options["fadeInDuration"] as? Int {
-            settings.fadeInDuration = fadeInDuration
-        }
-        if let fadeOutDuration = call.options["fadeOutDuration"] as? Int {
-            settings.fadeOutDuration = fadeOutDuration
-        }
-        if let autoHide = call.options["autoHide"] as? Bool {
-            settings.autoHide = autoHide
-        }
-        return settings
-    }
-
-    private func splashScreenConfig() -> SplashScreenConfig {
-        var config = SplashScreenConfig()
-
-        if let backgroundColor = getConfig().getConfigJSON()["backgroundColor"] as? String {
-            let hex = backgroundColor.replacingOccurrences(of: "#", with: "")
-            config.backgroundColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
-        }
-        if let spinnerStyle = getConfig().getConfigJSON()["iosSpinnerStyle"] as? String {
-            switch spinnerStyle.lowercased() {
-            case "small":
-                config.spinnerStyle = .medium
-            default:
-                config.spinnerStyle = .large
-            }
-        }
-        if let spinnerColor = getConfig().getConfigJSON()["spinnerColor"] as? String {
-            let hex = spinnerColor.replacingOccurrences(of: "#", with: "")
-            config.spinnerColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
-        }
-        config.showSpinner = getConfig().getBoolean("showSpinner", config.showSpinner)
-
-        config.launchShowDuration = getConfig().getInt("launchShowDuration", config.launchShowDuration)
-        config.launchAutoHide = getConfig().getBoolean("launchAutoHide", config.launchAutoHide)
-        return config
-    }
-
-}
-SWIFT_EOF
+            echo "$SPLASH_SWIFT_B64" | base64 --decode > "$SPLASH_PLUGIN"
             echo "Replacement complete. New file content:"
             cat -n "$SPLASH_PLUGIN"
           else
@@ -404,79 +314,7 @@ SWIFT_EOF
           # Also replace the Pods copy of SplashScreenPlugin.swift if it exists
           find "$PWD/ios/App/Pods" -name "SplashScreenPlugin.swift" 2>/dev/null | while read f; do
             echo "Replacing Pods copy: $f"
-            cat > "$f" << 'SWIFT_EOF'
-import Foundation
-import Capacitor
-
-@objc(SplashScreenPlugin)
-public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
-    public let identifier = "SplashScreenPlugin"
-    public let jsName = "SplashScreen"
-    public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "show", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "hide", returnType: CAPPluginReturnPromise)
-    ]
-    private var splashScreen: SplashScreen?
-
-    override public func load() {
-        if let view = self.webView?.superview {
-            splashScreen = SplashScreen(parentView: view, config: splashScreenConfig())
-            splashScreen?.showOnLaunch()
-        }
-    }
-
-    @objc public func show(_ call: CAPPluginCall) {
-        if let splash = splashScreen {
-            let settings = splashScreenSettings(from: call)
-            splash.show(settings: settings, completion: { call.resolve() })
-        } else {
-            call.resolve([:])
-        }
-    }
-
-    @objc public func hide(_ call: CAPPluginCall) {
-        if let splash = splashScreen {
-            let settings = splashScreenSettings(from: call)
-            splash.hide(settings: settings)
-            call.resolve()
-        } else {
-            call.resolve([:])
-        }
-    }
-
-    private func splashScreenSettings(from call: CAPPluginCall) -> SplashScreenSettings {
-        var settings = SplashScreenSettings()
-        if let showDuration = call.options["showDuration"] as? Int { settings.showDuration = showDuration }
-        if let fadeInDuration = call.options["fadeInDuration"] as? Int { settings.fadeInDuration = fadeInDuration }
-        if let fadeOutDuration = call.options["fadeOutDuration"] as? Int { settings.fadeOutDuration = fadeOutDuration }
-        if let autoHide = call.options["autoHide"] as? Bool { settings.autoHide = autoHide }
-        return settings
-    }
-
-    private func splashScreenConfig() -> SplashScreenConfig {
-        var config = SplashScreenConfig()
-        if let backgroundColor = getConfig().getConfigJSON()["backgroundColor"] as? String {
-            let hex = backgroundColor.replacingOccurrences(of: "#", with: "")
-            config.backgroundColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
-        }
-        if let spinnerStyle = getConfig().getConfigJSON()["iosSpinnerStyle"] as? String {
-            switch spinnerStyle.lowercased() {
-            case "small": config.spinnerStyle = .medium
-            default: config.spinnerStyle = .large
-            }
-        }
-        if let spinnerColor = getConfig().getConfigJSON()["spinnerColor"] as? String {
-            let hex = spinnerColor.replacingOccurrences(of: "#", with: "")
-            config.spinnerColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
-        }
-        config.showSpinner = getConfig().getBoolean("showSpinner", config.showSpinner)
-        config.launchShowDuration = getConfig().getInt("launchShowDuration", config.launchShowDuration)
-        config.launchAutoHide = getConfig().getBoolean("launchAutoHide", config.launchAutoHide)
-        return config
-    }
-
-}
-SWIFT_EOF
+            echo "$SPLASH_SWIFT_B64" | base64 --decode > "$f"
           done
           echo "=== SplashScreenPlugin replacement complete ==="
 
