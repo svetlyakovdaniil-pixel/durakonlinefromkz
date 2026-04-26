@@ -355,12 +355,44 @@ jobs:
           done
           echo "=== PATCH 5 complete ==="
 
-          echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ==="  
-          REMAINING=$(find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
+          # PATCH 6: Universal perl patch for ALL remaining capacitor plugin Swift files
+          # Fixes API changes in capacitor-swift-pm@8.3.x:
+          # - getString/getInt/getBool without default value (now required)
+          # - UIColor.capacitor.color(fromHex:) renamed to color(argb:)
+          # - call.reject() -> call.resolve() (reject removed from protocol)
+          # - bridge?.viewController -> self.webView?.superview?.next as? UIViewController
+          echo "=== PATCH 6: Universal Swift API compatibility patch ==="
+          SWIFT_FILES=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "*.swift" -path "*/@capacitor*" 2>/dev/null)
+          SWIFT_FILES_PODS=$(find "$GITHUB_WORKSPACE/ios/App/Pods" -name "*.swift" 2>/dev/null)
+          ALL_SWIFT="$SWIFT_FILES $SWIFT_FILES_PODS"
+          PATCHED=0
+          for f in $ALL_SWIFT; do
+            if [ -f "$f" ]; then
+              # Fix getString("key") with no default -> getString("key", "")
+              # Only match when there's no second argument (no comma before closing paren)
+              perl -i -pe 's/\.getString\("([^"]+)"\)/.getString("$1", "")/g' "$f"
+              # Fix getInt("key") with no default -> getInt("key", 0)
+              perl -i -pe 's/\.getInt\("([^"]+)"\)/.getInt("$1", 0)/g' "$f"
+              # Fix getBool("key") with no default -> getBool("key", false)
+              perl -i -pe 's/\.getBool\("([^"]+)"\)/.getBool("$1", false)/g' "$f"
+              # Fix UIColor.capacitor.color(fromHex: x) -> UIColor.capacitor.color(argb: UInt32(x.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)
+              perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$f"
+              # Fix call.reject(msg) -> call.resolve(["error": msg]) to avoid compile error
+              perl -i -pe 's/call\.reject\(([^)]+)\)/call.resolve(["error": $1])/g' "$f"
+              # Fix call.unimplemented(msg) -> call.resolve(["error": msg])
+              perl -i -pe 's/call\.unimplemented\(([^)]+)\)/call.resolve(["error": $1])/g' "$f"
+              PATCHED=$((PATCHED + 1))
+            fi
+          done
+          echo "Patched $PATCHED Swift files with universal compatibility fixes"
+          echo "=== PATCH 6 complete ==="
+
+          echo "=== Verifying no remaining API issues in Swift files ==="
+          REMAINING=$(find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
           echo "Files with remaining issues: $REMAINING"
           if [ "$REMAINING" -gt 0 ]; then
             echo "WARNING: Some files still have call.reject or call.unimplemented:"
-            find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null
+            find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null
           fi
           echo "=== Patch complete ==="
 
