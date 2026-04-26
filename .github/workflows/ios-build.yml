@@ -218,6 +218,8 @@ jobs:
 
           PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
           PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+          PROFILE_TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+          PROFILE_EXPIRY=$(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
 
           if [ -z "$PROFILE_UUID" ]; then
             PROFILE_UUID=$(grep -a 'UUID' "$RUNNER_TEMP/profile.mobileprovision" | \
@@ -226,13 +228,19 @@ jobs:
 
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
+          echo "Profile Team ID: $PROFILE_TEAM_ID"
+          echo "Profile Expiry: $PROFILE_EXPIRY"
 
           # Install profile using UUID as filename (required by Xcode)
           cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
           echo "Provisioning profile installed as ${PROFILE_UUID}.mobileprovision"
 
+          # Also install to system-wide location as fallback
+          sudo mkdir -p "/Library/MobileDevice/Provisioning Profiles" 2>/dev/null || true
+          sudo cp "$RUNNER_TEMP/profile.mobileprovision" "/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision" 2>/dev/null || true
+
           # List all installed profiles
-          echo "=== Installed profiles ==="
+          echo "=== Installed profiles in ~/Library ==="
           ls -la "$PROFILE_PATH/" | head -20
 
           printf 'PROFILE_UUID=%s\n' "$PROFILE_UUID" >> $GITHUB_ENV
@@ -258,14 +266,10 @@ jobs:
           profile_uuid = os.environ.get('PROFILE_UUID', '')
           profile_name = os.environ.get('PROFILE_NAME', '')
 
-          # Use UUID as specifier if available, otherwise fall back to name
-          profile_specifier = profile_uuid if profile_uuid else profile_name
-
           print(f"Bundle ID: {bundle_id}")
           print(f"Team ID: {team_id}")
           print(f"Profile UUID: {profile_uuid}")
           print(f"Profile Name: {profile_name}")
-          print(f"Profile Specifier (using): {profile_specifier}")
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
@@ -290,34 +294,23 @@ jobs:
               'CODE_SIGN_IDENTITY = "Apple Distribution";',
               content
           )
-          # Remove existing PROVISIONING_PROFILE_SPECIFIER entries
+          # Remove ALL existing PROVISIONING_PROFILE entries from pbxproj
+          # We will pass it directly via xcodebuild CLI instead
           content = re.sub(
               r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
               '',
               content
           )
-          # Remove existing PROVISIONING_PROFILE entries
           content = re.sub(
               r'\s*PROVISIONING_PROFILE = [^;]*;',
               '',
               content
           )
 
-          # Add PROVISIONING_PROFILE_SPECIFIER after each PRODUCT_BUNDLE_IDENTIFIER match
-          lines = content.split('\n')
-          result = []
-          for line in lines:
-              result.append(line)
-              if f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};' in line:
-                  result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_specifier}";')
-                  if profile_uuid:
-                      result.append(f'\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";')
-          content = '\n'.join(result)
-
           with open(pbxproj_path, "w") as f:
               f.write(content)
 
-          print("Xcode project updated successfully")
+          print("Xcode project updated successfully (no PROVISIONING_PROFILE_SPECIFIER in pbxproj)")
           PYEOF
 
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
@@ -356,7 +349,10 @@ jobs:
           fi
 
           echo "=== Using Profile UUID for signing: $PROFILE_UUID ==="
+          echo "=== Profile Name: $PROFILE_NAME ==="
 
+          # Pass PROVISIONING_PROFILE as UUID directly via CLI (not via pbxproj)
+          # This bypasses the "No profile matching name" error
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
