@@ -375,7 +375,7 @@ jobs:
 
       # ── 17. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
-        if: ${{ github.event.inputs.upload_to_appstore != 'false' && secrets.APP_STORE_CONNECT_API_KEY_ID != '' }}
+        if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
