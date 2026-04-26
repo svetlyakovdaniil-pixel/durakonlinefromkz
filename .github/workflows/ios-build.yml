@@ -199,6 +199,9 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
+          echo "=== Certificate imported. Identities in keychain: ==="
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
+
       # ── 13. Install Provisioning Profile ──────────────────────────────────
       - name: Install Provisioning Profile
         env:
@@ -206,17 +209,34 @@ jobs:
         run: |
           PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
           mkdir -p "$PROFILE_PATH"
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision"
-          echo "Provisioning profile installed"
 
-          PROFILE_UUID=$(security cms -D -i "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" -o /tmp/profile.plist 2>/dev/null && \
-            /usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+          # Decode the profile
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+
+          # Extract UUID and Name from the profile
+          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" -o /tmp/profile.plist 2>/dev/null || true
+
+          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
+
           if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID=$(grep -a 'UUID' "$PROFILE_PATH/DurakOnlineKZ_AppStore.mobileprovision" | \
+            PROFILE_UUID=$(grep -a 'UUID' "$RUNNER_TEMP/profile.mobileprovision" | \
               grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
           fi
+
           echo "Profile UUID: $PROFILE_UUID"
+          echo "Profile Name: $PROFILE_NAME"
+
+          # Install profile using UUID as filename (required by Xcode)
+          cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
+          echo "Provisioning profile installed as ${PROFILE_UUID}.mobileprovision"
+
+          # List all installed profiles
+          echo "=== Installed profiles ==="
+          ls -la "$PROFILE_PATH/" | head -20
+
           printf 'PROFILE_UUID=%s\n' "$PROFILE_UUID" >> $GITHUB_ENV
+          printf 'PROFILE_NAME=%s\n' "$PROFILE_NAME" >> $GITHUB_ENV
 
       # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
@@ -226,12 +246,26 @@ jobs:
         run: |
           cd ios/App
 
+          echo "=== Using Profile UUID: $PROFILE_UUID ==="
+          echo "=== Using Profile Name: $PROFILE_NAME ==="
+
           python3 << 'PYEOF'
           import re, os
 
           pbxproj_path = "App.xcodeproj/project.pbxproj"
           bundle_id = os.environ['IOS_BUNDLE_ID']
           team_id = os.environ['IOS_TEAM_ID']
+          profile_uuid = os.environ.get('PROFILE_UUID', '')
+          profile_name = os.environ.get('PROFILE_NAME', '')
+
+          # Use UUID as specifier if available, otherwise fall back to name
+          profile_specifier = profile_uuid if profile_uuid else profile_name
+
+          print(f"Bundle ID: {bundle_id}")
+          print(f"Team ID: {team_id}")
+          print(f"Profile UUID: {profile_uuid}")
+          print(f"Profile Name: {profile_name}")
+          print(f"Profile Specifier (using): {profile_specifier}")
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
@@ -256,19 +290,28 @@ jobs:
               'CODE_SIGN_IDENTITY = "Apple Distribution";',
               content
           )
+          # Remove existing PROVISIONING_PROFILE_SPECIFIER entries
           content = re.sub(
               r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
               '',
               content
           )
+          # Remove existing PROVISIONING_PROFILE entries
+          content = re.sub(
+              r'\s*PROVISIONING_PROFILE = [^;]*;',
+              '',
+              content
+          )
 
-          profile_name = "DurakOnlineKZ AppStore Distribution"
+          # Add PROVISIONING_PROFILE_SPECIFIER after each PRODUCT_BUNDLE_IDENTIFIER match
           lines = content.split('\n')
           result = []
           for line in lines:
               result.append(line)
               if f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};' in line:
-                  result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";')
+                  result.append(f'\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_specifier}";')
+                  if profile_uuid:
+                      result.append(f'\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";')
           content = '\n'.join(result)
 
           with open(pbxproj_path, "w") as f:
@@ -312,6 +355,8 @@ jobs:
             export PATH="$HOME/.rbenv/shims:$HOME/.gem/ruby/3.2.0/bin:$HOME/.gem/ruby/3.1.0/bin:$HOME/.gem/ruby/2.6.0/bin:$PATH"
           fi
 
+          echo "=== Using Profile UUID for signing: $PROFILE_UUID ==="
+
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -325,6 +370,8 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE="$PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | (xcpretty --color 2>/dev/null || cat)
 
@@ -346,6 +393,10 @@ jobs:
           team_id = os.environ['IOS_TEAM_ID']
           bundle_id = os.environ['IOS_BUNDLE_ID']
           runner_temp = os.environ['RUNNER_TEMP']
+          profile_uuid = os.environ.get('PROFILE_UUID', '')
+          profile_name = os.environ.get('PROFILE_NAME', '')
+          # Use UUID as specifier if available, otherwise fall back to name
+          profile_specifier = profile_uuid if profile_uuid else profile_name
           plist = (
               '<?xml version="1.0" encoding="UTF-8"?>\n'
               '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
@@ -364,14 +415,14 @@ jobs:
               '  <key>provisioningProfiles</key>\n'
               '  <dict>\n'
               '    <key>' + bundle_id + '</key>\n'
-              '    <string>DurakOnlineKZ AppStore Distribution</string>\n'
+              '    <string>' + profile_specifier + '</string>\n'
               '  </dict>\n'
               '</dict>\n'
               '</plist>\n'
           )
           with open(runner_temp + '/ExportOptions.plist', 'w') as f:
               f.write(plist)
-          print('ExportOptions.plist created')
+          print(f'ExportOptions.plist created with profile specifier: {profile_specifier}')
           PYEOF
 
           xcodebuild -exportArchive \
