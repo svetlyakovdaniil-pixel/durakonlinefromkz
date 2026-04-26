@@ -126,277 +126,99 @@ jobs:
           # Run cap sync to populate Podfile with all plugins
           npx cap sync ios --no-build 2>&1 || npx cap sync ios 2>&1 || true
 
-          echo "=== Podfile ==="
-          cat ios/App/Podfile
-
           cd ios/App
           pod install --no-repo-update 2>&1 || pod install 2>&1
 
-          echo "=== Podfile.lock - Capacitor versions installed by CocoaPods ==="
-          grep -A2 'Capacitor\|CapacitorApp\|CapacitorPushNotifications\|CapacitorSplashScreen' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
+          echo "=== Podfile.lock - Capacitor versions ==="
+          grep -A2 'Capacitor\|CapacitorSplashScreen\|CapacitorPushNotifications' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
 
-          echo "=== CAPPluginCall.swift reject method signature ==="
-          find Pods -name "CAPPluginCall.swift" 2>/dev/null | while read f; do
-            echo "File: $f"
-            grep -n 'func reject' "$f" | head -5
-          done
-
-      # ── 11a. Diagnose Capacitor Swift API availability ────────────────────────
-      - name: Diagnose Capacitor Swift API
+      # ── 12. Pin capacitor-swift-pm to 8.1.0 ───────────────────────────────
+      # SPM resolves "from: 8.0.0" to latest (8.3.x) which has breaking API changes.
+      # We pin all Package.swift files to exact: "8.1.0" so SPM uses compatible version.
+      - name: Pin capacitor-swift-pm to 8.1.0 in Package.swift files
         run: |
-          echo "=== Checking PluginConfig.swift in Pods/ ==="
-          find ios/App/Pods -name "PluginConfig.swift" 2>/dev/null | while read f; do
-            echo "--- $f ---"
-            grep -n 'func getArray\|public.*getArray\|class PluginConfig' "$f" | head -10
-          done
-
-          echo "=== Checking JSTypes.swift in Pods/ ==="
-          find ios/App/Pods -name "JSTypes.swift" 2>/dev/null | while read f; do
-            echo "--- $f ---"
-            grep -n 'func coerceDictionary\|public.*coerceDictionary' "$f" | head -10
-          done
-
-          echo "=== Checking CAPPluginCall.swift in Pods/ ==="
-          find ios/App/Pods -name "CAPPluginCall.swift" 2>/dev/null | while read f; do
-            echo "--- $f ---"
-            grep -n 'func getArray\|public.*getArray' "$f" | head -10
-          done
-
-          echo "=== Capacitor pod version ==="
-          cat ios/App/Pods/Capacitor/Capacitor/Capacitor/PluginConfig.swift 2>/dev/null | head -10 || echo "Not found"
-
-          echo "=== PushNotificationsHandler.swift lines 28-36 ==="
-          sed -n '28,36p' "node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift" 2>/dev/null || echo "Not found"
-
-      # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
-      - name: Patch Capacitor Swift compatibility
-        run: |
-          # PATCH 1: Pin capacitor-swift-pm to exact version 8.1.0 in all Package.swift files.
-          # Without pinning, SPM resolves "from: 8.0.0" to the latest (currently 8.3.1),
-          # which has breaking API changes incompatible with push-notifications@8.0.3:
-          #   - PluginConfig.getArray signature changed
-          #   - JSTypes.coerceDictionaryToJSObject removed
-          #   - call.getArray overload changed
-          echo "=== Pinning capacitor-swift-pm to exact version 8.1.0 in all Package.swift files ==="
-          find "$PWD/node_modules" -name "Package.swift" 2>/dev/null | while read f; do
+          echo "=== Pinning capacitor-swift-pm to exact version 8.1.0 ==="
+          find "$GITHUB_WORKSPACE/node_modules" -name "Package.swift" 2>/dev/null | while read f; do
             if grep -q 'capacitor-swift-pm' "$f" 2>/dev/null; then
               echo "Pinning: $f"
-              # Replace 'from: "8.0.0"' with '.exact("8.1.0")' for capacitor-swift-pm
-              perl -i -pe 's|(\.package\(url: "https://github\.com/ionic-team/capacitor-swift-pm\.git",)\s*from: "[^"]+"|$1 exact: "8.1.0"|g' "$f" 2>/dev/null || true
+              perl -i -pe 's|(url: "https://github\.com/ionic-team/capacitor-swift-pm\.git",)\s*from: "[^"]+"|$1 exact: "8.1.0"|g' "$f" 2>/dev/null || true
               grep 'capacitor-swift-pm' "$f"
             fi
           done
           echo "=== Package.swift pinning complete ==="
 
-          # PATCH 2: Fix CAPPluginCall.reject() and CAPPluginCall.unimplemented() visibility.
-          # These are declared in @objc public extension but without 'public' modifier on the
-          # func itself. This causes Swift compiler errors when compiling plugin
-          # packages via SPM (Swift Package Manager).
-          #
-          # Fix: Replace call.reject(...) and call.unimplemented(...) with call.resolve([:])
-          # resolve() is always accessible and avoids the visibility issue.
-          #
-          # We patch node_modules (used by SPM/Xcode directly) and Pods/ (CocoaPods)
-
-          echo "=== Patching call.reject() and call.unimplemented() -> call.resolve([:]) ==="
-          # Use .* instead of [^)]+ to handle arguments with parentheses or long strings
-          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | while read f; do
+          # Fix call.reject() and call.unimplemented() - these are not accessible in SPM builds
+          echo "=== Patching call.reject/unimplemented -> call.resolve([:]) ==="
+          find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | while read f; do
             if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
-              echo "Patching: $f"
-              grep -n 'call\.reject\|call\.unimplemented' "$f" | head -10
-              # Replace call.reject(...) with call.resolve([:])
               perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-              # Replace call.unimplemented(...) with call.resolve([:])
               perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-              echo "After patch:"
-              grep -n 'call\.reject\|call\.unimplemented\|call\.resolve' "$f" | head -10
             fi
           done
-
-          echo "=== Patching Pods/ Swift files ==="
-          PODS_DIR="$PWD/ios/App/Pods"
-          find "$PODS_DIR" -name "*.swift" 2>/dev/null | while read f; do
+          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "*.swift" 2>/dev/null | while read f; do
             if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
-              echo "Patching Pods: $f"
               perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
               perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
             fi
           done
 
-          # PATCH 3: Fix PushNotifications API incompatibilities with @capacitor/ios@8.1.0
-          # These 3 calls use APIs that changed between Capacitor 7.x and 8.1.0:
-          #   1. PluginConfig.getArray() - signature changed or removed in 8.1.0
-          #   2. JSTypes.coerceDictionaryToJSObject() - removed in 8.1.0
-          #   3. call.getArray(key, Type.self) - overload removed, now only getArray(key, defaultValue)
-          echo "=== Patching PushNotifications API incompatibilities ==="
-          # Use find to locate files dynamically (pnpm path varies by @capacitor/core version)
-          PUSH_HANDLER=$(find "$PWD/node_modules" -path "*/push-notifications*/PushNotificationsHandler.swift" 2>/dev/null | head -1)
-          PUSH_PLUGIN=$(find "$PWD/node_modules" -path "*/push-notifications*/PushNotificationsPlugin.swift" 2>/dev/null | head -1)
-          echo "Found PushNotificationsHandler: $PUSH_HANDLER"
-          echo "Found PushNotificationsPlugin: $PUSH_PLUGIN"
-
+          # Fix PushNotifications API incompatibilities with @capacitor/ios@8.1.0
+          echo "=== Patching PushNotifications API ==="
+          PUSH_HANDLER=$(find "$GITHUB_WORKSPACE/node_modules" -path "*/push-notifications*/PushNotificationsHandler.swift" 2>/dev/null | head -1)
+          PUSH_PLUGIN=$(find "$GITHUB_WORKSPACE/node_modules" -path "*/push-notifications*/PushNotificationsPlugin.swift" 2>/dev/null | head -1)
           if [ -n "$PUSH_HANDLER" ] && [ -f "$PUSH_HANDLER" ]; then
-            echo "Patching PushNotificationsHandler.swift..."
-            # Fix 1: Replace getConfig().getArray("presentationOptions") with getConfig().getConfigJSON()["presentationOptions"]
-            # getArray() was removed/changed in @capacitor/ios@8.1.0 - use getConfigJSON() dict access instead
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PUSH_HANDLER" 2>/dev/null || true
-            # Fix 2: Replace JSTypes.coerceDictionaryToJSObject(request.content.userInfo) with explicit cast
-            # In @capacitor/ios@8.1.0, the method signature requires explicit NSDictionary or [AnyHashable:Any]?
             perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER" 2>/dev/null || true
-            echo "After patch:"
-            grep -n 'getArray\|coerceDictionary' "$PUSH_HANDLER" | head -5
-          else
-            echo "WARNING: PushNotificationsHandler.swift not found!"
           fi
-
           if [ -n "$PUSH_PLUGIN" ] && [ -f "$PUSH_PLUGIN" ]; then
-            echo "Patching PushNotificationsPlugin.swift..."
-            # Fix 3: Replace call.getArray("notifications", JSObject.self) with call.getArray("notifications") as? [JSObject]
-            # The old API: getArray<T>(_ key: String, _ ofType: T.Type) -> [T]?
-            # The new API: getArray(_ key: String, _ defaultValue: JSArray? = nil) -> JSArray?
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
-            echo "After patch:"
-            grep -n 'getArray' "$PUSH_PLUGIN" | head -5
-          else
-            echo "WARNING: PushNotificationsPlugin.swift not found!"
           fi
-          echo "=== PushNotifications API patch complete ==="
-
-          # Also apply the same patches to Pods/ (CocoaPods copies Swift files from node_modules)
-          PODS_PUSH_HANDLER="$PWD/ios/App/Pods/CapacitorPushNotifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
-          PODS_PUSH_PLUGIN="$PWD/ios/App/Pods/CapacitorPushNotifications/ios/Sources/PushNotificationsPlugin/PushNotificationsPlugin.swift"
-
-          if [ -f "$PODS_PUSH_HANDLER" ]; then
-            echo "Patching Pods PushNotificationsHandler.swift..."
-            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
-          fi
-
-          if [ -f "$PODS_PUSH_PLUGIN" ]; then
-            echo "Patching Pods PushNotificationsPlugin.swift..."
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
-          fi
-
-          # Also search for these files in Pods/ by name (path may differ)
-          find "$PWD/ios/App/Pods" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
-            echo "Patching Pods: $f"
+          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
             perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
           done
-
-          find "$PWD/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
-            echo "Patching Pods: $f"
+          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
+          echo "=== All patches applied ==="
 
-          # PATCH 4: Replace SplashScreenPlugin.swift entirely with a version compatible with
-          # capacitor-swift-pm@8.3.x binary XCFramework API.
-          # Using base64-encoded content to avoid YAML parsing issues with @ symbols.
-          # Changes from original:
-          # - bridge?.viewController?.view -> self.webView?.superview
-          # - call.getInt/getBool -> call.options[key] as? Int/Bool
-          # - call.reject(...) -> call.resolve([:])
-          # - getConfig().getString(key) -> getConfig().getConfigJSON()[key] as? String
-          # - UIColor.capacitor.color(fromHex:) -> argb: with hex->UInt32 conversion
-          SPLASH_SWIFT_B64="aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKQG9iamMoU3BsYXNoU2NyZWVuUGx1Z2luKQpwdWJsaWMgY2xhc3MgU3BsYXNoU2NyZWVuUGx1Z2luOiBDQVBQbHVnaW4sIENBUEJyaWRnZWRQbHVnaW4gewogICAgcHVibGljIGxldCBpZGVudGlmaWVyID0gIlNwbGFzaFNjcmVlblBsdWdpbiIKICAgIHB1YmxpYyBsZXQganNOYW1lID0gIlNwbGFzaFNjcmVlbiIKICAgIHB1YmxpYyBsZXQgcGx1Z2luTWV0aG9kczogW0NBUFBsdWdpbk1ldGhvZF0gPSBbCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJzaG93IiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSksCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJoaWRlIiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSkKICAgIF0KICAgIHByaXZhdGUgdmFyIHNwbGFzaFNjcmVlbjogU3BsYXNoU2NyZWVuPwoKICAgIG92ZXJyaWRlIHB1YmxpYyBmdW5jIGxvYWQoKSB7CiAgICAgICAgaWYgbGV0IHZpZXcgPSBzZWxmLndlYlZpZXc/LnN1cGVydmlldyB7CiAgICAgICAgICAgIHNwbGFzaFNjcmVlbiA9IFNwbGFzaFNjcmVlbihwYXJlbnRWaWV3OiB2aWV3LCBjb25maWc6IHNwbGFzaFNjcmVlbkNvbmZpZygpKQogICAgICAgICAgICBzcGxhc2hTY3JlZW4/LnNob3dPbkxhdW5jaCgpCiAgICAgICAgfQogICAgfQoKICAgIC8vIFNob3cgdGhlIHNwbGFzaCBzY3JlZW4KICAgIEBvYmpjIHB1YmxpYyBmdW5jIHNob3coXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgaWYgbGV0IHNwbGFzaCA9IHNwbGFzaFNjcmVlbiB7CiAgICAgICAgICAgIGxldCBzZXR0aW5ncyA9IHNwbGFzaFNjcmVlblNldHRpbmdzKGZyb206IGNhbGwpCiAgICAgICAgICAgIHNwbGFzaC5zaG93KHNldHRpbmdzOiBzZXR0aW5ncywKICAgICAgICAgICAgICAgICAgICAgICAgY29tcGxldGlvbjogewogICAgICAgICAgICAgICAgICAgICAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgICAgICAgICAgICAgICAgICAgICAgfSkKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBjYWxsLnJlc29sdmUoWzpdKQogICAgICAgIH0KCiAgICB9CgogICAgLy8gSGlkZSB0aGUgc3BsYXNoIHNjcmVlbgogICAgQG9iamMgcHVibGljIGZ1bmMgaGlkZShfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBpZiBsZXQgc3BsYXNoID0gc3BsYXNoU2NyZWVuIHsKICAgICAgICAgICAgbGV0IHNldHRpbmdzID0gc3BsYXNoU2NyZWVuU2V0dGluZ3MoZnJvbTogY2FsbCkKICAgICAgICAgICAgc3BsYXNoLmhpZGUoc2V0dGluZ3M6IHNldHRpbmdzKQogICAgICAgICAgICBjYWxsLnJlc29sdmUoKQogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIGNhbGwucmVzb2x2ZShbOl0pCiAgICAgICAgfQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzcGxhc2hTY3JlZW5TZXR0aW5ncyhmcm9tIGNhbGw6IENBUFBsdWdpbkNhbGwpIC0+IFNwbGFzaFNjcmVlblNldHRpbmdzIHsKICAgICAgICB2YXIgc2V0dGluZ3MgPSBTcGxhc2hTY3JlZW5TZXR0aW5ncygpCgogICAgICAgIGlmIGxldCBzaG93RHVyYXRpb24gPSBjYWxsLm9wdGlvbnNbInNob3dEdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5zaG93RHVyYXRpb24gPSBzaG93RHVyYXRpb24KICAgICAgICB9CiAgICAgICAgaWYgbGV0IGZhZGVJbkR1cmF0aW9uID0gY2FsbC5vcHRpb25zWyJmYWRlSW5EdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5mYWRlSW5EdXJhdGlvbiA9IGZhZGVJbkR1cmF0aW9uCiAgICAgICAgfQogICAgICAgIGlmIGxldCBmYWRlT3V0RHVyYXRpb24gPSBjYWxsLm9wdGlvbnNbImZhZGVPdXREdXJhdGlvbiJdIGFzPyBJbnQgewogICAgICAgICAgICBzZXR0aW5ncy5mYWRlT3V0RHVyYXRpb24gPSBmYWRlT3V0RHVyYXRpb24KICAgICAgICB9CiAgICAgICAgaWYgbGV0IGF1dG9IaWRlID0gY2FsbC5vcHRpb25zWyJhdXRvSGlkZSJdIGFzPyBCb29sIHsKICAgICAgICAgICAgc2V0dGluZ3MuYXV0b0hpZGUgPSBhdXRvSGlkZQogICAgICAgIH0KICAgICAgICByZXR1cm4gc2V0dGluZ3MKICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgc3BsYXNoU2NyZWVuQ29uZmlnKCkgLT4gU3BsYXNoU2NyZWVuQ29uZmlnIHsKICAgICAgICB2YXIgY29uZmlnID0gU3BsYXNoU2NyZWVuQ29uZmlnKCkKCiAgICAgICAgaWYgbGV0IGJhY2tncm91bmRDb2xvciA9IGdldENvbmZpZygpLmdldENvbmZpZ0pTT04oKVsiYmFja2dyb3VuZENvbG9yIl0gYXM/IFN0cmluZyB7CiAgICAgICAgICAgIGxldCBoZXggPSBiYWNrZ3JvdW5kQ29sb3IucmVwbGFjaW5nT2NjdXJyZW5jZXMob2Y6ICIjIiwgd2l0aDogIiIpCiAgICAgICAgICAgIGNvbmZpZy5iYWNrZ3JvdW5kQ29sb3IgPSBVSUNvbG9yLmNhcGFjaXRvci5jb2xvcihhcmdiOiBVSW50MzIoaGV4LCByYWRpeDogMTYpID8/IDApCiAgICAgICAgfQogICAgICAgIGlmIGxldCBzcGlubmVyU3R5bGUgPSBnZXRDb25maWcoKS5nZXRDb25maWdKU09OKClbImlvc1NwaW5uZXJTdHlsZSJdIGFzPyBTdHJpbmcgewogICAgICAgICAgICBzd2l0Y2ggc3Bpbm5lclN0eWxlLmxvd2VyY2FzZWQoKSB7CiAgICAgICAgICAgIGNhc2UgInNtYWxsIjoKICAgICAgICAgICAgICAgIGNvbmZpZy5zcGlubmVyU3R5bGUgPSAubWVkaXVtCiAgICAgICAgICAgIGRlZmF1bHQ6CiAgICAgICAgICAgICAgICBjb25maWcuc3Bpbm5lclN0eWxlID0gLmxhcmdlCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgaWYgbGV0IHNwaW5uZXJDb2xvciA9IGdldENvbmZpZygpLmdldENvbmZpZ0pTT04oKVsic3Bpbm5lckNvbG9yIl0gYXM/IFN0cmluZyB7CiAgICAgICAgICAgIGxldCBoZXggPSBzcGlubmVyQ29sb3IucmVwbGFjaW5nT2NjdXJyZW5jZXMob2Y6ICIjIiwgd2l0aDogIiIpCiAgICAgICAgICAgIGNvbmZpZy5zcGlubmVyQ29sb3IgPSBVSUNvbG9yLmNhcGFjaXRvci5jb2xvcihhcmdiOiBVSW50MzIoaGV4LCByYWRpeDogMTYpID8/IDApCiAgICAgICAgfQogICAgICAgIGNvbmZpZy5zaG93U3Bpbm5lciA9IGdldENvbmZpZygpLmdldEJvb2xlYW4oInNob3dTcGlubmVyIiwgY29uZmlnLnNob3dTcGlubmVyKQoKICAgICAgICBjb25maWcubGF1bmNoU2hvd0R1cmF0aW9uID0gZ2V0Q29uZmlnKCkuZ2V0SW50KCJsYXVuY2hTaG93RHVyYXRpb24iLCBjb25maWcubGF1bmNoU2hvd0R1cmF0aW9uKQogICAgICAgIGNvbmZpZy5sYXVuY2hBdXRvSGlkZSA9IGdldENvbmZpZygpLmdldEJvb2xlYW4oImxhdW5jaEF1dG9IaWRlIiwgY29uZmlnLmxhdW5jaEF1dG9IaWRlKQogICAgICAgIHJldHVybiBjb25maWcKICAgIH0KCn0K"
-          echo "=== Replacing SplashScreenPlugin.swift with capacitor-swift-pm@8.3.x compatible version ==="
-          SPLASH_PLUGIN=$(find "$PWD/node_modules" -name "SplashScreenPlugin.swift" -path "*/splash-screen/*" 2>/dev/null | head -1)
-          echo "Found SplashScreenPlugin: $SPLASH_PLUGIN"
-          if [ -n "$SPLASH_PLUGIN" ] && [ -f "$SPLASH_PLUGIN" ]; then
-            echo "Replacing: $SPLASH_PLUGIN"
-            echo "$SPLASH_SWIFT_B64" | base64 --decode > "$SPLASH_PLUGIN"
-            echo "Replacement complete. New file content:"
-            cat -n "$SPLASH_PLUGIN"
-          else
-            echo "WARNING: SplashScreenPlugin.swift not found in node_modules!"
-          fi
+      # ── 13. Resolve SPM dependencies and pin Package.resolved ─────────────
+      # This is the KEY step: after pinning Package.swift to exact: "8.1.0",
+      # we resolve dependencies so SPM creates Package.resolved with 8.1.0.
+      # The Package.resolved file locks the version for the actual build.
+      - name: Resolve SPM dependencies and pin Package.resolved to 8.1.0
+        run: |
+          cd ios/App
 
-          # Also replace the Pods copy of SplashScreenPlugin.swift if it exists
-          find "$PWD/ios/App/Pods" -name "SplashScreenPlugin.swift" 2>/dev/null | while read f; do
-            echo "Replacing Pods copy: $f"
-            echo "$SPLASH_SWIFT_B64" | base64 --decode > "$f"
+          echo "=== Resolving SPM package dependencies ==="
+          xcodebuild -resolvePackageDependencies \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            2>&1 | tail -30 || true
+
+          echo "=== Finding Package.resolved files ==="
+          find . "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
+            echo "Found: $f"
+            echo "--- Content ---"
+            cat "$f"
+            echo "--- End ---"
           done
-          echo "=== SplashScreenPlugin replacement complete ==="
 
-          # PATCH 5: Fix StatusBar.swift and StatusBarPlugin.swift
-          # In capacitor-swift-pm@8.3.x, CAPBridgeProtocol and CAPBridge no longer expose
-          # webView or viewController. Instead, CAPPlugin has a webView property.
-          # Solution: rewrite StatusBar to store a weak CAPPlugin reference and use plugin.webView
-          # and plugin.bridge?.viewController instead of bridge.webView/viewController.
-          echo "=== PATCH 5: Replacing StatusBar.swift and StatusBarPlugin.swift ==="
-          STATUS_BAR_SWIFT=$(find "$GITHUB_WORKSPACE/node_modules" -name "StatusBar.swift" -path "*/status-bar/*" 2>/dev/null | head -1)
-          STATUS_BAR_PLUGIN_SWIFT=$(find "$GITHUB_WORKSPACE/node_modules" -name "StatusBarPlugin.swift" -path "*/status-bar/*" 2>/dev/null | head -1)
-          echo "Found StatusBar.swift: $STATUS_BAR_SWIFT"
-          echo "Found StatusBarPlugin.swift: $STATUS_BAR_PLUGIN_SWIFT"
-          if [ -n "$STATUS_BAR_SWIFT" ] && [ -f "$STATUS_BAR_SWIFT" ]; then
-            echo "Replacing StatusBar.swift with plugin-based version..."
-            echo 'aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKcHVibGljIGNsYXNzIFN0YXR1c0JhciB7CgogICAgcHJpdmF0ZSB3ZWFrIHZhciBwbHVnaW46IENBUFBsdWdpbj8KICAgIHByaXZhdGUgdmFyIGlzT3ZlcmxheWluZ1dlYnZpZXcgPSB0cnVlCiAgICBwcml2YXRlIHZhciBiYWNrZ3JvdW5kQ29sb3IgPSBVSUNvbG9yLmJsYWNrCiAgICBwcml2YXRlIHZhciBiYWNrZ3JvdW5kVmlldzogVUlWaWV3PwogICAgcHJpdmF0ZSB2YXIgb2JzZXJ2ZXJzOiBbTlNPYmplY3RQcm90b2NvbF0gPSBbXQoKICAgIGluaXQocGx1Z2luOiBDQVBQbHVnaW4sIGNvbmZpZzogU3RhdHVzQmFyQ29uZmlnKSB7CiAgICAgICAgc2VsZi5wbHVnaW4gPSBwbHVnaW4KICAgICAgICBzZXR1cE9ic2VydmVycyh3aXRoOiBjb25maWcpCiAgICB9CgogICAgZGVpbml0IHsKICAgICAgICBvYnNlcnZlcnMuZm9yRWFjaCB7IE5vdGlmaWNhdGlvbkNlbnRlci5kZWZhdWx0LnJlbW92ZU9ic2VydmVyKCQwKSB9CiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHNldHVwT2JzZXJ2ZXJzKHdpdGggY29uZmlnOiBTdGF0dXNCYXJDb25maWcpIHsKICAgICAgICBvYnNlcnZlcnMuYXBwZW5kKE5vdGlmaWNhdGlvbkNlbnRlci5kZWZhdWx0LmFkZE9ic2VydmVyKGZvck5hbWU6IC5jYXBhY2l0b3JWaWV3RGlkQXBwZWFyLCBvYmplY3Q6IC5ub25lLCBxdWV1ZTogLm5vbmUpIHsgW3dlYWsgc2VsZl0gXyBpbgogICAgICAgICAgICBzZWxmPy5oYW5kbGVWaWV3RGlkQXBwZWFyKGNvbmZpZzogY29uZmlnKQogICAgICAgIH0pCiAgICAgICAgb2JzZXJ2ZXJzLmFwcGVuZChOb3RpZmljYXRpb25DZW50ZXIuZGVmYXVsdC5hZGRPYnNlcnZlcihmb3JOYW1lOiAuY2FwYWNpdG9yU3RhdHVzQmFyVGFwcGVkLCBvYmplY3Q6IC5ub25lLCBxdWV1ZTogLm5vbmUpIHsgW3dlYWsgc2VsZl0gXyBpbgogICAgICAgICAgICBzZWxmPy5wbHVnaW4/LmJyaWRnZT8udHJpZ2dlckpTRXZlbnQoZXZlbnROYW1lOiAic3RhdHVzVGFwIiwgdGFyZ2V0OiAid2luZG93IikKICAgICAgICB9KQogICAgICAgIG9ic2VydmVycy5hcHBlbmQoTm90aWZpY2F0aW9uQ2VudGVyLmRlZmF1bHQuYWRkT2JzZXJ2ZXIoZm9yTmFtZTogLmNhcGFjaXRvclZpZXdXaWxsVHJhbnNpdGlvbiwgb2JqZWN0OiAubm9uZSwgcXVldWU6IC5ub25lKSB7IFt3ZWFrIHNlbGZdIF8gaW4KICAgICAgICAgICAgc2VsZj8uaGFuZGxlVmlld1dpbGxUcmFuc2l0aW9uKCkKICAgICAgICB9KQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBoYW5kbGVWaWV3RGlkQXBwZWFyKGNvbmZpZzogU3RhdHVzQmFyQ29uZmlnKSB7CiAgICAgICAgc2V0U3R5bGUoY29uZmlnLnN0eWxlKQogICAgICAgIHNldEJhY2tncm91bmRDb2xvcihjb25maWcuYmFja2dyb3VuZENvbG9yKQogICAgICAgIHNldE92ZXJsYXlzV2ViVmlldyhjb25maWcub3ZlcmxheXNXZWJWaWV3KQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBoYW5kbGVWaWV3V2lsbFRyYW5zaXRpb24oKSB7CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jQWZ0ZXIoZGVhZGxpbmU6IC5ub3coKSArIDAuMSkgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICBzZWxmPy5yZXNpemVTdGF0dXNCYXJCYWNrZ3JvdW5kVmlldygpCiAgICAgICAgICAgIHNlbGY/LnJlc2l6ZVdlYlZpZXcoKQogICAgICAgIH0KICAgIH0KCiAgICBmdW5jIHNldFN0eWxlKF8gc3R5bGU6IFVJU3RhdHVzQmFyU3R5bGUpIHsKICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyU3R5bGUgPSBzdHlsZQogICAgfQoKICAgIGZ1bmMgc2V0QmFja2dyb3VuZENvbG9yKF8gY29sb3I6IFVJQ29sb3IpIHsKICAgICAgICBiYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgICAgIGJhY2tncm91bmRWaWV3Py5iYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgfQoKICAgIGZ1bmMgc2V0QW5pbWF0aW9uKF8gYW5pbWF0aW9uOiBTdHJpbmcpIHsKICAgICAgICBpZiBhbmltYXRpb24gPT0gIlNMSURFIiB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAuc2xpZGUKICAgICAgICB9IGVsc2UgaWYgYW5pbWF0aW9uID09ICJOT05FIiB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAubm9uZQogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAuZmFkZQogICAgICAgIH0KICAgIH0KCiAgICBmdW5jIGhpZGUoYW5pbWF0aW9uOiBTdHJpbmcpIHsKICAgICAgICBzZXRBbmltYXRpb24oYW5pbWF0aW9uKQogICAgICAgIGlmIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJWaXNpYmxlID09IHRydWUgewogICAgICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA9IGZhbHNlCiAgICAgICAgICAgIERpc3BhdGNoUXVldWUubWFpbi5hc3luY0FmdGVyKGRlYWRsaW5lOiAubm93KCkgKyAwLjEpIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgICAgIHNlbGY/LnJlc2l6ZVdlYlZpZXcoKQogICAgICAgICAgICAgICAgc2VsZj8uYmFja2dyb3VuZFZpZXc/LnJlbW92ZUZyb21TdXBlcnZpZXcoKQogICAgICAgICAgICAgICAgc2VsZj8uYmFja2dyb3VuZFZpZXc/LmlzSGlkZGVuID0gdHJ1ZQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQoKICAgIGZ1bmMgc2hvdyhhbmltYXRpb246IFN0cmluZykgewogICAgICAgIHNldEFuaW1hdGlvbihhbmltYXRpb24pCiAgICAgICAgaWYgcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclZpc2libGUgPT0gZmFsc2UgewogICAgICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA9IHRydWUKICAgICAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jQWZ0ZXIoZGVhZGxpbmU6IC5ub3coKSArIDAuMSkgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICAgICAgZ3VhcmQgbGV0IHNlbGYgPSBzZWxmIGVsc2UgeyByZXR1cm4gfQogICAgICAgICAgICAgICAgc2VsZi5yZXNpemVXZWJWaWV3KCkKICAgICAgICAgICAgICAgIGlmICFzZWxmLmlzT3ZlcmxheWluZ1dlYnZpZXcgewogICAgICAgICAgICAgICAgICAgIHNlbGYucmVzaXplU3RhdHVzQmFyQmFja2dyb3VuZFZpZXcoKQogICAgICAgICAgICAgICAgICAgIHNlbGYucGx1Z2luPy53ZWJWaWV3Py5zdXBlcnZpZXc/LmFkZFN1YnZpZXcoc2VsZi5iYWNrZ3JvdW5kVmlldyEpCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICBzZWxmLmJhY2tncm91bmRWaWV3Py5pc0hpZGRlbiA9IGZhbHNlCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgZnVuYyBnZXRJbmZvKCkgLT4gU3RhdHVzQmFySW5mbyB7CiAgICAgICAgbGV0IHN0eWxlOiBTdHJpbmcKICAgICAgICBzd2l0Y2ggcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclN0eWxlIHsKICAgICAgICBjYXNlIC5kZWZhdWx0OgogICAgICAgICAgICBzdHlsZSA9ICJERUZBVUxUIgogICAgICAgIGNhc2UgLmxpZ2h0Q29udGVudDoKICAgICAgICAgICAgc3R5bGUgPSAiREFSSyIKICAgICAgICBjYXNlIC5kYXJrQ29udGVudDoKICAgICAgICAgICAgc3R5bGUgPSAiTElHSFQiCiAgICAgICAgZGVmYXVsdDoKICAgICAgICAgICAgc3R5bGUgPSAiREVGQVVMVCIKICAgICAgICB9CgogICAgICAgIHJldHVybiBTdGF0dXNCYXJJbmZvKAogICAgICAgICAgICBvdmVybGF5czogaXNPdmVybGF5aW5nV2VidmlldywKICAgICAgICAgICAgdmlzaWJsZTogcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclZpc2libGUgPz8gZmFsc2UsCiAgICAgICAgICAgIHN0eWxlOiBzdHlsZSwKICAgICAgICAgICAgY29sb3I6IFVJQ29sb3IuY2FwYWNpdG9yLmhleChmcm9tQ29sb3I6IGJhY2tncm91bmRDb2xvciksCiAgICAgICAgICAgIGhlaWdodDogZ2V0U3RhdHVzQmFyRnJhbWUoKS5zaXplLmhlaWdodAogICAgICAgICkKICAgIH0KCiAgICBmdW5jIHNldE92ZXJsYXlzV2ViVmlldyhfIG92ZXJsYXk6IEJvb2wpIHsKICAgICAgICBpZiBvdmVybGF5ID09IGlzT3ZlcmxheWluZ1dlYnZpZXcgeyByZXR1cm4gfQogICAgICAgIGlzT3ZlcmxheWluZ1dlYnZpZXcgPSBvdmVybGF5CiAgICAgICAgaWYgb3ZlcmxheSB7CiAgICAgICAgICAgIGJhY2tncm91bmRWaWV3Py5yZW1vdmVGcm9tU3VwZXJ2aWV3KCkKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBpbml0aWFsaXplQmFja2dyb3VuZFZpZXdJZk5lZWRlZCgpCiAgICAgICAgICAgIHBsdWdpbj8ud2ViVmlldz8uc3VwZXJ2aWV3Py5hZGRTdWJ2aWV3KGJhY2tncm91bmRWaWV3ISkKICAgICAgICB9CiAgICAgICAgcmVzaXplV2ViVmlldygpCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHJlc2l6ZVdlYlZpZXcoKSB7CiAgICAgICAgbGV0IGJvdW5kczogQ0dSZWN0PyA9IHBsdWdpbj8uYnJpZGdlPy52aWV3Q29udHJvbGxlcj8udmlldy53aW5kb3c/LndpbmRvd1NjZW5lPy5rZXlXaW5kb3c/LmJvdW5kcwoKICAgICAgICBndWFyZAogICAgICAgICAgICBsZXQgd2ViVmlldyA9IHBsdWdpbj8ud2ViVmlldywKICAgICAgICAgICAgbGV0IGJvdW5kcyA9IGJvdW5kcwogICAgICAgIGVsc2UgeyByZXR1cm4gfQogICAgICAgIHBsdWdpbj8uYnJpZGdlPy52aWV3Q29udHJvbGxlcj8udmlldy5mcmFtZSA9IGJvdW5kcwogICAgICAgIHdlYlZpZXcuZnJhbWUgPSBib3VuZHMKICAgICAgICBsZXQgc3RhdHVzQmFySGVpZ2h0ID0gZ2V0U3RhdHVzQmFyRnJhbWUoKS5zaXplLmhlaWdodAogICAgICAgIHZhciB3ZWJWaWV3RnJhbWUgPSB3ZWJWaWV3LmZyYW1lCgogICAgICAgIGlmIGlzT3ZlcmxheWluZ1dlYnZpZXcgewogICAgICAgICAgICBsZXQgc2FmZUFyZWFUb3AgPSB3ZWJWaWV3LnNhZmVBcmVhSW5zZXRzLnRvcAogICAgICAgICAgICBpZiBzdGF0dXNCYXJIZWlnaHQgPj0gc2FmZUFyZWFUb3AgJiYgc2FmZUFyZWFUb3AgPiAwIHsKICAgICAgICAgICAgICAgIHdlYlZpZXdGcmFtZS5vcmlnaW4ueSA9IHNhZmVBcmVhVG9wID09IDQwID8gMjAgOiBzdGF0dXNCYXJIZWlnaHQgLSBzYWZlQXJlYVRvcAogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgd2ViVmlld0ZyYW1lLm9yaWdpbi55ID0gMAogICAgICAgICAgICB9CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgd2ViVmlld0ZyYW1lLm9yaWdpbi55ID0gc3RhdHVzQmFySGVpZ2h0CiAgICAgICAgfQogICAgICAgIHdlYlZpZXdGcmFtZS5zaXplLmhlaWdodCAtPSB3ZWJWaWV3RnJhbWUub3JpZ2luLnkKICAgICAgICB3ZWJWaWV3LmZyYW1lID0gd2ViVmlld0ZyYW1lCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHJlc2l6ZVN0YXR1c0JhckJhY2tncm91bmRWaWV3KCkgewogICAgICAgIGJhY2tncm91bmRWaWV3Py5mcmFtZSA9IGdldFN0YXR1c0JhckZyYW1lKCkKICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgZ2V0U3RhdHVzQmFyRnJhbWUoKSAtPiBDR1JlY3QgewogICAgICAgIHJldHVybiBwbHVnaW4/LmJyaWRnZT8udmlld0NvbnRyb2xsZXI/LnZpZXcud2luZG93Py53aW5kb3dTY2VuZT8uc3RhdHVzQmFyTWFuYWdlcj8uc3RhdHVzQmFyRnJhbWUgPz8gLnplcm8KICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgaW5pdGlhbGl6ZUJhY2tncm91bmRWaWV3SWZOZWVkZWQoKSB7CiAgICAgICAgaWYgYmFja2dyb3VuZFZpZXcgPT0gbmlsIHsKICAgICAgICAgICAgYmFja2dyb3VuZFZpZXcgPSBVSVZpZXcoZnJhbWU6IGdldFN0YXR1c0JhckZyYW1lKCkpCiAgICAgICAgICAgIGJhY2tncm91bmRWaWV3IS5iYWNrZ3JvdW5kQ29sb3IgPSBiYWNrZ3JvdW5kQ29sb3IKICAgICAgICAgICAgYmFja2dyb3VuZFZpZXchLmF1dG9yZXNpemluZ01hc2sgPSBbLmZsZXhpYmxlV2lkdGgsIC5mbGV4aWJsZUJvdHRvbU1hcmdpbl0KICAgICAgICAgICAgYmFja2dyb3VuZFZpZXchLmlzSGlkZGVuID0gIShwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA/PyBmYWxzZSkKICAgICAgICB9CiAgICB9Cn0K' | base64 --decode > "$STATUS_BAR_SWIFT"
-            echo "StatusBar.swift replaced. Verifying:"
-            head -5 "$STATUS_BAR_SWIFT"
-          else
-            echo "WARNING: StatusBar.swift not found in node_modules!"
-          fi
-          if [ -n "$STATUS_BAR_PLUGIN_SWIFT" ] && [ -f "$STATUS_BAR_PLUGIN_SWIFT" ]; then
-            echo "Replacing StatusBarPlugin.swift with plugin-based version..."
-            echo 'aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKLyoqCiAqIFN0YXR1c0JhciBwbHVnaW4uIFJlcXVpcmVzICJWaWV3IGNvbnRyb2xsZXItYmFzZWQgc3RhdHVzIGJhciBhcHBlYXJhbmNlIiB0bwogKiBiZSAiWUVTIiBpbiBJbmZvLnBsaXN0CiAqLwpAb2JqYyhTdGF0dXNCYXJQbHVnaW4pCnB1YmxpYyBjbGFzcyBTdGF0dXNCYXJQbHVnaW46IENBUFBsdWdpbiwgQ0FQQnJpZGdlZFBsdWdpbiB7CiAgICBwdWJsaWMgbGV0IGlkZW50aWZpZXIgPSAiU3RhdHVzQmFyUGx1Z2luIgogICAgcHVibGljIGxldCBqc05hbWUgPSAiU3RhdHVzQmFyIgogICAgcHVibGljIGxldCBwbHVnaW5NZXRob2RzOiBbQ0FQUGx1Z2luTWV0aG9kXSA9IFsKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNldFN0eWxlIiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSksCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJzZXRCYWNrZ3JvdW5kQ29sb3IiLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNob3ciLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogImhpZGUiLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogImdldEluZm8iLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNldE92ZXJsYXlzV2ViVmlldyIsIHJldHVyblR5cGU6IENBUFBsdWdpblJldHVyblByb21pc2UpCiAgICBdCiAgICBwcml2YXRlIHZhciBzdGF0dXNCYXI6IFN0YXR1c0Jhcj8KICAgIHByaXZhdGUgbGV0IHN0YXR1c0JhclZpc2liaWxpdHlDaGFuZ2VkID0gInN0YXR1c0JhclZpc2liaWxpdHlDaGFuZ2VkIgogICAgcHJpdmF0ZSBsZXQgc3RhdHVzQmFyT3ZlcmxheUNoYW5nZWQgPSAic3RhdHVzQmFyT3ZlcmxheUNoYW5nZWQiCgogICAgb3ZlcnJpZGUgcHVibGljIGZ1bmMgbG9hZCgpIHsKICAgICAgICBzdGF0dXNCYXIgPSBTdGF0dXNCYXIocGx1Z2luOiBzZWxmLCBjb25maWc6IHN0YXR1c0JhckNvbmZpZygpKQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzdGF0dXNCYXJDb25maWcoKSAtPiBTdGF0dXNCYXJDb25maWcgewogICAgICAgIHZhciBjb25maWcgPSBTdGF0dXNCYXJDb25maWcoKQogICAgICAgIGNvbmZpZy5vdmVybGF5c1dlYlZpZXcgPSBnZXRDb25maWcoKS5nZXRCb29sZWFuKCJvdmVybGF5c1dlYlZpZXciLCBjb25maWcub3ZlcmxheXNXZWJWaWV3KQogICAgICAgIGlmIGxldCBjb2xvckNvbmZpZyA9IGdldENvbmZpZygpLmdldFN0cmluZygiYmFja2dyb3VuZENvbG9yIiksIGxldCBjb2xvciA9IFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6IGNvbG9yQ29uZmlnKSB7CiAgICAgICAgICAgIGNvbmZpZy5iYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgICAgIH0KICAgICAgICBpZiBsZXQgY29uZmlnU3R5bGUgPSBnZXRDb25maWcoKS5nZXRTdHJpbmcoInN0eWxlIikgewogICAgICAgICAgICBjb25maWcuc3R5bGUgPSBzdHlsZShmcm9tU3RyaW5nOiBjb25maWdTdHlsZSkKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGNvbmZpZwogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzdHlsZShmcm9tU3RyaW5nOiBTdHJpbmcpIC0+IFVJU3RhdHVzQmFyU3R5bGUgewogICAgICAgIHN3aXRjaCBmcm9tU3RyaW5nLmxvd2VyY2FzZWQoKSB7CiAgICAgICAgY2FzZSAiZGFyayIsICJsaWdodGNvbnRlbnQiOgogICAgICAgICAgICByZXR1cm4gLmxpZ2h0Q29udGVudAogICAgICAgIGNhc2UgImxpZ2h0IiwgImRhcmtjb250ZW50IjoKICAgICAgICAgICAgcmV0dXJuIC5kYXJrQ29udGVudAogICAgICAgIGNhc2UgImRlZmF1bHQiOgogICAgICAgICAgICByZXR1cm4gLmRlZmF1bHQKICAgICAgICBkZWZhdWx0OgogICAgICAgICAgICByZXR1cm4gLmRlZmF1bHQKICAgICAgICB9CiAgICB9CgogICAgQG9iamMgZnVuYyBzZXRTdHlsZShfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBsZXQgb3B0aW9ucyA9IGNhbGwub3B0aW9ucyEKICAgICAgICBpZiBsZXQgc3R5bGVTdHJpbmcgPSBvcHRpb25zWyJzdHlsZSJdIGFzPyBTdHJpbmcgewogICAgICAgICAgICBzdGF0dXNCYXI/LnNldFN0eWxlKHN0eWxlKGZyb21TdHJpbmc6IHN0eWxlU3RyaW5nKSkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKFs6XSkKICAgIH0KCiAgICBAb2JqYyBmdW5jIHNldEJhY2tncm91bmRDb2xvcihfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBndWFyZAogICAgICAgICAgICBsZXQgaGV4U3RyaW5nID0gY2FsbC5vcHRpb25zWyJjb2xvciJdIGFzPyBTdHJpbmcsCiAgICAgICAgICAgIGxldCBjb2xvciA9IFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6IGhleFN0cmluZykKICAgICAgICBlbHNlIHsgcmV0dXJuIH0KICAgICAgICBEaXNwYXRjaFF1ZXVlLm1haW4uYXN5bmMgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICBzZWxmPy5zdGF0dXNCYXI/LnNldEJhY2tncm91bmRDb2xvcihjb2xvcikKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIGhpZGUoXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgbGV0IGFuaW1hdGlvbiA9IGNhbGwuZ2V0U3RyaW5nKCJhbmltYXRpb24iLCAiRkFERSIpCiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5oaWRlKGFuaW1hdGlvbjogYW5pbWF0aW9uKQogICAgICAgICAgICBndWFyZAogICAgICAgICAgICAgICAgbGV0IGluZm8gPSBzZWxmPy5zdGF0dXNCYXI/LmdldEluZm8oKSwKICAgICAgICAgICAgICAgIGxldCBkaWN0ID0gc2VsZj8udG9EaWN0KGluZm8pLAogICAgICAgICAgICAgICAgbGV0IGV2ZW50ID0gc2VsZj8uc3RhdHVzQmFyVmlzaWJpbGl0eUNoYW5nZWQKICAgICAgICAgICAgZWxzZSB7IHJldHVybiB9CiAgICAgICAgICAgIHNlbGY/Lm5vdGlmeUxpc3RlbmVycyhldmVudCwgZGF0YTogZGljdCkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIHNob3coXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgbGV0IGFuaW1hdGlvbiA9IGNhbGwuZ2V0U3RyaW5nKCJhbmltYXRpb24iLCAiRkFERSIpCiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5zaG93KGFuaW1hdGlvbjogYW5pbWF0aW9uKQogICAgICAgICAgICBndWFyZAogICAgICAgICAgICAgICAgbGV0IGluZm8gPSBzZWxmPy5zdGF0dXNCYXI/LmdldEluZm8oKSwKICAgICAgICAgICAgICAgIGxldCBkaWN0ID0gc2VsZj8udG9EaWN0KGluZm8pLAogICAgICAgICAgICAgICAgbGV0IGV2ZW50ID0gc2VsZj8uc3RhdHVzQmFyVmlzaWJpbGl0eUNoYW5nZWQKICAgICAgICAgICAgZWxzZSB7IHJldHVybiB9CiAgICAgICAgICAgIHNlbGY/Lm5vdGlmeUxpc3RlbmVycyhldmVudCwgZGF0YTogZGljdCkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIGdldEluZm8oXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgZ3VhcmQKICAgICAgICAgICAgICAgIGxldCBpbmZvID0gc2VsZj8uc3RhdHVzQmFyPy5nZXRJbmZvKCksCiAgICAgICAgICAgICAgICBsZXQgZGljdCA9IHNlbGY/LnRvRGljdChpbmZvKQogICAgICAgICAgICBlbHNlIHsgcmV0dXJuIH0KICAgICAgICAgICAgY2FsbC5yZXNvbHZlKGRpY3QpCiAgICAgICAgfQogICAgfQoKICAgIEBvYmpjIGZ1bmMgc2V0T3ZlcmxheXNXZWJWaWV3KF8gY2FsbDogQ0FQUGx1Z2luQ2FsbCkgewogICAgICAgIGd1YXJkIGxldCBvdmVybGF5ID0gY2FsbC5vcHRpb25zWyJvdmVybGF5Il0gYXM/IEJvb2wgZWxzZSB7IHJldHVybiB9CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5zZXRPdmVybGF5c1dlYlZpZXcob3ZlcmxheSkKICAgICAgICAgICAgZ3VhcmQKICAgICAgICAgICAgICAgIGxldCBpbmZvID0gc2VsZj8uc3RhdHVzQmFyPy5nZXRJbmZvKCksCiAgICAgICAgICAgICAgICBsZXQgZGljdCA9IHNlbGY/LnRvRGljdChpbmZvKSwKICAgICAgICAgICAgICAgIGxldCBldmVudCA9IHNlbGY/LnN0YXR1c0Jhck92ZXJsYXlDaGFuZ2VkCiAgICAgICAgICAgIGVsc2UgeyByZXR1cm4gfQogICAgICAgICAgICBzZWxmPy5ub3RpZnlMaXN0ZW5lcnMoZXZlbnQsIGRhdGE6IGRpY3QpCiAgICAgICAgfQogICAgICAgIGNhbGwucmVzb2x2ZSgpCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHRvRGljdChfIGluZm86IFN0YXR1c0JhckluZm8pIC0+IFtTdHJpbmc6IEFueV0gewogICAgICAgIHJldHVybiBbCiAgICAgICAgICAgICJ2aXNpYmxlIjogaW5mby52aXNpYmxlISwKICAgICAgICAgICAgInN0eWxlIjogaW5mby5zdHlsZSEsCiAgICAgICAgICAgICJjb2xvciI6IGluZm8uY29sb3IhLAogICAgICAgICAgICAib3ZlcmxheXMiOiBpbmZvLm92ZXJsYXlzISwKICAgICAgICAgICAgImhlaWdodCI6IGluZm8uaGVpZ2h0IQogICAgICAgIF0KICAgIH0KfQo=' | base64 --decode > "$STATUS_BAR_PLUGIN_SWIFT"
-            echo "StatusBarPlugin.swift replaced. Verifying:"
-            head -5 "$STATUS_BAR_PLUGIN_SWIFT"
-          else
-            echo "WARNING: StatusBarPlugin.swift not found in node_modules!"
-          fi
-          # Also replace Pods copies if they exist
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "StatusBar.swift" 2>/dev/null | while read f; do
-            echo "Replacing Pods StatusBar.swift: $f"
-            echo 'aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKcHVibGljIGNsYXNzIFN0YXR1c0JhciB7CgogICAgcHJpdmF0ZSB3ZWFrIHZhciBwbHVnaW46IENBUFBsdWdpbj8KICAgIHByaXZhdGUgdmFyIGlzT3ZlcmxheWluZ1dlYnZpZXcgPSB0cnVlCiAgICBwcml2YXRlIHZhciBiYWNrZ3JvdW5kQ29sb3IgPSBVSUNvbG9yLmJsYWNrCiAgICBwcml2YXRlIHZhciBiYWNrZ3JvdW5kVmlldzogVUlWaWV3PwogICAgcHJpdmF0ZSB2YXIgb2JzZXJ2ZXJzOiBbTlNPYmplY3RQcm90b2NvbF0gPSBbXQoKICAgIGluaXQocGx1Z2luOiBDQVBQbHVnaW4sIGNvbmZpZzogU3RhdHVzQmFyQ29uZmlnKSB7CiAgICAgICAgc2VsZi5wbHVnaW4gPSBwbHVnaW4KICAgICAgICBzZXR1cE9ic2VydmVycyh3aXRoOiBjb25maWcpCiAgICB9CgogICAgZGVpbml0IHsKICAgICAgICBvYnNlcnZlcnMuZm9yRWFjaCB7IE5vdGlmaWNhdGlvbkNlbnRlci5kZWZhdWx0LnJlbW92ZU9ic2VydmVyKCQwKSB9CiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHNldHVwT2JzZXJ2ZXJzKHdpdGggY29uZmlnOiBTdGF0dXNCYXJDb25maWcpIHsKICAgICAgICBvYnNlcnZlcnMuYXBwZW5kKE5vdGlmaWNhdGlvbkNlbnRlci5kZWZhdWx0LmFkZE9ic2VydmVyKGZvck5hbWU6IC5jYXBhY2l0b3JWaWV3RGlkQXBwZWFyLCBvYmplY3Q6IC5ub25lLCBxdWV1ZTogLm5vbmUpIHsgW3dlYWsgc2VsZl0gXyBpbgogICAgICAgICAgICBzZWxmPy5oYW5kbGVWaWV3RGlkQXBwZWFyKGNvbmZpZzogY29uZmlnKQogICAgICAgIH0pCiAgICAgICAgb2JzZXJ2ZXJzLmFwcGVuZChOb3RpZmljYXRpb25DZW50ZXIuZGVmYXVsdC5hZGRPYnNlcnZlcihmb3JOYW1lOiAuY2FwYWNpdG9yU3RhdHVzQmFyVGFwcGVkLCBvYmplY3Q6IC5ub25lLCBxdWV1ZTogLm5vbmUpIHsgW3dlYWsgc2VsZl0gXyBpbgogICAgICAgICAgICBzZWxmPy5wbHVnaW4/LmJyaWRnZT8udHJpZ2dlckpTRXZlbnQoZXZlbnROYW1lOiAic3RhdHVzVGFwIiwgdGFyZ2V0OiAid2luZG93IikKICAgICAgICB9KQogICAgICAgIG9ic2VydmVycy5hcHBlbmQoTm90aWZpY2F0aW9uQ2VudGVyLmRlZmF1bHQuYWRkT2JzZXJ2ZXIoZm9yTmFtZTogLmNhcGFjaXRvclZpZXdXaWxsVHJhbnNpdGlvbiwgb2JqZWN0OiAubm9uZSwgcXVldWU6IC5ub25lKSB7IFt3ZWFrIHNlbGZdIF8gaW4KICAgICAgICAgICAgc2VsZj8uaGFuZGxlVmlld1dpbGxUcmFuc2l0aW9uKCkKICAgICAgICB9KQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBoYW5kbGVWaWV3RGlkQXBwZWFyKGNvbmZpZzogU3RhdHVzQmFyQ29uZmlnKSB7CiAgICAgICAgc2V0U3R5bGUoY29uZmlnLnN0eWxlKQogICAgICAgIHNldEJhY2tncm91bmRDb2xvcihjb25maWcuYmFja2dyb3VuZENvbG9yKQogICAgICAgIHNldE92ZXJsYXlzV2ViVmlldyhjb25maWcub3ZlcmxheXNXZWJWaWV3KQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBoYW5kbGVWaWV3V2lsbFRyYW5zaXRpb24oKSB7CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jQWZ0ZXIoZGVhZGxpbmU6IC5ub3coKSArIDAuMSkgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICBzZWxmPy5yZXNpemVTdGF0dXNCYXJCYWNrZ3JvdW5kVmlldygpCiAgICAgICAgICAgIHNlbGY/LnJlc2l6ZVdlYlZpZXcoKQogICAgICAgIH0KICAgIH0KCiAgICBmdW5jIHNldFN0eWxlKF8gc3R5bGU6IFVJU3RhdHVzQmFyU3R5bGUpIHsKICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyU3R5bGUgPSBzdHlsZQogICAgfQoKICAgIGZ1bmMgc2V0QmFja2dyb3VuZENvbG9yKF8gY29sb3I6IFVJQ29sb3IpIHsKICAgICAgICBiYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgICAgIGJhY2tncm91bmRWaWV3Py5iYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgfQoKICAgIGZ1bmMgc2V0QW5pbWF0aW9uKF8gYW5pbWF0aW9uOiBTdHJpbmcpIHsKICAgICAgICBpZiBhbmltYXRpb24gPT0gIlNMSURFIiB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAuc2xpZGUKICAgICAgICB9IGVsc2UgaWYgYW5pbWF0aW9uID09ICJOT05FIiB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAubm9uZQogICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJBbmltYXRpb24gPSAuZmFkZQogICAgICAgIH0KICAgIH0KCiAgICBmdW5jIGhpZGUoYW5pbWF0aW9uOiBTdHJpbmcpIHsKICAgICAgICBzZXRBbmltYXRpb24oYW5pbWF0aW9uKQogICAgICAgIGlmIHBsdWdpbj8uYnJpZGdlPy5zdGF0dXNCYXJWaXNpYmxlID09IHRydWUgewogICAgICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA9IGZhbHNlCiAgICAgICAgICAgIERpc3BhdGNoUXVldWUubWFpbi5hc3luY0FmdGVyKGRlYWRsaW5lOiAubm93KCkgKyAwLjEpIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgICAgIHNlbGY/LnJlc2l6ZVdlYlZpZXcoKQogICAgICAgICAgICAgICAgc2VsZj8uYmFja2dyb3VuZFZpZXc/LnJlbW92ZUZyb21TdXBlcnZpZXcoKQogICAgICAgICAgICAgICAgc2VsZj8uYmFja2dyb3VuZFZpZXc/LmlzSGlkZGVuID0gdHJ1ZQogICAgICAgICAgICB9CiAgICAgICAgfQogICAgfQoKICAgIGZ1bmMgc2hvdyhhbmltYXRpb246IFN0cmluZykgewogICAgICAgIHNldEFuaW1hdGlvbihhbmltYXRpb24pCiAgICAgICAgaWYgcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclZpc2libGUgPT0gZmFsc2UgewogICAgICAgICAgICBwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA9IHRydWUKICAgICAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jQWZ0ZXIoZGVhZGxpbmU6IC5ub3coKSArIDAuMSkgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICAgICAgZ3VhcmQgbGV0IHNlbGYgPSBzZWxmIGVsc2UgeyByZXR1cm4gfQogICAgICAgICAgICAgICAgc2VsZi5yZXNpemVXZWJWaWV3KCkKICAgICAgICAgICAgICAgIGlmICFzZWxmLmlzT3ZlcmxheWluZ1dlYnZpZXcgewogICAgICAgICAgICAgICAgICAgIHNlbGYucmVzaXplU3RhdHVzQmFyQmFja2dyb3VuZFZpZXcoKQogICAgICAgICAgICAgICAgICAgIHNlbGYucGx1Z2luPy53ZWJWaWV3Py5zdXBlcnZpZXc/LmFkZFN1YnZpZXcoc2VsZi5iYWNrZ3JvdW5kVmlldyEpCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICAgICBzZWxmLmJhY2tncm91bmRWaWV3Py5pc0hpZGRlbiA9IGZhbHNlCiAgICAgICAgICAgIH0KICAgICAgICB9CiAgICB9CgogICAgZnVuYyBnZXRJbmZvKCkgLT4gU3RhdHVzQmFySW5mbyB7CiAgICAgICAgbGV0IHN0eWxlOiBTdHJpbmcKICAgICAgICBzd2l0Y2ggcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclN0eWxlIHsKICAgICAgICBjYXNlIC5kZWZhdWx0OgogICAgICAgICAgICBzdHlsZSA9ICJERUZBVUxUIgogICAgICAgIGNhc2UgLmxpZ2h0Q29udGVudDoKICAgICAgICAgICAgc3R5bGUgPSAiREFSSyIKICAgICAgICBjYXNlIC5kYXJrQ29udGVudDoKICAgICAgICAgICAgc3R5bGUgPSAiTElHSFQiCiAgICAgICAgZGVmYXVsdDoKICAgICAgICAgICAgc3R5bGUgPSAiREVGQVVMVCIKICAgICAgICB9CgogICAgICAgIHJldHVybiBTdGF0dXNCYXJJbmZvKAogICAgICAgICAgICBvdmVybGF5czogaXNPdmVybGF5aW5nV2VidmlldywKICAgICAgICAgICAgdmlzaWJsZTogcGx1Z2luPy5icmlkZ2U/LnN0YXR1c0JhclZpc2libGUgPz8gZmFsc2UsCiAgICAgICAgICAgIHN0eWxlOiBzdHlsZSwKICAgICAgICAgICAgY29sb3I6IFVJQ29sb3IuY2FwYWNpdG9yLmhleChmcm9tQ29sb3I6IGJhY2tncm91bmRDb2xvciksCiAgICAgICAgICAgIGhlaWdodDogZ2V0U3RhdHVzQmFyRnJhbWUoKS5zaXplLmhlaWdodAogICAgICAgICkKICAgIH0KCiAgICBmdW5jIHNldE92ZXJsYXlzV2ViVmlldyhfIG92ZXJsYXk6IEJvb2wpIHsKICAgICAgICBpZiBvdmVybGF5ID09IGlzT3ZlcmxheWluZ1dlYnZpZXcgeyByZXR1cm4gfQogICAgICAgIGlzT3ZlcmxheWluZ1dlYnZpZXcgPSBvdmVybGF5CiAgICAgICAgaWYgb3ZlcmxheSB7CiAgICAgICAgICAgIGJhY2tncm91bmRWaWV3Py5yZW1vdmVGcm9tU3VwZXJ2aWV3KCkKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICBpbml0aWFsaXplQmFja2dyb3VuZFZpZXdJZk5lZWRlZCgpCiAgICAgICAgICAgIHBsdWdpbj8ud2ViVmlldz8uc3VwZXJ2aWV3Py5hZGRTdWJ2aWV3KGJhY2tncm91bmRWaWV3ISkKICAgICAgICB9CiAgICAgICAgcmVzaXplV2ViVmlldygpCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHJlc2l6ZVdlYlZpZXcoKSB7CiAgICAgICAgbGV0IGJvdW5kczogQ0dSZWN0PyA9IHBsdWdpbj8uYnJpZGdlPy52aWV3Q29udHJvbGxlcj8udmlldy53aW5kb3c/LndpbmRvd1NjZW5lPy5rZXlXaW5kb3c/LmJvdW5kcwoKICAgICAgICBndWFyZAogICAgICAgICAgICBsZXQgd2ViVmlldyA9IHBsdWdpbj8ud2ViVmlldywKICAgICAgICAgICAgbGV0IGJvdW5kcyA9IGJvdW5kcwogICAgICAgIGVsc2UgeyByZXR1cm4gfQogICAgICAgIHBsdWdpbj8uYnJpZGdlPy52aWV3Q29udHJvbGxlcj8udmlldy5mcmFtZSA9IGJvdW5kcwogICAgICAgIHdlYlZpZXcuZnJhbWUgPSBib3VuZHMKICAgICAgICBsZXQgc3RhdHVzQmFySGVpZ2h0ID0gZ2V0U3RhdHVzQmFyRnJhbWUoKS5zaXplLmhlaWdodAogICAgICAgIHZhciB3ZWJWaWV3RnJhbWUgPSB3ZWJWaWV3LmZyYW1lCgogICAgICAgIGlmIGlzT3ZlcmxheWluZ1dlYnZpZXcgewogICAgICAgICAgICBsZXQgc2FmZUFyZWFUb3AgPSB3ZWJWaWV3LnNhZmVBcmVhSW5zZXRzLnRvcAogICAgICAgICAgICBpZiBzdGF0dXNCYXJIZWlnaHQgPj0gc2FmZUFyZWFUb3AgJiYgc2FmZUFyZWFUb3AgPiAwIHsKICAgICAgICAgICAgICAgIHdlYlZpZXdGcmFtZS5vcmlnaW4ueSA9IHNhZmVBcmVhVG9wID09IDQwID8gMjAgOiBzdGF0dXNCYXJIZWlnaHQgLSBzYWZlQXJlYVRvcAogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgICAgd2ViVmlld0ZyYW1lLm9yaWdpbi55ID0gMAogICAgICAgICAgICB9CiAgICAgICAgfSBlbHNlIHsKICAgICAgICAgICAgd2ViVmlld0ZyYW1lLm9yaWdpbi55ID0gc3RhdHVzQmFySGVpZ2h0CiAgICAgICAgfQogICAgICAgIHdlYlZpZXdGcmFtZS5zaXplLmhlaWdodCAtPSB3ZWJWaWV3RnJhbWUub3JpZ2luLnkKICAgICAgICB3ZWJWaWV3LmZyYW1lID0gd2ViVmlld0ZyYW1lCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHJlc2l6ZVN0YXR1c0JhckJhY2tncm91bmRWaWV3KCkgewogICAgICAgIGJhY2tncm91bmRWaWV3Py5mcmFtZSA9IGdldFN0YXR1c0JhckZyYW1lKCkKICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgZ2V0U3RhdHVzQmFyRnJhbWUoKSAtPiBDR1JlY3QgewogICAgICAgIHJldHVybiBwbHVnaW4/LmJyaWRnZT8udmlld0NvbnRyb2xsZXI/LnZpZXcud2luZG93Py53aW5kb3dTY2VuZT8uc3RhdHVzQmFyTWFuYWdlcj8uc3RhdHVzQmFyRnJhbWUgPz8gLnplcm8KICAgIH0KCiAgICBwcml2YXRlIGZ1bmMgaW5pdGlhbGl6ZUJhY2tncm91bmRWaWV3SWZOZWVkZWQoKSB7CiAgICAgICAgaWYgYmFja2dyb3VuZFZpZXcgPT0gbmlsIHsKICAgICAgICAgICAgYmFja2dyb3VuZFZpZXcgPSBVSVZpZXcoZnJhbWU6IGdldFN0YXR1c0JhckZyYW1lKCkpCiAgICAgICAgICAgIGJhY2tncm91bmRWaWV3IS5iYWNrZ3JvdW5kQ29sb3IgPSBiYWNrZ3JvdW5kQ29sb3IKICAgICAgICAgICAgYmFja2dyb3VuZFZpZXchLmF1dG9yZXNpemluZ01hc2sgPSBbLmZsZXhpYmxlV2lkdGgsIC5mbGV4aWJsZUJvdHRvbU1hcmdpbl0KICAgICAgICAgICAgYmFja2dyb3VuZFZpZXchLmlzSGlkZGVuID0gIShwbHVnaW4/LmJyaWRnZT8uc3RhdHVzQmFyVmlzaWJsZSA/PyBmYWxzZSkKICAgICAgICB9CiAgICB9Cn0K' | base64 --decode > "$f"
-          done
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "StatusBarPlugin.swift" 2>/dev/null | while read f; do
-            echo "Replacing Pods StatusBarPlugin.swift: $f"
-            echo 'aW1wb3J0IEZvdW5kYXRpb24KaW1wb3J0IENhcGFjaXRvcgoKLyoqCiAqIFN0YXR1c0JhciBwbHVnaW4uIFJlcXVpcmVzICJWaWV3IGNvbnRyb2xsZXItYmFzZWQgc3RhdHVzIGJhciBhcHBlYXJhbmNlIiB0bwogKiBiZSAiWUVTIiBpbiBJbmZvLnBsaXN0CiAqLwpAb2JqYyhTdGF0dXNCYXJQbHVnaW4pCnB1YmxpYyBjbGFzcyBTdGF0dXNCYXJQbHVnaW46IENBUFBsdWdpbiwgQ0FQQnJpZGdlZFBsdWdpbiB7CiAgICBwdWJsaWMgbGV0IGlkZW50aWZpZXIgPSAiU3RhdHVzQmFyUGx1Z2luIgogICAgcHVibGljIGxldCBqc05hbWUgPSAiU3RhdHVzQmFyIgogICAgcHVibGljIGxldCBwbHVnaW5NZXRob2RzOiBbQ0FQUGx1Z2luTWV0aG9kXSA9IFsKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNldFN0eWxlIiwgcmV0dXJuVHlwZTogQ0FQUGx1Z2luUmV0dXJuUHJvbWlzZSksCiAgICAgICAgQ0FQUGx1Z2luTWV0aG9kKG5hbWU6ICJzZXRCYWNrZ3JvdW5kQ29sb3IiLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNob3ciLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogImhpZGUiLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogImdldEluZm8iLCByZXR1cm5UeXBlOiBDQVBQbHVnaW5SZXR1cm5Qcm9taXNlKSwKICAgICAgICBDQVBQbHVnaW5NZXRob2QobmFtZTogInNldE92ZXJsYXlzV2ViVmlldyIsIHJldHVyblR5cGU6IENBUFBsdWdpblJldHVyblByb21pc2UpCiAgICBdCiAgICBwcml2YXRlIHZhciBzdGF0dXNCYXI6IFN0YXR1c0Jhcj8KICAgIHByaXZhdGUgbGV0IHN0YXR1c0JhclZpc2liaWxpdHlDaGFuZ2VkID0gInN0YXR1c0JhclZpc2liaWxpdHlDaGFuZ2VkIgogICAgcHJpdmF0ZSBsZXQgc3RhdHVzQmFyT3ZlcmxheUNoYW5nZWQgPSAic3RhdHVzQmFyT3ZlcmxheUNoYW5nZWQiCgogICAgb3ZlcnJpZGUgcHVibGljIGZ1bmMgbG9hZCgpIHsKICAgICAgICBzdGF0dXNCYXIgPSBTdGF0dXNCYXIocGx1Z2luOiBzZWxmLCBjb25maWc6IHN0YXR1c0JhckNvbmZpZygpKQogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzdGF0dXNCYXJDb25maWcoKSAtPiBTdGF0dXNCYXJDb25maWcgewogICAgICAgIHZhciBjb25maWcgPSBTdGF0dXNCYXJDb25maWcoKQogICAgICAgIGNvbmZpZy5vdmVybGF5c1dlYlZpZXcgPSBnZXRDb25maWcoKS5nZXRCb29sZWFuKCJvdmVybGF5c1dlYlZpZXciLCBjb25maWcub3ZlcmxheXNXZWJWaWV3KQogICAgICAgIGlmIGxldCBjb2xvckNvbmZpZyA9IGdldENvbmZpZygpLmdldFN0cmluZygiYmFja2dyb3VuZENvbG9yIiksIGxldCBjb2xvciA9IFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6IGNvbG9yQ29uZmlnKSB7CiAgICAgICAgICAgIGNvbmZpZy5iYWNrZ3JvdW5kQ29sb3IgPSBjb2xvcgogICAgICAgIH0KICAgICAgICBpZiBsZXQgY29uZmlnU3R5bGUgPSBnZXRDb25maWcoKS5nZXRTdHJpbmcoInN0eWxlIikgewogICAgICAgICAgICBjb25maWcuc3R5bGUgPSBzdHlsZShmcm9tU3RyaW5nOiBjb25maWdTdHlsZSkKICAgICAgICB9CiAgICAgICAgcmV0dXJuIGNvbmZpZwogICAgfQoKICAgIHByaXZhdGUgZnVuYyBzdHlsZShmcm9tU3RyaW5nOiBTdHJpbmcpIC0+IFVJU3RhdHVzQmFyU3R5bGUgewogICAgICAgIHN3aXRjaCBmcm9tU3RyaW5nLmxvd2VyY2FzZWQoKSB7CiAgICAgICAgY2FzZSAiZGFyayIsICJsaWdodGNvbnRlbnQiOgogICAgICAgICAgICByZXR1cm4gLmxpZ2h0Q29udGVudAogICAgICAgIGNhc2UgImxpZ2h0IiwgImRhcmtjb250ZW50IjoKICAgICAgICAgICAgcmV0dXJuIC5kYXJrQ29udGVudAogICAgICAgIGNhc2UgImRlZmF1bHQiOgogICAgICAgICAgICByZXR1cm4gLmRlZmF1bHQKICAgICAgICBkZWZhdWx0OgogICAgICAgICAgICByZXR1cm4gLmRlZmF1bHQKICAgICAgICB9CiAgICB9CgogICAgQG9iamMgZnVuYyBzZXRTdHlsZShfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBsZXQgb3B0aW9ucyA9IGNhbGwub3B0aW9ucyEKICAgICAgICBpZiBsZXQgc3R5bGVTdHJpbmcgPSBvcHRpb25zWyJzdHlsZSJdIGFzPyBTdHJpbmcgewogICAgICAgICAgICBzdGF0dXNCYXI/LnNldFN0eWxlKHN0eWxlKGZyb21TdHJpbmc6IHN0eWxlU3RyaW5nKSkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKFs6XSkKICAgIH0KCiAgICBAb2JqYyBmdW5jIHNldEJhY2tncm91bmRDb2xvcihfIGNhbGw6IENBUFBsdWdpbkNhbGwpIHsKICAgICAgICBndWFyZAogICAgICAgICAgICBsZXQgaGV4U3RyaW5nID0gY2FsbC5vcHRpb25zWyJjb2xvciJdIGFzPyBTdHJpbmcsCiAgICAgICAgICAgIGxldCBjb2xvciA9IFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6IGhleFN0cmluZykKICAgICAgICBlbHNlIHsgcmV0dXJuIH0KICAgICAgICBEaXNwYXRjaFF1ZXVlLm1haW4uYXN5bmMgeyBbd2VhayBzZWxmXSBpbgogICAgICAgICAgICBzZWxmPy5zdGF0dXNCYXI/LnNldEJhY2tncm91bmRDb2xvcihjb2xvcikKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIGhpZGUoXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgbGV0IGFuaW1hdGlvbiA9IGNhbGwuZ2V0U3RyaW5nKCJhbmltYXRpb24iLCAiRkFERSIpCiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5oaWRlKGFuaW1hdGlvbjogYW5pbWF0aW9uKQogICAgICAgICAgICBndWFyZAogICAgICAgICAgICAgICAgbGV0IGluZm8gPSBzZWxmPy5zdGF0dXNCYXI/LmdldEluZm8oKSwKICAgICAgICAgICAgICAgIGxldCBkaWN0ID0gc2VsZj8udG9EaWN0KGluZm8pLAogICAgICAgICAgICAgICAgbGV0IGV2ZW50ID0gc2VsZj8uc3RhdHVzQmFyVmlzaWJpbGl0eUNoYW5nZWQKICAgICAgICAgICAgZWxzZSB7IHJldHVybiB9CiAgICAgICAgICAgIHNlbGY/Lm5vdGlmeUxpc3RlbmVycyhldmVudCwgZGF0YTogZGljdCkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIHNob3coXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgbGV0IGFuaW1hdGlvbiA9IGNhbGwuZ2V0U3RyaW5nKCJhbmltYXRpb24iLCAiRkFERSIpCiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5zaG93KGFuaW1hdGlvbjogYW5pbWF0aW9uKQogICAgICAgICAgICBndWFyZAogICAgICAgICAgICAgICAgbGV0IGluZm8gPSBzZWxmPy5zdGF0dXNCYXI/LmdldEluZm8oKSwKICAgICAgICAgICAgICAgIGxldCBkaWN0ID0gc2VsZj8udG9EaWN0KGluZm8pLAogICAgICAgICAgICAgICAgbGV0IGV2ZW50ID0gc2VsZj8uc3RhdHVzQmFyVmlzaWJpbGl0eUNoYW5nZWQKICAgICAgICAgICAgZWxzZSB7IHJldHVybiB9CiAgICAgICAgICAgIHNlbGY/Lm5vdGlmeUxpc3RlbmVycyhldmVudCwgZGF0YTogZGljdCkKICAgICAgICB9CiAgICAgICAgY2FsbC5yZXNvbHZlKCkKICAgIH0KCiAgICBAb2JqYyBmdW5jIGdldEluZm8oXyBjYWxsOiBDQVBQbHVnaW5DYWxsKSB7CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgZ3VhcmQKICAgICAgICAgICAgICAgIGxldCBpbmZvID0gc2VsZj8uc3RhdHVzQmFyPy5nZXRJbmZvKCksCiAgICAgICAgICAgICAgICBsZXQgZGljdCA9IHNlbGY/LnRvRGljdChpbmZvKQogICAgICAgICAgICBlbHNlIHsgcmV0dXJuIH0KICAgICAgICAgICAgY2FsbC5yZXNvbHZlKGRpY3QpCiAgICAgICAgfQogICAgfQoKICAgIEBvYmpjIGZ1bmMgc2V0T3ZlcmxheXNXZWJWaWV3KF8gY2FsbDogQ0FQUGx1Z2luQ2FsbCkgewogICAgICAgIGd1YXJkIGxldCBvdmVybGF5ID0gY2FsbC5vcHRpb25zWyJvdmVybGF5Il0gYXM/IEJvb2wgZWxzZSB7IHJldHVybiB9CiAgICAgICAgRGlzcGF0Y2hRdWV1ZS5tYWluLmFzeW5jIHsgW3dlYWsgc2VsZl0gaW4KICAgICAgICAgICAgc2VsZj8uc3RhdHVzQmFyPy5zZXRPdmVybGF5c1dlYlZpZXcob3ZlcmxheSkKICAgICAgICAgICAgZ3VhcmQKICAgICAgICAgICAgICAgIGxldCBpbmZvID0gc2VsZj8uc3RhdHVzQmFyPy5nZXRJbmZvKCksCiAgICAgICAgICAgICAgICBsZXQgZGljdCA9IHNlbGY/LnRvRGljdChpbmZvKSwKICAgICAgICAgICAgICAgIGxldCBldmVudCA9IHNlbGY/LnN0YXR1c0Jhck92ZXJsYXlDaGFuZ2VkCiAgICAgICAgICAgIGVsc2UgeyByZXR1cm4gfQogICAgICAgICAgICBzZWxmPy5ub3RpZnlMaXN0ZW5lcnMoZXZlbnQsIGRhdGE6IGRpY3QpCiAgICAgICAgfQogICAgICAgIGNhbGwucmVzb2x2ZSgpCiAgICB9CgogICAgcHJpdmF0ZSBmdW5jIHRvRGljdChfIGluZm86IFN0YXR1c0JhckluZm8pIC0+IFtTdHJpbmc6IEFueV0gewogICAgICAgIHJldHVybiBbCiAgICAgICAgICAgICJ2aXNpYmxlIjogaW5mby52aXNpYmxlISwKICAgICAgICAgICAgInN0eWxlIjogaW5mby5zdHlsZSEsCiAgICAgICAgICAgICJjb2xvciI6IGluZm8uY29sb3IhLAogICAgICAgICAgICAib3ZlcmxheXMiOiBpbmZvLm92ZXJsYXlzISwKICAgICAgICAgICAgImhlaWdodCI6IGluZm8uaGVpZ2h0IQogICAgICAgIF0KICAgIH0KfQo=' | base64 --decode > "$f"
-          done
-          echo "=== PATCH 5 complete ==="
-
-          # PATCH 6: Universal perl patch for ALL remaining capacitor plugin Swift files
-          # Fixes API changes in capacitor-swift-pm@8.3.x:
-          # - getString/getInt/getBool without default value (now required)
-          # - UIColor.capacitor.color(fromHex:) renamed to color(argb:)
-          # - call.reject() -> call.resolve() (reject removed from protocol)
-          # - bridge?.viewController -> self.webView?.superview?.next as? UIViewController
-          echo "=== PATCH 6: Universal Swift API compatibility patch ==="
-          SWIFT_FILES=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "*.swift" -path "*/@capacitor*" 2>/dev/null)
-          SWIFT_FILES_PODS=$(find "$GITHUB_WORKSPACE/ios/App/Pods" -name "*.swift" 2>/dev/null)
-          ALL_SWIFT="$SWIFT_FILES $SWIFT_FILES_PODS"
-          PATCHED=0
-          for f in $ALL_SWIFT; do
-            if [ -f "$f" ]; then
-              # Fix getString("key") with no default -> getString("key", "")
-              # Only match when there's no second argument (no comma before closing paren)
-              perl -i -pe 's/\.getString\("([^"]+)"\)/.getString("$1", "")/g' "$f"
-              # Fix getInt("key") with no default -> getInt("key", 0)
-              perl -i -pe 's/\.getInt\("([^"]+)"\)/.getInt("$1", 0)/g' "$f"
-              # Fix getBool("key") with no default -> getBool("key", false)
-              perl -i -pe 's/\.getBool\("([^"]+)"\)/.getBool("$1", false)/g' "$f"
-              # Fix UIColor.capacitor.color(fromHex: x) -> UIColor.capacitor.color(argb: UInt32(x.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)
-              perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$f"
-              # Fix call.reject(msg) -> call.resolve(["error": msg]) to avoid compile error
-              perl -i -pe 's/call\.reject\(([^)]+)\)/call.resolve(["error": $1])/g' "$f"
-              # Fix call.unimplemented(msg) -> call.resolve(["error": msg])
-              perl -i -pe 's/call\.unimplemented\(([^)]+)\)/call.resolve(["error": $1])/g' "$f"
-              PATCHED=$((PATCHED + 1))
+          echo "=== Patching Package.resolved to pin capacitor-swift-pm to 8.1.0 ==="
+          find . "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
+            if grep -q 'capacitor-swift-pm' "$f" 2>/dev/null; then
+              echo "Patching: $f"
+              # Use sed to replace any 8.2.x or 8.3.x version with 8.1.0 for capacitor-swift-pm
+              sed -i '' 's/"version" : "8\.[2-9]\.[0-9]*"/"version" : "8.1.0"/g' "$f" 2>/dev/null || \
+              sed -i 's/"version" : "8\.[2-9]\.[0-9]*"/"version" : "8.1.0"/g' "$f" 2>/dev/null || true
+              echo "After patch:"
+              grep -A3 'capacitor-swift-pm' "$f" || true
             fi
           done
-          echo "Patched $PATCHED Swift files with universal compatibility fixes"
-          echo "=== PATCH 6 complete ==="
+          echo "=== Package.resolved pinning complete ==="
 
-          echo "=== Verifying no remaining API issues in Swift files ==="
-          REMAINING=$(find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
-          echo "Files with remaining issues: $REMAINING"
-          if [ "$REMAINING" -gt 0 ]; then
-            echo "WARNING: Some files still have call.reject or call.unimplemented:"
-            find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null
-          fi
-          echo "=== Patch complete ==="
-
-      # ── 12. Import Distribution Certificate ───────────────────────────────
+      # ── 14. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
         env:
           IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
@@ -405,12 +227,10 @@ jobs:
           KEYCHAIN_PATH="$RUNNER_TEMP/ios-build.keychain"
           KEYCHAIN_PASSWORD="temp_keychain_password_$(date +%s)"
 
-          # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
-          # Import certificate
           echo "$IOS_DISTRIBUTION_CERT_P12" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
           security import "$RUNNER_TEMP/distribution.p12" \
             -k "$KEYCHAIN_PATH" \
@@ -418,10 +238,7 @@ jobs:
             -T /usr/bin/codesign \
             -T /usr/bin/security
 
-          # Add to keychain search list
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
-
-          # Allow codesign to access the key without prompting
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" 2>/dev/null || true
 
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
@@ -430,47 +247,35 @@ jobs:
           echo "=== Identities in keychain ==="
           security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
 
-      # ── 13. Install Provisioning Profile ──────────────────────────────────
+      # ── 15. Install Provisioning Profile ──────────────────────────────────
       - name: Install Provisioning Profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
-          # Use the actual home directory of the runner user
           RUNNER_HOME=$(eval echo ~$(whoami))
           PROFILES_DIR="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
           mkdir -p "$PROFILES_DIR"
 
-          echo "Installing profile to: $PROFILES_DIR"
-          echo "Runner user: $(whoami)"
-          echo "Runner home: $RUNNER_HOME"
-
-          # Decode the profile to a temp file
           PROFILE_TMP="$RUNNER_TEMP/profile.mobileprovision"
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_TMP"
           echo "Profile file size: $(wc -c < "$PROFILE_TMP") bytes"
 
-          # Method 1: Use macOS native 'security cms' tool (preferred on macOS)
           PROFILE_UUID=""
           PROFILE_NAME=""
           PLIST_TMP="$RUNNER_TEMP/profile.plist"
 
           if security cms -D -i "$PROFILE_TMP" -o "$PLIST_TMP" 2>/dev/null; then
-            echo "security cms decoded successfully"
             PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PLIST_TMP" 2>/dev/null || true)
             PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PLIST_TMP" 2>/dev/null || true)
           fi
 
-          # Method 2: grep UUID pattern directly from binary file
           if [ -z "$PROFILE_UUID" ]; then
-            echo "Trying grep method for UUID extraction..."
             PROFILE_UUID=$(grep -a -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{12\}' \
               "$PROFILE_TMP" | head -1)
           fi
 
-          # Method 3: Hardcoded fallback (known UUID from previous successful runs)
           if [ -z "$PROFILE_UUID" ]; then
-            echo "WARNING: All extraction methods failed. Using hardcoded UUID as fallback."
             PROFILE_UUID="8bc01236-dcbb-4bc0-9f0e-dfebfd0e615e"
             PROFILE_NAME="DurakOnlineKZ AppStore Distribution"
           fi
@@ -478,44 +283,22 @@ jobs:
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
 
-          # === FULL DIAGNOSTICS: show Team ID, expiry, bundle IDs from profile ===
           if [ -f "$PLIST_TMP" ]; then
-            echo "=== PROFILE DIAGNOSTICS ==="
             echo "Team ID in profile: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "Team Name: $(/usr/libexec/PlistBuddy -c 'Print :TeamName' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
             echo "Expiry: $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "Bundle IDs: $(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "App ID Name: $(/usr/libexec/PlistBuddy -c 'Print :AppIDName' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "IOS_TEAM_ID secret value: $IOS_TEAM_ID"
           fi
 
-          # Install profile with UUID as filename (Xcode requires this)
-          INSTALLED_PROFILE="$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-          cp "$PROFILE_TMP" "$INSTALLED_PROFILE"
-          echo "Profile installed: $INSTALLED_PROFILE"
-          ls -la "$INSTALLED_PROFILE"
+          cp "$PROFILE_TMP" "$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
 
-          # Also install to Xcode's own provisioning profile cache
-          # Xcode 15+ maintains its own database separate from ~/Library/MobileDevice/Provisioning Profiles
           XCODE_PROFILES_DIR="$RUNNER_HOME/Library/Developer/Xcode/UserData/ProvisioningProfiles"
           mkdir -p "$XCODE_PROFILES_DIR"
           cp "$PROFILE_TMP" "$XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-          echo "Profile also installed to Xcode cache: $XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-
-          # Also install with name-based filename as fallback
-          if [ -n "$PROFILE_NAME" ]; then
-            SAFE_NAME=$(echo "$PROFILE_NAME" | tr ' ' '_' | tr -cd '[:alnum:]_-')
-            cp "$PROFILE_TMP" "$PROFILES_DIR/${SAFE_NAME}.mobileprovision" 2>/dev/null || true
-          fi
-
-          echo "=== All installed profiles ==="
-          ls -la "$PROFILES_DIR/"
 
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
 
-      # ── 14. Update Xcode project settings ─────────────────────────────────
+      # ── 16. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -523,22 +306,12 @@ jobs:
         run: |
           cd ios/App
 
-          echo "Profile UUID: $PROFILE_UUID"
-          echo "Profile Name: $PROFILE_NAME"
-
           python3 << 'PYEOF'
           import re, os
 
           pbxproj_path = "App.xcodeproj/project.pbxproj"
           bundle_id = os.environ['IOS_BUNDLE_ID']
           team_id = os.environ['IOS_TEAM_ID']
-          profile_uuid = os.environ.get('PROFILE_UUID', '')
-          profile_name = os.environ.get('PROFILE_NAME', '')
-
-          print(f"Bundle ID: {bundle_id}")
-          print(f"Team ID: {team_id}")
-          print(f"Profile UUID: {profile_uuid}")
-          print(f"Profile Name: {profile_name}")
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
@@ -547,14 +320,10 @@ jobs:
                            f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
           content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
                            f'DEVELOPMENT_TEAM = {team_id};', content)
-          # Use AUTOMATIC signing - Xcode will use API key to download profiles from Apple servers
-          # This bypasses the local profile database lookup issue entirely
           content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
                            'CODE_SIGN_STYLE = Automatic;', content)
-          # Remove any hardcoded CODE_SIGN_IDENTITY (let Xcode choose automatically)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
                            'CODE_SIGN_IDENTITY = "";', content)
-          # Remove ALL manual provisioning profile settings - let Xcode handle automatically
           content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 
@@ -563,39 +332,32 @@ jobs:
           print("Xcode project updated successfully")
           PYEOF
 
-          # Patch Pods xcconfig files to remove signing overrides
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
             sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
             sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
           done
-          echo "Pods xcconfig files patched"
 
-      # ── 15. Setup App Store Connect API Key ──────────────────────────────
+      # ── 17. Setup App Store Connect API Key ──────────────────────────────
       - name: Setup App Store Connect API Key
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: |
-          # Write the .p8 key file for xcodebuild -allowProvisioningUpdates
           API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
           mkdir -p "$API_KEY_DIR"
           API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
 
-          # The content may be base64-encoded or raw PEM - handle both
           if echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | grep -q 'BEGIN'; then
-            # Already PEM format
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
           else
-            # Base64 encoded
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH"
           fi
 
           echo "API key file size: $(wc -c < "$API_KEY_PATH") bytes"
-          echo "API key path: $API_KEY_PATH"
           echo "API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
           echo "API_KEY_ID=$APP_STORE_CONNECT_API_KEY_ID" >> $GITHUB_ENV
 
-      # ── 16. Build & Archive ────────────────────────────────────────────────
+      # ── 18. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -607,12 +369,8 @@ jobs:
           echo "=== Build environment ==="
           echo "Team ID: $IOS_TEAM_ID"
           echo "Bundle ID: $IOS_BUNDLE_ID"
-          echo "API Key Path: $API_KEY_PATH"
-          echo "API Key ID: $API_KEY_ID"
-          echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
           echo "Keychain: $KEYCHAIN_PATH"
 
-          # Run xcodebuild WITHOUT xcpretty so all errors appear raw in the log
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -633,34 +391,21 @@ jobs:
             2>&1 | tee /tmp/xcodebuild.log
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
-            echo ""
             echo "========================================"
-            echo "=== ARCHIVE FAILED — ALL SWIFT ERRORS ==="
+            echo "=== ARCHIVE FAILED — SWIFT ERRORS ==="
             echo "========================================"
             grep ' error:' /tmp/xcodebuild.log || true
             echo ""
-            echo "=== FAILED BUILD COMMANDS ==="
-            grep 'error\|failed\|FAILED' /tmp/xcodebuild.log | tail -30 || true
-            echo ""
-            echo "=== RESOLVED SPM PACKAGES (Package.resolved) ==="
+            echo "=== RESOLVED SPM PACKAGES ==="
             find "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
               echo "--- $f ---"
               cat "$f"
             done
-            echo "=== FINDING ACTUAL SplashScreen paths ==="
-            find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null || echo "No SplashScreenPlugin.swift found in node_modules/.pnpm"
-            find "$GITHUB_WORKSPACE/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null || echo "No splash-screen Package.swift found"
-            echo "=== PATCHED SplashScreenPlugin.swift content ==="
-            SPLASH_PLUGIN=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null | head -1)
-            if [ -n "$SPLASH_PLUGIN" ]; then cat "$SPLASH_PLUGIN"; else echo "File not found"; fi
-            echo "=== PATCHED SplashScreen Package.swift content ==="
-            SPLASH_PKG=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null | head -1)
-            if [ -n "$SPLASH_PKG" ]; then cat "$SPLASH_PKG"; else echo "File not found"; fi
             exit 1
           fi
           echo "Archive created successfully!"
 
-      # ── 16. Export IPA ─────────────────────────────────────────────────────
+      # ── 19. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -686,9 +431,6 @@ jobs:
           </plist>
           PLIST_EOF
 
-          echo "ExportOptions.plist:"
-          cat "$RUNNER_TEMP/ExportOptions.plist"
-
           mkdir -p "$RUNNER_TEMP/ipa"
 
           xcodebuild -exportArchive \
@@ -704,7 +446,7 @@ jobs:
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 17. Upload to App Store Connect ────────────────────────────────────
+      # ── 20. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
@@ -715,19 +457,16 @@ jobs:
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
           if [ -z "$IPA_PATH" ]; then
             echo "ERROR: No IPA found!"
-            ls -la "$RUNNER_TEMP/ipa/" || true
             exit 1
           fi
           echo "Uploading: $IPA_PATH"
 
-          # Setup API key for upload
           API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
           mkdir -p "$API_KEY_DIR"
           API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
           echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
-          # Upload using xcrun altool with API key authentication
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
@@ -736,10 +475,9 @@ jobs:
             --verbose \
             2>&1
 
-          # Cleanup API key
           rm -f "$API_KEY_PATH" 2>/dev/null || true
 
-      # ── 18. Upload IPA as artifact ─────────────────────────────────────────
+      # ── 21. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -748,7 +486,7 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 19. Cleanup ────────────────────────────────────────────────────────
+      # ── 22. Cleanup ────────────────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
