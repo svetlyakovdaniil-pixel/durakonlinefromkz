@@ -141,6 +141,33 @@ jobs:
             grep -n 'func reject' "$f" | head -5
           done
 
+      # ── 11a. Diagnose Capacitor Swift API availability ────────────────────────
+      - name: Diagnose Capacitor Swift API
+        run: |
+          echo "=== Checking PluginConfig.swift in Pods/ ==="
+          find ios/App/Pods -name "PluginConfig.swift" 2>/dev/null | while read f; do
+            echo "--- $f ---"
+            grep -n 'func getArray\|public.*getArray\|class PluginConfig' "$f" | head -10
+          done
+
+          echo "=== Checking JSTypes.swift in Pods/ ==="
+          find ios/App/Pods -name "JSTypes.swift" 2>/dev/null | while read f; do
+            echo "--- $f ---"
+            grep -n 'func coerceDictionary\|public.*coerceDictionary' "$f" | head -10
+          done
+
+          echo "=== Checking CAPPluginCall.swift in Pods/ ==="
+          find ios/App/Pods -name "CAPPluginCall.swift" 2>/dev/null | while read f; do
+            echo "--- $f ---"
+            grep -n 'func getArray\|public.*getArray' "$f" | head -10
+          done
+
+          echo "=== Capacitor pod version ==="
+          cat ios/App/Pods/Capacitor/Capacitor/Capacitor/PluginConfig.swift 2>/dev/null | head -10 || echo "Not found"
+
+          echo "=== PushNotificationsHandler.swift lines 28-36 ==="
+          sed -n '28,36p' "node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift" 2>/dev/null || echo "Not found"
+
       # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
       - name: Patch Capacitor Swift compatibility
         run: |
@@ -196,7 +223,66 @@ jobs:
             fi
           done
 
-          echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ==="
+          # PATCH 3: Fix PushNotifications API incompatibilities with @capacitor/ios@8.1.0
+          # These 3 calls use APIs that changed between Capacitor 7.x and 8.1.0:
+          #   1. PluginConfig.getArray() - signature changed or removed in 8.1.0
+          #   2. JSTypes.coerceDictionaryToJSObject() - removed in 8.1.0
+          #   3. call.getArray(key, Type.self) - overload removed, now only getArray(key, defaultValue)
+          echo "=== Patching PushNotifications API incompatibilities ==="
+          PUSH_HANDLER="$PWD/node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
+          PUSH_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsPlugin.swift"
+
+          if [ -f "$PUSH_HANDLER" ]; then
+            echo "Patching PushNotificationsHandler.swift..."
+            # Fix 1: Replace getConfig().getArray("presentationOptions") with getConfig().getConfigJSON()["presentationOptions"]
+            # getArray() was removed/changed in @capacitor/ios@8.1.0 - use getConfigJSON() dict access instead
+            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PUSH_HANDLER" 2>/dev/null || true
+            # Fix 2: Replace JSTypes.coerceDictionaryToJSObject(request.content.userInfo) with explicit cast
+            # In @capacitor/ios@8.1.0, the method signature requires explicit NSDictionary or [AnyHashable:Any]?
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$PUSH_HANDLER" 2>/dev/null || true
+            echo "After patch:"
+            grep -n 'getArray\|coerceDictionary' "$PUSH_HANDLER" | head -5
+          fi
+
+          if [ -f "$PUSH_PLUGIN" ]; then
+            echo "Patching PushNotificationsPlugin.swift..."
+            # Fix 3: Replace call.getArray("notifications", JSObject.self) with call.getArray("notifications") as? [JSObject]
+            # The old API: getArray<T>(_ key: String, _ ofType: T.Type) -> [T]?
+            # The new API: getArray(_ key: String, _ defaultValue: JSArray? = nil) -> JSArray?
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
+            echo "After patch:"
+            grep -n 'getArray' "$PUSH_PLUGIN" | head -5
+          fi
+          echo "=== PushNotifications API patch complete ==="
+
+          # Also apply the same patches to Pods/ (CocoaPods copies Swift files from node_modules)
+          PODS_PUSH_HANDLER="$PWD/ios/App/Pods/CapacitorPushNotifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
+          PODS_PUSH_PLUGIN="$PWD/ios/App/Pods/CapacitorPushNotifications/ios/Sources/PushNotificationsPlugin/PushNotificationsPlugin.swift"
+
+          if [ -f "$PODS_PUSH_HANDLER" ]; then
+            echo "Patching Pods PushNotificationsHandler.swift..."
+            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
+          fi
+
+          if [ -f "$PODS_PUSH_PLUGIN" ]; then
+            echo "Patching Pods PushNotificationsPlugin.swift..."
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
+          fi
+
+          # Also search for these files in Pods/ by name (path may differ)
+          find "$PWD/ios/App/Pods" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
+            echo "Patching Pods: $f"
+            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$f" 2>/dev/null || true
+          done
+
+          find "$PWD/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
+            echo "Patching Pods: $f"
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$f" 2>/dev/null || true
+          done
+
+          echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ===" 
           REMAINING=$(find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
           echo "Files with remaining issues: $REMAINING"
           if [ "$REMAINING" -gt 0 ]; then
