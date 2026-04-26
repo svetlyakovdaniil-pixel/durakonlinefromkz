@@ -282,47 +282,42 @@ jobs:
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
 
-          # PATCH 4: Fix SplashScreenPlugin.swift for capacitor-swift-pm 8.3.x API changes.
-          # The binary XCFramework in capacitor-swift-pm@8.3.x has changed API:
-          # - CAPPluginCall no longer has getValue() or single-arg getInt()/getBool()
-          # - PluginConfig no longer has getString() - use getConfigJSON() instead
-          # - UIColor.capacitor.color(fromHex:) renamed to UIColor.capacitor.color(argb:)
-          # - bridge?.viewController is not accessible via 'any CAPBridgeProtocol' - use webView?.superview
-          echo "=== Patching SplashScreenPlugin.swift for capacitor-swift-pm 8.3.x API ==="
+          # PATCH 4: Fix SplashScreenPlugin.swift for capacitor-swift-pm 8.1.0 binary API.
+          # The binary XCFramework in capacitor-swift-pm@8.1.0 has these issues:
+          # - bridge?.viewController is not accessible via 'any CAPBridgeProtocol' existential
+          #   FIX: use self.webView?.superview (CAPPlugin has direct webView property)
+          # - call.getInt("key") single-arg form may not be accessible from binary
+          #   FIX: use (call.options["key"] as? Int)
+          # - call.getBool("key") single-arg form may not be accessible from binary
+          #   FIX: use (call.options["key"] as? Bool)
+          # NOTE: fromHex: and getString are available in 8.1.0 - do NOT change them
+          echo "=== Patching SplashScreenPlugin.swift for capacitor-swift-pm 8.1.0 binary API ==="
           SPLASH_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/ios/Sources/SplashScreenPlugin/SplashScreenPlugin.swift"
           if [ -f "$SPLASH_PLUGIN" ]; then
             echo "Patching: $SPLASH_PLUGIN"
             echo "Before patch:"
             cat -n "$SPLASH_PLUGIN"
 
-            # Fix 1: bridge?.viewController?.view -> bridge?.webView?.superview
-            # viewController is not accessible via 'any CAPBridgeProtocol' in 8.3.x
-            perl -i -pe 's/bridge\?\.viewController\?\.view/bridge?.webView?.superview/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+            # Fix 1: bridge?.viewController?.view -> self.webView?.superview
+            # viewController is not accessible via 'any CAPBridgeProtocol' existential in Swift 5.7+
+            # CAPPlugin has a direct 'webView' property (from CAPPlugin.h), use that instead
+            perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$SPLASH_PLUGIN" 2>/dev/null || true
 
             # Fix 2: call.getInt("key") -> (call.options["key"] as? Int)
-            # Single-arg getInt/getBool removed from CAPPluginCall in 8.3.x binary
+            # Single-arg getInt/getBool may not be accessible from binary framework
             perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
             perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
-
-            # Fix 3: getConfig().getString("key") -> (getConfig().getConfigJSON()["key"] as? String)
-            # PluginConfig.getString removed in 8.3.x binary
-            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/(getConfig().getConfigJSON()["$1"] as? String)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
-
-            # Fix 4: UIColor.capacitor.color(fromHex: x) -> UIColor.capacitor.color(argb: x)
-            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:/UIColor.capacitor.color(argb:/g' "$SPLASH_PLUGIN" 2>/dev/null || true
 
             echo "After patch:"
             cat -n "$SPLASH_PLUGIN"
           fi
 
-          # Also patch the Pods copy of SplashScreenPlugin.swift
+          # Also patch the Pods copy of SplashScreenPlugin.swift if it exists
           find "$PWD/ios/App/Pods" -name "SplashScreenPlugin.swift" 2>/dev/null | while read f; do
-            echo "Patching Pods: $f"
-            perl -i -pe 's/bridge\?\.viewController\?\.view/bridge?.webView?.superview/g' "$f" 2>/dev/null || true
+            echo "Patching Pods copy: $f"
+            perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$f" 2>/dev/null || true
             perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$f" 2>/dev/null || true
             perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/(getConfig().getConfigJSON()["$1"] as? String)/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:/UIColor.capacitor.color(argb:/g' "$f" 2>/dev/null || true
           done
           echo "=== SplashScreenPlugin patch complete ==="
 
