@@ -132,93 +132,51 @@ jobs:
           echo "=== Podfile.lock - Capacitor versions ==="
           grep -A2 'Capacitor\|CapacitorSplashScreen\|CapacitorPushNotifications' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
 
-      # ── 12. Pin capacitor-swift-pm to 8.1.0 ───────────────────────────────
-      # SPM resolves "from: 8.0.0" to latest (8.3.x) which has breaking API changes.
-      # We pin all Package.swift files to exact: "8.1.0" so SPM uses compatible version.
-      - name: Pin capacitor-swift-pm to 8.1.0 in Package.swift files
+      # ── 12. Patch capacitor plugins for capacitor-swift-pm 8.3.x ──────────
+      # capacitor-swift-pm 8.3.x removed optional overloads of getInt/getBool/getString,
+      # removed call.reject/unimplemented, renamed UIColor.capacitor.color(fromHex:).
+      # Strategy: inject CapacitorCompatibility.swift shim into every plugin Sources dir.
+      - name: Patch capacitor plugins for capacitor-swift-pm 8.3.x compatibility
         run: |
-          echo "=== Pinning capacitor-swift-pm to exact version 8.1.0 ==="
-          find "$GITHUB_WORKSPACE/node_modules" -name "Package.swift" 2>/dev/null | while read f; do
-            if grep -q 'capacitor-swift-pm' "$f" 2>/dev/null; then
-              echo "Pinning: $f"
-              perl -i -pe 's|(url: "https://github\.com/ionic-team/capacitor-swift-pm\.git",)\s*from: "[^"]+"|$1 exact: "8.1.0"|g' "$f" 2>/dev/null || true
-              grep 'capacitor-swift-pm' "$f"
-            fi
-          done
-          echo "=== Package.swift pinning complete ==="
+          echo "=== Injecting CapacitorCompatibility.swift shim ==="
+          echo "Ly8gQ2FwYWNpdG9yQ29tcGF0aWJpbGl0eS5zd2lmdAovLyBDb21wYXRpYmlsaXR5IHNoaW0gZm9yIGNhcGFjaXRvci1zd2lmdC1wbSA4LjMueAovLyBSZXN0b3JlcyBBUElzIHRoYXQgd2VyZSByZW1vdmVkIG9yIHJlbmFtZWQgaW4gOC4zLngKaW1wb3J0IENhcGFjaXRvcgppbXBvcnQgRm91bmRhdGlvbgppbXBvcnQgVUlLaXQKCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCBvcHRpb25hbCBvdmVybG9hZHMKLy8gSW4gOC4zLngsIGdldEludC9nZXRCb29sL2dldFN0cmluZyBvbmx5IGhhdmUgbm9uLW9wdGlvbmFsIHZlcnNpb25zIHdpdGggcmVxdWlyZWQgZGVmYXVsdC4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9ucyB1c2VkIGJ5IG9sZGVyIHBsdWdpbiBjb2RlLgpwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyBnZXRJbnQoXyBrZXk6IFN0cmluZykgLT4gSW50PyB7CiAgICAgICAgcmV0dXJuIG9wdGlvbnNba2V5XSBhcz8gSW50CiAgICB9CiAgICBmdW5jIGdldEJvb2woXyBrZXk6IFN0cmluZykgLT4gQm9vbD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEJvb2wKICAgIH0KICAgIGZ1bmMgZ2V0U3RyaW5nKF8ga2V5OiBTdHJpbmcpIC0+IFN0cmluZz8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IFN0cmluZwogICAgfQogICAgZnVuYyBnZXRGbG9hdChfIGtleTogU3RyaW5nKSAtPiBGbG9hdD8gewogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiB2IH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gSW50IHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldERvdWJsZShfIGtleTogU3RyaW5nKSAtPiBEb3VibGU/IHsKICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIHYgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiBEb3VibGUodikgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBJbnQgeyByZXR1cm4gRG91YmxlKHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldEFycmF5KF8ga2V5OiBTdHJpbmcpIC0+IEpTQXJyYXk/IHsKICAgICAgICByZXR1cm4gb3B0aW9uc1trZXldIGFzPyBKU0FycmF5CiAgICB9CiAgICBmdW5jIGdldE9iamVjdChfIGtleTogU3RyaW5nKSAtPiBKU09iamVjdD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEpTT2JqZWN0CiAgICB9Cn0KCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCByZWplY3QvdW5pbXBsZW1lbnRlZAovLyBUaGVzZSBtZXRob2RzIHdlcmUgcmVtb3ZlZCBpbiA4LjMueApwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyByZWplY3QoXyBtZXNzYWdlOiBTdHJpbmcsIF8gY29kZTogU3RyaW5nPyA9IG5pbCwgXyBlcnJvcjogRXJyb3I/ID0gbmlsLCBfIGRhdGE6IFBsdWdpbkNhbGxSZXN1bHREYXRhPyA9IG5pbCkgewogICAgICAgIHZhciByZXN1bHQ6IFBsdWdpbkNhbGxSZXN1bHREYXRhID0gZGF0YSA/PyBbOl0KICAgICAgICByZXN1bHRbIm1lc3NhZ2UiXSA9IG1lc3NhZ2UKICAgICAgICBpZiBsZXQgY29kZSA9IGNvZGUgeyByZXN1bHRbImNvZGUiXSA9IGNvZGUgfQogICAgICAgIGlmIGxldCBlcnJvciA9IGVycm9yIHsgcmVzdWx0WyJlcnJvciJdID0gZXJyb3IubG9jYWxpemVkRGVzY3JpcHRpb24gfQogICAgICAgIHNlbGYucmVzb2x2ZShyZXN1bHQpCiAgICB9CiAgICBmdW5jIHVuaW1wbGVtZW50ZWQoKSB7CiAgICAgICAgc2VsZi5yZXNvbHZlKFsibWVzc2FnZSI6ICJub3QgaW1wbGVtZW50ZWQiXSkKICAgIH0KICAgIGZ1bmMgdW5pbXBsZW1lbnRlZChfIG1lc3NhZ2U6IFN0cmluZykgewogICAgICAgIHNlbGYucmVzb2x2ZShbIm1lc3NhZ2UiOiBtZXNzYWdlXSkKICAgIH0KfQoKLy8gTUFSSzogLSBQbHVnaW5Db25maWcgb3B0aW9uYWwgZ2V0U3RyaW5nCi8vIEluIDguMy54LCBQbHVnaW5Db25maWcuZ2V0U3RyaW5nIHJlcXVpcmVzIGEgZGVmYXVsdCB2YWx1ZS4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9uLgpwdWJsaWMgZXh0ZW5zaW9uIFBsdWdpbkNvbmZpZyB7CiAgICBmdW5jIGdldFN0cmluZyhfIGtleTogU3RyaW5nKSAtPiBTdHJpbmc/IHsKICAgICAgICByZXR1cm4gZ2V0U3RyaW5nKGtleSwgbmlsKQogICAgfQp9CgovLyBNQVJLOiAtIFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6KQovLyBJbiA4LjMueCwgdGhpcyBtZXRob2Qgd2FzIHJlbmFtZWQgdG8gY29sb3IoYXJnYjopLgovLyBUaGlzIGV4dGVuc2lvbiBhZGRzIGJhY2sgdGhlIGZyb21IZXg6IHZlcnNpb24uCnB1YmxpYyBleHRlbnNpb24gQ2FwYWNpdG9yRXh0ZW5zaW9uIHdoZXJlIEV4dGVuZGVkVHlwZSA9PSBVSUNvbG9yIHsKICAgIHN0YXRpYyBmdW5jIGNvbG9yKGZyb21IZXg6IFN0cmluZykgLT4gVUlDb2xvcj8gewogICAgICAgIGxldCBoZXhTdHJpbmcgPSBmcm9tSGV4LnRyaW1taW5nQ2hhcmFjdGVycyhpbjogLndoaXRlc3BhY2VzQW5kTmV3bGluZXMpCiAgICAgICAgICAgIC5yZXBsYWNpbmdPY2N1cnJlbmNlcyhvZjogIiMiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMHgiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMFgiLCB3aXRoOiAiIikKICAgICAgICB2YXIgYXJnYjogVUludDY0ID0gMAogICAgICAgIGd1YXJkIFNjYW5uZXIoc3RyaW5nOiBoZXhTdHJpbmcpLnNjYW5IZXhJbnQ2NCgmYXJnYikgZWxzZSB7IHJldHVybiBuaWwgfQogICAgICAgIGxldCByZWQ6IENHRmxvYXQKICAgICAgICBsZXQgZ3JlZW46IENHRmxvYXQKICAgICAgICBsZXQgYmx1ZTogQ0dGbG9hdAogICAgICAgIGxldCBhbHBoYTogQ0dGbG9hdAogICAgICAgIGlmIGhleFN0cmluZy5jb3VudCA8PSA2IHsKICAgICAgICAgICAgcmVkID0gQ0dGbG9hdCgoYXJnYiAmIDB4RkYwMDAwKSA+PiAxNikgLyAyNTUuMAogICAgICAgICAgICBncmVlbiA9IENHRmxvYXQoKGFyZ2IgJiAweDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBibHVlID0gQ0dGbG9hdChhcmdiICYgMHgwMDAwRkYpIC8gMjU1LjAKICAgICAgICAgICAgYWxwaGEgPSAxLjAKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICByZWQgPSBDR0Zsb2F0KChhcmdiICYgMHhGRjAwXzAwMDApID4+IDI0KSAvIDI1NS4wCiAgICAgICAgICAgIGdyZWVuID0gQ0dGbG9hdCgoYXJnYiAmIDB4MDBGRjAwMDApID4+IDE2KSAvIDI1NS4wCiAgICAgICAgICAgIGJsdWUgPSBDR0Zsb2F0KChhcmdiICYgMHgwMDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBhbHBoYSA9IENHRmxvYXQoYXJnYiAmIDB4MDAwMDAwRkYpIC8gMjU1LjAKICAgICAgICB9CiAgICAgICAgcmV0dXJuIFVJQ29sb3IocmVkOiByZWQsIGdyZWVuOiBncmVlbiwgYmx1ZTogYmx1ZSwgYWxwaGE6IGFscGhhKQogICAgfQp9Cg==" | base64 --decode > /tmp/CapacitorCompatibility.swift
+          echo "Decoded: $(wc -l < /tmp/CapacitorCompatibility.swift) lines"
 
-          # Fix call.reject() and call.unimplemented() - these are not accessible in SPM builds
-          echo "=== Patching call.reject/unimplemented -> call.resolve([:]) ==="
+          # Inject into every plugin Sources directory in node_modules
+          find "$GITHUB_WORKSPACE/node_modules" -path "*/ios/Sources" -type d 2>/dev/null | while read srcdir; do
+            echo "Injecting into: $srcdir"
+            cp /tmp/CapacitorCompatibility.swift "$srcdir/CapacitorCompatibility.swift"
+          done
+
+          # Also inject into Pods directories (CocoaPods copies of plugins)
+          find "$GITHUB_WORKSPACE/ios/App/Pods" -path "*/Sources/Capacitor*" -type d 2>/dev/null | while read srcdir; do
+            echo "Injecting into Pods: $srcdir"
+            cp /tmp/CapacitorCompatibility.swift "$srcdir/CapacitorCompatibility.swift"
+          done
+          echo "=== CapacitorCompatibility.swift injection complete ==="
+
+          # Fix bridge?.viewController -> self.webView?.next as? UIViewController
+          # and bridge?.webView -> self.webView (in StatusBar.swift, BrowserPlugin.swift)
+          echo "=== Patching bridge.viewController and bridge.webView ==="
           find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" 2>/dev/null | while read f; do
-            if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
-              perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-              perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-            fi
-          done
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "*.swift" 2>/dev/null | while read f; do
-            if grep -q 'call\.reject\|call\.unimplemented' "$f" 2>/dev/null; then
-              perl -i -pe 's/call\.reject\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
-              perl -i -pe 's/call\.unimplemented\(.*\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+            if grep -q 'bridge.*viewController\|bridge.*webView' "$f" 2>/dev/null; then
+              perl -i -pe 's/\bbridge\??\.viewController\b/self.webView?.next as? UIViewController/g' "$f" 2>/dev/null || true
+              perl -i -pe 's/\bbridge\??\.webView\b/self.webView/g' "$f" 2>/dev/null || true
             fi
           done
 
-          # Fix PushNotifications API incompatibilities with @capacitor/ios@8.1.0
+          # Fix PushNotifications API incompatibilities
           echo "=== Patching PushNotifications API ==="
-          PUSH_HANDLER=$(find "$GITHUB_WORKSPACE/node_modules" -path "*/push-notifications*/PushNotificationsHandler.swift" 2>/dev/null | head -1)
-          PUSH_PLUGIN=$(find "$GITHUB_WORKSPACE/node_modules" -path "*/push-notifications*/PushNotificationsPlugin.swift" 2>/dev/null | head -1)
-          if [ -n "$PUSH_HANDLER" ] && [ -f "$PUSH_HANDLER" ]; then
-            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PUSH_HANDLER" 2>/dev/null || true
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER" 2>/dev/null || true
-          fi
-          if [ -n "$PUSH_PLUGIN" ] && [ -f "$PUSH_PLUGIN" ]; then
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
-          fi
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
+          find "$GITHUB_WORKSPACE/node_modules" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
             perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
           done
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
+          find "$GITHUB_WORKSPACE/node_modules" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
           echo "=== All patches applied ==="
 
-      # ── 13. Resolve SPM dependencies and pin Package.resolved ─────────────
-      # This is the KEY step: after pinning Package.swift to exact: "8.1.0",
-      # we resolve dependencies so SPM creates Package.resolved with 8.1.0.
-      # The Package.resolved file locks the version for the actual build.
-      - name: Resolve SPM dependencies and pin Package.resolved to 8.1.0
-        run: |
-          cd ios/App
-
-          echo "=== Resolving SPM package dependencies ==="
-          xcodebuild -resolvePackageDependencies \
-            -workspace App.xcworkspace \
-            -scheme App \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            2>&1 | tail -30 || true
-
-          echo "=== Finding Package.resolved files ==="
-          find . "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
-            echo "Found: $f"
-            echo "--- Content ---"
-            cat "$f"
-            echo "--- End ---"
-          done
-
-          echo "=== Patching Package.resolved to pin capacitor-swift-pm to 8.1.0 ==="
-          find . "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
-            if grep -q 'capacitor-swift-pm' "$f" 2>/dev/null; then
-              echo "Patching: $f"
-              # Use sed to replace any 8.2.x or 8.3.x version with 8.1.0 for capacitor-swift-pm
-              sed -i '' 's/"version" : "8\.[2-9]\.[0-9]*"/"version" : "8.1.0"/g' "$f" 2>/dev/null || \
-              sed -i 's/"version" : "8\.[2-9]\.[0-9]*"/"version" : "8.1.0"/g' "$f" 2>/dev/null || true
-              echo "After patch:"
-              grep -A3 'capacitor-swift-pm' "$f" || true
-            fi
-          done
-          echo "=== Package.resolved pinning complete ==="
-
-      # ── 14. Import Distribution Certificate ───────────────────────────────
+      # ── 13. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
         env:
           IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
@@ -247,7 +205,7 @@ jobs:
           echo "=== Identities in keychain ==="
           security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
 
-      # ── 15. Install Provisioning Profile ──────────────────────────────────
+      # ── 14. Install Provisioning Profile ──────────────────────────────────
       - name: Install Provisioning Profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
@@ -298,7 +256,7 @@ jobs:
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
 
-      # ── 16. Update Xcode project settings ─────────────────────────────────
+      # ── 15. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -306,7 +264,7 @@ jobs:
         run: |
           cd ios/App
 
-          python3 << 'PYEOF'
+          python3 << 'PYEOF2'
           import re, os
 
           pbxproj_path = "App.xcodeproj/project.pbxproj"
@@ -330,14 +288,14 @@ jobs:
           with open(pbxproj_path, "w") as f:
               f.write(content)
           print("Xcode project updated successfully")
-          PYEOF
+          PYEOF2
 
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
             sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
             sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
           done
 
-      # ── 17. Setup App Store Connect API Key ──────────────────────────────
+      # ── 16. Setup App Store Connect API Key ──────────────────────────────
       - name: Setup App Store Connect API Key
         env:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
@@ -357,7 +315,7 @@ jobs:
           echo "API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
           echo "API_KEY_ID=$APP_STORE_CONNECT_API_KEY_ID" >> $GITHUB_ENV
 
-      # ── 18. Build & Archive ────────────────────────────────────────────────
+      # ── 17. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -392,7 +350,7 @@ jobs:
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
             echo "========================================"
-            echo "=== ARCHIVE FAILED — SWIFT ERRORS ==="
+            echo "=== ARCHIVE FAILED - SWIFT ERRORS ==="
             echo "========================================"
             grep ' error:' /tmp/xcodebuild.log || true
             echo ""
@@ -405,7 +363,7 @@ jobs:
           fi
           echo "Archive created successfully!"
 
-      # ── 19. Export IPA ─────────────────────────────────────────────────────
+      # ── 18. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
@@ -446,7 +404,7 @@ jobs:
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 20. Upload to App Store Connect ────────────────────────────────────
+      # ── 19. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
@@ -477,7 +435,7 @@ jobs:
 
           rm -f "$API_KEY_PATH" 2>/dev/null || true
 
-      # ── 21. Upload IPA as artifact ─────────────────────────────────────────
+      # ── 20. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -486,7 +444,7 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 22. Cleanup ────────────────────────────────────────────────────────
+      # ── 21. Cleanup ────────────────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
