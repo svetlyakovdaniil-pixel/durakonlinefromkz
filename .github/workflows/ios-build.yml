@@ -318,6 +318,31 @@ jobs:
           done
           echo "=== SplashScreenPlugin replacement complete ==="
 
+          # PATCH 5: Fix StatusBar.swift - bridge.webView and bridge.viewController
+          # are not available in capacitor-swift-pm@8.3.x CAPBridgeProtocol.
+          # Use (bridge as? CAPBridge) cast to access these properties.
+          echo "=== PATCH 5: Patching StatusBar.swift for capacitor-swift-pm@8.3.x ==="
+          STATUS_BAR_SWIFT=$(find "$PWD/node_modules" -name "StatusBar.swift" -path "*/status-bar/*" 2>/dev/null | head -1)
+          echo "Found StatusBar.swift: $STATUS_BAR_SWIFT"
+          if [ -n "$STATUS_BAR_SWIFT" ] && [ -f "$STATUS_BAR_SWIFT" ]; then
+            echo "Patching: $STATUS_BAR_SWIFT"
+            # Replace bridge.webView with (bridge as? CAPBridge)?.webView
+            perl -i -pe 's/bridge\.webView/(bridge as? CAPBridge)?.webView/g' "$STATUS_BAR_SWIFT"
+            # Replace bridge.viewController with (bridge as? CAPBridge)?.viewController
+            perl -i -pe 's/bridge\.viewController/(bridge as? CAPBridge)?.viewController/g' "$STATUS_BAR_SWIFT"
+            echo "StatusBar.swift patched. Verifying:"
+            grep -n 'bridge\.webView\|bridge\.viewController\|CAPBridge' "$STATUS_BAR_SWIFT" || echo "No more bridge.webView/viewController references"
+          else
+            echo "WARNING: StatusBar.swift not found in node_modules!"
+          fi
+          # Also patch Pods copy if it exists
+          find "$PWD/ios/App/Pods" -name "StatusBar.swift" 2>/dev/null | while read f; do
+            echo "Patching Pods copy: $f"
+            perl -i -pe 's/bridge\.webView/(bridge as? CAPBridge)?.webView/g' "$f"
+            perl -i -pe 's/bridge\.viewController/(bridge as? CAPBridge)?.viewController/g' "$f"
+          done
+          echo "=== PATCH 5 complete ==="
+
           echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ==="  
           REMAINING=$(find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
           echo "Files with remaining issues: $REMAINING"
