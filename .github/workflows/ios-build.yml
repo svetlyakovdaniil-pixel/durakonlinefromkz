@@ -219,6 +219,22 @@ jobs:
           echo "Profile installed: $INSTALLED_PROFILE"
           ls -la "$INSTALLED_PROFILE"
 
+          # Also install to Xcode's own provisioning profile cache
+          # Xcode 15+ maintains its own database separate from ~/Library/MobileDevice/Provisioning Profiles
+          XCODE_PROFILES_DIR="$RUNNER_HOME/Library/Developer/Xcode/UserData/ProvisioningProfiles"
+          mkdir -p "$XCODE_PROFILES_DIR"
+          cp "$PROFILE_TMP" "$XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
+          echo "Profile also installed to Xcode cache: $XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
+
+          # Also install with name-based filename as fallback
+          if [ -n "$PROFILE_NAME" ]; then
+            SAFE_NAME=$(echo "$PROFILE_NAME" | tr ' ' '_' | tr -cd '[:alnum:]_-')
+            cp "$PROFILE_TMP" "$PROFILES_DIR/${SAFE_NAME}.mobileprovision" 2>/dev/null || true
+          fi
+
+          echo "=== All installed profiles ==="
+          ls -la "$PROFILES_DIR/"
+
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
           echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
@@ -259,10 +275,22 @@ jobs:
                            'CODE_SIGN_STYLE = Manual;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
                            'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
-          # Remove any existing PROVISIONING_PROFILE settings from pbxproj
-          # We will pass them via xcodebuild CLI flags instead
-          content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
-          content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+          # Set PROVISIONING_PROFILE_SPECIFIER in pbxproj for the App target
+          # This is the correct way - set it in the project file, NOT via CLI flags
+          # CLI flags apply to ALL targets (including RevenueCat which doesn't support it)
+          if profile_uuid:
+              # First remove any existing profile settings
+              content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+              content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+              # Add PROVISIONING_PROFILE_SPECIFIER after CODE_SIGN_IDENTITY in App target sections
+              # We add it after each CODE_SIGN_IDENTITY = "Apple Distribution"; line
+              content = content.replace(
+                  'CODE_SIGN_IDENTITY = "Apple Distribution";',
+                  f'CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
+              )
+          else:
+              content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+              content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 
           with open(pbxproj_path, "w") as f:
               f.write(content)
@@ -314,9 +342,11 @@ jobs:
             XCPRETTY_CMD="cat"
           fi
 
-          # Build with manual signing for the App target only
-          # KEY: Do NOT pass PROVISIONING_PROFILE as a global flag (it applies to ALL targets)
-          # Instead, set it only in the pbxproj (done in previous step) and pass UUID via SPECIFIER
+          # Build with manual signing
+          # IMPORTANT: Do NOT pass PROVISIONING_PROFILE_SPECIFIER as CLI flag - it applies to ALL targets
+          # including RevenueCat SPM packages which don't support manual signing.
+          # The profile specifier is set in the pbxproj for the App target only.
+          # We pass OTHER_CODE_SIGN_FLAGS to point to our keychain.
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -330,7 +360,6 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
 
