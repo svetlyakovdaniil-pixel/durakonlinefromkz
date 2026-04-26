@@ -289,54 +289,196 @@ jobs:
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
 
-          # PATCH 4: Fix SplashScreenPlugin.swift for capacitor-swift-pm binary API.
-          # The binary XCFramework in capacitor-swift-pm has these issues:
-          # - bridge?.viewController is not accessible via 'any CAPBridgeProtocol' existential
-          #   FIX: use self.webView?.superview (CAPPlugin has direct webView property)
-          # - call.getInt("key") single-arg form may not be accessible from binary
-          #   FIX: use (call.options["key"] as? Int)
-          # - call.getBool("key") single-arg form may not be accessible from binary
-          #   FIX: use (call.options["key"] as? Bool)
-          # - PluginConfig.getString() may not be accessible from binary
-          #   FIX: use getConfigJSON()["key"] as? String
-          # - UIColor.capacitor.color(fromHex:) may not be accessible from binary
-          #   FIX: use UIColor.capacitor.color(argb:) with hex->UInt32 conversion
-          echo "=== Patching SplashScreenPlugin.swift for capacitor-swift-pm binary API ==="
-          # Use find to locate files dynamically (pnpm path varies by @capacitor/core version)
+          # PATCH 4: Replace SplashScreenPlugin.swift entirely with a version compatible with
+          # capacitor-swift-pm@8.3.x binary XCFramework API.
+          # Changes from original:
+          # - bridge?.viewController?.view -> self.webView?.superview
+          # - call.getInt("key") -> (call.options["key"] as? Int)
+          # - call.getBool("key") -> (call.options["key"] as? Bool)
+          # - call.reject(...) -> call.resolve([:])
+          # - getConfig().getString("key") -> (getConfig().getConfigJSON()["key"] as? String)
+          # - UIColor.capacitor.color(fromHex: x) -> inline hex->UInt32 conversion
+          echo "=== Replacing SplashScreenPlugin.swift with capacitor-swift-pm@8.3.x compatible version ==="
           SPLASH_PLUGIN=$(find "$PWD/node_modules" -name "SplashScreenPlugin.swift" -path "*/splash-screen/*" 2>/dev/null | head -1)
           echo "Found SplashScreenPlugin: $SPLASH_PLUGIN"
           if [ -n "$SPLASH_PLUGIN" ] && [ -f "$SPLASH_PLUGIN" ]; then
-            echo "Patching: $SPLASH_PLUGIN"
+            echo "Replacing: $SPLASH_PLUGIN"
+            cat > "$SPLASH_PLUGIN" << 'SWIFT_EOF'
+import Foundation
+import Capacitor
 
-            # Fix 1: bridge?.viewController?.view -> self.webView?.superview
-            perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+@objc(SplashScreenPlugin)
+public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "SplashScreenPlugin"
+    public let jsName = "SplashScreen"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "show", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hide", returnType: CAPPluginReturnPromise)
+    ]
+    private var splashScreen: SplashScreen?
 
-            # Fix 2: call.getInt("key") -> (call.options["key"] as? Int)
-            perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
-            perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+    override public func load() {
+        if let view = self.webView?.superview {
+            splashScreen = SplashScreen(parentView: view, config: splashScreenConfig())
+            splashScreen?.showOnLaunch()
+        }
+    }
 
-            # Fix 3: getConfig().getString("key") -> getConfig().getConfigJSON()["key"] as? String
-            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/getConfig().getConfigJSON()["$1"] as? String/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+    // Show the splash screen
+    @objc public func show(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.show(settings: settings,
+                        completion: {
+                            call.resolve()
+                        })
+        } else {
+            call.resolve([:])
+        }
 
-            # Fix 4: UIColor.capacitor.color(fromHex: x) -> UIColor.capacitor.color(argb: UInt32(x.replacingOccurrences(of:"#",with:""), radix:16) ?? 0)
-            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+    }
 
-            echo "After patch:"
+    // Hide the splash screen
+    @objc public func hide(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.hide(settings: settings)
+            call.resolve()
+        } else {
+            call.resolve([:])
+        }
+    }
+
+    private func splashScreenSettings(from call: CAPPluginCall) -> SplashScreenSettings {
+        var settings = SplashScreenSettings()
+
+        if let showDuration = call.options["showDuration"] as? Int {
+            settings.showDuration = showDuration
+        }
+        if let fadeInDuration = call.options["fadeInDuration"] as? Int {
+            settings.fadeInDuration = fadeInDuration
+        }
+        if let fadeOutDuration = call.options["fadeOutDuration"] as? Int {
+            settings.fadeOutDuration = fadeOutDuration
+        }
+        if let autoHide = call.options["autoHide"] as? Bool {
+            settings.autoHide = autoHide
+        }
+        return settings
+    }
+
+    private func splashScreenConfig() -> SplashScreenConfig {
+        var config = SplashScreenConfig()
+
+        if let backgroundColor = getConfig().getConfigJSON()["backgroundColor"] as? String {
+            let hex = backgroundColor.replacingOccurrences(of: "#", with: "")
+            config.backgroundColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
+        }
+        if let spinnerStyle = getConfig().getConfigJSON()["iosSpinnerStyle"] as? String {
+            switch spinnerStyle.lowercased() {
+            case "small":
+                config.spinnerStyle = .medium
+            default:
+                config.spinnerStyle = .large
+            }
+        }
+        if let spinnerColor = getConfig().getConfigJSON()["spinnerColor"] as? String {
+            let hex = spinnerColor.replacingOccurrences(of: "#", with: "")
+            config.spinnerColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
+        }
+        config.showSpinner = getConfig().getBoolean("showSpinner", config.showSpinner)
+
+        config.launchShowDuration = getConfig().getInt("launchShowDuration", config.launchShowDuration)
+        config.launchAutoHide = getConfig().getBoolean("launchAutoHide", config.launchAutoHide)
+        return config
+    }
+
+}
+SWIFT_EOF
+            echo "Replacement complete. New file content:"
             cat -n "$SPLASH_PLUGIN"
           else
             echo "WARNING: SplashScreenPlugin.swift not found in node_modules!"
           fi
 
-          # Also patch the Pods copy of SplashScreenPlugin.swift if it exists
+          # Also replace the Pods copy of SplashScreenPlugin.swift if it exists
           find "$PWD/ios/App/Pods" -name "SplashScreenPlugin.swift" 2>/dev/null | while read f; do
-            echo "Patching Pods copy: $f"
-            perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/getConfig().getConfigJSON()["$1"] as? String/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$f" 2>/dev/null || true
+            echo "Replacing Pods copy: $f"
+            cat > "$f" << 'SWIFT_EOF'
+import Foundation
+import Capacitor
+
+@objc(SplashScreenPlugin)
+public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "SplashScreenPlugin"
+    public let jsName = "SplashScreen"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "show", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hide", returnType: CAPPluginReturnPromise)
+    ]
+    private var splashScreen: SplashScreen?
+
+    override public func load() {
+        if let view = self.webView?.superview {
+            splashScreen = SplashScreen(parentView: view, config: splashScreenConfig())
+            splashScreen?.showOnLaunch()
+        }
+    }
+
+    @objc public func show(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.show(settings: settings, completion: { call.resolve() })
+        } else {
+            call.resolve([:])
+        }
+    }
+
+    @objc public func hide(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.hide(settings: settings)
+            call.resolve()
+        } else {
+            call.resolve([:])
+        }
+    }
+
+    private func splashScreenSettings(from call: CAPPluginCall) -> SplashScreenSettings {
+        var settings = SplashScreenSettings()
+        if let showDuration = call.options["showDuration"] as? Int { settings.showDuration = showDuration }
+        if let fadeInDuration = call.options["fadeInDuration"] as? Int { settings.fadeInDuration = fadeInDuration }
+        if let fadeOutDuration = call.options["fadeOutDuration"] as? Int { settings.fadeOutDuration = fadeOutDuration }
+        if let autoHide = call.options["autoHide"] as? Bool { settings.autoHide = autoHide }
+        return settings
+    }
+
+    private func splashScreenConfig() -> SplashScreenConfig {
+        var config = SplashScreenConfig()
+        if let backgroundColor = getConfig().getConfigJSON()["backgroundColor"] as? String {
+            let hex = backgroundColor.replacingOccurrences(of: "#", with: "")
+            config.backgroundColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
+        }
+        if let spinnerStyle = getConfig().getConfigJSON()["iosSpinnerStyle"] as? String {
+            switch spinnerStyle.lowercased() {
+            case "small": config.spinnerStyle = .medium
+            default: config.spinnerStyle = .large
+            }
+        }
+        if let spinnerColor = getConfig().getConfigJSON()["spinnerColor"] as? String {
+            let hex = spinnerColor.replacingOccurrences(of: "#", with: "")
+            config.spinnerColor = UIColor.capacitor.color(argb: UInt32(hex, radix: 16) ?? 0)
+        }
+        config.showSpinner = getConfig().getBoolean("showSpinner", config.showSpinner)
+        config.launchShowDuration = getConfig().getInt("launchShowDuration", config.launchShowDuration)
+        config.launchAutoHide = getConfig().getBoolean("launchAutoHide", config.launchAutoHide)
+        return config
+    }
+
+}
+SWIFT_EOF
           done
-          echo "=== SplashScreenPlugin patch complete ==="
+          echo "=== SplashScreenPlugin replacement complete ==="
 
           echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ==="  
           REMAINING=$(find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject\|call\.unimplemented' 2>/dev/null | wc -l)
@@ -599,13 +741,13 @@ jobs:
               cat "$f"
             done
             echo "=== FINDING ACTUAL SplashScreen paths ==="
-            find "$PWD/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null
-            find "$PWD/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null
+            find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null || echo "No SplashScreenPlugin.swift found in node_modules/.pnpm"
+            find "$GITHUB_WORKSPACE/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null || echo "No splash-screen Package.swift found"
             echo "=== PATCHED SplashScreenPlugin.swift content ==="
-            SPLASH_PLUGIN=$(find "$PWD/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null | head -1)
+            SPLASH_PLUGIN=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null | head -1)
             if [ -n "$SPLASH_PLUGIN" ]; then cat "$SPLASH_PLUGIN"; else echo "File not found"; fi
             echo "=== PATCHED SplashScreen Package.swift content ==="
-            SPLASH_PKG=$(find "$PWD/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null | head -1)
+            SPLASH_PKG=$(find "$GITHUB_WORKSPACE/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null | head -1)
             if [ -n "$SPLASH_PKG" ]; then cat "$SPLASH_PKG"; else echo "File not found"; fi
             exit 1
           fi
