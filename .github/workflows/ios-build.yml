@@ -25,53 +25,41 @@ jobs:
     timeout-minutes: 90
 
     steps:
-      # ── 0. Setup PATH (Homebrew is at /opt/homebrew on this runner) ────────
-      - name: Setup PATH for Homebrew
+      # ── 0. Setup PATH ──────────────────────────────────────────────────────
+      - name: Setup PATH
         run: |
-          echo "/opt/homebrew/bin" >> $GITHUB_PATH
-          echo "/opt/homebrew/sbin" >> $GITHUB_PATH
-          echo "/usr/local/bin" >> $GITHUB_PATH
-          echo "PATH set: /opt/homebrew/bin added"
-          ls /opt/homebrew/bin/brew && echo "brew found at /opt/homebrew/bin/brew" || echo "brew NOT found"
-
-      # ── 1. Fix Xcode developer directory ──────────────────────────────────
-      - name: Fix Xcode developer directory
-        run: |
-          echo "=== Current xcode-select path ==="
-          xcode-select -p || true
-          echo "=== Looking for Xcode.app ==="
-          ls /Applications/ | grep -i xcode || echo "No Xcode in /Applications"
-          find /Applications -name "Xcode.app" -maxdepth 2 2>/dev/null || echo "Xcode.app not found in /Applications"
-          # Fix xcode-select to point to Xcode.app instead of CommandLineTools
-          if [ -d "/Applications/Xcode.app/Contents/Developer" ]; then
-            sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-            echo "xcode-select fixed to Xcode.app"
-          elif [ -d "/Applications/Xcode_16.app/Contents/Developer" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app/Contents/Developer
-            echo "xcode-select fixed to Xcode_16.app"
-          elif [ -d "/Applications/Xcode_15.app/Contents/Developer" ]; then
-            sudo xcode-select -s /Applications/Xcode_15.app/Contents/Developer
-            echo "xcode-select fixed to Xcode_15.app"
+          # Find brew location
+          if [ -f "/opt/homebrew/bin/brew" ]; then
+            BREW_PREFIX="/opt/homebrew"
+          elif [ -f "/usr/local/bin/brew" ]; then
+            BREW_PREFIX="/usr/local"
           else
-            XCODE_PATH=$(find /Applications -name "*.app" -maxdepth 1 | xargs -I{} find {} -name "xcodebuild" -maxdepth 5 2>/dev/null | head -1 | sed 's|/usr/bin/xcodebuild||' | sed 's|/Contents/Developer.*||')
-            if [ -n "$XCODE_PATH" ]; then
-              sudo xcode-select -s "$XCODE_PATH/Contents/Developer"
-              echo "xcode-select fixed to $XCODE_PATH"
-            else
-              echo "ERROR: Could not find Xcode.app! xcodebuild will fail."
-              xcode-select -p
-            fi
+            BREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/opt/homebrew")
           fi
-          echo "=== xcode-select after fix ==="
+          echo "$BREW_PREFIX/bin" >> $GITHUB_PATH
+          echo "$BREW_PREFIX/sbin" >> $GITHUB_PATH
+          echo "/usr/local/bin" >> $GITHUB_PATH
+          # Find rbenv ruby and add to PATH
+          if [ -d "$HOME/.rbenv/shims" ]; then
+            echo "$HOME/.rbenv/shims" >> $GITHUB_PATH
+            echo "$HOME/.rbenv/bin" >> $GITHUB_PATH
+          fi
+          echo "PATH setup complete. brew at: $BREW_PREFIX"
+
+      # ── 1. Verify Xcode ────────────────────────────────────────────────────
+      - name: Verify Xcode setup
+        run: |
+          echo "=== xcode-select path ==="
           xcode-select -p
           echo "=== xcodebuild version ==="
-          xcodebuild -version || echo "xcodebuild failed - Xcode not properly configured"
+          xcodebuild -version
+          echo "Xcode verified OK"
 
       # ── 2. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 3. Setup pnpm ────────────────────────────────────────────────────
+      # ── 3. Setup pnpm ──────────────────────────────────────────────────────
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -120,33 +108,49 @@ jobs:
           fi
           npx cap sync ios
 
-      # ── 9. Install CocoaPods via Homebrew ──────────────────────────────────
-      - name: Install CocoaPods
+      # ── 9. Ensure CocoaPods is linked ──────────────────────────────────────
+      - name: Ensure CocoaPods is available
         run: |
-          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
-          echo "=== Checking for pod ==="
-          which pod && pod --version && echo "CocoaPods already installed, skipping" && exit 0 || true
-          echo "=== Installing CocoaPods via Homebrew ==="
-          /opt/homebrew/bin/brew install cocoapods
-          echo "=== Verifying pod installation ==="
-          which pod || /opt/homebrew/bin/pod --version
-          pod --version || /opt/homebrew/bin/pod --version
+          echo "=== Checking pod ==="
+          if command -v pod &>/dev/null; then
+            echo "pod found at: $(which pod)"
+            pod --version
+          else
+            echo "pod not in PATH, trying brew link..."
+            brew link --overwrite cocoapods 2>/dev/null || true
+            if command -v pod &>/dev/null; then
+              echo "pod now available: $(pod --version)"
+            else
+              echo "Installing cocoapods via brew..."
+              brew install cocoapods
+              brew link --overwrite cocoapods || true
+            fi
+          fi
+          pod --version
 
-      # ── 10. Install Fastlane via Homebrew ──────────────────────────────────
-      - name: Install Fastlane
+      # ── 10. Ensure Fastlane is available ───────────────────────────────────
+      - name: Ensure Fastlane is available
         run: |
-          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
-          echo "=== Checking for fastlane ==="
-          which fastlane && fastlane --version && echo "Fastlane already installed, skipping" && exit 0 || true
-          echo "=== Installing Fastlane via Homebrew ==="
-          /opt/homebrew/bin/brew install fastlane
-          echo "=== Verifying fastlane installation ==="
-          fastlane --version || /opt/homebrew/bin/fastlane --version
+          echo "=== Checking fastlane ==="
+          if command -v fastlane &>/dev/null; then
+            echo "fastlane found at: $(which fastlane)"
+            fastlane --version
+          else
+            echo "fastlane not in PATH, trying brew link..."
+            brew link --overwrite fastlane 2>/dev/null || true
+            if command -v fastlane &>/dev/null; then
+              echo "fastlane now available"
+            else
+              echo "Installing fastlane via brew..."
+              brew install fastlane
+              brew link --overwrite fastlane || true
+            fi
+          fi
+          fastlane --version
 
       # ── 11. Install CocoaPods dependencies ─────────────────────────────────
       - name: Install CocoaPods dependencies
         run: |
-          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
           echo "=== iOS directory structure ==="
           find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
           echo "=== Contents of ios/App ==="
@@ -226,8 +230,8 @@ jobs:
           import re, os
 
           pbxproj_path = "App.xcodeproj/project.pbxproj"
-          bundle_id = os.environ["IOS_BUNDLE_ID"]
-          team_id = os.environ["IOS_TEAM_ID"]
+          bundle_id = os.environ['IOS_BUNDLE_ID']
+          team_id = os.environ['IOS_TEAM_ID']
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
@@ -288,19 +292,24 @@ jobs:
 
           echo "Xcode project updated"
 
-      # ── 15. Build & Archive ────────────────────────────────────────────
+      # ── 15. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
-          export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/usr/local/bin:$PATH"
           cd ios/App
 
-          # Install xcpretty if not present (via gem user install)
+          # Install xcpretty if not present
           if ! command -v xcpretty &>/dev/null; then
+            # Try rbenv ruby first, then system ruby
+            if command -v rbenv &>/dev/null; then
+              eval "$(rbenv init -)" 2>/dev/null || true
+              gem install xcpretty --no-document 2>/dev/null || true
+            fi
             gem install xcpretty --no-document --user-install 2>/dev/null || true
-            export PATH="$HOME/.gem/ruby/2.6.0/bin:$PATH"
+            # Add possible gem bin paths
+            export PATH="$HOME/.rbenv/shims:$HOME/.gem/ruby/3.2.0/bin:$HOME/.gem/ruby/3.1.0/bin:$HOME/.gem/ruby/2.6.0/bin:$PATH"
           fi
 
           xcodebuild archive \
@@ -326,13 +335,12 @@ jobs:
           fi
           echo "Archive created successfully!"
 
-      # ── 16. Export IPA ──────────────────────────────────────────────────────
+      # ── 16. Export IPA ─────────────────────────────────────────────────────
       - name: Export IPA
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
-          # Write ExportOptions.plist using python3 to avoid heredoc YAML issues
           python3 - << 'PYEOF'
           import os
           team_id = os.environ['IOS_TEAM_ID']
@@ -374,7 +382,7 @@ jobs:
           echo "IPA exported:"
           ls -la "$RUNNER_TEMP/ipa/"
 
-      # ── 17. Upload to App Store Connect ─────────────────────────────────────
+      # ── 17. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
@@ -398,7 +406,7 @@ jobs:
             --password "@env:APPLE_APP_SPECIFIC_PASSWORD" \
             --verbose
 
-      # ── 18. Upload IPA as artifact (always) ─────────────────────────────────
+      # ── 18. Upload IPA as artifact (always) ────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -407,7 +415,7 @@ jobs:
           path: ${{ runner.temp }}/ipa/*.ipa
           retention-days: 30
 
-      # ── 19. Cleanup keychain ─────────────────────────────────────────────────────
+      # ── 19. Cleanup keychain ───────────────────────────────────────────────
       - name: Cleanup keychain
         if: always()
         run: |
