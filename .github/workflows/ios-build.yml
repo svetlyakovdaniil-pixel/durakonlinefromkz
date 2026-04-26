@@ -28,32 +28,23 @@ jobs:
       # ── 0. Setup PATH ──────────────────────────────────────────────────────
       - name: Setup PATH
         run: |
-          # Find brew location
           if [ -f "/opt/homebrew/bin/brew" ]; then
-            BREW_PREFIX="/opt/homebrew"
+            echo "/opt/homebrew/bin" >> $GITHUB_PATH
+            echo "/opt/homebrew/sbin" >> $GITHUB_PATH
           elif [ -f "/usr/local/bin/brew" ]; then
-            BREW_PREFIX="/usr/local"
-          else
-            BREW_PREFIX=$(brew --prefix 2>/dev/null || echo "/opt/homebrew")
+            echo "/usr/local/bin" >> $GITHUB_PATH
           fi
-          echo "$BREW_PREFIX/bin" >> $GITHUB_PATH
-          echo "$BREW_PREFIX/sbin" >> $GITHUB_PATH
-          echo "/usr/local/bin" >> $GITHUB_PATH
-          # Find rbenv ruby and add to PATH
           if [ -d "$HOME/.rbenv/shims" ]; then
             echo "$HOME/.rbenv/shims" >> $GITHUB_PATH
             echo "$HOME/.rbenv/bin" >> $GITHUB_PATH
           fi
-          echo "PATH setup complete. brew at: $BREW_PREFIX"
+          echo "PATH setup complete"
 
       # ── 1. Verify Xcode ────────────────────────────────────────────────────
       - name: Verify Xcode setup
         run: |
-          echo "=== xcode-select path ==="
           xcode-select -p
-          echo "=== xcodebuild version ==="
           xcodebuild -version
-          echo "Xcode verified OK"
 
       # ── 2. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
@@ -86,7 +77,7 @@ jobs:
       - name: Install Capacitor CLI globally
         run: npm install -g @capacitor/cli@8
 
-      # ── 8. Add iOS platform (generates full Xcode project) ─────────────────
+      # ── 8. Add iOS platform ────────────────────────────────────────────────
       - name: Add iOS platform
         run: |
           if [ ! -f "ios/App/App.xcodeproj/project.pbxproj" ]; then
@@ -103,76 +94,29 @@ jobs:
             done
             cp /tmp/Info.plist ios/App/App/Info.plist || true
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
-          else
-            echo "xcodeproj found, running cap sync..."
           fi
           npx cap sync ios
 
-      # ── 9. Ensure CocoaPods is linked ──────────────────────────────────────
+      # ── 9. Ensure CocoaPods is available ───────────────────────────────────
       - name: Ensure CocoaPods is available
         run: |
-          echo "=== Checking pod ==="
-          if command -v pod &>/dev/null; then
-            echo "pod found at: $(which pod)"
-            pod --version
-          else
-            echo "pod not in PATH, trying brew link..."
-            brew link --overwrite cocoapods 2>/dev/null || true
-            if command -v pod &>/dev/null; then
-              echo "pod now available: $(pod --version)"
-            else
-              echo "Installing cocoapods via brew..."
-              brew install cocoapods
-              brew link --overwrite cocoapods || true
-            fi
+          if ! command -v pod &>/dev/null; then
+            brew link --overwrite cocoapods 2>/dev/null || brew install cocoapods
           fi
           pod --version
 
       # ── 10. Ensure Fastlane is available ───────────────────────────────────
       - name: Ensure Fastlane is available
         run: |
-          echo "=== Checking fastlane ==="
-          if command -v fastlane &>/dev/null; then
-            echo "fastlane found at: $(which fastlane)"
-            fastlane --version
-          else
-            echo "fastlane not in PATH, trying brew link..."
-            brew link --overwrite fastlane 2>/dev/null || true
-            if command -v fastlane &>/dev/null; then
-              echo "fastlane now available"
-            else
-              echo "Installing fastlane via brew..."
-              brew install fastlane
-              brew link --overwrite fastlane || true
-            fi
+          if ! command -v fastlane &>/dev/null; then
+            brew link --overwrite fastlane 2>/dev/null || brew install fastlane
           fi
           fastlane --version
 
       # ── 11. Install CocoaPods dependencies ─────────────────────────────────
       - name: Install CocoaPods dependencies
         run: |
-          echo "=== iOS directory structure ==="
-          find ios -name "Podfile" -o -name "*.xcodeproj" -o -name "*.xcworkspace" 2>/dev/null | head -20
-          echo "=== Contents of ios/App ==="
-          ls -la ios/App/ 2>/dev/null || echo "ios/App not found"
-
-          # Create Podfile using base64-encoded content (avoids YAML ':' parsing issues)
-          if [ ! -f "ios/App/Podfile" ]; then
-            echo "Creating Podfile from base64..."
-            echo "cmVxdWlyZV9yZWxhdGl2ZSAiLi4vLi4vbm9kZV9tb2R1bGVzL0BjYXBhY2l0b3IvaW9zL3NjcmlwdHMvcG9kc19oZWxwZXJzIgoKcGxhdGZvcm0gOmlvcywgIjE1LjAiCnVzZV9mcmFtZXdvcmtzIQoKaW5zdGFsbCEgImNvY29hcG9kcyIsIDpkaXNhYmxlX2lucHV0X291dHB1dF9wYXRocyA9PiB0cnVlCgpkZWYgY2FwYWNpdG9yX3BvZHMKICBwb2QgIkNhcGFjaXRvciIsIDpwYXRoID0+ICIuLi8uLi9ub2RlX21vZHVsZXMvQGNhcGFjaXRvci9pb3MiCiAgcG9kICJDYXBhY2l0b3JDb3Jkb3ZhIiwgOnBhdGggPT4gIi4uLy4uL25vZGVfbW9kdWxlcy9AY2FwYWNpdG9yL2lvcyIKZW5kCgp0YXJnZXQgIkFwcCIgZG8KICBjYXBhY2l0b3JfcG9kcwplbmQKCnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkNPREVfU0lHTklOR19BTExPV0VEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOSU5HX1JFUVVJUkVEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOX0lERU5USVRZIl0gPSAiIgogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkVYUEFOREVEX0NPREVfU0lHTl9JREVOVElUWSJdID0gIiIKICAgIGVuZAogIGVuZAplbmQK" | base64 --decode > ios/App/Podfile
-            echo "Podfile created."
-          fi
-
-          # Run cap sync to populate Podfile with all plugins automatically
-          echo "Running cap sync to populate Podfile with plugins..."
-          npx cap sync ios --no-build 2>&1 || npx cap sync ios 2>&1 || true
-
-          echo "=== Podfile after cap sync ==="
-          cat ios/App/Podfile
-
           cd ios/App
-          # Try without repo update first (faster, avoids CDN timeout)
-          # If it fails, try with repo update
           pod install --no-repo-update 2>&1 || pod install 2>&1
 
       # ── 12. Import Distribution Certificate ───────────────────────────────
@@ -184,10 +128,12 @@ jobs:
           KEYCHAIN_PATH="$RUNNER_TEMP/ios-build.keychain"
           KEYCHAIN_PASSWORD="temp_keychain_password_$(date +%s)"
 
+          # Create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
+          # Import certificate
           echo "$IOS_DISTRIBUTION_CERT_P12" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
           security import "$RUNNER_TEMP/distribution.p12" \
             -k "$KEYCHAIN_PATH" \
@@ -195,13 +141,17 @@ jobs:
             -T /usr/bin/codesign \
             -T /usr/bin/security
 
+          # Add to keychain search list
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Allow codesign to access the key without prompting
+          # NOTE: -A flag allows all applications (no password prompt)
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" 2>/dev/null || true
 
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
 
-          echo "=== Certificate imported. Identities in keychain: ==="
+          echo "=== Identities in keychain ==="
           security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
 
       # ── 13. Install Provisioning Profile ──────────────────────────────────
@@ -215,38 +165,39 @@ jobs:
           # Decode the profile
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
 
-          # Extract UUID and Name from the profile
-          security cms -D -i "$RUNNER_TEMP/profile.mobileprovision" -o /tmp/profile.plist 2>/dev/null || true
+          # Extract UUID using strings command (fast, no hanging)
+          PROFILE_UUID=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
+            grep -A1 '<key>UUID</key>' | grep '<string>' | \
+            sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
 
-          PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
-          PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
-          PROFILE_TEAM_ID=$(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
-          PROFILE_EXPIRY=$(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' /tmp/profile.plist 2>/dev/null | tr -d '\n' || echo "")
-
+          # Fallback: grep for UUID pattern directly
           if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID=$(grep -a 'UUID' "$RUNNER_TEMP/profile.mobileprovision" | \
-              grep -o '[0-9a-f]\{8\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{4\}-[0-9a-f]\{12\}' | head -1)
+            PROFILE_UUID=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
+              grep -E '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' | head -1)
           fi
+
+          # Extract Name using strings command
+          PROFILE_NAME=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
+            grep -A1 '<key>Name</key>' | grep '<string>' | \
+            sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
 
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
-          echo "Profile Team ID: $PROFILE_TEAM_ID"
-          echo "Profile Expiry: $PROFILE_EXPIRY"
 
-          # Install profile using UUID as filename (required by Xcode)
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "ERROR: Could not extract UUID from provisioning profile!"
+            exit 1
+          fi
+
+          # Install profile (user directory only - NO sudo needed)
           cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
-          echo "Provisioning profile installed as ${PROFILE_UUID}.mobileprovision"
+          echo "Profile installed: $PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
 
-          # Also install to system-wide location as fallback
-          sudo mkdir -p "/Library/MobileDevice/Provisioning Profiles" 2>/dev/null || true
-          sudo cp "$RUNNER_TEMP/profile.mobileprovision" "/Library/MobileDevice/Provisioning Profiles/${PROFILE_UUID}.mobileprovision" 2>/dev/null || true
+          # List installed profiles
+          ls -la "$PROFILE_PATH/" | grep "${PROFILE_UUID}" || echo "Profile file check"
 
-          # List all installed profiles
-          echo "=== Installed profiles in ~/Library ==="
-          ls -la "$PROFILE_PATH/" | head -20
-
-          printf 'PROFILE_UUID=%s\n' "$PROFILE_UUID" >> $GITHUB_ENV
-          printf 'PROFILE_NAME=%s\n' "$PROFILE_NAME" >> $GITHUB_ENV
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
 
       # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
@@ -256,8 +207,8 @@ jobs:
         run: |
           cd ios/App
 
-          echo "=== Using Profile UUID: $PROFILE_UUID ==="
-          echo "=== Using Profile Name: $PROFILE_NAME ==="
+          echo "Profile UUID: $PROFILE_UUID"
+          echo "Profile Name: $PROFILE_NAME"
 
           python3 << 'PYEOF'
           import re, os
@@ -266,62 +217,37 @@ jobs:
           bundle_id = os.environ['IOS_BUNDLE_ID']
           team_id = os.environ['IOS_TEAM_ID']
           profile_uuid = os.environ.get('PROFILE_UUID', '')
-          profile_name = os.environ.get('PROFILE_NAME', '')
 
           print(f"Bundle ID: {bundle_id}")
           print(f"Team ID: {team_id}")
           print(f"Profile UUID: {profile_uuid}")
-          print(f"Profile Name: {profile_name}")
 
           with open(pbxproj_path, "r") as f:
               content = f.read()
 
-          content = re.sub(
-              r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
-              f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};',
-              content
-          )
-          content = re.sub(
-              r'DEVELOPMENT_TEAM = [^;]*;',
-              f'DEVELOPMENT_TEAM = {team_id};',
-              content
-          )
-          content = re.sub(
-              r'CODE_SIGN_STYLE = [^;]+;',
-              'CODE_SIGN_STYLE = Manual;',
-              content
-          )
-          content = re.sub(
-              r'CODE_SIGN_IDENTITY = [^;]*;',
-              'CODE_SIGN_IDENTITY = "Apple Distribution";',
-              content
-          )
-          # Remove ALL existing PROVISIONING_PROFILE entries from pbxproj
-          # We will pass it directly via xcodebuild CLI instead
-          content = re.sub(
-              r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;',
-              '',
-              content
-          )
-          content = re.sub(
-              r'\s*PROVISIONING_PROFILE = [^;]*;',
-              '',
-              content
-          )
+          content = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
+                           f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
+          content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
+                           f'DEVELOPMENT_TEAM = {team_id};', content)
+          content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
+                           'CODE_SIGN_STYLE = Manual;', content)
+          content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
+                           'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
+          # Remove PROVISIONING_PROFILE from pbxproj - pass via CLI instead
+          content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+          content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 
           with open(pbxproj_path, "w") as f:
               f.write(content)
-
-          print("Xcode project updated successfully (no PROVISIONING_PROFILE_SPECIFIER in pbxproj)")
+          print("Xcode project updated successfully")
           PYEOF
 
+          # Patch Pods xcconfig files to remove signing overrides
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
             sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
             sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
           done
           echo "Pods xcconfig files patched"
-
-          echo "Xcode project updated"
 
       # ── 15. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
@@ -331,23 +257,15 @@ jobs:
         run: |
           cd ios/App
 
-          # Install xcpretty if not present
-          if ! command -v xcpretty &>/dev/null; then
-            # Try rbenv ruby first, then system ruby
-            if command -v rbenv &>/dev/null; then
-              eval "$(rbenv init -)" 2>/dev/null || true
-              gem install xcpretty --no-document 2>/dev/null || true
-            fi
-            gem install xcpretty --no-document --user-install 2>/dev/null || true
-            # Add possible gem bin paths
-            export PATH="$HOME/.rbenv/shims:$HOME/.gem/ruby/3.2.0/bin:$HOME/.gem/ruby/3.1.0/bin:$HOME/.gem/ruby/2.6.0/bin:$PATH"
+          echo "Profile UUID: $PROFILE_UUID"
+
+          # Use xcpretty if available for cleaner output
+          if command -v xcpretty &>/dev/null; then
+            XCPRETTY_CMD="xcpretty --color"
+          else
+            XCPRETTY_CMD="cat"
           fi
 
-          echo "=== Using Profile UUID for signing: $PROFILE_UUID ==="
-          echo "=== Profile Name: $PROFILE_NAME ==="
-
-          # Pass PROVISIONING_PROFILE as UUID directly via CLI (not via pbxproj)
-          # This bypasses the "No profile matching name" error
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -364,11 +282,11 @@ jobs:
             PROVISIONING_PROFILE="$PROFILE_UUID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            2>&1 | tee /tmp/xcodebuild.log | (xcpretty --color 2>/dev/null || cat)
+            2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
-            echo "Archive failed! Last 100 lines of build log:"
-            tail -100 /tmp/xcodebuild.log
+            echo "=== Archive FAILED! Last 150 lines of build log: ==="
+            tail -150 /tmp/xcodebuild.log
             exit 1
           fi
           echo "Archive created successfully!"
@@ -379,49 +297,42 @@ jobs:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
         run: |
-          python3 - << 'PYEOF'
-          import os
-          team_id = os.environ['IOS_TEAM_ID']
-          bundle_id = os.environ['IOS_BUNDLE_ID']
-          runner_temp = os.environ['RUNNER_TEMP']
-          profile_uuid = os.environ.get('PROFILE_UUID', '')
-          profile_name = os.environ.get('PROFILE_NAME', '')
-          # Use UUID as specifier if available, otherwise fall back to name
-          profile_specifier = profile_uuid if profile_uuid else profile_name
-          plist = (
-              '<?xml version="1.0" encoding="UTF-8"?>\n'
-              '<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n'
-              '<plist version="1.0">\n'
-              '<dict>\n'
-              '  <key>method</key>\n'
-              '  <string>app-store-connect</string>\n'
-              '  <key>teamID</key>\n'
-              '  <string>' + team_id + '</string>\n'
-              '  <key>uploadBitcode</key>\n'
-              '  <false/>\n'
-              '  <key>uploadSymbols</key>\n'
-              '  <true/>\n'
-              '  <key>signingStyle</key>\n'
-              '  <string>manual</string>\n'
-              '  <key>provisioningProfiles</key>\n'
-              '  <dict>\n'
-              '    <key>' + bundle_id + '</key>\n'
-              '    <string>' + profile_specifier + '</string>\n'
-              '  </dict>\n'
-              '</dict>\n'
-              '</plist>\n'
-          )
-          with open(runner_temp + '/ExportOptions.plist', 'w') as f:
-              f.write(plist)
-          print(f'ExportOptions.plist created with profile specifier: {profile_specifier}')
-          PYEOF
+          cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${IOS_BUNDLE_ID}</key>
+              <string>${PROFILE_UUID}</string>
+            </dict>
+          </dict>
+          </plist>
+          PLIST_EOF
+
+          echo "ExportOptions.plist:"
+          cat "$RUNNER_TEMP/ExportOptions.plist"
+
+          mkdir -p "$RUNNER_TEMP/ipa"
 
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            2>&1 | tee /tmp/export.log
 
-          echo "IPA exported:"
+          echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
 
       # ── 17. Upload to App Store Connect ────────────────────────────────────
@@ -433,6 +344,11 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: No IPA found!"
+            ls -la "$RUNNER_TEMP/ipa/" || true
+            exit 1
+          fi
           echo "Uploading: $IPA_PATH"
 
           xcrun altool --upload-app \
@@ -440,15 +356,9 @@ jobs:
             --file "$IPA_PATH" \
             --username "$APPLE_ID" \
             --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --verbose || \
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --username "$APPLE_ID" \
-            --password "@env:APPLE_APP_SPECIFIC_PASSWORD" \
             --verbose
 
-      # ── 18. Upload IPA as artifact (always) ────────────────────────────────
+      # ── 18. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
         if: always()
         uses: actions/upload-artifact@v4
