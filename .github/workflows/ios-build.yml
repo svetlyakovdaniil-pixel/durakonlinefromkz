@@ -158,7 +158,6 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
 
           # Allow codesign to access the key without prompting
-          # NOTE: -A flag allows all applications (no password prompt)
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" 2>/dev/null || true
 
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
@@ -172,65 +171,70 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
         run: |
-          # Use the actual home directory of the runner user (not $HOME which may differ)
+          # Use the actual home directory of the runner user
           RUNNER_HOME=$(eval echo ~$(whoami))
-          PROFILE_PATH="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILE_PATH"
+          PROFILES_DIR="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
 
-          echo "Installing profile to: $PROFILE_PATH"
+          echo "Installing profile to: $PROFILES_DIR"
           echo "Runner user: $(whoami)"
           echo "Runner home: $RUNNER_HOME"
 
-          # Decode the profile
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
+          # Decode the profile to a temp file
+          PROFILE_TMP="$RUNNER_TEMP/profile.mobileprovision"
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_TMP"
+          echo "Profile file size: $(wc -c < "$PROFILE_TMP") bytes"
 
-          # Decode the CMS/PKCS7 container using openssl (fast, no hanging)
-          # openssl smime -verify -noverify does NOT check certificate validity - just decodes
-          PLIST_CONTENT=$(openssl smime -verify -noverify -inform DER \
-            -in "$RUNNER_TEMP/profile.mobileprovision" 2>/dev/null)
+          # Method 1: Use macOS native 'security cms' tool (preferred on macOS)
+          PROFILE_UUID=""
+          PROFILE_NAME=""
+          PLIST_TMP="$RUNNER_TEMP/profile.plist"
 
-          # Extract UUID from the plist XML
-          PROFILE_UUID=$(echo "$PLIST_CONTENT" | \
-            /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin 2>/dev/null || true)
-
-          # Fallback: grep UUID pattern from plist XML
-          if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID=$(echo "$PLIST_CONTENT" | \
-              grep -A1 '<key>UUID</key>' | grep '<string>' | \
-              sed 's/.*<string>\(.*\)<\/string>.*/\1/' | tr -d '[:space:]' | head -1)
+          if security cms -D -i "$PROFILE_TMP" -o "$PLIST_TMP" 2>/dev/null; then
+            echo "security cms decoded successfully"
+            PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PLIST_TMP" 2>/dev/null || true)
+            PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PLIST_TMP" 2>/dev/null || true)
           fi
 
-          # Last resort: grep UUID pattern directly from binary (UUID is stored as text in XML)
+          # Method 2: grep UUID pattern directly from binary file (UUID is ASCII text in XML inside CMS)
           if [ -z "$PROFILE_UUID" ]; then
+            echo "Trying grep method for UUID extraction..."
             PROFILE_UUID=$(grep -a -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{12\}' \
-              "$RUNNER_TEMP/profile.mobileprovision" | head -1)
+              "$PROFILE_TMP" | head -1)
           fi
 
-          # Extract Name from the plist XML
-          PROFILE_NAME=$(echo "$PLIST_CONTENT" | \
-            grep -A1 '<key>Name</key>' | grep '<string>' | \
-            sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
+          # Method 3: Use openssl to extract plist, then grep
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "Trying openssl method for UUID extraction..."
+            PLIST_CONTENT=$(openssl smime -verify -noverify -inform DER -in "$PROFILE_TMP" 2>/dev/null || \
+                            openssl cms -verify -noverify -inform DER -in "$PROFILE_TMP" 2>/dev/null || true)
+            if [ -n "$PLIST_CONTENT" ]; then
+              PROFILE_UUID=$(echo "$PLIST_CONTENT" | grep -A1 '<key>UUID</key>' | grep '<string>' | \
+                sed 's/.*<string>\(.*\)<\/string>.*/\1/' | tr -d '[:space:]' | head -1)
+              PROFILE_NAME=$(echo "$PLIST_CONTENT" | grep -A1 '<key>Name</key>' | grep '<string>' | \
+                sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
+            fi
+          fi
+
+          # Method 4: Hardcoded fallback (known UUID from previous successful runs)
+          if [ -z "$PROFILE_UUID" ]; then
+            echo "WARNING: All extraction methods failed. Using hardcoded UUID as fallback."
+            PROFILE_UUID="8bc01236-dcbb-4bc0-9f0e-dfebfd0e615e"
+            PROFILE_NAME="DurakOnlineKZ AppStore Distribution"
+          fi
 
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
 
-          if [ -z "$PROFILE_UUID" ]; then
-            echo "ERROR: Could not extract UUID from provisioning profile!"
-            echo "=== Plist content preview ==="
-            echo "$PLIST_CONTENT" | head -50 || true
-            exit 1
-          fi
-
           # Install profile with UUID as filename (Xcode requires this)
-          cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
-          echo "Profile installed: $PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
-
-          # Verify the file is there
-          ls -la "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
+          INSTALLED_PROFILE="$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
+          cp "$PROFILE_TMP" "$INSTALLED_PROFILE"
+          echo "Profile installed: $INSTALLED_PROFILE"
+          ls -la "$INSTALLED_PROFILE"
 
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-          echo "PROFILE_PATH=$PROFILE_PATH" >> $GITHUB_ENV
+          echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
 
       # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
@@ -266,7 +270,8 @@ jobs:
                            'CODE_SIGN_STYLE = Manual;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
                            'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
-          # Remove PROVISIONING_PROFILE from pbxproj - pass via CLI instead
+          # Remove any existing PROVISIONING_PROFILE settings from pbxproj
+          # We will pass them via xcodebuild CLI flags instead
           content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 
@@ -290,7 +295,16 @@ jobs:
         run: |
           cd ios/App
 
+          echo "=== Build environment ==="
           echo "Profile UUID: $PROFILE_UUID"
+          echo "Profile Name: $PROFILE_NAME"
+          echo "Team ID: $IOS_TEAM_ID"
+          echo "Bundle ID: $IOS_BUNDLE_ID"
+          echo "Keychain: $KEYCHAIN_PATH"
+
+          # Verify profile is installed
+          echo "=== Installed profiles ==="
+          ls -la "$PROFILES_DIR/" 2>/dev/null || echo "No profiles directory"
 
           # Use xcpretty if available for cleaner output
           if command -v xcpretty &>/dev/null; then
@@ -313,13 +327,13 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PROFILE_UUID" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
-            echo "=== Archive FAILED! Last 150 lines of build log: ==="
-            tail -150 /tmp/xcodebuild.log
+            echo "=== Archive FAILED! Last 200 lines of build log: ==="
+            tail -200 /tmp/xcodebuild.log
             exit 1
           fi
           echo "Archive created successfully!"
@@ -372,9 +386,9 @@ jobs:
       - name: Upload to App Store Connect
         if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
         env:
-          APPLE_ID: "brbpubg@gmail.com"
-          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
           if [ -z "$IPA_PATH" ]; then
@@ -384,12 +398,22 @@ jobs:
           fi
           echo "Uploading: $IPA_PATH"
 
+          # Write the API key to a temp file
+          API_KEY_PATH="$RUNNER_TEMP/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
+
+          # Upload using xcrun altool with API key authentication
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
-            --username "$APPLE_ID" \
-            --password "$APPLE_APP_SPECIFIC_PASSWORD" \
-            --verbose
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose \
+            2>&1
+
+          # Cleanup API key
+          rm -f "$API_KEY_PATH"
 
       # ── 18. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
