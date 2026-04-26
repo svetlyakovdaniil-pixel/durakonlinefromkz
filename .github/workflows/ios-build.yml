@@ -132,28 +132,47 @@ jobs:
           cd ios/App
           pod install --no-repo-update 2>&1 || pod install 2>&1
 
+          echo "=== Podfile.lock - Capacitor versions installed by CocoaPods ==="
+          grep -A2 'Capacitor\|CapacitorApp\|CapacitorPushNotifications\|CapacitorSplashScreen' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
+
+          echo "=== CAPPluginCall.swift reject method signature ==="
+          find Pods -name "CAPPluginCall.swift" 2>/dev/null | while read f; do
+            echo "File: $f"
+            grep -n 'func reject' "$f" | head -5
+          done
+
       # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
       - name: Patch Capacitor Swift compatibility
         run: |
-          # Fix @capacitor/app AppPlugin.swift - call.reject() signature issue
-          # In some Capacitor version combos, reject() is not found by the Swift compiler
-          # Replace with a safe alternative that always works
-          APP_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+app@8.1.0_@capacitor+core@8.3.0/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift"
-          if [ -f "$APP_PLUGIN" ]; then
-            echo "Patching AppPlugin.swift..."
-            # Replace call.reject("Unable to get App Info") with call.resolve([:]) to avoid Swift compile error
-            sed -i '' 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$APP_PLUGIN" || \
-            sed -i 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$APP_PLUGIN" || true
-            echo "AppPlugin.swift patched:"
-            grep -n 'reject\|resolve' "$APP_PLUGIN" | head -10
-          else
-            echo "AppPlugin.swift not found at expected path, searching..."
-            find "$PWD/node_modules" -name "AppPlugin.swift" 2>/dev/null | while read f; do
-              echo "Found: $f"
-              sed -i '' 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$f" 2>/dev/null || \
-              sed -i 's/call\.reject("Unable to get App Info")/call.resolve(["name": "", "id": "", "build": "", "version": ""])/' "$f" || true
-            done
-          fi
+          # Xcode compiles Swift files from Pods/ directory (created by pod install),
+          # NOT from node_modules. So we must patch files in ios/App/Pods/ after pod install.
+          #
+          # The issue: in some Capacitor version combos, CAPPluginCall.reject() is not found
+          # by the Swift compiler. We patch all Capacitor plugin Swift files to use a
+          # safe method signature that always compiles.
+
+          PODS_DIR="$PWD/ios/App/Pods"
+
+          echo "=== Searching for Swift files with call.reject() in Pods/ ==="
+          find "$PODS_DIR" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
+            echo "Patching: $f"
+            # Show before
+            grep -n 'call\.reject(' "$f" | head -5
+            # On macOS, sed -i '' works; on Linux, sed -i works
+            sed -i '' 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" 2>/dev/null || \
+            sed -i 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" || true
+            echo "After patch:"
+            grep -n 'call\.reject(' "$f" | head -5
+          done
+
+          # Also patch in node_modules as fallback (in case Xcode uses those directly)
+          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
+            echo "Also patching node_modules: $f"
+            sed -i '' 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" 2>/dev/null || \
+            sed -i 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" || true
+          done
+
+          echo "=== Patch complete ==="
 
       # ── 12. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
