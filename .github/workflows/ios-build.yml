@@ -249,7 +249,7 @@ jobs:
             # Fix 3: Replace call.getArray("notifications", JSObject.self) with call.getArray("notifications") as? [JSObject]
             # The old API: getArray<T>(_ key: String, _ ofType: T.Type) -> [T]?
             # The new API: getArray(_ key: String, _ defaultValue: JSArray? = nil) -> JSArray?
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
             echo "After patch:"
             grep -n 'getArray' "$PUSH_PLUGIN" | head -5
           fi
@@ -267,7 +267,7 @@ jobs:
 
           if [ -f "$PODS_PUSH_PLUGIN" ]; then
             echo "Patching Pods PushNotificationsPlugin.swift..."
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
           fi
 
           # Also search for these files in Pods/ by name (path may differ)
@@ -279,7 +279,7 @@ jobs:
 
           find "$PWD/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
             echo "Patching Pods: $f"
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
 
           echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ===" 
