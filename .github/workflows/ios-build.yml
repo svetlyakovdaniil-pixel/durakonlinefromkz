@@ -295,6 +295,18 @@ jobs:
           echo "=== Installed profiles ==="
           ls -la "$PROFILES_DIR/" 2>/dev/null || echo "No profiles directory"
 
+          # Create a target-specific xcconfig to apply profile only to App target
+          # This prevents the profile from being applied to RevenueCat and other SPM packages
+          cat > /tmp/App.xcconfig << XCCONFIG_EOF
+          // Only apply manual signing to the App target
+          // SPM packages (RevenueCat etc.) use automatic signing
+          CODE_SIGN_STYLE = Manual
+          CODE_SIGN_IDENTITY = Apple Distribution
+          DEVELOPMENT_TEAM = ${IOS_TEAM_ID}
+          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_UUID}
+          OTHER_CODE_SIGN_FLAGS = --keychain ${KEYCHAIN_PATH}
+          XCCONFIG_EOF
+
           # Use xcpretty if available for cleaner output
           if command -v xcpretty &>/dev/null; then
             XCPRETTY_CMD="xcpretty --color"
@@ -302,8 +314,9 @@ jobs:
             XCPRETTY_CMD="cat"
           fi
 
-          # Build with manual signing - pass profile UUID directly
-          # Do NOT use -allowProvisioningUpdates (requires API key)
+          # Build with manual signing for the App target only
+          # KEY: Do NOT pass PROVISIONING_PROFILE as a global flag (it applies to ALL targets)
+          # Instead, set it only in the pbxproj (done in previous step) and pass UUID via SPECIFIER
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
@@ -317,7 +330,6 @@ jobs:
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE="$PROFILE_UUID" \
             PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
