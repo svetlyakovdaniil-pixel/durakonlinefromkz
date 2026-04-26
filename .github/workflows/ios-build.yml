@@ -172,24 +172,23 @@ jobs:
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
         run: |
-          PROFILE_PATH="$HOME/Library/MobileDevice/Provisioning Profiles"
+          # Use the actual home directory of the runner user (not $HOME which may differ)
+          RUNNER_HOME=$(eval echo ~$(whoami))
+          PROFILE_PATH="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
           mkdir -p "$PROFILE_PATH"
+
+          echo "Installing profile to: $PROFILE_PATH"
+          echo "Runner user: $(whoami)"
+          echo "Runner home: $RUNNER_HOME"
 
           # Decode the profile
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
 
-          # Extract UUID using strings command (fast, no hanging)
+          # Extract UUID using strings (fast, no hanging - avoids security cms which can hang)
           PROFILE_UUID=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
-            grep -A1 '<key>UUID</key>' | grep '<string>' | \
-            sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
+            grep -E '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' | head -1)
 
-          # Fallback: grep for UUID pattern directly
-          if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
-              grep -E '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' | head -1)
-          fi
-
-          # Extract Name using strings command
+          # Extract Name using strings (also fast, no hanging)
           PROFILE_NAME=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
             grep -A1 '<key>Name</key>' | grep '<string>' | \
             sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
@@ -202,15 +201,16 @@ jobs:
             exit 1
           fi
 
-          # Install profile (user directory only - NO sudo needed)
+          # Install profile with UUID as filename (Xcode requires this)
           cp "$RUNNER_TEMP/profile.mobileprovision" "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
           echo "Profile installed: $PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
 
-          # List installed profiles
-          ls -la "$PROFILE_PATH/" | grep "${PROFILE_UUID}" || echo "Profile file check"
+          # Verify the file is there
+          ls -la "$PROFILE_PATH/${PROFILE_UUID}.mobileprovision"
 
           echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
           echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
+          echo "PROFILE_PATH=$PROFILE_PATH" >> $GITHUB_ENV
 
       # ── 14. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
@@ -293,7 +293,7 @@ jobs:
             CODE_SIGN_STYLE=Manual \
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PROFILE_UUID" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_UUID" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
 
