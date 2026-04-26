@@ -317,36 +317,47 @@ jobs:
           done
           echo "Pods xcconfig files patched"
 
-      # ── 15. Build & Archive ────────────────────────────────────────────────
+      # ── 15. Setup App Store Connect API Key ──────────────────────────────
+      - name: Setup App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          # Write the .p8 key file for xcodebuild -allowProvisioningUpdates
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$API_KEY_DIR"
+          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          # The content may be base64-encoded or raw PEM - handle both
+          if echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | grep -q 'BEGIN'; then
+            # Already PEM format
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
+          else
+            # Base64 encoded
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH"
+          fi
+
+          echo "API key file size: $(wc -c < "$API_KEY_PATH") bytes"
+          echo "API key path: $API_KEY_PATH"
+          echo "API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
+          echo "API_KEY_ID=$APP_STORE_CONNECT_API_KEY_ID" >> $GITHUB_ENV
+
+      # ── 16. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cd ios/App
 
           echo "=== Build environment ==="
-          echo "Profile UUID: $PROFILE_UUID"
-          echo "Profile Name: $PROFILE_NAME"
           echo "Team ID: $IOS_TEAM_ID"
           echo "Bundle ID: $IOS_BUNDLE_ID"
+          echo "API Key Path: $API_KEY_PATH"
+          echo "API Key ID: $API_KEY_ID"
+          echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
           echo "Keychain: $KEYCHAIN_PATH"
-
-          # Verify profile is installed
-          echo "=== Installed profiles ==="
-          ls -la "$PROFILES_DIR/" 2>/dev/null || echo "No profiles directory"
-
-          # Create a target-specific xcconfig to apply profile only to App target
-          # This prevents the profile from being applied to RevenueCat and other SPM packages
-          cat > /tmp/App.xcconfig << XCCONFIG_EOF
-          // Only apply manual signing to the App target
-          // SPM packages (RevenueCat etc.) use automatic signing
-          CODE_SIGN_STYLE = Manual
-          CODE_SIGN_IDENTITY = Apple Distribution
-          DEVELOPMENT_TEAM = ${IOS_TEAM_ID}
-          PROVISIONING_PROFILE_SPECIFIER = ${PROFILE_UUID}
-          OTHER_CODE_SIGN_FLAGS = --keychain ${KEYCHAIN_PATH}
-          XCCONFIG_EOF
 
           # Use xcpretty if available for cleaner output
           if command -v xcpretty &>/dev/null; then
@@ -355,24 +366,25 @@ jobs:
             XCPRETTY_CMD="cat"
           fi
 
-          # Build with manual signing
-          # IMPORTANT: Do NOT pass PROVISIONING_PROFILE_SPECIFIER as CLI flag - it applies to ALL targets
-          # including RevenueCat SPM packages which don't support manual signing.
-          # The profile specifier is set in the pbxproj for the App target only.
-          # We pass OTHER_CODE_SIGN_FLAGS to point to our keychain.
+          # Build with AUTOMATIC signing + API key
+          # -allowProvisioningUpdates tells Xcode to download/register profiles from Apple servers
+          # This completely bypasses the local profile database lookup issue
           xcodebuild archive \
             -workspace App.xcworkspace \
             -scheme App \
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Manual \
-            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_STYLE=Automatic \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log | eval "$XCPRETTY_CMD"
 
@@ -388,6 +400,7 @@ jobs:
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
           <?xml version="1.0" encoding="UTF-8"?>
@@ -403,12 +416,7 @@ jobs:
             <key>uploadSymbols</key>
             <true/>
             <key>signingStyle</key>
-            <string>manual</string>
-            <key>provisioningProfiles</key>
-            <dict>
-              <key>${IOS_BUNDLE_ID}</key>
-              <string>${PROFILE_UUID}</string>
-            </dict>
+            <string>automatic</string>
           </dict>
           </plist>
           PLIST_EOF
@@ -422,6 +430,10 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             2>&1 | tee /tmp/export.log
 
           echo "=== IPA directory contents ==="
