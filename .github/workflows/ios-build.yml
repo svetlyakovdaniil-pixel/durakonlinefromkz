@@ -148,8 +148,9 @@ jobs:
             cp /tmp/CapacitorCompatibility.swift "$srcdir/CapacitorCompatibility.swift"
           done
 
-          # Also inject into Pods directories (CocoaPods copies of plugins)
-          find "$GITHUB_WORKSPACE/ios/App/Pods" -path "*/Sources/Capacitor*" -type d 2>/dev/null | while read srcdir; do
+          # Also inject into ALL Pods source directories (CocoaPods copies of plugins)
+          find "$GITHUB_WORKSPACE/ios/App/Pods" -name "*.swift" -path "*/Sources/*" 2>/dev/null | \
+            xargs -I{} dirname {} | sort -u | while read srcdir; do
             echo "Injecting into Pods: $srcdir"
             cp /tmp/CapacitorCompatibility.swift "$srcdir/CapacitorCompatibility.swift"
           done
