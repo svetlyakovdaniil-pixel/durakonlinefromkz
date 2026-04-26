@@ -575,6 +575,16 @@ jobs:
             echo ""
             echo "=== FAILED BUILD COMMANDS ==="
             grep 'error\|failed\|FAILED' /tmp/xcodebuild.log | tail -30 || true
+            echo ""
+            echo "=== RESOLVED SPM PACKAGES (Package.resolved) ==="
+            find "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
+              echo "--- $f ---"
+              cat "$f"
+            done
+            echo "=== PATCHED SplashScreenPlugin.swift content ==="
+            cat "$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/ios/Sources/SplashScreenPlugin/SplashScreenPlugin.swift" 2>/dev/null || echo "File not found"
+            echo "=== PATCHED SplashScreen Package.swift content ==="
+            cat "$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/Package.swift" 2>/dev/null || echo "File not found"
             exit 1
           fi
           echo "Archive created successfully!"
