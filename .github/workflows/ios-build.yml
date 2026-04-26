@@ -229,10 +229,13 @@ jobs:
           #   2. JSTypes.coerceDictionaryToJSObject() - removed in 8.1.0
           #   3. call.getArray(key, Type.self) - overload removed, now only getArray(key, defaultValue)
           echo "=== Patching PushNotifications API incompatibilities ==="
-          PUSH_HANDLER="$PWD/node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
-          PUSH_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.1.0/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsPlugin.swift"
+          # Use find to locate files dynamically (pnpm path varies by @capacitor/core version)
+          PUSH_HANDLER=$(find "$PWD/node_modules" -path "*/push-notifications*/PushNotificationsHandler.swift" 2>/dev/null | head -1)
+          PUSH_PLUGIN=$(find "$PWD/node_modules" -path "*/push-notifications*/PushNotificationsPlugin.swift" 2>/dev/null | head -1)
+          echo "Found PushNotificationsHandler: $PUSH_HANDLER"
+          echo "Found PushNotificationsPlugin: $PUSH_PLUGIN"
 
-          if [ -f "$PUSH_HANDLER" ]; then
+          if [ -n "$PUSH_HANDLER" ] && [ -f "$PUSH_HANDLER" ]; then
             echo "Patching PushNotificationsHandler.swift..."
             # Fix 1: Replace getConfig().getArray("presentationOptions") with getConfig().getConfigJSON()["presentationOptions"]
             # getArray() was removed/changed in @capacitor/ios@8.1.0 - use getConfigJSON() dict access instead
@@ -242,9 +245,11 @@ jobs:
             perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER" 2>/dev/null || true
             echo "After patch:"
             grep -n 'getArray\|coerceDictionary' "$PUSH_HANDLER" | head -5
+          else
+            echo "WARNING: PushNotificationsHandler.swift not found!"
           fi
 
-          if [ -f "$PUSH_PLUGIN" ]; then
+          if [ -n "$PUSH_PLUGIN" ] && [ -f "$PUSH_PLUGIN" ]; then
             echo "Patching PushNotificationsPlugin.swift..."
             # Fix 3: Replace call.getArray("notifications", JSObject.self) with call.getArray("notifications") as? [JSObject]
             # The old API: getArray<T>(_ key: String, _ ofType: T.Type) -> [T]?
@@ -252,6 +257,8 @@ jobs:
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
             echo "After patch:"
             grep -n 'getArray' "$PUSH_PLUGIN" | head -5
+          else
+            echo "WARNING: PushNotificationsPlugin.swift not found!"
           fi
           echo "=== PushNotifications API patch complete ==="
 
@@ -282,34 +289,42 @@ jobs:
             perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
 
-          # PATCH 4: Fix SplashScreenPlugin.swift for capacitor-swift-pm 8.1.0 binary API.
-          # The binary XCFramework in capacitor-swift-pm@8.1.0 has these issues:
+          # PATCH 4: Fix SplashScreenPlugin.swift for capacitor-swift-pm binary API.
+          # The binary XCFramework in capacitor-swift-pm has these issues:
           # - bridge?.viewController is not accessible via 'any CAPBridgeProtocol' existential
           #   FIX: use self.webView?.superview (CAPPlugin has direct webView property)
           # - call.getInt("key") single-arg form may not be accessible from binary
           #   FIX: use (call.options["key"] as? Int)
           # - call.getBool("key") single-arg form may not be accessible from binary
           #   FIX: use (call.options["key"] as? Bool)
-          # NOTE: fromHex: and getString are available in 8.1.0 - do NOT change them
-          echo "=== Patching SplashScreenPlugin.swift for capacitor-swift-pm 8.1.0 binary API ==="
-          SPLASH_PLUGIN="$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/ios/Sources/SplashScreenPlugin/SplashScreenPlugin.swift"
-          if [ -f "$SPLASH_PLUGIN" ]; then
+          # - PluginConfig.getString() may not be accessible from binary
+          #   FIX: use getConfigJSON()["key"] as? String
+          # - UIColor.capacitor.color(fromHex:) may not be accessible from binary
+          #   FIX: use UIColor.capacitor.color(argb:) with hex->UInt32 conversion
+          echo "=== Patching SplashScreenPlugin.swift for capacitor-swift-pm binary API ==="
+          # Use find to locate files dynamically (pnpm path varies by @capacitor/core version)
+          SPLASH_PLUGIN=$(find "$PWD/node_modules" -name "SplashScreenPlugin.swift" -path "*/splash-screen/*" 2>/dev/null | head -1)
+          echo "Found SplashScreenPlugin: $SPLASH_PLUGIN"
+          if [ -n "$SPLASH_PLUGIN" ] && [ -f "$SPLASH_PLUGIN" ]; then
             echo "Patching: $SPLASH_PLUGIN"
-            echo "Before patch:"
-            cat -n "$SPLASH_PLUGIN"
 
             # Fix 1: bridge?.viewController?.view -> self.webView?.superview
-            # viewController is not accessible via 'any CAPBridgeProtocol' existential in Swift 5.7+
-            # CAPPlugin has a direct 'webView' property (from CAPPlugin.h), use that instead
             perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$SPLASH_PLUGIN" 2>/dev/null || true
 
             # Fix 2: call.getInt("key") -> (call.options["key"] as? Int)
-            # Single-arg getInt/getBool may not be accessible from binary framework
             perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
             perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
 
+            # Fix 3: getConfig().getString("key") -> getConfig().getConfigJSON()["key"] as? String
+            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/getConfig().getConfigJSON()["$1"] as? String/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+
+            # Fix 4: UIColor.capacitor.color(fromHex: x) -> UIColor.capacitor.color(argb: UInt32(x.replacingOccurrences(of:"#",with:""), radix:16) ?? 0)
+            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$SPLASH_PLUGIN" 2>/dev/null || true
+
             echo "After patch:"
             cat -n "$SPLASH_PLUGIN"
+          else
+            echo "WARNING: SplashScreenPlugin.swift not found in node_modules!"
           fi
 
           # Also patch the Pods copy of SplashScreenPlugin.swift if it exists
@@ -318,6 +333,8 @@ jobs:
             perl -i -pe 's/bridge\?\.viewController\?\.view/self.webView?.superview/g' "$f" 2>/dev/null || true
             perl -i -pe 's/call\.getInt\("([^"]+)"\)/(call.options["$1"] as? Int)/g' "$f" 2>/dev/null || true
             perl -i -pe 's/call\.getBool\("([^"]+)"\)/(call.options["$1"] as? Bool)/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)/getConfig().getConfigJSON()["$1"] as? String/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:\s*([^)]+)\)/UIColor.capacitor.color(argb: UInt32($1.replacingOccurrences(of: "#", with: ""), radix: 16) ?? 0)/g' "$f" 2>/dev/null || true
           done
           echo "=== SplashScreenPlugin patch complete ==="
 
@@ -581,10 +598,15 @@ jobs:
               echo "--- $f ---"
               cat "$f"
             done
+            echo "=== FINDING ACTUAL SplashScreen paths ==="
+            find "$PWD/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null
+            find "$PWD/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null
             echo "=== PATCHED SplashScreenPlugin.swift content ==="
-            cat "$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/ios/Sources/SplashScreenPlugin/SplashScreenPlugin.swift" 2>/dev/null || echo "File not found"
+            SPLASH_PLUGIN=$(find "$PWD/node_modules/.pnpm" -name "SplashScreenPlugin.swift" 2>/dev/null | head -1)
+            if [ -n "$SPLASH_PLUGIN" ]; then cat "$SPLASH_PLUGIN"; else echo "File not found"; fi
             echo "=== PATCHED SplashScreen Package.swift content ==="
-            cat "$PWD/node_modules/.pnpm/@capacitor+splash-screen@8.0.1_@capacitor+core@8.1.0/node_modules/@capacitor/splash-screen/Package.swift" 2>/dev/null || echo "File not found"
+            SPLASH_PKG=$(find "$PWD/node_modules/.pnpm" -path "*splash-screen*/Package.swift" 2>/dev/null | head -1)
+            if [ -n "$SPLASH_PKG" ]; then cat "$SPLASH_PKG"; else echo "File not found"; fi
             exit 1
           fi
           echo "Archive created successfully!"
