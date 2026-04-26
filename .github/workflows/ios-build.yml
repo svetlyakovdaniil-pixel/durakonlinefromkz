@@ -283,27 +283,16 @@ jobs:
                            f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
           content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
                            f'DEVELOPMENT_TEAM = {team_id};', content)
+          # Use AUTOMATIC signing - Xcode will use API key to download profiles from Apple servers
+          # This bypasses the local profile database lookup issue entirely
           content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
-                           'CODE_SIGN_STYLE = Manual;', content)
+                           'CODE_SIGN_STYLE = Automatic;', content)
+          # Remove any hardcoded CODE_SIGN_IDENTITY (let Xcode choose automatically)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
-                           'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
-          # Set PROVISIONING_PROFILE in pbxproj for the App target
-          # KEY DISTINCTION:
-          # - PROVISIONING_PROFILE_SPECIFIER = Xcode searches its database (fails on CI if DB not refreshed)
-          # - PROVISIONING_PROFILE = Xcode uses UUID to find file directly in ~/Library/MobileDevice/Provisioning Profiles/
-          # We use PROVISIONING_PROFILE (UUID-based file lookup) which is more reliable on CI
-          if profile_uuid:
-              # First remove any existing profile settings
-              content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
-              content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
-              # Add PROVISIONING_PROFILE after CODE_SIGN_IDENTITY in App target sections
-              content = content.replace(
-                  'CODE_SIGN_IDENTITY = "Apple Distribution";',
-                  f'CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
-              )
-          else:
-              content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
-              content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+                           'CODE_SIGN_IDENTITY = "";', content)
+          # Remove ALL manual provisioning profile settings - let Xcode handle automatically
+          content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+          content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 
           with open(pbxproj_path, "w") as f:
               f.write(content)
