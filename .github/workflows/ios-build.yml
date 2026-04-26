@@ -401,15 +401,12 @@ jobs:
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
             echo "========================================"
-            echo "=== ARCHIVE FAILED - SWIFT ERRORS ==="
+            echo "=== ARCHIVE FAILED - FIRST 30 ERRORS ==="
             echo "========================================"
-            grep ' error:' /tmp/xcodebuild.log || true
+            grep -m 30 ' error:' /tmp/xcodebuild.log || echo "No 'error:' lines found"
             echo ""
-            echo "=== RESOLVED SPM PACKAGES ==="
-            find "$RUNNER_TEMP/SourcePackages" -name "Package.resolved" 2>/dev/null | while read f; do
-              echo "--- $f ---"
-              cat "$f"
-            done
+            echo "=== LAST 50 LINES OF BUILD LOG ==="
+            tail -50 /tmp/xcodebuild.log
             exit 1
           fi
           echo "Archive created successfully!"
