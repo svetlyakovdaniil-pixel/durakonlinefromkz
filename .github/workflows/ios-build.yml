@@ -22,7 +22,7 @@ jobs:
   build-ios:
     name: Build iOS App
     runs-on: self-hosted
-    timeout-minutes: 90
+    timeout-minutes: 120
 
     steps:
       # ── 0. Setup PATH ──────────────────────────────────────────────────────
