@@ -275,18 +275,19 @@ jobs:
                            'CODE_SIGN_STYLE = Manual;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
                            'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
-          # Set PROVISIONING_PROFILE_SPECIFIER in pbxproj for the App target
-          # This is the correct way - set it in the project file, NOT via CLI flags
-          # CLI flags apply to ALL targets (including RevenueCat which doesn't support it)
+          # Set PROVISIONING_PROFILE in pbxproj for the App target
+          # KEY DISTINCTION:
+          # - PROVISIONING_PROFILE_SPECIFIER = Xcode searches its database (fails on CI if DB not refreshed)
+          # - PROVISIONING_PROFILE = Xcode uses UUID to find file directly in ~/Library/MobileDevice/Provisioning Profiles/
+          # We use PROVISIONING_PROFILE (UUID-based file lookup) which is more reliable on CI
           if profile_uuid:
               # First remove any existing profile settings
               content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
               content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
-              # Add PROVISIONING_PROFILE_SPECIFIER after CODE_SIGN_IDENTITY in App target sections
-              # We add it after each CODE_SIGN_IDENTITY = "Apple Distribution"; line
+              # Add PROVISIONING_PROFILE after CODE_SIGN_IDENTITY in App target sections
               content = content.replace(
                   'CODE_SIGN_IDENTITY = "Apple Distribution";',
-                  f'CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
+                  f'CODE_SIGN_IDENTITY = "Apple Distribution";\n\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_uuid}";'
               )
           else:
               content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
