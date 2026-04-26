@@ -170,6 +170,7 @@ jobs:
       - name: Install Provisioning Profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
           # Use the actual home directory of the runner user
           RUNNER_HOME=$(eval echo ~$(whoami))
@@ -212,6 +213,17 @@ jobs:
 
           echo "Profile UUID: $PROFILE_UUID"
           echo "Profile Name: $PROFILE_NAME"
+
+          # === FULL DIAGNOSTICS: show Team ID, expiry, bundle IDs from profile ===
+          if [ -f "$PLIST_TMP" ]; then
+            echo "=== PROFILE DIAGNOSTICS ==="
+            echo "Team ID in profile: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "Team Name: $(/usr/libexec/PlistBuddy -c 'Print :TeamName' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "Expiry: $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "Bundle IDs: $(/usr/libexec/PlistBuddy -c 'Print :Entitlements:application-identifier' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "App ID Name: $(/usr/libexec/PlistBuddy -c 'Print :AppIDName' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "IOS_TEAM_ID secret value: $IOS_TEAM_ID"
+          fi
 
           # Install profile with UUID as filename (Xcode requires this)
           INSTALLED_PROFILE="$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
