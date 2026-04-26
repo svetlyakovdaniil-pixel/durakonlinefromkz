@@ -321,13 +321,6 @@ jobs:
           done
           echo "Pods xcconfig files patched"
 
-          echo "Pre-resolving SPM packages..."
-          xcodebuild -resolvePackageDependencies \
-            -workspace App.xcworkspace \
-            -scheme App \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            2>&1 | tail -5 || true
-
           echo "Xcode project updated"
 
       # ── 15. Build & Archive ────────────────────────────────────────────────
