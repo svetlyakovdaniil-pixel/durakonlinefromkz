@@ -184,12 +184,30 @@ jobs:
           # Decode the profile
           echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$RUNNER_TEMP/profile.mobileprovision"
 
-          # Extract UUID using strings (fast, no hanging - avoids security cms which can hang)
-          PROFILE_UUID=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
-            grep -E '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$' | head -1)
+          # Decode the CMS/PKCS7 container using openssl (fast, no hanging)
+          # openssl smime -verify -noverify does NOT check certificate validity - just decodes
+          PLIST_CONTENT=$(openssl smime -verify -noverify -inform DER \
+            -in "$RUNNER_TEMP/profile.mobileprovision" 2>/dev/null)
 
-          # Extract Name using strings (also fast, no hanging)
-          PROFILE_NAME=$(strings "$RUNNER_TEMP/profile.mobileprovision" | \
+          # Extract UUID from the plist XML
+          PROFILE_UUID=$(echo "$PLIST_CONTENT" | \
+            /usr/libexec/PlistBuddy -c 'Print :UUID' /dev/stdin 2>/dev/null || true)
+
+          # Fallback: grep UUID pattern from plist XML
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID=$(echo "$PLIST_CONTENT" | \
+              grep -A1 '<key>UUID</key>' | grep '<string>' | \
+              sed 's/.*<string>\(.*\)<\/string>.*/\1/' | tr -d '[:space:]' | head -1)
+          fi
+
+          # Last resort: grep UUID pattern directly from binary (UUID is stored as text in XML)
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID=$(grep -a -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{12\}' \
+              "$RUNNER_TEMP/profile.mobileprovision" | head -1)
+          fi
+
+          # Extract Name from the plist XML
+          PROFILE_NAME=$(echo "$PLIST_CONTENT" | \
             grep -A1 '<key>Name</key>' | grep '<string>' | \
             sed 's/.*<string>\(.*\)<\/string>.*/\1/' | head -1)
 
@@ -198,6 +216,8 @@ jobs:
 
           if [ -z "$PROFILE_UUID" ]; then
             echo "ERROR: Could not extract UUID from provisioning profile!"
+            echo "=== Plist content preview ==="
+            echo "$PLIST_CONTENT" | head -50 || true
             exit 1
           fi
 
