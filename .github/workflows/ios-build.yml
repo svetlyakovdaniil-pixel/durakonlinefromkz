@@ -239,7 +239,7 @@ jobs:
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PUSH_HANDLER" 2>/dev/null || true
             # Fix 2: Replace JSTypes.coerceDictionaryToJSObject(request.content.userInfo) with explicit cast
             # In @capacitor/ios@8.1.0, the method signature requires explicit NSDictionary or [AnyHashable:Any]?
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$PUSH_HANDLER" 2>/dev/null || true
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER" 2>/dev/null || true
             echo "After patch:"
             grep -n 'getArray\|coerceDictionary' "$PUSH_HANDLER" | head -5
           fi
@@ -249,7 +249,7 @@ jobs:
             # Fix 3: Replace call.getArray("notifications", JSObject.self) with call.getArray("notifications") as? [JSObject]
             # The old API: getArray<T>(_ key: String, _ ofType: T.Type) -> [T]?
             # The new API: getArray(_ key: String, _ defaultValue: JSArray? = nil) -> JSArray?
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$PUSH_PLUGIN" 2>/dev/null || true
             echo "After patch:"
             grep -n 'getArray' "$PUSH_PLUGIN" | head -5
           fi
@@ -262,24 +262,24 @@ jobs:
           if [ -f "$PODS_PUSH_HANDLER" ]; then
             echo "Patching Pods PushNotificationsHandler.swift..."
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PODS_PUSH_HANDLER" 2>/dev/null || true
           fi
 
           if [ -f "$PODS_PUSH_PLUGIN" ]; then
             echo "Patching Pods PushNotificationsPlugin.swift..."
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$PODS_PUSH_PLUGIN" 2>/dev/null || true
           fi
 
           # Also search for these files in Pods/ by name (path may differ)
           find "$PWD/ios/App/Pods" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
             echo "Patching Pods: $f"
             perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\)/JSTypes.coerceDictionaryToJSObject(request.content.userInfo as [AnyHashable: Any]?)/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
           done
 
           find "$PWD/ios/App/Pods" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
             echo "Patching Pods: $f"
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$f" 2>/dev/null || true
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", nil) as? [JSObject]/g' "$f" 2>/dev/null || true
           done
 
           echo "=== Verifying no remaining call.reject or call.unimplemented in Swift files ===" 
