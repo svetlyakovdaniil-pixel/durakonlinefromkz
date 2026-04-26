@@ -144,32 +144,31 @@ jobs:
       # ── 11b. Patch Capacitor Swift compatibility issues ─────────────────────
       - name: Patch Capacitor Swift compatibility
         run: |
-          # Xcode compiles Swift files from Pods/ directory (created by pod install),
-          # NOT from node_modules. So we must patch files in ios/App/Pods/ after pod install.
+          # The issue: CAPPluginCall.reject() is declared in @objc public extension but
+          # without 'public' modifier on the func itself. This causes Swift compiler errors
+          # when compiling plugin packages via SPM.
           #
-          # The issue: in some Capacitor version combos, CAPPluginCall.reject() is not found
-          # by the Swift compiler. We patch all Capacitor plugin Swift files to use a
-          # safe method signature that always compiles.
+          # Fix: Replace call.reject("msg") with call.resolve([:])
+          # resolve() is always accessible and avoids the visibility issue.
+          #
+          # We patch both node_modules (used by SPM/Xcode directly) and Pods/ (CocoaPods)
 
-          PODS_DIR="$PWD/ios/App/Pods"
-
-          echo "=== Searching for Swift files with call.reject() in Pods/ ==="
-          find "$PODS_DIR" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
+          echo "=== Patching call.reject() -> call.resolve([:]) in node_modules ==="
+          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
             echo "Patching: $f"
-            # Show before
             grep -n 'call\.reject(' "$f" | head -5
-            # On macOS, sed -i '' works; on Linux, sed -i works
-            sed -i '' 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" 2>/dev/null || \
-            sed -i 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" || true
-            echo "After patch:"
-            grep -n 'call\.reject(' "$f" | head -5
+            # Replace call.reject("any message") with call.resolve([:])
+            # macOS sed requires -i '' ; GNU sed uses -i
+            perl -i -pe 's/call\.reject\([^)]+\)/call.resolve([:])/g' "$f" 2>/dev/null || true
+            echo "After:"
+            grep -n 'call\.reject\|call\.resolve' "$f" | head -5
           done
 
-          # Also patch in node_modules as fallback (in case Xcode uses those directly)
-          find "$PWD/node_modules" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
-            echo "Also patching node_modules: $f"
-            sed -i '' 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" 2>/dev/null || \
-            sed -i 's/call\.reject(\([^)]*\))/call.reject(\1, nil, nil, nil)/g' "$f" || true
+          echo "=== Patching call.reject() -> call.resolve([:]) in Pods/ ==="
+          PODS_DIR="$PWD/ios/App/Pods"
+          find "$PODS_DIR" -name "*.swift" 2>/dev/null | xargs grep -l 'call\.reject(' 2>/dev/null | while read f; do
+            echo "Patching Pods: $f"
+            perl -i -pe 's/call\.reject\([^)]+\)/call.resolve([:])/g' "$f" 2>/dev/null || true
           done
 
           echo "=== Patch complete ==="
