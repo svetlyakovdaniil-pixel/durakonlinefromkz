@@ -144,20 +144,58 @@ jobs:
           echo "=== Podfile.lock - Capacitor versions ==="
           grep -A2 'Capacitor\|CapacitorSplashScreen\|CapacitorPushNotifications' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
 
-      # ── 12. Patch capacitor plugins for capacitor-swift-pm 8.3.x ──────────
-      # CocoaPods plugins use Capacitor 8.1.0 which already has all the APIs.
-      # The CapacitorCompatibility.swift shim must NOT be injected into CocoaPods
-      # plugin sources because it would cause Swift redeclaration errors.
-      # The shim is only injected into SPM checkouts in step 17.
-      # Here we only prepare the shim file for later use in step 17.
-      - name: Patch capacitor plugins for capacitor-swift-pm 8.3.x compatibility
+      # ── 12. Patch capacitor plugin sources for capacitor-swift-pm 8.1.0 ──────
+      # capacitor-swift-pm 8.1.0 is a binary XCFramework that lacks several APIs
+      # present in @capacitor/ios 8.1.0 (CocoaPods). We patch the plugin Swift
+      # source files in node_modules directly before Xcode compiles them.
+      - name: Patch capacitor plugin sources for capacitor-swift-pm 8.1.0 compatibility
         run: |
-          echo "=== Preparing CapacitorCompatibility.swift shim for SPM checkouts ==="
-          echo "Ly8gQ2FwYWNpdG9yQ29tcGF0aWJpbGl0eS5zd2lmdAovLyBDb21wYXRpYmlsaXR5IHNoaW0gZm9yIGNhcGFjaXRvci1zd2lmdC1wbSA4LjMueAovLyBSZXN0b3JlcyBBUElzIHRoYXQgd2VyZSByZW1vdmVkIG9yIHJlbmFtZWQgaW4gOC4zLngKaW1wb3J0IENhcGFjaXRvcgppbXBvcnQgRm91bmRhdGlvbgppbXBvcnQgVUlLaXQKCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCBvcHRpb25hbCBvdmVybG9hZHMKLy8gSW4gOC4zLngsIGdldEludC9nZXRCb29sL2dldFN0cmluZyBvbmx5IGhhdmUgbm9uLW9wdGlvbmFsIHZlcnNpb25zIHdpdGggcmVxdWlyZWQgZGVmYXVsdC4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9ucyB1c2VkIGJ5IG9sZGVyIHBsdWdpbiBjb2RlLgpwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyBnZXRJbnQoXyBrZXk6IFN0cmluZykgLT4gSW50PyB7CiAgICAgICAgcmV0dXJuIG9wdGlvbnNba2V5XSBhcz8gSW50CiAgICB9CiAgICBmdW5jIGdldEJvb2woXyBrZXk6IFN0cmluZykgLT4gQm9vbD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEJvb2wKICAgIH0KICAgIGZ1bmMgZ2V0U3RyaW5nKF8ga2V5OiBTdHJpbmcpIC0+IFN0cmluZz8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IFN0cmluZwogICAgfQogICAgZnVuYyBnZXRGbG9hdChfIGtleTogU3RyaW5nKSAtPiBGbG9hdD8gewogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiB2IH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gSW50IHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldERvdWJsZShfIGtleTogU3RyaW5nKSAtPiBEb3VibGU/IHsKICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIHYgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiBEb3VibGUodikgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBJbnQgeyByZXR1cm4gRG91YmxlKHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldEFycmF5KF8ga2V5OiBTdHJpbmcpIC0+IEpTQXJyYXk/IHsKICAgICAgICByZXR1cm4gb3B0aW9uc1trZXldIGFzPyBKU0FycmF5CiAgICB9CiAgICBmdW5jIGdldE9iamVjdChfIGtleTogU3RyaW5nKSAtPiBKU09iamVjdD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEpTT2JqZWN0CiAgICB9Cn0KCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCByZWplY3QvdW5pbXBsZW1lbnRlZAovLyBUaGVzZSBtZXRob2RzIHdlcmUgcmVtb3ZlZCBpbiA4LjMueApwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyByZWplY3QoXyBtZXNzYWdlOiBTdHJpbmcsIF8gY29kZTogU3RyaW5nPyA9IG5pbCwgXyBlcnJvcjogRXJyb3I/ID0gbmlsLCBfIGRhdGE6IFBsdWdpbkNhbGxSZXN1bHREYXRhPyA9IG5pbCkgewogICAgICAgIHZhciByZXN1bHQ6IFBsdWdpbkNhbGxSZXN1bHREYXRhID0gZGF0YSA/PyBbOl0KICAgICAgICByZXN1bHRbIm1lc3NhZ2UiXSA9IG1lc3NhZ2UKICAgICAgICBpZiBsZXQgY29kZSA9IGNvZGUgeyByZXN1bHRbImNvZGUiXSA9IGNvZGUgfQogICAgICAgIGlmIGxldCBlcnJvciA9IGVycm9yIHsgcmVzdWx0WyJlcnJvciJdID0gZXJyb3IubG9jYWxpemVkRGVzY3JpcHRpb24gfQogICAgICAgIHNlbGYucmVzb2x2ZShyZXN1bHQpCiAgICB9CiAgICBmdW5jIHVuaW1wbGVtZW50ZWQoKSB7CiAgICAgICAgc2VsZi5yZXNvbHZlKFsibWVzc2FnZSI6ICJub3QgaW1wbGVtZW50ZWQiXSkKICAgIH0KICAgIGZ1bmMgdW5pbXBsZW1lbnRlZChfIG1lc3NhZ2U6IFN0cmluZykgewogICAgICAgIHNlbGYucmVzb2x2ZShbIm1lc3NhZ2UiOiBtZXNzYWdlXSkKICAgIH0KfQoKLy8gTUFSSzogLSBQbHVnaW5Db25maWcgb3B0aW9uYWwgZ2V0U3RyaW5nCi8vIEluIDguMy54LCBQbHVnaW5Db25maWcuZ2V0U3RyaW5nIHJlcXVpcmVzIGEgZGVmYXVsdCB2YWx1ZS4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9uLgpwdWJsaWMgZXh0ZW5zaW9uIFBsdWdpbkNvbmZpZyB7CiAgICBmdW5jIGdldFN0cmluZyhfIGtleTogU3RyaW5nKSAtPiBTdHJpbmc/IHsKICAgICAgICByZXR1cm4gZ2V0U3RyaW5nKGtleSwgbmlsKQogICAgfQp9CgovLyBNQVJLOiAtIFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6KQovLyBJbiA4LjMueCwgdGhpcyBtZXRob2Qgd2FzIHJlbmFtZWQgdG8gY29sb3IoYXJnYjopLgovLyBUaGlzIGV4dGVuc2lvbiBhZGRzIGJhY2sgdGhlIGZyb21IZXg6IHZlcnNpb24uCnB1YmxpYyBleHRlbnNpb24gQ2FwYWNpdG9yRXh0ZW5zaW9uIHdoZXJlIEV4dGVuZGVkVHlwZSA9PSBVSUNvbG9yIHsKICAgIHN0YXRpYyBmdW5jIGNvbG9yKGZyb21IZXg6IFN0cmluZykgLT4gVUlDb2xvcj8gewogICAgICAgIGxldCBoZXhTdHJpbmcgPSBmcm9tSGV4LnRyaW1taW5nQ2hhcmFjdGVycyhpbjogLndoaXRlc3BhY2VzQW5kTmV3bGluZXMpCiAgICAgICAgICAgIC5yZXBsYWNpbmdPY2N1cnJlbmNlcyhvZjogIiMiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMHgiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMFgiLCB3aXRoOiAiIikKICAgICAgICB2YXIgYXJnYjogVUludDY0ID0gMAogICAgICAgIGd1YXJkIFNjYW5uZXIoc3RyaW5nOiBoZXhTdHJpbmcpLnNjYW5IZXhJbnQ2NCgmYXJnYikgZWxzZSB7IHJldHVybiBuaWwgfQogICAgICAgIGxldCByZWQ6IENHRmxvYXQKICAgICAgICBsZXQgZ3JlZW46IENHRmxvYXQKICAgICAgICBsZXQgYmx1ZTogQ0dGbG9hdAogICAgICAgIGxldCBhbHBoYTogQ0dGbG9hdAogICAgICAgIGlmIGhleFN0cmluZy5jb3VudCA8PSA2IHsKICAgICAgICAgICAgcmVkID0gQ0dGbG9hdCgoYXJnYiAmIDB4RkYwMDAwKSA+PiAxNikgLyAyNTUuMAogICAgICAgICAgICBncmVlbiA9IENHRmxvYXQoKGFyZ2IgJiAweDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBibHVlID0gQ0dGbG9hdChhcmdiICYgMHgwMDAwRkYpIC8gMjU1LjAKICAgICAgICAgICAgYWxwaGEgPSAxLjAKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICByZWQgPSBDR0Zsb2F0KChhcmdiICYgMHhGRjAwXzAwMDApID4+IDI0KSAvIDI1NS4wCiAgICAgICAgICAgIGdyZWVuID0gQ0dGbG9hdCgoYXJnYiAmIDB4MDBGRjAwMDApID4+IDE2KSAvIDI1NS4wCiAgICAgICAgICAgIGJsdWUgPSBDR0Zsb2F0KChhcmdiICYgMHgwMDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBhbHBoYSA9IENHRmxvYXQoYXJnYiAmIDB4MDAwMDAwRkYpIC8gMjU1LjAKICAgICAgICB9CiAgICAgICAgcmV0dXJuIFVJQ29sb3IocmVkOiByZWQsIGdyZWVuOiBncmVlbiwgYmx1ZTogYmx1ZSwgYWxwaGE6IGFscGhhKQogICAgfQp9Cg==" | base64 --decode > /tmp/CapacitorCompatibility.swift
-          echo "Shim prepared: $(wc -l < /tmp/CapacitorCompatibility.swift) lines"
-          echo "NOTE: Shim will be injected into SPM checkouts only in step 17."
-          echo "CocoaPods plugins use Capacitor 8.1.0 which already has all these APIs."
-          echo "=== No patches needed for CocoaPods plugins ==="
+          echo "=== Patching PushNotificationsHandler.swift ==="
+          PUSH_HANDLER=$(find node_modules -path "*push-notifications*/PushNotificationsPlugin/PushNotificationsHandler.swift" 2>/dev/null | head -1)
+          if [ -n "$PUSH_HANDLER" ]; then
+            echo "Patching: $PUSH_HANDLER"
+            # Fix: PluginConfig.getArray not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\) as\? \[String\]/self.plugin?.getConfig().getConfigJSON()["presentationOptions"] as? [String]/g' "$PUSH_HANDLER"
+            # Fix: JSTypes.coerceDictionaryToJSObject not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\) \?\? \[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER"
+            echo "PushNotificationsHandler.swift patched."
+            grep -n "presentationOptions\|coerce\|JSTypes" "$PUSH_HANDLER" || echo "(no matches - patches applied)"
+          else
+            echo "WARNING: PushNotificationsHandler.swift not found"
+          fi
+
+          echo "=== Patching PushNotificationsPlugin.swift ==="
+          PUSH_PLUGIN=$(find node_modules -path "*push-notifications*/PushNotificationsPlugin/PushNotificationsPlugin.swift" 2>/dev/null | head -1)
+          if [ -n "$PUSH_PLUGIN" ]; then
+            echo "Patching: $PUSH_PLUGIN"
+            # Fix: getArray(_:ofType:) not available, use getArray(_:) with cast
+            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PUSH_PLUGIN"
+            # Fix: CAPPluginCall.reject not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
+            # Fix: CAPPluginCall.unimplemented not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/call\.unimplemented\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
+            echo "PushNotificationsPlugin.swift patched."
+            grep -n "\.reject\|\.unimplemented\|getArray.*JSObject" "$PUSH_PLUGIN" || echo "(no matches - patches applied)"
+          else
+            echo "WARNING: PushNotificationsPlugin.swift not found"
+          fi
+
+          echo "=== Patching SplashScreenPlugin.swift ==="
+          SPLASH_PLUGIN=$(find node_modules -path "*splash-screen*/SplashScreenPlugin/SplashScreenPlugin.swift" 2>/dev/null | head -1)
+          if [ -n "$SPLASH_PLUGIN" ]; then
+            echo "Patching: $SPLASH_PLUGIN"
+            # Fix: call.reject not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$SPLASH_PLUGIN"
+            # Fix: PluginConfig.getString without default not available in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)(?!,)/getConfig().getString("\1", nil)/g' "$SPLASH_PLUGIN"
+            # Fix: UIColor.capacitor.color(fromHex:) -> color(argb:) in capacitor-swift-pm 8.1.0
+            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:/UIColor.capacitor.color(argb:/g' "$SPLASH_PLUGIN"
+            echo "SplashScreenPlugin.swift patched."
+            grep -n "fromHex\|getString\|reject" "$SPLASH_PLUGIN" || echo "(no matches - patches applied)"
+          else
+            echo "WARNING: SplashScreenPlugin.swift not found"
+          fi
+          echo "=== All plugin patches applied ==="
 
       # ── 13. Import Distribution Certificate ───────────────────────────────
       - name: Import Distribution Certificate
