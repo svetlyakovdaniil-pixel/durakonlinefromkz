@@ -7,15 +7,12 @@ present in @capacitor/ios 8.1.0 (CocoaPods). This script patches the plugin
 Swift source files in node_modules directly before Xcode compiles them.
 """
 import re
-import glob
 import os
 import sys
 
 
 def patch_file(path, patches):
-    if not os.path.exists(path):
-        print(f"WARNING: {path} not found")
-        return False
+    """Apply regex patches to a file. Returns True if any changes were made."""
     with open(path, "r") as f:
         content = f.read()
     original = content
@@ -24,16 +21,19 @@ def patch_file(path, patches):
     with open(path, "w") as f:
         f.write(content)
     if content != original:
-        print(f"Patched: {path}")
+        print(f"  Patched: {path}")
         return True
     else:
-        print(f"No changes needed: {path}")
+        print(f"  No changes needed: {path}")
         return False
 
 
-def find_file(pattern):
-    matches = glob.glob(pattern, recursive=True)
-    return matches[0] if matches else None
+def find_file_by_name(root, filename):
+    """Walk directory tree to find a file by exact name."""
+    for dirpath, dirnames, filenames in os.walk(root):
+        if filename in filenames:
+            return os.path.join(dirpath, filename)
+    return None
 
 
 def main():
@@ -43,10 +43,14 @@ def main():
     os.chdir(project_root)
     print(f"Working directory: {os.getcwd()}")
 
+    node_modules = os.path.join(project_root, "node_modules")
+    if not os.path.isdir(node_modules):
+        print(f"ERROR: node_modules not found at {node_modules}")
+        sys.exit(1)
+
     # --- PushNotificationsHandler.swift ---
-    path = find_file(
-        "node_modules/**/*push-notifications*/PushNotificationsPlugin/PushNotificationsHandler.swift"
-    )
+    print("\n[1] Patching PushNotificationsHandler.swift ...")
+    path = find_file_by_name(node_modules, "PushNotificationsHandler.swift")
     if path:
         patch_file(
             path,
@@ -64,12 +68,11 @@ def main():
             ],
         )
     else:
-        print("WARNING: PushNotificationsHandler.swift not found")
+        print("  WARNING: PushNotificationsHandler.swift not found in node_modules")
 
     # --- PushNotificationsPlugin.swift ---
-    path = find_file(
-        "node_modules/**/*push-notifications*/PushNotificationsPlugin/PushNotificationsPlugin.swift"
-    )
+    print("\n[2] Patching PushNotificationsPlugin.swift ...")
+    path = find_file_by_name(node_modules, "PushNotificationsPlugin.swift")
     if path:
         patch_file(
             path,
@@ -92,12 +95,11 @@ def main():
             ],
         )
     else:
-        print("WARNING: PushNotificationsPlugin.swift not found")
+        print("  WARNING: PushNotificationsPlugin.swift not found in node_modules")
 
     # --- SplashScreenPlugin.swift ---
-    path = find_file(
-        "node_modules/**/*splash-screen*/SplashScreenPlugin/SplashScreenPlugin.swift"
-    )
+    print("\n[3] Patching SplashScreenPlugin.swift ...")
+    path = find_file_by_name(node_modules, "SplashScreenPlugin.swift")
     if path:
         patch_file(
             path,
@@ -108,8 +110,9 @@ def main():
                     r'call.resolve(["message": "\1"])',
                 ),
                 # PluginConfig.getString without default not in capacitor-swift-pm 8.1.0
+                # Match getString("key") but NOT getString("key", something)
                 (
-                    r'getConfig\(\)\.getString\("([^"]+)"\)(?!,)',
+                    r'getConfig\(\)\.getString\("([^"]+)"\)(?!\s*,)',
                     r'getConfig().getString("\1", nil)',
                 ),
                 # UIColor.capacitor.color(fromHex:) -> color(argb:) in capacitor-swift-pm 8.1.0
@@ -120,9 +123,9 @@ def main():
             ],
         )
     else:
-        print("WARNING: SplashScreenPlugin.swift not found")
+        print("  WARNING: SplashScreenPlugin.swift not found in node_modules")
 
-    print("=== All plugin patches applied ===")
+    print("\n=== All plugin patches applied ===")
 
 
 if __name__ == "__main__":
