@@ -143,11 +143,16 @@ jobs:
           echo "Decoded: $(wc -l < /tmp/CapacitorCompatibility.swift) lines"
 
           # Inject into every Swift file directory in node_modules (plugin Sources)
+          echo "=== All Swift dirs in node_modules ==="
           find "$GITHUB_WORKSPACE/node_modules" -name "*.swift" -path "*/ios/Sources/*" 2>/dev/null | \
-            xargs -I{} dirname {} | sort -u | while read srcdir; do
+            xargs -I{} dirname {} | sort -u | tee /tmp/swift_dirs.txt
+          echo "=== Total dirs: $(wc -l < /tmp/swift_dirs.txt) ==="
+          while read srcdir; do
             echo "Injecting into: $srcdir"
             cp /tmp/CapacitorCompatibility.swift "$srcdir/CapacitorCompatibility.swift"
-          done
+          done < /tmp/swift_dirs.txt
+          echo "=== Verifying injection ==="
+          find "$GITHUB_WORKSPACE/node_modules" -name "CapacitorCompatibility.swift" 2>/dev/null
           echo "=== CapacitorCompatibility.swift injection complete ==="
 
           # Fix PushNotifications API incompatibilities
