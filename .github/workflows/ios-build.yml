@@ -348,6 +348,25 @@ jobs:
             ls -la "$RUNNER_TEMP/SourcePackages/" 2>/dev/null || echo "SourcePackages dir empty"
           fi
 
+      # ── 17b. Diagnose PushNotifications source files ─────────────────────────
+      - name: Diagnose PushNotifications source files
+        run: |
+          echo "=== PushNotificationsPlugin.swift (first 50 lines) ==="
+          PUSH_DIR=$(find . -path "*push-notifications*/PushNotificationsPlugin" -type d 2>/dev/null | head -1)
+          if [ -n "$PUSH_DIR" ]; then
+            echo "Found at: $PUSH_DIR"
+            head -50 "$PUSH_DIR/PushNotificationsPlugin.swift" 2>/dev/null || echo "File not found"
+            echo "--- PushNotificationsHandler.swift ---"
+            cat "$PUSH_DIR/PushNotificationsHandler.swift" 2>/dev/null || echo "File not found"
+            echo "--- All .swift files in dir ---"
+            ls -la "$PUSH_DIR/" 2>/dev/null
+          else
+            echo "PushNotifications plugin dir not found"
+            find . -name "PushNotificationsPlugin.swift" 2>/dev/null | head -5
+          fi
+          echo "=== Capacitor 8.1.0 getArray signatures ==="
+          grep -n "func getArray" node_modules/.pnpm/@capacitor+ios@8.1.0_@capacitor+core@8.1.0/node_modules/@capacitor/ios/Capacitor/Capacitor/JSTypes.swift 2>/dev/null || echo "Not found"
+
       # ── 18. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
         env:
