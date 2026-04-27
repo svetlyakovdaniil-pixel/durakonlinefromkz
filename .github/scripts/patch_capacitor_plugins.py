@@ -3,8 +3,16 @@
 Patch Capacitor plugin Swift sources for capacitor-swift-pm 8.1.0 compatibility.
 
 capacitor-swift-pm 8.1.0 is a binary XCFramework that lacks several APIs
-present in @capacitor/ios 8.1.0 (CocoaPods). This script patches the plugin
+present in @capacitor/ios 8.0.x (CocoaPods). This script patches the plugin
 Swift source files in node_modules directly before Xcode compiles them.
+
+Key differences in capacitor-swift-pm 8.1.0 vs @capacitor/ios 8.0.x:
+- CAPBridgeProtocol has no .viewController property (use webView?.window?.rootViewController)
+- CAPPluginCall.getInt/getBool/getString require a default value (no optional overloads)
+- CAPPluginCall.reject() does not exist (use resolve with message)
+- CAPPluginCall.unimplemented() does not exist (use resolve with message)
+- CAPPluginCall.getArray() requires a default value (no optional overload)
+- PluginConfig.getString() requires a default value (no optional overload)
 """
 import re
 import os
@@ -82,7 +90,19 @@ def main():
                     r'call\.getArray\("notifications",\s*JSObject\.self\)',
                     'call.getArray("notifications") as? [JSObject]',
                 ),
-                # CAPPluginCall.reject not in capacitor-swift-pm 8.1.0
+                # call.getArray("notifications") without default -> needs default value
+                # getArray(_ key: String) -> JSArray? is NOT available in 8.1.0
+                # Must use getArray(_ key: String, _ defaultValue: JSArray) -> JSArray
+                (
+                    r'call\.getArray\("notifications"\)(?!\s*,)',
+                    'call.getArray("notifications", [])',
+                ),
+                # CAPPluginCall.reject with variable argument (e.g. err.localizedDescription)
+                (
+                    r'call\.reject\(([^")\n][^)\n]*)\)',
+                    r'call.resolve(["message": String(describing: \1)])',
+                ),
+                # CAPPluginCall.reject with string literal
                 (
                     r'call\.reject\("([^"]+)"\)',
                     r'call.resolve(["message": "\1"])',
@@ -104,16 +124,33 @@ def main():
         patch_file(
             path,
             [
+                # bridge?.viewController not in capacitor-swift-pm 8.1.0
+                # CAPBridgeProtocol does not have .viewController in 8.1.0
+                (
+                    r"bridge\?\.viewController\?\.view",
+                    "bridge?.webView?.window?.rootViewController?.view",
+                ),
+                # call.getInt without default -> needs default value in 8.1.0
+                # Only call.getInt(_ key: String, _ defaultValue: Int) -> Int exists
+                (
+                    r'call\.getInt\("([^"]+)"\)(?!\s*,)',
+                    r'call.getInt("\1", 0)',
+                ),
+                # call.getBool without default -> needs default value in 8.1.0
+                (
+                    r'call\.getBool\("([^"]+)"\)(?!\s*,)',
+                    r'call.getBool("\1", false)',
+                ),
+                # getConfig().getString("key", nil) -> nil is not valid as String default
+                # Use getConfigJSON()["key"] as? String instead
+                (
+                    r'getConfig\(\)\.getString\("([^"]+)",\s*nil\)',
+                    r'(getConfig().getConfigJSON()["\1"] as? String)',
+                ),
                 # call.reject not in capacitor-swift-pm 8.1.0
                 (
                     r'call\.reject\("([^"]+)"\)',
                     r'call.resolve(["message": "\1"])',
-                ),
-                # PluginConfig.getString without default not in capacitor-swift-pm 8.1.0
-                # Match getString("key") but NOT getString("key", something)
-                (
-                    r'getConfig\(\)\.getString\("([^"]+)"\)(?!\s*,)',
-                    r'getConfig().getString("\1", nil)',
                 ),
                 # UIColor.capacitor.color(fromHex:) -> color(argb:) in capacitor-swift-pm 8.1.0
                 (
