@@ -544,7 +544,7 @@ public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
         settings.fadeInDuration = call.getInt("fadeInDuration", settings.fadeInDuration)
         settings.fadeOutDuration = call.getInt("fadeOutDuration", settings.fadeOutDuration)
         settings.autoHide = call.getBool("autoHide", settings.autoHide)
-        settings.showSpinner = call.getBool("showSpinner", settings.showSpinner)
+        // Note: showSpinner is NOT a property of SplashScreenSettings (v8.0.1), only SplashScreenConfig has it
         return settings
     }
 
