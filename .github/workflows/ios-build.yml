@@ -358,6 +358,15 @@ jobs:
           fi
           echo "=== Capacitor 8.1.0 getArray signatures ==="
           grep -n "func getArray" node_modules/.pnpm/@capacitor+ios@8.1.0_@capacitor+core@8.1.0/node_modules/@capacitor/ios/Capacitor/Capacitor/JSTypes.swift 2>/dev/null || echo "Not found"
+          echo "=== SplashScreenPlugin.swift (8.1.0) - after patch ==="
+          SPLASH_FILE=$(find . -path "*@capacitor+core@8.1.0*splash-screen*SplashScreenPlugin.swift" 2>/dev/null | head -1)
+          if [ -n "$SPLASH_FILE" ]; then
+            echo "Found at: $SPLASH_FILE"
+            cat -n "$SPLASH_FILE"
+          else
+            echo "SplashScreenPlugin.swift (8.1.0) not found"
+            find . -name "SplashScreenPlugin.swift" 2>/dev/null
+          fi
 
       # ── 18. Build & Archive ────────────────────────────────────────────────
       - name: Build and Archive
