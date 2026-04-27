@@ -155,9 +155,9 @@ jobs:
           if [ -n "$PUSH_HANDLER" ]; then
             echo "Patching: $PUSH_HANDLER"
             # Fix: PluginConfig.getArray not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\) as\? \[String\]/self.plugin?.getConfig().getConfigJSON()["presentationOptions"] as? [String]/g' "$PUSH_HANDLER"
+            perl -i '' -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\) as\? \[String\]/self.plugin?.getConfig().getConfigJSON()["presentationOptions"] as? [String]/g' "$PUSH_HANDLER"
             # Fix: JSTypes.coerceDictionaryToJSObject not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\) \?\? \[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER"
+            perl -i '' -pe 's/JSTypes\.coerceDictionaryToJSObject\(request\.content\.userInfo\) \?\? \[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$PUSH_HANDLER"
             echo "PushNotificationsHandler.swift patched."
             grep -n "presentationOptions\|coerce\|JSTypes" "$PUSH_HANDLER" || echo "(no matches - patches applied)"
           else
@@ -169,11 +169,11 @@ jobs:
           if [ -n "$PUSH_PLUGIN" ]; then
             echo "Patching: $PUSH_PLUGIN"
             # Fix: getArray(_:ofType:) not available, use getArray(_:) with cast
-            perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PUSH_PLUGIN"
+            perl -i '' -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications") as? [JSObject]/g' "$PUSH_PLUGIN"
             # Fix: CAPPluginCall.reject not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
+            perl -i '' -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
             # Fix: CAPPluginCall.unimplemented not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/call\.unimplemented\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
+            perl -i '' -pe 's/call\.unimplemented\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$PUSH_PLUGIN"
             echo "PushNotificationsPlugin.swift patched."
             grep -n "\.reject\|\.unimplemented\|getArray.*JSObject" "$PUSH_PLUGIN" || echo "(no matches - patches applied)"
           else
@@ -185,11 +185,11 @@ jobs:
           if [ -n "$SPLASH_PLUGIN" ]; then
             echo "Patching: $SPLASH_PLUGIN"
             # Fix: call.reject not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$SPLASH_PLUGIN"
+            perl -i '' -pe 's/call\.reject\("([^"]+)"\)/call.resolve(["message": "\1"])/g' "$SPLASH_PLUGIN"
             # Fix: PluginConfig.getString without default not available in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/getConfig\(\)\.getString\("([^"]+)"\)(?!,)/getConfig().getString("\1", nil)/g' "$SPLASH_PLUGIN"
+            perl -i '' -pe 's/getConfig\(\)\.getString\("([^"]+)"\)(?!,)/getConfig().getString("\1", nil)/g' "$SPLASH_PLUGIN"
             # Fix: UIColor.capacitor.color(fromHex:) -> color(argb:) in capacitor-swift-pm 8.1.0
-            perl -i -pe 's/UIColor\.capacitor\.color\(fromHex:/UIColor.capacitor.color(argb:/g' "$SPLASH_PLUGIN"
+            perl -i '' -pe 's/UIColor\.capacitor\.color\(fromHex:/UIColor.capacitor.color(argb:/g' "$SPLASH_PLUGIN"
             echo "SplashScreenPlugin.swift patched."
             grep -n "fromHex\|getString\|reject" "$SPLASH_PLUGIN" || echo "(no matches - patches applied)"
           else
@@ -368,17 +368,17 @@ jobs:
             # Also patch bridge.viewController/webView in checkouts
             find "$CHECKOUTS" -name "*.swift" 2>/dev/null | while read f; do
               if grep -q 'bridge.*viewController\|bridge.*webView' "$f" 2>/dev/null; then
-                perl -i -pe 's/\bbridge\??\.viewController\b/self.webView?.next as? UIViewController/g' "$f" 2>/dev/null || true
-                perl -i -pe 's/\bbridge\??\.webView\b/self.webView/g' "$f" 2>/dev/null || true
+                perl -i '' -pe 's/\bbridge\??\.viewController\b/self.webView?.next as? UIViewController/g' "$f" 2>/dev/null || true
+                perl -i '' -pe 's/\bbridge\??\.webView\b/self.webView/g' "$f" 2>/dev/null || true
               fi
             done
             # Also patch PushNotifications in checkouts
             find "$CHECKOUTS" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
-              perl -i -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
-              perl -i -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
+              perl -i '' -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
+              perl -i '' -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
             done
             find "$CHECKOUTS" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
-              perl -i -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
+              perl -i '' -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
             done
             echo "=== Injection into SourcePackages/checkouts complete ==="
           else
