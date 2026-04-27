@@ -11,17 +11,27 @@ peer-dependency suffixes (e.g. @capacitor+core@8.1.0 vs @capacitor+core@8.3.0).
 This script patches ALL found instances to ensure the CI version is also patched.
 
 Key differences in capacitor-swift-pm 8.1.0 vs @capacitor/ios 8.0.x (CocoaPods):
-- CAPBridgeProtocol has no .viewController property (use self.webView?.window?.rootViewController)
-- CAPBridgeProtocol has no .webView property (use self.webView on CAPPlugin directly)
+- CAPBridgeProtocol has no .viewController property
+- PluginConfig.getString() is wrapped in #if compiler(>=5.3) && $NonescapableTypes
+  -> NOT reliably available! Use getConfigJSON()["key"] as? String instead
 - CAPPluginCall.getInt/getBool without default returns Optional (Int?/Bool?)
   BUT getInt/getBool WITH default returns non-optional (Int/Bool) - cannot use 'if let'
 - CAPPluginCall.getArray() requires a default value (no optional overload)
-- PluginConfig.getString() requires a default value (no optional overload with nil)
 - CAPPluginCall.reject() does not exist (use resolve with message)
+- UIColor.capacitor.color(fromHex:) -> color(argb:)
 """
 import re
 import os
 import sys
+
+
+def find_all_files_by_name(root, filename):
+    """Walk directory tree to find ALL files with exact name."""
+    results = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        if filename in filenames:
+            results.append(os.path.join(dirpath, filename))
+    return results
 
 
 def patch_file(path, patches):
@@ -39,15 +49,6 @@ def patch_file(path, patches):
     else:
         print(f"  No changes needed: {path}")
         return False
-
-
-def find_all_files_by_name(root, filename):
-    """Walk directory tree to find ALL files with exact name."""
-    results = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        if filename in filenames:
-            results.append(os.path.join(dirpath, filename))
-    return results
 
 
 def main():
@@ -96,11 +97,9 @@ def main():
                     # getArray(_:ofType:) not in capacitor-swift-pm 8.1.0
                     (
                         r'call\.getArray\("notifications",\s*JSObject\.self\)',
-                        'call.getArray("notifications") as? [JSObject]',
+                        'call.getArray("notifications", [])',
                     ),
                     # call.getArray("notifications") without default -> needs default value
-                    # getArray(_ key: String) -> JSArray? is NOT available in 8.1.0
-                    # Must use getArray(_ key: String, _ defaultValue: JSArray) -> JSArray
                     (
                         r'call\.getArray\("notifications"\)(?!\s*,)',
                         'call.getArray("notifications", [])',
@@ -126,109 +125,113 @@ def main():
         print("  WARNING: PushNotificationsPlugin.swift not found in node_modules")
 
     # --- SplashScreenPlugin.swift ---
+    # Strategy: Replace the entire file content with a fully patched version.
+    # This is more reliable than regex patches because:
+    # 1. getString() is conditionally compiled in xcframework 8.1.0 (#if $NonescapableTypes)
+    # 2. bridge?.viewController?.view is not available
+    # 3. call.getInt/getBool without default returns Optional - cannot use 'if let' with non-optional
+    # The patched version uses getConfigJSON() for all string config access.
     print("\n[3] Patching SplashScreenPlugin.swift ...")
     paths = find_all_files_by_name(node_modules, "SplashScreenPlugin.swift")
     if paths:
         for path in paths:
-            patch_file(
-                path,
-                [
-                    # bridge?.viewController not in capacitor-swift-pm 8.1.0
-                    # CAPBridgeProtocol does not have .viewController in 8.1.0
-                    # Use self.webView (CAPPlugin property) instead of bridge?.webView
-                    (
-                        r"bridge\?\.viewController\?\.view",
-                        "self.webView?.window?.rootViewController?.view",
-                    ),
-                    # Also fix the intermediate patched form (bridge?.webView?.window...)
-                    # in case the file was already partially patched
-                    (
-                        r"bridge\?\.webView\?\.window\?\.rootViewController\?\.view",
-                        "self.webView?.window?.rootViewController?.view",
-                    ),
-                    # call.getInt("key") without default -> returns Int? in 8.1.0
-                    # 'if let x = call.getInt("key")' works because it returns Optional
-                    # BUT if already patched to call.getInt("key", 0) it returns Int (non-optional)
-                    # Fix: change 'if let x = call.getInt("key", 0)' to 'let x = call.getInt("key", settings.x)'
-                    # Pattern: if let showDuration = call.getInt("showDuration", 0) {
-                    #           settings.showDuration = showDuration
-                    #           }
-                    # -> settings.showDuration = call.getInt("showDuration", settings.showDuration)
-                    (
-                        r'if let showDuration = call\.getInt\("showDuration",\s*\d+\) \{\s*\n\s*settings\.showDuration = showDuration\s*\n\s*\}',
-                        'settings.showDuration = call.getInt("showDuration", settings.showDuration)',
-                    ),
-                    (
-                        r'if let fadeInDuration = call\.getInt\("fadeInDuration",\s*\d+\) \{\s*\n\s*settings\.fadeInDuration = fadeInDuration\s*\n\s*\}',
-                        'settings.fadeInDuration = call.getInt("fadeInDuration", settings.fadeInDuration)',
-                    ),
-                    (
-                        r'if let fadeOutDuration = call\.getInt\("fadeOutDuration",\s*\d+\) \{\s*\n\s*settings\.fadeOutDuration = fadeOutDuration\s*\n\s*\}',
-                        'settings.fadeOutDuration = call.getInt("fadeOutDuration", settings.fadeOutDuration)',
-                    ),
-                    (
-                        r'if let autoHide = call\.getBool\("autoHide",\s*\w+\) \{\s*\n\s*settings\.autoHide = autoHide\s*\n\s*\}',
-                        'settings.autoHide = call.getBool("autoHide", settings.autoHide)',
-                    ),
-                    # Also handle the original form (without default) - convert to direct assignment
-                    (
-                        r'if let showDuration = call\.getInt\("showDuration"\) \{\s*\n\s*settings\.showDuration = showDuration\s*\n\s*\}',
-                        'settings.showDuration = call.getInt("showDuration", settings.showDuration)',
-                    ),
-                    (
-                        r'if let fadeInDuration = call\.getInt\("fadeInDuration"\) \{\s*\n\s*settings\.fadeInDuration = fadeInDuration\s*\n\s*\}',
-                        'settings.fadeInDuration = call.getInt("fadeInDuration", settings.fadeInDuration)',
-                    ),
-                    (
-                        r'if let fadeOutDuration = call\.getInt\("fadeOutDuration"\) \{\s*\n\s*settings\.fadeOutDuration = fadeOutDuration\s*\n\s*\}',
-                        'settings.fadeOutDuration = call.getInt("fadeOutDuration", settings.fadeOutDuration)',
-                    ),
-                    (
-                        r'if let autoHide = call\.getBool\("autoHide"\) \{\s*\n\s*settings\.autoHide = autoHide\s*\n\s*\}',
-                        'settings.autoHide = call.getBool("autoHide", settings.autoHide)',
-                    ),
-                    # getConfig().getString("key", nil) -> nil is not valid as String default
-                    # Use getConfig().getString("key", "") and check for empty string
-                    # Pattern: if let backgroundColor = getConfig().getString("backgroundColor", nil) {
-                    # ->       let backgroundColor = getConfig().getString("backgroundColor", "")
-                    #          if !backgroundColor.isEmpty {
-                    (
-                        r'if let backgroundColor = (?:getConfig\(\)\.getString\("backgroundColor",\s*nil\)|(?:getConfig\(\)\.getConfigJSON\(\)\["backgroundColor"\] as\? String))',
-                        'let backgroundColorStr = getConfig().getString("backgroundColor", "")\n        if !backgroundColorStr.isEmpty',
-                    ),
-                    # Fix the body to use backgroundColorStr instead of backgroundColor
-                    (
-                        r'config\.backgroundColor = UIColor\.capacitor\.color\(argb: backgroundColor\)',
-                        'config.backgroundColor = UIColor.capacitor.color(argb: backgroundColorStr)',
-                    ),
-                    (
-                        r'if let spinnerStyle = (?:getConfig\(\)\.getString\("iosSpinnerStyle",\s*nil\)|(?:getConfig\(\)\.getConfigJSON\(\)\["iosSpinnerStyle"\] as\? String))',
-                        'let spinnerStyleStr = getConfig().getString("iosSpinnerStyle", "")\n        if !spinnerStyleStr.isEmpty',
-                    ),
-                    (
-                        r'switch spinnerStyle\.lowercased\(\)',
-                        'switch spinnerStyleStr.lowercased()',
-                    ),
-                    (
-                        r'if let spinnerColor = (?:getConfig\(\)\.getString\("spinnerColor",\s*nil\)|(?:getConfig\(\)\.getConfigJSON\(\)\["spinnerColor"\] as\? String))',
-                        'let spinnerColorStr = getConfig().getString("spinnerColor", "")\n        if !spinnerColorStr.isEmpty',
-                    ),
-                    (
-                        r'config\.spinnerColor = UIColor\.capacitor\.color\(argb: spinnerColor\)',
-                        'config.spinnerColor = UIColor.capacitor.color(argb: spinnerColorStr)',
-                    ),
-                    # UIColor.capacitor.color(fromHex:) -> color(argb:) in capacitor-swift-pm 8.1.0
-                    (
-                        r"UIColor\.capacitor\.color\(fromHex:",
-                        "UIColor.capacitor.color(argb:",
-                    ),
-                    # call.reject not in capacitor-swift-pm 8.1.0
-                    (
-                        r'call\.reject\("([^"]+)"\)',
-                        r'call.resolve(["message": "\1"])',
-                    ),
-                ],
-            )
+            with open(path, "r") as f:
+                content = f.read()
+            original = content
+
+            # Check if already fully patched (contains our marker)
+            if "getConfigJSON()" in content and "self.webView?.window?.rootViewController?.view" in content:
+                # Check if splashScreenSettings is also patched
+                if "settings.showDuration = call.getInt" in content:
+                    print(f"  Already fully patched: {path}")
+                    continue
+
+            # Full replacement of the entire SplashScreenPlugin.swift
+            # This handles ALL versions (8.1.0 and 8.3.0) of the file
+            new_content = '''import Foundation
+import Capacitor
+
+@objc(SplashScreenPlugin)
+public class SplashScreenPlugin: CAPPlugin, CAPBridgedPlugin {
+    public let identifier = "SplashScreenPlugin"
+    public let jsName = "SplashScreen"
+    public let pluginMethods: [CAPPluginMethod] = [
+        CAPPluginMethod(name: "show", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "hide", returnType: CAPPluginReturnPromise)
+    ]
+    private var splashScreen: SplashScreen?
+
+    override public func load() {
+        if let view = self.webView?.window?.rootViewController?.view {
+            splashScreen = SplashScreen(parentView: view, config: splashScreenConfig())
+            splashScreen?.showOnLaunch()
+        }
+    }
+
+    // Show the splash screen
+    @objc public func show(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.show(settings: settings,
+                        completion: {
+                            call.resolve()
+                        })
+        } else {
+            call.resolve(["message": "Unable to show Splash Screen"])
+        }
+    }
+
+    // Hide the splash screen
+    @objc public func hide(_ call: CAPPluginCall) {
+        if let splash = splashScreen {
+            let settings = splashScreenSettings(from: call)
+            splash.hide(settings: settings)
+            call.resolve()
+        } else {
+            call.resolve(["message": "Unable to hide Splash Screen"])
+        }
+    }
+
+    private func splashScreenSettings(from call: CAPPluginCall) -> SplashScreenSettings {
+        var settings = SplashScreenSettings()
+        settings.showDuration = call.getInt("showDuration", settings.showDuration)
+        settings.fadeInDuration = call.getInt("fadeInDuration", settings.fadeInDuration)
+        settings.fadeOutDuration = call.getInt("fadeOutDuration", settings.fadeOutDuration)
+        settings.autoHide = call.getBool("autoHide", settings.autoHide)
+        return settings
+    }
+
+    private func splashScreenConfig() -> SplashScreenConfig {
+        var config = SplashScreenConfig()
+        // Use getConfigJSON() instead of getString() because getString() is conditionally
+        // compiled in capacitor-swift-pm 8.1.0 (#if compiler(>=5.3) && $NonescapableTypes)
+        // and may not be available. getConfigJSON() is always available.
+        let configJSON = getConfig().getConfigJSON()
+        if let backgroundColorStr = configJSON["backgroundColor"] as? String, !backgroundColorStr.isEmpty {
+            config.backgroundColor = UIColor.capacitor.color(argb: backgroundColorStr)
+        }
+        if let spinnerStyleStr = configJSON["iosSpinnerStyle"] as? String, !spinnerStyleStr.isEmpty {
+            switch spinnerStyleStr.lowercased() {
+            case "small":
+                config.spinnerStyle = .medium
+            default:
+                config.spinnerStyle = .large
+            }
+        }
+        if let spinnerColorStr = configJSON["spinnerColor"] as? String, !spinnerColorStr.isEmpty {
+            config.spinnerColor = UIColor.capacitor.color(argb: spinnerColorStr)
+        }
+        config.showSpinner = getConfig().getBoolean("showSpinner", config.showSpinner)
+        config.launchShowDuration = getConfig().getInt("launchShowDuration", config.launchShowDuration)
+        config.launchAutoHide = getConfig().getBoolean("launchAutoHide", config.launchAutoHide)
+        return config
+    }
+
+}
+'''
+            with open(path, "w") as f:
+                f.write(new_content)
+            print(f"  Fully replaced: {path}")
     else:
         print("  WARNING: SplashScreenPlugin.swift not found in node_modules")
 
