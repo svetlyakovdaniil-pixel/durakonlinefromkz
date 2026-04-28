@@ -58,8 +58,9 @@ export default function Login() {
               credentials: "include",
             });
             if (res.ok) {
-              // Session cookie is now set — navigate to home
-              window.location.href = "/";
+              // Small delay to ensure cookie is persisted before redirect
+              await new Promise(resolve => setTimeout(resolve, 300));
+              window.location.replace("/");
             } else {
               setError(t("auth.serverError"));
               setGoogleLoading(false);
@@ -121,8 +122,9 @@ export default function Login() {
         return;
       }
 
-      // Success — reload to pick up the session cookie
-      window.location.href = "/";
+      // Success — small delay to ensure cookie is persisted, then reload
+      await new Promise(resolve => setTimeout(resolve, 300));
+      window.location.replace("/");
     } catch {
       setError(t("auth.serverError"));
     } finally {
