@@ -1,18 +1,16 @@
 name: iOS App Store Upload (macos-26 )
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'client/**'
-      - 'server/**'
-      - 'ios/**'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - '.github/workflows/ios-build.yml'
-      - '.github/scripts/**'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'App version (e.g. 1.0.2)'
+        required: true
+        default: '1.0.2'
+      build_number:
+        description: 'Build number (e.g. 13)'
+        required: true
+        default: '13'
       upload_to_appstore:
         description: 'Upload to App Store Connect'
         required: false
@@ -27,29 +25,21 @@ jobs:
 
     steps:
       # ── 0. Setup PATH ──────────────────────────────────────────────────────
-      - name: Setup PATH
+      - name: Select Xcode 26
         run: |
-          if [ -f "/opt/homebrew/bin/brew" ]; then
-            echo "/opt/homebrew/bin" >> $GITHUB_PATH
-            echo "/opt/homebrew/sbin" >> $GITHUB_PATH
-          elif [ -f "/usr/local/bin/brew" ]; then
-            echo "/usr/local/bin" >> $GITHUB_PATH
-          fi
-          if [ -d "$HOME/.rbenv/shims" ]; then
-            echo "$HOME/.rbenv/shims" >> $GITHUB_PATH
-            echo "$HOME/.rbenv/bin" >> $GITHUB_PATH
-          fi
-          echo "PATH setup complete"
-
-      # ── 1. Verify Xcode ────────────────────────────────────────────────────
-      - name: Verify Xcode setup
-        run: |
+          sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer 2>/dev/null || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcode-select -p
           xcodebuild -version
 
       # ── 2. Checkout ────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Set version and build number
+        run: |
+          cd ios/App
+          xcrun agvtool new-marketing-version ${{ github.event.inputs.version }}
+          xcrun agvtool new-version -all ${{ github.event.inputs.build_number }}
 
       # ── 3. Setup pnpm ──────────────────────────────────────────────────────
       - name: Setup pnpm
