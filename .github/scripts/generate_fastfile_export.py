@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate Fastfile for exporting IPA using Fastlane."""
+"""Generate Fastfile for export_ipa lane (fallback when xcodebuild -exportArchive fails)."""
 import os
 import sys
 
@@ -8,11 +8,25 @@ api_key_path = os.environ.get('API_KEY_PATH', '')
 api_key_id = os.environ.get('API_KEY_ID', '')
 issuer_id = os.environ.get('APP_STORE_CONNECT_ISSUER_ID', '')
 team_id = os.environ.get('IOS_TEAM_ID', '')
-bundle_id = os.environ.get('IOS_BUNDLE_ID', '')
+bundle_id = os.environ.get('IOS_BUNDLE_ID', '').strip()
+profile_name = os.environ.get('PROFILE_NAME', '').strip()
+profile_uuid = os.environ.get('PROFILE_UUID', '').strip()
 
-if not all([api_key_path, api_key_id, issuer_id, team_id]):
+if not api_key_path or not api_key_id or not issuer_id or not team_id:
     print("ERROR: Missing required environment variables", file=sys.stderr)
     sys.exit(1)
+
+# Build provisioning profile mapping if available
+profile_ref = profile_name if profile_name else profile_uuid
+if bundle_id and profile_ref:
+    provisioning_profiles_ruby = f"""
+      provisioning_profiles: {{
+        "{bundle_id}" => "{profile_ref}"
+      }},"""
+    print(f"Using provisioning profile: '{profile_ref}' for bundle ID: '{bundle_id}'")
+else:
+    provisioning_profiles_ruby = ""
+    print("No profile mapping - Fastlane will use automatic signing.")
 
 fastfile = f"""default_platform(:ios)
 
@@ -30,7 +44,7 @@ platform :ios do
     build_app(
       skip_build_archive: true,
       archive_path: "{runner_temp}/App.xcarchive",
-      export_method: "app-store",
+      export_method: "app-store-connect",
       export_team_id: "{team_id}",
       output_directory: "{runner_temp}/ipa",
       output_name: "App.ipa",
@@ -38,7 +52,7 @@ platform :ios do
         method: "app-store-connect",
         teamID: "{team_id}",
         signingStyle: "automatic",
-        manageAppVersionAndBuildNumber: false
+        manageAppVersionAndBuildNumber: false{provisioning_profiles_ruby}
       }},
       xcargs: "-allowProvisioningUpdates"
     )
@@ -46,12 +60,7 @@ platform :ios do
 end
 """
 
-fastfile_path = 'ios/App/fastlane/Fastfile'
 os.makedirs('ios/App/fastlane', exist_ok=True)
-with open(fastfile_path, 'w') as f:
+with open('ios/App/fastlane/Fastfile', 'w') as f:
     f.write(fastfile)
-
-print(f"Fastfile written to {fastfile_path}")
-print(f"Team ID: {team_id}")
-print(f"Archive: {runner_temp}/App.xcarchive")
-print(f"Output: {runner_temp}/ipa/App.ipa")
+print("Fastfile written to ios/App/fastlane/Fastfile")
