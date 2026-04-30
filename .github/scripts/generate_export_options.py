@@ -15,7 +15,8 @@ if not team_id:
 
 # Build provisioningProfiles dict if we have a profile name and bundle ID
 provisioning_profiles_xml = ""
-if bundle_id and (profile_name or profile_uuid):
+has_profile = bundle_id and (profile_name or profile_uuid)
+if has_profile:
     profile_ref = profile_name if profile_name else profile_uuid
     provisioning_profiles_xml = f"""
   <key>provisioningProfiles</key>
@@ -23,9 +24,11 @@ if bundle_id and (profile_name or profile_uuid):
     <key>{bundle_id}</key>
     <string>{profile_ref}</string>
   </dict>"""
-    print(f"Using provisioning profile: '{profile_ref}' for bundle ID: '{bundle_id}'")
+    signing_style = "manual"
+    print(f"Using MANUAL signing with profile: '{profile_ref}' for bundle ID: '{bundle_id}'")
 else:
-    print("No profile name/UUID found - using automatic signing without explicit profile mapping.")
+    signing_style = "automatic"
+    print("No profile name/UUID found - using automatic signing (may fail with cloud signing error).")
 
 plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -36,7 +39,7 @@ plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
   <key>teamID</key>
   <string>{team_id}</string>
   <key>signingStyle</key>
-  <string>automatic</string>
+  <string>{signing_style}</string>
   <key>uploadBitcode</key>
   <false/>
   <key>uploadSymbols</key>
