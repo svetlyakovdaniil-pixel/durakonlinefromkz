@@ -173,65 +173,16 @@ jobs:
           security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
 
       # ── 14. Install Provisioning Profile ──────────────────────────────────
-      # We rely on -allowProvisioningUpdates + App Store Connect API key for automatic
-      # provisioning. Installing a local profile is only done if the secret is valid.
+      # ── 14. Install Provisioning Profile ──────────────────────────────────────
+      # DISABLED: We rely entirely on -allowProvisioningUpdates + App Store Connect API key
+      # for automatic provisioning. The API key (App Manager role or higher) downloads
+      # the correct provisioning profile from Apple automatically during archive/export.
+      # A local provisioning profile is NOT needed and caused failures when invalid.
       - name: Install Provisioning Profile
-        env:
-          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
-          if [ -z "$IOS_PROVISIONING_PROFILE" ]; then
-            echo "IOS_PROVISIONING_PROFILE secret is empty - skipping (API key will handle automatic provisioning)"
-            exit 0
-          fi
-
-          RUNNER_HOME=$(eval echo ~$(whoami))
-          PROFILES_DIR="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_DIR"
-
-          PROFILE_TMP="$RUNNER_TEMP/profile.mobileprovision"
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_TMP"
-          PROFILE_SIZE=$(wc -c < "$PROFILE_TMP")
-          echo "Profile file size: $PROFILE_SIZE bytes"
-
-          if [ "$PROFILE_SIZE" -lt 100 ]; then
-            echo "Profile file too small ($PROFILE_SIZE bytes) - likely invalid. Skipping."
-            exit 0
-          fi
-
-          PROFILE_UUID=""
-          PROFILE_NAME=""
-          PLIST_TMP="$RUNNER_TEMP/profile.plist"
-
-          if security cms -D -i "$PROFILE_TMP" -o "$PLIST_TMP" 2>/dev/null; then
-            PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PLIST_TMP" 2>/dev/null || true)
-            PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PLIST_TMP" 2>/dev/null || true)
-            echo "Team ID in profile: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "Expiry: $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-          else
-            echo "WARNING: Could not decode provisioning profile - skipping installation (API key will handle provisioning)"
-            exit 0
-          fi
-
-          if [ -z "$PROFILE_UUID" ]; then
-            echo "WARNING: Could not extract UUID from profile - skipping installation"
-            exit 0
-          fi
-
-          echo "Profile UUID: $PROFILE_UUID"
-          echo "Profile Name: $PROFILE_NAME"
-
-          cp "$PROFILE_TMP" "$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-
-          XCODE_PROFILES_DIR="$RUNNER_HOME/Library/Developer/Xcode/UserData/ProvisioningProfiles"
-          mkdir -p "$XCODE_PROFILES_DIR"
-          cp "$PROFILE_TMP" "$XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-          echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
-          echo "Profile installed successfully: $PROFILE_NAME ($PROFILE_UUID)"
-
+          echo "Provisioning profile installation skipped."
+          echo "Using App Store Connect API key for automatic provisioning."
+          echo "Ensure your API key has App Manager role or higher in App Store Connect."
       # ── 15. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
         env:
