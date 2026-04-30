@@ -418,7 +418,7 @@ jobs:
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store</string>
+            <string>app-store-connect</string>
             <key>teamID</key>
             <string>${IOS_TEAM_ID}</string>
             <key>uploadBitcode</key>
@@ -427,6 +427,8 @@ jobs:
             <true/>
             <key>signingStyle</key>
             <string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key>
+            <false/>
           </dict>
           </plist>
           PLIST_EOF
@@ -445,6 +447,12 @@ jobs:
 
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
+
+          # If IPA not found, show full export log for diagnosis
+          if ! find "$RUNNER_TEMP/ipa" -name "*.ipa" | grep -q .; then
+            echo "=== EXPORT FAILED - Full export log ==="
+            cat /tmp/export.log
+          fi
 
       # ── 19. Upload to App Store Connect ────────────────────────────────────
       - name: Upload to App Store Connect
