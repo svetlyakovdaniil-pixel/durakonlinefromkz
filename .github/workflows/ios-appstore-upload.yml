@@ -372,29 +372,47 @@ jobs:
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store-connect</string>
-            <key>teamID</key>
-            <string>${IOS_TEAM_ID}</string>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
-            <key>signingStyle</key>
-            <string>automatic</string>
-            <key>manageAppVersionAndBuildNumber</key>
-            <false/>
-          </dict>
-          </plist>
-          PLIST_EOF
-
           mkdir -p "$RUNNER_TEMP/ipa"
 
+          # Write ExportOptions.plist using Python to avoid shell heredoc variable expansion issues
+          python3 - <<PYEOF2
+import os, subprocess
+
+team_id = os.environ['IOS_TEAM_ID']
+bundle_id = os.environ['IOS_BUNDLE_ID']
+runner_temp = os.environ['RUNNER_TEMP']
+
+plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>method</key>
+  <string>app-store-connect</string>
+  <key>teamID</key>
+  <string>{team_id}</string>
+  <key>signingStyle</key>
+  <string>automatic</string>
+  <key>uploadBitcode</key>
+  <false/>
+  <key>uploadSymbols</key>
+  <true/>
+  <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+</dict>
+</plist>"""
+
+plist_path = f"{runner_temp}/ExportOptions.plist"
+with open(plist_path, 'w') as f:
+    f.write(plist_content)
+
+print(f"ExportOptions.plist written to {plist_path}")
+print(f"Team ID: {team_id}")
+print(f"Bundle ID: {bundle_id}")
+print("Content:")
+print(plist_content)
+PYEOF2
+
+          echo "=== Running xcodebuild -exportArchive ==="
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
@@ -403,15 +421,76 @@ jobs:
             -authenticationKeyPath "$API_KEY_PATH" \
             -authenticationKeyID "$API_KEY_ID" \
             -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
-            2>&1 | tee /tmp/export.log
+            2>&1 | tee /tmp/export.log || true
 
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
 
-          # If IPA not found, show full export log for diagnosis
+          # If IPA not found, try Fastlane as fallback
           if ! find "$RUNNER_TEMP/ipa" -name "*.ipa" | grep -q .; then
-            echo "=== EXPORT FAILED - Full export log ==="
-            cat /tmp/export.log
+            echo "=== xcodebuild export failed, trying Fastlane ==="
+            cat /tmp/export.log | tail -30
+
+            # Create Fastfile for export only
+            mkdir -p ios/App/fastlane
+            python3 - <<PYEOF3
+import os
+
+runner_temp = os.environ['RUNNER_TEMP']
+api_key_path = os.environ['API_KEY_PATH']
+api_key_id = os.environ['API_KEY_ID']
+issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
+team_id = os.environ['IOS_TEAM_ID']
+bundle_id = os.environ['IOS_BUNDLE_ID']
+
+fastfile = f"""default_platform(:ios)
+
+platform :ios do
+  desc "Export IPA from existing archive"
+  lane :export_ipa do
+    api_key = app_store_connect_api_key(
+      key_id: "{api_key_id}",
+      issuer_id: "{issuer_id}",
+      key_filepath: "{api_key_path}",
+      duration: 1200,
+      in_house: false
+    )
+
+    build_app(
+      skip_build_archive: true,
+      archive_path: "{runner_temp}/App.xcarchive",
+      export_method: "app-store",
+      export_team_id: "{team_id}",
+      output_directory: "{runner_temp}/ipa",
+      output_name: "App.ipa",
+      export_options: {{
+        method: "app-store",
+        teamID: "{team_id}",
+        signingStyle: "automatic",
+        manageAppVersionAndBuildNumber: false
+      }},
+      xcargs: "-allowProvisioningUpdates"
+    )
+  end
+end
+"""
+
+with open('ios/App/fastlane/Fastfile', 'w') as f:
+    f.write(fastfile)
+print("Fastfile written")
+PYEOF3
+
+            cd ios/App
+            fastlane export_ipa 2>&1 | tee /tmp/fastlane_export.log || true
+            cd ../..
+
+            echo "=== IPA directory after Fastlane ==="
+            ls -la "$RUNNER_TEMP/ipa/"
+
+            if ! find "$RUNNER_TEMP/ipa" -name "*.ipa" | grep -q .; then
+              echo "=== FASTLANE EXPORT FAILED ==="
+              cat /tmp/fastlane_export.log | tail -50
+            fi
           fi
 
       # ── 19. Upload to App Store Connect ────────────────────────────────────
