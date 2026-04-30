@@ -35,7 +35,7 @@ plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
   <key>method</key>
-  <string>app-store-connect</string>
+  <string>app-store</string>
   <key>teamID</key>
   <string>{team_id}</string>
   <key>signingStyle</key>

@@ -32,7 +32,7 @@ platform :ios do
     build_app(
       skip_build_archive: true,
       archive_path: "{runner_temp}/App.xcarchive",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       export_team_id: "{team_id}",
       output_directory: "{runner_temp}/ipa",
       output_name: "App.ipa",
