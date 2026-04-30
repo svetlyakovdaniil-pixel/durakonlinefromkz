@@ -35,12 +35,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set version and build number
-        run: |
-          cd ios/App
-          xcrun agvtool new-marketing-version ${{ github.event.inputs.version }}
-          xcrun agvtool new-version -all ${{ github.event.inputs.build_number }}
-
       # ── 3. Setup pnpm ──────────────────────────────────────────────────────
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -99,6 +93,13 @@ jobs:
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
           fi
           npx cap sync ios
+
+      # ── 8b. Set version and build number ─────────────────────────────────────
+      - name: Set version and build number
+        run: |
+          cd ios/App
+          xcrun agvtool new-marketing-version ${{ github.event.inputs.version }}
+          xcrun agvtool new-version -all ${{ github.event.inputs.build_number }}
 
       # ── 9. Ensure CocoaPods is available ───────────────────────────────────
       - name: Ensure CocoaPods is available
