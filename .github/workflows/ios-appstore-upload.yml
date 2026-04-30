@@ -1,0 +1,143 @@
+name: iOS App Store Upload (macos-26)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version (e.g. 1.0.2)'
+        required: true
+        default: '1.0.2'
+      build_number:
+        description: 'Build number (e.g. 13)'
+        required: true
+        default: '13'
+
+jobs:
+  build:
+    runs-on: macos-26
+    timeout-minutes: 60
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install pnpm
+      run: npm install -g pnpm
+
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+
+    - name: Build web assets
+      run: pnpm run build
+
+    - name: Sync iOS
+      run: npx cap sync ios
+
+    - name: Fix PushNotificationsHandler
+      run: |
+        FILE="node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.3.1/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
+        if [ -f "$FILE" ]; then
+          sed -i '' 's/JSTypes\.coerceDictionary(\([^)]*\))/JSTypes.coerceDictionaryToJSObject(\1 as NSDictionary?)/g' "$FILE" || true
+        fi
+
+    - name: Fix AppDelegate
+      run: |
+        cat > ios/App/App/AppDelegate.swift << 'SWIFT'
+        import UIKit
+        import Capacitor
+        @UIApplicationMain
+        class AppDelegate: UIResponder, UIApplicationDelegate {
+            var window: UIWindow?
+            func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { return true }
+            func applicationWillResignActive(_ application: UIApplication) {}
+            func applicationDidEnterBackground(_ application: UIApplication) {}
+            func applicationWillEnterForeground(_ application: UIApplication) {}
+            func applicationDidBecomeActive(_ application: UIApplication) {}
+            func applicationWillTerminate(_ application: UIApplication) {}
+            func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+                return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
+            }
+        }
+        SWIFT
+
+    - name: Select Xcode 26
+      run: |
+        sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer 2>/dev/null || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+        xcodebuild -version
+
+    - name: Import Certificate
+      env:
+        CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
+        CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
+        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+      run: |
+        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
+        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+        echo -n "$CERTIFICATE_BASE64" | base64 --decode -o $RUNNER_TEMP/certificate.p12
+        security import $RUNNER_TEMP/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
+        security list-keychain -d user -s $KEYCHAIN_PATH
+
+    - name: Install Provisioning Profile
+      env:
+        PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
+      run: |
+        PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
+        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+
+    - name: Set version
+      run: |
+        cd ios/App
+        xcrun agvtool new-marketing-version ${{ github.event.inputs.version }}
+        xcrun agvtool new-version -all ${{ github.event.inputs.build_number }}
+
+    - name: Archive
+      run: |
+        cd ios/App
+        xcodebuild archive \
+          -project App.xcodeproj \
+          -scheme App \
+          -configuration Release \
+          -archivePath $RUNNER_TEMP/App.xcarchive \
+          -destination "generic/platform=iOS" \
+          CODE_SIGN_STYLE=Manual \
+          PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
+          CODE_SIGN_IDENTITY="iPhone Distribution"
+
+    - name: Export IPA
+      run: |
+        cat > $RUNNER_TEMP/ExportOptions.plist << 'PLIST'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0"><dict>
+          <key>method</key><string>app-store</string>
+          <key>teamID</key><string>TEAM_PLACEHOLDER</string>
+          <key>uploadBitcode</key><false/>
+          <key>uploadSymbols</key><true/>
+        </dict></plist>
+        PLIST
+        sed -i '' "s/TEAM_PLACEHOLDER/${{ secrets.APPLE_TEAM_ID }}/g" $RUNNER_TEMP/ExportOptions.plist
+        xcodebuild -exportArchive \
+          -archivePath $RUNNER_TEMP/App.xcarchive \
+          -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
+          -exportPath $RUNNER_TEMP/export
+
+    - name: Upload to App Store
+      env:
+        APPLE_ID: ${{ secrets.APPLE_ID }}
+        APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+      run: |
+        xcrun altool --upload-app \
+          --type ios \
+          --file "$RUNNER_TEMP/export/App.ipa" \
+          --username "$APPLE_ID" \
+          --password "$APP_SPECIFIC_PASSWORD" \
+          --verbose
