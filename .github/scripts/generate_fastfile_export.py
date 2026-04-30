@@ -16,6 +16,8 @@ if not api_key_path or not api_key_id or not issuer_id or not team_id:
 # Use the already-generated ExportOptions.plist file (created by generate_export_options.py)
 export_options_plist = os.path.join(runner_temp, 'ExportOptions.plist')
 
+# Note: when using export_options (plist file), do NOT also set export_method
+# as they conflict. The plist already contains the method.
 fastfile = f"""default_platform(:ios)
 
 platform :ios do
@@ -32,12 +34,10 @@ platform :ios do
     build_app(
       skip_build_archive: true,
       archive_path: "{runner_temp}/App.xcarchive",
-      export_method: "app-store",
       export_team_id: "{team_id}",
       output_directory: "{runner_temp}/ipa",
       output_name: "App.ipa",
-      export_options_plist: "{export_options_plist}",
-      xcargs: "-allowProvisioningUpdates"
+      export_options: "{export_options_plist}"
     )
   end
 end
