@@ -183,6 +183,8 @@ jobs:
         env:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          PROFILE_NAME: ${{ env.PROFILE_NAME }}
+          PROFILE_UUID: ${{ env.PROFILE_UUID }}
         run: |
           cd ios/App
 
@@ -200,12 +202,22 @@ jobs:
                            f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
           content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
                            f'DEVELOPMENT_TEAM = {team_id};', content)
+          profile_name = os.environ.get('PROFILE_NAME', '')
+          profile_uuid = os.environ.get('PROFILE_UUID', '')
+
           content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
-                           'CODE_SIGN_STYLE = Automatic;', content)
+                           'CODE_SIGN_STYLE = Manual;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
-                           'CODE_SIGN_IDENTITY = "";', content)
+                           'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+          # Insert PROVISIONING_PROFILE_SPECIFIER after each CODE_SIGN_STYLE = Manual;
+          if profile_name:
+              content = re.sub(
+                  r'(CODE_SIGN_STYLE = Manual;)',
+                  f'\\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";',
+                  content
+              )
 
           with open(pbxproj_path, "w") as f:
               f.write(content)
@@ -321,6 +333,8 @@ jobs:
           IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          PROFILE_NAME: ${{ env.PROFILE_NAME }}
+          PROFILE_UUID: ${{ env.PROFILE_UUID }}
         run: |
           cd ios/App
 
@@ -335,16 +349,14 @@ jobs:
             -configuration Release \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             -skipPackagePluginValidation \
             -skipMacroValidation \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log
 
@@ -382,10 +394,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/ipa" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/export.log || true
 
           echo "=== IPA directory contents ==="
