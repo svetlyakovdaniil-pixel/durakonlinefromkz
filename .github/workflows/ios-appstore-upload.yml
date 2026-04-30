@@ -1,143 +1,502 @@
-name: iOS App Store Upload (macos-26)
+name: iOS App Store Upload (macos-26 )
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'client/**'
+      - 'server/**'
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - '.github/workflows/ios-build.yml'
+      - '.github/scripts/**'
   workflow_dispatch:
     inputs:
-      version:
-        description: 'App version (e.g. 1.0.2)'
-        required: true
-        default: '1.0.2'
-      build_number:
-        description: 'Build number (e.g. 13)'
-        required: true
-        default: '13'
+      upload_to_appstore:
+        description: 'Upload to App Store Connect'
+        required: false
+        default: 'true'
+        type: boolean
 
 jobs:
-  build:
+  build-ios:
+    name: Build iOS App
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      # ── 0. Setup PATH ──────────────────────────────────────────────────────
+      - name: Setup PATH
+        run: |
+          if [ -f "/opt/homebrew/bin/brew" ]; then
+            echo "/opt/homebrew/bin" >> $GITHUB_PATH
+            echo "/opt/homebrew/sbin" >> $GITHUB_PATH
+          elif [ -f "/usr/local/bin/brew" ]; then
+            echo "/usr/local/bin" >> $GITHUB_PATH
+          fi
+          if [ -d "$HOME/.rbenv/shims" ]; then
+            echo "$HOME/.rbenv/shims" >> $GITHUB_PATH
+            echo "$HOME/.rbenv/bin" >> $GITHUB_PATH
+          fi
+          echo "PATH setup complete"
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
+      # ── 1. Verify Xcode ────────────────────────────────────────────────────
+      - name: Verify Xcode setup
+        run: |
+          xcode-select -p
+          xcodebuild -version
 
-    - name: Install pnpm
-      run: npm install -g pnpm
+      # ── 2. Checkout ────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Install dependencies
-      run: pnpm install --frozen-lockfile
+      # ── 3. Setup pnpm ──────────────────────────────────────────────────────
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
 
-    - name: Build web assets
-      run: pnpm run build
+      # ── 4. Setup Node.js ───────────────────────────────────────────────────
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-    - name: Sync iOS
-      run: npx cap sync ios
+      # ── 4b. Cache pnpm store (self-hosted runner) ──────────────────────────
+      - name: Get pnpm store directory
+        id: pnpm-cache-dir
+        run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
 
-    - name: Fix PushNotificationsHandler
-      run: |
-        FILE="node_modules/.pnpm/@capacitor+push-notifications@8.0.3_@capacitor+core@8.3.1/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift"
-        if [ -f "$FILE" ]; then
-          sed -i '' 's/JSTypes\.coerceDictionary(\([^)]*\))/JSTypes.coerceDictionaryToJSObject(\1 as NSDictionary?)/g' "$FILE" || true
-        fi
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache-dir.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
-    - name: Fix AppDelegate
-      run: |
-        cat > ios/App/App/AppDelegate.swift << 'SWIFT'
-        import UIKit
-        import Capacitor
-        @UIApplicationMain
-        class AppDelegate: UIResponder, UIApplicationDelegate {
-            var window: UIWindow?
-            func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { return true }
-            func applicationWillResignActive(_ application: UIApplication) {}
-            func applicationDidEnterBackground(_ application: UIApplication) {}
-            func applicationWillEnterForeground(_ application: UIApplication) {}
-            func applicationDidBecomeActive(_ application: UIApplication) {}
-            func applicationWillTerminate(_ application: UIApplication) {}
-            func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
-                return ApplicationDelegateProxy.shared.application(app, open: url, options: options)
-            }
-        }
-        SWIFT
+      # ── 5. Install dependencies ────────────────────────────────────────────
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-    - name: Select Xcode 26
-      run: |
-        sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer 2>/dev/null || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
-        xcodebuild -version
+      # ── 6. Build web app ───────────────────────────────────────────────────
+      - name: Build web app
+        env:
+          NODE_ENV: production
+          VITE_APP_TITLE: "Durak online from KZ"
+          VITE_ADMOB_IOS_APP_ID: "ca-app-pub-3940256099942544~1458002511"
+        run: pnpm run build
 
-    - name: Import Certificate
-      env:
-        CERTIFICATE_BASE64: ${{ secrets.CERTIFICATE_BASE64 }}
-        CERTIFICATE_PASSWORD: ${{ secrets.CERTIFICATE_PASSWORD }}
-        KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-      run: |
-        KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-        security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-        security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-        echo -n "$CERTIFICATE_BASE64" | base64 --decode -o $RUNNER_TEMP/certificate.p12
-        security import $RUNNER_TEMP/certificate.p12 -P "$CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-        security list-keychain -d user -s $KEYCHAIN_PATH
+      # ── 7. Install Capacitor CLI ───────────────────────────────────────────
+      - name: Install Capacitor CLI globally
+        run: npm install -g @capacitor/cli@8
 
-    - name: Install Provisioning Profile
-      env:
-        PROVISIONING_PROFILE_BASE64: ${{ secrets.PROVISIONING_PROFILE_BASE64 }}
-      run: |
-        PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
-        echo -n "$PROVISIONING_PROFILE_BASE64" | base64 --decode -o $PP_PATH
-        mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-        cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+      # ── 8. Add iOS platform ────────────────────────────────────────────────
+      - name: Add iOS platform
+        run: |
+          if [ ! -f "ios/App/App.xcodeproj/project.pbxproj" ]; then
+            echo "No xcodeproj found, running cap add ios..."
+            cp -r ios/App/App/Assets.xcassets /tmp/AppAssets || true
+            cp -r ios/App/App/*.lproj /tmp/ 2>/dev/null || true
+            cp ios/App/App/Info.plist /tmp/Info.plist || true
+            cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
+            rm -rf ios
+            npx cap add ios
+            cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
+            for dir in /tmp/*.lproj; do
+              [ -d "$dir" ] && cp -r "$dir" "ios/App/App/" || true
+            done
+            cp /tmp/Info.plist ios/App/App/Info.plist || true
+            cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
+          fi
+          npx cap sync ios
 
-    - name: Set version
-      run: |
-        cd ios/App
-        xcrun agvtool new-marketing-version ${{ github.event.inputs.version }}
-        xcrun agvtool new-version -all ${{ github.event.inputs.build_number }}
+      # ── 9. Ensure CocoaPods is available ───────────────────────────────────
+      - name: Ensure CocoaPods is available
+        run: |
+          if ! command -v pod &>/dev/null; then
+            brew link --overwrite cocoapods 2>/dev/null || brew install cocoapods
+          fi
+          pod --version
 
-    - name: Archive
-      run: |
-        cd ios/App
-        xcodebuild archive \
-          -project App.xcodeproj \
-          -scheme App \
-          -configuration Release \
-          -archivePath $RUNNER_TEMP/App.xcarchive \
-          -destination "generic/platform=iOS" \
-          CODE_SIGN_STYLE=Manual \
-          PROVISIONING_PROFILE_SPECIFIER="${{ secrets.PROVISIONING_PROFILE_NAME }}" \
-          CODE_SIGN_IDENTITY="iPhone Distribution"
+      # ── 10. Ensure Fastlane is available ───────────────────────────────────
+      - name: Ensure Fastlane is available
+        run: |
+          if ! command -v fastlane &>/dev/null; then
+            brew link --overwrite fastlane 2>/dev/null || brew install fastlane
+          fi
+          fastlane --version
 
-    - name: Export IPA
-      run: |
-        cat > $RUNNER_TEMP/ExportOptions.plist << 'PLIST'
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0"><dict>
-          <key>method</key><string>app-store</string>
-          <key>teamID</key><string>TEAM_PLACEHOLDER</string>
-          <key>uploadBitcode</key><false/>
-          <key>uploadSymbols</key><true/>
-        </dict></plist>
-        PLIST
-        sed -i '' "s/TEAM_PLACEHOLDER/${{ secrets.APPLE_TEAM_ID }}/g" $RUNNER_TEMP/ExportOptions.plist
-        xcodebuild -exportArchive \
-          -archivePath $RUNNER_TEMP/App.xcarchive \
-          -exportOptionsPlist $RUNNER_TEMP/ExportOptions.plist \
-          -exportPath $RUNNER_TEMP/export
+      # ── 11. Install CocoaPods dependencies ─────────────────────────────────
+      - name: Install CocoaPods dependencies
+        run: |
+          # Create Podfile if missing (cap sync doesn't always create it)
+          if [ ! -f "ios/App/Podfile" ]; then
+            echo "Creating Podfile from base64..."
+            echo "cmVxdWlyZV9yZWxhdGl2ZSAiLi4vLi4vbm9kZV9tb2R1bGVzL0BjYXBhY2l0b3IvaW9zL3NjcmlwdHMvcG9kc19oZWxwZXJzIgoKcGxhdGZvcm0gOmlvcywgIjE1LjAiCnVzZV9mcmFtZXdvcmtzIQoKaW5zdGFsbCEgImNvY29hcG9kcyIsIDpkaXNhYmxlX2lucHV0X291dHB1dF9wYXRocyA9PiB0cnVlCgpkZWYgY2FwYWNpdG9yX3BvZHMKICBwb2QgIkNhcGFjaXRvciIsIDpwYXRoID0+ICIuLi8uLi9ub2RlX21vZHVsZXMvQGNhcGFjaXRvci9pb3MiCiAgcG9kICJDYXBhY2l0b3JDb3Jkb3ZhIiwgOnBhdGggPT4gIi4uLy4uL25vZGVfbW9kdWxlcy9AY2FwYWNpdG9yL2lvcyIKZW5kCgp0YXJnZXQgIkFwcCIgZG8KICBjYXBhY2l0b3JfcG9kcwplbmQKCnBvc3RfaW5zdGFsbCBkbyB8aW5zdGFsbGVyfAogIGluc3RhbGxlci5wb2RzX3Byb2plY3QudGFyZ2V0cy5lYWNoIGRvIHx0YXJnZXR8CiAgICB0YXJnZXQuYnVpbGRfY29uZmlndXJhdGlvbnMuZWFjaCBkbyB8Y29uZmlnfAogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkNPREVfU0lHTklOR19BTExPV0VEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOSU5HX1JFUVVJUkVEIl0gPSAiTk8iCiAgICAgIGNvbmZpZy5idWlsZF9zZXR0aW5nc1siQ09ERV9TSUdOX0lERU5USVRZIl0gPSAiIgogICAgICBjb25maWcuYnVpbGRfc2V0dGluZ3NbIkVYUEFOREVEX0NPREVfU0lHTl9JREVOVElUWSJdID0gIiIKICAgIGVuZAogIGVuZAplbmQK" | base64 --decode > ios/App/Podfile
+            echo "Podfile created."
+          fi
 
-    - name: Upload to App Store
-      env:
-        APPLE_ID: ${{ secrets.APPLE_ID }}
-        APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
-      run: |
-        xcrun altool --upload-app \
-          --type ios \
-          --file "$RUNNER_TEMP/export/App.ipa" \
-          --username "$APPLE_ID" \
-          --password "$APP_SPECIFIC_PASSWORD" \
-          --verbose
+          # Run cap sync to populate Podfile with all plugins
+          npx cap sync ios --no-build 2>&1 || npx cap sync ios 2>&1 || true
+
+          cd ios/App
+          pod install --no-repo-update 2>&1 || pod install 2>&1
+
+          echo "=== Podfile.lock - Capacitor versions ==="
+          grep -A2 'Capacitor\|CapacitorSplashScreen\|CapacitorPushNotifications' Podfile.lock 2>/dev/null | head -30 || echo "No Podfile.lock found"
+
+      # ── 12. Patch capacitor plugin sources for capacitor-swift-pm 8.1.0 ──────
+      # capacitor-swift-pm 8.1.0 is a binary XCFramework that lacks several APIs
+      # present in @capacitor/ios 8.1.0 (CocoaPods). We patch the plugin Swift
+      # source files in node_modules directly before Xcode compiles them.
+      - name: Patch capacitor plugin sources for capacitor-swift-pm 8.1.0 compatibility
+        run: python3 .github/scripts/patch_capacitor_plugins.py
+
+      # ── 13. Import Distribution Certificate ───────────────────────────────
+      - name: Import Distribution Certificate
+        env:
+          IOS_DISTRIBUTION_CERT_P12: ${{ secrets.IOS_DISTRIBUTION_CERT_P12 }}
+          IOS_DISTRIBUTION_CERT_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERT_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/ios-build.keychain"
+          KEYCHAIN_PASSWORD="temp_keychain_password_$(date +%s)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          echo "$IOS_DISTRIBUTION_CERT_P12" | base64 --decode > "$RUNNER_TEMP/distribution.p12"
+          security import "$RUNNER_TEMP/distribution.p12" \
+            -k "$KEYCHAIN_PATH" \
+            -P "$IOS_DISTRIBUTION_CERT_PASSWORD" \
+            -T /usr/bin/codesign \
+            -T /usr/bin/security
+
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH" 2>/dev/null || true
+
+          echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> $GITHUB_ENV
+          echo "KEYCHAIN_PASSWORD=$KEYCHAIN_PASSWORD" >> $GITHUB_ENV
+
+          echo "=== Identities in keychain ==="
+          security find-identity -v -p codesigning "$KEYCHAIN_PATH" || true
+
+      # ── 14. Install Provisioning Profile ──────────────────────────────────
+      - name: Install Provisioning Profile
+        env:
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+        run: |
+          RUNNER_HOME=$(eval echo ~$(whoami))
+          PROFILES_DIR="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
+          mkdir -p "$PROFILES_DIR"
+
+          PROFILE_TMP="$RUNNER_TEMP/profile.mobileprovision"
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_TMP"
+          echo "Profile file size: $(wc -c < "$PROFILE_TMP") bytes"
+
+          PROFILE_UUID=""
+          PROFILE_NAME=""
+          PLIST_TMP="$RUNNER_TEMP/profile.plist"
+
+          if security cms -D -i "$PROFILE_TMP" -o "$PLIST_TMP" 2>/dev/null; then
+            PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PLIST_TMP" 2>/dev/null || true)
+            PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PLIST_TMP" 2>/dev/null || true)
+          fi
+
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID=$(grep -a -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{12\}' \
+              "$PROFILE_TMP" | head -1)
+          fi
+
+          if [ -z "$PROFILE_UUID" ]; then
+            PROFILE_UUID="8bc01236-dcbb-4bc0-9f0e-dfebfd0e615e"
+            PROFILE_NAME="DurakOnlineKZ AppStore Distribution"
+          fi
+
+          echo "Profile UUID: $PROFILE_UUID"
+          echo "Profile Name: $PROFILE_NAME"
+
+          if [ -f "$PLIST_TMP" ]; then
+            echo "Team ID in profile: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+            echo "Expiry: $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
+          fi
+
+          cp "$PROFILE_TMP" "$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
+
+          XCODE_PROFILES_DIR="$RUNNER_HOME/Library/Developer/Xcode/UserData/ProvisioningProfiles"
+          mkdir -p "$XCODE_PROFILES_DIR"
+          cp "$PROFILE_TMP" "$XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
+
+          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
+          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
+          echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
+
+      # ── 15. Update Xcode project settings ─────────────────────────────────
+      - name: Update Xcode project bundle ID and signing
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+        run: |
+          cd ios/App
+
+          python3 << 'PYEOF2'
+          import re, os
+
+          pbxproj_path = "App.xcodeproj/project.pbxproj"
+          bundle_id = os.environ['IOS_BUNDLE_ID']
+          team_id = os.environ['IOS_TEAM_ID']
+
+          with open(pbxproj_path, "r") as f:
+              content = f.read()
+
+          content = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
+                           f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
+          content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
+                           f'DEVELOPMENT_TEAM = {team_id};', content)
+          content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
+                           'CODE_SIGN_STYLE = Automatic;', content)
+          content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
+                           'CODE_SIGN_IDENTITY = "";', content)
+          content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+          content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+
+          with open(pbxproj_path, "w") as f:
+              f.write(content)
+          print("Xcode project updated successfully")
+          PYEOF2
+
+          find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
+            sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
+            sed -i '' '/^PROVISIONING_PROFILE/d' "$xcconfig" 2>/dev/null || true
+          done
+
+      # ── 16. Setup App Store Connect API Key ──────────────────────────────
+      - name: Setup App Store Connect API Key
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$API_KEY_DIR"
+          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+
+          if echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | grep -q 'BEGIN'; then
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
+          else
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH"
+          fi
+
+          echo "API key file size: $(wc -c < "$API_KEY_PATH") bytes"
+          echo "API_KEY_PATH=$API_KEY_PATH" >> $GITHUB_ENV
+          echo "API_KEY_ID=$APP_STORE_CONNECT_API_KEY_ID" >> $GITHUB_ENV
+
+      # ── 17. Resolve SPM deps + inject shim ───────────────────────────────────
+      - name: Resolve SPM dependencies and inject CapacitorCompatibility shim
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          cd ios/App
+
+          echo "=== Resolving SPM package dependencies ==="
+          xcodebuild -resolvePackageDependencies \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            2>&1 | tail -20 || true
+
+          echo "=== Injecting CapacitorCompatibility.swift into SourcePackages/checkouts ==="
+          COMPAT_FILE="/tmp/CapacitorCompatibility.swift"
+          # Decode the shim (same base64 as step 12)
+          echo "Ly8gQ2FwYWNpdG9yQ29tcGF0aWJpbGl0eS5zd2lmdAovLyBDb21wYXRpYmlsaXR5IHNoaW0gZm9yIGNhcGFjaXRvci1zd2lmdC1wbSA4LjMueAovLyBSZXN0b3JlcyBBUElzIHRoYXQgd2VyZSByZW1vdmVkIG9yIHJlbmFtZWQgaW4gOC4zLngKaW1wb3J0IENhcGFjaXRvcgppbXBvcnQgRm91bmRhdGlvbgppbXBvcnQgVUlLaXQKCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCBvcHRpb25hbCBvdmVybG9hZHMKLy8gSW4gOC4zLngsIGdldEludC9nZXRCb29sL2dldFN0cmluZyBvbmx5IGhhdmUgbm9uLW9wdGlvbmFsIHZlcnNpb25zIHdpdGggcmVxdWlyZWQgZGVmYXVsdC4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9ucyB1c2VkIGJ5IG9sZGVyIHBsdWdpbiBjb2RlLgpwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyBnZXRJbnQoXyBrZXk6IFN0cmluZykgLT4gSW50PyB7CiAgICAgICAgcmV0dXJuIG9wdGlvbnNba2V5XSBhcz8gSW50CiAgICB9CiAgICBmdW5jIGdldEJvb2woXyBrZXk6IFN0cmluZykgLT4gQm9vbD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEJvb2wKICAgIH0KICAgIGZ1bmMgZ2V0U3RyaW5nKF8ga2V5OiBTdHJpbmcpIC0+IFN0cmluZz8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IFN0cmluZwogICAgfQogICAgZnVuYyBnZXRGbG9hdChfIGtleTogU3RyaW5nKSAtPiBGbG9hdD8gewogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiB2IH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gSW50IHsgcmV0dXJuIEZsb2F0KHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldERvdWJsZShfIGtleTogU3RyaW5nKSAtPiBEb3VibGU/IHsKICAgICAgICBpZiBsZXQgdiA9IG9wdGlvbnNba2V5XSBhcz8gRG91YmxlIHsgcmV0dXJuIHYgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBGbG9hdCB7IHJldHVybiBEb3VibGUodikgfQogICAgICAgIGlmIGxldCB2ID0gb3B0aW9uc1trZXldIGFzPyBJbnQgeyByZXR1cm4gRG91YmxlKHYpIH0KICAgICAgICByZXR1cm4gbmlsCiAgICB9CiAgICBmdW5jIGdldEFycmF5KF8ga2V5OiBTdHJpbmcpIC0+IEpTQXJyYXk/IHsKICAgICAgICByZXR1cm4gb3B0aW9uc1trZXldIGFzPyBKU0FycmF5CiAgICB9CiAgICBmdW5jIGdldE9iamVjdChfIGtleTogU3RyaW5nKSAtPiBKU09iamVjdD8gewogICAgICAgIHJldHVybiBvcHRpb25zW2tleV0gYXM/IEpTT2JqZWN0CiAgICB9Cn0KCi8vIE1BUks6IC0gQ0FQUGx1Z2luQ2FsbCByZWplY3QvdW5pbXBsZW1lbnRlZAovLyBUaGVzZSBtZXRob2RzIHdlcmUgcmVtb3ZlZCBpbiA4LjMueApwdWJsaWMgZXh0ZW5zaW9uIENBUFBsdWdpbkNhbGwgewogICAgZnVuYyByZWplY3QoXyBtZXNzYWdlOiBTdHJpbmcsIF8gY29kZTogU3RyaW5nPyA9IG5pbCwgXyBlcnJvcjogRXJyb3I/ID0gbmlsLCBfIGRhdGE6IFBsdWdpbkNhbGxSZXN1bHREYXRhPyA9IG5pbCkgewogICAgICAgIHZhciByZXN1bHQ6IFBsdWdpbkNhbGxSZXN1bHREYXRhID0gZGF0YSA/PyBbOl0KICAgICAgICByZXN1bHRbIm1lc3NhZ2UiXSA9IG1lc3NhZ2UKICAgICAgICBpZiBsZXQgY29kZSA9IGNvZGUgeyByZXN1bHRbImNvZGUiXSA9IGNvZGUgfQogICAgICAgIGlmIGxldCBlcnJvciA9IGVycm9yIHsgcmVzdWx0WyJlcnJvciJdID0gZXJyb3IubG9jYWxpemVkRGVzY3JpcHRpb24gfQogICAgICAgIHNlbGYucmVzb2x2ZShyZXN1bHQpCiAgICB9CiAgICBmdW5jIHVuaW1wbGVtZW50ZWQoKSB7CiAgICAgICAgc2VsZi5yZXNvbHZlKFsibWVzc2FnZSI6ICJub3QgaW1wbGVtZW50ZWQiXSkKICAgIH0KICAgIGZ1bmMgdW5pbXBsZW1lbnRlZChfIG1lc3NhZ2U6IFN0cmluZykgewogICAgICAgIHNlbGYucmVzb2x2ZShbIm1lc3NhZ2UiOiBtZXNzYWdlXSkKICAgIH0KfQoKLy8gTUFSSzogLSBQbHVnaW5Db25maWcgb3B0aW9uYWwgZ2V0U3RyaW5nCi8vIEluIDguMy54LCBQbHVnaW5Db25maWcuZ2V0U3RyaW5nIHJlcXVpcmVzIGEgZGVmYXVsdCB2YWx1ZS4KLy8gVGhpcyBleHRlbnNpb24gYWRkcyBiYWNrIHRoZSBvcHRpb25hbCB2ZXJzaW9uLgpwdWJsaWMgZXh0ZW5zaW9uIFBsdWdpbkNvbmZpZyB7CiAgICBmdW5jIGdldFN0cmluZyhfIGtleTogU3RyaW5nKSAtPiBTdHJpbmc/IHsKICAgICAgICByZXR1cm4gZ2V0U3RyaW5nKGtleSwgbmlsKQogICAgfQp9CgovLyBNQVJLOiAtIFVJQ29sb3IuY2FwYWNpdG9yLmNvbG9yKGZyb21IZXg6KQovLyBJbiA4LjMueCwgdGhpcyBtZXRob2Qgd2FzIHJlbmFtZWQgdG8gY29sb3IoYXJnYjopLgovLyBUaGlzIGV4dGVuc2lvbiBhZGRzIGJhY2sgdGhlIGZyb21IZXg6IHZlcnNpb24uCnB1YmxpYyBleHRlbnNpb24gQ2FwYWNpdG9yRXh0ZW5zaW9uIHdoZXJlIEV4dGVuZGVkVHlwZSA9PSBVSUNvbG9yIHsKICAgIHN0YXRpYyBmdW5jIGNvbG9yKGZyb21IZXg6IFN0cmluZykgLT4gVUlDb2xvcj8gewogICAgICAgIGxldCBoZXhTdHJpbmcgPSBmcm9tSGV4LnRyaW1taW5nQ2hhcmFjdGVycyhpbjogLndoaXRlc3BhY2VzQW5kTmV3bGluZXMpCiAgICAgICAgICAgIC5yZXBsYWNpbmdPY2N1cnJlbmNlcyhvZjogIiMiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMHgiLCB3aXRoOiAiIikKICAgICAgICAgICAgLnJlcGxhY2luZ09jY3VycmVuY2VzKG9mOiAiMFgiLCB3aXRoOiAiIikKICAgICAgICB2YXIgYXJnYjogVUludDY0ID0gMAogICAgICAgIGd1YXJkIFNjYW5uZXIoc3RyaW5nOiBoZXhTdHJpbmcpLnNjYW5IZXhJbnQ2NCgmYXJnYikgZWxzZSB7IHJldHVybiBuaWwgfQogICAgICAgIGxldCByZWQ6IENHRmxvYXQKICAgICAgICBsZXQgZ3JlZW46IENHRmxvYXQKICAgICAgICBsZXQgYmx1ZTogQ0dGbG9hdAogICAgICAgIGxldCBhbHBoYTogQ0dGbG9hdAogICAgICAgIGlmIGhleFN0cmluZy5jb3VudCA8PSA2IHsKICAgICAgICAgICAgcmVkID0gQ0dGbG9hdCgoYXJnYiAmIDB4RkYwMDAwKSA+PiAxNikgLyAyNTUuMAogICAgICAgICAgICBncmVlbiA9IENHRmxvYXQoKGFyZ2IgJiAweDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBibHVlID0gQ0dGbG9hdChhcmdiICYgMHgwMDAwRkYpIC8gMjU1LjAKICAgICAgICAgICAgYWxwaGEgPSAxLjAKICAgICAgICB9IGVsc2UgewogICAgICAgICAgICByZWQgPSBDR0Zsb2F0KChhcmdiICYgMHhGRjAwXzAwMDApID4+IDI0KSAvIDI1NS4wCiAgICAgICAgICAgIGdyZWVuID0gQ0dGbG9hdCgoYXJnYiAmIDB4MDBGRjAwMDApID4+IDE2KSAvIDI1NS4wCiAgICAgICAgICAgIGJsdWUgPSBDR0Zsb2F0KChhcmdiICYgMHgwMDAwRkYwMCkgPj4gOCkgLyAyNTUuMAogICAgICAgICAgICBhbHBoYSA9IENHRmxvYXQoYXJnYiAmIDB4MDAwMDAwRkYpIC8gMjU1LjAKICAgICAgICB9CiAgICAgICAgcmV0dXJuIFVJQ29sb3IocmVkOiByZWQsIGdyZWVuOiBncmVlbiwgYmx1ZTogYmx1ZSwgYWxwaGE6IGFscGhhKQogICAgfQp9Cg==" | base64 --decode > "$COMPAT_FILE"
+          echo "Shim: $(wc -l < $COMPAT_FILE) lines"
+
+          # Inject into every Sources directory in SourcePackages/checkouts
+          CHECKOUTS="$RUNNER_TEMP/SourcePackages/checkouts"
+          if [ -d "$CHECKOUTS" ]; then
+            find "$CHECKOUTS" -path "*/ios/Sources" -type d 2>/dev/null | while read srcdir; do
+              echo "Injecting into: $srcdir"
+              cp "$COMPAT_FILE" "$srcdir/CapacitorCompatibility.swift"
+            done
+            # Also patch bridge.viewController/webView in checkouts
+            find "$CHECKOUTS" -name "*.swift" 2>/dev/null | while read f; do
+              if grep -q 'bridge.*viewController\|bridge.*webView' "$f" 2>/dev/null; then
+                perl -i '' -pe 's/\bbridge\??\.viewController\b/self.webView?.next as? UIViewController/g' "$f" 2>/dev/null || true
+                perl -i '' -pe 's/\bbridge\??\.webView\b/self.webView/g' "$f" 2>/dev/null || true
+              fi
+            done
+            # Also patch PushNotifications in checkouts
+            find "$CHECKOUTS" -name "PushNotificationsHandler.swift" 2>/dev/null | while read f; do
+              perl -i '' -pe 's/self\.plugin\?\.getConfig\(\)\.getArray\("presentationOptions"\)/self.plugin?.getConfig().getConfigJSON()["presentationOptions"]/g' "$f" 2>/dev/null || true
+              perl -i '' -pe 's/JSTypes\.coerceDictionaryToJSObject\([^)]+\)\s*\?\?\s*\[:\]/(request.content.userInfo as? JSObject) ?? [:]/g' "$f" 2>/dev/null || true
+            done
+            find "$CHECKOUTS" -name "PushNotificationsPlugin.swift" 2>/dev/null | while read f; do
+              perl -i '' -pe 's/call\.getArray\("notifications",\s*JSObject\.self\)/call.getArray("notifications", []) as? [JSObject]/g' "$f" 2>/dev/null || true
+            done
+            echo "=== Injection into SourcePackages/checkouts complete ==="
+          else
+            echo "WARNING: SourcePackages/checkouts not found at $CHECKOUTS"
+            ls -la "$RUNNER_TEMP/SourcePackages/" 2>/dev/null || echo "SourcePackages dir empty"
+          fi
+
+      # ── 17b. Diagnose PushNotifications source files ─────────────────────────
+      - name: Diagnose PushNotifications source files
+        run: |
+          echo "=== PushNotificationsPlugin.swift (first 50 lines) ==="
+          PUSH_DIR=$(find . -path "*push-notifications*/PushNotificationsPlugin" -type d 2>/dev/null | head -1)
+          if [ -n "$PUSH_DIR" ]; then
+            echo "Found at: $PUSH_DIR"
+            head -50 "$PUSH_DIR/PushNotificationsPlugin.swift" 2>/dev/null || echo "File not found"
+            echo "--- PushNotificationsHandler.swift ---"
+            cat "$PUSH_DIR/PushNotificationsHandler.swift" 2>/dev/null || echo "File not found"
+            echo "--- All .swift files in dir ---"
+            ls -la "$PUSH_DIR/" 2>/dev/null
+          else
+            echo "PushNotifications plugin dir not found"
+            find . -name "PushNotificationsPlugin.swift" 2>/dev/null | head -5
+          fi
+          echo "=== Capacitor 8.1.0 getArray signatures ==="
+          grep -n "func getArray" node_modules/.pnpm/@capacitor+ios@8.1.0_@capacitor+core@8.1.0/node_modules/@capacitor/ios/Capacitor/Capacitor/JSTypes.swift 2>/dev/null || echo "Not found"
+          echo "=== SplashScreenPlugin.swift (8.1.0) - after patch ==="
+          SPLASH_FILE=$(find . -path "*@capacitor+core@8.1.0*splash-screen*SplashScreenPlugin.swift" 2>/dev/null | head -1)
+          if [ -n "$SPLASH_FILE" ]; then
+            echo "Found at: $SPLASH_FILE"
+            cat -n "$SPLASH_FILE"
+          else
+            echo "SplashScreenPlugin.swift (8.1.0) not found"
+            find . -name "SplashScreenPlugin.swift" 2>/dev/null
+          fi
+
+      # ── 18. Build & Archive ────────────────────────────────────────────────
+      - name: Build and Archive
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          cd ios/App
+
+          echo "=== Build environment ==="
+          echo "Team ID: $IOS_TEAM_ID"
+          echo "Bundle ID: $IOS_BUNDLE_ID"
+          echo "Keychain: $KEYCHAIN_PATH"
+
+          xcodebuild archive \
+            -workspace App.xcworkspace \
+            -scheme App \
+            -configuration Release \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -destination "generic/platform=iOS" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            -skipPackagePluginValidation \
+            -skipMacroValidation \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
+            CODE_SIGN_STYLE=Automatic \
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
+            2>&1 | tee /tmp/xcodebuild.log
+
+          if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
+            echo "========================================"
+            echo "=== ARCHIVE FAILED - FIRST 30 ERRORS ==="
+            echo "========================================"
+            grep -m 30 ' error:' /tmp/xcodebuild.log || echo "No 'error:' lines found"
+            echo ""
+            echo "=== LAST 50 LINES OF BUILD LOG ==="
+            tail -50 /tmp/xcodebuild.log
+            exit 1
+          fi
+          echo "Archive created successfully!"
+
+      # ── 18. Export IPA ─────────────────────────────────────────────────────
+      - name: Export IPA
+        env:
+          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>signingStyle</key>
+            <string>automatic</string>
+          </dict>
+          </plist>
+          PLIST_EOF
+
+          mkdir -p "$RUNNER_TEMP/ipa"
+
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportPath "$RUNNER_TEMP/ipa" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            2>&1 | tee /tmp/export.log
+
+          echo "=== IPA directory contents ==="
+          ls -la "$RUNNER_TEMP/ipa/"
+
+      # ── 19. Upload to App Store Connect ────────────────────────────────────
+      - name: Upload to App Store Connect
+        if: ${{ github.event.inputs.upload_to_appstore != 'false' }}
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
+          if [ -z "$IPA_PATH" ]; then
+            echo "ERROR: No IPA found!"
+            exit 1
+          fi
+          echo "Uploading: $IPA_PATH"
+
+          API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
+          mkdir -p "$API_KEY_DIR"
+          API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
+          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose \
+            2>&1
+
+          rm -f "$API_KEY_PATH" 2>/dev/null || true
+
+      # ── 20. Upload IPA as artifact ─────────────────────────────────────────
+      - name: Upload IPA artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: DurakOnlineKZ-iOS-${{ github.run_number }}
+          path: ${{ runner.temp }}/ipa/*.ipa
+          retention-days: 30
+
+      # ── 21. Cleanup ────────────────────────────────────────────────────────
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
