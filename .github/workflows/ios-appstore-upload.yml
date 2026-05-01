@@ -202,22 +202,12 @@ jobs:
                            f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
           content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
                            f'DEVELOPMENT_TEAM = {team_id};', content)
-          profile_name = os.environ.get('PROFILE_NAME', '')
-          profile_uuid = os.environ.get('PROFILE_UUID', '')
-
           content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
-                           'CODE_SIGN_STYLE = Manual;', content)
+                           'CODE_SIGN_STYLE = Automatic;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
-                           'CODE_SIGN_IDENTITY = "Apple Distribution";', content)
+                           'CODE_SIGN_IDENTITY = "";', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
-          # Insert PROVISIONING_PROFILE_SPECIFIER after each CODE_SIGN_STYLE = Manual;
-          if profile_name:
-              content = re.sub(
-                  r'(CODE_SIGN_STYLE = Manual;)',
-                  f'\\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{profile_name}";',
-                  content
-              )
 
           with open(pbxproj_path, "w") as f:
               f.write(content)
@@ -354,9 +344,8 @@ jobs:
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
             PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_STYLE=Automatic \
             CODE_SIGN_IDENTITY="Apple Distribution" \
-            PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
             OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
             2>&1 | tee /tmp/xcodebuild.log
 
