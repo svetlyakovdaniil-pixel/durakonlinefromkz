@@ -425,17 +425,30 @@ jobs:
           fi
           echo "Uploading: $IPA_PATH"
 
+          # Decode the .p8 key content
           API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
           mkdir -p "$API_KEY_DIR"
           API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
           echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
-          # Build API key JSON for Fastlane (required format for api_key_path)
-          API_KEY_JSON="$RUNNER_TEMP/api_key.json"
-          python3 .github/scripts/generate_api_key_json.py
+          echo "Key ID: $APP_STORE_CONNECT_API_KEY_ID"
+          echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
+          echo "Key file size: $(wc -c < $API_KEY_PATH) bytes"
 
-          # Use fastlane pilot to upload IPA to TestFlight / App Store Connect
+          # Build Fastlane API key JSON
+          API_KEY_JSON="$RUNNER_TEMP/api_key.json"
+          cat > "$API_KEY_JSON" << JSONEOF
+          {
+            "key_id": "${APP_STORE_CONNECT_API_KEY_ID}",
+            "issuer_id": "${APP_STORE_CONNECT_ISSUER_ID}",
+            "key": "$(cat $API_KEY_PATH)",
+            "is_key_content_base64": false
+          }
+JSONEOF
+          echo "API key JSON written"
+
+          # Upload using fastlane pilot (works with Xcode 26, replaces deprecated altool)
           fastlane run upload_to_testflight \
             ipa:"$IPA_PATH" \
             api_key_path:"$API_KEY_JSON" \

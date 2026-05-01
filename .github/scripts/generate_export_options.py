@@ -44,6 +44,8 @@ plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
   <key>uploadSymbols</key>
   <true/>
   <key>manageAppVersionAndBuildNumber</key>
+  <false/>
+  <key>uploadToAppStore</key>
   <false/>{provisioning_profiles_xml}
 </dict>
 </plist>"""
