@@ -431,13 +431,40 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
+          # Diagnose available upload tools on this runner
+          echo "=== Xcode version ==="
+          xcodebuild -version
+          echo "=== altool location ==="
+          xcrun --find altool 2>&1 || echo "altool not found"
+          echo "=== notarytool location ==="
+          xcrun --find notarytool 2>&1 || echo "notarytool not found"
+          echo "=== Transporter location ==="
+          ls /Applications/Transporter.app 2>&1 || echo "Transporter not found"
+          ls /usr/local/bin/iTMSTransporter 2>&1 || echo "iTMSTransporter not found"
+          find /Applications/Xcode*.app -name "iTMSTransporter" 2>/dev/null | head -3 || echo "iTMSTransporter not in Xcode"
+          find /Applications/Xcode*.app -name "altool" 2>/dev/null | head -3 || echo "altool not in Xcode"
+          echo "=== Uploading IPA ==="
+          # Try xcrun altool first
           xcrun altool --upload-app \
             --type ios \
             --file "$IPA_PATH" \
             --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
             --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose \
-            2>&1
+            2>&1 && echo "altool upload succeeded" || {
+            echo "altool failed, exit code: $?"
+            # Try iTMSTransporter as fallback
+            TRANSPORTER=$(find /Applications/Xcode*.app -name "iTMSTransporter" 2>/dev/null | head -1)
+            if [ -n "$TRANSPORTER" ]; then
+              echo "Trying iTMSTransporter at: $TRANSPORTER"
+              "$TRANSPORTER" -m upload -f "$IPA_PATH" \
+                -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+                -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+                -v eXtreme 2>&1
+            else
+              echo "No upload tool available!"
+              exit 1
+            fi
+          }
 
           rm -f "$API_KEY_PATH" 2>/dev/null || true
 
