@@ -431,42 +431,35 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
-          # Diagnose available upload tools on this runner
-          echo "=== Xcode version ==="
-          xcodebuild -version
-          echo "=== altool location ==="
-          xcrun --find altool 2>&1 || echo "altool not found"
-          echo "=== notarytool location ==="
-          xcrun --find notarytool 2>&1 || echo "notarytool not found"
-          echo "=== Transporter location ==="
-          ls /Applications/Transporter.app 2>&1 || echo "Transporter not found"
-          ls /usr/local/bin/iTMSTransporter 2>&1 || echo "iTMSTransporter not found"
-          find /Applications/Xcode*.app -name "iTMSTransporter" 2>/dev/null | head -3 || echo "iTMSTransporter not in Xcode"
-          find /Applications/Xcode*.app -name "altool" 2>/dev/null | head -3 || echo "altool not in Xcode"
-          echo "=== Uploading IPA ==="
-          # Try xcrun altool first
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            2>&1 && echo "altool upload succeeded" || {
-            echo "altool failed, exit code: $?"
-            # Try iTMSTransporter as fallback
-            TRANSPORTER=$(find /Applications/Xcode*.app -name "iTMSTransporter" 2>/dev/null | head -1)
-            if [ -n "$TRANSPORTER" ]; then
-              echo "Trying iTMSTransporter at: $TRANSPORTER"
-              "$TRANSPORTER" -m upload -f "$IPA_PATH" \
-                -apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-                -apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-                -v eXtreme 2>&1
-            else
-              echo "No upload tool available!"
-              exit 1
-            fi
-          }
+          # Build API key JSON for Fastlane (required format for api_key_path)
+          API_KEY_JSON="$RUNNER_TEMP/api_key.json"
+          python3 -c "
+import json, os, sys
+key_id = os.environ['APP_STORE_CONNECT_API_KEY_ID']
+issuer_id = os.environ['APP_STORE_CONNECT_ISSUER_ID']
+key_content = os.environ['APP_STORE_CONNECT_API_KEY_CONTENT']
+# Decode if base64
+import base64
+try:
+    decoded = base64.b64decode(key_content).decode('utf-8')
+    if '-----BEGIN' in decoded:
+        key_content = decoded
+except Exception:
+    pass
+data = {'key_id': key_id, 'issuer_id': issuer_id, 'key': key_content, 'in_house': False, 'is_key_content_base64': False}
+with open('$API_KEY_JSON', 'w') as f:
+    json.dump(data, f)
+print('API key JSON written')
+"
 
-          rm -f "$API_KEY_PATH" 2>/dev/null || true
+          # Use fastlane pilot to upload IPA to TestFlight / App Store Connect
+          fastlane run upload_to_testflight \
+            ipa:"$IPA_PATH" \
+            api_key_path:"$API_KEY_JSON" \
+            skip_waiting_for_build_processing:true \
+            2>&1
+
+          rm -f "$API_KEY_PATH" "$API_KEY_JSON" 2>/dev/null || true
 
       # ── 20. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
