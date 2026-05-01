@@ -437,16 +437,7 @@ jobs:
 
           # Diagnostic: show JSON content (without the key itself)
           echo "=== api_key.json diagnostic ==="
-          API_KEY_JSON_PATH="$RUNNER_TEMP/api_key.json" python3 -c "
-import json, os
-path = os.environ['API_KEY_JSON_PATH']
-with open(path) as f:
-    d = json.load(f)
-print('key_id:', d.get('key_id', 'MISSING'))
-print('issuer_id:', d.get('issuer_id', 'MISSING'))
-print('key_len:', len(d.get('key', '')))
-print('in_house:', d.get('in_house', 'MISSING'))
-"
+          python3 .github/scripts/diagnose_api_key_json.py
 
           echo "Bundle ID: $IOS_BUNDLE_ID"
           echo "Apple ID: $IOS_APP_APPLE_ID"
