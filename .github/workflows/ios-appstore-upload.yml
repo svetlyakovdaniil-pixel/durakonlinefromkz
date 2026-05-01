@@ -417,6 +417,8 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          IOS_APP_APPLE_ID: ${{ secrets.IOS_APP_APPLE_ID }}
         run: |
           IPA_PATH=$(find "$RUNNER_TEMP/ipa" -name "*.ipa" | head -1)
           if [ -z "$IPA_PATH" ]; then
@@ -425,17 +427,40 @@ jobs:
           fi
           echo "Uploading: $IPA_PATH"
 
+          # Verify IPA bundle ID
+          echo "=== IPA bundle ID check ==="
+          unzip -p "$IPA_PATH" "Payload/*.app/Info.plist" 2>/dev/null | plutil -extract CFBundleIdentifier raw - 2>/dev/null || echo "Could not extract bundle ID from IPA"
+
           # Generate Fastlane API key JSON via Python script (avoids YAML heredoc issues)
           python3 .github/scripts/generate_api_key_json.py
           API_KEY_JSON="$RUNNER_TEMP/api_key.json"
 
-          echo "Key ID: $APP_STORE_CONNECT_API_KEY_ID"
-          echo "Issuer ID: $APP_STORE_CONNECT_ISSUER_ID"
+          # Diagnostic: show JSON content (without the key itself)
+          echo "=== api_key.json diagnostic ==="
+          API_KEY_JSON_PATH="$RUNNER_TEMP/api_key.json" python3 -c "
+import json, os
+path = os.environ['API_KEY_JSON_PATH']
+with open(path) as f:
+    d = json.load(f)
+print('key_id:', d.get('key_id', 'MISSING'))
+print('issuer_id:', d.get('issuer_id', 'MISSING'))
+print('key_len:', len(d.get('key', '')))
+print('in_house:', d.get('in_house', 'MISSING'))
+"
 
-          # Upload using fastlane pilot (works with Xcode 26, replaces deprecated altool)
+          echo "Bundle ID: $IOS_BUNDLE_ID"
+          echo "Apple ID: $IOS_APP_APPLE_ID"
+
+          # Workaround for Xcode 26 altool bug: --use-old-altool prevents wrong app selection
+          # See: https://github.com/fastlane/fastlane/issues/29698
+          export DELIVER_ALTOOL_ADDITIONAL_UPLOAD_PARAMETERS="--use-old-altool"
+
+          # Upload using fastlane pilot with explicit app_identifier and apple_id
           fastlane run upload_to_testflight \
             ipa:"$IPA_PATH" \
             api_key_path:"$API_KEY_JSON" \
+            app_identifier:"$IOS_BUNDLE_ID" \
+            apple_id:"$IOS_APP_APPLE_ID" \
             skip_waiting_for_build_processing:true \
             2>&1
 
