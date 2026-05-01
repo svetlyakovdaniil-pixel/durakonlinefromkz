@@ -30,18 +30,17 @@ else:
     signing_style = "automatic"
     print("No profile name/UUID found - using automatic signing (may fail with cloud signing error).")
 
+# Use app-store-connect (Xcode 15+), not deprecated app-store
 plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
   <key>method</key>
-  <string>app-store</string>
+  <string>app-store-connect</string>
   <key>teamID</key>
   <string>{team_id}</string>
   <key>signingStyle</key>
   <string>{signing_style}</string>
-  <key>uploadBitcode</key>
-  <false/>
   <key>uploadSymbols</key>
   <true/>
   <key>manageAppVersionAndBuildNumber</key>
