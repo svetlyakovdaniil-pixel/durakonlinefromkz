@@ -132,7 +132,10 @@ async function startServer() {
         return res.status(400).json({ error: "missing_token" });
       }
       // Verify the token is valid before setting the cookie
-      await nativeSdk.verifySession(token);
+      const session = await nativeSdk.verifySession(token);
+      if (!session) {
+        return res.status(401).json({ error: "invalid_token" });
+      }
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(NATIVE_COOKIE_NAME, token, { ...cookieOptions, maxAge: NATIVE_ONE_YEAR_MS });
       return res.json({ ok: true });
