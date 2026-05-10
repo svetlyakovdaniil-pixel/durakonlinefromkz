@@ -8,6 +8,7 @@ import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { App } from "@capacitor/app";
+import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -57,22 +58,13 @@ export default function Login() {
         const token = params.get("token");
         if (token) {
           try {
-            // Exchange token for a session cookie via server endpoint
-            const res = await fetch("https://durakonlinefromkz.online/api/auth/native/session", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ token }),
-              credentials: "include",
-            });
-            if (res.ok) {
-              // Small delay to ensure cookie is persisted before redirect
-              await new Promise(resolve => setTimeout(resolve, 300));
-              window.location.replace("/");
-            } else {
-              setError(t("auth.serverError"));
-              setGoogleLoading(false);
-              setAppleLoading(false);
-            }
+            // On native iOS/Android: save token to localStorage.
+            // The tRPC client reads this token and sends it via Authorization header.
+            // Cookies don't work cross-domain in Capacitor (capacitor://localhost vs durakonlinefromkz.online).
+            localStorage.setItem(NATIVE_TOKEN_KEY, token);
+            // Small delay to ensure storage is written before reload
+            await new Promise(resolve => setTimeout(resolve, 100));
+            window.location.replace("/");
           } catch {
             setError(t("auth.serverError"));
             setGoogleLoading(false);
@@ -131,8 +123,14 @@ export default function Login() {
         return;
       }
 
-      // Success — small delay to ensure cookie is persisted, then reload
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // On native iOS/Android: server returns token in response body.
+      // Save it to localStorage so tRPC can send it via Authorization header.
+      if (Capacitor.isNativePlatform() && data.token) {
+        localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
+      }
+
+      // Small delay to ensure storage is written, then reload
+      await new Promise(resolve => setTimeout(resolve, 100));
       window.location.replace("/");
     } catch {
       setError(t("auth.serverError"));

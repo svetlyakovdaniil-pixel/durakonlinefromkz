@@ -209,7 +209,8 @@ export function registerEmailAuthRoutes(app: Express) {
       });
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.status(201).json({ success: true, openId });
+      // Also return token in body so native iOS/Android can store it in localStorage
+      res.status(201).json({ success: true, openId, token: sessionToken });
     } catch (error) {
       console.error("[EmailAuth] Verify code failed:", error);
       res.status(500).json({ error: "server_error", message: "Ошибка сервера" });
@@ -301,7 +302,9 @@ export function registerEmailAuthRoutes(app: Express) {
       });
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.status(200).json({ success: true, openId: user.openId });
+      // Also return token in body so native iOS/Android can store it in localStorage
+      // (cookies don't work cross-domain in Capacitor: capacitor://localhost vs durakonlinefromkz.online)
+      res.status(200).json({ success: true, openId: user.openId, token: sessionToken });
     } catch (error) {
       console.error("[EmailAuth] Login failed:", error);
       res.status(500).json({ error: "server_error", message: "Ошибка сервера" });

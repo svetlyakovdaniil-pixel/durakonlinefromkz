@@ -2,6 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'sonner';
 import { trpc } from '@/lib/trpc';
+import { Capacitor } from '@capacitor/core';
+import { NATIVE_API_BASE, NATIVE_TOKEN_KEY } from '@shared/const';
 import type {
   ServerToClientEvents, ClientToServerEvents,
   Room, ClientGameState, AvailableAction, RoomSettings,
@@ -87,9 +89,15 @@ export function useSocket(userId: string | null, userName: string | null) {
   useEffect(() => {
     if (!userId) return;
 
-    const socket: TypedSocket = io({
+    // On native iOS/Android: connect to the production server with absolute URL.
+    // On web: connect to the same origin (no URL needed).
+    const isNative = Capacitor.isNativePlatform();
+    const socketUrl = isNative ? NATIVE_API_BASE : undefined;
+    const nativeToken = isNative ? localStorage.getItem(NATIVE_TOKEN_KEY) : null;
+
+    const socket: TypedSocket = io(socketUrl as any, {
       path: '/api/socket.io',
-      auth: { odId: userId, name: userName || tRef.current('socket.guest') },
+      auth: { odId: userId, name: userName || tRef.current('socket.guest'), token: nativeToken || undefined },
       transports: ['websocket', 'polling'],
       upgrade: true,
       rememberUpgrade: true,

@@ -257,10 +257,20 @@ class SDKServer {
   }
 
   async authenticateRequest(req: Request): Promise<User> {
-    // Regular authentication flow
-    const cookies = this.parseCookies(req.headers.cookie);
-    const sessionCookie = cookies.get(COOKIE_NAME);
-    const session = await this.verifySession(sessionCookie);
+    // Support Authorization: Bearer <token> header for native iOS/Android apps.
+    // Capacitor apps can't use cross-domain cookies, so they store the token in
+    // localStorage and send it via Authorization header.
+    const authHeader = req.headers.authorization;
+    let tokenToVerify: string | undefined;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      tokenToVerify = authHeader.slice(7);
+    } else {
+      // Fall back to cookie-based auth for web
+      const cookies = this.parseCookies(req.headers.cookie);
+      tokenToVerify = cookies.get(COOKIE_NAME);
+    }
+
+    const session = await this.verifySession(tokenToVerify);
 
     if (!session) {
       throw ForbiddenError("Invalid session cookie");
