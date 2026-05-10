@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, User, ArrowLeft, Gift, ShieldCheck } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -153,6 +154,10 @@ export default function Register() {
         setCodeDigits(["", "", "", "", "", ""]);
         setTimeout(() => inputRefs.current[0]?.focus(), 100);
         return;
+      }
+      // On native iOS/Android: save token to localStorage so tRPC can send it via Authorization header
+      if (Capacitor.isNativePlatform() && data.token) {
+        localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
       }
       window.location.href = "/";
     } catch {
