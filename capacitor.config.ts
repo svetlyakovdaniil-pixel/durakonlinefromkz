@@ -5,12 +5,12 @@ const config: CapacitorConfig = {
   appName: 'Durak online from KZ',
   webDir: 'dist/public',
 
-  // In development: point to your live server so hot-reload works
-  // In production: remove the `server` block entirely so the app loads from webDir
-  // server: {
-  //   url: 'https://durakonlinefromkz.online',
-  //   cleartext: true,
-  // },
+  // Point to the production server so all assets (/assets/static/...) load correctly.
+  // Without this, relative URLs resolve to capacitor://localhost/... which has no files.
+  server: {
+    url: 'https://durakonlinefromkz.online',
+    cleartext: false,
+  },
 
   plugins: {
     SplashScreen: {

@@ -1,5 +1,7 @@
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { Capacitor } from "@capacitor/core";
+import { NATIVE_TOKEN_KEY } from "@shared/const";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
@@ -25,6 +27,11 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    // On native iOS/Android, remove the token from localStorage first
+    // so subsequent auth.me queries don't re-authenticate via the Bearer header
+    if (Capacitor.isNativePlatform()) {
+      localStorage.removeItem(NATIVE_TOKEN_KEY);
+    }
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
