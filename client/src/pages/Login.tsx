@@ -38,6 +38,13 @@ export default function Login() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
+    // When user closes the browser (presses X or Back) without completing auth,
+    // clear the loading state so the buttons are usable again
+    const handleBrowserFinished = Browser.addListener("browserFinished", () => {
+      setGoogleLoading(false);
+      setAppleLoading(false);
+    });
+
     const handleAppUrl = App.addListener("appUrlOpen", async (event) => {
       const url = event.url;
       if (!url.startsWith("durak://auth/")) return;
@@ -84,6 +91,7 @@ export default function Login() {
 
     return () => {
       handleAppUrl.then((listener) => listener.remove());
+      handleBrowserFinished.then((listener) => listener.remove());
     };
   }, [t]);
 
@@ -104,7 +112,8 @@ export default function Login() {
 
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
+      const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+      const res = await fetch(`${apiBase}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),

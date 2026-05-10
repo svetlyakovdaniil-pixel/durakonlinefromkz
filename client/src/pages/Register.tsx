@@ -70,7 +70,8 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/register/send-code", {
+      const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+      const res = await fetch(`${apiBase}/api/auth/register/send-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -136,7 +137,8 @@ export default function Register() {
     setVerifyLoading(true);
     setVerifyError("");
     try {
-      const res = await fetch("/api/auth/register/verify-code", {
+      const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+      const res = await fetch(`${apiBase}/api/auth/register/verify-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), code }),
@@ -172,7 +174,8 @@ export default function Register() {
     setResendLoading(true);
     setVerifyError("");
     try {
-      const res = await fetch("/api/auth/register/resend-code", {
+      const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+      const res = await fetch(`${apiBase}/api/auth/register/resend-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
