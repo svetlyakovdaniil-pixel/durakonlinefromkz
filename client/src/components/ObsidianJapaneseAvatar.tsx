@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianJapaneseAvatar — "Sakura Void" v5
@@ -178,7 +179,7 @@ export function ObsidianJapaneseAvatar({ size = 48, className = '' }: Props) {
         animation: `ojp5-pulse-${uid} 2.4s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_japanese_v2_0098554b.png"
+          src={getAssetUrl("/assets/static/obsidian_japanese_v2_0098554b.png")}
           alt="Обсидиан Японские мотивы"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '47.5% 47.5%', display: 'block' }}
           draggable={false}

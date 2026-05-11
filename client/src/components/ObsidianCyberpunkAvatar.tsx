@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianCyberpunkAvatar — Ultimate obsidian netrunner overlord of the digital void.
@@ -67,7 +68,7 @@ export function ObsidianCyberpunkAvatar({ size = 48, className = '' }: Props) {
         animation: `oca-void-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_cyberpunk-F42HmWbza98ZbqBggYVNNt.webp"
+          src={getAssetUrl("/assets/static/obsidian_cyberpunk-F42HmWbza98ZbqBggYVNNt.webp")}
           alt="Обсидиан Киберпанк"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface NeonPawAvatarProps {
   size?: number;
@@ -42,7 +43,7 @@ export function NeonPawAvatar({ size = 48, className = '' }: NeonPawAvatarProps)
 
       {/* Paw image */}
       <img
-        src="/assets/static/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp"
+        src={getAssetUrl("/assets/static/neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp")}
         alt="Циркон"
         style={{
           width: '100%',

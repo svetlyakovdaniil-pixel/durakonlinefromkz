@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
+import { getAssetUrl } from '@/lib/assetUrl';
 import {
   AVATAR_OPTIONS,
   getAvatarUrl,
@@ -203,7 +204,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
               <AnimatedAvatar baseId={selectedBaseId} size={96} />
             ) : (
               <img
-                src={getAvatarUrl(selected)}
+                src={getAssetUrl(getAvatarUrl(selected))}
                 alt="Selected avatar"
                 className="w-full h-full object-cover"
               />
@@ -245,7 +246,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                   // For animated avatars with a static preview image, use the image in the grid
                   // (saves performance — full animation only shown in the large preview above)
                   <img
-                    src={item.previewUrl}
+                    src={getAssetUrl(item.previewUrl!)}
                     alt={item.displayName}
                     className={`w-full h-full object-cover ${locked ? 'grayscale opacity-60' : ''}`}
                     loading="lazy"
@@ -256,7 +257,7 @@ export default function AvatarPicker({ currentAvatarId, onSelect, onClose, loadi
                   </div>
                 ) : (
                   <img
-                    src={item.previewUrl ?? item.url}
+                    src={getAssetUrl(item.previewUrl ?? item.url)}
                     alt={item.displayName}
                     className={`w-full h-full object-cover ${locked ? 'grayscale' : ''}`}
                     loading="lazy"

@@ -1,5 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { CARD_BACK_URL, CARD_BACK_CUSTOM_URL } from '../../../shared/cardAssets';
+import { getAssetUrl } from '@/lib/assetUrl';
+
+const _CARD_BACK_URL = getAssetUrl(CARD_BACK_URL);
+const _CARD_BACK_CUSTOM_URL = getAssetUrl(CARD_BACK_CUSTOM_URL);
 
 // ---- Deal Animation ----
 // Shows cards flying from deck area to hand area when cards are drawn after a trick.
@@ -16,7 +20,7 @@ interface DealAnimationProps {
 export function DealAnimation({ cardCount, deckStyle, fromDeck, onComplete }: DealAnimationProps) {
   const [cards, setCards] = useState<{ id: number; phase: 'waiting' | 'flying' | 'done' }[]>([]);
   const [deckVisible, setDeckVisible] = useState(false);
-  const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+  const backUrl = deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
   const completedRef = useRef(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 
@@ -203,7 +207,7 @@ interface BitoAnimationProps {
 
 export function BitoAnimation({ cardCount, deckStyle, onComplete }: BitoAnimationProps) {
   const [cards, setCards] = useState<{ id: number; phase: 'start' | 'flying' | 'done' }[]>([]);
-  const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+  const backUrl = deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
   const completedRef = useRef(false);
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
 

@@ -31,6 +31,21 @@ import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { hapticError } from '@/lib/haptics';
 import { useIsLandscape } from '@/hooks/useOrientation';
+import { getAssetUrl } from '@/lib/assetUrl';
+
+// Native-safe asset URL wrappers (prepend production server URL on iOS/Android)
+const _CARD_BACK_URL = getAssetUrl(CARD_BACK_URL);
+const _CARD_BACK_CUSTOM_URL = getAssetUrl(CARD_BACK_CUSTOM_URL);
+const _GAME_TABLE_URL = getAssetUrl(GAME_TABLE_URL);
+const _CARD_IMAGES: Record<string, string> = Object.fromEntries(
+  Object.entries(CARD_IMAGES).map(([k, v]) => [k, getAssetUrl(v)])
+);
+const _CARD_IMAGES_CUSTOM: Record<string, string> = Object.fromEntries(
+  Object.entries(CARD_IMAGES_CUSTOM).map(([k, v]) => [k, getAssetUrl(v)])
+);
+const _TABLE_STYLES: typeof TABLE_STYLES = Object.fromEntries(
+  Object.entries(TABLE_STYLES).map(([k, v]) => [k, { ...v, url: getAssetUrl(v.url) }])
+) as typeof TABLE_STYLES;
 
 
 const SUIT_ORDER: Record<string, number> = { spades: 0, clubs: 1, diamonds: 2, hearts: 3 };
@@ -264,7 +279,7 @@ const DeckVisual = memo(function DeckVisual({
   deckStyle: 'classic' | 'custom';
   label: string;
 }) {
-  const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+  const backUrl = deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
 
   if (deckCount === 0) return null;
 
@@ -280,7 +295,7 @@ const DeckVisual = memo(function DeckVisual({
         ? getCustomCardImageKey(trumpCard.rank, trumpCard.suit)
         : getCardImageKey(trumpCard.rank, trumpCard.suit))
     : null;
-  const trumpImageMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+  const trumpImageMap = isCustom ? _CARD_IMAGES_CUSTOM : _CARD_IMAGES;
   const trumpImageUrl = trumpImageKey ? trumpImageMap[trumpImageKey] : null;
 
   const trumpSuit = trumpCard?.suit || '';
@@ -416,7 +431,7 @@ const TrumpIcon = memo(function TrumpIcon({ suit, size = 'normal', label = 'Ко
 // ---- Discard pile visual ----
 interface DiscardPileProps { count: number; deckStyle: 'classic' | 'custom'; bitoLabel?: string }
 const DiscardPile = memo(function DiscardPile({ count, deckStyle, bitoLabel = 'Бито' }: DiscardPileProps) {
-  const backUrl = deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+  const backUrl = deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
 
   const cardPositions = useMemo(() => {
     const positions: { rotation: number; offsetX: number; offsetY: number }[] = [];
@@ -585,8 +600,8 @@ export default function GameTable({
 
   // Preload all card images for the current deck style to avoid white flash
   useEffect(() => {
-    const imageMap = gs.deckStyle === 'custom' ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
-    const backUrl = gs.deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+    const imageMap = gs.deckStyle === 'custom' ? _CARD_IMAGES_CUSTOM : _CARD_IMAGES;
+    const backUrl = gs.deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
     const urls = [...Object.values(imageMap), backUrl];
     urls.forEach(url => {
       const img = new Image();
@@ -1377,7 +1392,7 @@ export default function GameTable({
           {((gs.prizePool && gs.prizePool > 0) || (prizeData && prizeData.pool > 0)) && (
             <div className="bg-amber-900/20 border border-amber-600/30 rounded-xl p-3 sm:p-4">
               <div className="flex items-center justify-center gap-2 mb-2">
-                <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-5 h-5" />
+                <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-5 h-5" />
                 <span className="text-amber-300 font-bold text-sm sm:text-base">{t('game.bank')}: {formatBalance(gs.prizePool || prizeData?.pool || 0)}</span>
               </div>
             </div>
@@ -1405,7 +1420,7 @@ export default function GameTable({
                     {prize && prize.amount > 0 && (
                       <span className="flex items-center gap-0.5 text-xs sm:text-sm text-amber-300">
                         +{formatBalance(prize.amount)}
-                        <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3.5 h-3.5" />
+                        <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-3.5 h-3.5" />
                       </span>
                     )}
                     <span className={`text-xs sm:text-sm ${p.leftGame && p.id === gs.loserId ? 'text-red-400' : p.leftGame ? 'text-gray-400' : p.id === gs.loserId ? 'text-red-400' : 'text-green-400'}`}>
@@ -1444,7 +1459,7 @@ export default function GameTable({
     <div
       data-tutorial="game-table"
       className="min-h-[100dvh] bg-cover bg-center bg-no-repeat relative flex flex-col"
-      style={{ backgroundImage: `url(${TABLE_STYLES[gs.tableStyle ?? 'classic']?.url ?? GAME_TABLE_URL})` }}
+      style={{ backgroundImage: `url(${_TABLE_STYLES[gs.tableStyle ?? 'classic']?.url ?? _GAME_TABLE_URL})` }}
     >
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-black/40" />
@@ -1480,7 +1495,7 @@ export default function GameTable({
                   <span className="text-red-300 text-xs sm:text-sm font-medium">
                     {t('game.leaveGameDeduction', { amount: formatBalance(Math.floor(gs.prizePool / gs.players.length)) })}
                   </span>
-                  <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                  <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-4 h-4" />
                 </div>
               )}
               <div className="flex items-center justify-center gap-1.5 bg-red-900/30 border border-red-700/30 rounded-lg px-3 py-2">
@@ -1671,7 +1686,7 @@ export default function GameTable({
                           return oppPrize && oppPrize.amount > 0 ? (
                             <div className={`flex items-center gap-0.5 ${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-amber-300 font-medium`}>
                               <span>+{formatBalance(oppPrize.amount)}</span>
-                              <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3 h-3" />
+                              <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-3 h-3" />
                             </div>
                           ) : null;
                         })()}
@@ -1679,7 +1694,7 @@ export default function GameTable({
                     ) : (
                       <div className="flex items-center gap-0.5 sm:gap-1.5">
                         <img
-                          src={gs.deckStyle === 'custom' ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL}
+                          src={gs.deckStyle === 'custom' ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL}
                           alt="cards"
                           className={`${manyOpponents ? 'w-3 h-[18px]' : 'w-4 h-6'} sm:w-5 sm:h-7 rounded-sm object-cover`}
                         />
@@ -1834,7 +1849,7 @@ export default function GameTable({
                             const hc = gs.trumpInfo.hiddenTrumpCard1!;
                             const isCustom = gs.deckStyle === 'custom';
                             const imgKey = isCustom ? getCustomCardImageKey(hc.rank, hc.suit) : getCardImageKey(hc.rank, hc.suit);
-                            const imgMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+                            const imgMap = isCustom ? _CARD_IMAGES_CUSTOM : _CARD_IMAGES;
                             const imgUrl = imgKey ? imgMap[imgKey] : null;
                             if (imgUrl) {
                               return <div className="w-full h-full bg-white"><img src={imgUrl} alt={`${hc.rank} ${hc.suit}`} className="w-full h-full object-cover" /></div>;
@@ -1920,7 +1935,7 @@ export default function GameTable({
                 return myPrize && myPrize.amount > 0 ? (
                   <div className="flex items-center gap-1.5 text-amber-300 text-xs sm:text-sm font-medium">
                     <span>+{formatBalance(myPrize.amount)}</span>
-                    <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                    <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-4 h-4" />
                   </div>
                 ) : null;
               })()}

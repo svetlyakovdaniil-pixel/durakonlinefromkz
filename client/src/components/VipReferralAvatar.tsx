@@ -1,12 +1,12 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface VipReferralAvatarProps {
   size?: number;
   className?: string;
 }
 
-const VIP_AVATAR_URL =
-  '/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
+const VIP_AVATAR_URL = getAssetUrl('/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp');
 
 /**
  * VipReferralAvatar — Referral reward VIP avatar

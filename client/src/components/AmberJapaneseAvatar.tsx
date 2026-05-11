@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberJapaneseAvatar — Kitsune fox spirit in golden kimono.
@@ -61,7 +62,7 @@ export function AmberJapaneseAvatar({ size = 48, className = '' }: Props) {
         animation: `ajp-aura-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_japanese_s9_11a4e751.png"
+          src={getAssetUrl("/assets/static/amber_japanese_s9_11a4e751.png")}
           alt="Янтарь Японские мотивы"
           style={{
             width: '100%', height: '100%',

@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-
+import { getAssetUrl } from '@/lib/assetUrl';
 // Fallback tracks (used when no playlist is loaded from backend)
 const DEFAULT_TRACKS = [
-  '/assets/static/1_fd1382d6.mp3',
-  '/assets/static/2_97b3c0a9.mp3',
-  '/assets/static/3_9c1cf3b0.mp3',
-  '/assets/static/4_3882b329.mp3',
-  '/assets/static/5_79e63061.mp3',
-  '/assets/static/6_2a64f936.mp3',
-  '/assets/static/7_48c4f68c.mp3',
+  getAssetUrl('/assets/static/1_fd1382d6.mp3'),
+  getAssetUrl('/assets/static/2_97b3c0a9.mp3'),
+  getAssetUrl('/assets/static/3_9c1cf3b0.mp3'),
+  getAssetUrl('/assets/static/4_3882b329.mp3'),
+  getAssetUrl('/assets/static/5_79e63061.mp3'),
+  getAssetUrl('/assets/static/6_2a64f936.mp3'),
+  getAssetUrl('/assets/static/7_48c4f68c.mp3'),
 ];
 
 const SETTINGS_KEY = 'kazakh-durak-settings';
@@ -184,8 +184,10 @@ export function useMusic() {
   // Set tracks dynamically (for playlist switching)
   const setTracks = useCallback((newTracks: string[]) => {
     if (newTracks.length === 0) return;
-    setTracksState(newTracks);
-    tracksRef.current = newTracks;
+    // Apply getAssetUrl to all tracks (handles native iOS/Android where relative paths don't work)
+    const resolvedTracks = newTracks.map(t => getAssetUrl(t));
+    setTracksState(resolvedTracks);
+    tracksRef.current = resolvedTracks;
     trackIndexRef.current = 0;
     // If currently playing, restart with new playlist
     if (isPlayingRef.current && enabled) {

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyPirateAvatar — Fearsome undead pirate with glowing red eyes.
@@ -28,7 +29,7 @@ export function RubyPirateAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `rpa-halo-${uid} 2.2s ease-in-out infinite` }}>
         <img
-          src="/assets/static/ruby_pirate_islands_acbbbc77.png"
+          src={getAssetUrl("/assets/static/ruby_pirate_islands_acbbbc77.png")}
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `rpa-flicker-${uid} 4s ease-in-out infinite` }}
           draggable={false}

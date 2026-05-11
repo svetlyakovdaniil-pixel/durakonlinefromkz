@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianPirateAvatar — Legendary obsidian ghost fleet admiral.
@@ -66,7 +67,7 @@ export function ObsidianPirateAvatar({ size = 48, className = '' }: Props) {
         animation: `opa-storm-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_pirate_islands-m7mqMLNNUB3WiggJMsPgQ7.webp"
+          src={getAssetUrl("/assets/static/obsidian_pirate_islands-m7mqMLNNUB3WiggJMsPgQ7.webp")}
           alt="Обсидиан Пираты"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -5,10 +5,11 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Gift, Copy, Check, Loader2, ChevronLeft } from 'lucide-react';
 import { useTranslation } from '@/i18n';
+import { getAssetUrl } from '@/lib/assetUrl';
 
-const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
-const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
-const VIP_AVATAR_URL = '/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp';
+const SHANYRAK_ICON = getAssetUrl('/assets/static/shanyrak_96e91a49.png');
+const TENGE_ICON = getAssetUrl('/assets/static/tenge_9aefd1b7.png');
+const VIP_AVATAR_URL = getAssetUrl('/assets/static/avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp');
 
 // Milestones: count, level, shanyrak, tenge
 // above=true → цифра в кружке снизу линии, награда сверху линии

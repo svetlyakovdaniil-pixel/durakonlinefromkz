@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface NeonCatAvatarProps {
   size?: number;
@@ -97,7 +98,7 @@ export function NeonCatAvatar({ size = 48, className = '' }: NeonCatAvatarProps)
       >
         {/* ── Base image — fades during glasses-only phase ── */}
         <img
-          src="/assets/static/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp"
+          src={getAssetUrl("/assets/static/neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp")}
           alt="Янтарь"
           style={{
             position: 'absolute',

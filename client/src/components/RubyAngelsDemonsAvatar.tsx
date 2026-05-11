@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyAngelsDemonsAvatar — Half-angel half-demon with divine/infernal aura.
@@ -28,7 +29,7 @@ export function RubyAngelsDemonsAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `rad-halo-${uid} 3s ease-in-out infinite` }}>
         <img
-          src="/assets/static/ruby_angels_demons_dc4a2a91.png"
+          src={getAssetUrl("/assets/static/ruby_angels_demons_dc4a2a91.png")}
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `rad-flicker-${uid} 4s ease-in-out infinite` }}
           draggable={false}

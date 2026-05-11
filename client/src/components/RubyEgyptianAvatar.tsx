@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyEgyptianAvatar — Horus the falcon god with golden radiance.
@@ -25,7 +26,7 @@ export function RubyEgyptianAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `reg-halo-${uid} 2.5s ease-in-out infinite` }}>
         <img
-          src="/assets/static/ruby_egyptian_gods_52ceb9b8.png"
+          src={getAssetUrl("/assets/static/ruby_egyptian_gods_52ceb9b8.png")}
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `reg-flicker-${uid} 3s ease-in-out infinite` }}
           draggable={false}

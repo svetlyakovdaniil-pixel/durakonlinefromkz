@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberSpaceAvatar — Golden cosmic warrior in amber space armor.
@@ -34,7 +35,7 @@ export function AmberSpaceAvatar({ size = 48, className = '' }: Props) {
         animation: `as-nebula-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_space_odyssey_v2_adde7dfd.png"
+          src={getAssetUrl("/assets/static/amber_space_odyssey_v2_adde7dfd.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', animation: `as-cosmic-${uid} 5s ease-in-out infinite` }}
           draggable={false}

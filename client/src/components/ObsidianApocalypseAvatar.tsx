@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianApocalypseAvatar — Nuclear void obsidian with purple apocalypse.
@@ -118,7 +119,7 @@ export function ObsidianApocalypseAvatar({ size = 48, className = '' }: Props) {
         animation: `oap-glow-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_apocalypse_v2_464c2e3e.png"
+          src={getAssetUrl("/assets/static/obsidian_apocalypse_v2_464c2e3e.png")}
           alt="Обсидиан Апокалипсис"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

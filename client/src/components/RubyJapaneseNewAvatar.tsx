@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyJapaneseNewAvatar — Samurai warrior with cherry blossoms and torii gates.
@@ -41,7 +42,7 @@ export function RubyJapaneseNewAvatar({ size = 48, className = '' }: Props) {
         animation: `rjpn-halo-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/ruby_japanese_v2_ed9fc656.png"
+          src={getAssetUrl("/assets/static/ruby_japanese_v2_ed9fc656.png")}
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

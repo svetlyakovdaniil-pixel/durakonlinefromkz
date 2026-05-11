@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface NuclearMushroomAvatarProps {
   size?: number;
@@ -26,8 +27,7 @@ export function NuclearMushroomAvatar({ size = 48, className = '' }: NuclearMush
   const rafRef = useRef<number>(0);
   const startRef = useRef<number>(0);
 
-  const imgUrl =
-    '/assets/static/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp';
+  const imgUrl = getAssetUrl('/assets/static/nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp');
 
   useEffect(() => {
     const canvas = canvasRef.current;

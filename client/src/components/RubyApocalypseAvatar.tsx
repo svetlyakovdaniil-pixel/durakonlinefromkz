@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyApocalypseAvatar — Post-apocalyptic survivor amid fire and ruins.
@@ -39,7 +40,7 @@ export function RubyApocalypseAvatar({ size = 48, className = '' }: Props) {
         animation: `rapo-halo-${uid} 2.2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/ruby_apocalypse_final_791c8b8e.png"
+          src={getAssetUrl("/assets/static/ruby_apocalypse_final_791c8b8e.png")}
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianNorseAvatar — Odin reborn as obsidian god of cosmic darkness.
@@ -64,7 +65,7 @@ export function ObsidianNorseAvatar({ size = 48, className = '' }: Props) {
         animation: `ona-pulse-${uid} 2.5s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_norse_gods-cZ2YKE5bVYuvdXd4WuLkfw.webp"
+          src={getAssetUrl("/assets/static/obsidian_norse_gods-cZ2YKE5bVYuvdXd4WuLkfw.webp")}
           alt="Обсидиан Скандинавские боги"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -5,12 +5,11 @@ const config: CapacitorConfig = {
   appName: 'Durak online from KZ',
   webDir: 'dist/public',
 
-  // Point to the production server so all assets (/assets/static/...) load correctly.
-  // Without this, relative URLs resolve to capacitor://localhost/... which has no files.
-  server: {
-    url: 'https://durakonlinefromkz.online',
-    cleartext: false,
-  },
+  // NOTE: server.url is intentionally NOT set here.
+  // When server.url is set, Capacitor loads the WebView from a remote URL, which:
+  //   1. Causes a white status bar gap at the top (iOS status bar overlay breaks)
+  //   2. Causes OAuth deep links (durak://auth/...) to open in Safari instead of returning to the app
+  // Instead, we use getAssetUrl() in client code to prepend NATIVE_API_BASE for /assets/ paths on native.
 
   plugins: {
     SplashScreen: {

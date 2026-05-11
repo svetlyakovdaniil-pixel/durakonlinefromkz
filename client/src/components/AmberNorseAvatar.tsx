@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberNorseAvatar — Thor/Odin with amber rune lightning.
@@ -37,7 +38,7 @@ export function AmberNorseAvatar({ size = 48, className = '' }: Props) {
         animation: `an-rune-${uid} 2.5s ease-in-out infinite, an-breathe-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_norse_gods_v2_f21b55c1.png"
+          src={getAssetUrl("/assets/static/amber_norse_gods_v2_f21b55c1.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}

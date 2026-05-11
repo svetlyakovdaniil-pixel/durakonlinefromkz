@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberEgyptianAvatar — Ra/Horus with golden amber divine aura.
@@ -40,7 +41,7 @@ export function AmberEgyptianAvatar({ size = 48, className = '' }: Props) {
         animation: `ae-solar-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_egyptian_gods_v2_43e04e99.png"
+          src={getAssetUrl("/assets/static/amber_egyptian_gods_v2_43e04e99.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', animation: `ae-pulse-${uid} 3s ease-in-out infinite` }}
           draggable={false}

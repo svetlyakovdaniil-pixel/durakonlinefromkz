@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface GreatKhanAvatarProps {
   size?: number;
@@ -49,7 +50,7 @@ export function GreatKhanAvatar({ size = 48, className = '' }: GreatKhanAvatarPr
 
       {/* Base photorealistic image */}
       <img
-        src="/assets/static/great_khan_avatar-N9ykdAF9YU7urTnqCdUiJa.webp"
+        src={getAssetUrl("/assets/static/great_khan_avatar-N9ykdAF9YU7urTnqCdUiJa.webp")}
         alt="Обсидиан"
         style={{
           width: '100%',

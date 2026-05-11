@@ -3628,3 +3628,10 @@
 - [x] Fix App Store rejection 2.1(a) + 4.0: use SFSafariViewController via @capacitor/browser for Apple/Google OAuth login
 - [x] Configure deep link URL scheme (durak://) for OAuth callback to return to app after login
 - [x] Update server Apple/Google OAuth callbacks to redirect to app URL scheme after auth
+- [x] Bug: white status bar gap at top of screen — fixed by removing server.url from capacitor.config.ts
+- [x] Bug: OAuth (Google/Apple) opens game in Safari instead of returning to app — fixed by removing server.url from capacitor.config.ts
+- [x] Refactor: add getAssetUrl() utility to prepend NATIVE_API_BASE for all /assets/ paths on native iOS/Android
+
+- [x] Bug: white status bar gap at top of screen — fixed by removing server.url from capacitor.config.ts
+- [x] Bug: OAuth (Google/Apple) opens game in Safari instead of returning to app — fixed by removing server.url from capacitor.config.ts
+- [x] Refactor: add getAssetUrl() utility to prepend NATIVE_API_BASE for all /assets/ paths on native iOS/Android

@@ -32,12 +32,14 @@ import { ObsidianHiphopFrame } from './ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from './ObsidianAngelsDemonsFrame';
 import GalaxyTableOverlay from './GalaxyTableOverlay';
 
-const CUSTOM_DECK_BACK = CARD_BACK_CUSTOM_URL;
-const KING_SPADES = CARD_IMAGES_CUSTOM['K-spades'];
+import { getAssetUrl } from '@/lib/assetUrl';
+
+const CUSTOM_DECK_BACK = getAssetUrl(CARD_BACK_CUSTOM_URL);
+const KING_SPADES = getAssetUrl(CARD_IMAGES_CUSTOM['K-spades']);
 // Batyry deck (classic) assets for shop display
-const CLASSIC_DECK_BACK = CARD_BACK_URL;
-const CLASSIC_KING_SPADES = CARD_IMAGES['K-spades'];
-const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
+const CLASSIC_DECK_BACK = getAssetUrl(CARD_BACK_URL);
+const CLASSIC_KING_SPADES = getAssetUrl(CARD_IMAGES['K-spades']);
+const TENGE_ICON = getAssetUrl('/assets/static/tenge_9aefd1b7.png');
 
 const CLASSIC_DECK_PRICE = 25; // Батыры великой степи — платная колода
 
@@ -111,7 +113,7 @@ interface ConfirmPurchase {
   price: number;
 }
 
-const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
+const SHANYRAK_ICON = getAssetUrl('/assets/static/shanyrak_96e91a49.png');
 
 export default function ShopModal({ open, onClose, currentTenge, currentShanyrak = 0, isPremium = false, onPurchased }: ShopModalProps) {
   const [purchasing, setPurchasing] = useState(false);
@@ -470,7 +472,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   <div key={tableId} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex flex-col gap-3">
                       <div className="w-full h-36 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg relative">
-                        <img src={table.url} alt={table.name} className="w-full h-full object-cover" />
+                        <img src={getAssetUrl(table.url)} alt={table.name} className="w-full h-full object-cover" />
                         {tableId === 'galaxy' && (
                           <div className="absolute inset-0 pointer-events-none">
                             <GalaxyTableOverlay enabled={true} />
@@ -617,7 +619,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                     <div className="flex items-center gap-4">
                       <div className="shrink-0 relative group cursor-pointer" onClick={() => setPreviewAvatar(avatar)}>
                         <div className="w-20 h-20 rounded-full overflow-hidden border-2 shadow-lg border-cyan-500/60 shadow-cyan-500/20 transition-transform group-hover:scale-105">
-                          <img src={avatar.url} alt={displayName} className="w-full h-full object-cover" />
+                          <img src={getAssetUrl(avatar.url)} alt={displayName} className="w-full h-full object-cover" />
                         </div>
                         <div className="absolute inset-0 w-20 h-20 rounded-full bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                           <Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
@@ -714,7 +716,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                               ? 'bg-red-600/80 text-white hover:bg-red-500'
                               : 'bg-amber-700/30 text-amber-200 hover:bg-amber-700/50'
                           }`}
-                          onClick={() => togglePreview(playlist.id, playlist.tracks[0])}
+                          onClick={() => togglePreview(playlist.id, getAssetUrl(playlist.tracks[0]))}
                         >
                           {isPreviewPlaying ? (
                             <><Square className="w-3 h-3" /> {t('shop.stopBtn')} ({previewTimer}s)</>
@@ -786,7 +788,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   <div key={pack.id} className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-amber-900/30 flex items-center justify-center">
-                        <img src={pack.emotions[0].url} alt={packName} className="w-10 h-10 object-contain" />
+                        <img src={getAssetUrl(pack.emotions[0].url)} alt={packName} className="w-10 h-10 object-contain" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="text-amber-100 font-bold text-sm">{packName}</h4>
@@ -797,7 +799,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                     <div className="grid grid-cols-5 gap-1.5 mb-3">
                       {pack.emotions.map(em => (
                         <div key={em.id} className="flex flex-col items-center gap-0.5">
-                          <img src={em.url} alt={em.label} className="w-10 h-10 object-contain" />
+                          <img src={getAssetUrl(em.url)} alt={em.label} className="w-10 h-10 object-contain" />
                           <span className="text-[9px] text-amber-200/40 leading-none">{locale === 'kk' && em.labelKk ? em.labelKk : locale === 'en' && em.labelEn ? em.labelEn : locale === 'uk' && (em as any).labelUk ? (em as any).labelUk : locale === 'ka' && (em as any).labelKa ? (em as any).labelKa : locale === 'az' && (em as any).labelAz ? (em as any).labelAz : locale === 'uz' && (em as any).labelUz ? (em as any).labelUz : locale === 'pl' && (em as any).labelPl ? (em as any).labelPl : em.label}</span>
                         </div>
                       ))}
@@ -878,7 +880,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   </div>
                 ) : (
                   <div className="w-48 h-48 rounded-2xl overflow-hidden border-2 border-cyan-500/40 shadow-xl shadow-cyan-500/10">
-                    <img src={previewAvatar.url} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : locale === 'uk' && (previewAvatar as any).nameUk ? (previewAvatar as any).nameUk : locale === 'ka' && (previewAvatar as any).nameKa ? (previewAvatar as any).nameKa : locale === 'az' && (previewAvatar as any).nameAz ? (previewAvatar as any).nameAz : locale === 'uz' && (previewAvatar as any).nameUz ? (previewAvatar as any).nameUz : locale === 'pl' && (previewAvatar as any).namePl ? (previewAvatar as any).namePl : previewAvatar.name} className="w-full h-full object-cover" />
+                    <img src={getAssetUrl(previewAvatar.url)} alt={locale === 'kk' && previewAvatar.nameKk ? previewAvatar.nameKk : locale === 'en' && previewAvatar.nameEn ? previewAvatar.nameEn : locale === 'uk' && (previewAvatar as any).nameUk ? (previewAvatar as any).nameUk : locale === 'ka' && (previewAvatar as any).nameKa ? (previewAvatar as any).nameKa : locale === 'az' && (previewAvatar as any).nameAz ? (previewAvatar as any).nameAz : locale === 'uz' && (previewAvatar as any).nameUz ? (previewAvatar as any).nameUz : locale === 'pl' && (previewAvatar as any).namePl ? (previewAvatar as any).namePl : previewAvatar.name} className="w-full h-full object-cover" />
                   </div>
                 )}
               </div>

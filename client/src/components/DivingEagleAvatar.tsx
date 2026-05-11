@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface DivingEagleAvatarProps {
   size?: number;
@@ -48,7 +49,7 @@ export function DivingEagleAvatar({ size = 48, className = '' }: DivingEagleAvat
 
       {/* Base photorealistic image */}
       <img
-        src="/assets/static/diving_eagle_avatar-mETA3RPC2znnKVf6a8Nzyx.webp"
+        src={getAssetUrl("/assets/static/diving_eagle_avatar-mETA3RPC2znnKVf6a8Nzyx.webp")}
         alt="Циркон"
         style={{
           width: '100%',

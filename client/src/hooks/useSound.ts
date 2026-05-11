@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-
+import { getAssetUrl } from '@/lib/assetUrl';
 // CDN URLs for sound effects
 const SOUND_URLS = {
   // Original sounds
-  cardDeal: '/assets/static/card_deal_faaefea0.wav',
-  roundWin: '/assets/static/round_win_72f79f57.wav',
-  gameWin: '/assets/static/game_win_1b8d5eaa.wav',
-  gameLose: '/assets/static/game_lose_d0b3c1f1.wav',
+  cardDeal: getAssetUrl('/assets/static/card_deal_faaefea0.wav'),
+  roundWin: getAssetUrl('/assets/static/round_win_72f79f57.wav'),
+  gameWin: getAssetUrl('/assets/static/game_win_1b8d5eaa.wav'),
+  gameLose: getAssetUrl('/assets/static/game_lose_d0b3c1f1.wav'),
 
   // New custom sounds
-  cardPlay: '/assets/static/положиликартунастол_2d5c774f.mp3',
-  trumpPlay: '/assets/static/положиликозырьнастол_a1725e72.mp3',
-  cardTake: '/assets/static/беретвруки_8e6bac85.mp3',
-  transfer: '/assets/static/перевод_685db838.mp3',
-  multiCard: '/assets/static/игроккидаетнастолсразунесколькокартзараз_db22f391.mp3',
-  yourTurn: '/assets/static/ВАШХОД_41ad06aa.mp3',
-  bito: '/assets/static/bito1_120_6a477906.mp3',
-} as const;
+  cardPlay: getAssetUrl('/assets/static/положиликартунастол_2d5c774f.mp3'),
+  trumpPlay: getAssetUrl('/assets/static/положиликозырьнастол_a1725e72.mp3'),
+  cardTake: getAssetUrl('/assets/static/беретвруки_8e6bac85.mp3'),
+  transfer: getAssetUrl('/assets/static/перевод_685db838.mp3'),
+  multiCard: getAssetUrl('/assets/static/игроккидаетнастолсразунесколькокартзараз_db22f391.mp3'),
+  yourTurn: getAssetUrl('/assets/static/ВАШХОД_41ad06aa.mp3'),
+  bito: getAssetUrl('/assets/static/bito1_120_6a477906.mp3'),
+};
 
 export type SoundName = keyof typeof SOUND_URLS;
 

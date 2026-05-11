@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface GoldenHordeAvatarProps {
   size?: number;
@@ -135,7 +136,7 @@ export function GoldenHordeAvatar({ size = 48, className = '' }: GoldenHordeAvat
 
       {/* ── Warrior photo — multiply blend: dark bg becomes transparent, warrior stays ── */}
       <img
-        src="/assets/static/golden_horde_warrior_avatar-oJWWxe5DCcpxB9nbWMET8o.webp"
+        src={getAssetUrl("/assets/static/golden_horde_warrior_avatar-oJWWxe5DCcpxB9nbWMET8o.webp")}
         alt="Воин Золотой Орды"
         style={{
           position: 'absolute',

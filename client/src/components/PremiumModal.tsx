@@ -11,7 +11,8 @@ import { toast } from 'sonner';
 import { PremiumFrame } from './PremiumFrame';
 import { isIAPAvailable, purchasePremium, restorePurchases } from '@/lib/iap';
 import { Capacitor } from '@capacitor/core';
-const TENGE_ICON = '/assets/static/tenge_9aefd1b7.png';
+import { getAssetUrl } from '@/lib/assetUrl';
+const TENGE_ICON = getAssetUrl('/assets/static/tenge_9aefd1b7.png');
 
 interface PremiumModalProps {
   open: boolean;

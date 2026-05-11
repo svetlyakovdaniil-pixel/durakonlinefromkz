@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyKazakhAvatar — Berkut eagle soaring with Kazakh ornaments.
@@ -36,7 +37,7 @@ export function RubyKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `rkaz-halo-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/ruby_kazakh_v3_49409013.png"
+          src={getAssetUrl("/assets/static/ruby_kazakh_v3_49409013.png")}
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

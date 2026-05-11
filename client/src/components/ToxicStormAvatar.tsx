@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface ToxicStormAvatarProps {
   size?: number;
@@ -14,7 +15,7 @@ interface ToxicStormAvatarProps {
  * - Rain streaks animated falling down
  */
 export function ToxicStormAvatar({ size = 48, className = '' }: ToxicStormAvatarProps) {
-  const imgUrl = '/assets/static/toxic_storm_avatar-cR6SmN4ZtMUEBVktcpwyo9.png';
+  const imgUrl = getAssetUrl('/assets/static/toxic_storm_avatar-cR6SmN4ZtMUEBVktcpwyo9.png');
 
   return (
     <div
