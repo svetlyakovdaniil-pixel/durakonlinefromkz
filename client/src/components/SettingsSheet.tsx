@@ -200,7 +200,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </button>
         )}
       </SheetTrigger>
-      <SheetContent side="right" className="bg-[#0f2035] border-l border-amber-700/30 text-amber-100 w-[300px] sm:w-[380px] max-h-[95dvh] overflow-y-auto">
+      <SheetContent side="right" className="bg-[#0f2035] border-l border-amber-700/30 text-amber-100 w-[300px] sm:w-[380px] overflow-y-auto">
         <SheetHeader>
           <SheetTitle className="text-amber-100 text-xl flex items-center gap-2">
             <Settings className="w-5 h-5 text-amber-400" />
@@ -504,7 +504,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           {/* 10. Logout */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-11">
+              <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-12 mb-2">
                 <LogOut className="w-4 h-4" />
                 {t('settings.logout')}
               </Button>
