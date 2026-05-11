@@ -67,7 +67,19 @@ jobs:
         env:
           NODE_ENV: production
           VITE_APP_TITLE: "Durak online from KZ"
+          # AdMob (test IDs for both platforms)
           VITE_ADMOB_IOS_APP_ID: "ca-app-pub-3940256099942544~1458002511"
+          VITE_ADMOB_ANDROID_APP_ID: "ca-app-pub-3940256099942544~3347511713"
+          VITE_ADMOB_REWARDED_AD_UNIT_ID: "ca-app-pub-3940256099942544/5224354917"
+          VITE_ADMOB_IOS_REWARDED_AD_UNIT_ID: "ca-app-pub-3940256099942544/1712485313"
+          # RevenueCat (public API keys - safe to include in workflow)
+          VITE_REVENUECAT_IOS_KEY: "appl_GdpfUqDfDgVtrHhTWhmzgSCogqz"
+          VITE_REVENUECAT_ANDROID_KEY: "goog_hXjnyimijBJbaxxINMZucNdxDxt"
+          # Manus OAuth
+          VITE_APP_ID: "gxeBaGYcbqtwBaadFUobUt"
+          VITE_OAUTH_PORTAL_URL: "https://manus.im"
+          VITE_FRONTEND_FORGE_API_KEY: "kLwjYrJZrrcnsHptrYLXkB"
+          VITE_FRONTEND_FORGE_API_URL: "https://forge.manus.ai"
         run: pnpm run build
 
       # ── 7. Install Capacitor CLI ───────────────────────────────────────────

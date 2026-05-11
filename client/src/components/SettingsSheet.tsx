@@ -210,7 +210,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </SheetTitle>
         </SheetHeader>
 
-        <div className="mt-6 space-y-5">
+        <div className="mt-6 space-y-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 32px)' }}>
           {/* 1. Change name */}
           <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <div className="flex items-center justify-between mb-2">
