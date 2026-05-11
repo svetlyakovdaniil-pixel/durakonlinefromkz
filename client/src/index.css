@@ -804,3 +804,12 @@
     min-height: 40px;
   }
 }
+
+/* ─── Settings Sheet: iOS safe-area bottom padding ──────────────────────────
+ * The right-side Sheet (settings panel) uses h-full which extends behind the
+ * iOS home indicator. Add bottom padding so the logout button is always
+ * reachable and not hidden under the home indicator.
+ */
+[data-slot="sheet-content"][data-state="open"] {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
+}
