@@ -29,6 +29,16 @@ import {
 import { Capacitor } from '@capacitor/core';
 
 let admobInitialized = false;
+const admobListeners: Array<(available: boolean) => void> = [];
+
+/** Subscribe to AdMob availability changes */
+export function onAdMobAvailabilityChange(cb: (available: boolean) => void): () => void {
+  admobListeners.push(cb);
+  return () => {
+    const idx = admobListeners.indexOf(cb);
+    if (idx !== -1) admobListeners.splice(idx, 1);
+  };
+}
 
 /**
  * Initialize AdMob SDK. Call once on app start (in App.tsx).
@@ -59,6 +69,7 @@ export async function initAdMob(): Promise<void> {
 
     admobInitialized = true;
     console.log('[AdMob] Initialized');
+    admobListeners.forEach(cb => cb(true));
   } catch (err) {
     console.error('[AdMob] Failed to initialize:', err);
   }
@@ -81,9 +92,13 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     return null;
   }
 
-  const adUnitId = import.meta.env.VITE_ADMOB_REWARDED_AD_UNIT_ID as string | undefined;
+  const platform = Capacitor.getPlatform();
+  // Use platform-specific rewarded ad unit ID if available, fallback to shared
+  const iosUnitId = import.meta.env.VITE_ADMOB_IOS_REWARDED_AD_UNIT_ID as string | undefined;
+  const sharedUnitId = import.meta.env.VITE_ADMOB_REWARDED_AD_UNIT_ID as string | undefined;
+  const adUnitId = (platform === 'ios' && iosUnitId) ? iosUnitId : sharedUnitId;
   if (!adUnitId) {
-    console.warn('[AdMob] VITE_ADMOB_REWARDED_AD_UNIT_ID not configured');
+    console.warn('[AdMob] No rewarded ad unit ID configured for platform:', platform);
     return null;
   }
 

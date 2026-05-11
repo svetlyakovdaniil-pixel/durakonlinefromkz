@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
 import { translateTxDescription } from "./TengeTopUpModal";
-import { showRewardedAd, isAdMobAvailable } from "@/lib/admob";
+import { showRewardedAd, isAdMobAvailable, onAdMobAvailabilityChange } from "@/lib/admob";
 import { getAssetUrl } from '@/lib/assetUrl';
 
 const TENGE_ICON = getAssetUrl("/assets/static/tenge_9aefd1b7.png");
@@ -60,6 +60,12 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
 
   const [adCooldownRemaining, setAdCooldownRemaining] = useState<number>(0);
   const [adWatching, setAdWatching] = useState(false);
+  // Reactive AdMob availability — re-renders when SDK finishes initializing
+  const [adMobReady, setAdMobReady] = useState(() => isAdMobAvailable());
+  useEffect(() => {
+    setAdMobReady(isAdMobAvailable());
+    return onAdMobAvailabilityChange((available) => setAdMobReady(available));
+  }, []);
 
   const adWatchTopupMutation = trpc.balance.adWatchTopup.useMutation({
     onSuccess: (data) => {
@@ -226,11 +232,11 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             <div className="mb-4">
               <button
                 className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
-                  adCooldownRemaining > 0 || adWatching || !isAdMobAvailable()
+                  adCooldownRemaining > 0 || adWatching || !adMobReady
                     ? 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
                     : 'bg-green-900/30 hover:bg-green-800/40 text-green-100 border border-green-600/30'
                 }`}
-                disabled={adCooldownRemaining > 0 || adWatching || !isAdMobAvailable()}
+                disabled={adCooldownRemaining > 0 || adWatching || !adMobReady}
                 onClick={handleWatchAd}
               >
                 <div className="flex items-center gap-2">
@@ -247,7 +253,7 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                 </div>
               </button>
               <p className="text-[10px] text-gray-500 text-center mt-1">
-                {!isAdMobAvailable() ? t('topUp.comingSoon') : adCooldownRemaining > 0 ? t('topUp.adCooldown') : t('topUp.adNote')}
+                {!adMobReady ? t('topUp.comingSoon') : adCooldownRemaining > 0 ? t('topUp.adCooldown') : t('topUp.adNote')}
               </p>
             </div>
 

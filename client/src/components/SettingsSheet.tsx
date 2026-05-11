@@ -38,6 +38,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [contactOpen, setContactOpen] = useState(false);
   const [contactEmail, setContactEmail] = useState('');
   const [contactMessage, setContactMessage] = useState('');
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   // Push notification settings
   const { data: pushSettings, refetch: refetchPushSettings } = trpc.push.getSettings.useQuery(undefined, { enabled: open });
@@ -433,10 +435,8 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </button>
 
           {/* 8. Privacy Policy */}
-          <a
-            href="/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setPrivacyOpen(true)}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <Shield className="w-5 h-5 text-amber-400 shrink-0" />
@@ -448,13 +448,11 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                 {t('settings.privacyPolicyDesc')}
               </p>
             </div>
-          </a>
+          </button>
 
           {/* 9. Terms of Service */}
-          <a
-            href="/terms"
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            onClick={() => setTermsOpen(true)}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <FileText className="w-5 h-5 text-amber-400 shrink-0" />
@@ -466,7 +464,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                 {t('settings.privacyPolicyDesc')}
               </p>
             </div>
-          </a>
+          </button>
 
           {/* 9b. Push Notification Settings — shown only on native iOS/Android */}
           {typeof window !== 'undefined' && !!(window as any)?.Capacitor?.isNativePlatform?.() && (
@@ -590,6 +588,150 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    {/* Privacy Policy in-app dialog */}
+    <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
+      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-lg w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b border-amber-700/20 shrink-0">
+          <DialogTitle className="text-amber-100 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-amber-400" />
+            {t('settings.privacyPolicy')}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="overflow-y-auto flex-1 px-4 py-4 prose prose-invert prose-sm max-w-none space-y-4 text-amber-100/80">
+          <PrivacyPolicyContent locale={locale} />
+        </div>
+        <div className="px-4 py-3 border-t border-amber-700/20 shrink-0">
+          <Button
+            onClick={() => setPrivacyOpen(false)}
+            className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+          >
+            {t('common.close') || 'Закрыть'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    {/* Terms of Service in-app dialog */}
+    <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
+      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-lg w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-4 py-3 border-b border-amber-700/20 shrink-0">
+          <DialogTitle className="text-amber-100 flex items-center gap-2">
+            <FileText className="w-4 h-4 text-amber-400" />
+            {t('terms.title')}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="overflow-y-auto flex-1 px-4 py-4 prose prose-invert prose-sm max-w-none space-y-4 text-amber-100/80">
+          <TermsOfServiceContent locale={locale} />
+        </div>
+        <div className="px-4 py-3 border-t border-amber-700/20 shrink-0">
+          <Button
+            onClick={() => setTermsOpen(false)}
+            className="w-full bg-amber-600 hover:bg-amber-500 text-white"
+          >
+            {t('common.close') || 'Закрыть'}
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
+  );
+}
+
+// ─── Inline content components for Privacy Policy and Terms of Service ───────
+// These render the relevant content based on locale, shown inside in-app dialogs.
+
+function PrivacyPolicyContent({ locale }: { locale: string }) {
+  const headingCls = "text-base font-bold text-amber-200 mb-2 mt-4 first:mt-0";
+  const textCls = "text-amber-100/70 leading-relaxed text-sm";
+  const listCls = "list-disc pl-5 text-amber-100/70 space-y-1 text-sm";
+
+  if (locale === 'kk') return (
+    <>
+      <section><h2 className={headingCls}>1. Жалпы ережелер</h2><p className={textCls}>Осы Құпиялылық саясаты «Дурак онлайн from KZ» мобильді қосымшасы пайдаланушыларының жеке деректерін өңдеу және қорғау тәртібін белгілейді. Қосымшаны пайдалана отырып, сіз осы Саясаттың шарттарымен келісесіз.</p></section>
+      <section><h2 className={headingCls}>2. Біз қандай деректер жинаймыз</h2><ul className={listCls}><li>Аккаунт деректері: электрондық пошта, лақап ат, аватар</li><li>Ойын деректері: статистика, баланс, сатып алынған заттар</li><li>Техникалық деректер: құрылғы түрі, ОЖ нұсқасы, IP-мекенжай</li><li>Өзара әрекет деректері: достар тізімі, шағымдар тарихы</li></ul></section>
+      <section><h2 className={headingCls}>3. Деректерді пайдалану</h2><p className={textCls}>Жиналған деректер қосымшаның жұмысын қамтамасыз ету, пайдаланушыны сәйкестендіру, ойын статистикасын жүргізу және қауіпсіздікті қамтамасыз ету үшін пайдаланылады.</p></section>
+      <section><h2 className={headingCls}>4. Деректерді сақтау және қорғау</h2><p className={textCls}>Деректер шифрлаумен қорғалған серверлерде сақталады. Рұқсатсыз қол жеткізуден қорғау үшін барлық қажетті шаралар қолданылады.</p></section>
+      <section><h2 className={headingCls}>5. Үшінші тараптарға деректер беру</h2><p className={textCls}>Біз жеке деректерді үшінші тараптарға сатпаймыз, алмастырмаймыз немесе бермейміз, заңда белгіленген жағдайлардан немесе қызметтер көрсету үшін қажет болған жағдайлардан басқа.</p></section>
+      <section><h2 className={headingCls}>6. Пайдаланушы құқықтары</h2><ul className={listCls}><li>Сақталған жеке деректер туралы ақпарат алу</li><li>Дұрыс емес деректерді түзетуді сұрау</li><li>Аккаунтыңызды және барлық байланысты деректерді жоюды сұрау</li><li>Жеке деректерді өңдеуге берілген келісімді кері қайтарып алу</li></ul></section>
+      <section><h2 className={headingCls}>7. Кәмелетке толмағандардың деректері</h2><p className={textCls}>Қосымша 13 жасқа толмаған балаларға арналмаған. Егер бала деректерін берген болса, оларды жою үшін бізге хабарласыңыз.</p></section>
+      <section><h2 className={headingCls}>8. Байланыс</h2><p className={textCls}>Жеке деректерді өңдеуге қатысты мәселелер бойынша: <a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 underline">durakonlinefromkz@gmail.com</a></p></section>
+    </>
+  );
+
+  if (locale === 'en') return (
+    <>
+      <section><h2 className={headingCls}>1. General Provisions</h2><p className={textCls}>This Privacy Policy defines the procedure for processing and protecting personal data of users of the "Durak Online from KZ" mobile application. By using the Application, you agree to the terms of this Policy.</p></section>
+      <section><h2 className={headingCls}>2. Data We Collect</h2><ul className={listCls}><li>Account data: email address, display name (nickname), avatar</li><li>Game data: game statistics (wins, losses), game balance (tenge), purchased items</li><li>Technical data: device type, OS version, IP address, session ID</li><li>Interaction data: friends list, complaint history</li></ul></section>
+      <section><h2 className={headingCls}>3. How We Use Data</h2><p className={textCls}>Collected data is used to ensure the Application's operation, identify users, maintain game statistics and ratings, ensure security, and improve the Application.</p></section>
+      <section><h2 className={headingCls}>4. Data Storage and Protection</h2><p className={textCls}>We take all necessary measures to protect personal data from unauthorized access. Data is stored on secure servers using encryption.</p></section>
+      <section><h2 className={headingCls}>5. Third-Party Data Sharing</h2><p className={textCls}>We do not sell, trade, or transfer your personal data to third parties, except as required by law or necessary for providing services.</p></section>
+      <section><h2 className={headingCls}>6. User Rights</h2><ul className={listCls}><li>Obtain information about stored personal data</li><li>Request correction of inaccurate data</li><li>Request deletion of your account and all related data</li><li>Withdraw consent for personal data processing</li></ul></section>
+      <section><h2 className={headingCls}>7. Children's Data</h2><p className={textCls}>The Application is not intended for children under 13. If you discover a child has provided us their data, contact us for deletion.</p></section>
+      <section><h2 className={headingCls}>8. Contact</h2><p className={textCls}>For questions about personal data processing: <a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 underline">durakonlinefromkz@gmail.com</a></p></section>
+    </>
+  );
+
+  // Default: Russian (also used for uk, ka, az, uz, pl)
+  return (
+    <>
+      <section><h2 className={headingCls}>1. Общие положения</h2><p className={textCls}>Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных пользователей мобильного приложения «Дурак онлайн from KZ». Используя Приложение, вы соглашаетесь с условиями данной Политики.</p></section>
+      <section><h2 className={headingCls}>2. Какие данные мы собираем</h2><ul className={listCls}><li><strong>Данные аккаунта:</strong> адрес электронной почты, отображаемое имя (никнейм), аватар</li><li><strong>Игровые данные:</strong> статистика игр (победы, поражения), игровой баланс (тенге), приобретённые предметы</li><li><strong>Технические данные:</strong> тип устройства, версия операционной системы, IP-адрес, идентификатор сессии</li><li><strong>Данные взаимодействия:</strong> список друзей, история жалоб</li></ul></section>
+      <section><h2 className={headingCls}>3. Как мы используем данные</h2><ul className={listCls}><li>Обеспечения работы Приложения и предоставления игровых функций</li><li>Идентификации пользователя и управления аккаунтом</li><li>Ведения игровой статистики и рейтингов</li><li>Обеспечения безопасности и предотвращения мошенничества</li><li>Улучшения качества Приложения и пользовательского опыта</li></ul></section>
+      <section><h2 className={headingCls}>4. Хранение и защита данных</h2><p className={textCls}>Мы принимаем все необходимые меры для защиты персональных данных от несанкционированного доступа. Данные хранятся на защищённых серверах с использованием шифрования.</p></section>
+      <section><h2 className={headingCls}>5. Передача данных третьим лицам</h2><p className={textCls}>Мы не продаём, не обмениваем и не передаём ваши персональные данные третьим лицам, за исключением случаев, предусмотренных применимым законодательством или необходимых для предоставления услуг.</p></section>
+      <section><h2 className={headingCls}>6. Права пользователя</h2><ul className={listCls}><li>Получить информацию о хранимых персональных данных</li><li>Запросить исправление неточных данных</li><li>Запросить удаление вашего аккаунта и всех связанных данных</li><li>Отозвать согласие на обработку персональных данных</li></ul></section>
+      <section><h2 className={headingCls}>7. Данные несовершеннолетних</h2><p className={textCls}>Приложение не предназначено для детей младше 13 лет. Если вы обнаружили, что ребёнок предоставил нам свои данные, свяжитесь с нами для их удаления.</p></section>
+      <section><h2 className={headingCls}>8. Файлы cookie и аналитика</h2><p className={textCls}>Приложение использует сессионные cookie для поддержания авторизации. Мы можем использовать анонимную аналитику для улучшения качества обслуживания.</p></section>
+      <section><h2 className={headingCls}>9. Изменения в Политике</h2><p className={textCls}>Мы оставляем за собой право вносить изменения в настоящую Политику конфиденциальности. Продолжение использования Приложения после внесения изменений означает ваше согласие с обновлённой Политикой.</p></section>
+      <section><h2 className={headingCls}>10. Контакты</h2><p className={textCls}>По всем вопросам: <a href="mailto:durakonlinefromkz@gmail.com" className="text-amber-400 underline">durakonlinefromkz@gmail.com</a></p></section>
+    </>
+  );
+}
+
+function TermsOfServiceContent({ locale }: { locale: string }) {
+  const headingCls = "text-base font-bold text-amber-200 mb-2 mt-4 first:mt-0";
+  const textCls = "text-amber-100/70 leading-relaxed text-sm";
+
+  if (locale === 'kk') return (
+    <>
+      <h2 className={headingCls}>Пайдаланушы келісімі</h2>
+      <p className={textCls}>Күшіне ену күні: 2025 жылдың 1 қаңтары</p>
+      <section><h3 className={headingCls}>1. Шарттарды қабылдау</h3><p className={textCls}>«Дурак онлайн from KZ» қосымшасын пайдалана отырып, сіз осы Пайдаланушы келісімімен келісесіз.</p></section>
+      <section><h3 className={headingCls}>2. Қызметтің сипаттамасы</h3><p className={textCls}>«Дурак онлайн from KZ» — дәстүрлі қазақ «Дурак» ойынына негізделген онлайн карта ойыны. Қосымша мультиплеер, ойын ішіндегі валюта (Шаныраки мен Тенге) және косметикалық заттарды қамтитын ойын платформасын ұсынады.</p></section>
+      <section><h3 className={headingCls}>3. Ойын ішіндегі сатып алулар</h3><p className={textCls}>Қосымша ресми қосымшалар дүкендері арқылы нақты ақшаға ойын ішіндегі валютаны (Тенге) сатып алуды ұсынады. Барлық сатып алулар түпкілікті болып табылады. Ойын ішіндегі валютаның нақты ақшалай құны жоқ.</p></section>
+      <section><h3 className={headingCls}>4. Мінез-құлық ережелері</h3><p className={textCls}>Тыйым салынады: чит-кодтарды, боттарды немесе автоматтандыру құралдарын пайдалану; басқа ойыншыларды қорлау; серверлерді бұзуға немесе бұзуға әрекет жасау.</p></section>
+      <section><h3 className={headingCls}>5. Байланыс</h3><p className={textCls}>Осы келісімге қатысты мәселелер бойынша қосымшаның параметрлеріндегі кері байланыс формасы арқылы хабарласыңыз.</p></section>
+    </>
+  );
+
+  if (locale === 'en') return (
+    <>
+      <h2 className={headingCls}>Terms of Service</h2>
+      <p className={textCls}>Effective date: January 1, 2025</p>
+      <section><h3 className={headingCls}>1. Acceptance of Terms</h3><p className={textCls}>By using the "Durak Online from KZ" application, you agree to these Terms of Service. If you do not agree, please do not use the Application.</p></section>
+      <section><h3 className={headingCls}>2. Service Description</h3><p className={textCls}>"Durak Online from KZ" is an online card game based on the traditional Kazakh version of the "Durak" game. The Application provides a gaming platform including multiplayer, in-game currency (Shanyraks and Tenge), and cosmetic items.</p></section>
+      <section><h3 className={headingCls}>3. In-App Purchases</h3><p className={textCls}>The Application offers the purchase of in-game currency (Tenge) for real money through official app stores. All purchases are final and non-refundable. In-game currency has no real monetary value.</p></section>
+      <section><h3 className={headingCls}>4. Advertising</h3><p className={textCls}>The Application may display advertisements, including rewarded ads (for which in-game currency is awarded). Advertising is provided by third parties (Google AdMob).</p></section>
+      <section><h3 className={headingCls}>5. Rules of Conduct</h3><p className={textCls}>Prohibited: using cheats, bots, or automation tools; insulting other players; attempting to hack or disrupt servers; using the Application for commercial purposes without permission.</p></section>
+      <section><h3 className={headingCls}>6. Contact</h3><p className={textCls}>For questions related to these terms, contact us through the feedback form in the Application settings.</p></section>
+    </>
+  );
+
+  // Default: Russian
+  return (
+    <>
+      <h2 className={headingCls}>Пользовательское соглашение</h2>
+      <p className={textCls}>Дата вступления в силу: 1 января 2025 года</p>
+      <section><h3 className={headingCls}>1. Принятие условий</h3><p className={textCls}>Используя приложение «Дурак онлайн from KZ», вы соглашаетесь с настоящим Пользовательским соглашением. Если вы не согласны с условиями, пожалуйста, не используйте Приложение.</p></section>
+      <section><h3 className={headingCls}>2. Описание сервиса</h3><p className={textCls}>«Дурак онлайн from KZ» — это онлайн-карточная игра, основанная на традиционной казахской версии игры «Дурак». Приложение предоставляет игровую платформу, включая мультиплеер, внутриигровую валюту (Шаныраки и Тенге) и косметические предметы.</p></section>
+      <section><h3 className={headingCls}>3. Учётная запись</h3><p className={textCls}>Для использования Приложения необходима регистрация. Вы несёте ответственность за сохранность данных своей учётной записи. Запрещается создавать несколько учётных записей для обхода ограничений.</p></section>
+      <section><h3 className={headingCls}>4. Внутриигровые покупки</h3><p className={textCls}>Приложение предлагает покупку внутриигровой валюты (Тенге) за реальные деньги через официальные магазины приложений. Все покупки являются окончательными и не подлежат возврату. Внутриигровая валюта не имеет реальной денежной стоимости.</p></section>
+      <section><h3 className={headingCls}>5. Реклама</h3><p className={textCls}>Приложение может показывать рекламу, в том числе рекламу с вознаграждением. Реклама предоставляется третьими сторонами (Google AdMob).</p></section>
+      <section><h3 className={headingCls}>6. Правила поведения</h3><p className={textCls}>Запрещается: использовать читы, боты или иные средства автоматизации; оскорблять других игроков; пытаться взломать или нарушить работу серверов; использовать Приложение в коммерческих целях без разрешения.</p></section>
+      <section><h3 className={headingCls}>7. Интеллектуальная собственность</h3><p className={textCls}>Все права на Приложение принадлежат разработчикам. Запрещается копировать, модифицировать или распространять материалы Приложения без письменного разрешения.</p></section>
+      <section><h3 className={headingCls}>8. Ограничение ответственности</h3><p className={textCls}>Приложение предоставляется «как есть». Мы не гарантируем бесперебойную работу сервиса.</p></section>
+      <section><h3 className={headingCls}>9. Контакты</h3><p className={textCls}>По вопросам, связанным с настоящим соглашением, обращайтесь через форму обратной связи в настройках Приложения.</p></section>
     </>
   );
 }
