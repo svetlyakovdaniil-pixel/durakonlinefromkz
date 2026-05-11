@@ -13,6 +13,14 @@ on:
       - '.github/scripts/**'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'App version (e.g. 1.0.2)'
+        required: true
+        default: '1.0.2'
+      build_number:
+        description: 'Build number (e.g. 23)'
+        required: true
+        default: '23'
       upload_to_appstore:
         description: 'Upload to App Store Connect'
         required: false
@@ -22,28 +30,18 @@ on:
 jobs:
   build-ios:
     name: Build iOS App
-    runs-on: self-hosted
+    # NOTE: Uses GitHub-hosted macos-26 runner (NOT self-hosted Mac).
+    # Self-hosted runner (MacBook-Pro-An) is often offline — always use macos-26.
+    # To trigger a build manually: go to Actions → iOS Build & App Store Upload → Run workflow
+    # and enter the version and build_number.
+    runs-on: macos-26
     timeout-minutes: 120
 
     steps:
-      # ── 0. Setup PATH ──────────────────────────────────────────────────────
-      - name: Setup PATH
+      # ── 0. Select Xcode ────────────────────────────────────────────────────
+      - name: Select Xcode 26
         run: |
-          if [ -f "/opt/homebrew/bin/brew" ]; then
-            echo "/opt/homebrew/bin" >> $GITHUB_PATH
-            echo "/opt/homebrew/sbin" >> $GITHUB_PATH
-          elif [ -f "/usr/local/bin/brew" ]; then
-            echo "/usr/local/bin" >> $GITHUB_PATH
-          fi
-          if [ -d "$HOME/.rbenv/shims" ]; then
-            echo "$HOME/.rbenv/shims" >> $GITHUB_PATH
-            echo "$HOME/.rbenv/bin" >> $GITHUB_PATH
-          fi
-          echo "PATH setup complete"
-
-      # ── 1. Verify Xcode ────────────────────────────────────────────────────
-      - name: Verify Xcode setup
-        run: |
+          sudo xcode-select -s /Applications/Xcode_26.app/Contents/Developer 2>/dev/null || sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
           xcode-select -p
           xcodebuild -version
 
@@ -89,6 +87,13 @@ jobs:
       # ── 7. Install Capacitor CLI ───────────────────────────────────────────
       - name: Install Capacitor CLI globally
         run: npm install -g @capacitor/cli@8
+
+      # ── 8b. Set version and build number ─────────────────────────────────────
+      - name: Set version and build number
+        run: |
+          cd ios/App
+          xcrun agvtool new-marketing-version ${{ github.event.inputs.version || '1.0.2' }}
+          xcrun agvtool new-version -all ${{ github.event.inputs.build_number || github.run_number }}
 
       # ── 8. Add iOS platform ────────────────────────────────────────────────
       - name: Add iOS platform
@@ -185,52 +190,8 @@ jobs:
       - name: Install Provisioning Profile
         env:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
-          IOS_TEAM_ID: ${{ secrets.IOS_TEAM_ID }}
         run: |
-          RUNNER_HOME=$(eval echo ~$(whoami))
-          PROFILES_DIR="$RUNNER_HOME/Library/MobileDevice/Provisioning Profiles"
-          mkdir -p "$PROFILES_DIR"
-
-          PROFILE_TMP="$RUNNER_TEMP/profile.mobileprovision"
-          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > "$PROFILE_TMP"
-          echo "Profile file size: $(wc -c < "$PROFILE_TMP") bytes"
-
-          PROFILE_UUID=""
-          PROFILE_NAME=""
-          PLIST_TMP="$RUNNER_TEMP/profile.plist"
-
-          if security cms -D -i "$PROFILE_TMP" -o "$PLIST_TMP" 2>/dev/null; then
-            PROFILE_UUID=$(/usr/libexec/PlistBuddy -c 'Print :UUID' "$PLIST_TMP" 2>/dev/null || true)
-            PROFILE_NAME=$(/usr/libexec/PlistBuddy -c 'Print :Name' "$PLIST_TMP" 2>/dev/null || true)
-          fi
-
-          if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID=$(grep -a -o '[0-9A-Fa-f]\{8\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{4\}-[0-9A-Fa-f]\{12\}' \
-              "$PROFILE_TMP" | head -1)
-          fi
-
-          if [ -z "$PROFILE_UUID" ]; then
-            PROFILE_UUID="8bc01236-dcbb-4bc0-9f0e-dfebfd0e615e"
-            PROFILE_NAME="DurakOnlineKZ AppStore Distribution"
-          fi
-
-          echo "Profile UUID: $PROFILE_UUID"
-          echo "Profile Name: $PROFILE_NAME"
-
-          if [ -f "$PLIST_TMP" ]; then
-            echo "Team ID in profile: $(/usr/libexec/PlistBuddy -c 'Print :TeamIdentifier:0' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-            echo "Expiry: $(/usr/libexec/PlistBuddy -c 'Print :ExpirationDate' "$PLIST_TMP" 2>/dev/null || echo 'N/A')"
-          fi
-
-          cp "$PROFILE_TMP" "$PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-
-          XCODE_PROFILES_DIR="$RUNNER_HOME/Library/Developer/Xcode/UserData/ProvisioningProfiles"
-          mkdir -p "$XCODE_PROFILES_DIR"
-          cp "$PROFILE_TMP" "$XCODE_PROFILES_DIR/${PROFILE_UUID}.mobileprovision"
-
-          echo "PROFILE_UUID=$PROFILE_UUID" >> $GITHUB_ENV
-          echo "PROFILE_NAME=$PROFILE_NAME" >> $GITHUB_ENV
-          echo "PROFILES_DIR=$PROFILES_DIR" >> $GITHUB_ENV
+          python3 .github/scripts/install_provisioning_profile.py
 
       # ── 15. Update Xcode project settings ─────────────────────────────────
       - name: Update Xcode project bundle ID and signing
