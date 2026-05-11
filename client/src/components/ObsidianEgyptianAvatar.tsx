@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianEgyptianAvatar — Anubis reborn as obsidian deity of death.
@@ -68,7 +69,7 @@ export function ObsidianEgyptianAvatar({ size = 48, className = '' }: Props) {
         animation: `oea-pulse-${uid} 2.8s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_egyptian_gods-HwZuAJipid5wMPLwE9jfDN.webp"
+          src={getAssetUrl("/assets/static/obsidian_egyptian_gods-HwZuAJipid5wMPLwE9jfDN.webp")}
           alt="Обсидиан Египетские боги"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

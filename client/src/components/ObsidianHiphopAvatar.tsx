@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianHiphopAvatar — Supernatural hip-hop deity of the underground.
@@ -70,7 +71,7 @@ export function ObsidianHiphopAvatar({ size = 48, className = '' }: Props) {
         animation: `oha-beat-${uid} 0.8s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_hiphop_90s-Rx5QAgMC5akbKfSPh2UYkY.webp"
+          src={getAssetUrl("/assets/static/obsidian_hiphop_90s-Rx5QAgMC5akbKfSPh2UYkY.webp")}
           alt="Обсидиан Хип-хоп"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

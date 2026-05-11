@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyNeonEraAvatar — Neon city night with electric signs.
@@ -46,7 +47,7 @@ export function RubyNeonEraAvatar({ size = 48, className = '' }: Props) {
         animation: `rneon-halo-${uid} 2s linear infinite`,
       }}>
         <img
-          src="/assets/static/ruby_neon_era_v3_42502a8f.png"
+          src={getAssetUrl("/assets/static/ruby_neon_era_v3_42502a8f.png")}
           alt="Рубин"
           style={{
             width: '105%', height: '105%',

@@ -19,6 +19,7 @@ import { useTranslation } from '@/i18n';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { trpc } from '@/lib/trpc';
 import { toast } from 'sonner';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface WaitingRoomProps {
   room: Room;
@@ -146,7 +147,7 @@ export default function WaitingRoom({
               <Layers className="w-3 h-3 mr-0.5 sm:mr-1" /> {room.settings.deckStyle === 'custom' ? t('waitingRoom.deckN2') : t('waitingRoom.deckN1')}
             </Badge>
             <Badge variant="outline" className="border-amber-500/30 text-amber-300/70 text-[10px] sm:text-xs">
-              <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
+              <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-3 h-3 mr-0.5 sm:mr-1" />
               {formatBalance(room.settings.betAmount || 100)}
             </Badge>
             {room.settings.playlistId && (
@@ -326,7 +327,7 @@ export default function WaitingRoom({
             {/* Bet amount */}
             <div>
               <Label className="text-amber-200/70 text-sm flex items-center gap-1.5">
-                <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-4 h-4" />
+                <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-4 h-4" />
                 {t('lobby.bet')}: {formatBalance(BET_AMOUNTS[editBetAmountIdx])}
               </Label>
               <Slider

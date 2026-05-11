@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianAngelsDemonsAvatar — Supreme obsidian arbiter beyond heaven and hell.
@@ -73,7 +74,7 @@ export function ObsidianAngelsDemonsAvatar({ size = 48, className = '' }: Props)
         animation: `oada-duality-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_angels_demons-Jb4TqRyJ4bRGFfWdknwUSR.webp"
+          src={getAssetUrl("/assets/static/obsidian_angels_demons-Jb4TqRyJ4bRGFfWdknwUSR.webp")}
           alt="Обсидиан Ангелы и Демоны"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface KhanAvatarProps {
   size?: number;
@@ -65,7 +66,7 @@ export function KhanAvatar({ size = 48, className = '' }: KhanAvatarProps) {
 
       {/* Base photorealistic image */}
       <img
-        src="/assets/static/khan_steppe_avatar-72rsBrDvaNJLS7y5xKmfwa.webp"
+        src={getAssetUrl("/assets/static/khan_steppe_avatar-72rsBrDvaNJLS7y5xKmfwa.webp")}
         alt="Рубин"
         style={{
           width: '100%',

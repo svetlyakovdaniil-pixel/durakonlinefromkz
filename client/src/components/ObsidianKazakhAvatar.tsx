@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianKazakhAvatar — Kazakh Khan reborn as obsidian deity.
@@ -160,7 +161,7 @@ export function ObsidianKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `oka-pulse-${uid} 2.4s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_kazakh_v2-CwSTTzwCooxU3Z7eSWybpy.webp"
+          src={getAssetUrl("/assets/static/obsidian_kazakh_v2-CwSTTzwCooxU3Z7eSWybpy.webp")}
           alt="Обсидиан Казахский хан"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

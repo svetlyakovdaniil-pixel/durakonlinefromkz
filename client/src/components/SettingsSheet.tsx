@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -160,13 +161,13 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   // Default tracks (same as useMusic hook)
   const DEFAULT_TRACKS = [
-    '/assets/static/1_fd1382d6.mp3',
-    '/assets/static/2_97b3c0a9.mp3',
-    '/assets/static/3_9c1cf3b0.mp3',
-    '/assets/static/4_3882b329.mp3',
-    '/assets/static/5_79e63061.mp3',
-    '/assets/static/6_2a64f936.mp3',
-    '/assets/static/7_48c4f68c.mp3',
+    getAssetUrl('/assets/static/1_fd1382d6.mp3'),
+    getAssetUrl('/assets/static/2_97b3c0a9.mp3'),
+    getAssetUrl('/assets/static/3_9c1cf3b0.mp3'),
+    getAssetUrl('/assets/static/4_3882b329.mp3'),
+    getAssetUrl('/assets/static/5_79e63061.mp3'),
+    getAssetUrl('/assets/static/6_2a64f936.mp3'),
+    getAssetUrl('/assets/static/7_48c4f68c.mp3'),
   ];
 
   // When playlist data loads or changes, switch the music tracks and apply volume multiplier

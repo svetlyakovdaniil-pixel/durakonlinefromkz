@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberAngelsDemonsAvatar — Half-angel half-demon with amber divine energy.
@@ -34,7 +35,7 @@ export function AmberAngelsDemonsAvatar({ size = 48, className = '' }: Props) {
         animation: `ad-dual-${uid} 2.5s ease-in-out infinite, ad-breathe-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_angels_demons_v2_b882b3bd.png"
+          src={getAssetUrl("/assets/static/amber_angels_demons_v2_b882b3bd.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}

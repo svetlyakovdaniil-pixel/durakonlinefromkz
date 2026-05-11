@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface GasMaskAvatarProps {
   size?: number;
@@ -18,7 +19,7 @@ interface GasMaskAvatarProps {
  *   Right lens: center ~62% from left, ~34% from top, ~22% wide, ~18% tall
  */
 export function GasMaskAvatar({ size = 48, className = '' }: GasMaskAvatarProps) {
-  const imgUrl = '/assets/static/gasmask_avatar-QspMaqo2ZQTvwEek5U4B35.png';
+  const imgUrl = getAssetUrl('/assets/static/gasmask_avatar-QspMaqo2ZQTvwEek5U4B35.png');
 
   return (
     <div

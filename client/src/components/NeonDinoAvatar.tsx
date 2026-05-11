@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface NeonDinoAvatarProps {
   size?: number;
@@ -59,7 +60,7 @@ export function NeonDinoAvatar({ size = 48, className = '' }: NeonDinoAvatarProp
         }}
       >
         <img
-          src="/assets/static/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp"
+          src={getAssetUrl("/assets/static/neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp")}
           alt="Рубин"
           style={{
             width: '100%',

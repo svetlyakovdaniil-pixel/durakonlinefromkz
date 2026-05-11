@@ -8,8 +8,9 @@ import { X, Calendar, CheckCircle, Lock, Gift, Clock, RefreshCw, Crown } from 'l
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
 import { toast } from 'sonner';
+import { getAssetUrl } from '@/lib/assetUrl';
 
-const SHANYRAK_ICON = '/assets/static/shanyrak_96e91a49.png';
+const SHANYRAK_ICON = getAssetUrl('/assets/static/shanyrak_96e91a49.png');
 
 interface DailyQuestsModalProps {
   open: boolean;

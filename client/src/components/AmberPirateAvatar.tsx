@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberPirateAvatar — Legendary golden pirate captain.
@@ -32,7 +33,7 @@ export function AmberPirateAvatar({ size = 48, className = '' }: Props) {
         animation: `ap-storm-${uid} 3s ease-in-out infinite, ap-sway-${uid} 4s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_pirate_islands_v2_e0aa3599.png"
+          src={getAssetUrl("/assets/static/amber_pirate_islands_v2_e0aa3599.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
           draggable={false}

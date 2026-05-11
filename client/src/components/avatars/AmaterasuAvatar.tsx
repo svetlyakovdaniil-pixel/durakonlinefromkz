@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { registerAvatarDraw } from '@/lib/avatarRafManager';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface AmaterasuAvatarProps {
   size?: number;
@@ -7,7 +8,7 @@ interface AmaterasuAvatarProps {
   style?: React.CSSProperties;
 }
 
-const BASE_IMAGE_URL = '/assets/static/amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp';
+const BASE_IMAGE_URL = getAssetUrl('/assets/static/amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp');
 
 export function AmaterasuAvatar({ size = 64, className = '', style }: AmaterasuAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

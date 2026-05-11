@@ -23,6 +23,7 @@ import { ObsidianHiphopFrame } from '@/components/ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from '@/components/ObsidianAngelsDemonsFrame';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useState as useLocalState } from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface SeasonPageProps {
   open: boolean;
@@ -141,7 +142,7 @@ function RewardPopup({
           <div className="space-y-2">
             {/* Shanyraks */}
             <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(234,179,8,0.08)' }}>
-              <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-6 h-6 object-contain" />
+              <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-6 h-6 object-contain" />
               <span className="text-amber-200 font-semibold text-sm">
                 +{reward.shanyraks.toLocaleString()} {t('lobby.shanyraksUnit')}
               </span>
@@ -150,7 +151,7 @@ function RewardPopup({
             {/* Tenge */}
             {reward.tenge > 0 && (
               <div className="flex items-center gap-2 rounded-lg px-3 py-2.5" style={{ background: 'rgba(139,92,246,0.10)' }}>
-                <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-6 h-6 object-contain" />
+                <img src={getAssetUrl("/assets/static/tenge_9aefd1b7.png")} alt="" className="w-6 h-6 object-contain" />
                 <span className="text-purple-300 font-semibold text-sm">
                   +{reward.tenge} {t('lobby.tengeUnit')}
                 </span>
@@ -783,13 +784,13 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
                       <div className="text-amber-100 text-sm space-y-1.5">
                         {/* Shanyraks */}
                         <div className="flex items-center gap-2">
-                          <img src="/assets/static/shanyrak_96e91a49.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                          <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="" className="w-5 h-5 object-contain flex-shrink-0" />
                           <span>+{rewardDef.shanyraks.toLocaleString()} {t('lobby.shanyraksUnit')}</span>
                         </div>
                         {/* Tenge */}
                         {rewardDef.tenge > 0 && (
                           <div className="flex items-center gap-2">
-                            <img src="/assets/static/tenge_9aefd1b7.png" alt="" className="w-5 h-5 object-contain flex-shrink-0" />
+                            <img src={getAssetUrl("/assets/static/tenge_9aefd1b7.png")} alt="" className="w-5 h-5 object-contain flex-shrink-0" />
                             <span>+{rewardDef.tenge} {t('lobby.tengeUnit')}</span>
                           </div>
                         )}

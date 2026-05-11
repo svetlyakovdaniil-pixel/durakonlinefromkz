@@ -5,9 +5,10 @@ import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
 import { translateTxDescription } from "./TengeTopUpModal";
 import { showRewardedAd, isAdMobAvailable } from "@/lib/admob";
+import { getAssetUrl } from '@/lib/assetUrl';
 
-const TENGE_ICON = "/assets/static/tenge_9aefd1b7.png";
-const SHANYRAK_ICON = "/assets/static/shanyrak_96e91a49.png";
+const TENGE_ICON = getAssetUrl("/assets/static/tenge_9aefd1b7.png");
+const SHANYRAK_ICON = getAssetUrl("/assets/static/shanyrak_96e91a49.png");
 
 interface ShanyrakTopUpModalProps {
   open: boolean;

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { registerAvatarDraw } from '@/lib/avatarRafManager';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface SamuraiAvatarProps {
   size?: number;
@@ -7,8 +8,7 @@ interface SamuraiAvatarProps {
   style?: React.CSSProperties;
 }
 
-const BASE_IMAGE_URL =
-  '/assets/static/samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp';
+const BASE_IMAGE_URL = getAssetUrl('/assets/static/samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp');
 
 export function SamuraiAvatar({ size = 64, className = '', style }: SamuraiAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);

@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyCyberpunkAvatar — Cyborg hacker with red glitch effect.
@@ -29,7 +30,7 @@ export function RubyCyberpunkAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `rca-halo-${uid} 2s ease-in-out infinite` }}>
         <img
-          src="/assets/static/ruby_cyberpunk_ee56c332.png"
+          src={getAssetUrl("/assets/static/ruby_cyberpunk_ee56c332.png")}
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `rca-glitch-${uid} 4s ease-in-out infinite` }}
           draggable={false}

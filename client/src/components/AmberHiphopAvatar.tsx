@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberHiphopAvatar — Legendary golden hip-hop icon.
@@ -31,7 +32,7 @@ export function AmberHiphopAvatar({ size = 48, className = '' }: Props) {
         animation: `ah-beat-${uid} 0.6s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_hiphop_90s_v2_5310991c.png"
+          src={getAssetUrl("/assets/static/amber_hiphop_90s_v2_5310991c.png")}
           alt="Янтарь"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', display: 'block', animation: `ah-gold-${uid} 2s ease-in-out infinite` }}
           draggable={false}

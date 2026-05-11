@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * AmberKazakhAvatar — Kazakh tyubeteika, dombra, ornaments.
@@ -54,7 +55,7 @@ export function AmberKazakhAvatar({ size = 48, className = '' }: Props) {
         animation: `aka-pulse-${uid} 2.5s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/amber_kazakh_s6_v2_675d657a.png"
+          src={getAssetUrl("/assets/static/amber_kazakh_s6_v2_675d657a.png")}
           alt="Янтарь Казахский колорит"
           style={{
             width: '100%', height: '100%',

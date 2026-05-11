@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianSpaceAvatar — Cosmic void emperor commanding black holes.
@@ -69,7 +70,7 @@ export function ObsidianSpaceAvatar({ size = 48, className = '' }: Props) {
         animation: `osa-supernova-${uid} 3s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_space_odyssey-7gENsHLXLmZaeUU6EcPbyv.webp"
+          src={getAssetUrl("/assets/static/obsidian_space_odyssey-7gENsHLXLmZaeUU6EcPbyv.webp")}
           alt="Обсидиан Космос"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

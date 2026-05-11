@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianNeonEraAvatar — Neon vortex obsidian deity.
@@ -139,7 +140,7 @@ export function ObsidianNeonEraAvatar({ size = 48, className = '' }: Props) {
         animation: `ona-pulse-${uid} 2s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_neon_era_v2-adGE4hKxxPSNzmcWxb3qZE.webp"
+          src={getAssetUrl("/assets/static/obsidian_neon_era_v2-adGE4hKxxPSNzmcWxb3qZE.webp")}
           alt="Обсидиан Неоновая эра"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

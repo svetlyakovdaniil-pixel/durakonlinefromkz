@@ -6,6 +6,16 @@ import {
   SUIT_SYMBOLS, SUIT_COLORS,
   getCardImageKey, getCustomCardImageKey,
 } from '../../../shared/cardAssets';
+import { getAssetUrl } from '@/lib/assetUrl';
+
+const _CARD_BACK_URL = getAssetUrl(CARD_BACK_URL);
+const _CARD_BACK_CUSTOM_URL = getAssetUrl(CARD_BACK_CUSTOM_URL);
+const _CARD_IMAGES: Record<string, string> = Object.fromEntries(
+  Object.entries(CARD_IMAGES).map(([k, v]) => [k, getAssetUrl(v)])
+);
+const _CARD_IMAGES_CUSTOM: Record<string, string> = Object.fromEntries(
+  Object.entries(CARD_IMAGES_CUSTOM).map(([k, v]) => [k, getAssetUrl(v)])
+);
 
 interface PlayingCardProps {
   card?: Card;
@@ -154,7 +164,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
         : 'w-[68px] h-[101px] sm:w-[106px] sm:h-[150px]';  // +10% from w-[62px]/h-[92px]/sm:w-24/sm:h-34
 
   const isCustom = deckStyle === 'custom';
-  const backUrl = isCustom ? CARD_BACK_CUSTOM_URL : CARD_BACK_URL;
+  const backUrl = isCustom ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
 
   if (faceDown || !card) {
     return (
@@ -171,7 +181,7 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
   const imageKey = isCustom
     ? getCustomCardImageKey(card.rank, card.suit)
     : getCardImageKey(card.rank, card.suit);
-  const imageMap = isCustom ? CARD_IMAGES_CUSTOM : CARD_IMAGES;
+  const imageMap = isCustom ? _CARD_IMAGES_CUSTOM : _CARD_IMAGES;
   const hasImage = imageKey && imageMap[imageKey];
 
   return (

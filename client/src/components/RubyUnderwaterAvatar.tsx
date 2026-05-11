@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * RubyUnderwaterAvatar — Glowing anglerfish from the abyss.
@@ -35,7 +36,7 @@ export function RubyUnderwaterAvatar({ size = 48, className = '' }: Props) {
       `}</style>
       <div style={{ width: size, height: size, borderRadius: '50%', overflow: 'hidden', position: 'relative', animation: `ruw-halo-${uid} 2.8s ease-in-out infinite` }}>
         <img
-          src="/assets/static/ruby_underwater_world_83a8b445.png"
+          src={getAssetUrl("/assets/static/ruby_underwater_world_83a8b445.png")}
           alt="Рубин"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', display: 'block', animation: `ruw-flicker-${uid} 3.5s ease-in-out infinite` }}
           draggable={false}

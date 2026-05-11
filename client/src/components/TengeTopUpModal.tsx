@@ -14,7 +14,7 @@ import {
   type TengeProductId,
 } from "@/lib/iap";
 
-const TENGE_ICON = "/assets/static/tenge_9aefd1b7.png";
+const TENGE_ICON = getAssetUrl("/assets/static/tenge_9aefd1b7.png");
 
 interface TengeTopUpModalProps {
   open: boolean;
@@ -72,6 +72,7 @@ function formatLocalPrice(usd: number, currencyCode: string, locale: string): st
 
 export { translateTxDescription } from '@/lib/txUtils';
 import { translateTxDescription } from '@/lib/txUtils';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModalProps) {
   const { t, locale } = useTranslation();

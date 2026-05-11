@@ -51,6 +51,7 @@ import { ObsidianJapaneseAvatar } from './ObsidianJapaneseAvatar';
 import { VipReferralAvatar } from './VipReferralAvatar';
 import { getAvatarUrl, getBaseAvatarId } from '../../../shared/avatars';
 import { useAvatarOffsets } from '@/hooks/useAvatarOffsets';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface AvatarDisplayProps {
   avatarId?: string | null;
@@ -243,7 +244,7 @@ export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avat
     // Image-based avatar
     return (
       <img
-        src={getAvatarUrl(avatarId)}
+        src={getAssetUrl(getAvatarUrl(avatarId))}
         alt={alt}
         width={size}
         height={size}

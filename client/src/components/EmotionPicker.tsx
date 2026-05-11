@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { X } from 'lucide-react';
 import { HAMSTER_PACK, getEmotionPack, type EmotionPackItem } from '@shared/emotionPacks';
 import { useTranslation } from '@/i18n';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 // Legacy export for backward compatibility (hamster pack emotions)
 export const EMOTIONS = HAMSTER_PACK.emotions;
@@ -75,7 +76,7 @@ export function EmotionPicker({ onSelect, onClose, activePackId = 'khan' }: Emot
                 title={label}
               >
                 <img
-                  src={e.url}
+                  src={getAssetUrl(e.url)}
                   alt={label}
                   className="w-14 h-14 object-contain drop-shadow-md"
                   draggable={false}
@@ -113,7 +114,7 @@ export function EmotionBubble({ emotionId, emotionPackId = 'khan' }: EmotionBubb
       className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none animate-emotion-pop"
     >
       <img
-        src={emotion.url}
+        src={getAssetUrl(emotion.url)}
         alt={emotion.label}
         className="w-full h-full object-contain drop-shadow-lg"
         draggable={false}

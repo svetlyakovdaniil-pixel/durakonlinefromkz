@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAssetUrl } from '@/lib/assetUrl';
 interface Props { size?: number; className?: string; }
 /**
  * ObsidianUnderwaterAvatar — Abyssal deep-sea god of absolute darkness.
@@ -58,7 +59,7 @@ export function ObsidianUnderwaterAvatar({ size = 48, className = '' }: Props) {
         animation: `oua-void-${uid} 2.5s ease-in-out infinite`,
       }}>
         <img
-          src="/assets/static/obsidian_underwater_world-CrTo39hHA3GNH6kCigzNr8.webp"
+          src={getAssetUrl("/assets/static/obsidian_underwater_world-CrTo39hHA3GNH6kCigzNr8.webp")}
           alt="Обсидиан Подводный мир"
           style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: `${posX}% ${posY}%`, display: 'block' }}
           draggable={false}

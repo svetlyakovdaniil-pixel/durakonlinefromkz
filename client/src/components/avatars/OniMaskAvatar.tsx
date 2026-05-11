@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { registerAvatarDraw } from '@/lib/avatarRafManager';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface OniMaskAvatarProps {
   size?: number;
@@ -8,8 +9,7 @@ interface OniMaskAvatarProps {
 }
 
 // v3: transparent background, red-gold mask
-const BASE_IMAGE_URL =
-  '/assets/static/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp';
+const BASE_IMAGE_URL = getAssetUrl('/assets/static/oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp');
 
 export function OniMaskAvatar({ size = 64, className = '', style }: OniMaskAvatarProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
