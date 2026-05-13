@@ -459,26 +459,39 @@ jobs:
           fi
           echo "Uploading: $IPA_PATH"
 
+          # The API key from secrets may be stored as raw PEM or base64-encoded PEM.
+          # altool requires the raw PEM .p8 file (starts with -----BEGIN PRIVATE KEY-----)
           API_KEY_DIR="$HOME/.appstoreconnect/private_keys"
           mkdir -p "$API_KEY_DIR"
           API_KEY_PATH="$API_KEY_DIR/AuthKey_${APP_STORE_CONNECT_API_KEY_ID}.p8"
-          echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
-            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
-          # Use xcodebuild -uploadPackage (replaces deprecated altool in Xcode 15+)
-          xcodebuild -uploadPackage \
-            -packagePath "$IPA_PATH" \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
-            -allowAuthentication \
+          # Try base64 decode first; if result starts with -----BEGIN, it's already PEM
+          DECODED=$(echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode 2>/dev/null || true)
+          if echo "$DECODED" | grep -q "BEGIN"; then
+            echo "$DECODED" > "$API_KEY_PATH"
+            echo "API key: decoded from base64"
+          else
+            # Already raw PEM
+            echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
+            echo "API key: stored as raw PEM"
+          fi
+
+          echo "API key file size: $(wc -c < "$API_KEY_PATH") bytes"
+          head -1 "$API_KEY_PATH"
+
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
+            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+            --verbose \
             2>&1
 
-          UPLOAD_STATUS=${PIPESTATUS[0]:-$?}
+          UPLOAD_STATUS=$?
           rm -f "$API_KEY_PATH" 2>/dev/null || true
 
           if [ $UPLOAD_STATUS -ne 0 ]; then
-            echo "xcodebuild -uploadPackage failed with status $UPLOAD_STATUS"
+            echo "Upload failed with status $UPLOAD_STATUS"
             exit $UPLOAD_STATUS
           fi
           echo "Upload to App Store Connect succeeded!"
