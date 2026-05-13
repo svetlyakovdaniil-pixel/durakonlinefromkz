@@ -323,24 +323,36 @@ jobs:
           echo "Bundle ID: $IOS_BUNDLE_ID"
           echo "Keychain: $KEYCHAIN_PATH"
 
-          xcodebuild archive \
-            -workspace App.xcworkspace \
-            -scheme App \
-            -configuration Release \
-            -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            -destination "generic/platform=iOS" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "$API_KEY_PATH" \
-            -authenticationKeyID "$API_KEY_ID" \
-            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
-            -skipPackagePluginValidation \
-            -skipMacroValidation \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
-            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID" \
-            CODE_SIGN_STYLE=Automatic \
-            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH" \
-            2>&1 | tee /tmp/xcodebuild.log
+          COMMON_ARGS=(
+            -workspace App.xcworkspace
+            -scheme App
+            -configuration Release
+            -archivePath "$RUNNER_TEMP/App.xcarchive"
+            -destination "generic/platform=iOS"
+            -allowProvisioningUpdates
+            -authenticationKeyPath "$API_KEY_PATH"
+            -authenticationKeyID "$API_KEY_ID"
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID"
+            -skipPackagePluginValidation
+            -skipMacroValidation
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages"
+            DEVELOPMENT_TEAM="$IOS_TEAM_ID"
+            PRODUCT_BUNDLE_IDENTIFIER="$IOS_BUNDLE_ID"
+            OTHER_CODE_SIGN_FLAGS="--keychain $KEYCHAIN_PATH"
+          )
+
+          if [ -n "$PROFILE_UUID" ]; then
+            echo "Building with MANUAL signing, profile: $PROFILE_UUID"
+            xcodebuild archive "${COMMON_ARGS[@]}" \
+              CODE_SIGN_STYLE=Manual \
+              PROVISIONING_PROFILE="$PROFILE_UUID" \
+              2>&1 | tee /tmp/xcodebuild.log
+          else
+            echo "Building with AUTOMATIC signing"
+            xcodebuild archive "${COMMON_ARGS[@]}" \
+              CODE_SIGN_STYLE=Automatic \
+              2>&1 | tee /tmp/xcodebuild.log
+          fi
 
           if [ ! -d "$RUNNER_TEMP/App.xcarchive" ]; then
             echo "========================================"
