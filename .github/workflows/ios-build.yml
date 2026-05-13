@@ -465,15 +465,23 @@ jobs:
           echo "$APP_STORE_CONNECT_API_KEY_CONTENT" | base64 --decode > "$API_KEY_PATH" 2>/dev/null || \
             echo "$APP_STORE_CONNECT_API_KEY_CONTENT" > "$API_KEY_PATH"
 
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$IPA_PATH" \
-            --apiKey "$APP_STORE_CONNECT_API_KEY_ID" \
-            --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
-            --verbose \
+          # Use xcodebuild -uploadPackage (replaces deprecated altool in Xcode 15+)
+          xcodebuild -uploadPackage \
+            -packagePath "$IPA_PATH" \
+            -authenticationKeyPath "$API_KEY_PATH" \
+            -authenticationKeyID "$APP_STORE_CONNECT_API_KEY_ID" \
+            -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
+            -allowAuthentication \
             2>&1
 
+          UPLOAD_STATUS=${PIPESTATUS[0]:-$?}
           rm -f "$API_KEY_PATH" 2>/dev/null || true
+
+          if [ $UPLOAD_STATUS -ne 0 ]; then
+            echo "xcodebuild -uploadPackage failed with status $UPLOAD_STATUS"
+            exit $UPLOAD_STATUS
+          fi
+          echo "Upload to App Store Connect succeeded!"
 
       # ── 20. Upload IPA as artifact ─────────────────────────────────────────
       - name: Upload IPA artifact
