@@ -88,13 +88,6 @@ jobs:
       - name: Install Capacitor CLI globally
         run: npm install -g @capacitor/cli@8
 
-      # ── 8b. Set version and build number ─────────────────────────────────────
-      - name: Set version and build number
-        run: |
-          cd ios/App
-          xcrun agvtool new-marketing-version ${{ github.event.inputs.version || '1.0.2' }}
-          xcrun agvtool new-version -all ${{ github.event.inputs.build_number || github.run_number }}
-
       # ── 8. Add iOS platform ────────────────────────────────────────────────
       - name: Add iOS platform
         run: |
@@ -114,6 +107,13 @@ jobs:
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
           fi
           npx cap sync ios
+
+      # ── 8b. Set version and build number ─────────────────────────────────────
+      - name: Set version and build number
+        run: |
+          cd ios/App
+          xcrun agvtool new-marketing-version ${{ github.event.inputs.version || '1.0.2' }}
+          xcrun agvtool new-version -all ${{ github.event.inputs.build_number || github.run_number }}
 
       # ── 9. Ensure CocoaPods is available ───────────────────────────────────
       - name: Ensure CocoaPods is available
