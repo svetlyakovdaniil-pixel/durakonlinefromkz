@@ -3635,3 +3635,4 @@
 - [x] Bug: white status bar gap at top of screen — fixed by removing server.url from capacitor.config.ts
 - [x] Bug: OAuth (Google/Apple) opens game in Safari instead of returning to app — fixed by removing server.url from capacitor.config.ts
 - [x] Refactor: add getAssetUrl() utility to prepend NATIVE_API_BASE for all /assets/ paths on native iOS/Android
+- [x] Bug: game top HUD (timer, deck counts) overlapped by phone status bar — add safe-area-inset-top padding to game-table-root and top HUD

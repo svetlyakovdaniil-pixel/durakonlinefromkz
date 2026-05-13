@@ -635,7 +635,8 @@
 .game-table-root {
   /* Use dvh for dynamic viewport (accounts for browser chrome appearing/disappearing) */
   height: 100dvh;
-  /* Add padding for iOS home indicator and browser bottom bar */
+  /* Add padding for iOS status bar (top) and home indicator (bottom) */
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
 }
@@ -748,9 +749,11 @@
   }
 }
 
-/* Safe area for landscape (notch on left/right) */
+/* Safe area for landscape (notch on left/right, status bar at top is minimal) */
 @media (orientation: landscape) {
   .game-table-root {
+    /* In landscape, notch moves to left/right side; top safe area is minimal */
+    padding-top: max(env(safe-area-inset-top, 0px), 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
   }

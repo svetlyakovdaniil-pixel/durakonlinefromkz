@@ -16,6 +16,9 @@ import { Capacitor } from '@capacitor/core';
 import { StatusBar, Style } from '@capacitor/status-bar';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { Keyboard } from '@capacitor/keyboard';
+import { App as CapApp } from '@capacitor/app';
+import { Browser } from '@capacitor/browser';
+import { NATIVE_TOKEN_KEY } from '@shared/const';
 import { trpc } from "./lib/trpc";
 import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
@@ -80,6 +83,67 @@ function PushInitializer() {
   }, [meQuery.data?.id]);
 
   return null;
+}
+
+/**
+ * Global deep link handler for OAuth callbacks.
+ * Must be at App level (not Login page) to handle:
+ * 1. Cold start: app launched from durak:// deep link before Login mounts
+ * 2. Warm start: app already running when deep link fires
+ * Handles durak://auth/success?token=... and durak://auth/error?reason=...
+ */
+function DeepLinkHandler() {
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    // Handle cold start: app was launched from a deep link
+    CapApp.getLaunchUrl().then((result) => {
+      if (result?.url && result.url.startsWith('durak://auth/')) {
+        handleDeepLink(result.url);
+      }
+    }).catch(() => {});
+
+    // Handle warm start: app was already running when deep link fired
+    const listenerPromise = CapApp.addListener('appUrlOpen', async (event) => {
+      if (event.url.startsWith('durak://auth/')) {
+        await handleDeepLink(event.url);
+      }
+    });
+
+    return () => {
+      listenerPromise.then((listener) => listener.remove()).catch(() => {});
+    };
+  }, []);
+
+  return null;
+}
+
+async function handleDeepLink(url: string): Promise<void> {
+  // Close the in-app browser if it's open
+  await Browser.close().catch(() => {});
+
+  if (url.startsWith('durak://auth/success')) {
+    const params = new URLSearchParams(url.split('?')[1] || '');
+    const token = params.get('token');
+    if (token) {
+      try {
+        localStorage.setItem(NATIVE_TOKEN_KEY, token);
+        // Small delay to ensure storage is written before reload
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Use window.location.reload() for a guaranteed full page reload
+        // so the tRPC client re-initializes and reads the new token from localStorage
+        window.location.reload();
+      } catch (err) {
+        console.error('[DeepLink] Failed to save token:', err);
+      }
+    }
+  } else if (url.startsWith('durak://auth/error')) {
+    const params = new URLSearchParams(url.split('?')[1] || '');
+    const reason = params.get('reason') || 'unknown';
+    console.error('[DeepLink] OAuth error:', reason);
+    // Navigate to login page to show error
+    window.location.href = '/login?error=' + encodeURIComponent(reason);
+  }
 }
 
 /** Configure native mobile UI: StatusBar, SplashScreen, Keyboard */
@@ -159,6 +223,7 @@ function App() {
           <IAPInitializer />
           <AdMobInitializer />
           <MobileInitializer />
+          <DeepLinkHandler />
           <PushInitializer />
           <BatterySaverSync />
           <LanguageGate>

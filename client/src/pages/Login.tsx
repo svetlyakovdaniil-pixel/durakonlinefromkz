@@ -7,7 +7,6 @@ import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
-import { App } from "@capacitor/app";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
@@ -35,7 +34,8 @@ export default function Login() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Listen for deep link callbacks on native platforms (durak://auth/success?token=...)
+  // Listen for browserFinished to clear loading state when user cancels OAuth
+  // (deep link success/error handling is done globally in App.tsx DeepLinkHandler)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
@@ -46,45 +46,18 @@ export default function Login() {
       setAppleLoading(false);
     });
 
-    const handleAppUrl = App.addListener("appUrlOpen", async (event) => {
-      const url = event.url;
-      if (!url.startsWith("durak://auth/")) return;
-
-      // Close the SFSafariViewController
-      await Browser.close();
-
-      if (url.startsWith("durak://auth/success")) {
-        const params = new URLSearchParams(url.split("?")[1] || "");
-        const token = params.get("token");
-        if (token) {
-          try {
-            // On native iOS/Android: save token to localStorage.
-            // The tRPC client reads this token and sends it via Authorization header.
-            // Cookies don't work cross-domain in Capacitor (capacitor://localhost vs durakonlinefromkz.online).
-            localStorage.setItem(NATIVE_TOKEN_KEY, token);
-            // Small delay to ensure storage is written before reload
-            await new Promise(resolve => setTimeout(resolve, 100));
-            window.location.replace("/");
-          } catch {
-            setError(t("auth.serverError"));
-            setGoogleLoading(false);
-            setAppleLoading(false);
-          }
-        }
-      } else if (url.startsWith("durak://auth/error")) {
-        const params = new URLSearchParams(url.split("?")[1] || "");
-        const reason = params.get("reason") || "unknown";
-        console.error("[Login] OAuth error from deep link:", reason);
-        setError(t("auth.serverError"));
-        setGoogleLoading(false);
-        setAppleLoading(false);
-      }
-    });
-
     return () => {
-      handleAppUrl.then((listener) => listener.remove());
       handleBrowserFinished.then((listener) => listener.remove());
     };
+  }, []);
+
+  // Show error from OAuth deep link redirect (e.g., /login?error=google_cancelled)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const oauthError = params.get('error');
+    if (oauthError) {
+      setError(t('auth.serverError'));
+    }
   }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,7 +104,9 @@ export default function Login() {
 
       // Small delay to ensure storage is written, then reload
       await new Promise(resolve => setTimeout(resolve, 100));
-      window.location.replace("/");
+      // Use reload() to guarantee full page re-initialization so tRPC client
+      // picks up the new token from localStorage
+      window.location.reload();
     } catch {
       setError(t("auth.serverError"));
     } finally {
