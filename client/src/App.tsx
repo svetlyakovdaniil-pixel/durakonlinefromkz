@@ -87,38 +87,33 @@ function PushInitializer() {
 
 /**
  * Global deep link handler for OAuth callbacks.
- * Must be at App level (not Login page) to handle:
- * 1. Cold start: app launched from durak:// deep link before Login mounts
- * 2. Warm start: app already running when deep link fires
+ * Must be at App level (not Login page) to handle warm start:
+ * app already running when deep link fires (e.g., after SFSafariViewController closes).
  * Handles durak://auth/success?token=... and durak://auth/error?reason=...
  */
 function DeepLinkHandler() {
+  const utils = trpc.useUtils();
+
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-
-    // Handle cold start: app was launched from a deep link
-    CapApp.getLaunchUrl().then((result) => {
-      if (result?.url && result.url.startsWith('durak://auth/')) {
-        handleDeepLink(result.url);
-      }
-    }).catch(() => {});
 
     // Handle warm start: app was already running when deep link fired
     const listenerPromise = CapApp.addListener('appUrlOpen', async (event) => {
       if (event.url.startsWith('durak://auth/')) {
-        await handleDeepLink(event.url);
+        await handleDeepLink(event.url, utils);
       }
     });
 
     return () => {
       listenerPromise.then((listener) => listener.remove()).catch(() => {});
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return null;
 }
 
-async function handleDeepLink(url: string): Promise<void> {
+async function handleDeepLink(url: string, utils: ReturnType<typeof trpc.useUtils>): Promise<void> {
   // Close the in-app browser if it's open
   await Browser.close().catch(() => {});
 
@@ -128,11 +123,10 @@ async function handleDeepLink(url: string): Promise<void> {
     if (token) {
       try {
         localStorage.setItem(NATIVE_TOKEN_KEY, token);
-        // Small delay to ensure storage is written before reload
-        await new Promise(resolve => setTimeout(resolve, 100));
-        // Use window.location.reload() for a guaranteed full page reload
-        // so the tRPC client re-initializes and reads the new token from localStorage
-        window.location.reload();
+        // Invalidate all tRPC queries so auth.me re-fetches with the new token
+        await utils.invalidate();
+        // Navigate to home page
+        window.location.href = '/';
       } catch (err) {
         console.error('[DeepLink] Failed to save token:', err);
       }

@@ -9,7 +9,7 @@ import { getLoginUrl } from "./const";
 import { Capacitor } from "@capacitor/core";
 import "./index.css";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -18,6 +18,10 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
+
+  // Don't redirect if already on auth pages
+  const path = window.location.pathname;
+  if (path === '/login' || path === '/register') return;
 
   // On native: clear the stored token if it's invalid
   if (Capacitor.isNativePlatform()) {

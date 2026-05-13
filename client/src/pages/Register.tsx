@@ -159,9 +159,9 @@ export default function Register() {
       if (Capacitor.isNativePlatform() && data.token) {
         localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
       }
-      // Use reload() to guarantee full page re-initialization so tRPC client
-      // picks up the new token from localStorage
-      window.location.reload();
+      // Navigate to home — on native the tRPC client will pick up the token
+      // from localStorage on next request (no full reload needed)
+      window.location.href = '/';
     } catch {
       setVerifyError(t("auth.serverError"));
     } finally {
