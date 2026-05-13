@@ -102,11 +102,9 @@ export default function Login() {
         localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
       }
 
-      // Small delay to ensure storage is written, then reload
-      await new Promise(resolve => setTimeout(resolve, 100));
-      // Use reload() to guarantee full page re-initialization so tRPC client
-      // picks up the new token from localStorage
-      window.location.reload();
+      // Navigate to home — on native the tRPC client will pick up the token
+      // from localStorage on next request (no full reload needed)
+      window.location.href = '/';
     } catch {
       setError(t("auth.serverError"));
     } finally {
