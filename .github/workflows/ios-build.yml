@@ -201,31 +201,48 @@ jobs:
         run: |
           cd ios/App
 
-          python3 << 'PYEOF2'
-          import re, os
+          echo "PROFILE_UUID from env: ${PROFILE_UUID:-<not set>}"
 
-          pbxproj_path = "App.xcodeproj/project.pbxproj"
-          bundle_id = os.environ['IOS_BUNDLE_ID']
-          team_id = os.environ['IOS_TEAM_ID']
+          python3 - << 'PYEOF2'
+import re, os
 
-          with open(pbxproj_path, "r") as f:
-              content = f.read()
+pbxproj_path = "App.xcodeproj/project.pbxproj"
+bundle_id = os.environ['IOS_BUNDLE_ID']
+team_id = os.environ['IOS_TEAM_ID']
+profile_uuid = os.environ.get('PROFILE_UUID', '').strip()
+profile_name = os.environ.get('PROFILE_NAME', '').strip()
 
-          content = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
-                           f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
-          content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
-                           f'DEVELOPMENT_TEAM = {team_id};', content)
-          content = re.sub(r'CODE_SIGN_STYLE = [^;]+;',
-                           'CODE_SIGN_STYLE = Automatic;', content)
-          content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
-                           'CODE_SIGN_IDENTITY = "";', content)
-          content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
-          content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+with open(pbxproj_path, "r") as f:
+    content = f.read()
 
-          with open(pbxproj_path, "w") as f:
-              f.write(content)
-          print("Xcode project updated successfully")
-          PYEOF2
+content = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
+                 f'PRODUCT_BUNDLE_IDENTIFIER = {bundle_id};', content)
+content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
+                 f'DEVELOPMENT_TEAM = {team_id};', content)
+
+if profile_uuid:
+    print(f"Using Manual signing with profile UUID: {profile_uuid}")
+    content = re.sub(r'CODE_SIGN_STYLE = [^;]+;', 'CODE_SIGN_STYLE = Manual;', content)
+    content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;', 'CODE_SIGN_IDENTITY = "iPhone Distribution";', content)
+    content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+    content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+    specifier = profile_name if profile_name else profile_uuid
+    content = re.sub(
+        r'(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)',
+        f'\\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{specifier}";\n\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";',
+        content
+    )
+else:
+    print("No PROFILE_UUID found, using Automatic signing")
+    content = re.sub(r'CODE_SIGN_STYLE = [^;]+;', 'CODE_SIGN_STYLE = Automatic;', content)
+    content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;', 'CODE_SIGN_IDENTITY = "";', content)
+    content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
+    content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
+
+with open(pbxproj_path, "w") as f:
+    f.write(content)
+print("Xcode project updated successfully")
+PYEOF2
 
           find Pods -name "*.xcconfig" 2>/dev/null | while read xcconfig; do
             sed -i '' '/^CODE_SIGN_IDENTITY/d' "$xcconfig" 2>/dev/null || true
@@ -382,24 +399,58 @@ jobs:
           IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
+          # Use PROFILE_UUID set by Install Provisioning Profile step
+          PROFILE_UUID="${PROFILE_UUID:-}"
+
+          if [ -n "$PROFILE_UUID" ]; then
+            echo "Using manual signing with profile UUID: $PROFILE_UUID"
+            cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
             <key>method</key>
-            <string>app-store</string>
+            <string>app-store-connect</string>
             <key>teamID</key>
             <string>${IOS_TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>manual</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${IOS_BUNDLE_ID}</key>
+              <string>${PROFILE_UUID}</string>
+            </dict>
             <key>uploadBitcode</key>
             <false/>
             <key>uploadSymbols</key>
             <true/>
-            <key>signingStyle</key>
-            <string>automatic</string>
           </dict>
           </plist>
           PLIST_EOF
+          else
+            echo "No PROFILE_UUID found, falling back to automatic signing"
+            cat > "$RUNNER_TEMP/ExportOptions.plist" << PLIST_EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store-connect</string>
+            <key>teamID</key>
+            <string>${IOS_TEAM_ID}</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>uploadBitcode</key>
+            <false/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          PLIST_EOF
+          fi
+
+          echo "=== ExportOptions.plist ==="
+          cat "$RUNNER_TEMP/ExportOptions.plist"
 
           mkdir -p "$RUNNER_TEMP/ipa"
 
@@ -412,6 +463,9 @@ jobs:
             -authenticationKeyID "$API_KEY_ID" \
             -authenticationKeyIssuerID "$APP_STORE_CONNECT_ISSUER_ID" \
             2>&1 | tee /tmp/export.log
+
+          echo "=== Export log (last 20 lines) ==="
+          tail -20 /tmp/export.log
 
           echo "=== IPA directory contents ==="
           ls -la "$RUNNER_TEMP/ipa/"
