@@ -147,7 +147,7 @@ export function registerGoogleAuthRoutes(app: Express) {
         await db.upsertUser({ openId, lastSignedIn: new Date() });
 
         sessionToken = await sdk.createSessionToken(openId, {
-          name: existingUser.name || googleUser.name || "",
+          name: existingUser.name || googleUser.name || "Player",
           expiresInMs: ONE_YEAR_MS,
         });
 
