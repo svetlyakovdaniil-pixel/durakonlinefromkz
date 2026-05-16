@@ -119,12 +119,16 @@ export function registerGoogleAuthRoutes(app: Express) {
 
     if (error) {
       console.error("[GoogleAuth] OAuth error:", error);
-      if (isNative) return res.redirect(`durak://auth/error?reason=google_cancelled`);
+      if (isNative) {
+        return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>window.location="durak://auth/error?reason=google_cancelled";</script></body></html>`);
+      }
       return res.redirect(`${origin}/login?error=google_cancelled`);
     }
 
     if (!code) {
-      if (isNative) return res.redirect(`durak://auth/error?reason=google_no_code`);
+      if (isNative) {
+        return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>window.location="durak://auth/error?reason=google_no_code";</script></body></html>`);
+      }
       return res.redirect(`${origin}/login?error=google_no_code`);
     }
 
@@ -184,16 +188,30 @@ export function registerGoogleAuthRoutes(app: Express) {
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
       }
 
-      // For native apps: redirect to custom URL scheme so the app can pick up the token
+      // For native apps: use an HTML page that sets window.location to the custom URL scheme.
+      // iOS SFSafariViewController blocks res.redirect() to custom schemes (durak://),
+      // but a JavaScript window.location assignment works correctly.
       if (isNative) {
-        return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+        const deepLinkUrl = `durak://auth/success?token=${encodeURIComponent(sessionToken)}`;
+        return res.send(`<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Signing in...</title></head>
+<body>
+<script>
+  window.location = ${JSON.stringify(deepLinkUrl)};
+</script>
+<p>Redirecting back to app...</p>
+</body>
+</html>`);
       }
 
       // Web: redirect to home after successful login
       res.redirect(`${origin}/`);
     } catch (err) {
       console.error("[GoogleAuth] Callback failed:", err);
-      if (isNative) return res.redirect(`durak://auth/error?reason=google_server_error`);
+      if (isNative) {
+        return res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"></head><body><script>window.location="durak://auth/error?reason=google_server_error";</script></body></html>`);
+      }
       res.redirect(`${origin}/login?error=google_server_error`);
     }
   });
