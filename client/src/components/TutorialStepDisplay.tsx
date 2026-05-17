@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight, ChevronLeft, X } from 'lucide-react';
 import type { ClientGameState } from '../../../shared/gameTypes';
 import { CARD_IMAGES_CUSTOM, CARD_BACK_CUSTOM_URL, getCustomCardImageKey, SUIT_SYMBOLS, SUIT_COLORS } from '../../../shared/cardAssets';
+import { getAssetUrl } from '@/lib/assetUrl';
 
 interface TutorialStepDisplayProps {
   scenario: TutorialScenario | null;
@@ -33,6 +34,7 @@ interface SpotlightRect {
 type SeqDefendPhase = 'waiting' | 'defend1' | 'defend2' | 'bito-text' | 'bito-fly' | 'done';
 
 // Helper: get card image URL for a card notation like '6h' or '777'
+// NOTE: Must be called as a hook or use getAssetUrl at render time, not here
 function getCardImageUrl(cardNotation: string): string | null {
   // Special case: 777 has no suit
   if (cardNotation === '777') {
@@ -54,9 +56,10 @@ function getCardImageUrl(cardNotation: string): string | null {
 function MiniCardFace({ cardNotation, className }: { cardNotation: string; className?: string }) {
   const imgUrl = getCardImageUrl(cardNotation);
   if (imgUrl) {
+    const resolvedUrl = getAssetUrl(imgUrl);
     return (
       <div className={`w-full h-full bg-white rounded-lg overflow-hidden ${className || ''}`}>
-        <img src={imgUrl} alt={cardNotation} className="w-full h-full object-cover" loading="lazy" />
+        <img src={resolvedUrl} alt={cardNotation} className="w-full h-full object-cover" loading="lazy" />
       </div>
     );
   }
@@ -876,7 +879,7 @@ export default function TutorialStepDisplay({
               }}
             >
               <div className="w-full h-full rounded-lg overflow-hidden shadow-lg border border-amber-700/30">
-                <img src={CARD_BACK_CUSTOM_URL} alt="" className="w-full h-full object-cover" />
+                <img src={getAssetUrl(CARD_BACK_CUSTOM_URL)} alt="" className="w-full h-full object-cover" />
               </div>
             </div>
           );

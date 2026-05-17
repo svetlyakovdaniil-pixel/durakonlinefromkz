@@ -2131,7 +2131,7 @@ export default function GameTable({
 
         {/* Player hand */}
         {gs.players[myIdx]?.isOut ? (
-          <div className="px-2 pb-2 sm:pb-3 pt-1">
+          <div className="px-2 pt-1" style={{ paddingBottom: 'max(12px, env(safe-area-inset-bottom, 12px))' }}>
             <div className="text-center text-amber-200/40 text-xs sm:text-sm py-2 sm:py-4">
               {t('game.youExited')}
             </div>

@@ -3,7 +3,7 @@
  * On native (iOS/Android): uses RevenueCat IAP to purchase 'premium_monthly' ($4.99/mo).
  * On web: shows a "available in mobile app" message.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Crown, Star, Zap, RefreshCw, Percent, Shield, Sparkles, Smartphone } from 'lucide-react';
 import { trpc } from '@/lib/trpc';
 import { useTranslation } from '@/i18n';
@@ -472,6 +472,21 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   const t = TEXTS[locale as keyof typeof TEXTS] ?? TEXTS.ru;
   const [buying, setBuying] = useState(false);
   const [restoring, setRestoring] = useState(false);
+  const [iapReady, setIapReady] = useState(() => isIAPAvailable());
+
+  // Poll until RevenueCat finishes initializing (it may take a few seconds after app launch)
+  useEffect(() => {
+    if (!open) return;
+    if (isIAPAvailable()) { setIapReady(true); return; }
+    const interval = setInterval(() => {
+      if (isIAPAvailable()) {
+        setIapReady(true);
+        clearInterval(interval);
+      }
+    }, 300);
+    const timeout = setTimeout(() => clearInterval(interval), 10000);
+    return () => { clearInterval(interval); clearTimeout(timeout); };
+  }, [open]);
 
   const { data: status, refetch: refetchStatus } = trpc.premium.status.useQuery(undefined, {
     enabled: open,
@@ -481,7 +496,6 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
   if (!open) return null;
 
   const isNative = Capacitor.isNativePlatform();
-  const iapReady = isIAPAvailable();
 
   const handleBuy = async () => {
     if (!isNative || !iapReady) return;
@@ -551,7 +565,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
 
       {/* Modal wrapper — mobile: full-height sheet, desktop: centered dialog */}
       <div
-        className="relative w-full sm:max-w-lg flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30 h-[100dvh] sm:h-auto sm:max-h-[90vh]"
+        className="relative w-full sm:max-w-lg flex flex-col rounded-t-2xl sm:rounded-2xl bg-gradient-to-b from-[#1a1200] via-[#1c1500] to-[#0d0d0d] border border-yellow-600/40 shadow-2xl shadow-yellow-900/30 h-[92dvh] sm:h-auto sm:max-h-[90vh]"
       >
 
         {/* Sticky close button row — always visible at top */}

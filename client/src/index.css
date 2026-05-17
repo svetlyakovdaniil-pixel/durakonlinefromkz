@@ -635,21 +635,19 @@
 .game-table-root {
   /* Use dvh for dynamic viewport (accounts for browser chrome appearing/disappearing) */
   height: 100dvh;
-  /* Add padding for iOS status bar (top) and home indicator (bottom) */
+  /* Add padding for iOS status bar (top only — bottom handled by player-hand-area) */
   padding-top: env(safe-area-inset-top, 0px);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
   box-sizing: border-box;
 }
 
-/* Player hand area bottom padding — always above browser nav bar */
+/* Player hand area bottom padding — always above iOS home indicator */
 .player-hand-area {
   padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
 }
 
-/* Avatar row — ensure it's always visible above safe area */
+/* Avatar row — fixed height, no extra safe area (handled by player-hand-area) */
 .avatar-action-row {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  min-height: calc(56px + env(safe-area-inset-bottom, 0px));
+  min-height: 56px;
 }
 
 /* Battlefield scroll — account for safe area in max-height */

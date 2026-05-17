@@ -567,7 +567,8 @@ export default function FriendsDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="right"
-        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[400px] p-0 overflow-hidden flex flex-col"
+        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[400px] p-0 overflow-hidden flex flex-col"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
         <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
           <SheetTitle className="text-amber-100 flex items-center gap-2">

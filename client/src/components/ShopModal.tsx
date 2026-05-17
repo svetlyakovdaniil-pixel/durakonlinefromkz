@@ -355,10 +355,10 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
     .filter(([id]) => id !== 'classic');
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center" onClick={onClose}>
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
       <div
-        className="relative bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-2xl shadow-2xl w-[calc(100vw-2rem)] max-w-md overflow-hidden"
+        className="relative bg-gradient-to-b from-[#1a2d45] to-[#0f1923] border border-amber-700/40 rounded-t-2xl sm:rounded-2xl shadow-2xl w-full sm:w-[calc(100vw-2rem)] sm:max-w-md flex flex-col h-[92dvh] sm:h-auto sm:max-h-[90vh] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -399,7 +399,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         </div>
 
         {/* Content */}
-        <div className="p-5 max-h-[50vh] overflow-y-auto">
+        <div className="p-5 flex-1 overflow-y-auto" style={{ paddingBottom: 'max(20px, env(safe-area-inset-bottom, 20px))' }}>
           {activeTab === 'decks' && (
             <div className="space-y-4">
               {/* Товарищ Мырза — бесплатная колода */}

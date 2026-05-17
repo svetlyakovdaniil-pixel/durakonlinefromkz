@@ -3637,7 +3637,11 @@
 - [x] Refactor: add getAssetUrl() utility to prepend NATIVE_API_BASE for all /assets/ paths on native iOS/Android
 - [x] Bug: game top HUD (timer, deck counts) overlapped by phone status bar — add safe-area-inset-top padding to game-table-root and top HUD
 
-## Баг: Google OAuth loop на iOS (Build 28)
-- [x] Корневая причина: existingUser.name = NULL в БД → JWT токен с name="" → verifySession отклоняет токен → auth.me = null → редирект на /login
-- [x] Исправлено: добавлен fallback "Player" в googleAuth.ts (как в appleAuth.ts)
-- [ ] Задеплоить исправление на продакшн и собрать Build 29
+## Исправления v1.0.30
+
+- [ ] ShopModal: max-h-[50vh] → h-[85dvh] на мобильных + overflow-y-auto
+- [ ] GameTable: убрать лишний отступ снизу под кнопками/аватаркой игрока
+- [ ] TutorialStepDisplay: белые карты — добавить getAssetUrl для путей к картам
+- [ ] PremiumModal: iapReady — использовать useState + useEffect вместо синхронного isIAPAvailable()
+- [x] GameTable: убрать лишний отступ снизу под кнопками/аватаркой игрока — удалён padding-bottom из game-table-root и avatar-action-row (тройное дублирование safe-area)
+- [x] Bundling assets: карты, аватары, столы — скачиваются в client/public/assets/ при iOS сборке; getAssetUrl() обновлён для bundled paths

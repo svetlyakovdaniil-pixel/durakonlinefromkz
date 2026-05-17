@@ -59,7 +59,7 @@ export default function ProfileDrawer({
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-[calc(100vw-2rem)] max-w-[400px] p-0 overflow-hidden">
+      <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[400px] p-0 overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <SheetHeader className="px-4 pt-4 pb-2">
           <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
         </SheetHeader>

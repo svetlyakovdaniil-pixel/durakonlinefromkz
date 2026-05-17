@@ -121,7 +121,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full sm:max-w-lg sm:mx-4 flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl"
+        className="relative w-full sm:max-w-lg sm:mx-4 flex flex-col h-[92dvh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl"
         style={{
           background: 'linear-gradient(180deg, #0e1e36 0%, #060e1a 100%)',
           border: '1px solid rgba(201,168,76,0.25)',

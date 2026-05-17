@@ -159,7 +159,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full sm:max-w-lg bg-[#1a1a2e] border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col h-[100dvh] sm:h-auto sm:max-h-[90vh]"
+        className="w-full sm:max-w-lg bg-[#1a1a2e] border border-white/10 rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col h-[92dvh] sm:h-auto sm:max-h-[90vh]"
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10 flex-shrink-0">
