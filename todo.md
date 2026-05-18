@@ -3639,9 +3639,15 @@
 
 ## Исправления v1.0.30
 
-- [ ] ShopModal: max-h-[50vh] → h-[85dvh] на мобильных + overflow-y-auto
-- [ ] GameTable: убрать лишний отступ снизу под кнопками/аватаркой игрока
-- [ ] TutorialStepDisplay: белые карты — добавить getAssetUrl для путей к картам
-- [ ] PremiumModal: iapReady — использовать useState + useEffect вместо синхронного isIAPAvailable()
+- [x] ShopModal: max-h-[50vh] → h-[92dvh] на мобильных + overflow-y-auto
+- [x] GameTable: убрать лишний отступ снизу под кнопками/аватаркой игрока
+- [x] TutorialStepDisplay: белые картьи — добавлен getAssetUrl для путей к картам
+- [x] PremiumModal: iapReady — useState + useEffect вместо синхронного isIAPAvailable()
 - [x] GameTable: убрать лишний отступ снизу под кнопками/аватаркой игрока — удалён padding-bottom из game-table-root и avatar-action-row (тройное дублирование safe-area)
 - [x] Bundling assets: карты, аватары, столы — скачиваются в client/public/assets/ при iOS сборке; getAssetUrl() обновлён для bundled paths
+
+## Исправления Build 32 (видео-фидбек)
+- [x] GameTable: чёрный пустой экран — исправлено в Build 31 (assets bundled); Build 32 использует h-[100dvh] overflow-hidden
+- [x] GameTable: рука игрока скроллится — заменён scroll на динамический overlap/fan layout (ResizeObserver)
+- [x] GameTable: аватарка и кнопки всегда видны — outer container h-[100dvh] overflow-hidden, game-table-root h-100%
+- [x] Assets: аватарки, столы, колоды вшиты в бандл (Build 31+); /assets/cards/ и /assets/avatars/ — bundled prefixes

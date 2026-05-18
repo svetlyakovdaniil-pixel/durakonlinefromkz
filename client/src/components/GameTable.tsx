@@ -104,86 +104,45 @@ const PlayerHand = memo(function PlayerHand({
   /** When true, use smaller cards (landscape mobile mode) */
   compact?: boolean;
 }) {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
 
-  const checkScroll = useCallback(() => {
-    const el = scrollRef.current;
+  // Measure container width for dynamic overlap calculation
+  useEffect(() => {
+    const el = containerRef.current;
     if (!el) return;
-    setCanScrollLeft(el.scrollLeft > 2);
-    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+    const ro = new ResizeObserver(entries => {
+      const w = entries[0]?.contentRect.width;
+      if (w) setContainerWidth(w);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
-  useMemo(() => {
-    setTimeout(checkScroll, 50);
-  }, [sortedHand.length, checkScroll]);
+  // Card dimensions
+  const cardW = compact ? 48 : 68;
+  const n = sortedHand.length;
 
-  const scroll = useCallback((direction: 'left' | 'right') => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const cardWidth = 56;
-    const scrollAmount = cardWidth * 3;
-    el.scrollBy({
-      left: direction === 'left' ? -scrollAmount : scrollAmount,
-      behavior: 'smooth',
-    });
-    setTimeout(checkScroll, 300);
-  }, [checkScroll]);
-
-  const getCardMargin = (i: number) => {
-    if (i === 0) return '0';
-    if (sortedHand.length <= 6) return '0';
-    if (sortedHand.length <= 8) return '-6px';
-    if (sortedHand.length <= 10) return '-10px';
-    if (sortedHand.length <= 14) return '-16px';
-    if (sortedHand.length <= 18) return '-20px';
-    return '-26px';
+  // Calculate negative margin so all cards fit in the container without scrolling.
+  // Available width = containerWidth - 32px padding (px-4 on each side)
+  // Total width with margin m: cardW + (n-1) * (cardW + m)
+  // Solve for m: m = (available - cardW*n) / (n-1)  — clamped to [-cardW*0.72, 0]
+  const getCardMargin = (): string => {
+    if (n <= 1) return '0';
+    const available = (containerWidth > 0 ? containerWidth : 320) - 32;
+    const raw = (available - cardW * n) / (n - 1);
+    // Clamp: never more than 0 (no gap), never less than -72% of card width
+    const clamped = Math.max(-cardW * 0.72, Math.min(0, raw));
+    return `${Math.round(clamped)}px`;
   };
-
-  const needsScroll = sortedHand.length > 6;
-
-  // Desktop: allow mouse wheel to scroll hand horizontally
-  const handleWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    // Only intercept if we can scroll horizontally
-    if (el.scrollWidth <= el.clientWidth) return;
-    e.preventDefault();
-    el.scrollLeft += e.deltaY !== 0 ? e.deltaY : e.deltaX;
-    setTimeout(checkScroll, 50);
-  }, [checkScroll]);
+  const marginLeft = getCardMargin();
 
   return (
-    <div className="relative">
-      {needsScroll && canScrollLeft && (
-        <button
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 text-amber-300 rounded-full p-0.5 sm:p-1 shadow-lg border border-amber-700/40 transition-all"
-          onClick={() => scroll('left')}
-        >
-          <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-      )}
-      {needsScroll && canScrollRight && (
-        <button
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-30 bg-black/70 hover:bg-black/90 text-amber-300 rounded-full p-0.5 sm:p-1 shadow-lg border border-amber-700/40 transition-all"
-          onClick={() => scroll('right')}
-        >
-          <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-        </button>
-      )}
-
+    <div ref={containerRef} className="relative w-full">
       <div
-        ref={scrollRef}
-        className={`flex pb-1 sm:pb-2 ${needsScroll ? 'overflow-x-auto scrollbar-thin scrollbar-thumb-amber-700/40 scrollbar-track-transparent' : 'justify-center'}${isTutorial ? ' overflow-y-visible pt-5' : ''}`}
-        onScroll={checkScroll}
-        onWheel={handleWheel}
-        style={needsScroll ? {
-          scrollbarWidth: 'thin',
-          WebkitOverflowScrolling: 'touch',
-        } : undefined}
+        className={`flex justify-center pb-1 sm:pb-2${isTutorial ? ' overflow-y-visible pt-5' : ''}`}
       >
-        <div className={`flex items-end px-4 sm:px-6 ${!needsScroll ? 'justify-center' : ''}`} style={needsScroll ? { minWidth: 'min-content', margin: '0 auto' } : undefined}>
+        <div className={`flex items-end`}>
           {sortedHand.map((card, i) => {
             const isPlayable = (playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id)) && !suppressPlayableStyle;
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
@@ -201,7 +160,7 @@ const PlayerHand = memo(function PlayerHand({
                 data-card-id={card.id}
                 className={`relative flex-shrink-0 ${(isTutorialHighlighted || hasColoredHighlight || isHighlighted) ? 'z-[60]' : ''} ${isPending ? 'opacity-50 pointer-events-none' : ''}`}
                 style={{
-                  marginLeft: getCardMargin(i),
+                  marginLeft: i === 0 ? '0' : marginLeft,
                   zIndex: (isTutorialHighlighted || hasColoredHighlight || isHighlighted) ? 60 : isSelected ? 50 : i,
                   transition: isPending ? 'opacity 0.15s' : undefined,
                 }}
@@ -1458,7 +1417,7 @@ export default function GameTable({
   return (
     <div
       data-tutorial="game-table"
-      className="min-h-[100dvh] bg-cover bg-center bg-no-repeat relative flex flex-col"
+      className="h-[100dvh] bg-cover bg-center bg-no-repeat relative flex flex-col overflow-hidden"
       style={{ backgroundImage: `url(${_TABLE_STYLES[gs.tableStyle ?? 'classic']?.url ?? _GAME_TABLE_URL})` }}
     >
       {/* Dark overlay */}

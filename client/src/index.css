@@ -633,8 +633,8 @@
 }
 /* Ensure game table fills the full visual viewport including safe areas */
 .game-table-root {
-  /* Use dvh for dynamic viewport (accounts for browser chrome appearing/disappearing) */
-  height: 100dvh;
+  /* Parent is already h-[100dvh] overflow-hidden, so fill it completely */
+  height: 100%;
   /* Add padding for iOS status bar (top only — bottom handled by player-hand-area) */
   padding-top: env(safe-area-inset-top, 0px);
   box-sizing: border-box;
