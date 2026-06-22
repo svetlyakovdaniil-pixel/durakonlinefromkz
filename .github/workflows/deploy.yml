@@ -1,4 +1,4 @@
-name: Deploy to Aeza
+name: Deploy to FirstVDS
 on:
   push:
     branches: [ main ]
@@ -9,9 +9,9 @@ jobs:
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: 185.221.199.177
+          host: 176.12.79.38
           username: root
-          key: ${{ secrets.AEZA_SSH_PRIVATE_KEY }}
+          password: ${{ secrets.FIRSTVDS_SSH_PASSWORD }}
           script: |
             set -e
             cd /root/app
