@@ -576,7 +576,7 @@ function pickGhostAction(
         if (b.pair.attack.rank === '777') return 1;
         return 0;
       });
-      const usedDefenseIds = new Set<number>();
+      const usedDefenseIds = new Set<string>();
       const canBeatOneCard = (
         attackCard: ClientGameState['myHand'][number],
         available: ClientGameState['myHand']
@@ -586,7 +586,7 @@ function pickGhostAction(
         const candidates = available.filter(dc => {
           if (dc.rank === '777') return true; // 777 beats everything
           if (attackCard.rank === '777') return false; // 777 can only be beaten by 777
-          if (dc.rank === 'K' && dc.suit === 'spades') return attackCard.rank !== '777'; // King of Spades beats anything except 777
+          if (dc.rank === 'K' && dc.suit === 'spades') return (attackCard.rank as string) !== '777'; // King of Spades beats anything except 777
           if (dc.suit === attackCard.suit && (RANK_ORDER[dc.rank] ?? 0) > (RANK_ORDER[attackCard.rank] ?? 0)) return true;
           if (dc.suit === trumpSuit && attackCard.suit !== trumpSuit) return true;
           return false;
