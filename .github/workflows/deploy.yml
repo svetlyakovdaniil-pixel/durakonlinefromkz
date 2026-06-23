@@ -14,10 +14,12 @@ jobs:
           password: ${{ secrets.FIRSTVDS_SSH_PASSWORD }}
           script: |
             set -e
+            git config --global --add safe.directory /root/app
             cd /root/app
             git fetch origin main
             git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
             GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
+            pm2 save
             echo "Deploy completed at $(date)"
