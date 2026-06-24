@@ -799,14 +799,8 @@ export async function adWatchTopup(userId: number): Promise<{
   const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
   if (!profile) return { success: false, reason: 'not_found' };
 
-  // Check 1h cooldown
+  // No cooldown limit on ad watching
   const now = new Date();
-  if (profile.lastAdWatch) {
-    const cooldownEnd = new Date(profile.lastAdWatch.getTime() + 60 * 60 * 1000);
-    if (now < cooldownEnd) {
-      return { success: false, reason: 'cooldown', cooldownUntil: cooldownEnd };
-    }
-  }
 
   const added = 1000;
   const newBalance = profile.balanceShanyrak + added;

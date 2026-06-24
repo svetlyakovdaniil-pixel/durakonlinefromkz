@@ -1,6 +1,6 @@
 /**
  * PremiumModal — full-screen modal showing Premium subscription benefits.
- * On native (iOS/Android): uses RevenueCat IAP to purchase 'premium_monthly' ($4.99/mo).
+ * On native (iOS/Android): uses RevenueCat IAP to purchase 'premium_monthly' ($1.99/mo).
  * On web: shows a "available in mobile app" message.
  */
 import { useState, useEffect } from 'react';
@@ -26,7 +26,7 @@ const TEXTS = {
     active: 'Активен',
     expires: 'Истекает',
     days: 'дн.',
-    buyBtn: 'Купить за $4.99',
+    buyBtn: 'Купить за $1.99',
     buyBtnWeb: 'Доступно в мобильном приложении',
     insufficientFunds: 'Недостаточно тенге',
     alreadyActive: 'Премиум уже активен',
@@ -80,7 +80,7 @@ const TEXTS = {
     active: 'Белсенді',
     expires: 'Аяқталады',
     days: 'күн',
-    buyBtn: '$4.99-ға сатып ал',
+    buyBtn: '$1.99-ға сатып ал',
     buyBtnWeb: 'Мобильді қосымшада қол жетімді',
     insufficientFunds: 'Теңге жеткіліксіз',
     alreadyActive: 'Премиум белсенді',
@@ -134,7 +134,7 @@ const TEXTS = {
     active: 'Active',
     expires: 'Expires',
     days: 'd.',
-    buyBtn: 'Buy for $4.99',
+    buyBtn: 'Buy for $1.99',
     buyBtnWeb: 'Available in mobile app',
     insufficientFunds: 'Insufficient tenge',
     alreadyActive: 'Premium is already active',
@@ -188,7 +188,7 @@ const TEXTS = {
     active: 'Активний',
     expires: 'Спливається',
     days: 'дн.',
-    buyBtn: 'Купити за $4.99',
+    buyBtn: 'Купити за $1.99',
     buyBtnWeb: 'Доступно в мобільному додатку',
     insufficientFunds: 'Недостатньо тенге',
     alreadyActive: 'Преміум вже активний',
@@ -242,7 +242,7 @@ const TEXTS = {
     active: 'აქტიური',
     expires: 'ვადა',
     days: 'დღ.',
-    buyBtn: 'ყიდვა $4.99-ად',
+    buyBtn: 'ყიდვა $1.99-ად',
     buyBtnWeb: 'ხელმისაწვდომია მობილურ აპლიკაციაში',
     insufficientFunds: 'არასაკმარისი ტენგე',
     alreadyActive: 'პრემიუმი უკვე აქტიურია',
@@ -296,7 +296,7 @@ const TEXTS = {
     active: 'Aktiv',
     expires: 'Biter',
     days: 'gün',
-    buyBtn: '$4.99-a satın al',
+    buyBtn: '$1.99-a satın al',
     buyBtnWeb: 'Mobil tətbiqdə mövcuddur',
     insufficientFunds: 'Kifayət qədər tenge yoxdur',
     alreadyActive: 'Premium artıq aktivdir',
@@ -350,7 +350,7 @@ const TEXTS = {
     active: 'Faol',
     expires: 'Tugaydi',
     days: 'kun',
-    buyBtn: '$4.99 ga sotib ol',
+    buyBtn: '$1.99 ga sotib ol',
     buyBtnWeb: 'Mobil ilovada mavjud',
     insufficientFunds: 'Tenge yetarli emas',
     alreadyActive: 'Premium allaqachon faol',
@@ -404,7 +404,7 @@ const TEXTS = {
     active: 'Aktywny',
     expires: 'Wygasa',
     days: 'dni',
-    buyBtn: 'Kup za $4.99',
+    buyBtn: 'Kup za $1.99',
     buyBtnWeb: 'Dostępne w aplikacji mobilnej',
     insufficientFunds: 'Niewystarczająca ilość tenge',
     alreadyActive: 'Premium jest już aktywny',

@@ -7,16 +7,16 @@
  * 3. Create products in App Store Connect and Google Play Console:
  *    - Product IDs: durak_tenge_100, durak_tenge_500, durak_tenge_1000, durak_tenge_5000
  *    - Type: Consumable (Non-Subscription)
- *    - Product ID: premium_monthly → $4.99/month subscription
+ *    - Product ID: premium_monthly → $1.99/month subscription
  * 4. Add those product IDs to RevenueCat as Entitlements or just use them directly
  * 5. Set VITE_REVENUECAT_IOS_KEY and VITE_REVENUECAT_ANDROID_KEY in your .env
  *
  * PRODUCT IDs (must match App Store Connect / Google Play Console):
  *   durak_tenge_100   → 100 тенге  (~$0.99)
- *   durak_tenge_500   → 500 тенге  (~$4.99)
+ *   durak_tenge_500   → 500 тенге  (~$1.99)
  *   durak_tenge_1000  → 1000 тенге (~$9.99)
  *   durak_tenge_5000  → 5000 тенге (~$49.99)
- *   premium_monthly   → Premium subscription (~$4.99/month)
+ *   premium_monthly   → Premium subscription (~$1.99/month)
  */
 
 import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';

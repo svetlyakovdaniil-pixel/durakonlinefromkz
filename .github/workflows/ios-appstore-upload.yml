@@ -67,11 +67,11 @@ jobs:
         env:
           NODE_ENV: production
           VITE_APP_TITLE: "Durak online from KZ"
-          # AdMob (test IDs for both platforms)
-          VITE_ADMOB_IOS_APP_ID: "ca-app-pub-3940256099942544~1458002511"
+          # AdMob (production IDs for iOS)
+          VITE_ADMOB_IOS_APP_ID: "ca-app-pub-9771065396938140~8385982392"
           VITE_ADMOB_ANDROID_APP_ID: "ca-app-pub-3940256099942544~3347511713"
           VITE_ADMOB_REWARDED_AD_UNIT_ID: "ca-app-pub-3940256099942544/5224354917"
-          VITE_ADMOB_IOS_REWARDED_AD_UNIT_ID: "ca-app-pub-3940256099942544/1712485313"
+          VITE_ADMOB_IOS_REWARDED_AD_UNIT_ID: "ca-app-pub-9771065396938140/6689757348"
           # RevenueCat (public API keys - safe to include in workflow)
           VITE_REVENUECAT_IOS_KEY: "appl_GdpfUqDfDgVtrHhTWhmzgSCogqz"
           VITE_REVENUECAT_ANDROID_KEY: "goog_hXjnyimijBJbaxxINMZucNdxDxt"
@@ -81,6 +81,16 @@ jobs:
           VITE_FRONTEND_FORGE_API_KEY: "kLwjYrJZrrcnsHptrYLXkB"
           VITE_FRONTEND_FORGE_API_URL: "https://forge.manus.ai"
         run: pnpm run build
+
+      # ── 6b. Download game assets (cards, avatars, tables) into dist/public ──
+      - name: Download game assets for iOS bundle
+        run: |
+          echo "Downloading card and avatar assets from production server..."
+          python3 .github/scripts/download_assets_for_ios.py
+          echo "=== Cards downloaded ==="
+          ls dist/public/assets/cards/ | wc -l
+          echo "=== Avatars downloaded ==="
+          ls dist/public/assets/avatars/ | wc -l
 
       # ── 7. Install Capacitor CLI ───────────────────────────────────────────
       - name: Install Capacitor CLI globally

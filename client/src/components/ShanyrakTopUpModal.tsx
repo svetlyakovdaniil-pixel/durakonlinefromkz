@@ -73,25 +73,14 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
         setSuccessMessage(`+${formatBalance(data.added ?? 0)} ${t('topUp.shanyrakUnit')}!`);
         onBalanceUpdated();
         utils.profile.me.invalidate();
-        // Start 1h cooldown locally
-        const cooldownEnd = Date.now() + 60 * 60 * 1000;
-        const tick = () => {
-          const remaining = cooldownEnd - Date.now();
-          setAdCooldownRemaining(remaining > 0 ? remaining : 0);
-        };
-        tick();
-        const interval = setInterval(() => {
-          const remaining = cooldownEnd - Date.now();
-          setAdCooldownRemaining(remaining > 0 ? remaining : 0);
-          if (remaining <= 0) clearInterval(interval);
-        }, 1000);
+        // No cooldown limit on ad watching
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     },
   });
 
   const handleWatchAd = useCallback(async () => {
-    if (adWatching || adCooldownRemaining > 0) return;
+    if (adWatching) return;
     setAdWatching(true);
     try {
       const rewarded = await showRewardedAd();
@@ -232,11 +221,11 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
             <div className="mb-4">
               <button
                 className={`w-full rounded-xl p-3 flex items-center justify-between font-semibold text-sm transition-all ${
-                  adCooldownRemaining > 0 || adWatching || !adMobReady
+                  adWatching || !adMobReady
                     ? 'bg-slate-700/30 text-gray-500 border border-slate-600/20 cursor-not-allowed'
                     : 'bg-green-900/30 hover:bg-green-800/40 text-green-100 border border-green-600/30'
                 }`}
-                disabled={adCooldownRemaining > 0 || adWatching || !adMobReady}
+                disabled={adWatching || !adMobReady}
                 onClick={handleWatchAd}
               >
                 <div className="flex items-center gap-2">
@@ -245,15 +234,15 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
                   ) : (
                     <Play className="w-4 h-4" />
                   )}
-                  <span>{adCooldownRemaining > 0 ? formatTime(adCooldownRemaining) : t('topUp.watchAd')}</span>
+                  <span>{t('topUp.watchAd')}</span>
                 </div>
                 <div className="flex items-center gap-1">
-                  <span className={adCooldownRemaining > 0 ? 'text-green-400/50' : 'text-green-400'}>+1000</span>
-                  <img src={SHANYRAK_ICON} alt="" className={`h-4 object-contain ${adCooldownRemaining > 0 ? 'opacity-50' : ''}`} />
+                  <span className='text-green-400'>+1000</span>
+                  <img src={SHANYRAK_ICON} alt="" className="h-4 object-contain" />
                 </div>
               </button>
               <p className="text-[10px] text-gray-500 text-center mt-1">
-                {!adMobReady ? t('topUp.comingSoon') : adCooldownRemaining > 0 ? t('topUp.adCooldown') : t('topUp.adNote')}
+                {!adMobReady ? t('topUp.comingSoon') : t('topUp.adNote')}
               </p>
             </div>
 

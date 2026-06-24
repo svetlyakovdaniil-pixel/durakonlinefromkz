@@ -3651,3 +3651,10 @@
 - [x] GameTable: рука игрока скроллится — заменён scroll на динамический overlap/fan layout (ResizeObserver)
 - [x] GameTable: аватарка и кнопки всегда видны — outer container h-[100dvh] overflow-hidden, game-table-root h-100%
 - [x] Assets: аватарки, столы, колоды вшиты в бандл (Build 31+); /assets/cards/ и /assets/avatars/ — bundled prefixes
+
+## Bug Fixes (2026-06-23)
+- [ ] Fix 1: Embed avatars/card decks/game tables as local assets in iOS bundle (add download step to workflow)
+- [ ] Fix 2: Fix premium price display ($4.99 → $1.99) in all locales in PremiumModal.tsx
+- [ ] Fix 3: Fix IAP purchase error — use real AdMob/RevenueCat IDs in workflow, improve error messages
+- [ ] Fix 4: Remove 1-ad-per-hour limit for rewarded ads (server + client)
+- [ ] Fix 5: Fix rewarded ads not showing — switch from test IDs to real production AdMob IDs in workflow

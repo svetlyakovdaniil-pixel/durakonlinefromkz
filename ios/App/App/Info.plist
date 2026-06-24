@@ -62,7 +62,7 @@
 	<!-- ── AdMob: REQUIRED by Google Mobile Ads SDK ──────────────────────── -->
 	<!-- Value is injected by GitHub Actions from VITE_ADMOB_IOS_APP_ID secret -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-9771065396938140~8385982392</string>
 
 	<!-- ── App Tracking Transparency (ATT) — iOS 14+ ─────────────────────── -->
 	<!-- Shown to the user before requesting IDFA permission.                  -->
