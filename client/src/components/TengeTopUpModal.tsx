@@ -153,7 +153,13 @@ export function TengeTopUpModal({ open, onClose, currentTenge }: TengeTopUpModal
         });
       }
     } catch (err) {
-      const msg = locale === "kk" ? "Сатып алу қатесі" : locale === "en" ? "Purchase failed" : locale === "ka" ? "შეძენა ვერ მოხერხდა" : locale === "az" ? "Alış uğursuz oldu" : locale === "uz" ? "Sotib olish muvaffaqiyatsiz" : locale === "pl" ? "Zakup nieudany" : "Ошибка покупки";
+      const isProductNotAvailable = err instanceof Error && err.message === 'PRODUCT_NOT_AVAILABLE';
+      let msg: string;
+      if (isProductNotAvailable) {
+        msg = locale === "kk" ? "Өнім дүкенде қол жетімді емес. Кейінірек қайталаңыз" : locale === "en" ? "Product not available in store yet. Try again later" : "Товар временно недоступен в магазине. Попробуйте позже";
+      } else {
+        msg = locale === "kk" ? "Сатып алу қатесі" : locale === "en" ? "Purchase failed" : locale === "ka" ? "შეძენა ვერ მოხერხდა" : locale === "az" ? "Alış uğursuz oldu" : locale === "uz" ? "Sotib olish muvaffaqiyatsiz" : locale === "pl" ? "Zakup nieudany" : "Ошибка покупки";
+      }
       toast.error(msg);
     } finally {
       setIsPurchasing(false);

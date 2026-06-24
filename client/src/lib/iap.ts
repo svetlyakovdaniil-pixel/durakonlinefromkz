@@ -125,7 +125,8 @@ export async function purchaseTenge(productId: TengeProductId): Promise<string |
     });
 
     if (products.length === 0) {
-      throw new Error(`Product not found: ${productId}`);
+      console.error(`[IAP] Product not found in App Store: ${productId}. Products may be pending Apple review or have incorrect product IDs.`);
+      throw new Error('PRODUCT_NOT_AVAILABLE');
     }
 
     const { transaction } = await Purchases.purchaseStoreProduct({
@@ -195,7 +196,8 @@ export async function purchasePremium(): Promise<PremiumPurchaseResult | null> {
     });
 
     if (products.length === 0) {
-      throw new Error(`Premium product not found: ${PREMIUM_PRODUCT_ID}`);
+      console.error(`[IAP] Premium product not found in App Store: ${PREMIUM_PRODUCT_ID}. Product may be pending Apple review.`);
+      throw new Error('PRODUCT_NOT_AVAILABLE');
     }
 
     const product = products[0];

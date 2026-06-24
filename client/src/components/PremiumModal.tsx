@@ -537,6 +537,9 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
       if (msg === 'already_active') {
         toast.error(t.alreadyActive);
         refetchStatus();
+      } else if (msg === 'PRODUCT_NOT_AVAILABLE') {
+        console.error('[PremiumModal] Premium product not available in App Store yet');
+        toast.error('Подписка временно недоступна. Попробуйте позже.');
       } else {
         console.error('[PremiumModal] IAP error:', err);
         toast.error(t.buyError);

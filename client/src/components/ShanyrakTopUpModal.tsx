@@ -83,13 +83,22 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     if (adWatching) return;
     setAdWatching(true);
     try {
-      const rewarded = await showRewardedAd();
-      if (rewarded) {
+      const { reward, failReason } = await showRewardedAd();
+      if (reward) {
         adWatchTopupMutation.mutate();
       } else {
-        // Ad failed to load or user dismissed without watching
-        // Only show error if it wasn't a voluntary dismiss (rewarded would be non-null if watched)
-        console.warn('[ShanyrakTopUp] Ad not rewarded — either failed to load or user dismissed early');
+        // Show specific error based on reason
+        if (failReason === 'dismissed_early') {
+          toast.error('Досмотрите рекламу до конца, чтобы получить награду');
+        } else if (failReason === 'no_fill') {
+          toast.error('Реклама временно недоступна. Попробуйте позже.');
+        } else if (failReason === 'timeout') {
+          toast.error('Время ожидания рекламы истекло. Попробуйте ещё раз.');
+        } else if (failReason === 'load_error' || failReason === 'show_error') {
+          toast.error('Не удалось загрузить рекламу. Попробуйте позже.');
+        } else {
+          console.warn('[ShanyrakTopUp] Ad not rewarded, reason:', failReason);
+        }
       }
     } catch (err) {
       console.error('[ShanyrakTopUp] Ad error:', err);

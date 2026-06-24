@@ -97,17 +97,19 @@ export function isAdMobAvailable(): boolean {
   return Capacitor.isNativePlatform();
 }
 
+/** Reason why an ad failed — returned alongside null for better UX */
+export type AdFailReason = 'no_fill' | 'load_error' | 'show_error' | 'timeout' | 'dismissed_early' | 'not_initialized' | 'no_unit_id' | null;
+
 /**
  * Show a rewarded ad and wait for the reward.
- * Returns the reward item on success, or null if:
- *   - Not on native platform
- *   - Ad failed to load
- *   - User closed the ad before earning the reward
+ * Returns { reward, failReason } where:
+ *   - reward is non-null on success
+ *   - failReason explains why reward is null
  */
-export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
+export async function showRewardedAd(): Promise<{ reward: AdMobRewardItem | null; failReason: AdFailReason }> {
   if (!Capacitor.isNativePlatform()) {
     console.warn('[AdMob] Not on native platform — skipping rewarded ad');
-    return null;
+    return { reward: null, failReason: 'not_initialized' };
   }
 
   const platform = Capacitor.getPlatform();
@@ -117,7 +119,7 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
   const adUnitId = (platform === 'ios' && iosUnitId) ? iosUnitId : sharedUnitId;
   if (!adUnitId) {
     console.warn('[AdMob] No rewarded ad unit ID configured for platform:', platform);
-    return null;
+    return { reward: null, failReason: 'no_unit_id' };
   }
 
   // If AdMob hasn't initialized yet, try to initialize now
@@ -128,17 +130,27 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
   return new Promise((resolve) => {
     let rewardEarned: AdMobRewardItem | null = null;
     let settled = false;
+    let failReason: AdFailReason = null;
 
-    const safeResolve = (val: AdMobRewardItem | null) => {
+    // Safety timeout — if no event fires within 90s, resolve with timeout
+    const timeoutId = setTimeout(() => {
+      console.error('[AdMob] Rewarded ad timed out after 90s');
+      void cleanup();
+      safeResolve(null, 'timeout');
+    }, 90_000);
+
+    const safeResolve = (val: AdMobRewardItem | null, reason: AdFailReason = null) => {
       if (settled) return;
       settled = true;
-      resolve(val);
+      clearTimeout(timeoutId);
+      resolve({ reward: val, failReason: reason });
     };
 
     // Listen for reward event
     const rewardListenerP = AdMob.addListener(
       RewardAdPluginEvents.Rewarded,
       (reward: AdMobRewardItem) => {
+        console.log('[AdMob] Reward earned:', reward);
         rewardEarned = reward;
       }
     );
@@ -158,8 +170,13 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     const closedListenerP = AdMob.addListener(
       RewardAdPluginEvents.Dismissed,
       () => {
+        console.log('[AdMob] Ad dismissed, rewardEarned:', rewardEarned);
         void cleanup();
-        safeResolve(rewardEarned);
+        if (rewardEarned) {
+          safeResolve(rewardEarned, null);
+        } else {
+          safeResolve(null, 'dismissed_early');
+        }
       }
     );
 
@@ -167,9 +184,11 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     const failedListenerP = AdMob.addListener(
       RewardAdPluginEvents.FailedToLoad,
       (error) => {
-        console.error('[AdMob] Rewarded ad failed to load:', error);
+        console.error('[AdMob] Rewarded ad failed to load:', JSON.stringify(error));
         void cleanup();
-        safeResolve(null);
+        // Error code 3 = no fill (no ads available)
+        const errorCode = (error as { code?: number })?.code;
+        safeResolve(null, errorCode === 3 ? 'no_fill' : 'load_error');
       }
     );
 
@@ -177,28 +196,33 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     const failedToShowListenerP = AdMob.addListener(
       RewardAdPluginEvents.FailedToShow,
       (error) => {
-        console.error('[AdMob] Rewarded ad failed to show:', error);
+        console.error('[AdMob] Rewarded ad failed to show:', JSON.stringify(error));
         void cleanup();
-        safeResolve(null);
+        safeResolve(null, 'show_error');
       }
     );
 
     // Prepare and show the ad
+    console.log('[AdMob] Preparing rewarded ad with unit ID:', adUnitId);
     AdMob.prepareRewardVideoAd({
       adId: adUnitId,
       isTesting: false,
     })
-      .then(() => AdMob.showRewardVideoAd())
+      .then(() => {
+        console.log('[AdMob] Ad prepared, showing...');
+        return AdMob.showRewardVideoAd();
+      })
       .then((reward) => {
+        console.log('[AdMob] showRewardVideoAd returned:', reward);
         // showRewardVideoAd() may return the reward directly in some versions
         if (reward && !rewardEarned) {
           rewardEarned = reward;
         }
       })
       .catch((err) => {
-        console.error('[AdMob] Failed to prepare/show rewarded ad:', err);
+        console.error('[AdMob] Failed to prepare/show rewarded ad:', JSON.stringify(err));
         void cleanup();
-        safeResolve(null);
+        safeResolve(null, 'load_error');
       });
   });
 }
