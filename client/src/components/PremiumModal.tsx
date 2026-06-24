@@ -12,6 +12,7 @@ import { PremiumFrame } from './PremiumFrame';
 import { isIAPAvailable, purchasePremium, restorePurchases } from '@/lib/iap';
 import { Capacitor } from '@capacitor/core';
 import { getAssetUrl } from '@/lib/assetUrl';
+import { NATIVE_API_BASE, NATIVE_TOKEN_KEY } from '@shared/const';
 const TENGE_ICON = getAssetUrl('/assets/static/tenge_9aefd1b7.png');
 
 interface PremiumModalProps {
@@ -508,9 +509,17 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
         return;
       }
       // Verify with server and activate premium
-      const response = await fetch('/api/iap/verify-premium', {
+      // On native iOS/Android: use absolute URL + Bearer token (cookies don't work cross-domain in Capacitor)
+      const isNativeApp = Capacitor.isNativePlatform();
+      const verifyUrl = isNativeApp
+        ? `${NATIVE_API_BASE}/api/iap/verify-premium`
+        : '/api/iap/verify-premium';
+      const nativeToken = isNativeApp ? localStorage.getItem(NATIVE_TOKEN_KEY) : null;
+      const verifyHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (nativeToken) verifyHeaders['Authorization'] = `Bearer ${nativeToken}`;
+      const response = await fetch(verifyUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: verifyHeaders,
         credentials: 'include',
         body: JSON.stringify({
           transactionId: result.transactionId,

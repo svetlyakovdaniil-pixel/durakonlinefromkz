@@ -29,6 +29,7 @@ import {
 import { Capacitor } from '@capacitor/core';
 
 let admobInitialized = false;
+let admobInitAttempted = false;
 const admobListeners: Array<(available: boolean) => void> = [];
 
 /** Subscribe to AdMob availability changes */
@@ -45,38 +46,55 @@ export function onAdMobAvailabilityChange(cb: (available: boolean) => void): () 
  * Safe to call on web — will no-op.
  */
 export async function initAdMob(): Promise<void> {
-  if (admobInitialized) return;
+  if (admobInitAttempted) return;
+  admobInitAttempted = true;
+
   if (!Capacitor.isNativePlatform()) return;
 
   try {
     await AdMob.initialize({
       testingDevices: [],
-      initializeForTesting: false, // Set to true during development
+      initializeForTesting: false,
     });
 
-    // Request consent (GDPR / CCPA compliance)
-    const consentInfo = await AdMob.requestConsentInfo({
-      debugGeography: AdmobConsentDebugGeography.DISABLED,
-      testDeviceIdentifiers: [],
-    });
+    // Request consent (GDPR / CCPA compliance) — best-effort, don't block on failure
+    try {
+      const consentInfo = await AdMob.requestConsentInfo({
+        debugGeography: AdmobConsentDebugGeography.DISABLED,
+        testDeviceIdentifiers: [],
+      });
 
-    if (
-      consentInfo.isConsentFormAvailable &&
-      consentInfo.status === AdmobConsentStatus.REQUIRED
-    ) {
-      await AdMob.showConsentForm();
+      if (
+        consentInfo.isConsentFormAvailable &&
+        consentInfo.status === AdmobConsentStatus.REQUIRED
+      ) {
+        await AdMob.showConsentForm();
+      }
+    } catch (consentErr) {
+      // Consent errors are non-fatal — ads can still be shown without consent form
+      console.warn('[AdMob] Consent request failed (non-fatal):', consentErr);
     }
 
     admobInitialized = true;
-    console.log('[AdMob] Initialized');
+    console.log('[AdMob] Initialized successfully');
     admobListeners.forEach(cb => cb(true));
   } catch (err) {
     console.error('[AdMob] Failed to initialize:', err);
+    // Even if initialization fails, mark as attempted so we don't retry infinitely.
+    // The button will still be shown — the ad load will fail gracefully at show time.
+    // Notify listeners that AdMob is available on native (button should be shown)
+    // so user can try — if ad fails to load we show a toast.
+    admobListeners.forEach(cb => cb(true));
   }
 }
 
+/**
+ * Returns true if we're on a native platform (iOS/Android).
+ * The ad button should be shown whenever we're on native,
+ * regardless of whether AdMob SDK initialized successfully.
+ */
 export function isAdMobAvailable(): boolean {
-  return Capacitor.isNativePlatform() && admobInitialized;
+  return Capacitor.isNativePlatform();
 }
 
 /**
@@ -102,8 +120,20 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     return null;
   }
 
+  // If AdMob hasn't initialized yet, try to initialize now
+  if (!admobInitialized && !admobInitAttempted) {
+    await initAdMob();
+  }
+
   return new Promise((resolve) => {
     let rewardEarned: AdMobRewardItem | null = null;
+    let settled = false;
+
+    const safeResolve = (val: AdMobRewardItem | null) => {
+      if (settled) return;
+      settled = true;
+      resolve(val);
+    };
 
     // Listen for reward event
     const rewardListenerP = AdMob.addListener(
@@ -114,9 +144,14 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
     );
 
     const cleanup = async () => {
-      (await rewardListenerP).remove();
-      (await closedListenerP).remove();
-      (await failedListenerP).remove();
+      try {
+        (await rewardListenerP).remove();
+        (await closedListenerP).remove();
+        (await failedListenerP).remove();
+        (await failedToShowListenerP).remove();
+      } catch {
+        // ignore cleanup errors
+      }
     };
 
     // Listen for ad closed (after reward or dismissed)
@@ -124,17 +159,27 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
       RewardAdPluginEvents.Dismissed,
       () => {
         void cleanup();
-        resolve(rewardEarned);
+        safeResolve(rewardEarned);
       }
     );
 
     // Listen for load failure
     const failedListenerP = AdMob.addListener(
       RewardAdPluginEvents.FailedToLoad,
-      () => {
-        console.error('[AdMob] Rewarded ad failed to load');
+      (error) => {
+        console.error('[AdMob] Rewarded ad failed to load:', error);
         void cleanup();
-        resolve(null);
+        safeResolve(null);
+      }
+    );
+
+    // Listen for show failure
+    const failedToShowListenerP = AdMob.addListener(
+      RewardAdPluginEvents.FailedToShow,
+      (error) => {
+        console.error('[AdMob] Rewarded ad failed to show:', error);
+        void cleanup();
+        safeResolve(null);
       }
     );
 
@@ -144,10 +189,16 @@ export async function showRewardedAd(): Promise<AdMobRewardItem | null> {
       isTesting: false,
     })
       .then(() => AdMob.showRewardVideoAd())
+      .then((reward) => {
+        // showRewardVideoAd() may return the reward directly in some versions
+        if (reward && !rewardEarned) {
+          rewardEarned = reward;
+        }
+      })
       .catch((err) => {
         console.error('[AdMob] Failed to prepare/show rewarded ad:', err);
         void cleanup();
-        resolve(null);
+        safeResolve(null);
       });
   });
 }

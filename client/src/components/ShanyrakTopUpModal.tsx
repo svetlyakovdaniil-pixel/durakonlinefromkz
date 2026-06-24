@@ -5,6 +5,7 @@ import { formatBalance } from "@shared/formatBalance";
 import { useTranslation } from "@/i18n";
 import { translateTxDescription } from "./TengeTopUpModal";
 import { showRewardedAd, isAdMobAvailable, onAdMobAvailabilityChange } from "@/lib/admob";
+import { toast } from "sonner";
 import { getAssetUrl } from '@/lib/assetUrl';
 
 const TENGE_ICON = getAssetUrl("/assets/static/tenge_9aefd1b7.png");
@@ -58,9 +59,8 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
 
   const testShanyrakMutation = trpc.balance.testAddShanyrak.useMutation();
 
-  const [adCooldownRemaining, setAdCooldownRemaining] = useState<number>(0);
   const [adWatching, setAdWatching] = useState(false);
-  // Reactive AdMob availability — re-renders when SDK finishes initializing
+  // AdMob is available on any native platform (iOS/Android)
   const [adMobReady, setAdMobReady] = useState(() => isAdMobAvailable());
   useEffect(() => {
     setAdMobReady(isAdMobAvailable());
@@ -86,11 +86,18 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
       const rewarded = await showRewardedAd();
       if (rewarded) {
         adWatchTopupMutation.mutate();
+      } else {
+        // Ad failed to load or user dismissed without watching
+        // Only show error if it wasn't a voluntary dismiss (rewarded would be non-null if watched)
+        console.warn('[ShanyrakTopUp] Ad not rewarded — either failed to load or user dismissed early');
       }
+    } catch (err) {
+      console.error('[ShanyrakTopUp] Ad error:', err);
+      toast.error(t('topUp.adError') || 'Реклама недоступна. Попробуйте позже.');
     } finally {
       setAdWatching(false);
     }
-  }, [adWatching, adCooldownRemaining, adWatchTopupMutation]);
+  }, [adWatching, adWatchTopupMutation, t]);
 
 
 
