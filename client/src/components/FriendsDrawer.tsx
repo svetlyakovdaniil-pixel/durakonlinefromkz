@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -563,19 +563,36 @@ export default function FriendsDrawer({
 }: FriendsDrawerProps) {
   const { t } = useTranslation();
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[400px] p-0 overflow-hidden flex flex-col"
-        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => onOpenChange(false)} />
+
+      {/* Panel */}
+      <div
+        className="relative w-full sm:max-w-[400px] flex flex-col bg-[#0f2035] border border-amber-700/30 sm:rounded-2xl overflow-hidden"
+        style={{
+          height: '100dvh',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
       >
-        <SheetHeader className="px-4 pt-4 pb-2 shrink-0 pr-12">
-          <SheetTitle className="text-amber-100 flex items-center gap-2">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
+          <span className="text-amber-100 font-semibold text-base flex items-center gap-2">
             <Users className="w-5 h-5 text-amber-400" />
             {t('profile.friends')}
-          </SheetTitle>
-        </SheetHeader>
+          </span>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70 hover:text-amber-100 hover:bg-black/50 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Content */}
         <div className="flex-1 overflow-y-auto px-4 pb-4">
           <FriendsContent
             onlineFriendIds={onlineFriendIds}
@@ -583,7 +600,21 @@ export default function FriendsDrawer({
             inRoom={inRoom}
           />
         </div>
-      </SheetContent>
-    </Sheet>
+
+        {/* Close button at bottom */}
+        <div
+          className="shrink-0 px-4 pt-3 border-t border-amber-700/20"
+          style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
+        >
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+            style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
+          >
+            {t('season.closeButton')}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

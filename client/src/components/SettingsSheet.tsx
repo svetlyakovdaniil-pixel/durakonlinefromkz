@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getAssetUrl } from '@/lib/assetUrl';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -194,23 +194,44 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
   return (
     <>
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
+      {/* Trigger */}
+      <div onClick={() => setOpen(true)} style={{ display: 'contents' }}>
         {children || (
           <button className="text-amber-200/50 hover:text-amber-100 transition-colors p-1.5 rounded">
             <Settings className="w-5 h-5" />
           </button>
         )}
-      </SheetTrigger>
-      <SheetContent side="right" className="bg-[#0f2035] border-l border-amber-700/30 text-amber-100 w-[300px] sm:w-[380px] overflow-y-auto">
-        <SheetHeader className="pr-12">
-          <SheetTitle className="text-amber-100 text-xl flex items-center gap-2">
-            <Settings className="w-5 h-5 text-amber-400" />
-            {t('settings.title')}
-          </SheetTitle>
-        </SheetHeader>
+      </div>
 
-        <div className="mt-6 space-y-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 32px)' }}>
+      {/* Modal overlay */}
+      {open && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+
+          {/* Panel */}
+          <div
+            className="relative w-full sm:max-w-[380px] flex flex-col bg-[#0f2035] border border-amber-700/30 sm:rounded-2xl overflow-hidden"
+            style={{
+              height: '100dvh',
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+            }}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
+              <span className="text-amber-100 font-semibold text-xl flex items-center gap-2">
+                <Settings className="w-5 h-5 text-amber-400" />
+                {t('settings.title')}
+              </span>
+              <button
+                onClick={() => setOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70 hover:text-amber-100 hover:bg-black/50 transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 32px)' }}>
           {/* 1. Change name */}
           <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <div className="flex items-center justify-between mb-2">
@@ -528,8 +549,23 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             </AlertDialogContent>
           </AlertDialog>
         </div>
-      </SheetContent>
-    </Sheet>
+
+            {/* Close button at bottom */}
+            <div
+              className="shrink-0 px-4 pt-3 border-t border-amber-700/20"
+              style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
+            >
+              <button
+                onClick={() => setOpen(false)}
+                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
+              >
+                {t('season.closeButton')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     {/* Contact Admin Dialog */}
     <Dialog open={contactOpen} onOpenChange={setContactOpen}>

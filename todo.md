@@ -6,6 +6,11 @@
 - [x] Нижняя кнопка «Закрыть» в Season/Premium/Quests — скрывать таб-бар когда модалки открыты
 - [x] Добавить safe-area-inset-bottom к нижней кнопке Season
 - [x] Блокировка горизонтальной ориентации экрана (iOS + Android)
+- [x] ProfileDrawer — переделан из Sheet в модальное окно (fixed overlay, safe-area-inset-top, кнопка X + кнопка Закрыть внизу)
+- [x] FriendsDrawer — переделан из Sheet в модальное окно
+- [x] LeaderboardDrawer — переделан из Sheet в модальное окно
+- [x] SettingsSheet — переделан из Sheet в модальное окно
+- [x] Таб-бар скрывается при открытии Friends и Leaderboard модалок
 
 ## Server-side
 - [x] Shared game types (gameTypes.ts) — cards, suits, ranks, game state, room, socket events
