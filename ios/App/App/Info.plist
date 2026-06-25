@@ -33,10 +33,13 @@
 	</array>
 
 	<!-- ── Supported device orientations (iPad) ──────────────────────────── -->
+	<!-- Apple requires all 4 orientations for iPad multitasking support -->
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 
 	<!-- ── Status bar ────────────────────────────────────────────────────── -->
