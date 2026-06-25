@@ -645,10 +645,10 @@
   padding-bottom: 0;
 }
 
-/* Avatar row — safe area bottom padding so buttons clear iOS home indicator */
+/* Avatar row */
 .avatar-action-row {
   min-height: 56px;
-  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  padding-bottom: 4px;
 }
 
 /* Battlefield scroll — account for safe area in max-height */

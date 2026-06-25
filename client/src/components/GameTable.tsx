@@ -551,7 +551,7 @@ export default function GameTable({
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
   const { settings: gameSettings } = useSettings();
    // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
-  const blurClass = gameSettings.batterySaverEnabled ? '' : '${blurClass}';
+  const blurClass = gameSettings.batterySaverEnabled ? '' : 'backdrop-blur-md';
   // Landscape orientation detection for adaptive layout
   const isLandscape = useIsLandscape();
   // Drop zone highlight
@@ -2096,7 +2096,8 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 player-hand-area shrink-0 bg-black/60 ${blurClass} border-t border-amber-700/20${isTutorial ? ' relative z-[60]' : ''}`}>
+        <div className={`player-hand-area shrink-0${isTutorial ? ' relative z-[60]' : ''}`}>
+          <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 bg-black/60 ${blurClass} border-t border-amber-700/20`}>
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2 relative z-0">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
             <button
@@ -2280,6 +2281,8 @@ export default function GameTable({
              </div>
           </div>
           )}
+          </div>
+          <div style={{ height: 'max(0px, env(safe-area-inset-bottom, 0px))', background: 'transparent' }} />
         </div>
         )}
       </div>

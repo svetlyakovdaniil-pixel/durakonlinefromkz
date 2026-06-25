@@ -116,15 +116,21 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.75)' }}
+      style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: "hidden", background: 'rgba(0,0,0,0.75)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full sm:max-w-lg sm:mx-4 flex flex-col h-[92dvh] sm:h-auto sm:max-h-[90vh] rounded-t-2xl sm:rounded-2xl"
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          flexDirection: 'column',
           background: 'linear-gradient(180deg, #0e1e36 0%, #060e1a 100%)',
           border: '1px solid rgba(201,168,76,0.25)',
+          overflow: 'hidden',
         }}
       >
         {/* Header */}

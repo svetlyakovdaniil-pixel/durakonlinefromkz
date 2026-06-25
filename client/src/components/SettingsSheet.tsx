@@ -205,16 +205,24 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
       {/* Modal overlay */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: "hidden" }}>
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
           {/* Panel */}
           <div
-            className="relative w-full sm:max-w-[380px] flex flex-col bg-[#0f2035] border border-amber-700/30 sm:rounded-2xl overflow-hidden"
             style={{
-              height: '100dvh',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#0f2035',
               paddingTop: 'env(safe-area-inset-top, 0px)',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
             }}
           >
             {/* Header */}

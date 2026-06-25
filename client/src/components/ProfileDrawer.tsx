@@ -63,13 +63,28 @@ export default function ProfileDrawer({
 
       {/* Modal overlay */}
       {open && (
-        <div className="fixed inset-0 z-50">
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: 'hidden' }}>
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+            className="bg-black/70 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+          />
           {/* Panel — full screen on mobile */}
           <div
-            className="absolute inset-0 flex flex-col bg-[#0f2035]"
-            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              background: '#0f2035',
+              paddingTop: 'env(safe-area-inset-top, 0px)',
+              boxSizing: 'border-box',
+              overflow: 'hidden',
+            }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
@@ -97,7 +112,7 @@ export default function ProfileDrawer({
               </button>
             </div>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }} className="px-4 pb-4 mt-2">
               {activeProfileTab === 'profile' ? (
                 <ProfileTab profile={profile} />
               ) : (
