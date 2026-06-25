@@ -203,7 +203,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         )}
       </SheetTrigger>
       <SheetContent side="right" className="bg-[#0f2035] border-l border-amber-700/30 text-amber-100 w-[300px] sm:w-[380px] overflow-y-auto">
-        <SheetHeader>
+        <SheetHeader className="pr-12">
           <SheetTitle className="text-amber-100 text-xl flex items-center gap-2">
             <Settings className="w-5 h-5 text-amber-400" />
             {t('settings.title')}

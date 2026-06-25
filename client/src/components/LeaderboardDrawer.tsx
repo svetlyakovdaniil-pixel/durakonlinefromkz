@@ -81,7 +81,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
         className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[480px] p-0 overflow-hidden flex flex-col"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
       >
-        <SheetHeader className="px-4 pt-4 pb-2 shrink-0">
+        <SheetHeader className="px-4 pt-4 pb-2 shrink-0 pr-12">
           <SheetTitle className="text-amber-100 flex items-center gap-2">
             <Trophy className="w-5 h-5 text-amber-400" />
             {t('lobby.leaderboard')}

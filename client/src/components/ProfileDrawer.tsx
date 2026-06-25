@@ -60,7 +60,7 @@ export default function ProfileDrawer({
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[400px] p-0 overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <SheetHeader className="px-4 pt-4 pb-2">
+        <SheetHeader className="px-4 pt-4 pb-2 flex flex-row items-center justify-between pr-12">
           <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
         </SheetHeader>
         <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">

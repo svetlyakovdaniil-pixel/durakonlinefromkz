@@ -1,5 +1,12 @@
 # Казахский Дурак Онлайн — TODO
 
+## Исправления кнопок закрытия (Jun 2026)
+- [x] Кнопка X в Sheet (профиль, рейтинг, друзья, настройки) — сделать заметной (rounded-full, bg-black/30, z-10)
+- [x] Добавить pr-12 к SheetHeader во всех Sheet компонентах чтобы заголовок не перекрывал кнопку X
+- [x] Нижняя кнопка «Закрыть» в Season/Premium/Quests — скрывать таб-бар когда модалки открыты
+- [x] Добавить safe-area-inset-bottom к нижней кнопке Season
+- [x] Блокировка горизонтальной ориентации экрана (iOS + Android)
+
 ## Server-side
 - [x] Shared game types (gameTypes.ts) — cards, suits, ranks, game state, room, socket events
 - [x] Shared card assets (cardAssets.ts) — CDN URLs for face cards, card back, game table
