@@ -739,7 +739,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
           className="flex-shrink-0 px-6 py-3 flex flex-col gap-2"
           style={{
             borderTop: '1px solid rgba(250,204,21,0.15)',
-            paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+            paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))',
           }}
         >
           {/* Restore Purchases — required by App Store Guidelines (only on native) */}

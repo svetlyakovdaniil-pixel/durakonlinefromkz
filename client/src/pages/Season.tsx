@@ -1190,7 +1190,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
           </div>{/* end scrollable content */}
 
           {/* Close button at bottom - always visible */}
-          <div className="shrink-0 px-5 pt-4 border-t border-amber-700/20" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}>
+          <div className="shrink-0 px-5 pt-4 border-t border-amber-700/20" style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}>
             <button
               onClick={onClose}
               className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"

@@ -339,7 +339,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         {/* Footer */}
         <div
           className="px-5 py-3 border-t border-white/10 flex-shrink-0"
-          style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))' }}
+          style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
         >
           <button
             onClick={onClose}

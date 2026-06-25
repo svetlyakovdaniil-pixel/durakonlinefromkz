@@ -292,7 +292,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
           className="px-4 py-3 shrink-0"
           style={{
             borderTop: '1px solid rgba(201,168,76,0.15)',
-            paddingBottom: 'max(16px, env(safe-area-inset-bottom, 16px))',
+            paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))',
           }}
         >
           <button

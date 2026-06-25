@@ -1828,7 +1828,7 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* ===== BOTTOM TAB BAR ===== */}
       <div
-        className={`fixed bottom-0 left-0 right-0 z-40 sm:hidden transition-opacity duration-200 ${showSeason || showPremium || showDailyQuests ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+        className={`fixed bottom-0 left-0 right-0 z-40 sm:hidden transition-opacity duration-200 ${showSeason || showPremium || showDailyQuests || showAchievements ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
         style={{
           background: 'linear-gradient(to top, #060e1a 0%, #0a1628 85%, #0a162800 100%)',
           borderTop: '1px solid rgba(180,130,30,0.18)',
