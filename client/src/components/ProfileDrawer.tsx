@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ReactDOM from 'react-dom';
 import { trpc } from '@/lib/trpc';
 
 import { Button } from '@/components/ui/button';
@@ -56,85 +57,86 @@ export default function ProfileDrawer({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
 
+  const modalContent = open ? (
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: 'hidden' }}>
+      {/* Backdrop */}
+      <div
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+        className="bg-black/70 backdrop-blur-sm"
+        onClick={() => setOpen(false)}
+      />
+      {/* Panel — full screen */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          background: '#0f2035',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
+          <span className="text-amber-100 font-semibold text-base">{t('profile.title')}</span>
+          <button
+            onClick={() => setOpen(false)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Tab switcher */}
+        <div className="mx-4 mt-2 flex bg-[#1a2d45] border border-amber-700/20 rounded-lg p-1 shrink-0 gap-1">
+          <button
+            onClick={() => setActiveProfileTab('profile')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'profile' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
+          >
+            <User className="w-3.5 h-3.5" /> {t('profile.title')}
+          </button>
+          <button
+            onClick={() => setActiveProfileTab('history')}
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'history' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
+          >
+            <History className="w-3.5 h-3.5" /> {t('profile.history')}
+          </button>
+        </div>
+        {/* Content */}
+        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }} className="px-4 pb-4 mt-2">
+          {activeProfileTab === 'profile' ? (
+            <ProfileTab profile={profile} />
+          ) : (
+            <MatchHistoryTab />
+          )}
+        </div>
+        {/* Close button at bottom */}
+        <div
+          className="shrink-0 px-4 pt-3 border-t border-amber-700/20"
+          style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
+        >
+          <button
+            onClick={() => setOpen(false)}
+            className="w-full py-3 rounded-xl font-semibold text-sm"
+            style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
+          >
+            {t('season.closeButton')}
+          </button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <>
-      {/* Trigger */}
+      {/* Trigger (kept for backward compat, but primary trigger is now external state) */}
       <div onClick={() => setOpen(true)} style={{ display: 'contents' }}>{children}</div>
-
-      {/* Modal overlay */}
-      {open && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: 'hidden' }}>
-          {/* Backdrop */}
-          <div
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-            className="bg-black/70 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
-          />
-          {/* Panel — full screen on mobile */}
-          <div
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: 'flex',
-              flexDirection: 'column',
-              background: '#0f2035',
-              paddingTop: 'env(safe-area-inset-top, 0px)',
-              boxSizing: 'border-box',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
-              <span className="text-amber-100 font-semibold text-base">{t('profile.title')}</span>
-              <button
-                onClick={() => setOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            {/* Tab switcher */}
-            <div className="mx-4 mt-2 flex bg-[#1a2d45] border border-amber-700/20 rounded-lg p-1 shrink-0 gap-1">
-              <button
-                onClick={() => setActiveProfileTab('profile')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'profile' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
-              >
-                <User className="w-3.5 h-3.5" /> {t('profile.title')}
-              </button>
-              <button
-                onClick={() => setActiveProfileTab('history')}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'history' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
-              >
-                <History className="w-3.5 h-3.5" /> {t('profile.history')}
-              </button>
-            </div>
-            {/* Content */}
-            <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }} className="px-4 pb-4 mt-2">
-              {activeProfileTab === 'profile' ? (
-                <ProfileTab profile={profile} />
-              ) : (
-                <MatchHistoryTab />
-              )}
-            </div>
-            {/* Close button at bottom */}
-            <div
-              className="shrink-0 px-4 pt-3 border-t border-amber-700/20"
-              style={{ paddingBottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))' }}
-            >
-              <button
-                onClick={() => setOpen(false)}
-                className="w-full py-3 rounded-xl font-semibold text-sm"
-                style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
-              >
-                {t('season.closeButton')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Portal: renders directly into document.body, bypasses all parent overflow/z-index */}
+      {typeof document !== 'undefined' && ReactDOM.createPortal(modalContent, document.body)}
     </>
   );
 }
