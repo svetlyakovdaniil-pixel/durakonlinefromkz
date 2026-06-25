@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,15 +55,38 @@ export default function ProfileDrawer({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
 
+  if (!open) return null;
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="bottom" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full p-0 overflow-hidden rounded-none" style={{ height: '100%', paddingBottom: 'env(safe-area-inset-bottom, 0px)', paddingTop: 'env(safe-area-inset-top, 0px)', display: 'flex', flexDirection: 'column' }}>
-        <SheetHeader className="px-4 pt-4 pb-2 flex flex-row items-center justify-between pr-12 shrink-0">
-          <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
-        </SheetHeader>
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, zIndex: 9999, overflow: 'hidden' }}>
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+      {/* Panel */}
+      <div
+        className="relative w-full flex flex-col overflow-hidden bg-[#0f2035]"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          border: '1px solid rgba(180,130,30,0.3)',
+          paddingTop: 'env(safe-area-inset-top, 0px)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
+          <span className="text-amber-100 font-semibold text-base">{t('profile.title')}</span>
+          <button
+            onClick={() => setOpen(false)}
+            className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70 hover:text-amber-100 hover:bg-black/50 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        {/* Tabs */}
         <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} className="flex flex-col flex-1 overflow-hidden">
-          <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto shrink-0">
+          <TabsList className="mx-4 mt-2 bg-[#1a2d45] border border-amber-700/20 w-auto shrink-0">
             <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs px-3">
               <User className="w-3.5 h-3.5 mr-1" /> {t('profile.title')}
             </TabsTrigger>
@@ -72,11 +94,9 @@ export default function ProfileDrawer({
               <History className="w-3.5 h-3.5 mr-1" /> {t('profile.history')}
             </TabsTrigger>
           </TabsList>
-
           <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
             <ProfileTab profile={profile} />
           </TabsContent>
-
           <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
             <MatchHistoryTab />
           </TabsContent>
@@ -91,8 +111,8 @@ export default function ProfileDrawer({
             {t('season.closeButton')}
           </button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </div>
   );
 }
 
