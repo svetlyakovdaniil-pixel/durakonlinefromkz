@@ -640,14 +640,15 @@
   box-sizing: border-box;
 }
 
-/* Player hand area bottom padding — always above iOS home indicator */
+/* Player hand area — no bottom padding here (handled by avatar-action-row) */
 .player-hand-area {
-  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  padding-bottom: 0;
 }
 
-/* Avatar row — fixed height, no extra safe area (handled by player-hand-area) */
+/* Avatar row — safe area bottom padding so buttons clear iOS home indicator */
 .avatar-action-row {
   min-height: 56px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
 }
 
 /* Battlefield scroll — account for safe area in max-height */
@@ -738,7 +739,7 @@
   /* Compact player hand in landscape */
   .landscape-mode .player-hand-area {
     padding-top: 2px;
-    padding-bottom: max(4px, env(safe-area-inset-bottom, 4px));
+    padding-bottom: 0;
   }
 
   /* Battlefield scroll max-height in landscape */
