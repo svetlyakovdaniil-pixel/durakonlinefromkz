@@ -1,6 +1,6 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { trpc } from '@/lib/trpc';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -56,34 +56,67 @@ export default function ProfileDrawer({
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
 
+  const panel = open ? (
+    <div
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#0f2035',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '1px solid rgba(180,130,30,0.2)', flexShrink: 0 }}>
+        <span style={{ color: '#fde68a', fontWeight: 600, fontSize: '16px' }}>{t('profile.title')}</span>
+        <button
+          onClick={() => setOpen(false)}
+          style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', border: 'none', color: '#fde68a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <X style={{ width: 16, height: 16 }} />
+        </button>
+      </div>
+      {/* Tabs */}
+      <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        <TabsList className="mx-4 mt-2 bg-[#1a2d45] border border-amber-700/20 w-auto" style={{ flexShrink: 0 }}>
+          <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs px-3">
+            <User className="w-3.5 h-3.5 mr-1" /> {t('profile.title')}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs px-3">
+            <History className="w-3.5 h-3.5 mr-1" /> {t('profile.history')}
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+          <ProfileTab profile={profile} />
+        </TabsContent>
+        <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+          <MatchHistoryTab />
+        </TabsContent>
+      </Tabs>
+      {/* Close button at bottom */}
+      <div style={{ flexShrink: 0, padding: '12px 16px', borderTop: '1px solid rgba(180,130,30,0.2)' }}>
+        <button
+          onClick={() => setOpen(false)}
+          style={{ width: '100%', padding: '12px', borderRadius: 12, background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}
+        >
+          {t('season.closeButton')}
+        </button>
+      </div>
+    </div>
+  ) : null;
+
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent side="right" className="bg-[#0f2035] border-amber-700/30 text-amber-100 w-full sm:w-[calc(100vw-2rem)] sm:max-w-[400px] p-0 overflow-hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', paddingTop: 'env(safe-area-inset-top, 0px)' }}>
-        <SheetHeader className="px-4 pt-4 pb-2 flex flex-row items-center justify-between pr-12">
-          <SheetTitle className="text-amber-100">{t('profile.title')}</SheetTitle>
-        </SheetHeader>
-        <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} className="flex flex-col h-[calc(100%-60px)]">
-          <TabsList className="mx-2 sm:mx-4 bg-[#1a2d45] border border-amber-700/20 w-auto">
-            <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <User className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.title')}</span>
-            </TabsTrigger>
-            <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-[10px] sm:text-[11px] px-2 sm:px-2.5">
-              <History className="w-3.5 h-3.5 sm:mr-1" /> <span className="hidden sm:inline">{t('profile.history')}</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4">
-            <ProfileTab profile={profile} />
-          </TabsContent>
-
-
-          <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4">
-            <MatchHistoryTab />
-          </TabsContent>
-        </Tabs>
-      </SheetContent>
-    </Sheet>
+    <>
+      <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{children}</span>
+      {typeof document !== 'undefined' ? createPortal(panel, document.body) : null}
+    </>
   );
 }
 
