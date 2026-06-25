@@ -71,6 +71,7 @@ export default function ProfileDrawer({
         background: '#0f2035',
         paddingTop: 'env(safe-area-inset-top, 0px)',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        pointerEvents: 'auto',
       }}
     >
       {/* Header */}
@@ -115,7 +116,7 @@ export default function ProfileDrawer({
   return (
     <>
       <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{children}</span>
-      {typeof document !== 'undefined' ? createPortal(panel, document.body) : null}
+      {typeof document !== 'undefined' ? createPortal(panel, document.getElementById('overlay-root') ?? document.body) : null}
     </>
   );
 }
