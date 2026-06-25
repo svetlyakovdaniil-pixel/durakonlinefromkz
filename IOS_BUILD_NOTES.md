@@ -28,6 +28,7 @@
 
 | Run # | Версия | Build # | Дата | Статус | Примечание |
 |-------|--------|---------|------|--------|------------|
+| #47   | 1.0.47 | 53      | 2026-06-25 | ⏳ In Progress | Переделаны Sheet → модальные окна (ProfileDrawer, FriendsDrawer, LeaderboardDrawer, SettingsSheet) |
 | #46   | 1.0.46 | 49      | 2026-06-24 | ⏳ Pending | Fix: IAP/AdMob детальные ошибки, PRODUCT_NOT_AVAILABLE, AdMob failReason |
 | #45   | 1.0.45 | 48      | 2026-06-24 | ✅ Success | Fix: IAP premium verify URL для native, AdMob кнопка всегда активна на native |
 | #44   | 1.0.44 | 47      | 2026-06-24 | ✅ Success | Все исправления: ассеты, цена $1.99, AdMob, без лимита рекламы (6m 23s) |

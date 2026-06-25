@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { trpc } from '@/lib/trpc';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -51,6 +51,7 @@ export default function ProfileDrawer({
   profile, onlineFriendIds, children, onInviteFriend, inRoom, initialTab, open: controlledOpen, onOpenChange: controlledOnOpenChange,
 }: ProfileDrawerProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [activeProfileTab, setActiveProfileTab] = useState<'profile' | 'history'>('profile');
   const { t } = useTranslation();
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
@@ -62,49 +63,47 @@ export default function ProfileDrawer({
 
       {/* Modal overlay */}
       {open && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+        <div className="fixed inset-0 z-50">
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
-
-          {/* Panel */}
+          {/* Panel — full screen on mobile */}
           <div
-            className="relative w-full sm:max-w-[400px] flex flex-col bg-[#0f2035] border border-amber-700/30 sm:rounded-2xl overflow-hidden"
-            style={{
-              height: '100dvh',
-              paddingTop: 'env(safe-area-inset-top, 0px)',
-            }}
+            className="absolute inset-0 flex flex-col bg-[#0f2035]"
+            style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-amber-700/20 shrink-0">
               <span className="text-amber-100 font-semibold text-base">{t('profile.title')}</span>
               <button
                 onClick={() => setOpen(false)}
-                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70 hover:text-amber-100 hover:bg-black/50 transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-black/30 text-amber-200/70"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Tabs */}
-            <Tabs defaultValue={initialTab === 'history' ? 'history' : 'profile'} className="flex flex-col flex-1 overflow-hidden">
-              <TabsList className="mx-4 mt-2 bg-[#1a2d45] border border-amber-700/20 w-auto shrink-0">
-                <TabsTrigger value="profile" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs px-3">
-                  <User className="w-3.5 h-3.5 mr-1" /> {t('profile.title')}
-                </TabsTrigger>
-                <TabsTrigger value="history" className="text-amber-200/70 data-[state=active]:text-amber-100 data-[state=active]:bg-amber-700/30 text-xs px-3">
-                  <History className="w-3.5 h-3.5 mr-1" /> {t('profile.history')}
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+            {/* Tab switcher */}
+            <div className="mx-4 mt-2 flex bg-[#1a2d45] border border-amber-700/20 rounded-lg p-1 shrink-0 gap-1">
+              <button
+                onClick={() => setActiveProfileTab('profile')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'profile' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
+              >
+                <User className="w-3.5 h-3.5" /> {t('profile.title')}
+              </button>
+              <button
+                onClick={() => setActiveProfileTab('history')}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-md text-xs font-medium transition-colors ${activeProfileTab === 'history' ? 'bg-amber-700/30 text-amber-100' : 'text-amber-200/70'}`}
+              >
+                <History className="w-3.5 h-3.5" /> {t('profile.history')}
+              </button>
+            </div>
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+              {activeProfileTab === 'profile' ? (
                 <ProfileTab profile={profile} />
-              </TabsContent>
-
-              <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-4 mt-2">
+              ) : (
                 <MatchHistoryTab />
-              </TabsContent>
-            </Tabs>
-
+              )}
+            </div>
             {/* Close button at bottom */}
             <div
               className="shrink-0 px-4 pt-3 border-t border-amber-700/20"
@@ -112,7 +111,7 @@ export default function ProfileDrawer({
             >
               <button
                 onClick={() => setOpen(false)}
-                className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+                className="w-full py-3 rounded-xl font-semibold text-sm"
                 style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
               >
                 {t('season.closeButton')}

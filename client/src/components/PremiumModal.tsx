@@ -760,7 +760,7 @@ export default function PremiumModal({ open, onClose }: PremiumModalProps) {
           )}
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+            className="w-full py-3 rounded-xl font-bold text-sm"
             style={{
               background: 'linear-gradient(135deg, rgba(250,204,21,0.12) 0%, rgba(250,204,21,0.06) 100%)',
               border: '1px solid rgba(250,204,21,0.3)',

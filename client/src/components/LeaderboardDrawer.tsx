@@ -312,7 +312,7 @@ export default function LeaderboardDrawer({ open, onOpenChange, myGameId }: Lead
         >
           <button
             onClick={() => onOpenChange(false)}
-            className="w-full py-3 rounded-xl font-semibold text-sm transition-all active:scale-95"
+            className="w-full py-3 rounded-xl font-semibold text-sm"
             style={{ background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', color: '#fbbf24' }}
           >
             {t('season.closeButton')}

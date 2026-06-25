@@ -297,7 +297,7 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
         >
           <button
             onClick={onClose}
-            className="w-full py-3 rounded-xl font-bold text-sm transition-all active:scale-95"
+            className="w-full py-3 rounded-xl font-bold text-sm"
             style={{
               background: 'linear-gradient(135deg, rgba(201,168,76,0.15) 0%, rgba(201,168,76,0.08) 100%)',
               border: '1px solid rgba(201,168,76,0.35)',
