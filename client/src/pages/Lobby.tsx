@@ -100,6 +100,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   const [showDailyQuests, setShowDailyQuests] = useState(false);
   const [showPremium, setShowPremium] = useState(false);
   const [showSeason, setShowSeason] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const [activeTab, setActiveTab] = useState<'lobby' | 'rooms'>('lobby');
 
   // Smart red dots — track which sections have been visited
@@ -480,15 +481,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   top: (profile as any)?.equippedFrame ? '-12px' : '8px',
                 }}
               >
-                <ProfileDrawer
-                  profile={profile}
-                  onlineFriendIds={onlineFriendIds}
-                  inRoom={false}
-                >
-                  <button className="hover:opacity-80 transition-opacity">
+                <button className="hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)}>
                     <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                   </button>
-                </ProfileDrawer>
                 <div className="flex items-center gap-1.5 mt-3">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
@@ -696,15 +691,9 @@ onClick={() => setShowTengeTopUp(true)}
                     ID {profile.gameId}
                   </Badge>
                 )}
-                <ProfileDrawer
-                  profile={profile}
-                  onlineFriendIds={onlineFriendIds}
-                  inRoom={false}
-                >
-                  <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2">
+                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2" onClick={() => setShowProfile(true)}>
                     <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={40} />
                   </button>
-                </ProfileDrawer>
                 <div className="flex items-center gap-1.5">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={16} showTooltip />
                   <span className="text-base text-amber-200/70 font-medium">{userName}</span>
@@ -1818,6 +1807,14 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Season Page */}
       <SeasonPage open={showSeason} onClose={() => setShowSeason(false)} />
+      {/* Profile Drawer */}
+      <ProfileDrawer
+        profile={profile}
+        onlineFriendIds={onlineFriendIds}
+        inRoom={false}
+        open={showProfile}
+        onOpenChange={setShowProfile}
+      />
 
       {/* Friends Drawer triggered from grid button */}
       <FriendsDrawer

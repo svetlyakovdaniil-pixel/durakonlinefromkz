@@ -34,8 +34,8 @@ interface ProfileDrawerProps {
   } | null;
   /** Online friend gameIds from socket */
   onlineFriendIds: number[];
-  /** Trigger element */
-  children: React.ReactNode;
+  /** Trigger element (optional when using controlled open state) */
+  children?: React.ReactNode;
   /** Callback to invite a friend to the current room */
   onInviteFriend?: (targetGameId: number) => void;
   /** Whether we're in a room (show invite buttons) */
@@ -115,7 +115,7 @@ export default function ProfileDrawer({
 
   return (
     <>
-      <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{children}</span>
+      {children && <span onClick={() => setOpen(true)} style={{ display: 'contents' }}>{children}</span>}
       {typeof document !== 'undefined' ? createPortal(panel, document.getElementById('overlay-root') ?? document.body) : null}
     </>
   );
