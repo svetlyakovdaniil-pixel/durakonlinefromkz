@@ -1,4 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
+import { useLocation } from 'wouter';
+import ProfilePage from './ProfilePage';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -20,6 +22,7 @@ import { useTranslation } from '@/i18n';
 import { trpc } from '@/lib/trpc';
 
 export default function Home() {
+  const [location] = useLocation();
   const { user, loading, isAuthenticated, logout } = useAuth();
   const { profile, profileLoading, refetchProfile } = useProfile(isAuthenticated);
   const { t, locale } = useTranslation();
@@ -423,6 +426,11 @@ export default function Home() {
         onUpdateRoom={(data) => updateRoom({ roomId: currentRoom.id, ...data })}
       />
     );
+  }
+
+  // Profile page — full-screen route
+  if (location === '/profile') {
+    return <ProfilePage />;
   }
 
   // Lobby — with forced tutorial overlay for new players
