@@ -135,8 +135,8 @@ export default function AchievementsModal({ open, onClose, onRewardClaimed }: Ac
       >
         {/* Header */}
         <div
-          className="flex items-center justify-between px-4 py-3 shrink-0"
-          style={{ borderBottom: '1px solid rgba(201,168,76,0.15)' }}
+          className="flex items-center justify-between px-4 pb-3 shrink-0"
+          style={{ borderBottom: '1px solid rgba(201,168,76,0.15)', paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
         >
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5" style={{ color: '#c9a84c' }} />

@@ -635,7 +635,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
           style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, background: `linear-gradient(160deg, ${theme.bgFrom} 0%, ${theme.bgTo} 50%, ${theme.bgFrom} 100%)`, border: `1px solid ${theme.border}` }}>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${theme.border}` }}>
+          <div className="flex items-center justify-between px-5 pb-4" style={{ borderBottom: `1px solid ${theme.border}`, paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)' }}>
             <div className="flex items-center gap-2">
               <span className="text-xl">{theme.emoji}</span>
               <span className="font-bold text-white text-lg">

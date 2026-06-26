@@ -169,7 +169,7 @@ export default function DailyQuestsModal({ open, onClose, onRewardClaimed }: Dai
         }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-white/10 flex-shrink-0">
+        <div className="flex items-center justify-between px-5 pb-4 border-b border-white/10 flex-shrink-0" style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 20px)' }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center">
               <Calendar className="w-5 h-5 text-amber-400" />
