@@ -13,7 +13,6 @@ import { Slider } from '@/components/ui/slider';
 import { Users, Timer, Bot, Plus, Settings, Gamepad2, Layers, RotateCcw, Lock, User, Hash, Bell, X, UserPlus, Check, Trash2, ShoppingCart, HelpCircle, BookOpen, Shield, Filter, Search, RefreshCw, ShieldAlert, Music, UserCircle2, DoorOpen, KeyRound, PlusCircle, Play, Trophy, CalendarCheck, Flame, Medal, Home } from 'lucide-react';
 import { getAvatarUrl, AVATAR_OPTIONS, getBaseAvatarId, getAvatarDisplayName } from '../../../shared/avatars';
 import { SEASON_RANKS, SEASON_REWARD_DEFS, getSeasonRank, getSeasonInfo } from '../../../shared/seasons';
-import ProfileDrawer from '@/components/ProfileDrawer';
 import PasswordDialog from '@/components/PasswordDialog';
 import SettingsSheet from '@/components/SettingsSheet';
 import { trpc } from '@/lib/trpc';
@@ -480,15 +479,9 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   top: (profile as any)?.equippedFrame ? '-12px' : '8px',
                 }}
               >
-                <ProfileDrawer
-                  profile={profile}
-                  onlineFriendIds={onlineFriendIds}
-                  inRoom={false}
-                >
-                  <button className="hover:opacity-80 transition-opacity">
-                    <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
-                  </button>
-                </ProfileDrawer>
+                <button className="hover:opacity-80 transition-opacity" onClick={() => setLocation('/profile')}>
+                  <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
+                </button>
                 <div className="flex items-center gap-1.5 mt-3">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
                   <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
@@ -696,15 +689,9 @@ onClick={() => setShowTengeTopUp(true)}
                     ID {profile.gameId}
                   </Badge>
                 )}
-                <ProfileDrawer
-                  profile={profile}
-                  onlineFriendIds={onlineFriendIds}
-                  inRoom={false}
-                >
-                  <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2">
-                    <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={40} />
-                  </button>
-                </ProfileDrawer>
+                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2" onClick={() => setLocation('/profile')}>
+                  <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={40} />
+                </button>
                 <div className="flex items-center gap-1.5">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={16} showTooltip />
                   <span className="text-base text-amber-200/70 font-medium">{userName}</span>
