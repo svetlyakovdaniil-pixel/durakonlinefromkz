@@ -503,6 +503,11 @@ export const kk = {
     noFrame: 'Жақтаусыз',
     requiresPremium: 'Premium қажет',
     seasonBadge: 'МАУСЫМ',
+    win: 'Жеңіс',
+    loss: 'Жеңіліс',
+    draw: 'Тең',
+    humanGames: 'Адамдармен ойындар',
+    games: 'Ойындар',
   },
 
   // Shop

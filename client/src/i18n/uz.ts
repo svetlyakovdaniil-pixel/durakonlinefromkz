@@ -507,6 +507,11 @@ export const uz = {
     noFrame: 'Ramkasiz',
     requiresPremium: 'Premium talab qilinadi',
     seasonBadge: 'Mavsum',
+    win: "G'alaba",
+    loss: "Mag'lubiyat",
+    draw: 'Durrang',
+    humanGames: "Odamlar bilan o'yinlar",
+    games: "O'yinlar",
   },
 
   // Shop

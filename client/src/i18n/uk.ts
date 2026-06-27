@@ -507,6 +507,11 @@ export const uk = {
     noFrame: 'Без рамки',
     requiresPremium: 'Потрібен Premium',
     seasonBadge: 'СЕЗОН',
+    win: 'Перемога',
+    loss: 'Поразка',
+    draw: 'Нічия',
+    humanGames: 'Ігри з людьми',
+    games: 'Ігри',
   },
 
   // Shop

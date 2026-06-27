@@ -507,6 +507,11 @@ export const pl = {
     noFrame: 'Bez ramki',
     requiresPremium: 'Wymaga Premium',
     seasonBadge: 'Sezon',
+    win: 'Wygrana',
+    loss: 'Przegrana',
+    draw: 'Remis',
+    humanGames: 'Gry z ludźmi',
+    games: 'Gry',
   },
 
   // Shop

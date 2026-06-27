@@ -506,6 +506,11 @@ export const en = {
     noFrame: 'No frame',
     requiresPremium: 'Requires Premium',
     seasonBadge: 'SEASON',
+    win: 'Win',
+    loss: 'Loss',
+    draw: 'Draw',
+    humanGames: 'Human Games',
+    games: 'Games',
   },
 
   // Shop

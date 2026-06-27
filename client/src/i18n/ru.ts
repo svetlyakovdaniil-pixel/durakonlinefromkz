@@ -505,6 +505,11 @@ export const ru = {
     noFrame: 'Без рамки',
     requiresPremium: 'Требуется Premium',
     seasonBadge: 'СЕЗОН',
+    win: 'Победа',
+    loss: 'Поражение',
+    draw: 'Ничья',
+    humanGames: 'Игры с людьми',
+    games: 'Игры',
   },
 
   // Shop

@@ -198,6 +198,8 @@ jobs:
           NODE_ENV: production
           VITE_APP_TITLE: "Durak online from KZ"
           VITE_ADMOB_IOS_APP_ID: "ca-app-pub-3940256099942544~1458002511"
+          VITE_ADMOB_IOS_REWARDED_AD_UNIT_ID: "ca-app-pub-3940256099942544/1712485313"
+          VITE_REVENUECAT_IOS_KEY: "appl_GdpfUqDfDgVtrHhTWhmzgSCogqz"
         run: pnpm run build
 
       # ── 7. Install Capacitor CLI ───────────────────────────────────────────

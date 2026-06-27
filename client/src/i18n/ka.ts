@@ -505,6 +505,11 @@ export const ka = {
     noFrame: 'ჩარჩოს გარეშე',
     requiresPremium: 'Premium საჭიროა',
     seasonBadge: 'სეზონი',
+    win: 'გამარჯვება',
+    loss: 'დამარცხება',
+    draw: 'ფრე',
+    humanGames: 'თამაშები ადამიანებთან',
+    games: 'თამაშები',
   },
 
   // Shop

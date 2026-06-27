@@ -507,6 +507,11 @@ export const az = {
     noFrame: 'Çərçivəsiz',
     requiresPremium: 'Premium tələb olunur',
     seasonBadge: 'Mövsüm',
+    win: 'Qələbə',
+    loss: 'Məğlubiyyət',
+    draw: 'Heç-heçə',
+    humanGames: 'İnsanlarla oyunlar',
+    games: 'Oyunlar',
   },
 
   // Shop
