@@ -127,22 +127,33 @@ const PlayerHand = memo(function PlayerHand({
   // Available width = containerWidth - 32px padding (px-4 on each side)
   // Total width with margin m: cardW + (n-1) * (cardW + m)
   // Solve for m: m = (available - cardW*n) / (n-1)  — clamped to [-cardW*0.72, 0]
+  // If even at max overlap cards don't fit → switch to horizontal scroll mode
+  const MAX_OVERLAP_RATIO = 0.72;
   const getCardMargin = (): string => {
     if (n <= 1) return '0';
     const available = (containerWidth > 0 ? containerWidth : 320) - 32;
     const raw = (available - cardW * n) / (n - 1);
     // Clamp: never more than 0 (no gap), never less than -72% of card width
-    const clamped = Math.max(-cardW * 0.72, Math.min(0, raw));
+    const clamped = Math.max(-cardW * MAX_OVERLAP_RATIO, Math.min(0, raw));
     return `${Math.round(clamped)}px`;
   };
   const marginLeft = getCardMargin();
 
+  // Determine if we need scroll: when even max overlap isn't enough to fit all cards
+  const needsScroll = (() => {
+    if (n <= 1) return false;
+    const available = (containerWidth > 0 ? containerWidth : 320) - 32;
+    const minTotalWidth = cardW + (n - 1) * (cardW * (1 - MAX_OVERLAP_RATIO));
+    return minTotalWidth > available;
+  })();
+
   return (
     <div ref={containerRef} className="relative w-full">
       <div
-        className={`flex justify-center pb-1 sm:pb-2${isTutorial ? ' overflow-y-visible pt-5' : ''}`}
+        className={`pb-1 sm:pb-2${isTutorial ? ' overflow-y-visible pt-5' : ''}${needsScroll ? ' overflow-x-auto scrollbar-none' : ' flex justify-center'}`}
+        style={needsScroll ? { paddingLeft: 8, paddingRight: 8 } : undefined}
       >
-        <div className={`flex items-end`}>
+        <div className={`flex items-end${needsScroll ? ' w-max' : ''}`}>
           {sortedHand.map((card, i) => {
             const isPlayable = (playableIds.has(card.id) || transferIds.has(card.id) || passThroughIds.has(card.id)) && !suppressPlayableStyle;
             const isSelected = selectedCardId === card.id || multiSelectIds.has(card.id);
