@@ -37,7 +37,7 @@ const config: CapacitorConfig = {
   ios: {
     // Minimum iOS version: 14.0 (required by Capacitor 6+)
     // Set in Xcode: General → Deployment Info → iOS 14.0
-    contentInset: 'always',
+    contentInset: 'never',
     allowsLinkPreview: false,
     scrollEnabled: false,
     backgroundColor: '#0a1628',
