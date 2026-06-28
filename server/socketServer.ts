@@ -1546,7 +1546,7 @@ export function initSocketServer(httpServer: HttpServer) {
         const forfeitRoom = rooms.get(roomId);
         const isTutorial = forfeitRoom?.settings.isTutorial || false;
         if (!isTutorial) {
-          recordForfeitLoss(forfeitGameId, isBotGame)
+          recordForfeitLoss(forfeitGameId, isBotGame, roomId, totalPlayersInRoom, hasBots, botCount)
             .catch((err: Error) => console.error('[DB] Failed to record forfeit loss:', err));
         }
       }
@@ -1867,6 +1867,20 @@ export function initSocketServer(httpServer: HttpServer) {
               const playerIdx = gameState.players.findIndex(p => p.id === odId);
               if (playerIdx !== -1 && !gameState.players[playerIdx].isOut) {
                 forfeitPlayer(gameState, playerIdx);
+                // Record forfeit as a loss (disconnect/app close)
+                const disconnectGameId = playerGameIds.get(odId);
+                if (disconnectGameId) {
+                  const dcHasBots = gameState.players.some(p => p.isBot);
+                  const dcBotCount = gameState.players.filter(p => p.isBot).length;
+                  const dcTotalPlayers = gameState.players.length;
+                  const dcBotRatio = dcTotalPlayers > 0 ? dcBotCount / dcTotalPlayers : 0;
+                  const dcIsBotGame = dcBotRatio > 0.334;
+                  const dcRoom = rooms.get(rid);
+                  if (!dcRoom?.settings.isTutorial) {
+                    recordForfeitLoss(disconnectGameId, dcIsBotGame, rid, dcTotalPlayers, dcHasBots, dcBotCount)
+                      .catch((err: Error) => console.error('[DB] Failed to record disconnect forfeit loss:', err));
+                  }
+                }
                 // STABILITY: Check if game should end after forfeit
                 checkGameOver(gameState);
                 markProgress(rid);

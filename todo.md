@@ -3679,3 +3679,8 @@
 - [x] Wire routes in Home.tsx for /privacy, /terms, /contact, /season-rules
 - [x] Update SettingsSheet.tsx: replace Dialog open state with navigate() calls
 - [x] Update Season.tsx: replace setShowRulesDialog(true) with navigate('/season-rules')
+
+## Build 78 — Match history: early exit = loss
+- [x] Add result field (win/loss/draw) to getPlayerGameHistory return based on isLoser/place
+- [x] Record forfeit (leaveGame via menu) in gameHistory so it shows as loss in match history
+- [x] Record disconnect/app-close forfeit in gameHistory as loss (freeze expiry handler)

@@ -494,11 +494,21 @@ export async function recordGameResult(data: {
  * Called immediately when a player leaves mid-game.
  * @param gameId - The player's gameId (from playerProfiles)
  * @param isBotGame - Whether this counts as a bot game (>33.4% bots)
+ * @param roomId - Optional room ID for gameHistory record
+ * @param totalPlayersInRoom - Optional total player count for context
+ * @param hasBots - Optional whether room had bots
+ * @param botCount - Optional number of bots
  */
-export async function recordForfeitLoss(gameId: number, isBotGame: boolean) {
+export async function recordForfeitLoss(
+  gameId: number,
+  isBotGame: boolean,
+  roomId?: string,
+  totalPlayersInRoom?: number,
+  hasBots?: boolean,
+  botCount?: number,
+) {
   const db = await getDb();
   if (!db) return;
-
   if (isBotGame) {
     // Bot game: update bot stats + rating penalty (-10 for bot game loser)
     await db.update(playerProfiles).set({
@@ -513,6 +523,22 @@ export async function recordForfeitLoss(gameId: number, isBotGame: boolean) {
       losses: sql`${playerProfiles.losses} + 1`,
       rating: sql`GREATEST(0, ${playerProfiles.rating} - 25)`,
     }).where(eq(playerProfiles.gameId, gameId));
+  }
+  // Insert a gameHistory record so the forfeit appears in the player's match history as a loss
+  if (roomId) {
+    const ratingChange = isBotGame ? -10 : -25;
+    await db.insert(gameHistory).values({
+      roomId,
+      playerCount: 1,
+      winnerId: null,
+      loserId: gameId,
+      playersJson: JSON.stringify([gameId]),
+      durationSeconds: 0,
+      hasBots: hasBots ?? false,
+      botCount: botCount ?? 0,
+      totalPlayersInRoom: totalPlayersInRoom ?? 1,
+      ratingChangesJson: JSON.stringify({ [gameId]: ratingChange }),
+    }).catch(() => {}); // Non-blocking, ignore duplicate errors
   }
 }
 
@@ -638,16 +664,18 @@ export async function getPlayerGameHistory(profileId: number, limit = 20) {
       ratingDelta = ratingTable[place - 1] ?? ratingTable[ratingTable.length - 1];
     }
 
+    // Determine result: loss if last place (durak), win if 1st place, draw for middle places
+    const result: 'win' | 'loss' | 'draw' = isLoser ? 'loss' : place === 1 ? 'win' : 'draw';
     return {
       ...record,
       place,
       ratingDelta,
       isLoser,
       isBotGame,
+      result,
     };
   });
 }
-
 // ============================================================
 // NOTIFICATION helpers
 // ============================================================
