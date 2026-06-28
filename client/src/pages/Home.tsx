@@ -1,6 +1,10 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useLocation } from 'wouter';
 import ProfilePage from './ProfilePage';
+import PrivacyPage from './PrivacyPage';
+import TermsPage from './TermsPage';
+import ContactPage from './ContactPage';
+import SeasonRulesPage from './SeasonRulesPage';
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
@@ -431,6 +435,22 @@ export default function Home() {
   // Profile page — full-screen route
   if (location === '/profile') {
     return <ProfilePage />;
+  }
+  // Privacy Policy page
+  if (location === '/privacy') {
+    return <PrivacyPage backPath="/" />;
+  }
+  // Terms of Service page
+  if (location === '/terms') {
+    return <TermsPage backPath="/" />;
+  }
+  // Contact Admin page
+  if (location === '/contact') {
+    return <ContactPage backPath="/" />;
+  }
+  // Season Rules page
+  if (location === '/season-rules') {
+    return <SeasonRulesPage backPath="/season" />;
   }
 
   // Lobby — with forced tutorial overlay for new players

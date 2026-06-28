@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { getAssetUrl } from '@/lib/assetUrl';
 
 import { Button } from '@/components/ui/button';
@@ -31,15 +32,11 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const sound = useSoundContext();
   const utils = trpc.useUtils();
 
+  const [, navigate] = useLocation();
   const [open, setOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
-  const [contactOpen, setContactOpen] = useState(false);
-  const [contactEmail, setContactEmail] = useState('');
-  const [contactMessage, setContactMessage] = useState('');
-  const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [termsOpen, setTermsOpen] = useState(false);
 
   // Push notification settings
   const { data: pushSettings, refetch: refetchPushSettings } = trpc.push.getSettings.useQuery(undefined, { enabled: open });
@@ -47,31 +44,6 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
     onSuccess: () => { refetchPushSettings(); },
     onError: (err) => { toast.error(err.message); },
   });
-
-  const sendContactMutation = trpc.contact.send.useMutation({
-    onSuccess: () => {
-      toast.success(t('contact.successTitle'));
-      setContactEmail('');
-      setContactMessage('');
-      setContactOpen(false);
-    },
-    onError: (err) => {
-      toast.error(err.message || t('contact.errorTitle'));
-    },
-  });
-
-  const handleSendContact = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(contactEmail)) {
-      toast.error(t('contact.validationEmail'));
-      return;
-    }
-    if (contactMessage.trim().length < 10) {
-      toast.error(t('contact.validationMessage'));
-      return;
-    }
-    sendContactMutation.mutate({ replyEmail: contactEmail, message: contactMessage.trim() });
-  };
 
   // Playlist data
   const { data: allPlaylists = [] } = trpc.playlists.list.useQuery(undefined, { enabled: open });
@@ -449,7 +421,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 7. Contact admin */}
           <button
-            onClick={() => setContactOpen(true)}
+            onClick={() => { setOpen(false); navigate('/contact'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <MessageSquare className="w-5 h-5 text-amber-400 shrink-0" />
@@ -465,7 +437,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 8. Privacy Policy */}
           <button
-            onClick={() => setPrivacyOpen(true)}
+            onClick={() => { setOpen(false); navigate('/privacy'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <Shield className="w-5 h-5 text-amber-400 shrink-0" />
@@ -481,7 +453,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 9. Terms of Service */}
           <button
-            onClick={() => setTermsOpen(true)}
+            onClick={() => { setOpen(false); navigate('/terms'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <FileText className="w-5 h-5 text-amber-400 shrink-0" />
@@ -575,109 +547,6 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
         </div>
       )}
 
-    {/* Contact Admin Dialog */}
-    <Dialog open={contactOpen} onOpenChange={setContactOpen}>
-      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="text-amber-100 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-amber-400" />
-            {t('contact.dialogTitle')}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 mt-2">
-          <div>
-            <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {t('contact.emailLabel')}
-              <span className="text-red-400 ml-1">*</span>
-            </label>
-            <Input
-              type="email"
-              value={contactEmail}
-              onChange={(e) => setContactEmail(e.target.value)}
-              placeholder={t('contact.emailPlaceholder')}
-              className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30"
-            />
-          </div>
-          <div>
-            <label className="text-xs text-amber-200/60 mb-1.5 block">
-              {t('contact.messageLabel')}
-              <span className="text-red-400 ml-1">*</span>
-            </label>
-            <Textarea
-              value={contactMessage}
-              onChange={(e) => setContactMessage(e.target.value)}
-              placeholder={t('contact.messagePlaceholder')}
-              rows={5}
-              maxLength={2000}
-              className="bg-[#0a1628] border-amber-700/30 text-amber-100 placeholder-amber-200/30 resize-none"
-            />
-            <p className="text-xs text-amber-200/30 text-right mt-1">{contactMessage.length}/2000</p>
-          </div>
-        </div>
-        <DialogFooter className="mt-2 gap-2">
-          <Button
-            variant="outline"
-            onClick={() => setContactOpen(false)}
-            className="border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100 bg-transparent"
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button
-            onClick={handleSendContact}
-            disabled={sendContactMutation.isPending}
-            className="bg-amber-600 hover:bg-amber-500 text-white"
-          >
-            {sendContactMutation.isPending ? t('contact.sending') : t('contact.sendButton')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    {/* Privacy Policy in-app dialog */}
-    <Dialog open={privacyOpen} onOpenChange={setPrivacyOpen}>
-      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-lg w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-4 py-3 border-b border-amber-700/20 shrink-0">
-          <DialogTitle className="text-amber-100 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-amber-400" />
-            {t('settings.privacyPolicy')}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="overflow-y-auto flex-1 px-4 py-4 prose prose-invert prose-sm max-w-none space-y-4 text-amber-100/80">
-          <PrivacyPolicyContent locale={locale} />
-        </div>
-        <div className="px-4 py-3 border-t border-amber-700/20 shrink-0">
-          <Button
-            onClick={() => setPrivacyOpen(false)}
-            className="w-full bg-amber-600 hover:bg-amber-500 text-white"
-          >
-            {t('common.close') || 'Закрыть'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-
-    {/* Terms of Service in-app dialog */}
-    <Dialog open={termsOpen} onOpenChange={setTermsOpen}>
-      <DialogContent className="bg-[#0f2035] border border-amber-700/30 text-amber-100 max-w-lg w-[95vw] max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="px-4 py-3 border-b border-amber-700/20 shrink-0">
-          <DialogTitle className="text-amber-100 flex items-center gap-2">
-            <FileText className="w-4 h-4 text-amber-400" />
-            {t('terms.title')}
-          </DialogTitle>
-        </DialogHeader>
-        <div className="overflow-y-auto flex-1 px-4 py-4 prose prose-invert prose-sm max-w-none space-y-4 text-amber-100/80">
-          <TermsOfServiceContent locale={locale} />
-        </div>
-        <div className="px-4 py-3 border-t border-amber-700/20 shrink-0">
-          <Button
-            onClick={() => setTermsOpen(false)}
-            className="w-full bg-amber-600 hover:bg-amber-500 text-white"
-          >
-            {t('common.close') || 'Закрыть'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
     </>
   );
 }

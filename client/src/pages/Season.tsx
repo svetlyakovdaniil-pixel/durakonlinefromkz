@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
@@ -568,6 +569,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const { t, locale } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'leaderboard' | 'ranks'>('info');
   const [rewardPopupKey, setRewardPopupKey] = useState<string | null>(null);
+  const [, navigate] = useLocation();
   const [showRulesDialog, setShowRulesDialog] = useState(false);
 
   // Support admin test season: read from DB (season_test_state) - works across page reloads and devices
@@ -644,7 +646,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
             </div>
             <div className="flex items-center gap-1">
               <button
-                onClick={() => setShowRulesDialog(true)}
+                onClick={() => navigate('/season-rules')}
                 className="text-white/50 hover:text-white transition-colors p-1"
                 title={t('season.rulesButton')}
               >
