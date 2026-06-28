@@ -3670,3 +3670,12 @@
 - [x] Fix 3: Fix IAP purchase error — PremiumModal uses absolute URL + Bearer token for native iOS; tenge IAP uses tRPC
 - [x] Fix 4: Remove 1-ad-per-hour limit for rewarded ads (server + client)
 - [x] Fix 5: Fix rewarded ads not showing — AdMob button always active on native; ad loads on demand with graceful error handling
+
+## Build 75 — Full-screen pages for Privacy/Terms/Contact/SeasonRules
+- [x] Create PrivacyPage.tsx as full-screen page with Back button (route /privacy)
+- [x] Create TermsPage.tsx as full-screen page with Back button (route /terms)
+- [x] Create ContactPage.tsx as full-screen page with contact form (route /contact)
+- [x] Create SeasonRulesPage.tsx as full-screen page with season rules (route /season-rules)
+- [x] Wire routes in Home.tsx for /privacy, /terms, /contact, /season-rules
+- [x] Update SettingsSheet.tsx: replace Dialog open state with navigate() calls
+- [x] Update Season.tsx: replace setShowRulesDialog(true) with navigate('/season-rules')
