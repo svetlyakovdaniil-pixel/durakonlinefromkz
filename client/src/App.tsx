@@ -24,6 +24,8 @@ import Home from "./pages/Home";
 import AdminPanel from "./pages/AdminPanel";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import ContactPage from "./pages/ContactPage";
+import SeasonRulesPage from "./pages/SeasonRulesPage";
 import DemoGame from "./pages/DemoGame";
 import ProfilePage from "./pages/ProfilePage";
 import Login from "./pages/Login";
@@ -43,6 +45,8 @@ function Router() {
       <Route path={"/404"} component={NotFound} />
       <Route path={"/demo-game"} component={DemoGame} />
       <Route path={"/profile"} component={ProfilePage} />
+      <Route path={"/contact"}>{() => <ContactPage backPath="/" />}</Route>
+      <Route path={"/season-rules"}>{() => <SeasonRulesPage backPath="/" />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

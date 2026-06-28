@@ -9,7 +9,7 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border">
+      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border safe-top">
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => setLocation('/')}
