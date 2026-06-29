@@ -38,3 +38,22 @@ export function useOrientation(): Orientation {
 export function useIsLandscape(): boolean {
   return useOrientation() === "landscape";
 }
+
+/**
+ * Returns true when the device is a tablet (iPad) — screen width >= 768px.
+ * Used to apply tablet-specific layout adaptations.
+ */
+export function useIsTablet(): boolean {
+  const [isTablet, setIsTablet] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth >= 768;
+  });
+
+  useEffect(() => {
+    const handler = () => setIsTablet(window.innerWidth >= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+
+  return isTablet;
+}

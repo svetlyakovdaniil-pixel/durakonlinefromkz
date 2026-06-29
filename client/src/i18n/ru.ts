@@ -510,6 +510,13 @@ export const ru = {
     draw: 'Ничья',
     humanGames: 'Игры с людьми',
     games: 'Игры',
+    deleteAccount: 'Удалить аккаунт',
+    deleteAccountConfirmTitle: 'Удалить аккаунт?',
+    deleteAccountConfirmText: 'Это действие необратимо. Все ваши данные, прогресс и покупки будут безвозвратно удалены.',
+    deleteAccountConfirm: 'Удалить навсегда',
+    deleteAccountCancel: 'Отмена',
+    deleteAccountSuccess: 'Аккаунт удалён',
+    deleteAccountError: 'Ошибка при удалении аккаунта',
   },
 
   // Shop

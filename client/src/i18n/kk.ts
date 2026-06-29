@@ -508,6 +508,13 @@ export const kk = {
     draw: 'Тең',
     humanGames: 'Адамдармен ойындар',
     games: 'Ойындар',
+    deleteAccount: 'Аккаунтты жою',
+    deleteAccountConfirmTitle: 'Аккаунтты жою?',
+    deleteAccountConfirmText: 'Бұл әрекетті болдырмау мүмкін емес. Барлық деректеріңіз, прогресіңіз және сатып алуларыңыз біржола жойылады.',
+    deleteAccountConfirm: 'Мәңгілікке жою',
+    deleteAccountCancel: 'Болдырмау',
+    deleteAccountSuccess: 'Аккаунт жойылды',
+    deleteAccountError: 'Аккаунтты жою қатесі',
   },
 
   // Shop

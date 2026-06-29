@@ -512,6 +512,13 @@ export const uk = {
     draw: 'Нічия',
     humanGames: 'Ігри з людьми',
     games: 'Ігри',
+    deleteAccount: 'Видалити акаунт',
+    deleteAccountConfirmTitle: 'Видалити акаунт?',
+    deleteAccountConfirmText: 'Ця дія незворотна. Усі ваші дані, прогрес і покупки будуть видалені назавжди.',
+    deleteAccountConfirm: 'Видалити назавжди',
+    deleteAccountCancel: 'Скасувати',
+    deleteAccountSuccess: 'Акаунт видалено',
+    deleteAccountError: 'Помилка при видаленні акаунту',
   },
 
   // Shop

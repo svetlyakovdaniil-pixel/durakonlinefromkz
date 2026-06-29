@@ -512,6 +512,13 @@ export const pl = {
     draw: 'Remis',
     humanGames: 'Gry z ludźmi',
     games: 'Gry',
+    deleteAccount: 'Usuń konto',
+    deleteAccountConfirmTitle: 'Usuń konto?',
+    deleteAccountConfirmText: 'Ta akcja jest nieodwracalna. Wszystkie Twoje dane, postępy i zakupy zostaną trwale usunięte.',
+    deleteAccountConfirm: 'Usuń na stałe',
+    deleteAccountCancel: 'Anuluj',
+    deleteAccountSuccess: 'Konto usunięte',
+    deleteAccountError: 'Błąd podczas usuwania konta',
   },
 
   // Shop

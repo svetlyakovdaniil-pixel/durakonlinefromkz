@@ -30,7 +30,7 @@ import TutorialStepDisplay from './TutorialStepDisplay';
 import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
 import { hapticError } from '@/lib/haptics';
-import { useIsLandscape } from '@/hooks/useOrientation';
+import { useIsLandscape, useIsTablet } from '@/hooks/useOrientation';
 import { getAssetUrl } from '@/lib/assetUrl';
 
 // Native-safe asset URL wrappers (prepend production server URL on iOS/Android)
@@ -565,6 +565,7 @@ export default function GameTable({
   const blurClass = gameSettings.batterySaverEnabled ? '' : 'backdrop-blur-md';
   // Landscape orientation detection for adaptive layout
   const isLandscape = useIsLandscape();
+  const isTablet = useIsTablet();
   // Drop zone highlight
   const [dropZoneHighlight, setDropZoneHighlight] = useState(false);
 
@@ -1717,7 +1718,7 @@ export default function GameTable({
         {/* Main game area */}
         <div className={`flex-1 flex relative min-h-0${isTutorial ? ' overflow-visible' : ' overflow-hidden'}`}>
           {/* LEFT PANEL — Timer + Discard pile — DESKTOP ONLY (also shown in landscape mobile) */}
-          <div className={`${isLandscape ? 'flex landscape-left-panel' : 'hidden sm:flex'} flex-col justify-start items-center ${isLandscape ? 'w-16' : 'w-36 md:w-44'} py-4 px-2 gap-4`}>
+          <div className={`${isLandscape ? 'flex landscape-left-panel' : 'hidden sm:flex'} flex-col justify-start items-center ${isLandscape ? 'w-16' : isTablet ? 'w-28' : 'w-36 md:w-44'} py-4 px-2 gap-4`}>
             <TurnTimerDesktop seconds={turnTimer} secLabel={t('game.sec')} />
 
             {gs.discardCount > 0 && (
@@ -1802,7 +1803,7 @@ export default function GameTable({
           </div>
 
           {/* RIGHT PANEL — Decks — DESKTOP ONLY (also shown in landscape mobile) */}
-          <div data-tutorial="deck-area" className={`${isLandscape ? 'flex landscape-right-panel' : 'hidden sm:flex'} flex-col justify-center items-center ${isLandscape ? 'w-20' : 'w-44 md:w-52'} py-4 px-2 gap-3`}>
+          <div data-tutorial="deck-area" className={`${isLandscape ? 'flex landscape-right-panel' : 'hidden sm:flex'} flex-col justify-center items-center ${isLandscape ? 'w-20' : isTablet ? 'w-36' : 'w-44 md:w-52'} py-4 px-2 gap-3`}>
             {bothDecksEmpty ? (
               <TrumpIcon suit={gs.trumpInfo.currentTrump} size="large" label={t('game.trumpSuit')} />
             ) : (

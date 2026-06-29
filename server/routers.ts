@@ -106,6 +106,7 @@ import {
   purchaseEmotionPack,
   setActiveEmotionPack,
   getOwnedEmotionPacks,
+  deletePlayerAccount,
 } from "./db";
 import { getAchievementsForProfile, incrementAchievementProgress, claimAchievementReward, getUnclaimedAchievementCount, forceRecalculateManyFaces, retroactiveRecalcAllAchievements } from "./achievementsDb";
 import { getOrCreateSeasonRating, getSeasonLeaderboard, getPlayerSeasonRating, processSeasonEnd, getUnclaimedSeasonRewards, claimSeasonReward } from "./db.season";
@@ -193,6 +194,18 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    /** Permanently delete the current user's account and all associated data */
+    deleteAccount: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const result = await deletePlayerAccount(ctx.user.id);
+        if (!result.success) {
+          throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: result.reason ?? 'Failed to delete account' });
+        }
+        // Clear session cookie
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+        return { success: true };
+      }),
   }),
 
   // ============================================================

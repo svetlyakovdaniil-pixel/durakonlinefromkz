@@ -3684,3 +3684,10 @@
 - [x] Add result field (win/loss/draw) to getPlayerGameHistory return based on isLoser/place
 - [x] Record forfeit (leaveGame via menu) in gameHistory so it shows as loss in match history
 - [x] Record disconnect/app-close forfeit in gameHistory as loss (freeze expiry handler)
+
+## App Store Rejection Fixes (Jun 29, 2026)
+- [ ] Fix 5.1.1(v): Add account deletion feature (server endpoint + UI in ProfilePage)
+- [ ] Fix 2.1(b): Submit all In-App Purchases for review in App Store Connect
+- [ ] Fix 3.1.2(c): Add Terms of Use link to App Store description metadata
+- [ ] Fix 4 (Design): Address iPad UI layout crowding issues
+- [ ] Build new binary (Build 80) and resubmit for App Store review

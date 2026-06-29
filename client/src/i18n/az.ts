@@ -512,6 +512,13 @@ export const az = {
     draw: 'Heç-heçə',
     humanGames: 'İnsanlarla oyunlar',
     games: 'Oyunlar',
+    deleteAccount: 'Hesabı sil',
+    deleteAccountConfirmTitle: 'Hesabı sil?',
+    deleteAccountConfirmText: 'Bu əməliyyat geri qaytarıla bilməz. Bütün məlumatlarınız, irəliləyişiniz və alışlarınız həmişəlik silinəcək.',
+    deleteAccountConfirm: 'Həmişəlik sil',
+    deleteAccountCancel: 'Ləğv et',
+    deleteAccountSuccess: 'Hesab silindi',
+    deleteAccountError: 'Hesabı silmə xətası',
   },
 
   // Shop

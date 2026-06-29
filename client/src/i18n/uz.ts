@@ -512,6 +512,13 @@ export const uz = {
     draw: 'Durrang',
     humanGames: "Odamlar bilan o'yinlar",
     games: "O'yinlar",
+    deleteAccount: "Hisobni o'chirish",
+    deleteAccountConfirmTitle: "Hisobni o'chirish?",
+    deleteAccountConfirmText: "Bu amalni ortga qaytarib bo'lmaydi. Barcha ma'lumotlaringiz, taraqqiyotingiz va xaridlaringiz butunlay o'chiriladi.",
+    deleteAccountConfirm: "Butunlay o'chirish",
+    deleteAccountCancel: "Bekor qilish",
+    deleteAccountSuccess: "Hisob o'chirildi",
+    deleteAccountError: "Hisobni o'chirishda xatolik",
   },
 
   // Shop

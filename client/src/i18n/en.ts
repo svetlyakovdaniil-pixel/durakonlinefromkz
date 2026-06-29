@@ -511,6 +511,13 @@ export const en = {
     draw: 'Draw',
     humanGames: 'Human Games',
     games: 'Games',
+    deleteAccount: 'Delete account',
+    deleteAccountConfirmTitle: 'Delete account?',
+    deleteAccountConfirmText: 'This action is irreversible. All your data, progress, and purchases will be permanently deleted.',
+    deleteAccountConfirm: 'Delete permanently',
+    deleteAccountCancel: 'Cancel',
+    deleteAccountSuccess: 'Account deleted',
+    deleteAccountError: 'Error deleting account',
   },
 
   // Shop

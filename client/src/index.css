@@ -815,3 +815,38 @@
 [data-slot="sheet-content"][data-state="open"] {
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 20px);
 }
+
+/* ─── iPad / Tablet Layout Adaptations (768px–1024px) ───────────────────────
+ * Apple Guideline 4 compliance: ensure the game UI is readable and usable
+ * on iPad Air 11-inch (M3) and similar tablets.
+ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  /* Opponent info cards: more padding */
+  [data-tutorial="opponent-info"] {
+    padding: 8px 10px !important;
+    min-width: 72px;
+  }
+
+  /* Avatar action row: larger on iPad */
+  .avatar-action-row {
+    min-height: 72px;
+    padding-bottom: 8px;
+  }
+
+  /* Player hand area: more padding */
+  .player-hand-area {
+    padding-top: 8px;
+    padding-bottom: 4px;
+  }
+
+  /* Battlefield scroll: more height available on iPad */
+  .battlefield-scroll.desktop-needs-scroll {
+    max-height: calc(100dvh - 280px);
+  }
+
+  /* Game buttons: larger touch targets on iPad */
+  .game-btn {
+    min-height: 44px;
+    font-size: 14px !important;
+  }
+}

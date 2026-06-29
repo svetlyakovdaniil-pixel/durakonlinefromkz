@@ -510,6 +510,13 @@ export const ka = {
     draw: 'ფრე',
     humanGames: 'თამაშები ადამიანებთან',
     games: 'თამაშები',
+    deleteAccount: 'ანგარიშის წაშლა',
+    deleteAccountConfirmTitle: 'ანგარიშის წაშლა?',
+    deleteAccountConfirmText: 'ეს მოქმედება შეუქცევადია. ყველა თქვენი მონაცემი, პროგრესი და შენაძენი სამუდამოდ წაიშლება.',
+    deleteAccountConfirm: 'სამუდამოდ წაშლა',
+    deleteAccountCancel: 'გაუქმება',
+    deleteAccountSuccess: 'ანგარიში წაშლილია',
+    deleteAccountError: 'ანგარიშის წაშლის შეცდომა',
   },
 
   // Shop

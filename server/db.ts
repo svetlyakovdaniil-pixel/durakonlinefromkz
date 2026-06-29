@@ -4169,3 +4169,49 @@ export async function saveGhostStrategyProfile(
     console.error('[Ghost] saveGhostStrategyProfile error:', e);
   }
 }
+
+/**
+ * Permanently delete a player account and all associated data.
+ * Required by App Store Guideline 5.1.1(v).
+ */
+export async function deletePlayerAccount(userId: number): Promise<{ success: boolean; reason?: string }> {
+  const db = await getDb();
+  if (!db) return { success: false, reason: 'Database not available' };
+
+  try {
+    // Find the player profile
+    const [profile] = await db.select({ id: playerProfiles.id })
+      .from(playerProfiles)
+      .where(eq(playerProfiles.userId, userId))
+      .limit(1);
+
+    if (profile) {
+      const profileId = profile.id;
+
+      // Delete all profile-related data
+      await db.delete(friendships).where(
+        or(eq(friendships.senderId, profileId), eq(friendships.receiverId, profileId))
+      );
+      await db.delete(notifications).where(eq(notifications.profileId, profileId));
+      await db.delete(transactions).where(eq(transactions.profileId, profileId));
+      await db.delete(userAchievements).where(eq(userAchievements.profileId, profileId));
+      await db.delete(userDailyQuests).where(eq(userDailyQuests.profileId, profileId));
+      await db.delete(seasonRatings).where(eq(seasonRatings.profileId, profileId));
+      await db.delete(seasonRewards).where(eq(seasonRewards.profileId, profileId));
+      await db.delete(iapTransactions).where(eq(iapTransactions.profileId, profileId));
+      await db.delete(referrals).where(
+        or(eq(referrals.referrerId, profileId), eq(referrals.referredId, profileId))
+      );
+      await db.delete(playerProfiles).where(eq(playerProfiles.id, profileId));
+    }
+
+    // Delete user credentials and the user record
+    await db.delete(userCredentials).where(eq(userCredentials.userId, userId));
+    await db.delete(users).where(eq(users.id, userId));
+
+    return { success: true };
+  } catch (e) {
+    console.error('[deletePlayerAccount] Error:', e);
+    return { success: false, reason: 'Internal error during account deletion' };
+  }
+}
