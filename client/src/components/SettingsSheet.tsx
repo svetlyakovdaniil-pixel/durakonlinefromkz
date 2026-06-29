@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+
 import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
@@ -37,6 +37,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   // Push notification settings
   const { data: pushSettings, refetch: refetchPushSettings } = trpc.push.getSettings.useQuery(undefined, { enabled: open });
@@ -338,85 +339,44 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           </label>
 
           {/* 6. Language */}
-          <div className="flex items-center justify-between bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
-            <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
-              <Globe className="w-4 h-4 text-amber-400" />
-              {t('settings.language')}
-            </span>
-            <Popover open={langOpen} onOpenChange={setLangOpen}>
-              <PopoverTrigger asChild>
-                <button className="flex items-center gap-2 text-sm text-amber-100 hover:text-amber-300 transition-colors bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
-                  <span className="text-base">{t('settings.langFlag')}</span>
-                  {t('settings.langName')}
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="bg-[#1a2d45] border-amber-700/30 w-48 p-2" align="end">
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('ru'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇷🇺</span>
-                  Русский
-                  {locale === 'ru' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('kk'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇰🇿</span>
-                  Қазақша
-                  {locale === 'kk' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('en'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇬🇧</span>
-                  English
-                  {locale === 'en' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('uk'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇺🇦</span>
-                  Українська
-                  {locale === 'uk' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('ka'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇬🇪</span>
-                  ქართული
-                  {locale === 'ka' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('az'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇦🇿</span>
-                  Azərbaycanca
-                  {locale === 'az' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('uz'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇺🇿</span>
-                  O'zbekcha
-                  {locale === 'uz' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-                <button
-                  className="flex items-center gap-2 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-3 py-2 rounded-lg transition-colors"
-                  onClick={() => { setLocale('pl'); setLangOpen(false); }}
-                >
-                  <span className="text-base">🇵🇱</span>
-                  Polski
-                  {locale === 'pl' && <Check className="w-4 h-4 text-green-400 ml-auto" />}
-                </button>
-              </PopoverContent>
-            </Popover>
+          <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
+            <button
+              className="flex items-center justify-between w-full"
+              onClick={() => setLangOpen(v => !v)}
+            >
+              <span className="text-sm font-semibold text-amber-200/80 flex items-center gap-2">
+                <Globe className="w-4 h-4 text-amber-400" />
+                {t('settings.language')}
+              </span>
+              <span className="flex items-center gap-2 text-sm text-amber-100 bg-[#0a1628] px-3 py-1.5 rounded-lg border border-amber-700/30">
+                <span className="text-base">{t('settings.langFlag')}</span>
+                {t('settings.langName')}
+              </span>
+            </button>
+            {langOpen && (
+              <div className="mt-3 rounded-xl overflow-hidden border border-amber-700/20">
+                {([
+                  { code: 'ru', flag: '🇷🇺', name: 'Русский' },
+                  { code: 'kk', flag: '🇰🇿', name: 'Қазақша' },
+                  { code: 'en', flag: '🇬🇧', name: 'English' },
+                  { code: 'uk', flag: '🇺🇦', name: 'Українська' },
+                  { code: 'ka', flag: '🇬🇪', name: 'ქართული' },
+                  { code: 'az', flag: '🇦🇿', name: 'Azərbaycanca' },
+                  { code: 'uz', flag: '🇺🇿', name: "O'zbekcha" },
+                  { code: 'pl', flag: '🇵🇱', name: 'Polski' },
+                ] as const).map(({ code, flag, name }) => (
+                  <button
+                    key={code}
+                    className="flex items-center gap-3 w-full text-sm text-amber-100 hover:bg-amber-700/20 px-4 py-3 transition-colors border-b border-amber-700/10 last:border-b-0"
+                    onClick={() => { setLocale(code); setLangOpen(false); }}
+                  >
+                    <span className="text-base">{flag}</span>
+                    <span className="flex-1 text-left">{name}</span>
+                    {locale === code && <Check className="w-4 h-4 text-green-400" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 7. Contact admin */}
@@ -501,33 +461,35 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
           )}
 
           {/* 10. Logout */}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-12 mb-2">
-                <LogOut className="w-4 h-4" />
-                {t('settings.logout')}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-md">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-amber-100">{t('settings.logoutConfirm')}</AlertDialogTitle>
-                <AlertDialogDescription className="text-amber-200/60">
-                  {t('settings.logoutDesc')}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="bg-[#0a1628] border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100">
+          {!logoutConfirmOpen ? (
+            <Button
+              className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-12 mb-2"
+              onClick={() => setLogoutConfirmOpen(true)}
+            >
+              <LogOut className="w-4 h-4" />
+              {t('settings.logout')}
+            </Button>
+          ) : (
+            <div className="bg-[#1a2d45] rounded-xl p-4 border border-red-700/40 mb-2">
+              <p className="text-amber-100 font-semibold text-sm mb-1">{t('settings.logoutConfirm')}</p>
+              <p className="text-amber-200/60 text-xs mb-4">{t('settings.logoutDesc')}</p>
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1 bg-[#0a1628] border border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100"
+                  variant="outline"
+                  onClick={() => setLogoutConfirmOpen(false)}
+                >
                   {t('common.cancel')}
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-red-700 hover:bg-red-600 text-white"
-                  onClick={onLogout}
+                </Button>
+                <Button
+                  className="flex-1 bg-red-700 hover:bg-red-600 text-white"
+                  onClick={() => { setLogoutConfirmOpen(false); onLogout(); }}
                 >
                   {t('common.yes')}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
             {/* Close button at bottom */}
