@@ -110,7 +110,7 @@ function RewardPopup({
   return (
     <>
 
-      <div className="fixed inset-0 z-[60] flex items-center justify-center">
+      <div className="fixed inset-0 z-[10001] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
         <div
           className="relative w-[min(340px,90vw)] rounded-2xl p-5 flex flex-col gap-4"
@@ -1206,7 +1206,7 @@ export default function SeasonPage({ open, onClose }: SeasonPageProps) {
 
       {/* Season Rules Dialog */}
       {showRulesDialog && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center">
+        <div className="fixed inset-0 z-[10002] flex items-center justify-center">
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowRulesDialog(false)} />
           <div
             className="relative w-[min(480px,95vw)] max-h-[88dvh] rounded-2xl flex flex-col overflow-hidden"
