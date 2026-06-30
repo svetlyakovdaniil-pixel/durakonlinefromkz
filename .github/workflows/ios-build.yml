@@ -215,6 +215,7 @@ jobs:
             cp -r ios/App/App/*.lproj /tmp/ 2>/dev/null || true
             cp ios/App/App/Info.plist /tmp/Info.plist || true
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
+            cp ios/App/App/AppRelease.entitlements /tmp/AppRelease.entitlements 2>/dev/null || true
             rm -rf ios
             npx cap add ios
             cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
@@ -223,6 +224,7 @@ jobs:
             done
             cp /tmp/Info.plist ios/App/App/Info.plist || true
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
+            cp /tmp/AppRelease.entitlements ios/App/App/AppRelease.entitlements 2>/dev/null || true
           fi
           npx cap sync ios
 

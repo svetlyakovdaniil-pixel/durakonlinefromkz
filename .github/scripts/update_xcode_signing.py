@@ -17,6 +17,16 @@ content = re.sub(r'PRODUCT_BUNDLE_IDENTIFIER = [^;]+;',
 content = re.sub(r'DEVELOPMENT_TEAM = [^;]*;',
                  f'DEVELOPMENT_TEAM = {team_id};', content)
 
+# Add CODE_SIGN_ENTITLEMENTS to link AppRelease.entitlements (required for Sign in with Apple)
+# Remove any existing CODE_SIGN_ENTITLEMENTS first, then re-add after PRODUCT_BUNDLE_IDENTIFIER
+content = re.sub(r'\s*CODE_SIGN_ENTITLEMENTS = [^;]*;', '', content)
+content = re.sub(
+    r'(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)',
+    r'\1\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;',
+    content
+)
+print("CODE_SIGN_ENTITLEMENTS set to App/AppRelease.entitlements")
+
 if profile_uuid:
     print(f"Using Manual signing with profile UUID: {profile_uuid}")
     content = re.sub(r'CODE_SIGN_STYLE = [^;]+;', 'CODE_SIGN_STYLE = Manual;', content)
@@ -25,7 +35,7 @@ if profile_uuid:
     content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
     specifier = profile_name if profile_name else profile_uuid
     content = re.sub(
-        r'(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)',
+        r'(CODE_SIGN_ENTITLEMENTS = App/AppRelease\.entitlements;)',
         f'\\1\n\t\t\t\tPROVISIONING_PROFILE_SPECIFIER = "{specifier}";\n\t\t\t\tPROVISIONING_PROFILE = "{profile_uuid}";',
         content
     )
