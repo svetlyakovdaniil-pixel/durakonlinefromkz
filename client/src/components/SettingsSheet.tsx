@@ -5,10 +5,9 @@ import { getAssetUrl } from '@/lib/assetUrl';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell, ChevronDown } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -37,6 +36,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
+  const [playlistOpen, setPlaylistOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
 
   // Push notification settings
@@ -287,29 +287,53 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
               />
             </label>
 
-            {/* Playlist selector — always visible when music section is shown */}
-            {ownedPlaylists.length > 0 && (
-              <div className="mt-2">
-                <span className="text-xs text-amber-200/50 mb-1.5 block">
-                  {t('settings.playlist')}
+            {/* Playlist selector — custom inline dropdown to avoid z-index portal issues */}
+            <div className="mt-2 relative">
+              <span className="text-xs text-amber-200/50 mb-1.5 block">
+                {t('settings.playlist')}
+              </span>
+              {/* Trigger button */}
+              <button
+                type="button"
+                className="w-full flex items-center justify-between bg-[#0a1628] border border-amber-700/30 text-amber-100 h-9 text-sm px-3 rounded-md"
+                onClick={() => setPlaylistOpen(v => !v)}
+              >
+                <span>
+                  {selectedPlaylistId === 'default'
+                    ? t('settings.classicMusic')
+                    : (() => {
+                        const pl = ownedPlaylists.find((p: any) => String(p.id) === selectedPlaylistId);
+                        return pl ? (locale === 'kk' && pl.nameKk ? pl.nameKk : pl.name) : t('settings.classicMusic');
+                      })()
+                  }
                 </span>
-                <Select value={selectedPlaylistId} onValueChange={handlePlaylistChange}>
-                  <SelectTrigger className="bg-[#0a1628] border-amber-700/30 text-amber-100 h-9 text-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-[#1a2d45] border-amber-700/30">
-                    <SelectItem value="default" className="text-amber-100 text-sm">
-                      {t('settings.classicMusic')} {/* RU: Классический, KK: Классикалық */}
-                    </SelectItem>
-                    {ownedPlaylists.map((p: any) => (
-                      <SelectItem key={p.id} value={String(p.id)} className="text-amber-100 text-sm">
-                        {locale === 'kk' && p.nameKk ? p.nameKk : p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                <ChevronDown className="w-4 h-4 opacity-50" />
+              </button>
+              {/* Inline dropdown */}
+              {playlistOpen && (
+                <div className="absolute left-0 right-0 top-full mt-1 rounded-xl overflow-hidden border border-amber-700/20 bg-[#1a2d45]" style={{ zIndex: 10001 }}>
+                  <button
+                    type="button"
+                    className={`flex items-center justify-between w-full text-sm text-amber-100 hover:bg-amber-700/20 px-4 py-3 transition-colors border-b border-amber-700/10`}
+                    onClick={() => { handlePlaylistChange('default'); setPlaylistOpen(false); }}
+                  >
+                    <span>{t('settings.classicMusic')}</span>
+                    {selectedPlaylistId === 'default' && <Check className="w-4 h-4 text-green-400" />}
+                  </button>
+                  {ownedPlaylists.map((p: any) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      className="flex items-center justify-between w-full text-sm text-amber-100 hover:bg-amber-700/20 px-4 py-3 transition-colors border-b border-amber-700/10 last:border-b-0"
+                      onClick={() => { handlePlaylistChange(String(p.id)); setPlaylistOpen(false); }}
+                    >
+                      <span>{locale === 'kk' && p.nameKk ? p.nameKk : p.name}</span>
+                      {selectedPlaylistId === String(p.id) && <Check className="w-4 h-4 text-green-400" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 4. Vibration */}
