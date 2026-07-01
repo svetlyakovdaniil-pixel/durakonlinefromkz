@@ -24,6 +24,7 @@ import { ObsidianHiphopFrame } from '@/components/ObsidianHiphopFrame';
 import { ObsidianAngelsDemonsFrame } from '@/components/ObsidianAngelsDemonsFrame';
 import { PlayerAvatar } from '@/components/PlayerAvatar';
 import { useState as useLocalState } from 'react';
+import ReactDOM from 'react-dom';
 import { getAssetUrl } from '@/lib/assetUrl';
 
 interface SeasonPageProps {
@@ -107,9 +108,8 @@ function RewardPopup({
   const _ac = getAvatarAccentColors(seasonAvatarId);
   const avatarAccent = { bg: _ac.bgClass, border: _ac.borderClass, text: _ac.textClass, hover: _ac.hoverClass };
 
-  return (
+  return ReactDOM.createPortal(
     <>
-
       <div className="fixed inset-0 z-[10001] flex items-center justify-center">
         <div className="absolute inset-0 bg-black/60" onClick={onClose} />
         <div
@@ -560,10 +560,10 @@ function RewardPopup({
           </div>
         </div>
       </div>
-    </>
+    </>,
+    document.body
   );
 }
-
 export default function SeasonPage({ open, onClose }: SeasonPageProps) {
   const { user } = useAuth();
   const { t, locale } = useTranslation();

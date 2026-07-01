@@ -3691,3 +3691,8 @@
 - [ ] Fix 3.1.2(c): Add Terms of Use link to App Store description metadata
 - [ ] Fix 4 (Design): Address iPad UI layout crowding issues
 - [ ] Build new binary (Build 80) and resubmit for App Store review
+
+## Исправление кнопки "Награда" в сезоне (Jul 2026)
+- [x] Кнопка "Награда" у рангов в сезоне не работала на iOS — попап не появлялся
+- [x] Причина: RewardPopup рендерился внутри fixed div с zIndex:9999, iOS WebView создаёт новый stacking context
+- [x] Исправление: ReactDOM.createPortal для рендеринга RewardPopup прямо в document.body
