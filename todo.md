@@ -3696,3 +3696,8 @@
 - [x] Кнопка "Награда" у рангов в сезоне не работала на iOS — попап не появлялся
 - [x] Причина: RewardPopup рендерился внутри fixed div с zIndex:9999, iOS WebView создаёт новый stacking context
 - [x] Исправление: ReactDOM.createPortal для рендеринга RewardPopup прямо в document.body
+
+## Keep-alive для предотвращения cold start (Jul 2026)
+- [ ] Добавить /api/scheduled/keepalive эндпоинт на сервере
+- [ ] Создать Manus Heartbeat задачу каждые 5 минут для пинга сервера
+- [ ] Задеплоить изменения и убедиться что сервер отвечает быстро

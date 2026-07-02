@@ -196,6 +196,12 @@ async function startServer() {
 
   console.log('[Cron] Push notification cron jobs scheduled');
 
+  // Keep-alive endpoint: called by Manus Heartbeat every 5 minutes to prevent cold starts
+  // This ensures the server is always warm when Apple reviewers or real users connect
+  app.post("/api/scheduled/keepalive", (_req, res) => {
+    res.json({ ok: true, ts: Date.now() });
+  });
+
   // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);

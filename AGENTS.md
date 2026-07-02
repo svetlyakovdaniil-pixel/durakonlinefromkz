@@ -36,11 +36,11 @@
    ```bash
    GH_TOKEN=<token> gh workflow run ios-build.yml \
      --repo svetlyakovdaniil-pixel/durakonlinefromkz \
-     -f version=1.0.68 \
+     -f version=1.0.69 \  # ALWAYS use latest marketing version from ASC!
      -f build_number=<NEXT_NUMBER>
    ```
-   - `version` = `1.0.68` (marketing version, keep this constant)
-   - `build_number` = increment from last successful TestFlight build (check with user)
+      - `version` = **MUST match the latest marketing version in ASC** (check with `/v1/preReleaseVersions?filter[app]=APP_ID&sort=-version&limit=1`)
+   - `build_number` = increment from last build in ASC (check with `/v1/builds?filter[app]=APP_ID&sort=-uploadedDate&limit=1`)
 
 5. **Wait ~6 minutes for build to complete, then verify:**
    ```bash
@@ -66,6 +66,14 @@
 - Build 77: First correct upload with all fixes (version 1.0.68, safe-top + routes)
 - Build 78: Match history fix — early exit records as loss
 - Build 79: Firebase iOS SDK added — push notifications now use FCM tokens
+- Build 83: Fix Sign in with Apple on iPad (CODE_SIGN_ENTITLEMENTS) — version 1.0.69 ✓
+- Build 84: WRONG — used version 1.0.68, did NOT appear in TestFlight ✗
+- Build 85: Fix season reward button (ReactDOM.createPortal) — version 1.0.69 ✓ (CORRECT WAY)
+
+## ⚠️ CRITICAL RULE: TestFlight Version Matching
+Build MUST use the SAME marketing version as the previous builds in TestFlight.
+If latest TestFlight shows v1.0.69 → new build MUST also use version=1.0.69.
+Using a lower version (e.g., 1.0.68) causes the build to go to a different version group and NOT appear in TestFlight.
 
 ## Project Structure Notes
 
