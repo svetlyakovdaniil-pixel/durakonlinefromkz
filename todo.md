@@ -3701,3 +3701,13 @@
 - [ ] Добавить /api/scheduled/keepalive эндпоинт на сервере
 - [ ] Создать Manus Heartbeat задачу каждые 5 минут для пинга сервера
 - [ ] Задеплоить изменения и убедиться что сервер отвечает быстро
+
+## Fix: Cold-start timeout causing Apple review failures (Build 86)
+- [x] Add /api/health GET endpoint for server warm-up
+- [x] Add /api/scheduled/keepalive POST endpoint for Heartbeat pings
+- [x] Add server warm-up fetch on Login page mount (fire-and-forget)
+- [x] Add 20s AbortController timeout to email login fetch
+- [x] Add 20s AbortController timeout to Apple Sign In init fetch
+- [ ] Set up Manus Heartbeat cron to ping /api/scheduled/keepalive every 5 minutes
+- [ ] Build 86 via GitHub Actions and attach to version 1.0.68
+- [ ] Resubmit to App Review

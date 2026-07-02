@@ -196,6 +196,12 @@ async function startServer() {
 
   console.log('[Cron] Push notification cron jobs scheduled');
 
+  // Health check endpoint — used by Login page to warm up the server on mount
+  // Also used by Manus Heartbeat keep-alive pings
+  app.get("/api/health", (_req, res) => {
+    res.json({ ok: true, ts: Date.now() });
+  });
+
   // Keep-alive endpoint: called by Manus Heartbeat every 5 minutes to prevent cold starts
   // This ensures the server is always warm when Apple reviewers or real users connect
   app.post("/api/scheduled/keepalive", (_req, res) => {

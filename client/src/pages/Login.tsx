@@ -34,6 +34,14 @@ export default function Login() {
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Warm up the server as soon as Login page mounts.
+  // This prevents cold-start delays (8+ seconds) when the user taps a login button.
+  useEffect(() => {
+    const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+    // Fire-and-forget: wake the server, ignore errors
+    fetch(`${apiBase}/api/health`, { method: "GET" }).catch(() => {});
+  }, []);
+
   // Listen for browserFinished to clear loading state when user cancels OAuth
   // (deep link success/error handling is done globally in App.tsx DeepLinkHandler)
   useEffect(() => {
@@ -78,12 +86,20 @@ export default function Login() {
     setLoading(true);
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
-      const res = await fetch(`${apiBase}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-        credentials: "include",
-      });
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s timeout
+      let res: Response;
+      try {
+        res = await fetch(`${apiBase}/api/auth/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+          credentials: "include",
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       const data = await res.json();
 
@@ -139,9 +155,18 @@ export default function Login() {
     try {
       if (Capacitor.isNativePlatform()) {
         // On native: get Apple auth URL then open in SFSafariViewController
-        const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`, {
-          credentials: "include",
-        });
+        const appleController = new AbortController();
+        const appleTimeout = setTimeout(() => appleController.abort(), 20000); // 20s timeout
+        let appleRes: Response;
+        try {
+          appleRes = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`, {
+            credentials: "include",
+            signal: appleController.signal,
+          });
+        } finally {
+          clearTimeout(appleTimeout);
+        }
+        const res = appleRes;
         if (!res.ok) {
           setError(t("auth.appleError"));
           setAppleLoading(false);
