@@ -301,7 +301,19 @@ export default function Home() {
     setActiveInvite(null);
   }, [declineInvite]);
 
-  if (loading) {
+  // Safety timeout: never show infinite spinner. If auth check takes >8s, treat as unauthenticated.
+  // This prevents Apple rejection for "no content appeared" on slow/blocked network.
+  const [loadingTimedOut, setLoadingTimedOut] = useState(false);
+  useEffect(() => {
+    if (!loading) {
+      setLoadingTimedOut(false);
+      return;
+    }
+    const timer = setTimeout(() => setLoadingTimedOut(true), 8000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  if (loading && !loadingTimedOut) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
@@ -309,7 +321,7 @@ export default function Home() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || loadingTimedOut) {
     return <LandingPage />;
   }
 

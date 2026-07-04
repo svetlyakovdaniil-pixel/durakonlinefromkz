@@ -110,16 +110,11 @@
 	</dict>
 
 	<!-- ── Capacitor: allowed navigation domains ─────────────────────────── -->
-	<!-- WKAppBoundDomains restricts which domains the WKWebView can navigate  -->
-	<!-- to. The production domain MUST be listed here so OAuth redirects      -->
-	<!-- (Google, Apple) work correctly when running as a native iOS app.      -->
-	<!-- Without this, the WebView cannot follow redirects to the server.      -->
-	<key>WKAppBoundDomains</key>
-	<array>
-		<string>localhost</string>
-		<string>durakonlinefromkz.online</string>
-		<string>www.durakonlinefromkz.online</string>
-	</array>
+	<!-- WKAppBoundDomains REMOVED: On iPadOS 26.5.2, this was causing network  -->
+	<!-- requests to be blocked/delayed in WKWebView, leading to infinite       -->
+	<!-- loading spinners. With CapacitorHttp enabled, all HTTP goes through    -->
+	<!-- native URLSession which doesn't need WKAppBoundDomains. OAuth redirects -->
+	<!-- use SFSafariViewController (not WKWebView) so they still work.         -->
 
 	<!-- ── Privacy: no camera/microphone/location needed ─────────────────── -->
 	<!-- Add these only if you add features that require them -->

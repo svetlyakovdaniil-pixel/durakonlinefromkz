@@ -16,8 +16,10 @@ export function useAuth(options?: UseAuthOptions) {
   const utils = trpc.useUtils();
 
   const meQuery = trpc.auth.me.useQuery(undefined, {
-    retry: false,
+    retry: 1, // Retry once on failure (network glitch on iOS WKWebView)
+    retryDelay: 2000, // Wait 2s before retry
     refetchOnWindowFocus: false,
+    gcTime: 5 * 60 * 1000, // 5 minutes - keep stale data available
   });
 
   const logoutMutation = trpc.auth.logout.useMutation({
