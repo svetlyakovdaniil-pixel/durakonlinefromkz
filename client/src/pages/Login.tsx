@@ -25,21 +25,16 @@ function getOAuthOrigin(): string {
 }
 
 /**
- * Safe fetch wrapper for native Capacitor platforms.
- * CapacitorHttp patches window.fetch to use native URLSession.
- * Known limitations of CapacitorHttp:
- *   - AbortController/signal is NOT supported (throws instead of aborting)
- *   - credentials: "include" may behave differently
- *   - response.ok may not be set correctly for all status codes
- * This wrapper handles these differences safely.
+ * Fetch with a manual timeout using Promise.race.
+ * Does NOT use AbortController (can cause issues on some iOS versions).
+ * Instead uses a timeout promise that rejects after the specified ms.
  */
-async function nativeFetch(url: string, options: RequestInit = {}): Promise<Response> {
-  if (Capacitor.isNativePlatform()) {
-    // Remove unsupported options for CapacitorHttp
-    const { signal: _signal, credentials: _credentials, ...safeOptions } = options;
-    return fetch(url, safeOptions);
-  }
-  return fetch(url, options);
+function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
+  const fetchPromise = fetch(url, options);
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+  return Promise.race([fetchPromise, timeoutPromise]);
 }
 
 export default function Login() {
@@ -53,11 +48,11 @@ export default function Login() {
   const [error, setError] = useState("");
 
   // Warm up the server as soon as Login page mounts.
-  // This prevents cold-start delays (8+ seconds) when the user taps a login button.
+  // This prevents cold-start delays when the user taps a login button.
+  // Use a simple fetch without timeout — fire-and-forget.
   useEffect(() => {
     const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
-    // Fire-and-forget: wake the server, ignore errors
-    nativeFetch(`${apiBase}/api/health`, { method: "GET" }).catch(() => {});
+    fetch(`${apiBase}/api/health`, { method: "GET" }).catch(() => {});
   }, []);
 
   // Listen for browserFinished to clear loading state when user cancels OAuth
@@ -105,15 +100,18 @@ export default function Login() {
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
 
-      // IMPORTANT: Do NOT use AbortController/signal on native platforms.
-      // CapacitorHttp patches window.fetch and does NOT support AbortSignal.
-      // Passing signal causes the request to throw an error instead of completing.
-      const res = await nativeFetch(`${apiBase}/api/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), password }),
-        credentials: "include",
-      });
+      // Use fetchWithTimeout to prevent infinite loading.
+      // Promise.race with a 20-second timeout ensures the button never spins forever.
+      const res = await fetchWithTimeout(
+        `${apiBase}/api/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
+          credentials: "include",
+        },
+        20000
+      );
 
       let data: Record<string, unknown> = {};
       try {
@@ -124,10 +122,7 @@ export default function Login() {
         return;
       }
 
-      // Check status code directly — CapacitorHttp may not set res.ok correctly
-      // for all status codes on all iOS versions
-      const httpStatus = res.status;
-      if (httpStatus === 200 || res.ok) {
+      if (res.ok || res.status === 200) {
         // Success
         if (Capacitor.isNativePlatform() && data.token) {
           localStorage.setItem(NATIVE_TOKEN_KEY, data.token as string);
@@ -137,16 +132,22 @@ export default function Login() {
       }
 
       // Handle error responses
-      if (httpStatus === 401 || data.error === "invalid_credentials") {
+      if (res.status === 401 || data.error === "invalid_credentials") {
         setError(t("auth.invalidCredentials"));
-      } else if (httpStatus === 400) {
+      } else if (res.status === 400) {
         setError((data.message as string) || t("auth.invalidCredentials"));
       } else {
         setError(t("auth.serverError"));
       }
     } catch (err) {
       console.error('[Login] Email login error:', err);
-      setError(t("auth.serverError"));
+      // Show timeout message if it was a timeout, otherwise generic error
+      const errMsg = err instanceof Error ? err.message : '';
+      if (errMsg.includes('timed out')) {
+        setError(t("auth.serverError"));
+      } else {
+        setError(t("auth.serverError"));
+      }
     } finally {
       setLoading(false);
     }
@@ -158,15 +159,21 @@ export default function Login() {
 
     const origin = getOAuthOrigin();
 
-    if (Capacitor.isNativePlatform()) {
-      // On native: open SFSafariViewController (iOS) / Chrome Custom Tab (Android)
-      // Pass native=true so server redirects to durak:// URL scheme after auth
-      const authUrl = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}&native=true`;
-      await Browser.open({ url: authUrl, presentationStyle: "popover" });
-      // Loading state will be cleared when deep link callback fires
-    } else {
-      // On web: use server-side redirect flow
-      window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        // On native: open SFSafariViewController (iOS) / Chrome Custom Tab (Android)
+        // Pass native=true so server redirects to durak:// URL scheme after auth
+        const authUrl = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}&native=true`;
+        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+        // Loading state will be cleared when deep link callback fires or browser closes
+      } else {
+        // On web: use server-side redirect flow
+        window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
+      }
+    } catch (err) {
+      console.error('[GoogleAuth] Sign-in failed:', err);
+      setError(t("auth.serverError"));
+      setGoogleLoading(false);
     }
   };
 
@@ -178,26 +185,20 @@ export default function Login() {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native: get Apple auth URL then open in SFSafariViewController
-        // IMPORTANT: Do NOT use AbortController/signal — CapacitorHttp does not support AbortSignal
-        const appleRes = await nativeFetch(
-          `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`,
-          { credentials: "include" }
-        );
-        if (appleRes.status !== 200 && !appleRes.ok) {
-          setError(t("auth.appleError"));
-          setAppleLoading(false);
-          return;
-        }
-        const { url } = await appleRes.json();
-        // Open in SFSafariViewController — Apple requires this for Sign in with Apple
-        await Browser.open({ url, presentationStyle: "popover" });
-        // Loading state will be cleared when deep link callback fires
+        // On native: build Apple auth URL directly and open in SFSafariViewController.
+        // IMPORTANT: We do NOT make a fetch() call here to get the URL.
+        // Any fetch() before Browser.open() can hang on iOS 26.5.2 and cause infinite loading.
+        // Instead, we construct the URL directly and let the server handle the OAuth flow.
+        const authUrl = `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`;
+        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+        // Loading state will be cleared when deep link callback fires or browser closes
       } else {
         // On web: get Apple auth URL and redirect
-        const res = await fetch(`${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`, {
-          credentials: "include",
-        });
+        const res = await fetchWithTimeout(
+          `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`,
+          { credentials: "include" },
+          15000
+        );
         if (!res.ok) {
           setError(t("auth.appleError"));
           setAppleLoading(false);
@@ -340,8 +341,6 @@ export default function Login() {
               )}
               {t("auth.apple")}
             </Button>
-
-
           </div>
 
           {/* Register link */}
@@ -357,8 +356,8 @@ export default function Login() {
 
           {/* Privacy policy link */}
           <p className="text-center mt-3 text-xs text-amber-200/30">
-            <a href="/privacy" className="hover:text-amber-200/50 underline underline-offset-2 transition-colors">
-              {t("privacy.link")}
+            <a href="/privacy" className="hover:text-amber-200/60 transition-colors">
+              {t("auth.privacyPolicy")}
             </a>
           </p>
         </div>

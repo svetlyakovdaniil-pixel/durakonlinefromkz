@@ -32,18 +32,12 @@ const config: CapacitorConfig = {
       style: 'DARK',
       resizeOnFullScreen: true,
     },
-    // CapacitorHttp: routes fetch() and XMLHttpRequest through native iOS URLSession / Android OkHttp.
-    // This bypasses WKWebView networking restrictions (WKAppBoundDomains, ITP, cookie isolation)
-    // that can block or delay cross-origin requests from capacitor://localhost to external APIs.
-    // Critical fix for iPadOS 26.5.2 where WKWebView may silently block fetch to external domains.
-    CapacitorHttp: {
-      enabled: true,
-    },
-    // CapacitorCookies: ensures cookies are properly shared between native HTTP and WKWebView.
-    // Required when CapacitorHttp is enabled to maintain session cookies across requests.
-    CapacitorCookies: {
-      enabled: true,
-    },
+    // NOTE: CapacitorHttp is intentionally DISABLED.
+    // On iOS 26.5.2 (iPadOS 26.5.2), CapacitorHttp causes fetch() promises to hang
+    // indefinitely — they never resolve or reject. This causes infinite loading spinners
+    // on all login buttons. Standard WKWebView fetch works correctly with proper CORS headers.
+    // CapacitorHttp: { enabled: false },
+    // CapacitorCookies: { enabled: false },
   },
 
   ios: {

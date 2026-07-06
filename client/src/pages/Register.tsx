@@ -6,7 +6,20 @@ import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, User, ArrowLeft, Gift, ShieldCheck } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
+import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
+
+/**
+ * Fetch with a manual timeout using Promise.race.
+ * Does NOT use AbortController (can cause issues on some iOS versions).
+ */
+function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
+  const fetchPromise = fetch(url, options);
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
+  );
+  return Promise.race([fetchPromise, timeoutPromise]);
+}
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -72,7 +85,7 @@ export default function Register() {
     setLoading(true);
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
-      const res = await fetch(`${apiBase}/api/auth/register/send-code`, {
+      const res = await fetchWithTimeout(`${apiBase}/api/auth/register/send-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -139,7 +152,7 @@ export default function Register() {
     setVerifyError("");
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
-      const res = await fetch(`${apiBase}/api/auth/register/verify-code`, {
+      const res = await fetchWithTimeout(`${apiBase}/api/auth/register/verify-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), code }),
@@ -182,7 +195,7 @@ export default function Register() {
     setVerifyError("");
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
-      const res = await fetch(`${apiBase}/api/auth/register/resend-code`, {
+      const res = await fetchWithTimeout(`${apiBase}/api/auth/register/resend-code`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }),
@@ -204,31 +217,45 @@ export default function Register() {
     }
   };
 
-  const handleGoogleSignIn = () => {
+  const handleGoogleSignIn = async () => {
     setError("");
     setGoogleLoading(true);
-    // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
-    // which is not a valid OAuth redirect URI — use the production domain instead.
     const origin = getOAuthOrigin();
     const ref = referralCode.trim().toUpperCase();
     const params = new URLSearchParams({ origin });
     if (ref) params.set("referralCode", ref);
-    window.location.href = `${origin}/api/auth/google/init?${params.toString()}`;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const authUrl = `${origin}/api/auth/google/init?${params.toString()}&native=true`;
+        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+      } else {
+        window.location.href = `${origin}/api/auth/google/init?${params.toString()}`;
+      }
+    } catch (err) {
+      console.error('[GoogleAuth] Sign-in failed:', err);
+      setError(t("auth.serverError"));
+      setGoogleLoading(false);
+    }
   };
 
   const handleAppleSignIn = async () => {
     setError("");
     setAppleLoading(true);
+    const origin = getOAuthOrigin();
+    const params = new URLSearchParams({ origin });
+    if (referralCode.trim()) params.set("referralCode", referralCode.trim().toUpperCase());
     try {
-      // On native Capacitor (iOS/Android), window.location.origin is "capacitor://localhost"
-      // which is not a valid OAuth redirect URI — use the production domain instead.
-      const origin = getOAuthOrigin();
-      const params = new URLSearchParams({ origin });
-      if (referralCode.trim()) params.set("referralCode", referralCode.trim().toUpperCase());
-      const res = await fetch(`${origin}/api/auth/apple/init?${params.toString()}`, { credentials: "include" });
-      if (!res.ok) { setError(t("auth.appleError")); setAppleLoading(false); return; }
-      const { url } = await res.json();
-      window.location.href = url;
+      if (Capacitor.isNativePlatform()) {
+        // On native: build URL directly and open in SFSafariViewController.
+        // Do NOT use fetch() before Browser.open() — it can hang on iOS 26.5.2.
+        const authUrl = `${origin}/api/auth/apple/init?${params.toString()}&native=true`;
+        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+      } else {
+        const res = await fetchWithTimeout(`${origin}/api/auth/apple/init?${params.toString()}`, { credentials: "include" }, 15000);
+        if (!res.ok) { setError(t("auth.appleError")); setAppleLoading(false); return; }
+        const { url } = await res.json();
+        window.location.href = url;
+      }
     } catch {
       setError(t("auth.appleError"));
       setAppleLoading(false);

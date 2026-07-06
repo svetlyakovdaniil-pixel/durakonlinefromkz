@@ -70,22 +70,22 @@ const trpcClient = trpc.createClient({
           headers["Authorization"] = `Bearer ${nativeToken}`;
         }
 
-        // Add 15s timeout to prevent infinite hanging requests on iOS WKWebView.
-        // On iPadOS 26.5.2, WKWebView may silently block/delay cross-origin fetch.
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        // Use existing signal if provided, otherwise use our timeout signal
-        const signal = init?.signal || controller.signal;
-
-        return globalThis.fetch(input, {
+        const fetchPromise = globalThis.fetch(input, {
           ...(init ?? {}),
-          signal,
           credentials: "include",
           headers: {
             ...(init?.headers as Record<string, string> ?? {}),
             ...headers,
           },
-        }).finally(() => clearTimeout(timeoutId));
+        });
+
+        // Use Promise.race for timeout instead of AbortController.
+        // AbortController can cause issues on some iOS versions.
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('tRPC request timed out after 20s')), 20000)
+        );
+
+        return Promise.race([fetchPromise, timeoutPromise]);
       },
     }),
   ],
