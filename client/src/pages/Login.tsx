@@ -100,18 +100,39 @@ export default function Login() {
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
 
-      // Use fetchWithTimeout to prevent infinite loading.
-      // Promise.race with a 20-second timeout ensures the button never spins forever.
-      const res = await fetchWithTimeout(
-        `${apiBase}/api/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim(), password }),
-          credentials: "include",
-        },
-        20000
-      );
+      // Retry logic: on iOS 26 WKWebView, the first fetch() can fail due to
+      // network initialization delays. Retry once after a short delay.
+      let res: Response | null = null;
+      let lastError: Error | null = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          if (attempt > 0) {
+            // Wait 2 seconds before retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
+          }
+          res = await fetchWithTimeout(
+            `${apiBase}/api/auth/login`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: email.trim(), password }),
+              credentials: "include",
+            },
+            20000
+          );
+          break; // Success, exit retry loop
+        } catch (fetchErr) {
+          lastError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
+          console.warn(`[Login] Attempt ${attempt + 1} failed:`, lastError.message);
+        }
+      }
+
+      if (!res) {
+        // Both attempts failed
+        console.error('[Login] All attempts failed:', lastError);
+        setError(t("auth.serverError"));
+        return;
+      }
 
       let data: Record<string, unknown> = {};
       try {
@@ -141,13 +162,7 @@ export default function Login() {
       }
     } catch (err) {
       console.error('[Login] Email login error:', err);
-      // Show timeout message if it was a timeout, otherwise generic error
-      const errMsg = err instanceof Error ? err.message : '';
-      if (errMsg.includes('timed out')) {
-        setError(t("auth.serverError"));
-      } else {
-        setError(t("auth.serverError"));
-      }
+      setError(t("auth.serverError"));
     } finally {
       setLoading(false);
     }

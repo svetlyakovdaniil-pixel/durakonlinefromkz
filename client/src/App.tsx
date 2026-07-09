@@ -93,8 +93,9 @@ function PushInitializer() {
 
 /**
  * Global deep link handler for OAuth callbacks.
- * Must be at App level (not Login page) to handle warm start:
- * app already running when deep link fires (e.g., after SFSafariViewController closes).
+ * Handles BOTH cold start and warm start scenarios:
+ * - Cold start: app was killed, then launched via durak:// deep link
+ * - Warm start: app was already running when deep link fired
  * Handles durak://auth/success?token=... and durak://auth/error?reason=...
  */
 function DeepLinkHandler() {
@@ -103,9 +104,23 @@ function DeepLinkHandler() {
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
 
-    // Handle warm start: app was already running when deep link fired
+    // Handle COLD START: app was launched directly via deep link
+    // This happens when iOS kills the app and then Sign in with Apple/Google
+    // redirects to durak:// — the app starts fresh and appUrlOpen never fires.
+    // getLaunchUrl() returns the URL that triggered the cold launch.
+    CapApp.getLaunchUrl().then(async (result) => {
+      if (result?.url && result.url.startsWith('durak://auth/')) {
+        console.log('[DeepLink] Cold start URL:', result.url);
+        await handleDeepLink(result.url, utils);
+      }
+    }).catch((err) => {
+      console.error('[DeepLink] getLaunchUrl failed:', err);
+    });
+
+    // Handle WARM START: app was already running when deep link fired
     const listenerPromise = CapApp.addListener('appUrlOpen', async (event) => {
       if (event.url.startsWith('durak://auth/')) {
+        console.log('[DeepLink] Warm start URL:', event.url);
         await handleDeepLink(event.url, utils);
       }
     });

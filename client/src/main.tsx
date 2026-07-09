@@ -81,8 +81,9 @@ const trpcClient = trpc.createClient({
 
         // Use Promise.race for timeout instead of AbortController.
         // AbortController can cause issues on some iOS versions.
+        // 30s timeout to handle iOS 26 WKWebView network initialization delays.
         const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('tRPC request timed out after 20s')), 20000)
+          setTimeout(() => reject(new Error('tRPC request timed out after 30s')), 30000)
         );
 
         return Promise.race([fetchPromise, timeoutPromise]);
