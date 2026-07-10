@@ -240,32 +240,51 @@ def main():
 
     submission_id = None
 
-    # Strategy: prefer READY_FOR_REVIEW → submit directly
-    # Then PREPARE_FOR_SUBMISSION → add item + submit
-    # Then create new
-    for preferred_state in ["READY_FOR_REVIEW", "PREPARE_FOR_SUBMISSION"]:
-        for s in submissions:
-            if s["attributes"]["state"] == preferred_state:
-                submission_id = s["id"]
-                print(f"Using existing submission {submission_id} (state: {preferred_state})")
+    # Strategy:
+    # 1. Find a submission that already contains our version
+    # 2. If none, find a PREPARE_FOR_SUBMISSION submission and add version
+    # 3. If none, create a new submission
+    
+    # First: find which submission already has our version
+    for s in submissions:
+        sid = s["id"]
+        state = s["attributes"]["state"]
+        if state in ("COMPLETE", "CANCELING", "CANCELED"):
+            continue
+        token = generate_token()
+        items = get_submission_items(token, sid)
+        for item in items:
+            rels = item.get("relationships", {})
+            asv = rels.get("appStoreVersion", {}).get("data", {})
+            if asv.get("id") == version_id:
+                submission_id = sid
+                print(f"Found version in existing submission {sid} (state: {state})")
                 break
         if submission_id:
             break
+
+    if not submission_id:
+        # Find a PREPARE_FOR_SUBMISSION submission to add the version to
+        for s in submissions:
+            if s["attributes"]["state"] == "PREPARE_FOR_SUBMISSION":
+                submission_id = s["id"]
+                print(f"Using PREPARE_FOR_SUBMISSION submission {submission_id}")
+                break
 
     if not submission_id:
         print("No usable submission found, creating new one...")
         token = generate_token()
         submission_id = create_review_submission(token, app_id)
 
-    # 6. Add the version to the submission (works for both PREPARE_FOR_SUBMISSION and READY_FOR_REVIEW)
+    # 6. Add the version to the submission (if not already there)
     token = generate_token()
     sub_data = api_get(f"/reviewSubmissions/{submission_id}", token)
     sub_state = sub_data["data"]["attributes"]["state"]
     print(f"Submission {submission_id} current state: {sub_state}")
 
-    # Always try to add the version - it will skip if already present
-    token = generate_token()
-    add_version_to_submission(token, submission_id, version_id)
+    if sub_state in ("PREPARE_FOR_SUBMISSION",):
+        token = generate_token()
+        add_version_to_submission(token, submission_id, version_id)
 
     # 7. Submit for review
     token = generate_token()
