@@ -1,0 +1,41 @@
+name: Submit for App Store Review
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'App version to submit (e.g. 1.0.70)'
+        required: true
+        default: '1.0.70'
+      build_number:
+        description: 'Build number to submit (e.g. 92)'
+        required: true
+        default: '92'
+
+jobs:
+  submit-review:
+    name: Submit for Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyJWT
+        run: pip install PyJWT cryptography requests
+
+      - name: Submit for App Store Review
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          IOS_APP_APPLE_ID: ${{ secrets.IOS_APP_APPLE_ID }}
+          VERSION: ${{ github.event.inputs.version }}
+          BUILD_NUMBER: ${{ github.event.inputs.build_number }}
+        run: python3 .github/scripts/submit_for_review.py
