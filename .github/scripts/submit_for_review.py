@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Submit an iOS app version for App Store Review using App Store Connect API.
-Waits for the build to finish processing in TestFlight, then submits for review.
+Submit an iOS app version for App Store Review using App Store Connect API v2.
+Uses the new submitAppReviewRequest endpoint (replaces deprecated appStoreVersionSubmissions).
 """
 import base64
 import json
@@ -30,6 +30,7 @@ if "BEGIN" not in KEY_CONTENT:
     except Exception as e:
         print(f"Warning: Could not decode base64 key: {e}")
 
+
 def generate_token() -> str:
     """Generate a short-lived JWT for App Store Connect API."""
     now = int(time.time())
@@ -49,14 +50,16 @@ def generate_token() -> str:
 
 
 def api_get(path: str, token: str) -> dict:
-    url = f"{BASE_URL}{path}"
+    url = f"{BASE_URL}{path}" if path.startswith("/") else path
     resp = requests.get(url, headers={"Authorization": f"Bearer {token}"}, timeout=30)
-    resp.raise_for_status()
+    if not resp.ok:
+        print(f"GET {path} failed: {resp.status_code} {resp.text[:500]}")
+        resp.raise_for_status()
     return resp.json()
 
 
 def api_post(path: str, token: str, body: dict) -> dict:
-    url = f"{BASE_URL}{path}"
+    url = f"{BASE_URL}{path}" if path.startswith("/") else path
     resp = requests.post(
         url,
         headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
@@ -64,7 +67,21 @@ def api_post(path: str, token: str, body: dict) -> dict:
         timeout=30,
     )
     if not resp.ok:
-        print(f"POST {path} failed: {resp.status_code} {resp.text}")
+        print(f"POST {path} failed: {resp.status_code} {resp.text[:1000]}")
+        resp.raise_for_status()
+    return resp.json()
+
+
+def api_patch(path: str, token: str, body: dict) -> dict:
+    url = f"{BASE_URL}{path}" if path.startswith("/") else path
+    resp = requests.patch(
+        url,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        json=body,
+        timeout=30,
+    )
+    if not resp.ok:
+        print(f"PATCH {path} failed: {resp.status_code} {resp.text[:500]}")
         resp.raise_for_status()
     return resp.json()
 
@@ -80,20 +97,54 @@ def get_app_id(token: str) -> str:
     return app_id
 
 
-def get_app_store_version(token: str, app_id: str) -> dict | None:
-    """Get the current editable App Store version."""
+def get_all_app_store_versions(token: str, app_id: str) -> list:
+    """Get all iOS App Store versions for the app."""
     data = api_get(
-        f"/apps/{app_id}/appStoreVersions?filter[appStoreState]=PREPARE_FOR_SUBMISSION,WAITING_FOR_REVIEW,IN_REVIEW,REJECTED,DEVELOPER_REJECTED,METADATA_REJECTED&filter[platform]=IOS",
+        f"/apps/{app_id}/appStoreVersions?filter[platform]=IOS&limit=20",
         token,
     )
-    versions = data.get("data", [])
-    if not versions:
-        return None
-    # Prefer PREPARE_FOR_SUBMISSION
+    return data.get("data", [])
+
+
+def get_editable_version(token: str, app_id: str) -> dict | None:
+    """Get the current editable App Store version (PREPARE_FOR_SUBMISSION or REJECTED)."""
+    versions = get_all_app_store_versions(token, app_id)
+    print(f"Found {len(versions)} App Store versions:")
     for v in versions:
-        if v["attributes"]["appStoreState"] == "PREPARE_FOR_SUBMISSION":
-            return v
-    return versions[0]
+        print(f"  v{v['attributes']['versionString']} - {v['attributes']['appStoreState']} (id: {v['id']})")
+
+    # Priority: PREPARE_FOR_SUBMISSION > REJECTED > DEVELOPER_REJECTED > METADATA_REJECTED
+    priority = ["PREPARE_FOR_SUBMISSION", "REJECTED", "DEVELOPER_REJECTED", "METADATA_REJECTED"]
+    for state in priority:
+        for v in versions:
+            if v["attributes"]["appStoreState"] == state:
+                return v
+    return None
+
+
+def create_app_store_version(token: str, app_id: str, version_str: str) -> dict:
+    """Create a new App Store version."""
+    body = {
+        "data": {
+            "type": "appStoreVersions",
+            "attributes": {
+                "platform": "IOS",
+                "versionString": version_str,
+            },
+            "relationships": {
+                "app": {
+                    "data": {
+                        "type": "apps",
+                        "id": app_id,
+                    }
+                }
+            },
+        }
+    }
+    result = api_post("/appStoreVersions", token, body)
+    version_id = result["data"]["id"]
+    print(f"Created new App Store version {version_str} (id: {version_id})")
+    return result["data"]
 
 
 def get_build(token: str, app_id: str, version: str, build_number: str) -> dict | None:
@@ -119,7 +170,7 @@ def wait_for_build_processing(token: str, app_id: str, version: str, build_numbe
     print(f"Waiting for build v{version} ({build_number}) to finish processing...")
     start = time.time()
     while time.time() - start < max_wait:
-        token = generate_token()  # refresh token periodically
+        token = generate_token()
         build = get_build(token, app_id, version, build_number)
         if build:
             state = build["attributes"].get("processingState", "UNKNOWN")
@@ -151,13 +202,16 @@ def set_build_on_version(token: str, version_id: str, build_id: str):
         timeout=30,
     )
     if not resp.ok:
-        print(f"PATCH build relationship failed: {resp.status_code} {resp.text}")
+        print(f"PATCH build relationship failed: {resp.status_code} {resp.text[:500]}")
         resp.raise_for_status()
     print(f"Build {build_id} associated with version {version_id}")
 
 
-def submit_for_review(token: str, version_id: str) -> dict:
-    """Submit the App Store version for review."""
+def submit_for_review_new_api(token: str, version_id: str) -> dict:
+    """
+    Submit using the new App Store Connect API v2.
+    Uses submitAppReviewRequest (replaces deprecated appStoreVersionSubmissions).
+    """
     body = {
         "data": {
             "type": "appStoreVersionSubmissions",
@@ -171,16 +225,41 @@ def submit_for_review(token: str, version_id: str) -> dict:
             },
         }
     }
-    result = api_post("/appStoreVersionSubmissions", token, body)
-    print("Submitted for review successfully!")
+    # Try new API first: /v2/appStoreVersionSubmissions
+    url_v2 = "https://api.appstoreconnect.apple.com/v2/appStoreVersionSubmissions"
+    resp = requests.post(
+        url_v2,
+        headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+        json=body,
+        timeout=30,
+    )
+    if resp.ok:
+        print("Submitted for review using v2 API!")
+        return resp.json()
+    print(f"v2 API failed ({resp.status_code}): {resp.text[:500]}")
+
+    # Try submitAppReviewRequest
+    body2 = {
+        "data": {
+            "type": "submitAppReviewRequests",
+            "relationships": {
+                "appStoreVersion": {
+                    "data": {
+                        "type": "appStoreVersions",
+                        "id": version_id,
+                    }
+                }
+            },
+        }
+    }
+    result = api_post("/submitAppReviewRequests", token, body2)
+    print("Submitted for review using submitAppReviewRequests API!")
     return result
 
 
 def main():
     print(f"=== Submitting v{VERSION} (build {BUILD_NUMBER}) for App Store Review ===")
     print(f"Bundle ID: {BUNDLE_ID}")
-    print(f"Key ID: {KEY_ID}")
-    print(f"Issuer ID: {ISSUER_ID}")
 
     token = generate_token()
 
@@ -193,16 +272,32 @@ def main():
     build_id = build["id"]
     print(f"Build ID: {build_id}")
 
-    # 3. Get the current App Store version
+    # 3. Get or create the App Store version
     token = generate_token()
-    version_obj = get_app_store_version(token, app_id)
+    version_obj = get_editable_version(token, app_id)
+
     if not version_obj:
-        raise RuntimeError("No editable App Store version found. Create one in App Store Connect first.")
+        print(f"No editable version found. Creating new version {VERSION}...")
+        token = generate_token()
+        version_obj = create_app_store_version(token, app_id, VERSION)
+    else:
+        version_str = version_obj["attributes"]["versionString"]
+        version_state = version_obj["attributes"]["appStoreState"]
+        print(f"Using existing version {version_str} (state: {version_state})")
+
+        # If version string doesn't match, update it
+        if version_str != VERSION:
+            print(f"Updating version string from {version_str} to {VERSION}...")
+            token = generate_token()
+            api_patch(f"/appStoreVersions/{version_obj['id']}", token, {
+                "data": {
+                    "type": "appStoreVersions",
+                    "id": version_obj["id"],
+                    "attributes": {"versionString": VERSION},
+                }
+            })
 
     version_id = version_obj["id"]
-    version_state = version_obj["attributes"]["appStoreState"]
-    version_str = version_obj["attributes"]["versionString"]
-    print(f"App Store version: {version_str} (state: {version_state}, id: {version_id})")
 
     # 4. Associate build with version
     token = generate_token()
@@ -210,7 +305,7 @@ def main():
 
     # 5. Submit for review
     token = generate_token()
-    submit_for_review(token, version_id)
+    submit_for_review_new_api(token, version_id)
 
     print(f"\n✅ Successfully submitted v{VERSION} (build {BUILD_NUMBER}) for App Store Review!")
     print("Apple will review the app and notify you by email.")
