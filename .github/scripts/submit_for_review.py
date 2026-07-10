@@ -146,8 +146,17 @@ def list_review_submissions(token: str, app_id: str) -> list:
 
 
 def get_submission_items(token: str, submission_id: str) -> list:
-    data = api_get(f"/reviewSubmissions/{submission_id}/items", token)
-    return data.get("data", [])
+    data = api_get(f"/reviewSubmissions/{submission_id}/items?include=appStoreVersion", token)
+    items = data.get("data", [])
+    # Attach included appStoreVersion data to items for easier lookup
+    included = {r["id"]: r for r in data.get("included", [])}
+    for item in items:
+        rels = item.get("relationships", {})
+        asv_ref = rels.get("appStoreVersion", {}).get("data", {})
+        asv_id = asv_ref.get("id")
+        if asv_id and asv_id in included:
+            item["_appStoreVersion"] = included[asv_id]
+    return items
 
 
 def add_version_to_submission(token: str, submission_id: str, version_id: str) -> str:
@@ -253,10 +262,16 @@ def main():
             continue
         token = generate_token()
         items = get_submission_items(token, sid)
+        print(f"  Checking submission {sid} ({state}): {len(items)} items")
         for item in items:
             rels = item.get("relationships", {})
-            asv = rels.get("appStoreVersion", {}).get("data", {})
-            if asv.get("id") == version_id:
+            asv_ref = rels.get("appStoreVersion", {}).get("data", {})
+            asv_id = asv_ref.get("id", "")
+            # Check by UUID match OR by version string (numeric vs UUID IDs)
+            asv_obj = item.get("_appStoreVersion", {})
+            asv_version_str = asv_obj.get("attributes", {}).get("versionString", "")
+            print(f"    Item asv_id={asv_id}, version_str={asv_version_str}")
+            if asv_id == version_id or asv_version_str == VERSION:
                 submission_id = sid
                 print(f"Found version in existing submission {sid} (state: {state})")
                 break
