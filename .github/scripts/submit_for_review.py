@@ -71,7 +71,7 @@ def api_patch(path: str, token: str, body: dict) -> dict:
     url = f"{BASE_URL}{path}" if path.startswith("/") else path
     resp = requests.patch(url, headers=hdrs(token), json=body, timeout=30)
     if not resp.ok:
-        print(f"PATCH {path} → {resp.status_code}: {resp.text[:500]}")
+        print(f"PATCH {path} → {resp.status_code}: {resp.text[:3000]}")
         resp.raise_for_status()
     return resp.json()
 
