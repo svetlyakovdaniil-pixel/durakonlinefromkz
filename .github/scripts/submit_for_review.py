@@ -257,15 +257,15 @@ def main():
         token = generate_token()
         submission_id = create_review_submission(token, app_id)
 
-    # 6. If not READY_FOR_REVIEW, add the version to the submission
+    # 6. Add the version to the submission (works for both PREPARE_FOR_SUBMISSION and READY_FOR_REVIEW)
     token = generate_token()
     sub_data = api_get(f"/reviewSubmissions/{submission_id}", token)
     sub_state = sub_data["data"]["attributes"]["state"]
     print(f"Submission {submission_id} current state: {sub_state}")
 
-    if sub_state == "PREPARE_FOR_SUBMISSION":
-        token = generate_token()
-        add_version_to_submission(token, submission_id, version_id)
+    # Always try to add the version - it will skip if already present
+    token = generate_token()
+    add_version_to_submission(token, submission_id, version_id)
 
     # 7. Submit for review
     token = generate_token()
