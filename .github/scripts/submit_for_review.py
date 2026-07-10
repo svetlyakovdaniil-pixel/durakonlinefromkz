@@ -3,18 +3,13 @@
 Submit an iOS app version for App Store Review using the new App Store Connect API.
 Uses the reviewSubmissions + reviewSubmissionItems flow.
 
-Flow:
-1. Find the build (wait for VALID state)
-2. Find the editable App Store version
-3. Associate the build with the version
-4. Find or create a review submission in PREPARE_FOR_SUBMISSION state
-5. Add the appStoreVersion as a reviewSubmissionItem (if not already added)
-6. PATCH the reviewSubmission with state=SUBMITTED
+Strategy:
+- If there's a READY_FOR_REVIEW submission → submit it directly (PATCH state=SUBMITTED)
+- If there's a PREPARE_FOR_SUBMISSION submission → add version + submit
+- Otherwise create a new submission
 """
 import base64
-import json
 import os
-import sys
 import time
 import jwt
 import requests
@@ -81,14 +76,6 @@ def api_patch(path: str, token: str, body: dict) -> dict:
     return resp.json()
 
 
-def api_delete(path: str, token: str):
-    url = f"{BASE_URL}{path}" if path.startswith("/") else path
-    resp = requests.delete(url, headers=hdrs(token), timeout=30)
-    if not resp.ok and resp.status_code != 404:
-        print(f"DELETE {path} → {resp.status_code}: {resp.text[:500]}")
-        resp.raise_for_status()
-
-
 def get_app_id(token: str) -> str:
     data = api_get(f"/apps?filter[bundleId]={BUNDLE_ID}", token)
     apps = data.get("data", [])
@@ -150,82 +137,20 @@ def set_build_on_version(token: str, version_id: str, build_id: str):
 
 
 def list_review_submissions(token: str, app_id: str) -> list:
-    """List all review submissions for the app."""
     data = api_get(f"/apps/{app_id}/reviewSubmissions?limit=20", token)
     submissions = data.get("data", [])
     print(f"Found {len(submissions)} review submissions:")
     for s in submissions:
-        print(f"  Submission {s['id']}: state={s['attributes']['state']}, platform={s['attributes'].get('platform', 'N/A')}")
+        print(f"  {s['id']}: state={s['attributes']['state']}")
     return submissions
 
 
-def cancel_submission(token: str, submission_id: str):
-    """Cancel a review submission by setting state to CANCELING."""
-    try:
-        body = {
-            "data": {
-                "type": "reviewSubmissions",
-                "id": submission_id,
-                "attributes": {"state": "CANCELING"},
-            }
-        }
-        api_patch(f"/reviewSubmissions/{submission_id}", token, body)
-        print(f"Cancelled submission {submission_id}")
-    except Exception as e:
-        print(f"Warning: Could not cancel submission {submission_id}: {e}")
-
-
-def get_or_create_review_submission(token: str, app_id: str) -> str:
-    """
-    Get an existing PREPARE_FOR_SUBMISSION review submission, or create a new one.
-    If at the limit, cancel old ones first.
-    """
-    submissions = list_review_submissions(token, app_id)
-
-    # Look for an existing PREPARE_FOR_SUBMISSION submission
-    for s in submissions:
-        if s["attributes"]["state"] == "PREPARE_FOR_SUBMISSION":
-            print(f"Reusing existing submission {s['id']}")
-            return s["id"]
-
-    # If we're at the limit, cancel old submissions that are not in review
-    cancellable_states = ["PREPARE_FOR_SUBMISSION", "READY_FOR_REVIEW"]
-    cancelled = 0
-    for s in submissions:
-        if s["attributes"]["state"] in cancellable_states:
-            token = generate_token()
-            cancel_submission(token, s["id"])
-            cancelled += 1
-            if cancelled >= 3:
-                break
-
-    if cancelled > 0:
-        time.sleep(5)  # Wait for cancellations to process
-
-    # Create a new submission
-    body = {
-        "data": {
-            "type": "reviewSubmissions",
-            "attributes": {"platform": "IOS"},
-            "relationships": {
-                "app": {"data": {"type": "apps", "id": app_id}}
-            },
-        }
-    }
-    result = api_post("/reviewSubmissions", token, body)
-    sub_id = result["data"]["id"]
-    print(f"Created new review submission: {sub_id}")
-    return sub_id
-
-
 def get_submission_items(token: str, submission_id: str) -> list:
-    """Get all items in a review submission."""
     data = api_get(f"/reviewSubmissions/{submission_id}/items", token)
     return data.get("data", [])
 
 
 def add_version_to_submission(token: str, submission_id: str, version_id: str) -> str:
-    """Add the App Store version as a review submission item."""
     # Check if already added
     items = get_submission_items(token, submission_id)
     for item in items:
@@ -250,7 +175,7 @@ def add_version_to_submission(token: str, submission_id: str, version_id: str) -
     return item_id
 
 
-def submit_for_review(token: str, submission_id: str):
+def submit_review_submission(token: str, submission_id: str):
     """Set the review submission state to SUBMITTED."""
     body = {
         "data": {
@@ -260,7 +185,23 @@ def submit_for_review(token: str, submission_id: str):
         }
     }
     api_patch(f"/reviewSubmissions/{submission_id}", token, body)
-    print("Review submission state set to SUBMITTED!")
+    print(f"Submission {submission_id} state set to SUBMITTED!")
+
+
+def create_review_submission(token: str, app_id: str) -> str:
+    body = {
+        "data": {
+            "type": "reviewSubmissions",
+            "attributes": {"platform": "IOS"},
+            "relationships": {
+                "app": {"data": {"type": "apps", "id": app_id}}
+            },
+        }
+    }
+    result = api_post("/reviewSubmissions", token, body)
+    sub_id = result["data"]["id"]
+    print(f"Created new review submission: {sub_id}")
+    return sub_id
 
 
 def main():
@@ -282,7 +223,7 @@ def main():
     token = generate_token()
     version_obj = get_editable_app_store_version(token, app_id)
     if not version_obj:
-        raise RuntimeError("No editable App Store version found. Please create one in App Store Connect.")
+        raise RuntimeError("No editable App Store version found.")
 
     version_id = version_obj["id"]
     version_str = version_obj["attributes"]["versionString"]
@@ -293,17 +234,42 @@ def main():
     token = generate_token()
     set_build_on_version(token, version_id, build_id)
 
-    # 5. Get or create a review submission
+    # 5. Find the best review submission to use
     token = generate_token()
-    submission_id = get_or_create_review_submission(token, app_id)
+    submissions = list_review_submissions(token, app_id)
 
-    # 6. Add the App Store version to the submission
+    submission_id = None
+
+    # Strategy: prefer READY_FOR_REVIEW → submit directly
+    # Then PREPARE_FOR_SUBMISSION → add item + submit
+    # Then create new
+    for preferred_state in ["READY_FOR_REVIEW", "PREPARE_FOR_SUBMISSION"]:
+        for s in submissions:
+            if s["attributes"]["state"] == preferred_state:
+                submission_id = s["id"]
+                print(f"Using existing submission {submission_id} (state: {preferred_state})")
+                break
+        if submission_id:
+            break
+
+    if not submission_id:
+        print("No usable submission found, creating new one...")
+        token = generate_token()
+        submission_id = create_review_submission(token, app_id)
+
+    # 6. If not READY_FOR_REVIEW, add the version to the submission
     token = generate_token()
-    add_version_to_submission(token, submission_id, version_id)
+    sub_data = api_get(f"/reviewSubmissions/{submission_id}", token)
+    sub_state = sub_data["data"]["attributes"]["state"]
+    print(f"Submission {submission_id} current state: {sub_state}")
+
+    if sub_state == "PREPARE_FOR_SUBMISSION":
+        token = generate_token()
+        add_version_to_submission(token, submission_id, version_id)
 
     # 7. Submit for review
     token = generate_token()
-    submit_for_review(token, submission_id)
+    submit_review_submission(token, submission_id)
 
     print(f"\n✅ Successfully submitted v{VERSION} (build {BUILD_NUMBER}) for App Store Review!")
     print("Apple will review the app and notify you by email.")
