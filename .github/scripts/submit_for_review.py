@@ -176,16 +176,16 @@ def add_version_to_submission(token: str, submission_id: str, version_id: str) -
 
 
 def submit_review_submission(token: str, submission_id: str):
-    """Set the review submission state to SUBMITTED."""
+    """Submit the review submission using submitted=true attribute."""
     body = {
         "data": {
             "type": "reviewSubmissions",
             "id": submission_id,
-            "attributes": {"state": "SUBMITTED"},
+            "attributes": {"submitted": True},
         }
     }
     api_patch(f"/reviewSubmissions/{submission_id}", token, body)
-    print(f"Submission {submission_id} state set to SUBMITTED!")
+    print(f"Submission {submission_id} submitted for review!")
 
 
 def create_review_submission(token: str, app_id: str) -> str:
