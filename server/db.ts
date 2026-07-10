@@ -17,10 +17,11 @@ export async function getDb() {
       _pool = mysql.createPool({
         uri: process.env.DATABASE_URL,
         waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
+        connectionLimit: 25,
+        queueLimit: 50,
+        connectTimeout: 15000,
         enableKeepAlive: true,
-        keepAliveInitialDelay: 30000,
+        keepAliveInitialDelay: 10000,
         ssl: { rejectUnauthorized: true },
       });
       _db = drizzle(_pool);

@@ -892,6 +892,7 @@ export const kk = {
     codeInvalid: 'Қате код',
     tooManyAttempts: 'Тым көп әрекет. Жаңа код сұраңыз.',
     emailSendFailed: 'Хат жіберілмеді. Кейінірек қайталаңыз.',
+    privacyPolicy: 'Құпиялылық саясаты',
   },
 
   contact: {

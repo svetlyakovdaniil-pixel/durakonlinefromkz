@@ -897,6 +897,7 @@ export const uz = {
     codeInvalid: "Noto'g'ri kod",
     tooManyAttempts: 'Juda ko\'p urinish. Yangi kod so\'rang.',
     emailSendFailed: 'Xat yuborib bo\'lmadi. Keyinroq qayta urinib ko\'ring.',
+    privacyPolicy: 'Maxfiylik siyosati',
   },
 
   contact: {

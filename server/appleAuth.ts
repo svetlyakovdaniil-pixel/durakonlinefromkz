@@ -113,7 +113,13 @@ export function registerAppleAuthRoutes(app: Express) {
     });
 
     const authUrl = `https://appleid.apple.com/auth/authorize?${params.toString()}`;
-    res.json({ url: authUrl });
+    // For native apps: redirect directly to Apple's auth URL so SFSafariViewController loads it properly.
+    // Previously this returned JSON, which caused SFSafariViewController to show a blank page.
+    if (native) {
+      res.redirect(authUrl);
+    } else {
+      res.json({ url: authUrl });
+    }
   });
 
   /**
@@ -124,8 +130,15 @@ export function registerAppleAuthRoutes(app: Express) {
     let isNative = false;
     try {
       const { code, id_token, state, user: userJson } = req.body;
+      console.log("[AppleAuth] Callback received:", {
+        hasCode: !!code,
+        hasIdToken: !!id_token,
+        hasState: !!state,
+        hasUser: !!userJson,
+      });
 
       if (!code && !id_token) {
+        console.error("[AppleAuth] Missing both code and id_token in callback");
         res.redirect("/?error=apple_missing_token");
         return;
       }

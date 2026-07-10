@@ -895,6 +895,7 @@ export const en = {
     codeInvalid: 'Invalid code',
     tooManyAttempts: 'Too many attempts. Request a new code.',
     emailSendFailed: 'Failed to send email. Try again later.',
+    privacyPolicy: 'Privacy Policy',
   },
 
   // Contact admin

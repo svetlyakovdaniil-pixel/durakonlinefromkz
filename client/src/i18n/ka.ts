@@ -891,6 +891,7 @@ export const ka = {
     codeInvalid: 'არასწორი კოდი',
     tooManyAttempts: 'ძალიან ბევრი მცდელობა. მოითხოვეთ ახალი კოდი.',
     emailSendFailed: 'წერილის გაგზავნა ვერ მოხერხდა. სცადეთ მოგვიანებით.',
+    privacyPolicy: 'კონფიდენციალობის პოლიტიკა',
   },
 
   contact: {

@@ -269,45 +269,56 @@ export function registerEmailAuthRoutes(app: Express) {
    * Body: { email, password }
    */
   app.post("/api/auth/login", async (req: Request, res: Response) => {
-    try {
-      const { email, password } = req.body;
-      if (!email || typeof email !== "string") {
-        res.status(400).json({ error: "invalid_email", message: "Введите email" });
+    const MAX_RETRIES = 2;
+    let lastError: unknown = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const { email, password } = req.body;
+        if (!email || typeof email !== "string") {
+          res.status(400).json({ error: "invalid_email", message: "Введите email" });
+          return;
+        }
+        if (!password || typeof password !== "string") {
+          res.status(400).json({ error: "invalid_password", message: "Введите пароль" });
+          return;
+        }
+        const normalizedEmail = email.trim().toLowerCase();
+        const credential = await db.getCredentialByEmail(normalizedEmail);
+        if (!credential) {
+          res.status(401).json({ error: "invalid_credentials", message: "Неверный email или пароль" });
+          return;
+        }
+        const isValid = await bcrypt.compare(password, credential.passwordHash);
+        if (!isValid) {
+          res.status(401).json({ error: "invalid_credentials", message: "Неверный email или пароль" });
+          return;
+        }
+        const user = await db.getUserById(credential.userId);
+        if (!user) {
+          res.status(401).json({ error: "user_not_found", message: "Пользователь не найден" });
+          return;
+        }
+        await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
+        const sessionToken = await sdk.createSessionToken(user.openId, {
+          name: user.name || "",
+          expiresInMs: ONE_YEAR_MS,
+        });
+        const cookieOptions = getSessionCookieOptions(req);
+        res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+        // Also return token in body so native iOS/Android can store it in localStorage
+        // (cookies don't work cross-domain in Capacitor: capacitor://localhost vs durakonlinefromkz.online)
+        res.status(200).json({ success: true, openId: user.openId, token: sessionToken });
         return;
+      } catch (error) {
+        lastError = error;
+        console.error(`[EmailAuth] Login attempt ${attempt} failed:`, error);
+        if (attempt < MAX_RETRIES) {
+          // Wait 800ms before retrying (DB pool may be temporarily exhausted)
+          await new Promise(resolve => setTimeout(resolve, 800));
+        }
       }
-      if (!password || typeof password !== "string") {
-        res.status(400).json({ error: "invalid_password", message: "Введите пароль" });
-        return;
-      }
-      const normalizedEmail = email.trim().toLowerCase();
-      const credential = await db.getCredentialByEmail(normalizedEmail);
-      if (!credential) {
-        res.status(401).json({ error: "invalid_credentials", message: "Неверный email или пароль" });
-        return;
-      }
-      const isValid = await bcrypt.compare(password, credential.passwordHash);
-      if (!isValid) {
-        res.status(401).json({ error: "invalid_credentials", message: "Неверный email или пароль" });
-        return;
-      }
-      const user = await db.getUserById(credential.userId);
-      if (!user) {
-        res.status(401).json({ error: "user_not_found", message: "Пользователь не найден" });
-        return;
-      }
-      await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
-      const sessionToken = await sdk.createSessionToken(user.openId, {
-        name: user.name || "",
-        expiresInMs: ONE_YEAR_MS,
-      });
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      // Also return token in body so native iOS/Android can store it in localStorage
-      // (cookies don't work cross-domain in Capacitor: capacitor://localhost vs durakonlinefromkz.online)
-      res.status(200).json({ success: true, openId: user.openId, token: sessionToken });
-    } catch (error) {
-      console.error("[EmailAuth] Login failed:", error);
-      res.status(500).json({ error: "server_error", message: "Ошибка сервера" });
     }
+    console.error("[EmailAuth] Login failed after all retries:", lastError);
+    res.status(500).json({ error: "server_error", message: "Ошибка сервера" });
   });
 }

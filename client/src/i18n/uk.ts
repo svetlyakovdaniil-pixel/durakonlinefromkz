@@ -900,6 +900,7 @@ export const uk = {
     codeInvalid: 'Невірний код',
     tooManyAttempts: 'Занадто багато спроб. Запросіть новий код.',
     emailSendFailed: 'Не вдалося надіслати листа. Спробуйте пізніше.',
+    privacyPolicy: 'Політика конфіденційності',
   },
 
   // Contact

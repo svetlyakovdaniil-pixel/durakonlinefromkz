@@ -897,6 +897,7 @@ export const pl = {
     codeInvalid: 'Nieprawidłowy kod',
     tooManyAttempts: 'Zbyt wiele prób. Poproś o nowy kod.',
     emailSendFailed: 'Nie można wysłać e-maila. Spróbuj ponownie później.',
+    privacyPolicy: 'Polityka prywatności',
   },
 
   contact: {

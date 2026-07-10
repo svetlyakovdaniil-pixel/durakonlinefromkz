@@ -897,6 +897,7 @@ export const az = {
     codeInvalid: 'Yanlış kod',
     tooManyAttempts: 'Çox sayda cəhd. Yeni kod tələb edin.',
     emailSendFailed: 'Məktub göndərilə bilmədi. Sonra yenidən cəhd edin.',
+    privacyPolicy: 'Məxfilik siyasəti',
   },
 
   contact: {

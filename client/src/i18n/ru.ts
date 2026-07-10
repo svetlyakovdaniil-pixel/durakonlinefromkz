@@ -894,6 +894,7 @@ export const ru = {
     codeInvalid: 'Неверный код',
     tooManyAttempts: 'Слишком много попыток. Запросите новый код.',
     emailSendFailed: 'Не удалось отправить письмо. Попробуйте позже.',
+    privacyPolicy: 'Политика конфиденциальности',
   },
 
   contact: {
