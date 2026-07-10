@@ -185,7 +185,7 @@ def add_version_to_submission(token: str, submission_id: str, version_id: str) -
 
 
 def submit_review_submission(token: str, submission_id: str):
-    """Submit the review submission using submitted=true attribute."""
+    """Submit the review submission using submitted=true attribute, with retries."""
     body = {
         "data": {
             "type": "reviewSubmissions",
@@ -193,8 +193,20 @@ def submit_review_submission(token: str, submission_id: str):
             "attributes": {"submitted": True},
         }
     }
-    api_patch(f"/reviewSubmissions/{submission_id}", token, body)
-    print(f"Submission {submission_id} submitted for review!")
+    # Retry up to 5 times with 60s delay for timing issues
+    for attempt in range(1, 6):
+        try:
+            token2 = generate_token()
+            api_patch(f"/reviewSubmissions/{submission_id}", token2, body)
+            print(f"Submission {submission_id} submitted for review!")
+            return
+        except Exception as e:
+            if attempt < 5 and "not ready" in str(e).lower() or "state" in str(e).lower():
+                print(f"Attempt {attempt} failed: {e}. Waiting 60s before retry...")
+                time.sleep(60)
+            else:
+                raise
+    raise RuntimeError("Failed to submit after 5 attempts")
 
 
 def create_review_submission(token: str, app_id: str) -> str:
@@ -242,6 +254,10 @@ def main():
     # 4. Associate build with version
     token = generate_token()
     set_build_on_version(token, version_id, build_id)
+
+    # Wait for Apple to process the build association
+    print("Waiting 90 seconds for Apple to process the build association...")
+    time.sleep(90)
 
     # 5. Find the best review submission to use
     token = generate_token()
