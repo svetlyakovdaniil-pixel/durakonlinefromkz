@@ -307,15 +307,45 @@ def main():
         token = generate_token()
         submission_id = create_review_submission(token, app_id)
 
-    # 6. Add the version to the submission (if not already there)
+    # 6. Handle submission state
     token = generate_token()
     sub_data = api_get(f"/reviewSubmissions/{submission_id}", token)
     sub_state = sub_data["data"]["attributes"]["state"]
     print(f"Submission {submission_id} current state: {sub_state}")
 
-    if sub_state in ("PREPARE_FOR_SUBMISSION",):
+    if sub_state == "PREPARE_FOR_SUBMISSION":
         token = generate_token()
         add_version_to_submission(token, submission_id, version_id)
+    elif sub_state == "UNRESOLVED_ISSUES":
+        # Resolve all rejected items so the submission can be resubmitted
+        token = generate_token()
+        items = get_submission_items(token, submission_id)
+        for item in items:
+            item_id = item["id"]
+            item_state = item["attributes"].get("state", "")
+            print(f"Item {item_id} state: {item_state}")
+            if item_state in ("REJECTED", "UNRESOLVED_ISSUES"):
+                print(f"Resolving rejected item {item_id}...")
+                token = generate_token()
+                resolve_body = {
+                    "data": {
+                        "type": "reviewSubmissionItems",
+                        "id": item_id,
+                        "attributes": {"resolved": True},
+                    }
+                }
+                try:
+                    api_patch(f"/reviewSubmissionItems/{item_id}", token, resolve_body)
+                    print(f"Item {item_id} resolved!")
+                except Exception as e:
+                    print(f"Could not resolve item {item_id}: {e}")
+        # Wait for state to update
+        print("Waiting 30s for submission state to update after resolving items...")
+        time.sleep(30)
+        token = generate_token()
+        sub_data = api_get(f"/reviewSubmissions/{submission_id}", token)
+        sub_state = sub_data["data"]["attributes"]["state"]
+        print(f"Submission state after resolving: {sub_state}")
 
     # 7. Submit for review
     token = generate_token()
