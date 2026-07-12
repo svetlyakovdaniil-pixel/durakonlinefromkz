@@ -89,6 +89,105 @@ async function verifyAppleIdToken(idToken: string): Promise<{
   };
 }
 
+/**
+ * Returns an HTML page that opens a deep link (durak://) in the native app.
+ *
+ * WHY HTML INSTEAD OF DIRECT REDIRECT:
+ * SFSafariViewController (used by the Capacitor Browser plugin on iOS/iPadOS)
+ * CANNOT open custom URL schemes (durak://) via a server-side 302 redirect.
+ * When the server redirects to durak://, SFSafariViewController shows an error
+ * page ("Safari cannot open the page") instead of returning to the app.
+ *
+ * The fix: return an HTML page that uses window.location to open the deep link.
+ * iOS intercepts window.location changes to custom URL schemes and routes them
+ * to the registered app, closing SFSafariViewController in the process.
+ *
+ * This is the standard approach used by Auth0, Firebase, and other OAuth providers
+ * for native app callbacks.
+ */
+function buildDeepLinkHtml(deepLinkUrl: string, isError: boolean): string {
+  const encodedUrl = deepLinkUrl.replace(/'/g, "\\'");
+  const title = isError ? "Authentication Error" : "Signing you in...";
+  const message = isError
+    ? "Something went wrong. Please return to the app and try again."
+    : "Please wait while we sign you in...";
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${title}</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a1628;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+      text-align: center;
+    }
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+    p { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 32px; }
+    .btn {
+      display: inline-block;
+      background: #ffffff;
+      color: #0a1628;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 12px;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <h1>${title}</h1>
+    <p>${message}</p>
+  </div>
+  <div id="fallback" class="hidden">
+    <h1>Return to App</h1>
+    <p>Tap the button below to continue in the Durak app.</p>
+    <a class="btn" href="${encodedUrl}">Open Durak App</a>
+  </div>
+  <script>
+    // Immediately try to open the deep link via window.location
+    // iOS intercepts custom URL scheme changes and routes them to the registered app,
+    // automatically closing SFSafariViewController.
+    try {
+      window.location.href = '${encodedUrl}';
+    } catch(e) {}
+
+    // Show fallback button after 2 seconds in case the automatic redirect didn't work
+    // (e.g., app not installed, or browser blocked the redirect)
+    setTimeout(function() {
+      document.getElementById('loading').classList.add('hidden');
+      document.getElementById('fallback').classList.remove('hidden');
+    }, 2000);
+  </script>
+</body>
+</html>`;
+}
+
 export function registerAppleAuthRoutes(app: Express) {
   /**
    * GET /api/auth/apple/init
@@ -114,7 +213,6 @@ export function registerAppleAuthRoutes(app: Express) {
 
     const authUrl = `https://appleid.apple.com/auth/authorize?${params.toString()}`;
     // For native apps: redirect directly to Apple's auth URL so SFSafariViewController loads it properly.
-    // Previously this returned JSON, which caused SFSafariViewController to show a blank page.
     if (native) {
       res.redirect(authUrl);
     } else {
@@ -124,7 +222,11 @@ export function registerAppleAuthRoutes(app: Express) {
 
   /**
    * POST /api/auth/apple/callback
-   * Apple sends a form_post to this endpoint after user authenticates
+   * Apple sends a form_post to this endpoint after user authenticates.
+   *
+   * IMPORTANT: For native apps, we return an HTML page that opens the deep link
+   * via window.location instead of a server-side 302 redirect.
+   * SFSafariViewController cannot follow 302 redirects to custom URL schemes (durak://).
    */
   app.post("/api/auth/apple/callback", async (req: Request, res: Response) => {
     let isNative = false;
@@ -156,6 +258,9 @@ export function registerAppleAuthRoutes(app: Express) {
       } catch {
         // Use defaults
       }
+
+      console.log("[AppleAuth] State parsed:", { origin, isNative, hasReferralCode: !!referralCode });
+
       // For native apps, always use production domain for redirect_uri
       const webOrigin = "https://durakonlinefromkz.online";
 
@@ -177,14 +282,20 @@ export function registerAppleAuthRoutes(app: Express) {
       try {
         if (id_token) {
           appleUser = await verifyAppleIdToken(id_token);
+          console.log("[AppleAuth] id_token verified successfully, sub:", appleUser.sub?.substring(0, 8) + "...");
         } else {
           // Exchange code for tokens
           const redirectUri = `${webOrigin}/api/auth/apple/callback`;
+          console.log("[AppleAuth] Exchanging code for tokens with redirectUri:", redirectUri);
           const tokens = await exchangeCodeForTokens(code, redirectUri);
           appleUser = await verifyAppleIdToken(tokens.id_token);
+          console.log("[AppleAuth] Code exchanged and token verified, sub:", appleUser.sub?.substring(0, 8) + "...");
         }
       } catch (err) {
         console.error("[AppleAuth] Token verification failed:", err);
+        if (isNative) {
+          return res.send(buildDeepLinkHtml(`durak://auth/error?reason=apple_invalid_token`, true));
+        }
         res.redirect(`${origin}/?error=apple_invalid_token`);
         return;
       }
@@ -202,7 +313,12 @@ export function registerAppleAuthRoutes(app: Express) {
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
         if (isNative) {
-          return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+          // Return HTML page that opens the deep link via window.location
+          // This is required because SFSafariViewController cannot follow 302 redirects
+          // to custom URL schemes (durak://) — it shows an error page instead.
+          const deepLink = `durak://auth/success?token=${encodeURIComponent(sessionToken)}`;
+          console.log("[AppleAuth] Returning HTML deep link page for native (existing user)");
+          return res.send(buildDeepLinkHtml(deepLink, false));
         }
         res.redirect(`${origin}/`);
       } else {
@@ -235,13 +351,18 @@ export function registerAppleAuthRoutes(app: Express) {
         const cookieOptions = getSessionCookieOptions(req);
         res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
         if (isNative) {
-          return res.redirect(`durak://auth/success?token=${encodeURIComponent(sessionToken)}`);
+          // Return HTML page that opens the deep link via window.location
+          const deepLink = `durak://auth/success?token=${encodeURIComponent(sessionToken)}`;
+          console.log("[AppleAuth] Returning HTML deep link page for native (new user)");
+          return res.send(buildDeepLinkHtml(deepLink, false));
         }
         res.redirect(`${origin}/`);
       }
     } catch (error) {
       console.error("[AppleAuth] Login failed:", error);
-      if (isNative) return res.redirect(`durak://auth/error?reason=apple_server_error`);
+      if (isNative) {
+        return res.send(buildDeepLinkHtml(`durak://auth/error?reason=apple_server_error`, true));
+      }
       res.redirect("/?error=apple_server_error");
     }
   });
