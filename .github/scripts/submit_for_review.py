@@ -19,8 +19,8 @@ KEY_ID = os.environ["APP_STORE_CONNECT_API_KEY_ID"].strip()
 ISSUER_ID = os.environ["APP_STORE_CONNECT_ISSUER_ID"].strip()
 KEY_CONTENT = os.environ["APP_STORE_CONNECT_API_KEY_CONTENT"].strip()
 BUNDLE_ID = os.environ.get("IOS_BUNDLE_ID", "com.durakonlinefromkz.app").strip()
-VERSION = os.environ.get("VERSION", "1.0.70").strip()
-BUILD_NUMBER = os.environ.get("BUILD_NUMBER", "92").strip()
+VERSION = os.environ.get("VERSION", "1.0.2").strip()
+BUILD_NUMBER = os.environ.get("BUILD_NUMBER", "299").strip()
 
 BASE_URL = "https://api.appstoreconnect.apple.com/v1"
 

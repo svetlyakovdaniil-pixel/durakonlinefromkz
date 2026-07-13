@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'App version to submit (e.g. 1.0.70)'
+        description: 'App version to submit (e.g. 1.0.2)'
         required: true
-        default: '1.0.70'
+        default: '1.0.2'
       build_number:
-        description: 'Build number to submit (e.g. 92)'
+        description: 'Build number to submit (e.g. 299)'
         required: true
-        default: '92'
+        default: '299'
 
 jobs:
   submit-review:
