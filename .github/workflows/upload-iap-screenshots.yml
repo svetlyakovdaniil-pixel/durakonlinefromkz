@@ -1,0 +1,23 @@
+name: Upload IAP Screenshots
+
+on:
+  workflow_dispatch:
+
+jobs:
+  upload-iap-screenshots:
+    runs-on: ubuntu-latest
+    env:
+      APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+      APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+      IOS_APP_APPLE_ID: ${{ secrets.IOS_APP_APPLE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install requests PyJWT cryptography Pillow
+      - name: Upload IAP Screenshots
+        run: python3 .github/scripts/upload_iap_screenshots.py
