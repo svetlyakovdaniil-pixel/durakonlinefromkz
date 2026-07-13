@@ -534,7 +534,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <Gamepad2 className="w-7 h-7 text-amber-400" />
                 <h1 className="text-xl font-bold text-amber-100">{t('lobby.title').split(' ')[0]} <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}</span> from KZ</h1>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1.5 lg:gap-3 flex-wrap justify-end">
                 {/* Admin button (only for admins/GMs) */}
                 {hasAdminAccess && (
                   <button
@@ -656,8 +656,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Currency: Tenge */}
                 <div className="flex items-center gap-1">
                   <span className="text-xs text-amber-300/60 font-semibold">{formatBalance(profile?.balanceTenge ?? 0)}</span>
-                  <div className="w-[51px] h-[51px] rounded-full overflow-hidden flex items-center justify-center">
-                    <img src={getAssetUrl("/assets/static/tenge_9aefd1b7.png")} alt="Тенге" className="w-[51px] h-[51px] object-contain" />
+                  <div className="w-9 h-9 lg:w-[51px] lg:h-[51px] rounded-full overflow-hidden flex items-center justify-center">
+                    <img src={getAssetUrl("/assets/static/tenge_9aefd1b7.png")} alt="Тенге" className="w-9 h-9 lg:w-[51px] lg:h-[51px] object-contain" />
                   </div>
                   <button
                     className="w-6 h-6 flex items-center justify-center rounded bg-amber-700/40 hover:bg-amber-600/50 text-amber-200 text-lg font-bold transition-colors leading-none"
@@ -670,8 +670,8 @@ onClick={() => setShowTengeTopUp(true)}
                 {/* Currency: Shanyrak */}
                 <div className="flex items-center gap-1">
                   <div className="flex flex-col items-center">
-                    <div className="h-[42px] flex items-center justify-center">
-                      <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="Шаныраки" className="h-[42px] object-contain" style={{marginTop: '12px'}} />
+                    <div className="h-9 lg:h-[42px] flex items-center justify-center">
+                      <img src={getAssetUrl("/assets/static/shanyrak_96e91a49.png")} alt="Шаныраки" className="h-9 lg:h-[42px] object-contain" style={{marginTop: '6px'}} />
                     </div>
                     <span className="text-xs text-green-400 font-semibold -mt-1">{formatBalance(profile?.balanceShanyrak ?? 0)}</span>
                   </div>
@@ -685,14 +685,14 @@ onClick={() => setShowTengeTopUp(true)}
                 </div>
 
                 {profile && (
-                  <Badge variant="outline" className="border-amber-600/30 text-amber-300 text-sm px-2.5 py-0.5">
+                  <Badge variant="outline" className="hidden lg:flex border-amber-600/30 text-amber-300 text-sm px-2.5 py-0.5">
                     ID {profile.gameId}
                   </Badge>
                 )}
-                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-2 -m-2" onClick={() => setLocation('/profile')}>
-                  <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={40} />
+                <button className="flex items-center gap-1.5 hover:opacity-80 transition-opacity p-1 -m-1" onClick={() => setLocation('/profile')}>
+                  <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={36} />
                 </button>
-                <div className="flex items-center gap-1.5">
+                <div className="hidden lg:flex items-center gap-1.5">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={16} showTooltip />
                   <span className="text-base text-amber-200/70 font-medium">{userName}</span>
                 </div>
@@ -1364,7 +1364,7 @@ onClick={() => setShowTengeTopUp(true)}
             )}
           </div>
         ) : (
-          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
             {filteredRooms.map(room => {
               const canRejoin = room.hasActiveGame && room.activeGamePlayerIds?.includes(userId);
 
