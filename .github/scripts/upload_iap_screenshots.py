@@ -117,6 +117,7 @@ def reserve_screenshot_upload(iap_id: str, file_size: int, file_name: str) -> di
     """
     Reserve an upload slot for IAP review screenshot.
     Uses the CORRECT endpoint: POST /v1/inAppPurchaseAppStoreReviewScreenshots
+    Note: relationship type must be 'inAppPurchases' (NOT 'inAppPurchasesV2')
     """
     body = {
         "data": {
@@ -127,7 +128,7 @@ def reserve_screenshot_upload(iap_id: str, file_size: int, file_name: str) -> di
             },
             "relationships": {
                 "inAppPurchaseV2": {
-                    "data": {"type": "inAppPurchasesV2", "id": iap_id}
+                    "data": {"type": "inAppPurchases", "id": iap_id}
                 }
             }
         }
@@ -232,7 +233,7 @@ def submit_iap_for_review(iap_id: str, product_id: str) -> bool:
                 "type": "inAppPurchaseSubmissions",
                 "relationships": {
                     "inAppPurchaseV2": {
-                        "data": {"type": "inAppPurchasesV2", "id": iap_id}
+                        "data": {"type": "inAppPurchases", "id": iap_id}
                     }
                 }
             }
