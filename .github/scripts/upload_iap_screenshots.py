@@ -21,16 +21,24 @@ from cryptography.hazmat.backends import default_backend
 
 
 # ── credentials ──────────────────────────────────────────────────────────────
-KEY_ID     = os.environ["APP_STORE_CONNECT_API_KEY_ID"]
-ISSUER_ID  = os.environ["APP_STORE_CONNECT_ISSUER_ID"]
-KEY_CONTENT = os.environ["APP_STORE_CONNECT_API_KEY_CONTENT"]
-APP_ID     = os.environ["IOS_APP_APPLE_ID"]
+KEY_ID     = os.environ["APP_STORE_CONNECT_API_KEY_ID"].strip()
+ISSUER_ID  = os.environ["APP_STORE_CONNECT_ISSUER_ID"].strip()
+KEY_CONTENT = os.environ["APP_STORE_CONNECT_API_KEY_CONTENT"].strip()
+APP_ID     = os.environ["IOS_APP_APPLE_ID"].strip()
+
+# Decode base64-encoded PEM key if needed
+if "BEGIN" not in KEY_CONTENT:
+    try:
+        KEY_CONTENT = base64.b64decode(KEY_CONTENT).decode("utf-8")
+        print("Decoded base64 API key")
+    except Exception as e:
+        print(f"Warning: Could not decode base64 key: {e}")
 
 BASE_URL = "https://api.appstoreconnect.apple.com/v1"
 
 
 def make_jwt() -> str:
-    key_data = base64.b64decode(KEY_CONTENT)
+    key_data = KEY_CONTENT.encode("utf-8") if isinstance(KEY_CONTENT, str) else KEY_CONTENT
     payload = {
         "iss": ISSUER_ID,
         "iat": int(time.time()),
@@ -38,7 +46,7 @@ def make_jwt() -> str:
         "aud": "appstoreconnect-v1",
     }
     token = jwt.encode(payload, key_data, algorithm="ES256", headers={"kid": KEY_ID})
-    return token if isinstance(token, str) else token.decode()
+    return token if isinstance(token, str) else token.decode("utf-8")
 
 
 def headers() -> dict:
