@@ -103,11 +103,21 @@ def get_iap_products() -> list:
 
 
 def get_existing_review_screenshot(iap_id: str) -> dict | None:
-    """Get existing review screenshot for IAP using the correct relationship endpoint."""
+    """Get existing review screenshot for IAP.
+    
+    The /inAppPurchasesV2/{id}/appStoreReviewScreenshot endpoint doesn't exist.
+    Instead, we use GET /v1/inAppPurchaseAppStoreReviewScreenshots?filter[inAppPurchaseV2]={id}
+    """
     try:
-        # The correct relationship endpoint for inAppPurchasesV2
-        result = api_get(f"/inAppPurchasesV2/{iap_id}/appStoreReviewScreenshot")
-        return result.get("data")
+        result = api_get(
+            f"/inAppPurchaseAppStoreReviewScreenshots",
+            params={"filter[inAppPurchaseV2]": iap_id}
+        )
+        items = result.get("data", [])
+        if items:
+            print(f"  Found existing screenshot via filter: {items[0]['id']}")
+            return items[0]
+        return None
     except Exception as e:
         print(f"  No existing screenshot: {e}")
         return None
