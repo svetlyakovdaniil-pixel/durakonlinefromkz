@@ -58,7 +58,11 @@ def headers() -> dict:
 
 
 def api_get(path: str, params: dict = None) -> dict:
-    url = f"{BASE_URL}{path}"
+    # If path starts with /v2/, use the v2 base URL
+    if path.startswith("/v2/"):
+        url = f"https://api.appstoreconnect.apple.com{path}"
+    else:
+        url = f"{BASE_URL}{path}"
     r = requests.get(url, headers=headers(), params=params)
     if not r.ok:
         print(f"GET {path} → {r.status_code}: {r.text[:500]}")
@@ -105,18 +109,19 @@ def get_iap_products() -> list:
 def get_existing_review_screenshot(iap_id: str) -> dict | None:
     """Get existing review screenshot for IAP.
     
-    The /inAppPurchasesV2/{id}/appStoreReviewScreenshot endpoint doesn't exist.
-    Instead, we use GET /v1/inAppPurchaseAppStoreReviewScreenshots?filter[inAppPurchaseV2]={id}
+    Use GET /v2/inAppPurchases/{id}?include=appStoreReviewScreenshot to get the screenshot.
+    The screenshot ID is in the 'included' array of the response.
     """
     try:
         result = api_get(
-            f"/inAppPurchaseAppStoreReviewScreenshots",
-            params={"filter[inAppPurchaseV2]": iap_id}
+            f"/v2/inAppPurchases/{iap_id}",
+            params={"include": "appStoreReviewScreenshot"}
         )
-        items = result.get("data", [])
-        if items:
-            print(f"  Found existing screenshot via filter: {items[0]['id']}")
-            return items[0]
+        included = result.get("included", [])
+        screenshots = [item for item in included if item.get("type") == "inAppPurchaseAppStoreReviewScreenshots"]
+        if screenshots:
+            print(f"  Found existing screenshot via include: {screenshots[0]['id']}")
+            return screenshots[0]
         return None
     except Exception as e:
         print(f"  No existing screenshot: {e}")
