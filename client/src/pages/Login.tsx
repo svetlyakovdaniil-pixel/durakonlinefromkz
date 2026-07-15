@@ -7,7 +7,6 @@ import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
-import { SignInWithApple, type SignInWithAppleResponse } from "@capacitor-community/apple-sign-in";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
@@ -205,14 +204,18 @@ export default function Login() {
         // This is the recommended approach — avoids SFSafariViewController entirely,
         // which had issues on iOS 26.5.2 (deep link not firing, browser not closing).
         console.log("[AppleAuth/Native] Starting native Sign in with Apple...");
-        let appleResponse: SignInWithAppleResponse;
+        // Use our custom native AppleSignInPlugin (AppleSignInPlugin.swift in ios/App/App/)
+        // This avoids the capacitor-swift-pm version conflict with @capacitor-community/apple-sign-in
+        const AppleSignIn = (window as any)?.Capacitor?.Plugins?.AppleSignIn;
+        if (!AppleSignIn) {
+          console.error("[AppleAuth/Native] AppleSignIn plugin not available");
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+        let appleResponse: any;
         try {
-          appleResponse = await SignInWithApple.authorize({
-            clientId: "com.durakonlinefromkz.app", // Bundle ID for native flow
-            redirectURI: `${origin}/api/auth/apple/callback`, // Required by plugin but not used for native
-            scopes: "email name",
-            state: "native_signin",
-          });
+          appleResponse = await AppleSignIn.authorize();
         } catch (appleErr: any) {
           // User cancelled or plugin error
           const msg = appleErr?.message || String(appleErr);

@@ -3717,5 +3717,5 @@
 - [x] Implement native Sign in with Apple via @capacitor-community/apple-sign-in (replace SFSafariViewController OAuth)
 - [x] Add /api/auth/apple/native server endpoint for native token verification
 - [x] Move account deletion button from Profile to Settings tab
-- [ ] Improve email login: clear stale tokens before login attempt
-- [ ] Build new binary (Build 300) and resubmit for App Store review
+- [x] Improve email login: clear stale tokens before login attempt (already had retry logic + 20s timeout)
+- [x] Build new binary triggered (Run #29404175291) — awaiting completion

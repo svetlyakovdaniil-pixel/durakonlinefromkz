@@ -216,6 +216,7 @@ jobs:
             cp ios/App/App/Info.plist /tmp/Info.plist || true
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
             cp ios/App/App/AppRelease.entitlements /tmp/AppRelease.entitlements 2>/dev/null || true
+            cp ios/App/App/AppleSignInPlugin.swift /tmp/AppleSignInPlugin.swift 2>/dev/null || true
             rm -rf ios
             npx cap add ios
             cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
@@ -225,8 +226,15 @@ jobs:
             cp /tmp/Info.plist ios/App/App/Info.plist || true
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
             cp /tmp/AppRelease.entitlements ios/App/App/AppRelease.entitlements 2>/dev/null || true
+            [ -f /tmp/AppleSignInPlugin.swift ] && cp /tmp/AppleSignInPlugin.swift ios/App/App/AppleSignInPlugin.swift || true
+          fi
+          # Ensure AppleSignInPlugin.swift is present after cap sync
+          if [ ! -f "ios/App/App/AppleSignInPlugin.swift" ]; then
+            git show HEAD:ios/App/App/AppleSignInPlugin.swift > ios/App/App/AppleSignInPlugin.swift 2>/dev/null || true
           fi
           npx cap sync ios
+          # Register AppleSignInPlugin.swift in the Xcode project
+          python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
 
       # ── 8b. Set version and build number ─────────────────────────────────────
       - name: Set version and build number
