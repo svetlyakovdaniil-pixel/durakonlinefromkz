@@ -1,0 +1,30 @@
+name: Check App Store Rejection Reason
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    name: Fetch Rejection Reason
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install PyJWT cryptography requests
+
+      - name: Fetch rejection reason
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+          IOS_BUNDLE_ID: ${{ secrets.IOS_BUNDLE_ID }}
+          IOS_APP_APPLE_ID: ${{ secrets.IOS_APP_APPLE_ID }}
+        run: python3 .github/scripts/fetch_rejection_reason.py
