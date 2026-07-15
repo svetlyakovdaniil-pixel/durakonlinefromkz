@@ -9,7 +9,8 @@ import { createRemoteJWKSet, jwtVerify } from "jose";
 // Apple Sign In configuration
 const APPLE_TEAM_ID = "CMP7AQ6386";
 const APPLE_KEY_ID = "SHTMB76CNK";
-const APPLE_SERVICE_ID = "com.durakonlinefromkz.web";
+const APPLE_SERVICE_ID = "com.durakonlinefromkz.web"; // Service ID (used for web OAuth)
+const APPLE_BUNDLE_ID = "com.durakonlinefromkz.app"; // Bundle ID (used for native ASAuthorizationController)
 const APPLE_PRIVATE_KEY = `***REMOVED***
 ***REMOVED***
 ***REMOVED***
@@ -71,15 +72,17 @@ async function exchangeCodeForTokens(
 
 /**
  * Verify Apple ID token and extract user info
+ * @param idToken - The identity token from Apple
+ * @param audience - The audience to verify against (Service ID for web, Bundle ID for native)
  */
-async function verifyAppleIdToken(idToken: string): Promise<{
+async function verifyAppleIdToken(idToken: string, audience: string = APPLE_SERVICE_ID): Promise<{
   sub: string;
   email: string | null;
   email_verified: boolean;
 }> {
   const { payload } = await jwtVerify(idToken, APPLE_JWKS, {
     issuer: "https://appleid.apple.com",
-    audience: APPLE_SERVICE_ID,
+    audience,
   });
 
   return {
@@ -189,6 +192,90 @@ function buildDeepLinkHtml(deepLinkUrl: string, isError: boolean): string {
 }
 
 export function registerAppleAuthRoutes(app: Express) {
+  /**
+   * POST /api/auth/apple/native
+   * Native Sign in with Apple endpoint.
+   * Called by @capacitor-community/apple-sign-in plugin after ASAuthorizationController succeeds.
+   * The plugin returns an identityToken (JWT) signed by Apple — we verify it server-side.
+   * Unlike the web OAuth flow, there is no SFSafariViewController or deep link involved.
+   * The audience for native tokens is the Bundle ID (com.durakonlinefromkz.app).
+   */
+  app.post("/api/auth/apple/native", async (req: Request, res: Response) => {
+    try {
+      const { identityToken, user: appleUserId, givenName, familyName, email: emailFromPlugin, referralCode } = req.body;
+
+      if (!identityToken) {
+        return res.status(400).json({ success: false, error: "No identity token provided" });
+      }
+
+      console.log("[AppleAuth/Native] Received native sign-in request");
+
+      // Verify the identity token from the native plugin
+      // Native tokens use Bundle ID as audience, not Service ID
+      let appleUser: { sub: string; email: string | null; email_verified: boolean };
+      try {
+        appleUser = await verifyAppleIdToken(identityToken, APPLE_BUNDLE_ID);
+        console.log("[AppleAuth/Native] Token verified, sub:", appleUser.sub?.substring(0, 8) + "...");
+      } catch (err) {
+        console.error("[AppleAuth/Native] Token verification failed:", err);
+        return res.status(401).json({ success: false, error: "Invalid Apple identity token" });
+      }
+
+      const openId = `apple_${appleUser.sub}`;
+
+      // Determine display name: plugin provides it on first sign-in only
+      const firstName = givenName || "";
+      const lastName = familyName || "";
+      const fullName = [firstName, lastName].filter(Boolean).join(" ") || null;
+
+      // Check if user already exists
+      const existingUser = await db.getUserByOpenId(openId);
+      if (existingUser) {
+        await db.upsertUser({ openId, lastSignedIn: new Date() });
+        const sessionToken = await sdk.createSessionToken(openId, {
+          name: existingUser.name || fullName || "Player",
+          expiresInMs: ONE_YEAR_MS,
+        });
+        console.log("[AppleAuth/Native] Existing user signed in:", openId.substring(0, 16) + "...");
+        return res.json({ success: true, token: sessionToken });
+      }
+
+      // New user — create account
+      const email = appleUser.email || emailFromPlugin || null;
+      const displayName = fullName || email?.split("@")[0] || "Player";
+      const truncatedName = displayName.substring(0, 12);
+
+      await db.upsertUser({
+        openId,
+        name: truncatedName,
+        email,
+        loginMethod: "apple",
+        lastSignedIn: new Date(),
+      });
+
+      const newUser = await db.getUserByOpenId(openId);
+      if (newUser) {
+        const profile = await db.getOrCreateProfile(newUser.id, truncatedName);
+        if (referralCode && profile) {
+          await db.activateReferralCode(profile.id, referralCode.trim().toUpperCase()).catch(err => {
+            console.warn("[AppleAuth/Native] Referral activation failed (non-fatal):", err);
+          });
+        }
+      }
+
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name: truncatedName,
+        expiresInMs: ONE_YEAR_MS,
+      });
+
+      console.log("[AppleAuth/Native] New user created and signed in:", openId.substring(0, 16) + "...");
+      return res.json({ success: true, token: sessionToken });
+    } catch (error) {
+      console.error("[AppleAuth/Native] Error:", error);
+      return res.status(500).json({ success: false, error: "Authentication failed" });
+    }
+  });
+
   /**
    * GET /api/auth/apple/init
    * Returns the Apple authorization URL for the frontend to redirect to

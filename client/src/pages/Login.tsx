@@ -7,6 +7,7 @@ import { useTranslation } from "@/i18n";
 import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
+import { SignInWithApple, type SignInWithAppleResponse } from "@capacitor-community/apple-sign-in";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
@@ -200,15 +201,78 @@ export default function Login() {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native: build Apple auth URL directly and open in SFSafariViewController.
-        // IMPORTANT: We do NOT make a fetch() call here to get the URL.
-        // Any fetch() before Browser.open() can hang on iOS 26.5.2 and cause infinite loading.
-        // Instead, we construct the URL directly and let the server handle the OAuth flow.
-        const authUrl = `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`;
-        await Browser.open({ url: authUrl, presentationStyle: "popover" });
-        // Loading state will be cleared when deep link callback fires or browser closes
+        // On native iOS/Android: use ASAuthorizationController via the plugin.
+        // This is the recommended approach — avoids SFSafariViewController entirely,
+        // which had issues on iOS 26.5.2 (deep link not firing, browser not closing).
+        console.log("[AppleAuth/Native] Starting native Sign in with Apple...");
+        let appleResponse: SignInWithAppleResponse;
+        try {
+          appleResponse = await SignInWithApple.authorize({
+            clientId: "com.durakonlinefromkz.app", // Bundle ID for native flow
+            redirectURI: `${origin}/api/auth/apple/callback`, // Required by plugin but not used for native
+            scopes: "email name",
+            state: "native_signin",
+          });
+        } catch (appleErr: any) {
+          // User cancelled or plugin error
+          const msg = appleErr?.message || String(appleErr);
+          console.log("[AppleAuth/Native] Authorization cancelled or failed:", msg);
+          if (msg.includes("cancel") || msg.includes("Cancel") || msg.includes("1001")) {
+            // User pressed Cancel — not an error
+            setAppleLoading(false);
+            return;
+          }
+          throw appleErr;
+        }
+
+        const { identityToken, givenName, familyName, email: appleEmail, user: appleUserId } = appleResponse.response;
+
+        if (!identityToken) {
+          console.error("[AppleAuth/Native] No identity token in response");
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+
+        console.log("[AppleAuth/Native] Got identity token, sending to server...");
+
+        // Send the identity token to our server for verification
+        const res = await fetchWithTimeout(
+          `${origin}/api/auth/apple/native`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              identityToken,
+              user: appleUserId,
+              givenName,
+              familyName,
+              email: appleEmail,
+            }),
+            credentials: "include",
+          },
+          20000
+        );
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.error("[AppleAuth/Native] Server error:", errData);
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
+          console.log("[AppleAuth/Native] Login successful, redirecting...");
+          window.location.href = "/";
+        } else {
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+        }
       } else {
-        // On web: get Apple auth URL and redirect
+        // On web: use server-side OAuth redirect flow (unchanged)
         const res = await fetchWithTimeout(
           `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`,
           { credentials: "include" },

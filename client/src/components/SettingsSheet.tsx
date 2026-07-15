@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
-import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell, ChevronDown } from 'lucide-react';
+import { Settings, Volume2, Music, Smartphone, Globe, LogOut, Pencil, Check, X, Sparkles, MessageSquare, Shield, FileText, Bell, ChevronDown, Trash2, AlertTriangle } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -38,6 +38,18 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const [langOpen, setLangOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+
+  const deleteAccountMutation = trpc.auth.deleteAccount.useMutation({
+    onSuccess: () => {
+      toast.success(t('profile.deleteAccountSuccess'));
+      setOpen(false);
+      window.location.reload();
+    },
+    onError: () => {
+      toast.error(t('profile.deleteAccountError'));
+    },
+  });
 
   // Push notification settings
   const { data: pushSettings, refetch: refetchPushSettings } = trpc.push.getSettings.useQuery(undefined, { enabled: open });
@@ -484,7 +496,49 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             </div>
           )}
 
-          {/* 10. Logout */}
+          {/* 10. Delete account — required by App Store Guideline 5.1.1(v) */}
+          {!deleteAccountOpen ? (
+            <button
+              onClick={() => setDeleteAccountOpen(true)}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-800/40 text-red-400/70 hover:text-red-400 hover:border-red-700/60 hover:bg-red-900/10 transition-colors text-sm mb-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t('profile.deleteAccount')}
+            </button>
+          ) : (
+            <div className="bg-[#1a2d45] rounded-xl p-4 border border-red-700/40 mb-2">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-8 h-8 rounded-full bg-red-900/40 flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                </div>
+                <p className="text-red-300 font-semibold text-sm">{t('profile.deleteAccountConfirmTitle')}</p>
+              </div>
+              <p className="text-amber-200/60 text-xs mb-4 leading-relaxed">{t('profile.deleteAccountConfirmText')}</p>
+              <div className="flex gap-3">
+                <Button
+                  className="flex-1 bg-[#0a1628] border border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100"
+                  variant="outline"
+                  onClick={() => setDeleteAccountOpen(false)}
+                  disabled={deleteAccountMutation.isPending}
+                >
+                  {t('profile.deleteAccountCancel')}
+                </Button>
+                <Button
+                  className="flex-1 bg-red-700 hover:bg-red-600 text-white"
+                  onClick={() => deleteAccountMutation.mutate()}
+                  disabled={deleteAccountMutation.isPending}
+                >
+                  {deleteAccountMutation.isPending ? (
+                    <span className="flex items-center gap-1"><Trash2 className="w-3 h-3 animate-pulse" /></span>
+                  ) : (
+                    t('profile.deleteAccountConfirm')
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* 11. Logout */}
           {!logoutConfirmOpen ? (
             <Button
               className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-12 mb-2"

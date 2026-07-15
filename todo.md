@@ -3711,3 +3711,11 @@
 - [ ] Set up Manus Heartbeat cron to ping /api/scheduled/keepalive every 5 minutes
 - [ ] Build 86 via GitHub Actions and attach to version 1.0.68
 - [ ] Resubmit to App Review
+
+## Apple Rejection Fix — Build 300 (Jul 15, 2026)
+
+- [x] Implement native Sign in with Apple via @capacitor-community/apple-sign-in (replace SFSafariViewController OAuth)
+- [x] Add /api/auth/apple/native server endpoint for native token verification
+- [x] Move account deletion button from Profile to Settings tab
+- [ ] Improve email login: clear stale tokens before login attempt
+- [ ] Build new binary (Build 300) and resubmit for App Store review
