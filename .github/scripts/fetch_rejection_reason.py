@@ -61,7 +61,6 @@ else:
 # 2. Get all iOS app store versions
 versions_data = get(f"/apps/{app_id}/appStoreVersions", params={
     "filter[platform]": "IOS",
-    "sort": "-createdDate",
     "limit": 10,
 })
 versions = versions_data.get("data", [])
