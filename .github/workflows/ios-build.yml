@@ -16,11 +16,11 @@ on:
       version:
         description: 'App version (e.g. 1.0.71)'
         required: true
-        default: '1.0.71'
+        default: '1.0.73'
       build_number:
         description: 'Build number (e.g. 23)'
         required: true
-        default: '23'
+        default: '98'
       upload_to_appstore:
         description: 'Upload to App Store Connect'
         required: false
@@ -240,7 +240,7 @@ jobs:
       - name: Set version and build number
         run: |
           cd ios/App
-          xcrun agvtool new-marketing-version ${{ github.event.inputs.version || '1.0.71' }}
+          xcrun agvtool new-marketing-version ${{ github.event.inputs.version || '1.0.73' }}
           xcrun agvtool new-version -all ${{ github.event.inputs.build_number || github.run_number }}
 
       # ── 9. Ensure CocoaPods is available ───────────────────────────────────
