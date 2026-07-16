@@ -45,6 +45,7 @@
 		"PushNotificationsPlugin",
 		"SplashScreenPlugin",
 		"StatusBarPlugin",
-		"PurchasesPlugin"
+		"PurchasesPlugin",
+		"AppleSignInPlugin"
 	]
 }
