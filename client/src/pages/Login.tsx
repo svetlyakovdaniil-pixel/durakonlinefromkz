@@ -61,25 +61,24 @@ export default function Login() {
   const [error, setError] = useState("");
   const [showRetry, setShowRetry] = useState(false);
 
-  // Watchdog timer ref — if any loading state stays true for > 12 seconds,
-  // we force-show an error + retry button so Apple reviewer never sees "loading indefinitely"
+  // Watchdog timer ref — only for email login.
+  // OAuth flows (Google/Apple) can legitimately take > 12s because the user is
+  // interacting with an external browser/dialog. We do NOT apply watchdog there.
   const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isAnyLoading = loading || googleLoading || appleLoading;
 
-  // Start watchdog when loading begins, clear when it ends
+  // Start watchdog ONLY for email login (loading state), not OAuth
   useEffect(() => {
-    if (isAnyLoading) {
+    if (loading) {
       setShowRetry(false);
       watchdogRef.current = setTimeout(() => {
-        // 12 seconds passed — force show error
+        // 20 seconds passed for email login — force show error
         setLoading(false);
-        setGoogleLoading(false);
-        setAppleLoading(false);
         setError(t("auth.serverError"));
         setShowRetry(true);
-        logAuthStep("watchdog_triggered", "12s timeout");
-      }, 12000);
+        logAuthStep("watchdog_triggered", "20s email timeout");
+      }, 20000);
     } else {
       if (watchdogRef.current) {
         clearTimeout(watchdogRef.current);
@@ -92,7 +91,7 @@ export default function Login() {
         watchdogRef.current = null;
       }
     };
-  }, [isAnyLoading, t]);
+  }, [loading, t]);
 
   // Warm up the server as soon as Login page mounts.
   useEffect(() => {
@@ -144,8 +143,8 @@ export default function Login() {
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
 
-      // Single attempt with 8 second timeout (reduced from 2×20s = 42s).
-      // Apple reviewer screenshots were 39s apart — they left before our old 42s timeout.
+      // Single attempt with 15 second timeout.
+      // Previous 8s was too aggressive — server cold start can take 5-8s on first request.
       let res: Response;
       try {
         logAuthStep("email_login_fetch_start");
@@ -157,7 +156,7 @@ export default function Login() {
             body: JSON.stringify({ email: email.trim(), password }),
             credentials: "include",
           },
-          8000
+          15000
         );
         logAuthStep("email_login_fetch_done", `status=${res.status}`);
       } catch (fetchErr) {

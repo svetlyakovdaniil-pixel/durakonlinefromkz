@@ -3728,4 +3728,4 @@
 - [x] Add watchdog: any spinner > 12 sec → show error + retry button
 - [x] Replace window.location.href="/" with SPA router navigation after login (Login.tsx + App.tsx DeepLinkHandler)
 - [x] Add remote auth logging beacon for each step (/api/auth/log endpoint)
-- [ ] Build 1.0.72 (95) and upload to TestFlight
+- [x] Build 1.0.72 (95) uploaded to TestFlight (Run #308, success)
