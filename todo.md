@@ -3729,3 +3729,16 @@
 - [x] Replace window.location.href="/" with SPA router navigation after login (Login.tsx + App.tsx DeepLinkHandler)
 - [x] Add remote auth logging beacon for each step (/api/auth/log endpoint)
 - [x] Build 1.0.72 (95) uploaded to TestFlight (Run #308, success)
+
+## Auth Fix — Build 1.0.73 (315) — Jul 17, 2026
+- [x] Fix critical: AppleSignInPlugin not in packageClassList → registerPlugin('AppleSignIn') returned no-op stub
+- [x] Added AppleSignInPlugin to packageClassList in capacitor.config.ts
+- [x] Added AppleSignInPlugin to packageClassList in ios/App/App/capacitor.config.json
+- [x] Fixed watchdog timer: now only applies to email login (not Google/Apple OAuth)
+- [x] Fixed auto-relogin after logout: sessionStorage flag prevents getLaunchUrl() processing twice
+- [x] Fixed SPA navigation: replaced window.location.href with router navigate in Login.tsx + App.tsx
+- [x] Build 1.0.73 (315) triggered via GitHub Actions (Run #315) — completed successfully
+- [x] Build 1.0.73 (315) uploaded to App Store Connect/TestFlight successfully (Run #315)
+- [ ] User tests Sign in with Apple in TestFlight build 1.0.73 (315)
+- [ ] Submit 1.0.73 (315) for App Store review after TestFlight confirmation
+
