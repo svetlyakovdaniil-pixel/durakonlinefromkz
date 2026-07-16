@@ -1,21 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useTranslation } from "@/i18n";
-import { Loader2, Mail, Lock, ArrowLeft } from "lucide-react";
+import { Loader2, Mail, Lock, ArrowLeft, RefreshCw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
- *
- * When running as a native Capacitor app (iOS/Android), window.location.origin
- * returns "capacitor://localhost" which is NOT a valid OAuth redirect URI.
- * In that case, we use the production domain so the OAuth callback goes to
- * the real server, which then redirects to durak:// deep link.
  */
 function getOAuthOrigin(): string {
   if (Capacitor.isNativePlatform()) {
@@ -27,14 +22,32 @@ function getOAuthOrigin(): string {
 /**
  * Fetch with a manual timeout using Promise.race.
  * Does NOT use AbortController (can cause issues on some iOS versions).
- * Instead uses a timeout promise that rejects after the specified ms.
  */
-function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 20000): Promise<Response> {
+function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 8000): Promise<Response> {
   const fetchPromise = fetch(url, options);
   const timeoutPromise = new Promise<never>((_, reject) =>
     setTimeout(() => reject(new Error(`Request timed out after ${timeoutMs}ms`)), timeoutMs)
   );
   return Promise.race([fetchPromise, timeoutPromise]);
+}
+
+/**
+ * Remote auth logging — sends a beacon to the server for each auth step.
+ * This helps diagnose exactly where the flow hangs during Apple review.
+ * Fire-and-forget, never throws.
+ */
+function logAuthStep(step: string, detail?: string) {
+  try {
+    const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
+    const body = JSON.stringify({ step, detail, ts: Date.now(), platform: Capacitor.getPlatform() });
+    fetch(`${apiBase}/api/auth/log`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+    }).catch(() => {});
+  } catch {
+    // Never throw from logging
+  }
 }
 
 export default function Login() {
@@ -46,27 +59,55 @@ export default function Login() {
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showRetry, setShowRetry] = useState(false);
+
+  // Watchdog timer ref — if any loading state stays true for > 12 seconds,
+  // we force-show an error + retry button so Apple reviewer never sees "loading indefinitely"
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isAnyLoading = loading || googleLoading || appleLoading;
+
+  // Start watchdog when loading begins, clear when it ends
+  useEffect(() => {
+    if (isAnyLoading) {
+      setShowRetry(false);
+      watchdogRef.current = setTimeout(() => {
+        // 12 seconds passed — force show error
+        setLoading(false);
+        setGoogleLoading(false);
+        setAppleLoading(false);
+        setError(t("auth.serverError"));
+        setShowRetry(true);
+        logAuthStep("watchdog_triggered", "12s timeout");
+      }, 12000);
+    } else {
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
+    }
+    return () => {
+      if (watchdogRef.current) {
+        clearTimeout(watchdogRef.current);
+        watchdogRef.current = null;
+      }
+    };
+  }, [isAnyLoading, t]);
 
   // Warm up the server as soon as Login page mounts.
-  // This prevents cold-start delays when the user taps a login button.
-  // Use a simple fetch without timeout — fire-and-forget.
   useEffect(() => {
     const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
     fetch(`${apiBase}/api/health`, { method: "GET" }).catch(() => {});
+    logAuthStep("login_page_mounted");
   }, []);
 
   // Listen for browserFinished to clear loading state when user cancels OAuth
-  // (deep link success/error handling is done globally in App.tsx DeepLinkHandler)
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
-
-    // When user closes the browser (presses X or Back) without completing auth,
-    // clear the loading state so the buttons are usable again
     const handleBrowserFinished = Browser.addListener("browserFinished", () => {
       setGoogleLoading(false);
       setAppleLoading(false);
     });
-
     return () => {
       handleBrowserFinished.then((listener) => listener.remove());
     };
@@ -84,6 +125,7 @@ export default function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setShowRetry(false);
 
     // Client-side validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -97,40 +139,33 @@ export default function Login() {
     }
 
     setLoading(true);
+    logAuthStep("email_login_start");
+
     try {
       const apiBase = Capacitor.isNativePlatform() ? "https://durakonlinefromkz.online" : "";
 
-      // Retry logic: on iOS 26 WKWebView, the first fetch() can fail due to
-      // network initialization delays. Retry once after a short delay.
-      let res: Response | null = null;
-      let lastError: Error | null = null;
-      for (let attempt = 0; attempt < 2; attempt++) {
-        try {
-          if (attempt > 0) {
-            // Wait 2 seconds before retry
-            await new Promise(resolve => setTimeout(resolve, 2000));
-          }
-          res = await fetchWithTimeout(
-            `${apiBase}/api/auth/login`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email: email.trim(), password }),
-              credentials: "include",
-            },
-            20000
-          );
-          break; // Success, exit retry loop
-        } catch (fetchErr) {
-          lastError = fetchErr instanceof Error ? fetchErr : new Error(String(fetchErr));
-          console.warn(`[Login] Attempt ${attempt + 1} failed:`, lastError.message);
-        }
-      }
-
-      if (!res) {
-        // Both attempts failed
-        console.error('[Login] All attempts failed:', lastError);
+      // Single attempt with 8 second timeout (reduced from 2×20s = 42s).
+      // Apple reviewer screenshots were 39s apart — they left before our old 42s timeout.
+      let res: Response;
+      try {
+        logAuthStep("email_login_fetch_start");
+        res = await fetchWithTimeout(
+          `${apiBase}/api/auth/login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: email.trim(), password }),
+            credentials: "include",
+          },
+          8000
+        );
+        logAuthStep("email_login_fetch_done", `status=${res.status}`);
+      } catch (fetchErr) {
+        const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+        logAuthStep("email_login_fetch_error", msg);
+        console.error('[Login] Fetch failed:', msg);
         setError(t("auth.serverError"));
+        setShowRetry(true);
         return;
       }
 
@@ -138,17 +173,20 @@ export default function Login() {
       try {
         data = await res.json();
       } catch {
-        // JSON parse failed — treat as server error
         setError(t("auth.serverError"));
+        setShowRetry(true);
         return;
       }
 
       if (res.ok || res.status === 200) {
-        // Success
+        logAuthStep("email_login_success");
         if (Capacitor.isNativePlatform() && data.token) {
           localStorage.setItem(NATIVE_TOKEN_KEY, data.token as string);
         }
-        window.location.href = '/';
+        // Use SPA navigation instead of window.location.href to avoid full WKWebView reload.
+        // window.location.href causes a full page reload which re-fetches the 2.5MB bundle
+        // and can cause WKWebView to hang on iPadOS 26 if there are in-flight requests.
+        setLocation("/");
         return;
       }
 
@@ -159,10 +197,13 @@ export default function Login() {
         setError((data.message as string) || t("auth.invalidCredentials"));
       } else {
         setError(t("auth.serverError"));
+        setShowRetry(true);
       }
     } catch (err) {
       console.error('[Login] Email login error:', err);
+      logAuthStep("email_login_error", String(err));
       setError(t("auth.serverError"));
+      setShowRetry(true);
     } finally {
       setLoading(false);
     }
@@ -170,23 +211,23 @@ export default function Login() {
 
   const handleGoogleSignIn = async () => {
     setError("");
+    setShowRetry(false);
     setGoogleLoading(true);
+    logAuthStep("google_login_start");
 
     const origin = getOAuthOrigin();
 
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native: open SFSafariViewController (iOS) / Chrome Custom Tab (Android)
-        // Pass native=true so server redirects to durak:// URL scheme after auth
         const authUrl = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}&native=true`;
         await Browser.open({ url: authUrl, presentationStyle: "popover" });
         // Loading state will be cleared when deep link callback fires or browser closes
       } else {
-        // On web: use server-side redirect flow
         window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
       }
     } catch (err) {
       console.error('[GoogleAuth] Sign-in failed:', err);
+      logAuthStep("google_login_error", String(err));
       setError(t("auth.serverError"));
       setGoogleLoading(false);
     }
@@ -194,34 +235,48 @@ export default function Login() {
 
   const handleAppleSignIn = async () => {
     setError("");
+    setShowRetry(false);
     setAppleLoading(true);
+    logAuthStep("apple_login_start");
 
     const origin = getOAuthOrigin();
 
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native iOS/Android: use ASAuthorizationController via the plugin.
-        // This is the recommended approach — avoids SFSafariViewController entirely,
-        // which had issues on iOS 26.5.2 (deep link not firing, browser not closing).
-        console.log("[AppleAuth/Native] Starting native Sign in with Apple...");
-        // Use our custom native AppleSignInPlugin (AppleSignInPlugin.swift in ios/App/App/)
-        // This avoids the capacitor-swift-pm version conflict with @capacitor-community/apple-sign-in
+        logAuthStep("apple_login_native_start");
         const AppleSignIn = (window as any)?.Capacitor?.Plugins?.AppleSignIn;
         if (!AppleSignIn) {
+          logAuthStep("apple_login_plugin_missing");
           console.error("[AppleAuth/Native] AppleSignIn plugin not available");
           setError(t("auth.appleError"));
           setAppleLoading(false);
           return;
         }
+
+        // Wrap native SIWA call in a 30-second timeout.
+        // Without this, if the native dialog fails to appear (e.g., on iPadOS 26 with scenes),
+        // the JS promise hangs forever — causing "loading indefinitely" for the reviewer.
         let appleResponse: any;
         try {
-          appleResponse = await AppleSignIn.authorize();
+          logAuthStep("apple_login_authorize_start");
+          const authorizePromise = AppleSignIn.authorize();
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Apple Sign In timed out after 30s")), 30000)
+          );
+          appleResponse = await Promise.race([authorizePromise, timeoutPromise]);
+          logAuthStep("apple_login_authorize_done");
         } catch (appleErr: any) {
-          // User cancelled or plugin error
           const msg = appleErr?.message || String(appleErr);
+          logAuthStep("apple_login_authorize_error", msg);
           console.log("[AppleAuth/Native] Authorization cancelled or failed:", msg);
           if (msg.includes("cancel") || msg.includes("Cancel") || msg.includes("1001")) {
             // User pressed Cancel — not an error
+            setAppleLoading(false);
+            return;
+          }
+          if (msg.includes("timed out")) {
+            setError(t("auth.appleError"));
+            setShowRetry(true);
             setAppleLoading(false);
             return;
           }
@@ -231,34 +286,47 @@ export default function Login() {
         const { identityToken, givenName, familyName, email: appleEmail, user: appleUserId } = appleResponse.response;
 
         if (!identityToken) {
+          logAuthStep("apple_login_no_token");
           console.error("[AppleAuth/Native] No identity token in response");
           setError(t("auth.appleError"));
           setAppleLoading(false);
           return;
         }
 
-        console.log("[AppleAuth/Native] Got identity token, sending to server...");
+        logAuthStep("apple_login_server_verify_start");
 
         // Send the identity token to our server for verification
-        const res = await fetchWithTimeout(
-          `${origin}/api/auth/apple/native`,
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              identityToken,
-              user: appleUserId,
-              givenName,
-              familyName,
-              email: appleEmail,
-            }),
-            credentials: "include",
-          },
-          20000
-        );
+        let res: Response;
+        try {
+          res = await fetchWithTimeout(
+            `${origin}/api/auth/apple/native`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                identityToken,
+                user: appleUserId,
+                givenName,
+                familyName,
+                email: appleEmail,
+              }),
+              credentials: "include",
+            },
+            8000
+          );
+          logAuthStep("apple_login_server_verify_done", `status=${res.status}`);
+        } catch (fetchErr) {
+          const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          logAuthStep("apple_login_server_verify_error", msg);
+          setError(t("auth.appleError"));
+          setShowRetry(true);
+          setAppleLoading(false);
+          return;
+        }
 
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
+          logAuthStep("apple_login_server_error", JSON.stringify(errData));
           console.error("[AppleAuth/Native] Server error:", errData);
           setError(t("auth.appleError"));
           setAppleLoading(false);
@@ -268,9 +336,12 @@ export default function Login() {
         const data = await res.json();
         if (data.success && data.token) {
           localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
-          console.log("[AppleAuth/Native] Login successful, redirecting...");
-          window.location.href = "/";
+          logAuthStep("apple_login_success");
+          console.log("[AppleAuth/Native] Login successful, navigating...");
+          // Use SPA navigation instead of window.location.href to avoid full WKWebView reload
+          setLocation("/");
         } else {
+          logAuthStep("apple_login_no_success_token");
           setError(t("auth.appleError"));
           setAppleLoading(false);
         }
@@ -279,7 +350,7 @@ export default function Login() {
         const res = await fetchWithTimeout(
           `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`,
           { credentials: "include" },
-          15000
+          8000
         );
         if (!res.ok) {
           setError(t("auth.appleError"));
@@ -291,12 +362,11 @@ export default function Login() {
       }
     } catch (err) {
       console.error("[AppleAuth] Sign-in failed:", err);
+      logAuthStep("apple_login_error", String(err));
       setError(t("auth.appleError"));
       setAppleLoading(false);
     }
   };
-
-  const isAnyLoading = loading || googleLoading || appleLoading;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] flex items-center justify-center px-4 relative overflow-hidden">
@@ -328,6 +398,15 @@ export default function Login() {
           {error && (
             <div className="bg-red-900/30 border border-red-700/40 rounded-lg px-4 py-3 mb-6 text-red-300 text-sm text-center">
               {error}
+              {showRetry && (
+                <button
+                  onClick={() => { setError(""); setShowRetry(false); }}
+                  className="flex items-center gap-1 mx-auto mt-2 text-amber-400 hover:text-amber-300 text-xs underline"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  {t("auth.retry") || "Попробовать снова"}
+                </button>
+              )}
             </div>
           )}
 
@@ -387,7 +466,6 @@ export default function Login() {
 
           {/* Social login buttons */}
           <div className="space-y-3">
-            {/* Google Sign-In button */}
             <Button
               variant="outline"
               onClick={handleGoogleSignIn}

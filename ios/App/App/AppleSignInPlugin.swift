@@ -1,6 +1,7 @@
 import Foundation
 import Capacitor
 import AuthenticationServices
+import UIKit
 
 /**
  * Native Sign in with Apple plugin for Capacitor.
@@ -98,6 +99,20 @@ extension AppleSignInPlugin: ASAuthorizationControllerDelegate {
 
 extension AppleSignInPlugin: ASAuthorizationControllerPresentationContextProviding {
     public func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
-        return self.bridge?.webView?.window ?? UIWindow()
+        // Use UIWindowScene-aware approach for iPadOS 26+ multi-scene support.
+        // The old approach (webView?.window ?? UIWindow()) can return nil on iPadOS 26
+        // with scenes, causing the SIWA sheet to never appear and the JS promise to hang forever.
+        if let scene = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first(where: { $0.activationState == .foregroundActive }),
+           let window = scene.windows.first(where: { $0.isKeyWindow }) ?? scene.windows.first {
+            return window
+        }
+        // Fallback: try the bridge's webView window
+        if let window = self.bridge?.webView?.window {
+            return window
+        }
+        // Last resort: create a new window (should never happen)
+        return UIWindow()
     }
 }

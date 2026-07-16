@@ -100,6 +100,7 @@ function PushInitializer() {
  */
 function DeepLinkHandler() {
   const utils = trpc.useUtils();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
@@ -111,7 +112,7 @@ function DeepLinkHandler() {
     CapApp.getLaunchUrl().then(async (result) => {
       if (result?.url && result.url.startsWith('durak://auth/')) {
         console.log('[DeepLink] Cold start URL:', result.url);
-        await handleDeepLink(result.url, utils);
+        await handleDeepLink(result.url, utils, setLocation);
       }
     }).catch((err) => {
       console.error('[DeepLink] getLaunchUrl failed:', err);
@@ -121,7 +122,7 @@ function DeepLinkHandler() {
     const listenerPromise = CapApp.addListener('appUrlOpen', async (event) => {
       if (event.url.startsWith('durak://auth/')) {
         console.log('[DeepLink] Warm start URL:', event.url);
-        await handleDeepLink(event.url, utils);
+        await handleDeepLink(event.url, utils, setLocation);
       }
     });
 
@@ -134,7 +135,11 @@ function DeepLinkHandler() {
   return null;
 }
 
-async function handleDeepLink(url: string, utils: ReturnType<typeof trpc.useUtils>): Promise<void> {
+async function handleDeepLink(
+  url: string,
+  utils: ReturnType<typeof trpc.useUtils>,
+  setLocation: (path: string) => void
+): Promise<void> {
   // Close the in-app browser if it's open
   await Browser.close().catch(() => {});
 
@@ -146,8 +151,9 @@ async function handleDeepLink(url: string, utils: ReturnType<typeof trpc.useUtil
         localStorage.setItem(NATIVE_TOKEN_KEY, token);
         // Invalidate all tRPC queries so auth.me re-fetches with the new token
         await utils.invalidate();
-        // Navigate to home page
-        window.location.href = '/';
+        // Use SPA navigation instead of window.location.href to avoid full WKWebView reload.
+        // Full reload can hang on iPadOS 26 if there are in-flight requests.
+        setLocation('/');
       } catch (err) {
         console.error('[DeepLink] Failed to save token:', err);
       }
@@ -156,8 +162,8 @@ async function handleDeepLink(url: string, utils: ReturnType<typeof trpc.useUtil
     const params = new URLSearchParams(url.split('?')[1] || '');
     const reason = params.get('reason') || 'unknown';
     console.error('[DeepLink] OAuth error:', reason);
-    // Navigate to login page to show error
-    window.location.href = '/login?error=' + encodeURIComponent(reason);
+    // Use SPA navigation instead of window.location.href
+    setLocation('/login?error=' + encodeURIComponent(reason));
   }
 }
 

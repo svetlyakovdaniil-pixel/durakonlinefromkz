@@ -3719,3 +3719,13 @@
 - [x] Move account deletion button from Profile to Settings tab
 - [x] Improve email login: clear stale tokens before login attempt (already had retry logic + 20s timeout)
 - [x] Build new binary triggered (Run #29404175291) — awaiting completion
+
+## Auth Fix — Build 1.0.72 (95) — Jul 17, 2026
+
+- [x] Fix Swift presentationAnchor to use UIWindowScene (fixes SIWA sheet not appearing on iPad)
+- [x] Add JS timeout (30 sec Promise.race) around native SIWA call
+- [x] Reduce email login timeout: 1 attempt × 8 sec → show error immediately
+- [x] Add watchdog: any spinner > 12 sec → show error + retry button
+- [x] Replace window.location.href="/" with SPA router navigation after login (Login.tsx + App.tsx DeepLinkHandler)
+- [x] Add remote auth logging beacon for each step (/api/auth/log endpoint)
+- [ ] Build 1.0.72 (95) and upload to TestFlight

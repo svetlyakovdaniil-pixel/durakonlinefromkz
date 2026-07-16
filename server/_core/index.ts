@@ -196,6 +196,19 @@ async function startServer() {
 
   console.log('[Cron] Push notification cron jobs scheduled');
 
+  // Remote auth diagnostics — receives step beacons from Login.tsx to trace where auth hangs.
+  // Logs to server console so we can diagnose Apple reviewer failures.
+  // Fire-and-forget from client, always returns 200.
+  app.post("/api/auth/log", (req, res) => {
+    try {
+      const { step, detail, ts, platform } = req.body || {};
+      console.log(`[AuthLog] step=${step} platform=${platform} detail=${detail} ts=${ts}`);
+    } catch {
+      // Never fail on logging
+    }
+    res.json({ ok: true });
+  });
+
   // Health check endpoint — used by Login page to warm up the server on mount
   // Also used by Manus Heartbeat keep-alive pings
   app.get("/api/health", (_req, res) => {
