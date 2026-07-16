@@ -8,6 +8,7 @@ import { Loader2, Mail, Lock, ArrowLeft, RefreshCw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
+import { AppleSignIn } from "@/lib/appleSignIn";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -243,14 +244,6 @@ export default function Login() {
     try {
       if (Capacitor.isNativePlatform()) {
         logAuthStep("apple_login_native_start");
-        const AppleSignIn = (window as any)?.Capacitor?.Plugins?.AppleSignIn;
-        if (!AppleSignIn) {
-          logAuthStep("apple_login_plugin_missing");
-          console.error("[AppleAuth/Native] AppleSignIn plugin not available");
-          setError(t("auth.appleError"));
-          setAppleLoading(false);
-          return;
-        }
 
         // Wrap native SIWA call in a 30-second timeout.
         // Without this, if the native dialog fails to appear (e.g., on iPadOS 26 with scenes),

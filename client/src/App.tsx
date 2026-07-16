@@ -109,14 +109,29 @@ function DeepLinkHandler() {
     // This happens when iOS kills the app and then Sign in with Apple/Google
     // redirects to durak:// — the app starts fresh and appUrlOpen never fires.
     // getLaunchUrl() returns the URL that triggered the cold launch.
-    CapApp.getLaunchUrl().then(async (result) => {
-      if (result?.url && result.url.startsWith('durak://auth/')) {
-        console.log('[DeepLink] Cold start URL:', result.url);
-        await handleDeepLink(result.url, utils, setLocation);
-      }
-    }).catch((err) => {
-      console.error('[DeepLink] getLaunchUrl failed:', err);
-    });
+    //
+    // IMPORTANT: We use a sessionStorage flag to ensure we only process the
+    // cold-start URL ONCE per app session. Without this, every time the user
+    // logs out and the app re-renders DeepLinkHandler, getLaunchUrl() returns
+    // the same old OAuth URL and auto-logs them back in.
+    const COLD_START_PROCESSED_KEY = '__durak_cold_start_processed';
+    const alreadyProcessed = sessionStorage.getItem(COLD_START_PROCESSED_KEY);
+    if (!alreadyProcessed) {
+      CapApp.getLaunchUrl().then(async (result) => {
+        if (result?.url && result.url.startsWith('durak://auth/')) {
+          console.log('[DeepLink] Cold start URL:', result.url);
+          // Mark as processed BEFORE handling to prevent race conditions
+          sessionStorage.setItem(COLD_START_PROCESSED_KEY, '1');
+          await handleDeepLink(result.url, utils, setLocation);
+        } else {
+          // No auth deep link — mark as processed anyway so we don't check again
+          sessionStorage.setItem(COLD_START_PROCESSED_KEY, '1');
+        }
+      }).catch((err) => {
+        console.error('[DeepLink] getLaunchUrl failed:', err);
+        sessionStorage.setItem(COLD_START_PROCESSED_KEY, '1');
+      });
+    }
 
     // Handle WARM START: app was already running when deep link fired
     const listenerPromise = CapApp.addListener('appUrlOpen', async (event) => {
