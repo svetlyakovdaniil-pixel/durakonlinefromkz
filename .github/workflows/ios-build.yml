@@ -217,6 +217,8 @@ jobs:
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
             cp ios/App/App/AppRelease.entitlements /tmp/AppRelease.entitlements 2>/dev/null || true
             cp ios/App/App/AppleSignInPlugin.swift /tmp/AppleSignInPlugin.swift 2>/dev/null || true
+            cp ios/App/App/MyViewController.swift /tmp/MyViewController.swift 2>/dev/null || true
+            cp ios/App/Base.lproj/Main.storyboard /tmp/Main.storyboard 2>/dev/null || true
             rm -rf ios
             npx cap add ios
             cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
@@ -227,14 +229,26 @@ jobs:
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
             cp /tmp/AppRelease.entitlements ios/App/App/AppRelease.entitlements 2>/dev/null || true
             [ -f /tmp/AppleSignInPlugin.swift ] && cp /tmp/AppleSignInPlugin.swift ios/App/App/AppleSignInPlugin.swift || true
+            [ -f /tmp/MyViewController.swift ] && cp /tmp/MyViewController.swift ios/App/App/MyViewController.swift || true
+            [ -f /tmp/Main.storyboard ] && cp /tmp/Main.storyboard ios/App/Base.lproj/Main.storyboard || true
           fi
           # Ensure AppleSignInPlugin.swift is present after cap sync
           if [ ! -f "ios/App/App/AppleSignInPlugin.swift" ]; then
             git show HEAD:ios/App/App/AppleSignInPlugin.swift > ios/App/App/AppleSignInPlugin.swift 2>/dev/null || true
           fi
+          # Ensure MyViewController.swift is present after cap sync
+          if [ ! -f "ios/App/App/MyViewController.swift" ]; then
+            git show HEAD:ios/App/App/MyViewController.swift > ios/App/App/MyViewController.swift 2>/dev/null || true
+          fi
+          # Ensure Main.storyboard has MyViewController class
+          if [ -f "ios/App/Base.lproj/Main.storyboard" ]; then
+            git show HEAD:ios/App/Base.lproj/Main.storyboard > ios/App/Base.lproj/Main.storyboard 2>/dev/null || true
+          fi
           npx cap sync ios
           # Register AppleSignInPlugin.swift in the Xcode project
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
+          # Register MyViewController.swift in the Xcode project
+          python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
 
       # ── 8b. Set version and build number ─────────────────────────────────────
       - name: Set version and build number
