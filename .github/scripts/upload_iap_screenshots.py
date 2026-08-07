@@ -19,6 +19,25 @@ from pathlib import Path
 import jwt
 from cryptography.hazmat.primitives.serialization import load_pem_private_key
 from cryptography.hazmat.backends import default_backend
+from PIL import Image
+
+# Required IAP review screenshot size for iPhone 6.5" (3x) per App Store Connect
+REQUIRED_WIDTH = 1290
+REQUIRED_HEIGHT = 2796
+
+
+def ensure_screenshot_size(image_path: str) -> Path:
+    """Resize the screenshot to the required 1290x2796 (iPhone 6.5" 3x) size."""
+    img = Image.open(image_path)
+    if img.width == REQUIRED_WIDTH and img.height == REQUIRED_HEIGHT:
+        return Path(image_path)
+    print(f"  Resizing {Path(image_path).name}: {img.width}x{img.height} -> {REQUIRED_WIDTH}x{REQUIRED_HEIGHT}")
+    img = img.convert("RGB")
+    img = img.resize((REQUIRED_WIDTH, REQUIRED_HEIGHT), Image.LANCZOS)
+    tmp = Path(image_path).with_name(f"resized_{Path(image_path).stem}.jpg")
+    img.save(tmp, "JPEG", quality=90)
+    print(f"  Resized screenshot saved: {tmp}")
+    return tmp
 
 
 # ── credentials ──────────────────────────────────────────────────────────────
@@ -314,7 +333,9 @@ def main():
         screenshot_path = screenshot_map[product_id]
 
         try:
-            success = upload_iap_screenshot(iap_id, product_id, screenshot_path)
+            # Resize to required dimensions before uploading (Apple rejects wrong sizes)
+            resized_path = ensure_screenshot_size(screenshot_path)
+            success = upload_iap_screenshot(iap_id, product_id, str(resized_path))
             if success:
                 success_count += 1
                 time.sleep(2)
