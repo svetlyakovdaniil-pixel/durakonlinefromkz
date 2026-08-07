@@ -21,7 +21,7 @@ function readMusicVolume(): number {
       if (typeof parsed.musicVolume === 'number') return parsed.musicVolume;
     }
   } catch {}
-  return 0.3;
+  return 0.24;
 }
 
 function writeMusicVolume(vol: number) {

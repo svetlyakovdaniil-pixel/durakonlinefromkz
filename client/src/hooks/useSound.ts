@@ -29,11 +29,11 @@ function readSoundSettings(): { enabled: boolean; volume: number } {
       const parsed = JSON.parse(settingsRaw);
       return {
         enabled: typeof parsed.soundEnabled === 'boolean' ? parsed.soundEnabled : true,
-        volume: typeof parsed.soundVolume === 'number' ? parsed.soundVolume : 0.5,
+        volume: typeof parsed.soundVolume === 'number' ? parsed.soundVolume : 0.4,
       };
     }
   } catch {}
-  return { enabled: true, volume: 0.5 };
+  return { enabled: true, volume: 0.4 };
 }
 
 function writeSoundSettings(enabled: boolean, volume: number) {
