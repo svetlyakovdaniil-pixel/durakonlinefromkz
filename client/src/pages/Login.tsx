@@ -8,6 +8,7 @@ import { Loader2, Mail, Lock, ArrowLeft, RefreshCw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
+import { AppleSignIn } from "@/lib/appleSignIn";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -271,15 +272,101 @@ export default function Login() {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native: use the web OAuth flow through SFSafariViewController (same as Register.tsx).
-        // The native ASAuthorizationController plugin (AppleSignInPlugin) has proven unreliable
-        // in CI builds — it frequently fails to register in the native bridge, causing
-        // '"AppleSignIn" plugin is not implemented on ios' and instant errors. The web OAuth
-        // flow goes through our server and returns via the durak:// deep link, which works.
         logAuthStep("apple_login_native_start");
-        const authUrl = `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}&native=true`;
-        await Browser.open({ url: authUrl, presentationStyle: "popover" });
-        // Loading state will be cleared when the deep link callback fires or browser closes
+
+        // Native Sign in with Apple via ASAuthorizationController.
+        // The native plugin is now properly registered in CI builds (storyboard + packageClassList
+        // fixes). This opens the system Apple dialog directly — NO SFSafariViewController, so the
+        // Google Safe Browsing "fraudulent website" warning never appears.
+        let appleResponse: any;
+        try {
+          logAuthStep("apple_login_authorize_start");
+          const authorizePromise = AppleSignIn.authorize();
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Apple Sign In timed out after 30s")), 30000)
+          );
+          appleResponse = await Promise.race([authorizePromise, timeoutPromise]);
+          logAuthStep("apple_login_authorize_done");
+        } catch (appleErr: any) {
+          const msg = appleErr?.message || String(appleErr);
+          logAuthStep("apple_login_authorize_error", msg);
+          console.log("[AppleAuth/Native] Authorization cancelled or failed:", msg);
+          if (msg.includes("cancel") || msg.includes("Cancel") || msg.includes("1001")) {
+            // User pressed Cancel — not an error
+            setAppleLoading(false);
+            return;
+          }
+          if (msg.includes("timed out")) {
+            setError(t("auth.appleError"));
+            setShowRetry(true);
+            setAppleLoading(false);
+            return;
+          }
+          throw appleErr;
+        }
+
+        const { identityToken, givenName, familyName, email: appleEmail, user: appleUserId } = appleResponse.response;
+
+        if (!identityToken) {
+          logAuthStep("apple_login_no_token");
+          console.error("[AppleAuth/Native] No identity token in response");
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+
+        logAuthStep("apple_login_server_verify_start");
+
+        // Send the identity token to our server for verification
+        let res: Response;
+        try {
+          res = await fetchWithTimeout(
+            `${origin}/api/auth/apple/native`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                identityToken,
+                user: appleUserId,
+                givenName,
+                familyName,
+                email: appleEmail,
+              }),
+              credentials: "include",
+            },
+            8000
+          );
+          logAuthStep("apple_login_server_verify_done", `status=${res.status}`);
+        } catch (fetchErr) {
+          const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          logAuthStep("apple_login_server_verify_error", msg);
+          setError(t("auth.appleError"));
+          setShowRetry(true);
+          setAppleLoading(false);
+          return;
+        }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          logAuthStep("apple_login_server_error", JSON.stringify(errData));
+          console.error("[AppleAuth/Native] Server error:", errData);
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
+          logAuthStep("apple_login_success");
+          console.log("[AppleAuth/Native] Login successful, navigating...");
+          // Use SPA navigation instead of window.location.href to avoid full WKWebView reload
+          setLocation("/");
+        } else {
+          logAuthStep("apple_login_no_success_token");
+          setError(t("auth.appleError"));
+          setAppleLoading(false);
+        }
       } else {
         // On web: use server-side OAuth redirect flow
         const res = await fetchWithTimeout(
