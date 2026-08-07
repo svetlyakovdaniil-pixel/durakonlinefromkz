@@ -71,7 +71,7 @@ for g in groups.get("data", []):
     gid = g["id"]
     token = generate_token()
     try:
-        gb = api_get(f"/betaGroups/{gid}/builds?limit=5&sort=-uploadedDate", token)
+        gb = api_get(f"/betaGroups/{gid}/builds?limit=10", token)
         for bd in gb.get("data", []):
             print(f"      -> build {bd['attributes'].get('version')} ({bd['attributes'].get('processingState')})")
     except Exception as e:
