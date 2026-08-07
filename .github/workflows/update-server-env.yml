@@ -1,0 +1,56 @@
+name: Update server .env from GitHub secrets
+
+on:
+  workflow_dispatch:
+    inputs:
+      keys:
+        description: 'Comma-separated env keys to update, e.g. "JWT_SECRET,APPLE_PRIVATE_KEY"'
+        required: true
+
+jobs:
+  update-env:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update .env on server
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          APPLE_PRIVATE_KEY: ${{ secrets.APPLE_PRIVATE_KEY }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          REVENUECAT_SECRET_KEY: ${{ secrets.REVENUECAT_SECRET_KEY }}
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        with:
+          host: 176.12.79.38
+          username: root
+          password: ${{ secrets.FIRSTVDS_SSH_PASSWORD }}
+          envs: JWT_SECRET,APPLE_PRIVATE_KEY,GOOGLE_CLIENT_SECRET,REVENUECAT_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT_KEY,DATABASE_URL
+          script: |
+            set -e
+            cd /root/app
+            # Build the new .env lines for the requested keys
+            KEYS="$(echo '${{ github.event.inputs.keys }}' | tr ',' ' ')"
+            echo "Updating keys: $KEYS"
+            for key in $KEYS; do
+              val="${!key}"
+              if [ -z "$val" ]; then
+                echo "WARNING: $key is empty/missing in secrets — skipping"
+                continue
+              fi
+              # Remove existing line, then append value (escaped)
+              sed -i "/^${key}=/d" .env 2>/dev/null || true
+              # Write value safely to a temp file to avoid quoting issues with multiline keys
+              printf '%s' "$val" > /tmp/envval
+              # Insert: key="..." (with literal newlines preserved via \n)
+              {
+                echo "${key}=\"$(sed 's/\\/\\\\/g; s/"/\\"/g' /tmp/envval | tr '\n' '\001' | sed 's/\x01/\\n/g')\""
+              } >> .env
+              echo "Updated $key"
+              rm -f /tmp/envval
+            done
+            echo "=== Keys now present in .env: ==="
+            cut -d'=' -f1 .env | grep -v '^#' | grep -v '^$' | sort
+            echo "=== To apply: cd /root/app && pm2 restart durak --update-env ==="
