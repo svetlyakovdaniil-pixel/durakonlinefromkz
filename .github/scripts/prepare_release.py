@@ -66,12 +66,21 @@ def api_patch(path, t, body):
     return r.json()
 
 
+def api_delete(path, t):
+    url = f"{BASE_URL}{path}"
+    r = requests.delete(url, headers=hdrs(t), timeout=30)
+    if not r.ok:
+        print(f"DELETE {path} -> {r.status_code}: {r.text[:600]}")
+        r.raise_for_status()
+    return r.json() if r.text else {}
+
+
 t = gen_token()
 app_data = api_get(f"/apps?filter[bundleId]={BUNDLE_ID}", t)
 app_id = app_data["data"][0]["id"]
 print(f"App ID: {app_id}")
 
-# ── 1. Cancel active submissions ──
+# ── 1. Cancel active submissions (DELETE reviewSubmission) ──
 t = gen_token()
 subs = api_get(f"/apps/{app_id}/reviewSubmissions?limit=20", t)
 for s in subs.get("data", []):
@@ -81,10 +90,10 @@ for s in subs.get("data", []):
         print(f"Cancelling submission {sid} (state={state})...")
         t = gen_token()
         try:
-            api_patch(f"/reviewSubmissions/{sid}", t, {"data": {"type": "reviewSubmissions", "id": sid, "attributes": {"submitted": False}}})
-            print(f"  Submission {sid} cancelled.")
+            api_delete(f"/reviewSubmissions/{sid}", t)
+            print(f"  Submission {sid} deleted.")
         except Exception as e:
-            print(f"  Could not cancel {sid}: {e}")
+            print(f"  Could not delete {sid}: {e}")
 
 # ── 2. Find build ──
 t = gen_token()
