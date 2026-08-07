@@ -84,3 +84,15 @@ print(f"\n--- App Store versions ({len(vers.get('data', []))}) ---")
 for v in vers.get("data", []):
     a = v["attributes"]
     print(f"  v{a['versionString']} | {a['appStoreState']} | id={v['id']}")
+
+# Pre-release versions (TestFlight groups) with their builds
+print(f"\n--- Pre-release versions (TestFlight groups) ---")
+token = generate_token()
+pre = api_get(f"/apps/{app_id}/preReleaseVersions?limit=20&include=builds", token)
+included_builds = {b["id"]: b["attributes"].get("version") for b in pre.get("included", []) if b["type"] == "builds"}
+for p in pre.get("data", []):
+    pa = p["attributes"]
+    print(f"  v{pa.get('version')} | platform={pa.get('platform')}")
+    for rel in p.get("relationships", {}).get("builds", {}).get("data", []):
+        bid = rel.get("id")
+        print(f"      -> build {included_builds.get(bid)}")
