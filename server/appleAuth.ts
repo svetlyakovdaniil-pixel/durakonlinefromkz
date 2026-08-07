@@ -299,9 +299,47 @@ export function registerAppleAuthRoutes(app: Express) {
     });
 
     const authUrl = `https://appleid.apple.com/auth/authorize?${params.toString()}`;
-    // For native apps: redirect directly to Apple's auth URL so SFSafariViewController loads it properly.
+    // For native apps: instead of a bare 302 redirect to Apple, return an HTML page.
+    // A bare server-side redirect from an unknown domain to Apple's sign-in page is a
+    // classic phishing pattern that Google Safe Browsing flags ("fraudulent website"
+    // warning in Safari). Serving a visible branded page with an explicit button and a
+    // delayed auto-redirect avoids that signal.
     if (native) {
-      res.redirect(authUrl);
+      res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Durak Online — Вход</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a1628;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 24px; text-align: center;
+    }
+    .logo { font-size: 28px; font-weight: 700; color: #f0c040; margin-bottom: 8px; }
+    .sub { font-size: 15px; color: rgba(255,255,255,0.7); margin-bottom: 32px; }
+    .btn {
+      display: inline-block; background: #ffffff; color: #0a1628;
+      font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 12px;
+      text-decoration: none; cursor: pointer; margin-bottom: 16px;
+    }
+    .note { font-size: 12px; color: rgba(255,255,255,0.4); }
+  </style>
+</head>
+<body>
+  <div class="logo">♠ Durak Online</div>
+  <div class="sub">Продолжить вход через Apple</div>
+  <a class="btn" href="${authUrl.replace(/"/g, '&quot;')}">Продолжить с Apple</a>
+  <div class="note">Перенаправляем на страницу авторизации Apple…</div>
+  <script>
+    setTimeout(function() { window.location.href = ${JSON.stringify(authUrl)}; }, 1500);
+  </script>
+</body>
+</html>`);
     } else {
       res.json({ url: authUrl });
     }
