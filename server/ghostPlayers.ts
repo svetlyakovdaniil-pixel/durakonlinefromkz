@@ -616,7 +616,7 @@ function pickGhostAction(
         // Can't beat all attack cards with one-to-one assignment — take immediately
         return { event: 'takeCards', data: roomId };
       }
-      // We CAN beat all cards.
+      // We CAN beat all cards currently on the table.
       // If ghost has ALREADY started defending (some pairs are defended),
       // ALWAYS continue defending — never randomly switch to taking mid-defense.
       // The take/defend decision is made only ONCE at the start of defense.
@@ -626,6 +626,35 @@ function pickGhostAction(
         const targetPairIdx = undefendedPairs[0].idx;
         const defenseCardId = pickBestAttackCard(playCard.cardIds, myHand, trumpSuit, skill, seenCards);
         return { event: 'playCard', data: { roomId, cardId: defenseCardId, targetPairIdx } };
+      }
+      // ── FIRST defense decision: estimate the risk of attackers throwing more ──
+      // The current table only shows cards already played. Attackers will keep
+      // throwing cards after each defense, and a bot that starts defending then
+      // runs out of answers looks terrible ("beat one card, then picked up").
+      // Estimate the worst realistic scenario:
+      //   - How many cards can attackers still throw? Not their whole hand —
+      //     realistically each attacker throws 1-3 cards. Bound by how many
+      //     cards THEY hold and by how many cards we can still beat.
+      //   - If that realistic "could be thrown" count exceeds our defensive
+      //     capacity, take now instead of starting a hopeless defense.
+      const myHandSize = myHand.length;
+      const attackablePlayers = gameState.players
+        .filter((p, idx) => idx !== gameState.currentDefenderIdx && (p.cardCount ?? 0) > 0 && !p.isOut && !p.leftGame);
+      // Realistic per-attacker throws: aggressive players throw up to 3,
+      // passive/balanced throw 1-2. Sum gives an upper bound of what could land.
+      const perAttackerThrows = temperament === 'aggressive' ? 3 : temperament === 'troll' ? 2 : 2;
+      const realisticThrows = attackablePlayers.reduce(
+        (sum, p) => sum + Math.min(perAttackerThrows, p.cardCount ?? 0),
+        0,
+      );
+      // Defensive capacity: cards we can realistically use to beat + the cards
+      // already spent on defense. Stronger bots accept slightly more risk.
+      const riskTolerance = 1.3 + skill * 0.9; // multiplier on our hand size
+      const expectedCapacity = Math.floor(myHandSize * riskTolerance);
+      if (realisticThrows > expectedCapacity) {
+        // Attackers can realistically throw more cards than we can answer —
+        // taking immediately avoids the "beat one, then picked up" pattern.
+        return { event: 'takeCards', data: roomId };
       }
       // First defense action: decide whether to defend or take based on skill/learning.
       const baseTakeProb = learnedTakeRate !== null
@@ -1180,8 +1209,14 @@ function connectGhost(ghost: GhostPlayer): void {
     }
     ghost.myActions = actions;
     if (actions.length > 0) {
-      clearGhostTimers(ghost);
-      scheduleGameAction(ghost);
+      // Do NOT reset the pending action timer on repeated yourTurn events.
+      // The server emits yourTurn on every battlefield update (e.g. when
+      // attackers throw more cards), and resetting the timer here caused the
+      // ghost to keep "re-thinking" until the turn timer ran out. If a timer is
+      // already pending, keep it — only schedule if none is running.
+      if (!ghost.actionTimer) {
+        scheduleGameAction(ghost);
+      }
     }
   });
 
