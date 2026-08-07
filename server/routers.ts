@@ -33,8 +33,6 @@ import {
   getFreeTopupStatus,
   recordTransaction,
   getMyTransactions,
-  testAddShanyrak,
-  testAddTenge,
   getOwnedDecks,
   purchaseDeck,
   getOwnedTables,
@@ -634,18 +632,6 @@ export const appRouter = router({
       if (profile) {
         processTutorialAchievements(profile.id).catch(() => {});
       }
-      return result;
-    }),
-
-    /** [TEST] Add 10K shanyraks */
-    testAddShanyrak: protectedProcedure.mutation(async ({ ctx }) => {
-      const result = await testAddShanyrak(ctx.user.id);
-      return result;
-    }),
-
-    /** [TEST] Add 10K tenge */
-    testAddTenge: protectedProcedure.mutation(async ({ ctx }) => {
-      const result = await testAddTenge(ctx.user.id);
       return result;
     }),
 

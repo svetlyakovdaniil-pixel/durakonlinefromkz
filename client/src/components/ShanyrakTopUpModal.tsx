@@ -57,8 +57,6 @@ export function ShanyrakTopUpModal({ open, onClose, currentShanyrak, currentTeng
     },
   });
 
-  const testShanyrakMutation = trpc.balance.testAddShanyrak.useMutation();
-
   const [adWatching, setAdWatching] = useState(false);
   // AdMob is available on any native platform (iOS/Android)
   const [adMobReady, setAdMobReady] = useState(() => isAdMobAvailable());

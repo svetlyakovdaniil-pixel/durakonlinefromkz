@@ -11,12 +11,8 @@ const APPLE_TEAM_ID = "CMP7AQ6386";
 const APPLE_KEY_ID = "SHTMB76CNK";
 const APPLE_SERVICE_ID = "com.durakonlinefromkz.web"; // Service ID (used for web OAuth)
 const APPLE_BUNDLE_ID = "com.durakonlinefromkz.app"; // Bundle ID (used for native ASAuthorizationController)
-const APPLE_PRIVATE_KEY = `***REMOVED***
-***REMOVED***
-***REMOVED***
-***REMOVED***
-***REMOVED***
-***REMOVED***`;
+// Private key is read from env (SECURITY: never hardcode keys in source).
+const APPLE_PRIVATE_KEY = process.env.APPLE_PRIVATE_KEY || "";
 
 // Apple's public JWKS endpoint
 const APPLE_JWKS = createRemoteJWKSet(
@@ -28,6 +24,9 @@ const APPLE_JWKS = createRemoteJWKSet(
  * This is a short-lived JWT signed with our private key
  */
 async function generateClientSecret(): Promise<string> {
+  if (!APPLE_PRIVATE_KEY) {
+    throw new Error("APPLE_PRIVATE_KEY is not configured");
+  }
   const privateKey = await importPKCS8(APPLE_PRIVATE_KEY, "ES256");
   const now = Math.floor(Date.now() / 1000);
   return new SignJWT({})

@@ -54,8 +54,6 @@ vi.mock("./db", () => ({
   getFreeTopupStatus: vi.fn(),
   recordTransaction: vi.fn(),
   getMyTransactions: vi.fn(),
-  testAddShanyrak: vi.fn(),
-  testAddTenge: vi.fn(),
   getOwnedDecks: vi.fn(),
   purchaseDeck: vi.fn(),
   getOwnedTables: vi.fn(),

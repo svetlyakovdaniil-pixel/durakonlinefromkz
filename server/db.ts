@@ -1232,56 +1232,6 @@ export async function creditShanyrakPrize(openId: string, amount: number, roomId
   return newBalance;
 }
 
-/**
- * [TEST] Add 10000 shanyraks to a player's balance.
- */
-export async function testAddShanyrak(userId: number): Promise<{ success: boolean; newBalance?: number }> {
-  const db = await getDb();
-  if (!db) return { success: false };
-
-  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  if (!profile) return { success: false };
-
-  const newBalance = profile.balanceShanyrak + 10000;
-  await db.update(playerProfiles).set({ balanceShanyrak: newBalance }).where(eq(playerProfiles.id, profile.id));
-
-  await recordTransaction({
-    profileId: profile.id,
-    type: 'free_topup',
-    amount: 10000,
-    currency: 'shanyrak',
-    description: '[ТЕСТ] +10 000 шаныраков',
-    balanceAfter: newBalance,
-  });
-
-  return { success: true, newBalance };
-}
-
-/**
- * [TEST] Add 10000 tenge to a player's balance.
- */
-export async function testAddTenge(userId: number): Promise<{ success: boolean; newBalance?: number }> {
-  const db = await getDb();
-  if (!db) return { success: false };
-
-  const [profile] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, userId)).limit(1);
-  if (!profile) return { success: false };
-
-  const newBalance = profile.balanceTenge + 10000;
-  await db.update(playerProfiles).set({ balanceTenge: newBalance }).where(eq(playerProfiles.id, profile.id));
-
-  await recordTransaction({
-    profileId: profile.id,
-    type: 'free_topup',
-    amount: 10000,
-    currency: 'tenge',
-    description: '[ТЕСТ] +10 000 тенге',
-    balanceAfter: newBalance,
-  });
-
-  return { success: true, newBalance };
-}
-
 // ============================================================
 // AVATAR FRAMES helpers
 // ============================================================

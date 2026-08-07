@@ -125,3 +125,4 @@ client/public/assets/cards/
 client/public/assets/avatars/
 
 __pycache__/
+.project-config.json
