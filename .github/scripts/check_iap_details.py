@@ -30,6 +30,8 @@ def generate_token() -> str:
 
 def api_get(path: str, token: str, params: dict = None) -> dict:
     url = f"{BASE_URL}{path}" if path.startswith("/") else path
+    if "/v2/" in path:
+        url = f"https://api.appstoreconnect.apple.com{path}" if path.startswith("/") else f"https://api.appstoreconnect.apple.com/{path}"
     resp = requests.get(url, headers={"Authorization": f"Bearer {token}"}, params=params, timeout=30)
     if not resp.ok:
         print(f"GET {path} -> {resp.status_code}: {resp.text[:600]}")
