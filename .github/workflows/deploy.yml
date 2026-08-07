@@ -20,6 +20,14 @@ jobs:
             git reset --hard origin/main
             pnpm install --frozen-lockfile
             pnpm run build
+            # Update "Dark trap electronic" -> "House" playlist (rename + new tracks)
+            set +e
+            npx tsx scripts/update_house_playlist.ts
+            UPDATE_STATUS=$?
+            set -e
+            if [ $UPDATE_STATUS -ne 0 ]; then
+              echo "WARNING: House playlist update failed (will retry next deploy)"
+            fi
             GHOST_PLAYER_COUNT=100 pm2 restart durak --update-env
             pm2 save
             echo "Deploy completed at $(date)"

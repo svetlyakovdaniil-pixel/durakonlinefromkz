@@ -2669,42 +2669,44 @@ export async function seedDarkTrapPlaylist() {
   const db = await getDb();
   if (!db) return;
 
-  // Check if Dark trap playlist already exists by name
-  const existing = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'Dark trap electronic'));
+  // Check if House playlist already exists (legacy name "Dark trap electronic")
+  const existing = await db.select().from(musicPlaylists).where(or(
+    eq(musicPlaylists.name, 'House'),
+    eq(musicPlaylists.name, 'Dark trap electronic'),
+  ));
   if (existing.length > 0) return;
 
-  const darkTrapTracks = [
-    '/assets/static/darktrap-1_ed58de8d.mp3',
-    '/assets/static/darktrap-2_9c7ffb18.mp3',
-    '/assets/static/darktrap-3_42bbb53d.mp3',
-    '/assets/static/darktrap-4_807d043b.mp3',
-    '/assets/static/darktrap-5_d4af0442.mp3',
-    '/assets/static/darktrap-6_972297b4.mp3',
-    '/assets/static/darktrap-7_193db398.mp3',
+  const houseTracks = [
+    '/assets/static/house-1.mp3',
+    '/assets/static/house-2.mp3',
+    '/assets/static/house-3.mp3',
+    '/assets/static/house-4.mp3',
+    '/assets/static/house-5.mp3',
+    '/assets/static/house-6.mp3',
   ];
 
   await db.insert(musicPlaylists).values({
-    name: 'Dark trap electronic',
-    nameKk: 'Dark trap electronic',
-    nameEn: 'Dark Trap Electronic',
-    nameUk: 'Dark Trap Electronic',
-    nameKa: 'Dark Trap Electronic',
-    nameAz: 'Dark Trap Electronic',
-    nameUz: 'Dark Trap Electronic',
-    namePl: 'Dark Trap Electronic',
-    tracksJson: JSON.stringify(darkTrapTracks),
+    name: 'House',
+    nameKk: 'House',
+    nameEn: 'House',
+    nameUk: 'House',
+    nameKa: 'House',
+    nameAz: 'House',
+    nameUz: 'House',
+    namePl: 'House',
+    tracksJson: JSON.stringify(houseTracks),
     priceShanyrak: 100000,
     isDefault: false,
     isAvailable: true,
     volumeMultiplier: 1.0,
-    description: 'Тёмный трэп и электронные биты — 7 треков',
-    descriptionKk: 'Қараңғы трэп және электронды биттер — 7 трек',
-    descriptionEn: 'Dark trap and electronic beats — 7 tracks',
-    descriptionUk: 'Темний треп та електронні біти — 7 треків',
-    descriptionKa: 'ბნელი ტრეპი და ელექტრონული ბიტები — 7 ტრეკი',
-    descriptionAz: 'Qaranlıq trap və elektron ritmlər — 7 trek',
-    descriptionUz: "Qorong'u trap va elektron bitlar — 7 trek",
-    descriptionPl: 'Mroczny trap i elektroniczne bity — 7 utworów',
+    description: 'House музыка — 6 треков',
+    descriptionKk: 'House музыка — 6 трек',
+    descriptionEn: 'House music — 6 tracks',
+    descriptionUk: 'House музика — 6 треків',
+    descriptionKa: 'House მუსიკა — 6 ტრეკი',
+    descriptionAz: 'House musiqi — 6 trek',
+    descriptionUz: 'House musiqa — 6 trek',
+    descriptionPl: 'Muzyka House — 6 utworów',
   });
 }
 

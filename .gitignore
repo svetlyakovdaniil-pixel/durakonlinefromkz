@@ -123,3 +123,5 @@ android/app/durak-kz-release.jks
 # Bundled game assets (cards, avatars, tables) — downloaded during iOS build
 client/public/assets/cards/
 client/public/assets/avatars/
+
+__pycache__/
