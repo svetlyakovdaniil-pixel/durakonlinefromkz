@@ -75,6 +75,14 @@ Build MUST use the SAME marketing version as the previous builds in TestFlight.
 If latest TestFlight shows v1.0.69 → new build MUST also use version=1.0.69.
 Using a lower version (e.g., 1.0.68) causes the build to go to a different version group and NOT appear in TestFlight.
 
+## 🔒 SINGLE MARKETING VERSION POLICY (as of Aug 2026)
+To eliminate version confusion between TestFlight and App Review:
+- **The marketing version is ALWAYS 1.0.70.** Only the build number changes.
+- Every iOS build MUST be dispatched with `version=1.0.70` (workflow_dispatch input).
+- NEITHER push builds (auto github.run_number) NOR any other version string are allowed.
+- The App Store version record stays "1.0.70"; a new build (higher number) is attached to it for review.
+- This keeps TestFlight, App Review and App Store on the SAME version string.
+
 ## Project Structure Notes
 
 - **Routes must be registered in TWO places:**
