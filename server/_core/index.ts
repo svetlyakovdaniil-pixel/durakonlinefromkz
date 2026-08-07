@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express from "express";
+import { Buffer } from "buffer";
 import { createServer } from "http";
 import net from "net";
 import fs from "fs";
@@ -199,13 +200,27 @@ async function startServer() {
   // Remote auth diagnostics — receives step beacons from Login.tsx to trace where auth hangs.
   // Logs to server console so we can diagnose Apple reviewer failures.
   // Fire-and-forget from client, always returns 200.
+  const authLogBuffer: string[] = [];
   app.post("/api/auth/log", (req, res) => {
     try {
       const { step, detail, ts, platform } = req.body || {};
-      console.log(`[AuthLog] step=${step} platform=${platform} detail=${detail} ts=${ts}`);
+      const line = `[AuthLog] step=${step} platform=${platform} detail=${detail} ts=${ts}`;
+      console.log(line);
+      authLogBuffer.push(line);
+      if (authLogBuffer.length > 500) authLogBuffer.shift();
     } catch {
       // Never fail on logging
     }
+    res.json({ ok: true });
+  });
+
+  // Diagnostic: read recent auth log beacons (for debugging Apple Sign-in from a device)
+  app.get("/api/auth/logs", (_req, res) => {
+    res.json({ entries: authLogBuffer.slice(-200) });
+  });
+
+  app.post("/api/auth/logs/clear", (_req, res) => {
+    authLogBuffer.length = 0;
     res.json({ ok: true });
   });
 
