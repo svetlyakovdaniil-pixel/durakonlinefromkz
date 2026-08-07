@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Show IAP product details: localizations, price points, screenshots, review info."""
 import base64
+import json
 import os
 import time
 import jwt
@@ -49,36 +50,25 @@ for i in iaps.get("data", []):
     iid = i["id"]
     print(f"\n  {a.get('productId')} | id={iid} | state={a.get('state')} | type={a.get('inAppPurchaseType')}")
 
-    # Localizations
+    # Full object with relationships via v2 include
     token = generate_token()
     try:
-        locs = api_get(f"/inAppPurchases/{iid}/inAppPurchaseLocalizations?limit=50", token)
-        print(f"    localizations:")
-        for l in locs.get("data", []):
-            la = l["attributes"]
-            print(f"      {la.get('locale')}: name='{la.get('name')}' desc='{str(la.get('description'))[:50]}'")
+        full = api_get(f"/v2/inAppPurchases/{iid}", token, params={"include": "inAppPurchaseLocalizations,pricePoints,appStoreReviewScreenshot"})
+        print(f"    v2 attributes: {json.dumps(full['data']['attributes'], indent=2)[:600]}")
+        rels = full['data'].get('relationships', {})
+        for rname, rval in rels.items():
+            rdata = rval.get('data')
+            if rdata is None:
+                print(f"    rel {rname}: EMPTY")
+            elif isinstance(rdata, list):
+                print(f"    rel {rname}: {len(rdata)} items")
+                for item in rdata:
+                    print(f"      {item.get('id')} type={item.get('type')}")
+            else:
+                print(f"    rel {rname}: {rdata.get('id')}")
+        for inc in full.get('included', []):
+            t = inc.get('type')
+            ia = inc.get('attributes', {})
+            print(f"    included {t}: {json.dumps(ia)[:300]}")
     except Exception as e:
-        print(f"    loc error: {e}")
-
-    # Price points
-    token = generate_token()
-    try:
-        prices = api_get(f"/inAppPurchases/{iid}/pricePoints?limit=5", token)
-        print(f"    price points: {len(prices.get('data', []))}")
-        for p in prices.get("data", []):
-            pa = p.get("attributes", {})
-            rel = p.get("relationships", {}).get("pricePoint", {}).get("data", {})
-            print(f"      id={p['id']} attrs={pa}")
-    except Exception as e:
-        print(f"    price error: {e}")
-
-    # Screenshots
-    token = generate_token()
-    try:
-        shots = api_get(f"/inAppPurchases/{iid}/appStoreReviewScreenshots?limit=5", token)
-        print(f"    review screenshots: {len(shots.get('data', []))}")
-        for s in shots.get("data", []):
-            sa = s.get("attributes", {})
-            print(f"      {s['id']}: state={sa.get('assetDeliveryState', {}).get('state')}")
-    except Exception as e:
-        print(f"    screenshot error: {e}")
+        print(f"    v2 include error: {e}")
