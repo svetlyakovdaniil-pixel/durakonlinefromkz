@@ -56,21 +56,11 @@ for i in iaps.get("data", []):
     token = generate_token()
     try:
         full = api_get(f"/v2/inAppPurchases/{iid}", token, params={"include": "inAppPurchaseLocalizations,pricePoints,appStoreReviewScreenshot"})
-        print(f"    v2 attributes: {json.dumps(full['data']['attributes'], indent=2)[:600]}")
         rels = full['data'].get('relationships', {})
-        for rname, rval in rels.items():
-            rdata = rval.get('data')
-            if rdata is None:
-                print(f"    rel {rname}: EMPTY")
-            elif isinstance(rdata, list):
-                print(f"    rel {rname}: {len(rdata)} items")
-                for item in rdata:
-                    print(f"      {item.get('id')} type={item.get('type')}")
-            else:
-                print(f"    rel {rname}: {rdata.get('id')}")
         for inc in full.get('included', []):
             t = inc.get('type')
             ia = inc.get('attributes', {})
-            print(f"    included {t}: {json.dumps(ia)[:300]}")
+            if t == "inAppPurchasePricePoints":
+                print(f"    pricepoint {inc['id']}: customerPrice={ia.get('customerPrice')} proceeds={ia.get('proceeds')} eq={ia.get('equalizations')}")
     except Exception as e:
         print(f"    v2 include error: {e}")
