@@ -82,23 +82,37 @@ for i in iaps.get("data", []):
         continue
     target_price = PRICE_MAP[pid]
 
-    # 1. Find the price point with the target customerPrice
+    # 1. Find the price point with the target customerPrice (paginate to find all)
     token = generate_token()
     try:
-        full = api_get(f"/v2/inAppPurchases/{iid}", token, params={"include": "pricePoints"})
+        all_price_points = []
+        cursor = None
+        while True:
+            params = {"limit": 200}
+            if cursor:
+                params["cursor"] = cursor
+            pp_data = api_get(f"/v2/inAppPurchases/{iid}/pricePoints", token, params=params)
+            for item in pp_data.get("data", []):
+                # pricePoints subresource returns inAppPurchasePricePoints directly
+                attrs = item.get("attributes", {})
+                all_price_points.append({"id": item["id"], "price": attrs.get("customerPrice")})
+            nxt = pp_data.get("meta", {}).get("paging", {}).get("next")
+            if not nxt:
+                break
+            cursor = nxt
+            token = generate_token()
+        print(f"    Found {len(all_price_points)} price points")
     except Exception as e:
         print(f"    ERROR fetching price points: {e}")
         continue
 
     target_pp_id = None
-    for inc in full.get("included", []):
-        if inc.get("type") == "inAppPurchasePricePoints":
-            cp = inc.get("attributes", {}).get("customerPrice")
-            if cp == target_price:
-                target_pp_id = inc["id"]
-                break
+    for pp in all_price_points:
+        if pp["price"] == target_price:
+            target_pp_id = pp["id"]
+            break
     if not target_pp_id:
-        print(f"    ERROR: no price point found for customerPrice={target_price} (got first 10 only)")
+        print(f"    ERROR: no price point found for customerPrice={target_price}")
         continue
     print(f"    Price point for ${target_price}: {target_pp_id}")
 
@@ -112,7 +126,26 @@ for i in iaps.get("data", []):
     except Exception as e:
         print(f"    No schedule yet: {e}")
 
-    # 3. Create inAppPurchasePriceSchedule
+    # 3. Create the manual inAppPurchasePrice first
+    token = generate_token()
+    try:
+        price_body = {
+            "data": {
+                "type": "inAppPurchasePrices",
+                "relationships": {
+                    "inAppPurchasePricePoint": {"data": {"type": "inAppPurchasePricePoints", "id": target_pp_id}},
+                    "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}},
+                },
+            }
+        }
+        price_result = api_post("/inAppPurchasePrices", token, price_body)
+        price_id = price_result["data"]["id"]
+        print(f"    Manual price created: {price_id}")
+    except Exception as e:
+        print(f"    ERROR creating manual price: {e}")
+        continue
+
+    # 4. Create inAppPurchasePriceSchedule referencing the manual price
     token = generate_token()
     try:
         body = {
@@ -121,15 +154,7 @@ for i in iaps.get("data", []):
                 "relationships": {
                     "inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
                     "manualPrices": {
-                        "data": [
-                            {
-                                "type": "inAppPurchasePrices",
-                                "relationships": {
-                                    "inAppPurchasePricePoint": {"data": {"type": "inAppPurchasePricePoints", "id": target_pp_id}},
-                                    "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}},
-                                },
-                            }
-                        ]
+                        "data": [{"type": "inAppPurchasePrices", "id": price_id}]
                     },
                 },
             }
@@ -140,7 +165,7 @@ for i in iaps.get("data", []):
         print(f"    ERROR creating schedule: {e}")
         continue
 
-    # 4. Create availability (all territories via availableInNewTerritories)
+    # 5. Create availability (all territories via availableInNewTerritories)
     token = generate_token()
     try:
         avail_body = {
