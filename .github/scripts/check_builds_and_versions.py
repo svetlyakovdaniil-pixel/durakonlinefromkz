@@ -61,6 +61,22 @@ for b in builds.get("data", [])[:4]:
     except Exception as e:
         print(f"  build {b['attributes'].get('version')}: error={e}")
 
+# Beta groups and which builds they contain
+print(f"\n--- Beta groups ---")
+token = generate_token()
+groups = api_get(f"/apps/{app_id}/betaGroups?limit=20", token)
+for g in groups.get("data", []):
+    ga = g["attributes"]
+    print(f"  group {ga.get('name')}: state={ga.get('state')} isInternal={ga.get('isInternalGroup')} public={ga.get('publicLinkEnabled')}")
+    gid = g["id"]
+    token = generate_token()
+    try:
+        gb = api_get(f"/betaGroups/{gid}/builds?limit=5&sort=-uploadedDate", token)
+        for bd in gb.get("data", []):
+            print(f"      -> build {bd['attributes'].get('version')} ({bd['attributes'].get('processingState')})")
+    except Exception as e:
+        print(f"      error: {e}")
+
 # Versions
 token = generate_token()
 vers = api_get(f"/apps/{app_id}/appStoreVersions?filter[platform]=IOS&limit=20", token)
