@@ -57,6 +57,43 @@ export default function Register() {
   const [resendLoading, setResendLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Listen for browserFinished to clear loading state when user cancels OAuth
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    const handleBrowserFinished = Browser.addListener("browserFinished", () => {
+      setGoogleLoading(false);
+      setAppleLoading(false);
+    });
+    return () => {
+      handleBrowserFinished.then((listener) => listener.remove());
+    };
+  }, []);
+
+  // Safety watchdog for native Google Sign-in — same rationale as Login.tsx.
+  // If the OAuth browser never closes or the deep link never fires, reset the
+  // loading state instead of spinning forever (Apple rejection Guideline 2.1a).
+  const googleWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (googleLoading) {
+      googleWatchdogRef.current = setTimeout(() => {
+        setGoogleLoading(false);
+        setError(t("auth.serverError"));
+      }, 60000);
+    } else {
+      if (googleWatchdogRef.current) {
+        clearTimeout(googleWatchdogRef.current);
+        googleWatchdogRef.current = null;
+      }
+    }
+    return () => {
+      if (googleWatchdogRef.current) {
+        clearTimeout(googleWatchdogRef.current);
+        googleWatchdogRef.current = null;
+      }
+    };
+  }, [googleLoading, t]);
+
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const timer = setInterval(() => {

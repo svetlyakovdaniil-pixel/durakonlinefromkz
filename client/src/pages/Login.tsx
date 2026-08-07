@@ -113,6 +113,35 @@ export default function Login() {
     };
   }, []);
 
+  // Safety watchdog for native Google Sign-in.
+  // On native, googleLoading is only cleared by browserFinished or the deep link
+  // callback. If SFSafariViewController fails to open, or the OAuth page hangs,
+  // or the deep link never fires, googleLoading would stay true forever — the
+  // exact "loading indefinitely" bug Apple rejected. This timer force-resets it.
+  const googleWatchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (googleLoading) {
+      googleWatchdogRef.current = setTimeout(() => {
+        setGoogleLoading(false);
+        setError(t("auth.serverError"));
+        setShowRetry(true);
+        logAuthStep("google_watchdog_triggered", "60s Google OAuth timeout");
+      }, 60000);
+    } else {
+      if (googleWatchdogRef.current) {
+        clearTimeout(googleWatchdogRef.current);
+        googleWatchdogRef.current = null;
+      }
+    }
+    return () => {
+      if (googleWatchdogRef.current) {
+        clearTimeout(googleWatchdogRef.current);
+        googleWatchdogRef.current = null;
+      }
+    };
+  }, [googleLoading, t]);
+
   // Show error from OAuth deep link redirect (e.g., /login?error=google_cancelled)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);

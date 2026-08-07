@@ -6,7 +6,6 @@ import TermsPage from './TermsPage';
 import ContactPage from './ContactPage';
 import SeasonRulesPage from './SeasonRulesPage';
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useSocket } from "@/hooks/useSocket";
@@ -563,6 +562,7 @@ export default function Home() {
 
 function LandingPage() {
   const { t } = useTranslation();
+  const [, setLocation] = useLocation();
   const faceCards = [
     CARD_IMAGES['K-spades'], CARD_IMAGES['Q-hearts'],
     CARD_IMAGES['J-diamonds'], CARD_IMAGES['A-clubs'],
@@ -604,11 +604,13 @@ function LandingPage() {
                   <Zap className="w-3 h-3 mr-1" /> {t('landing.feature3')}
                 </Badge>
               </div>
-              <a href={getLoginUrl()}>
-                <Button size="lg" className="bg-amber-600 hover:bg-amber-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-lg shadow-amber-900/30">
-                  <Crown className="w-5 h-5 mr-2" /> {t('landing.play')}
-                </Button>
-              </a>
+              <Button
+                size="lg"
+                onClick={() => setLocation('/login')}
+                className="bg-amber-600 hover:bg-amber-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-lg shadow-amber-900/30"
+              >
+                <Crown className="w-5 h-5 mr-2" /> {t('landing.play')}
+              </Button>
             </div>
             <div className="hidden lg:flex justify-center items-center">
               <div className="relative">
