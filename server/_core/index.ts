@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import { Buffer } from "buffer";
+import rateLimit from "express-rate-limit";
 import { createServer } from "http";
 import net from "net";
 import fs from "fs";
@@ -115,6 +116,29 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // ── Rate limiting (brute-force / spam protection) ──
+  // Auth endpoints: tight limits (password brute force, OTP spam)
+  const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 min
+    max: 100,                  // max 100 requests per IP per window
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "rate_limited", message: "Слишком много запросов. Попробуйте позже." },
+  });
+  // IAP verification: tight limits (economy protection)
+  const iapLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 50,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "rate_limited", message: "Слишком много запросов. Попробуйте позже." },
+  });
+
+  // Apply limiters
+  app.use("/api/auth", authLimiter);
+  app.use("/api/iap", iapLimiter);
+
   // Email/password auth routes
   registerEmailAuthRoutes(app);
   // Google Sign-In routes

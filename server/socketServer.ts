@@ -1597,9 +1597,14 @@ export function initSocketServer(httpServer: HttpServer) {
     });
 
     socket.on('sendChat', (data) => {
+      // Only players in the room can chat; cap message length (spam protection)
+      const room = rooms.get(data?.roomId);
+      const text = typeof data?.text === 'string' ? data.text.slice(0, 500) : '';
+      if (!room || text.length === 0) return;
+      if (!room.players.some(p => p.id === odId)) return;
       io.to(data.roomId).emit('chatMessage', {
         from: name,
-        text: data.text,
+        text,
         ts: Date.now(),
       });
     });

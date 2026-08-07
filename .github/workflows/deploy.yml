@@ -18,6 +18,12 @@ jobs:
             cd /root/app
             git fetch origin main
             git reset --hard origin/main
+            # Create .env from template only if it doesn't exist yet
+            # (production secrets are managed on the server, never in git)
+            if [ ! -f ".env" ]; then
+              cp .env.example .env
+              echo "Created .env from .env.example — MANUALLY fill in real secrets"
+            fi
             pnpm install --frozen-lockfile
             pnpm run build
             # Update "Dark trap electronic" -> "House" playlist (rename + new tracks)
