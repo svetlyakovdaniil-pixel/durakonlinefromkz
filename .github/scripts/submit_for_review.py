@@ -316,6 +316,10 @@ def main():
     if sub_state == "PREPARE_FOR_SUBMISSION":
         token = generate_token()
         add_version_to_submission(token, submission_id, version_id)
+    elif sub_state == "READY_FOR_REVIEW":
+        # A fresh/empty submission may not have our version yet — add it.
+        token = generate_token()
+        add_version_to_submission(token, submission_id, version_id)
     elif sub_state == "UNRESOLVED_ISSUES":
         # Resolve all rejected items so the submission can be resubmitted
         token = generate_token()
