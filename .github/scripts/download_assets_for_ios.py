@@ -118,11 +118,142 @@ AVATAR_FILES = [
     "avatar_wolf_fierce-jxRuqcVyJiD2VL2nhXrK9b.webp",
 ]
 
+# All emotion/sticker asset filenames (from dist/public/assets/emotions/ on production server)
+EMOTION_FILES = [
+    "emotion_devil_angry_e4ff36c8.png",
+    "emotion_devil_cool_e5b18242.png",
+    "emotion_devil_heart_4914bc75.png",
+    "emotion_devil_hurry_97527c35.png",
+    "emotion_devil_laugh_810771e3.png",
+    "emotion_devil_sad_fc1ad763.png",
+    "emotion_devil_sleep_5d68d751.png",
+    "emotion_devil_think_a32cf7f5.png",
+    "emotion_devil_win_d390dde4.png",
+    "emotion_devil_wow_6f7fcd2b.png",
+    "emotion_khan_angry_8618af32.png",
+    "emotion_khan_cool_7a4a8a8d.png",
+    "emotion_khan_heart_e35ddda3.png",
+    "emotion_khan_hurry_618fde27.png",
+    "emotion_khan_laugh_68ee4d40.png",
+    "emotion_khan_sad_27908e27.png",
+    "emotion_khan_sleep_be20119f.png",
+    "emotion_khan_think_33befc92.png",
+    "emotion_khan_win_e091d556.png",
+    "emotion_khan_wow_a86a7e15.png",
+    "emotion_monkey_angry_9fb48b22.png",
+    "emotion_monkey_cool_4b56eac0.png",
+    "emotion_monkey_heart_6fb9e4ca.png",
+    "emotion_monkey_hurry_33227715.png",
+    "emotion_monkey_laugh_9e3429b4.png",
+    "emotion_monkey_sad_a1b76315.png",
+    "emotion_monkey_sleep_0c454b9a.png",
+    "emotion_monkey_think_979faf8d.png",
+    "emotion_monkey_win_cbae3999.png",
+    "emotion_monkey_wow_4a569438.png",
+    "emotion_raccoon_angry-6uVHKrrqCwQBznY5aEh5nC.png",
+    "emotion_raccoon_cool-6rKk5ui5mySEY6uXKComWK.png",
+    "emotion_raccoon_heart_v2-TyneVuyMKoLBPNQZyanUc2.png",
+    "emotion_raccoon_hurry_v2-agQoZychkNzdjxPYvtLDTE.png",
+    "emotion_raccoon_ref_laugh_abe704af.png",
+    "emotion_raccoon_sad-FbNZWtaWSm6Fb4ausscNNE.png",
+    "emotion_raccoon_sleep-JPQYVFAzJtFXuS2m8Ko3Ax.png",
+    "emotion_raccoon_think-mo3SbXpKKwTTsM6y8SaNUQ.png",
+    "emotion_raccoon_win-PHHWAUiVmxmYgk2AimmfrD.png",
+    "emotion_raccoon_wow-4QRjVrmn7WYaBBZsWLL8Ej.png",
+]
+
+# All static image assets (season avatars, premium avatars, bot avatars, icons)
+# from dist/public/assets/static/ on production server. Audio (mp3/wav) is NOT
+# bundled — music and sounds still stream from the server.
+STATIC_FILES = [
+    "amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp",
+    "amber_angels_demons_v2_b882b3bd.png",
+    "amber_apocalypse_s8_96da3687.png",
+    "amber_cyberpunk_v4-52jR9jKRMgjhsCZXjNstx8.webp",
+    "amber_egyptian_gods_v2_43e04e99.png",
+    "amber_hiphop_90s_v2_5310991c.png",
+    "amber_japanese_s9_11a4e751.png",
+    "amber_kazakh_s6_v2_675d657a.png",
+    "amber_neon_era_s7_v2_434a2768.png",
+    "amber_norse_gods_v2_f21b55c1.png",
+    "amber_pirate_islands_v2_e0aa3599.png",
+    "amber_space_odyssey_v2_adde7dfd.png",
+    "amber_underwater_world_v2_0c6b5664.png",
+    "avatar_vip-5gYQDzq92heL65Hxbz4iAY.webp",
+    "avatar-bear-ggTgCeFCLsPRpzpWmUe6og.webp",
+    "avatar-eagle-KxvbVg3oAviwrdXzEpvXdT.webp",
+    "avatar-fox-A7ZAaomsUx9cfjYNNWxFw7.webp",
+    "avatar-snow-leopard-UGXKzhokntwzXvBoUdi5Lq.webp",
+    "avatar-wolf-fJ9SNhipdz6heHu7Au5XVp.webp",
+    "bot_avatar-bkCC7RwD3DYoJiFYZiby6m.webp",
+    "diving_eagle_avatar-mETA3RPC2znnKVf6a8Nzyx.webp",
+    "dragon_ryu_sapphire_47630a0e.webp",
+    "gasmask_avatar-nsq2WhNPXn8BwEayozZWdW.webp",
+    "gasmask_avatar-QspMaqo2ZQTvwEek5U4B35.png",
+    "golden_horde_warrior_avatar-oJWWxe5DCcpxB9nbWMET8o.webp",
+    "goose_new_8597b7f9.png",
+    "great_khan_avatar-N9ykdAF9YU7urTnqCdUiJa.webp",
+    "khan_steppe_avatar-72rsBrDvaNJLS7y5xKmfwa.webp",
+    "kitsune_emerald_4eb0f364.webp",
+    "neon_cat_amber_v2-G4HW9sWsBNkEHaW35YPvxs.webp",
+    "neon_crown_no_ring-k2gijZGF223aiMcs6ZohLm.webp",
+    "neon_crown_obsidian-3s7gu4bnxW94srxC2sGYmd.webp",
+    "neon_dino_ruby-e5c5vvCmCmU37AgnHKyEXM.webp",
+    "neon_paw_v2-J7ntbHJYh3mwfqGttW7nfX.webp",
+    "nexus_bunny_avatar-JL5A5iF6tsP42JWaLwG3Uf.webp",
+    "nuclear_mushroom_avatar-XqWr3xsdoLrkX3ZZrjUQTm.webp",
+    "obsidian_angels_demons-Jb4TqRyJ4bRGFfWdknwUSR.webp",
+    "obsidian_apocalypse_v2_464c2e3e.png",
+    "obsidian_cyberpunk-F42HmWbza98ZbqBggYVNNt.webp",
+    "obsidian_egyptian_gods-HwZuAJipid5wMPLwE9jfDN.webp",
+    "obsidian_hiphop_90s-Rx5QAgMC5akbKfSPh2UYkY.webp",
+    "obsidian_japanese_v2_0098554b.png",
+    "obsidian_kazakh_v2-CwSTTzwCooxU3Z7eSWybpy.webp",
+    "obsidian_neon_era_v2-adGE4hKxxPSNzmcWxb3qZE.webp",
+    "obsidian_norse_gods-cZ2YKE5bVYuvdXd4WuLkfw.webp",
+    "obsidian_pirate_islands-m7mqMLNNUB3WiggJMsPgQ7.webp",
+    "obsidian_space_odyssey-7gENsHLXLmZaeUU6EcPbyv.webp",
+    "obsidian_underwater_world-CrTo39hHA3GNH6kCigzNr8.webp",
+    "oni_mask_obsidian_v3-hJ3tDNhcH7vPq6s95Cuzo4.webp",
+    "ruby_angels_demons_dc4a2a91.png",
+    "ruby_apocalypse_final_791c8b8e.png",
+    "ruby_cyberpunk_ee56c332.png",
+    "ruby_egyptian_gods_52ceb9b8.png",
+    "ruby_hiphop_90s_bde0fc3c.png",
+    "ruby_japanese_v2_ed9fc656.png",
+    "ruby_kazakh_v3_49409013.png",
+    "ruby_neon_era_v3_42502a8f.png",
+    "ruby_norse_gods_0fa3c331.png",
+    "ruby_pirate_islands_acbbbc77.png",
+    "ruby_space_odyssey_f080fce1.png",
+    "ruby_underwater_world_83a8b445.png",
+    "samurai_amber_v2-m4pBvqrF6e84KqmZx6QZvq.webp",
+    "shanyrak_96e91a49.png",
+    "tenge_9aefd1b7.png",
+    "toxic_storm_avatar-cR6SmN4ZtMUEBVktcpwyo9.png",
+    "zircon_angels_demons-awXaXT9p65ykxqqS4S3xJH.webp",
+    "zircon_apocalypse_s8-mX7QoLXFqTx273Bn5WwJjA.webp",
+    "zircon_cyberpunk-WoVy5sKCJ5JyjptcjACrCB.webp",
+    "zircon_egyptian_gods-QgX6A97reWsR5kYtv89KEo.webp",
+    "zircon_hiphop_90s-fpFrZPKBD9JDsSsTgumemU.webp",
+    "zircon_japanese_s9-fETuS5Sokkh8MuW2cmwvAe.webp",
+    "zircon_kazakh_s6-D6TwZfEa5H9yauccNCb6G8.webp",
+    "zircon_neon_era_s7-JpdjrjrWH8jv3RJmLRUukG.webp",
+    "zircon_norse_gods-7mstNcbdxCWQHP2qZEqVws.webp",
+    "zircon_pirate_islands-MazjDWUxFEetXNUmozCPXp.webp",
+    "zircon_space_odyssey-m9fwPZ82eoVAaZJjtkHisU.webp",
+    "zircon_underwater_world-oCe3ChkQWpQrq9YoZjPDnd.webp",
+]
+
 CARDS_DIR = Path("dist/public/assets/cards")
 AVATARS_DIR = Path("dist/public/assets/avatars")
+EMOTIONS_DIR = Path("dist/public/assets/emotions")
+STATIC_DIR = Path("dist/public/assets/static")
 
 CARDS_DIR.mkdir(parents=True, exist_ok=True)
 AVATARS_DIR.mkdir(parents=True, exist_ok=True)
+EMOTIONS_DIR.mkdir(parents=True, exist_ok=True)
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def download_file(url: str, dest: Path) -> bool:
@@ -142,7 +273,7 @@ def download_file(url: str, dest: Path) -> bool:
 
 
 def main():
-    total = len(CARD_FILES) + len(AVATAR_FILES)
+    total = len(CARD_FILES) + len(AVATAR_FILES) + len(EMOTION_FILES) + len(STATIC_FILES)
     success = 0
     failed = []
 
@@ -163,6 +294,24 @@ def main():
             success += 1
         else:
             failed.append(f"avatars/{filename}")
+
+    print(f"\nDownloading {len(EMOTION_FILES)} emotion assets...")
+    for filename in EMOTION_FILES:
+        url = f"{BASE_URL}/assets/emotions/{filename}"
+        dest = EMOTIONS_DIR / filename
+        if download_file(url, dest):
+            success += 1
+        else:
+            failed.append(f"emotions/{filename}")
+
+    print(f"\nDownloading {len(STATIC_FILES)} static image assets...")
+    for filename in STATIC_FILES:
+        url = f"{BASE_URL}/assets/static/{filename}"
+        dest = STATIC_DIR / filename
+        if download_file(url, dest):
+            success += 1
+        else:
+            failed.append(f"static/{filename}")
 
     print(f"\nDone: {success}/{total} assets downloaded")
     if failed:

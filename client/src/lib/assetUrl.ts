@@ -8,6 +8,8 @@ import { NATIVE_API_BASE } from '@shared/const';
 const BUNDLED_PREFIXES = [
   '/assets/cards/',
   '/assets/avatars/',
+  '/assets/emotions/',
+  '/assets/static/',
 ];
 
 /**
