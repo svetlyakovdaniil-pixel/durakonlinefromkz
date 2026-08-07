@@ -126,46 +126,7 @@ for i in iaps.get("data", []):
     except Exception as e:
         print(f"    No schedule yet: {e}")
 
-    # 3. Create the manual inAppPurchasePrice first
-    token = generate_token()
-    try:
-        price_body = {
-            "data": {
-                "type": "inAppPurchasePrices",
-                "relationships": {
-                    "inAppPurchasePricePoint": {"data": {"type": "inAppPurchasePricePoints", "id": target_pp_id}},
-                    "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}},
-                },
-            }
-        }
-        price_result = api_post("/inAppPurchasePrices", token, price_body)
-        price_id = price_result["data"]["id"]
-        print(f"    Manual price created: {price_id}")
-    except Exception as e:
-        print(f"    ERROR creating manual price: {e}")
-        continue
-
-    # 4. Create inAppPurchasePriceSchedule referencing the manual price
-    token = generate_token()
-    try:
-        body = {
-            "data": {
-                "type": "inAppPurchasePriceSchedules",
-                "relationships": {
-                    "inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
-                    "manualPrices": {
-                        "data": [{"type": "inAppPurchasePrices", "id": price_id}]
-                    },
-                },
-            }
-        }
-        result = api_post("/inAppPurchasePriceSchedules", token, body)
-        print(f"    Price schedule created: {result['data']['id']}")
-    except Exception as e:
-        print(f"    ERROR creating schedule: {e}")
-        continue
-
-    # 5. Create availability (all territories via availableInNewTerritories)
+    # 3. Try creating availability first (may be permitted even if prices are not)
     token = generate_token()
     try:
         avail_body = {
@@ -184,6 +145,45 @@ for i in iaps.get("data", []):
         print(f"    Availability created: {result['data']['id']}")
     except Exception as e:
         print(f"    ERROR creating availability: {e}")
+
+    # 4. Create the manual inAppPurchasePrice first
+    token = generate_token()
+    try:
+        price_body = {
+            "data": {
+                "type": "inAppPurchasePrices",
+                "relationships": {
+                    "inAppPurchasePricePoint": {"data": {"type": "inAppPurchasePricePoints", "id": target_pp_id}},
+                    "inAppPurchaseV2": {"data": {"type": "inAppPurchases", "id": iid}},
+                },
+            }
+        }
+        price_result = api_post("/inAppPurchasePrices", token, price_body)
+        price_id = price_result["data"]["id"]
+        print(f"    Manual price created: {price_id}")
+    except Exception as e:
+        print(f"    ERROR creating manual price: {e}")
+        continue
+
+    # 5. Create inAppPurchasePriceSchedule referencing the manual price
+    token = generate_token()
+    try:
+        body = {
+            "data": {
+                "type": "inAppPurchasePriceSchedules",
+                "relationships": {
+                    "inAppPurchase": {"data": {"type": "inAppPurchases", "id": iid}},
+                    "manualPrices": {
+                        "data": [{"type": "inAppPurchasePrices", "id": price_id}]
+                    },
+                },
+            }
+        }
+        result = api_post("/inAppPurchasePriceSchedules", token, body)
+        print(f"    Price schedule created: {result['data']['id']}")
+    except Exception as e:
+        print(f"    ERROR creating schedule: {e}")
+        continue
 
     time.sleep(1)
 
