@@ -9,6 +9,7 @@ import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
 import { AppleSignIn } from "@/lib/appleSignIn";
+import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 
 /**
  * Returns the origin to use for OAuth redirect URIs.
@@ -248,9 +249,102 @@ export default function Login() {
 
     try {
       if (Capacitor.isNativePlatform()) {
-        const authUrl = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}&native=true`;
-        await Browser.open({ url: authUrl, presentationStyle: "popover" });
-        // Loading state will be cleared when deep link callback fires or browser closes
+        // Native Google Sign-In via GIDSignIn SDK (@capawesome/capacitor-google-sign-in).
+        // Opens the system Google account picker directly — NO SFSafariViewController, so the
+        // Google Safe Browsing "fraudulent website" warning never appears.
+        logAuthStep("google_login_native_start");
+
+        // Initialize once before first sign-in (idempotent)
+        try {
+          await GoogleSignIn.initialize({
+            clientId: "825855589810-imptgdssbi1h963uftlvo69ea80cr3ll.apps.googleusercontent.com",
+          });
+        } catch (initErr) {
+          logAuthStep("google_login_initialize_error", String(initErr));
+        }
+
+        let result: any;
+        try {
+          logAuthStep("google_login_signin_start");
+          const signInPromise = GoogleSignIn.signIn();
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Google Sign In timed out after 30s")), 30000)
+          );
+          result = await Promise.race([signInPromise, timeoutPromise]);
+          logAuthStep("google_login_signin_done");
+        } catch (signInErr: any) {
+          const msg = signInErr?.message || String(signInErr);
+          logAuthStep("google_login_signin_error", msg);
+          console.log("[GoogleAuth/Native] Sign-in cancelled or failed:", msg);
+          if (msg.includes("cancel") || msg.includes("Cancel") || msg.includes("1001")) {
+            // User pressed Cancel — not an error
+            setGoogleLoading(false);
+            return;
+          }
+          if (msg.includes("timed out")) {
+            setError(t("auth.serverError"));
+            setShowRetry(true);
+            setGoogleLoading(false);
+            return;
+          }
+          throw signInErr;
+        }
+
+        const idToken = result?.idToken;
+        if (!idToken) {
+          logAuthStep("google_login_no_token");
+          console.error("[GoogleAuth/Native] No id_token in result");
+          setError(t("auth.serverError"));
+          setGoogleLoading(false);
+          return;
+        }
+
+        logAuthStep("google_login_server_verify_start");
+
+        // Send the ID token to our server for verification
+        let res: Response;
+        try {
+          res = await fetchWithTimeout(
+            `${origin}/api/auth/google/native`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ idToken }),
+              credentials: "include",
+            },
+            8000
+          );
+          logAuthStep("google_login_server_verify_done", `status=${res.status}`);
+        } catch (fetchErr) {
+          const msg = fetchErr instanceof Error ? fetchErr.message : String(fetchErr);
+          logAuthStep("google_login_server_verify_error", msg);
+          setError(t("auth.serverError"));
+          setShowRetry(true);
+          setGoogleLoading(false);
+          return;
+        }
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          logAuthStep("google_login_server_error", JSON.stringify(errData));
+          console.error("[GoogleAuth/Native] Server error:", errData);
+          setError(t("auth.serverError"));
+          setGoogleLoading(false);
+          return;
+        }
+
+        const data = await res.json();
+        if (data.success && data.token) {
+          localStorage.setItem(NATIVE_TOKEN_KEY, data.token);
+          logAuthStep("google_login_success");
+          console.log("[GoogleAuth/Native] Login successful, navigating...");
+          // Use SPA navigation instead of window.location.href to avoid full WKWebView reload
+          setLocation("/");
+        } else {
+          logAuthStep("google_login_no_success_token");
+          setError(t("auth.serverError"));
+          setGoogleLoading(false);
+        }
       } else {
         window.location.href = `${origin}/api/auth/google/init?origin=${encodeURIComponent(origin)}`;
       }

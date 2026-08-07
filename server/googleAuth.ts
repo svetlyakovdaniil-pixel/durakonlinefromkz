@@ -5,6 +5,8 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { sdk } from "./_core/sdk";
 
 const GOOGLE_CLIENT_ID = "825855589810-q3rtiofrl81c24kop4s3ar5bu35dp7u6.apps.googleusercontent.com";
+// Native iOS client ID (GoogleSignIn SDK) — audience for native id_token verification
+const GOOGLE_NATIVE_CLIENT_ID = "825855589810-imptgdssbi1h963uftlvo69ea80cr3ll.apps.googleusercontent.com";
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET || "";
 
 /**
@@ -268,5 +270,91 @@ export function registerGoogleAuthRoutes(app: Express) {
    */
   app.post("/api/auth/google", async (req: Request, res: Response) => {
     res.status(410).json({ error: "deprecated", message: "Use /api/auth/google/init redirect flow instead" });
+  });
+
+  /**
+   * POST /api/auth/google/native
+   * Native Google Sign-In via @capawesome/capacitor-google-sign-in (GIDSignIn SDK).
+   * The plugin returns an id_token (JWT signed by Google) — we verify it server-side
+   * with the native iOS client ID as audience, then create/find the user and issue a
+   * session token. No SFSafariViewController, no durak:// deep link, no fraud warning.
+   */
+  app.post("/api/auth/google/native", async (req: Request, res: Response) => {
+    try {
+      const { idToken, referralCode } = req.body as { idToken?: string; referralCode?: string };
+
+      if (!idToken || typeof idToken !== "string") {
+        return res.status(400).json({ success: false, error: "No id_token provided" });
+      }
+
+      // Verify the ID token signed by Google. Audience must be the native iOS client ID.
+      let payload: { sub?: string; email?: string | null; email_verified?: boolean; name?: string | null; picture?: string | null };
+      try {
+        const jwtVerify = (await import("jose")).jwtVerify;
+        const createRemoteJWKSet = (await import("jose")).createRemoteJWKSet;
+        const { payload: verified } = await jwtVerify(
+          idToken,
+          createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs")),
+          {
+            issuer: ["https://accounts.google.com", "accounts.google.com"],
+            audience: GOOGLE_NATIVE_CLIENT_ID,
+          }
+        );
+        payload = verified as typeof payload;
+      } catch (err) {
+        console.error("[GoogleAuth/Native] Token verification failed:", err);
+        return res.status(401).json({ success: false, error: "Invalid Google id_token" });
+      }
+
+      const sub = payload.sub;
+      if (!sub) {
+        return res.status(401).json({ success: false, error: "Missing sub claim" });
+      }
+
+      const openId = `google_${sub}`;
+      const email = payload.email || null;
+      const name = payload.name || email?.split("@")[0] || "Player";
+      const truncatedName = name.substring(0, 12);
+
+      const existingUser = await db.getUserByOpenId(openId);
+      if (existingUser) {
+        await db.upsertUser({ openId, lastSignedIn: new Date() });
+        const sessionToken = await sdk.createSessionToken(openId, {
+          name: existingUser.name || truncatedName,
+          expiresInMs: ONE_YEAR_MS,
+        });
+        console.log("[GoogleAuth/Native] Existing user signed in:", openId.substring(0, 16) + "...");
+        return res.json({ success: true, token: sessionToken });
+      }
+
+      await db.upsertUser({
+        openId,
+        name: truncatedName,
+        email,
+        loginMethod: "google",
+        lastSignedIn: new Date(),
+      });
+
+      const newUser = await db.getUserByOpenId(openId);
+      if (newUser) {
+        const profile = await db.getOrCreateProfile(newUser.id, truncatedName);
+        if (referralCode && profile) {
+          await db.activateReferralCode(profile.id, referralCode.trim().toUpperCase()).catch(err => {
+            console.warn("[GoogleAuth/Native] Referral activation failed (non-fatal):", err);
+          });
+        }
+      }
+
+      const sessionToken = await sdk.createSessionToken(openId, {
+        name: truncatedName,
+        expiresInMs: ONE_YEAR_MS,
+      });
+
+      console.log("[GoogleAuth/Native] New user created and signed in:", openId.substring(0, 16) + "...");
+      return res.json({ success: true, token: sessionToken });
+    } catch (error) {
+      console.error("[GoogleAuth/Native] Error:", error);
+      return res.status(500).json({ success: false, error: "Authentication failed" });
+    }
   });
 }

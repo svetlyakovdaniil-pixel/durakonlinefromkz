@@ -74,6 +74,11 @@
 	<!-- 2. durak://  — custom scheme for OAuth deep link callbacks          -->
 	<!--    After Google/Apple OAuth, server redirects to durak://auth/...   -->
 	<!--    iOS intercepts this and returns control to the app               -->
+
+	<!-- Google Sign-In: native iOS client ID (used by @capawesome/capacitor-google-sign-in) -->
+	<key>GIDClientID</key>
+	<string>825855589810-imptgdssbi1h963uftlvo69ea80cr3ll.apps.googleusercontent.com</string>
+
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -81,7 +86,7 @@
 			<string>google-sign-in</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.825855589810-p63edci1a8ehttgcgurcehlskpp8vnb3</string>
+				<string>com.googleusercontent.apps.825855589810-imptgdssbi1h963uftlvo69ea80cr3ll</string>
 			</array>
 		</dict>
 		<dict>
