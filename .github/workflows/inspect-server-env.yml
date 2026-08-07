@@ -1,0 +1,24 @@
+name: Inspect server .env keys (names only, no values)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: List .env key names on server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 176.12.79.38
+          username: root
+          password: ${{ secrets.FIRSTVDS_SSH_PASSWORD }}
+          script: |
+            echo "=== .env key names on server (values redacted) ==="
+            if [ -f /root/app/.env ]; then
+              cut -d'=' -f1 /root/app/.env | grep -v '^#' | grep -v '^$'
+            else
+              echo "NO /root/app/.env FOUND"
+            fi
+            echo "=== pm2 env (names only) ==="
+            pm2 env 0 2>/dev/null | cut -d'=' -f1 | grep -v '^#' | grep -v '^$' | head -40 || echo "pm2 env unavailable"
