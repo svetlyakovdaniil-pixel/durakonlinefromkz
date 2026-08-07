@@ -43,16 +43,23 @@ print(f"App ID: {app_id}\n")
 
 # Builds
 token = generate_token()
-builds = api_get(f"/builds?filter[app]={app_id}&limit=15&sort=-uploadedDate&include=buildBetaDetail", token)
+builds = api_get(f"/builds?filter[app]={app_id}&limit=15&sort=-uploadedDate", token)
 print(f"\n--- Latest 15 builds ---")
 for b in builds.get("data", []):
     a = b["attributes"]
-    beta = "n/a"
-    for inc in builds.get("included", []):
-        if inc["type"] == "buildBetaDetails" and inc["relationships"].get("build", {}).get("data", {}).get("id") == b["id"]:
-            ba = inc["attributes"]
-            beta = f"state={ba.get('state')} extState={ba.get('externalTestingState')} extEnabled={ba.get('autoNotifyEnabled')}"
-    print(f"  build {a.get('version')} | {a.get('processingState')} | exp={a.get('expired')} | uploaded {a.get('uploadedDate', '')[:10]} | {beta} | id={b['id']}")
+    print(f"  build {a.get('version')} | {a.get('processingState')} | exp={a.get('expired')} | uploaded {a.get('uploadedDate', '')[:10]} | id={b['id']}")
+
+# Beta details for the two newest builds
+print(f"\n--- BuildBetaDetail for newest builds ---")
+for b in builds.get("data", [])[:4]:
+    bid = b["id"]
+    token = generate_token()
+    try:
+        detail = api_get(f"/builds/{bid}/buildBetaDetail", token)
+        da = detail.get("data", {}).get("attributes", {})
+        print(f"  build {b['attributes'].get('version')}: state={da.get('state')} extState={da.get('externalTestingState')} autoNotify={da.get('autoNotifyEnabled')}")
+    except Exception as e:
+        print(f"  build {b['attributes'].get('version')}: error={e}")
 
 # Versions
 token = generate_token()
