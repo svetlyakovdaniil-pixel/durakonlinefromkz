@@ -34,6 +34,35 @@ function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = 80
 }
 
 /**
+ * A reviewer can open the app while the API process is restarting. Retry only
+ * transport failures and 5xx responses; authentication errors stay immediate.
+ */
+async function fetchAuthRequest(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number,
+  attempts = 2,
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetchWithTimeout(url, options, timeoutMs);
+      if (response.status < 500 || attempt === attempts) {
+        return response;
+      }
+      lastError = new Error(`Authentication request failed with status ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 750 * attempt));
+  }
+
+  throw lastError instanceof Error ? lastError : new Error("Authentication request failed");
+}
+
+/**
  * Remote auth logging — sends a beacon to the server for each auth step.
  * This helps diagnose exactly where the flow hangs during Apple review.
  * Fire-and-forget, never throws.
@@ -179,7 +208,7 @@ export default function Login() {
       let res: Response;
       try {
         logAuthStep("email_login_fetch_start");
-        res = await fetchWithTimeout(
+        res = await fetchAuthRequest(
           `${apiBase}/api/auth/login`,
           {
             method: "POST",
@@ -187,7 +216,7 @@ export default function Login() {
             body: JSON.stringify({ email: email.trim(), password }),
             credentials: "include",
           },
-          15000
+          15000,
         );
         logAuthStep("email_login_fetch_done", `status=${res.status}`);
       } catch (fetchErr) {
@@ -304,7 +333,7 @@ export default function Login() {
         // Send the ID token to our server for verification
         let res: Response;
         try {
-          res = await fetchWithTimeout(
+          res = await fetchAuthRequest(
             `${origin}/api/auth/google/native`,
             {
               method: "POST",
@@ -312,7 +341,7 @@ export default function Login() {
               body: JSON.stringify({ idToken }),
               credentials: "include",
             },
-            8000
+            15000,
           );
           logAuthStep("google_login_server_verify_done", `status=${res.status}`);
         } catch (fetchErr) {
@@ -414,7 +443,7 @@ export default function Login() {
         // Send the identity token to our server for verification
         let res: Response;
         try {
-          res = await fetchWithTimeout(
+          res = await fetchAuthRequest(
             `${origin}/api/auth/apple/native`,
             {
               method: "POST",
@@ -428,7 +457,7 @@ export default function Login() {
               }),
               credentials: "include",
             },
-            8000
+            15000,
           );
           logAuthStep("apple_login_server_verify_done", `status=${res.status}`);
         } catch (fetchErr) {
@@ -520,7 +549,7 @@ export default function Login() {
                   className="flex items-center gap-1 mx-auto mt-2 text-amber-400 hover:text-amber-300 text-xs underline"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  {t("auth.retry") || "Попробовать снова"}
+                  {t("common.retry")}
                 </button>
               )}
             </div>

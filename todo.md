@@ -3737,6 +3737,14 @@
 - [x] Fixed watchdog timer: now only applies to email login (not Google/Apple OAuth)
 - [x] Fixed auto-relogin after logout: sessionStorage flag prevents getLaunchUrl() processing twice
 - [x] Fixed SPA navigation: replaced window.location.href with router navigate in Login.tsx + App.tsx
+
+## App Review authentication resilience — Aug 17, 2026
+
+- [x] Retry native email, Google and Apple backend authentication requests after transport failures or HTTP 5xx responses
+- [x] Increase native Google/Apple server verification timeout from 8s to 15s
+- [x] Preserve immediate responses for invalid credentials, cancellation and other HTTP 4xx errors
+- [x] Fix retry-button localization key (`common.retry` instead of missing `auth.retry`)
+- [x] Verify with `pnpm check` and `pnpm build`
 - [x] Build 1.0.73 (315) triggered via GitHub Actions (Run #315) — completed successfully
 - [x] Build 1.0.73 (315) uploaded to App Store Connect/TestFlight successfully (Run #315)
 - [ ] User tests Sign in with Apple in TestFlight build 1.0.73 (315)
