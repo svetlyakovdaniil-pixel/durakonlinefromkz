@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'App version to submit (e.g. 1.0.2)'
+        description: 'App version to submit (must match the tested TestFlight version)'
         required: true
-        default: '1.0.2'
+        default: '1.0.73'
       build_number:
-        description: 'Build number to submit (e.g. 299)'
+        description: 'Build number to submit (must match the tested TestFlight build)'
         required: true
-        default: '299'
+        default: '360'
 
 jobs:
   submit-review:

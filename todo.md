@@ -3745,6 +3745,12 @@
 - [x] Preserve immediate responses for invalid credentials, cancellation and other HTTP 4xx errors
 - [x] Fix retry-button localization key (`common.retry` instead of missing `auth.retry`)
 - [x] Verify with `pnpm check` and `pnpm build`
+
+## iOS release version alignment — Aug 17, 2026
+
+- [x] Use TestFlight `1.0.73` as the current marketing-version source of truth
+- [x] Disable automatic iOS uploads on push; releases require an explicit workflow dispatch
+- [x] Align prepare-release and review-submission defaults to `1.0.73 (360)`
 - [x] Build 1.0.73 (315) triggered via GitHub Actions (Run #315) — completed successfully
 - [x] Build 1.0.73 (315) uploaded to App Store Connect/TestFlight successfully (Run #315)
 - [ ] User tests Sign in with Apple in TestFlight build 1.0.73 (315)

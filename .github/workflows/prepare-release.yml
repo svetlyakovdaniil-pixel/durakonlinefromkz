@@ -10,7 +10,7 @@ on:
       build_number:
         description: 'Build number'
         required: true
-        default: '357'
+        default: '360'
 
 jobs:
   prepare:

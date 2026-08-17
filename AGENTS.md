@@ -8,7 +8,7 @@
 - GitHub repo: `svetlyakovdaniil-pixel/durakonlinefromkz`
 - GitHub token: stored in `GH_TOKEN` env variable (do NOT hardcode in this file — GitHub push protection will block the push)
 - Workflow: `ios-build.yml`
-- Marketing version: `1.0.68` (do NOT change unless user says so)
+- Marketing version: `1.0.73` (the current TestFlight release version)
 
 ### Step-by-Step Process
 
@@ -54,9 +54,9 @@
 | Mistake | Result | Fix |
 |---------|--------|-----|
 | Not pushing to GitHub before triggering build | Build uses old code | Always `git push github HEAD:main` first |
-| Using wrong version (e.g., `1.0.2` instead of `1.0.68`) | Build doesn't appear in TestFlight (goes to wrong version group) | Always use `1.0.68` |
+| Using a version different from current TestFlight | Build appears in a different TestFlight version group | Use the current TestFlight version |
 | Using build_number lower than existing builds | Apple rejects it | Always increment from last known build |
-| Not cancelling push-triggered builds | They use `github.run_number` as build_number (250+) which confuses numbering | Cancel push-triggered builds, use workflow_dispatch |
+| Uploading without an explicit release dispatch | An untested build can be attached to the wrong version | Use `workflow_dispatch` with the tested version and next build number |
 | Hardcoding secrets in AGENTS.md or any tracked file | GitHub push protection blocks the push | Use env vars, never hardcode tokens |
 
 ### Build Number History
@@ -75,13 +75,12 @@ Build MUST use the SAME marketing version as the previous builds in TestFlight.
 If latest TestFlight shows v1.0.69 → new build MUST also use version=1.0.69.
 Using a lower version (e.g., 1.0.68) causes the build to go to a different version group and NOT appear in TestFlight.
 
-## 🔒 SINGLE MARKETING VERSION POLICY (as of Aug 2026)
-To eliminate version confusion between TestFlight and App Review:
-- **The marketing version is ALWAYS 1.0.70.** Only the build number changes.
-- Every iOS build MUST be dispatched with `version=1.0.70` (workflow_dispatch input).
-- NEITHER push builds (auto github.run_number) NOR any other version string are allowed.
-- The App Store version record stays "1.0.70"; a new build (higher number) is attached to it for review.
-- This keeps TestFlight, App Review and App Store on the SAME version string.
+## Single Marketing Version Policy
+
+- **Current version: `1.0.73`.** TestFlight is the source of truth.
+- A build for TestFlight and its future App Review submission must use the same marketing version and build number.
+- iOS uploads run only through manual `workflow_dispatch`; a code push never creates an unreviewed iOS build.
+- Before changing the marketing version, check the latest TestFlight version through `check-builds-versions.yml`, update the workflow defaults, then create and test a new build under that version.
 
 ## Project Structure Notes
 
