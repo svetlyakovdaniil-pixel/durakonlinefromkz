@@ -3756,3 +3756,13 @@
 - [ ] User tests Sign in with Apple in TestFlight build 1.0.73 (315)
 - [ ] Submit 1.0.73 (315) for App Store review after TestFlight confirmation
 
+## App Review remediation — Aug 26, 2026
+
+- [x] Request App Tracking Transparency authorization before AdMob initialization
+- [x] Move account deletion flow to the top of Settings for immediate discovery
+- [x] Delete profile-related push tokens, complaints, contact messages, and owned game history
+- [x] Add `[FIX:ACCOUNT_DELETE]` server logging for the deletion flow
+- [ ] Accept the updated Apple Developer Program agreement and Paid Apps Agreement
+- [ ] Create/configure the `premium_monthly` App Store product and submit all active IAPs for review
+- [ ] Record account deletion and ATT flows on physical iPhone/iPad for App Review Notes
+

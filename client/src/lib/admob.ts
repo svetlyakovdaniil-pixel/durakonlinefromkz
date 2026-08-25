@@ -52,6 +52,18 @@ export async function initAdMob(): Promise<void> {
   if (!Capacitor.isNativePlatform()) return;
 
   try {
+    // Request ATT before AdMob starts so the permission appears on a fresh install.
+    try {
+      const trackingInfo = await AdMob.trackingAuthorizationStatus();
+      if (trackingInfo.status === 'notDetermined') {
+        console.log('[FIX:ATT] Requesting tracking authorization before AdMob initialization');
+        await AdMob.requestTrackingAuthorization();
+      }
+    } catch (trackingErr) {
+      // ATT is iOS-only; Android and older plugin runtimes must still initialize ads.
+      console.warn('[FIX:ATT] Tracking authorization request was unavailable:', trackingErr);
+    }
+
     await AdMob.initialize({
       testingDevices: [],
       initializeForTesting: false,

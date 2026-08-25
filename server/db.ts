@@ -1,7 +1,7 @@
 import { eq, and, or, like, sql, desc, asc, aliasedTable } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals, emailVerificationCodes, InsertEmailVerificationCode, serverSettings } from "../drizzle/schema";
+import { InsertUser, users, playerProfiles, friendships, gameHistory, notifications, transactions, adminAuditLog, massNotifications, shopPriceOverrides, playerComplaints, InsertPlayerComplaint, musicPlaylists, userCredentials, InsertUserCredential, contactMessages, InsertContactMessage, iapTransactions, userAchievements, avatarOffsets, AvatarOffset, seasonTestState, SeasonTestState, seasonRewards, userDailyQuests, seasonRatings, referrals, emailVerificationCodes, InsertEmailVerificationCode, serverSettings, pushTokens } from "../drizzle/schema";
 import { ACHIEVEMENTS, ACHIEVEMENT_MAP } from '../shared/achievements';
 import { ENV } from './_core/env';
 
@@ -4132,6 +4132,8 @@ export async function deletePlayerAccount(userId: number): Promise<{ success: bo
   if (!db) return { success: false, reason: 'Database not available' };
 
   try {
+    console.log('[FIX:ACCOUNT_DELETE] Starting account deletion', { userId });
+
     // Find the player profile
     const [profile] = await db.select({ id: playerProfiles.id })
       .from(playerProfiles)
@@ -4142,8 +4144,16 @@ export async function deletePlayerAccount(userId: number): Promise<{ success: bo
       const profileId = profile.id;
 
       // Delete all profile-related data
+      await db.delete(pushTokens).where(eq(pushTokens.profileId, profileId));
       await db.delete(friendships).where(
         or(eq(friendships.senderId, profileId), eq(friendships.receiverId, profileId))
+      );
+      await db.delete(playerComplaints).where(
+        or(eq(playerComplaints.reporterProfileId, profileId), eq(playerComplaints.targetProfileId, profileId))
+      );
+      await db.delete(contactMessages).where(eq(contactMessages.profileId, profileId));
+      await db.delete(gameHistory).where(
+        or(eq(gameHistory.winnerId, profileId), eq(gameHistory.loserId, profileId))
       );
       await db.delete(notifications).where(eq(notifications.profileId, profileId));
       await db.delete(transactions).where(eq(transactions.profileId, profileId));
@@ -4162,9 +4172,10 @@ export async function deletePlayerAccount(userId: number): Promise<{ success: bo
     await db.delete(userCredentials).where(eq(userCredentials.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
 
+    console.log('[FIX:ACCOUNT_DELETE] Account deletion completed', { userId });
     return { success: true };
   } catch (e) {
-    console.error('[deletePlayerAccount] Error:', e);
+    console.error('[FIX:ACCOUNT_DELETE] Account deletion failed', { userId, error: e });
     return { success: false, reason: 'Internal error during account deletion' };
   }
 }
