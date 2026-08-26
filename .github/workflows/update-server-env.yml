@@ -54,4 +54,5 @@ jobs:
             done
             echo "=== Keys now present in .env: ==="
             cut -d'=' -f1 .env | grep -v '^#' | grep -v '^$' | sort
-            echo "=== To apply: cd /root/app && pm2 restart durak --update-env ==="
+            pm2 restart durak --update-env
+            echo "=== PM2 restarted with updated environment ==="
