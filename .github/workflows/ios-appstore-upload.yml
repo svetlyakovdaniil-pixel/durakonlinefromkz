@@ -129,6 +129,7 @@ jobs:
           # Do not add it to packageClassList as that would register it twice.
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
+          python3 .github/scripts/add_resource_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/GoogleService-Info.plist
 
       # ── 8b. Set version and build number ─────────────────────────────────────
       - name: Set version and build number

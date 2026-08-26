@@ -144,7 +144,8 @@ jobs:
           # Register AppleSignInPlugin.swift in the Xcode project
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
            # Register MyViewController.swift in the Xcode project
-           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
+          python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
+          python3 .github/scripts/add_resource_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/GoogleService-Info.plist
            # Ensure the App target includes Apple Sign In and APNs entitlements.
            python3 - <<'PYEOF_ENTITLEMENTS'
            import re
