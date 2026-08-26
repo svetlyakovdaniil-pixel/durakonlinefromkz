@@ -158,9 +158,9 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
 
   const c = content[locale as keyof typeof content] || content.ru;
 
-  // In mandatory mode, prevent closing by clicking outside or pressing Escape
+  // The close icon must work even for the first-time tutorial. The parent still
+  // controls whether the tutorial is shown again for users who skip it.
   const handleOpenChange = (open: boolean) => {
-    if (isMandatory) return; // block dismiss
     if (!open) onClose();
   };
 
@@ -168,9 +168,6 @@ export function TutorialModal({ open, onClose, onStartTutorial, isLoading = fals
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         className="max-w-md"
-        // Prevent closing on outside click in mandatory mode
-        onPointerDownOutside={isMandatory ? (e) => e.preventDefault() : undefined}
-        onEscapeKeyDown={isMandatory ? (e) => e.preventDefault() : undefined}
       >
         <DialogHeader>
           <DialogTitle className="text-amber-100">{c.title}</DialogTitle>

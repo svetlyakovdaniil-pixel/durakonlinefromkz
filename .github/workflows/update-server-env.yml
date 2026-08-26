@@ -23,11 +23,12 @@ jobs:
           REVENUECAT_SECRET_KEY: ${{ secrets.REVENUECAT_SECRET_KEY }}
           FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
         with:
           host: 176.12.79.38
           username: root
           password: ${{ secrets.FIRSTVDS_SSH_PASSWORD }}
-          envs: JWT_SECRET,APPLE_PRIVATE_KEY,GOOGLE_CLIENT_SECRET,REVENUECAT_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT_KEY,DATABASE_URL
+          envs: JWT_SECRET,APPLE_PRIVATE_KEY,GOOGLE_CLIENT_SECRET,REVENUECAT_SECRET_KEY,FIREBASE_SERVICE_ACCOUNT_KEY,DATABASE_URL,RESEND_API_KEY
           script: |
             set -e
             cd /root/app

@@ -489,7 +489,7 @@ export default function Home() {
       {/* Forced tutorial for new players — shown after music choice */}
       <TutorialModal
         open={showForcedTutorial}
-        onClose={() => {}} // no-op: cannot close by clicking outside
+        onClose={handleForcedTutorialSkip}
         onStartTutorial={handleForcedTutorialStart}
         isLoading={forcedTutorialLoading}
         isMandatory={true}
