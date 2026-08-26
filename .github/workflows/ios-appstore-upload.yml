@@ -105,6 +105,9 @@ jobs:
             cp -r ios/App/App/*.lproj /tmp/ 2>/dev/null || true
             cp ios/App/App/Info.plist /tmp/Info.plist || true
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
+            cp ios/App/App/AppleSignInPlugin.swift /tmp/AppleSignInPlugin.swift 2>/dev/null || true
+            cp ios/App/App/MyViewController.swift /tmp/MyViewController.swift 2>/dev/null || true
+            cp ios/App/App/Base.lproj/Main.storyboard /tmp/Main.storyboard 2>/dev/null || true
             rm -rf ios
             npx cap add ios
             cp -r /tmp/AppAssets ios/App/App/Assets.xcassets || true
@@ -113,8 +116,16 @@ jobs:
             done
             cp /tmp/Info.plist ios/App/App/Info.plist || true
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
+            [ -f /tmp/AppleSignInPlugin.swift ] && cp /tmp/AppleSignInPlugin.swift ios/App/App/AppleSignInPlugin.swift || true
+            [ -f /tmp/MyViewController.swift ] && cp /tmp/MyViewController.swift ios/App/App/MyViewController.swift || true
+            [ -f /tmp/Main.storyboard ] && cp /tmp/Main.storyboard ios/App/App/Base.lproj/Main.storyboard || true
           fi
           npx cap sync ios
+          # Keep the custom controller and local Apple Sign In plugin registered
+          # after Capacitor regenerates the native project.
+          python3 .github/scripts/add_custom_plugins_to_config.py
+          python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
+          python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
 
       # ── 8b. Set version and build number ─────────────────────────────────────
       - name: Set version and build number
