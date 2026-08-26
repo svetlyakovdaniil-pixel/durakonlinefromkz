@@ -251,6 +251,11 @@ function MaintenanceGate({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
+  useEffect(() => {
+    // Remove the static boot screen only after React has mounted successfully.
+    document.getElementById('boot-fallback')?.remove();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider defaultTheme="dark">
