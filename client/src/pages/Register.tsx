@@ -8,6 +8,7 @@ import { Loader2, Mail, Lock, User, ArrowLeft, Gift, ShieldCheck } from "lucide-
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
+import { authorizeWithAppleNative } from "@/lib/appleNativeAuth";
 
 /**
  * Fetch with a manual timeout using Promise.race.
@@ -283,17 +284,21 @@ export default function Register() {
     if (referralCode.trim()) params.set("referralCode", referralCode.trim().toUpperCase());
     try {
       if (Capacitor.isNativePlatform()) {
-        // On native: build URL directly and open in SFSafariViewController.
-        // Do NOT use fetch() before Browser.open() — it can hang on iOS 26.5.2.
-        const authUrl = `${origin}/api/auth/apple/init?${params.toString()}&native=true`;
-        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+        const { token } = await authorizeWithAppleNative(origin);
+        localStorage.setItem(NATIVE_TOKEN_KEY, token);
+        setLocation("/");
       } else {
         const res = await fetchWithTimeout(`${origin}/api/auth/apple/init?${params.toString()}`, { credentials: "include" }, 15000);
         if (!res.ok) { setError(t("auth.appleError")); setAppleLoading(false); return; }
         const { url } = await res.json();
         window.location.href = url;
       }
-    } catch {
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("1001") || message.toLowerCase().includes("cancel")) {
+        setAppleLoading(false);
+        return;
+      }
       setError(t("auth.appleError"));
       setAppleLoading(false);
     }

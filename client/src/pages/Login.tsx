@@ -8,6 +8,7 @@ import { Loader2, Mail, Lock, ArrowLeft, RefreshCw } from "lucide-react";
 import { Capacitor } from "@capacitor/core";
 import { Browser } from "@capacitor/browser";
 import { NATIVE_TOKEN_KEY } from "@shared/const";
+import { authorizeWithAppleNative } from "@/lib/appleNativeAuth";
 import { GoogleSignIn } from "@capawesome/capacitor-google-sign-in";
 
 /**
@@ -393,17 +394,24 @@ export default function Login() {
     const origin = getOAuthOrigin();
 
     try {
-      // Use the same server OAuth flow on login and registration. This keeps
-      // Apple callback handling identical on native and web platforms.
-      const authUrl = `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}${Capacitor.isNativePlatform() ? "&native=true" : ""}`;
       if (Capacitor.isNativePlatform()) {
-        await Browser.open({ url: authUrl, presentationStyle: "popover" });
+        logAuthStep("apple_login_native_start");
+        const { token } = await authorizeWithAppleNative(origin);
+        localStorage.setItem(NATIVE_TOKEN_KEY, token);
+        logAuthStep("apple_login_success");
+        setLocation("/");
       } else {
+        const authUrl = `${origin}/api/auth/apple/init?origin=${encodeURIComponent(origin)}`;
         window.location.href = authUrl;
       }
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("1001") || message.toLowerCase().includes("cancel")) {
+        setAppleLoading(false);
+        return;
+      }
       console.error("[AppleAuth] Sign-in failed:", err);
-      logAuthStep("apple_login_error", String(err));
+      logAuthStep("apple_login_error", message);
       setError(t("auth.appleError"));
       setAppleLoading(false);
     }
