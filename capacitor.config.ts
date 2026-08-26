@@ -58,21 +58,6 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: false, // Set to true during development
   },
 
-  // packageClassList tells Capacitor which native plugin classes to auto-register.
-  // AppleSignInPlugin is our custom Swift plugin (AppleSignInPlugin.swift).
-  // Without this entry, registerPlugin('AppleSignIn') in JS returns a no-op stub.
-  packageClassList: [
-    'AdMobPlugin',
-    'AppPlugin',
-    'CAPBrowserPlugin',
-    'HapticsPlugin',
-    'KeyboardPlugin',
-    'PushNotificationsPlugin',
-    'SplashScreenPlugin',
-    'StatusBarPlugin',
-    'PurchasesPlugin',
-    'AppleSignInPlugin',
-  ],
 };
 
 export default config;

@@ -121,9 +121,8 @@ jobs:
             [ -f /tmp/Main.storyboard ] && cp /tmp/Main.storyboard ios/App/App/Base.lproj/Main.storyboard || true
           fi
           npx cap sync ios
-          # Keep the custom controller and local Apple Sign In plugin registered
-          # after Capacitor regenerates the native project.
-          python3 .github/scripts/add_custom_plugins_to_config.py
+          # MyViewController registers the local Apple Sign In plugin manually.
+          # Do not add it to packageClassList as that would register it twice.
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/AppleSignInPlugin.swift
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
 
