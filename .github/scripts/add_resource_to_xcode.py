@@ -19,6 +19,9 @@ def main():
     pbx_path = sys.argv[1]
     resource_path = sys.argv[2]
     resource_filename = os.path.basename(resource_path)
+    project_relative_path = os.path.relpath(
+        resource_path, os.path.dirname(pbx_path)
+    ).replace(os.sep, "/")
 
     if not os.path.exists(pbx_path):
         print(f"pbxproj not found at {pbx_path}, skipping")
@@ -40,7 +43,7 @@ def main():
     file_ref = (
         f"\t\t{file_ref_uuid} /* {resource_filename} */ = "
         f"{{isa = PBXFileReference; lastKnownFileType = text.plist.xml; "
-        f"path = {resource_filename}; sourceTree = \"<group>\"; }};"
+        f"path = {project_relative_path}; sourceTree = \"<group>\"; }};"
     )
     build_file = (
         f"\t\t{build_file_uuid} /* {resource_filename} in Resources */ = "
