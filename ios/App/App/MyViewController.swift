@@ -11,7 +11,8 @@ import Capacitor
  * Without this, registerPlugin('AppleSignIn') in JS returns a no-op stub
  * and Sign in with Apple silently fails with "Ошибка входа через Apple".
  */
-class MyViewController: CAPBridgeViewController {
+@objc(MyViewController)
+public class MyViewController: CAPBridgeViewController {
     override open func capacitorDidLoad() {
         bridge?.registerPluginInstance(AppleSignInPlugin())
     }
