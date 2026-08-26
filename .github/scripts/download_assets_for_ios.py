@@ -11,6 +11,7 @@ for Capacitor (cap sync copies them into ios/App/App/public/).
 import os
 import sys
 import urllib.request
+from urllib.parse import urlsplit
 import urllib.error
 from pathlib import Path
 
@@ -166,6 +167,17 @@ EMOTION_FILES = [
 # from dist/public/assets/static/ on production server. Audio (mp3/wav) is NOT
 # bundled — music and sounds still stream from the server.
 STATIC_FILES = [
+    # Hamster emotion pack (used by /assets/static/ URLs in shared/emotionPacks.ts)
+    "emotion_laugh.png",
+    "emotion_cool.png",
+    "emotion_angry.png",
+    "emotion_sad.png",
+    "emotion_think.png",
+    "emotion_wow.png",
+    "emotion_heart.png",
+    "emotion_hurry.png",
+    "emotion_win.png",
+    "emotion_sleep.png",
     "amaterasu_ruby-Uxg7HYRBpY2EuX7FcdsGRE.webp",
     "amber_angels_demons_v2_b882b3bd.png",
     "amber_apocalypse_s8_96da3687.png",
@@ -262,8 +274,12 @@ def download_file(url: str, dest: Path) -> bool:
         print(f"  [SKIP] {dest.name} (already exists)")
         return True
     try:
+        parsed = urlsplit(url)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("asset URL must use HTTPS")
         req = urllib.request.Request(url, headers={"User-Agent": "iOS-Build-Script/1.0"})
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        # URL is restricted to HTTPS before the request is opened.
+        with urllib.request.urlopen(req, timeout=60) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             dest.write_bytes(resp.read())
         print(f"  [OK]   {dest.name} ({dest.stat().st_size:,} bytes)")
         return True

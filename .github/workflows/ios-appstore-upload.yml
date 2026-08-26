@@ -105,6 +105,7 @@ jobs:
             cp -r ios/App/App/*.lproj /tmp/ 2>/dev/null || true
             cp ios/App/App/Info.plist /tmp/Info.plist || true
             cp ios/App/App/GoogleService-Info.plist /tmp/GoogleService-Info.plist 2>/dev/null || true
+            cp ios/App/App/AppRelease.entitlements /tmp/AppRelease.entitlements 2>/dev/null || true
             cp ios/App/App/AppleSignInPlugin.swift /tmp/AppleSignInPlugin.swift 2>/dev/null || true
             cp ios/App/App/MyViewController.swift /tmp/MyViewController.swift 2>/dev/null || true
             cp ios/App/App/Base.lproj/Main.storyboard /tmp/Main.storyboard 2>/dev/null || true
@@ -116,6 +117,7 @@ jobs:
             done
             cp /tmp/Info.plist ios/App/App/Info.plist || true
             cp /tmp/GoogleService-Info.plist ios/App/App/GoogleService-Info.plist 2>/dev/null || true
+            cp /tmp/AppRelease.entitlements ios/App/App/AppRelease.entitlements 2>/dev/null || true
             [ -f /tmp/AppleSignInPlugin.swift ] && cp /tmp/AppleSignInPlugin.swift ios/App/App/AppleSignInPlugin.swift || true
             [ -f /tmp/MyViewController.swift ] && cp /tmp/MyViewController.swift ios/App/App/MyViewController.swift || true
             [ -f /tmp/Main.storyboard ] && cp /tmp/Main.storyboard ios/App/App/Base.lproj/Main.storyboard || true
@@ -238,6 +240,10 @@ jobs:
                            'CODE_SIGN_STYLE = Automatic;', content)
           content = re.sub(r'CODE_SIGN_IDENTITY = [^;]*;',
                            'CODE_SIGN_IDENTITY = "";', content)
+          if 'CODE_SIGN_ENTITLEMENTS' not in content:
+              content = re.sub(r'(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)',
+                               r'\1\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;',
+                               content, count=1)
           content = re.sub(r'\s*PROVISIONING_PROFILE_SPECIFIER = [^;]*;', '', content)
           content = re.sub(r'\s*PROVISIONING_PROFILE = [^;]*;', '', content)
 

@@ -32,6 +32,9 @@ const config: CapacitorConfig = {
       style: 'DARK',
       resizeOnFullScreen: true,
     },
+    FirebaseMessaging: {
+      presentationOptions: ['alert', 'badge', 'sound'],
+    },
     // NOTE: CapacitorHttp is intentionally DISABLED.
     // On iOS 26.5.2 (iPadOS 26.5.2), CapacitorHttp causes fetch() promises to hang
     // indefinitely — they never resolve or reject. This causes infinite loading spinners
