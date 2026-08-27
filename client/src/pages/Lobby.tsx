@@ -455,11 +455,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
-            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '248px' }}>
+            <div className="relative flex items-start justify-between" style={{ height: isLandscape ? '60px' : '210px' }}>
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute left-12 top-7 bottom-2 z-20 flex w-[120px] flex-col items-start">
+              <div className="absolute left-16 top-5 bottom-2 z-20 flex w-[120px] flex-col items-start">
                 <h1 className="font-bold leading-[1.02] text-amber-50" style={{ fontSize: '1.15rem' }}>
                   {t('lobby.title').split(' ')[0]}
                   <br />
@@ -475,7 +475,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-0 left-[-3rem] overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-0 left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -502,7 +502,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
-                className="absolute left-[54%] -translate-x-1/2 flex flex-col items-center z-30"
+                className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
                   top: isLandscape ? '4px' : '50%',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
@@ -1148,7 +1148,7 @@ onClick={() => setShowTengeTopUp(true)}
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-        <div className="sm:hidden flex flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
+          <div className="sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
             className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
@@ -1922,7 +1922,7 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Spacer so content doesn't hide behind tab bar on mobile (rooms tab only) */}
-      {activeTab !== 'lobby' && <div className="h-16 sm:hidden" />}
+      {activeTab !== 'lobby' && <div className="sm:hidden" style={{ height: 'calc(64px + env(safe-area-inset-bottom, 0px))' }} />}
     </div>
   );
 }
