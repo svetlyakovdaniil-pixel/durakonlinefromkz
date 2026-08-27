@@ -3,7 +3,7 @@ import { VipReferralAvatar } from './VipReferralAvatar';
 import { trpc } from '@/lib/trpc';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { X, ShoppingCart, Check, AlertTriangle, Music, Play, Square, Eye, Crown } from 'lucide-react';
+import { X, ShoppingCart, Check, AlertTriangle, Music, Play, Square, Eye, Crown, Layers3, Table2, Frame, UserRound, Music2, Smile } from 'lucide-react';
 import { useTranslation } from '@/i18n';
 import { useMusicContext } from '@/contexts/MusicContext';
 import { CARD_BACK_URL, CARD_IMAGES, CARD_BACK_CUSTOM_URL, CARD_IMAGES_CUSTOM, TABLE_STYLES, type TableStyle } from '@shared/cardAssets';
@@ -381,20 +381,29 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="overflow-x-auto border-b border-amber-700/20 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          <div className="flex min-w-max">
+        {/* Tabs: keep every shop section visible, including on narrow screens. */}
+        <div className="border-b border-amber-700/20 px-3 py-2">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1 rounded-xl bg-black/10 p-1">
           {(['decks', 'tables', 'frames', 'avatars', 'music', 'emotions'] as const).map(tab => (
             <button
               key={tab}
-              className={`min-w-[82px] py-3 px-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab}
+              className={`flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-lg px-1 py-1.5 text-[11px] font-semibold leading-tight whitespace-nowrap transition-colors ${
                 activeTab === tab
-                  ? 'text-amber-100 border-b-2 border-amber-400 bg-amber-900/10'
-                  : 'text-amber-200/50 hover:text-amber-200/70'
+                  ? 'bg-amber-400/15 text-amber-100 shadow-sm ring-1 ring-inset ring-amber-400/30'
+                  : 'text-amber-200/55 hover:bg-amber-100/5 hover:text-amber-100'
               }`}
               onClick={() => setActiveTab(tab)}
             >
-              {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : tab === 'music' ? t('shop.music') : t('shop.emotions')}
+              {tab === 'decks' ? <Layers3 className="h-4 w-4" aria-hidden="true" />
+                : tab === 'tables' ? <Table2 className="h-4 w-4" aria-hidden="true" />
+                  : tab === 'frames' ? <Frame className="h-4 w-4" aria-hidden="true" />
+                    : tab === 'avatars' ? <UserRound className="h-4 w-4" aria-hidden="true" />
+                      : tab === 'music' ? <Music2 className="h-4 w-4" aria-hidden="true" />
+                        : <Smile className="h-4 w-4" aria-hidden="true" />}
+              <span>{tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : tab === 'music' ? t('shop.music') : t('shop.emotions')}</span>
             </button>
           ))}
           </div>

@@ -441,29 +441,38 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
   };
 
   return (
-    <div className="min-h-[100dvh] bg-gradient-to-br from-[#0a1628] via-[#0f2035] to-[#0a1628] sm:block flex flex-col">
+    <div
+      className="relative min-h-[100dvh] overflow-hidden bg-[#071321] sm:block flex flex-col"
+      style={{
+        backgroundImage: 'radial-gradient(circle at 12% 0%, rgba(201,168,76,0.12), transparent 28%), radial-gradient(circle at 88% 18%, rgba(46,119,164,0.13), transparent 32%), linear-gradient(145deg, #071321 0%, #0b1b2d 52%, #071321 100%)',
+      }}
+    >
+      <div className="pointer-events-none absolute -left-32 top-24 h-72 w-72 rounded-full bg-amber-400/5 blur-3xl" />
+      <div className="pointer-events-none absolute -right-40 bottom-16 h-96 w-96 rounded-full bg-cyan-400/5 blur-3xl" />
       {/* Header */}
-      <div className="border-b border-amber-700/20 bg-black/30 backdrop-blur-sm safe-top">
-        <div className="container py-3 sm:py-5" style={{paddingBottom: '5px', marginBottom: '12px'}}>
+      <div className="relative z-10 border-b border-white/10 bg-[#081525]/75 shadow-[0_14px_40px_rgba(0,0,0,0.18)] backdrop-blur-xl safe-top">
+        <div className="container py-3 sm:py-5" style={{ paddingBottom: isLandscape ? '5px' : '10px' }}>
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
-            <div className="relative flex items-start justify-between" style={{minHeight: isLandscape ? '60px' : ((profile as any)?.equippedFrame ? '120px' : '90px')}}>
+            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '104px' }}>
               {/* Left column: placeholder to maintain layout */}
-              <div className="relative z-20" style={{marginLeft: '-4px', width: '28px'}} />
+              <div className="relative z-20 w-8" />
               {/* Title — shifted right toward avatar, 20% larger */}
-              <div className="flex flex-col relative z-20" style={{marginLeft: '-20px'}}>
-                <h1 className="font-bold text-amber-100 leading-tight text-center" style={{marginRight: '205px', fontSize: '1.2rem'}}>
+              <div className="relative z-20 flex flex-col items-start pt-1">
+                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300/50">Durak online</p>
+                <h1 className="font-bold leading-tight text-amber-50" style={{ fontSize: '1.2rem' }}>
                   {t('lobby.title').split(' ')[0]}
-                  <br/>
-                  <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}</span>
-                  <br/>
-                  <span>from KZ</span>
+                  <span className="text-amber-400"> from KZ</span>
                 </h1>
+                <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${connected ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-400'}`} />
+                  {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
+                </span>
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="mt-3 relative overflow-hidden rounded-full px-3 py-0.5 text-xs font-bold tracking-wide cursor-pointer"
+                  className="relative mt-2 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -472,7 +481,6 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                     border: '1px solid rgba(251,191,36,0.6)',
                     color: '#fff8e1',
                     textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                    marginRight: '205px',
                   }}
                 >
                   <span className="relative z-10">
@@ -493,17 +501,17 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
-                  top: (profile as any)?.equippedFrame ? '-12px' : '8px',
+                  top: '4px',
                 }}
               >
-                <button className="hover:opacity-80 transition-opacity" onClick={() => setLocation('/profile')}>
+                <button className="rounded-full p-1 ring-1 ring-amber-300/20 transition-all hover:scale-105 hover:ring-amber-300/50" onClick={() => setLocation('/profile')}>
                   <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                 </button>
-                <div className="flex items-center gap-1.5 mt-3">
+                <div className="mt-2 flex max-w-[145px] items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-2.5 py-1">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
-                  <span className="text-sm text-amber-200/80 font-semibold">{userName}</span>
+                  <span className="truncate text-xs font-semibold text-amber-100/85">{userName}</span>
                   {profile && (
-                    <span className="text-xs text-amber-300/60">ID {profile.gameId}</span>
+                    <span className="text-[10px] text-amber-300/50">#{profile.gameId}</span>
                   )}
                 </div>
               </div>
@@ -511,7 +519,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                  style={{ right: '52px', bottom: '4px', marginRight: '280px', marginBottom: '84px' }}
+                   style={{ right: '76px', bottom: '6px' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
@@ -519,10 +527,10 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
               )}
               {/* Right column: Tenge top / Shanyrak bottom */}
-              <div className="flex flex-col items-end justify-between relative z-20 self-stretch" style={{marginRight: '10px'}}>
+               <div className="relative z-20 flex flex-col items-end justify-between self-stretch pt-1">
                 {/* Tenge */}
                 <button
-                  className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
+                   className="flex min-w-[42px] flex-col items-center rounded-xl border border-amber-300/10 bg-white/[0.035] px-1.5 py-1 transition-all hover:bg-white/[0.08] active:scale-95"
                   onClick={() => setShowTengeTopUp(true)}
                   title={t('lobby.topUpTenge')}
                 >
@@ -531,7 +539,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
                 {/* Shanyrak */}
                 <button
-                  className="flex flex-col items-center hover:opacity-80 active:opacity-60 transition-opacity"
+                   className="flex min-w-[42px] flex-col items-center rounded-xl border border-emerald-300/10 bg-white/[0.035] px-1.5 py-1 transition-all hover:bg-white/[0.08] active:scale-95"
                   onClick={() => setShowShanyrakTopUp(true)}
                   title={t('lobby.topUpShanyrak')}
                 >
@@ -546,10 +554,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === DESKTOP LAYOUT (≥ sm) === */}
           <div className="hidden sm:block">
             {/* Top row: title + user info */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-6">
               <div className="flex items-center gap-3">
-                <Gamepad2 className="w-7 h-7 text-amber-400" />
-                <h1 className="text-xl font-bold text-amber-100">{t('lobby.title').split(' ')[0]} <span className={connected ? 'text-green-400' : 'text-red-400'}>{connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}</span> from KZ</h1>
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-amber-300/20 bg-amber-300/10 shadow-inner shadow-amber-200/10">
+                  <Gamepad2 className="w-5 h-5 text-amber-300" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-amber-300/45">Durak online</p>
+                  <h1 className="text-xl font-bold text-amber-50">{t('lobby.title').split(' ')[0]} <span className="text-amber-400">from KZ</span></h1>
+                  <span className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${connected ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
+                    {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
+                  </span>
+                </div>
               </div>
               <div className="flex items-center gap-1.5 lg:gap-3 flex-wrap justify-end">
                 {/* Admin button (only for admins/GMs) */}
@@ -739,12 +755,12 @@ onClick={() => setShowTengeTopUp(true)}
               </div>
             </div>
             {/* Top players marquee (desktop) */}
-            <div className="mt-4 hidden sm:block">
+            <div className="mt-4 hidden overflow-hidden rounded-2xl border border-white/10 bg-white/[0.025] sm:block">
               <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
             </div>
 
             {/* Bottom row: Комнаты + Фильтр + Поиск + Создать */}
-            <div className="mt-4 pt-3 pb-1 border-t border-amber-700/15 space-y-3">
+            <div className="mt-4 space-y-3 rounded-2xl border border-white/10 bg-black/10 px-3 pt-3 pb-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <h2 className="text-2xl font-bold text-amber-100">{t('lobby.roomList')}</h2>
@@ -1131,25 +1147,29 @@ onClick={() => setShowTengeTopUp(true)}
         <div className="sm:hidden flex flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
-            className="w-full flex flex-row items-center justify-center gap-3 transition-all active:scale-[0.98] shrink-0"
+            className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
             style={{
-              background: 'linear-gradient(180deg, rgba(201,168,76,0.10) 0%, rgba(201,168,76,0.04) 100%)',
-              borderTop: '1px solid rgba(201,168,76,0.20)',
-              borderBottom: '1px solid rgba(201,168,76,0.20)',
-              paddingTop: '2.5vw',
-              paddingBottom: '2.5vw',
+              background: 'linear-gradient(105deg, rgba(201,168,76,0.22) 0%, rgba(201,168,76,0.08) 58%, rgba(46,119,164,0.12) 100%)',
+              boxShadow: '0 12px 30px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
+              paddingTop: '3.5vw',
+              paddingBottom: '3.5vw',
             }}
             onClick={handleQuickGame}
             disabled={isQuickGameLoading}
           >
-            <span className="font-bold tracking-wide text-amber-100" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
-              {isQuickGameLoading ? (t('lobby.joining') || 'Вхожу...') : t('tabBar.quickGame')}
+            <span className="flex flex-col items-start">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-200/55">Быстрый старт</span>
+              <span className="font-bold tracking-wide text-amber-50" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
+                {isQuickGameLoading ? (t('lobby.joining') || 'Вхожу...') : t('tabBar.quickGame')}
+              </span>
             </span>
-            <Play className="ml-0.5 shrink-0" style={{ color: '#c9a84c', width: 'clamp(14px, 4vw, 20px)', height: 'clamp(14px, 4vw, 20px)' }} fill="#c9a84c" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-300/20 ring-1 ring-inset ring-amber-200/25">
+              <Play className="ml-0.5 shrink-0" style={{ color: '#f5d77a', width: 'clamp(14px, 4vw, 20px)', height: 'clamp(14px, 4vw, 20px)' }} fill="#f5d77a" />
+            </span>
           </button>
 
           {/* 2-column menu grid — fills remaining space */}
-          <div className="grid grid-cols-2 flex-1" style={{ gridTemplateRows: 'repeat(5, 1fr)' }}>
+          <div className="grid grid-cols-2 flex-1 gap-2 px-3 pt-3" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
@@ -1165,11 +1185,11 @@ onClick={() => setShowTengeTopUp(true)}
               action === null ? (
                 <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button
-                    className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
+                    className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all hover:border-amber-300/25 hover:bg-white/[0.08] active:scale-[0.97]"
                     style={{
                       background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                      borderRight: borderR ? '1px solid rgba(201,168,76,0.15)' : undefined,
-                      borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
+                      borderRight: undefined,
+                      borderBottom: undefined,
                       gap: 'clamp(2px, 1.2vw, 6px)',
                       width: '100%',
                       height: '100%',
@@ -1187,11 +1207,11 @@ onClick={() => setShowTengeTopUp(true)}
               ) : (
               <button
                 key={key}
-                className="flex flex-col items-center justify-center transition-all active:scale-[0.97]"
+                className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all hover:border-amber-300/25 hover:bg-white/[0.08] active:scale-[0.97]"
                 style={{
                   background: 'linear-gradient(180deg, rgba(201,168,76,0.08) 0%, rgba(201,168,76,0.02) 100%)',
-                  borderRight: borderR ? '1px solid rgba(201,168,76,0.15)' : undefined,
-                  borderBottom: borderB ? '1px solid rgba(201,168,76,0.15)' : undefined,
+                  borderRight: undefined,
+                  borderBottom: undefined,
                   gap: 'clamp(2px, 1.2vw, 6px)',
                 }}
                 onClick={() => handleGridButtonClick(key, action)}
