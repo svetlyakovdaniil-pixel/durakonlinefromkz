@@ -459,17 +459,19 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute left-12 top-7 bottom-2 z-20 flex max-w-[38%] flex-col items-start">
-                <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300/50">Durak online</p>
-                <h1 className="font-bold leading-[1.05] text-amber-50" style={{ fontSize: '1.2rem' }}>
+              <div className="absolute left-12 top-7 bottom-2 z-20 flex w-[120px] flex-col items-start">
+                <h1 className="font-bold leading-[1.02] text-amber-50" style={{ fontSize: '1.15rem' }}>
                   {t('lobby.title').split(' ')[0]}
+                  <br />
+                  <span className="text-amber-400">{t('common.online').toLowerCase()}</span>
                   <br />
                   <span className="text-amber-400">from KZ</span>
                 </h1>
-                <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${connected ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
-                  <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-400'}`} />
-                  {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
-                </span>
+                <span
+                  className={`mt-2 h-2 w-2 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]' : 'bg-red-400'}`}
+                  title={connected ? t('common.online') : t('common.offline')}
+                  aria-label={connected ? t('common.online') : t('common.offline')}
+                />
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
@@ -500,7 +502,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               </div>
               {/* Center: Avatar + Name/ID */}
               <div
-                className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
+                className="absolute left-[54%] -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
                   top: isLandscape ? '4px' : '50%',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
@@ -1171,7 +1173,7 @@ onClick={() => setShowTengeTopUp(true)}
           </button>
 
           {/* 2-column menu grid — fills remaining space */}
-          <div className="grid grid-cols-2 flex-1 gap-2 px-3 pt-3" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
+          <div className="grid min-h-0 grid-cols-2 flex-1 gap-2 px-3 pt-3 pb-2" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
