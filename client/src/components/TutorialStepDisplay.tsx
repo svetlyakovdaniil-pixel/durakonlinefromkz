@@ -101,7 +101,7 @@ export default function TutorialStepDisplay({
   const { t } = useTranslation();
   const { play: playSound } = useSoundContext();
   const [spotlightRects, setSpotlightRects] = useState<SpotlightRect[]>([]);
-  const [textPos, setTextPos] = useState<{ top: number; left: number; maxWidth: number }>({
+  const [textPos, setTextPos] = useState<{ top: number | string; left: number; maxWidth: number }>({
     top: 0,
     left: 0,
     maxWidth: 400,
@@ -226,7 +226,7 @@ export default function TutorialStepDisplay({
     if (effectiveTextPosition === 'top') {
       const textBoxWidth = Math.min(336, window.innerWidth - 32);
       setTextPos({
-        top: 12,
+        top: isMobile ? 'max(56px, env(safe-area-inset-top))' : 12,
         left: window.innerWidth / 2 - textBoxWidth / 2,
         maxWidth: textBoxWidth,
       });

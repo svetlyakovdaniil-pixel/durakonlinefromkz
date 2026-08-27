@@ -1561,12 +1561,13 @@ export async function adminGetTransactions(opts: {
   const limit = opts.limit ?? 50;
   const offset = opts.offset ?? 0;
 
-  let whereClause = undefined;
-  if (opts.profileId) {
-    whereClause = eq(transactions.profileId, opts.profileId);
-  }
+  const whereClause = opts.profileId
+    ? and(eq(transactions.currency, 'tenge'), eq(transactions.profileId, opts.profileId))
+    : eq(transactions.currency, 'tenge');
 
-  const countResult = await db.select({ count: sql<number>`COUNT(*)` }).from(transactions);
+  const countResult = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(transactions)
+    .where(whereClause);
   const total = countResult[0]?.count ?? 0;
 
   const rows = await db.select({
@@ -3075,20 +3076,6 @@ export async function getAllAvatarOffsets(): Promise<AvatarOffset[]> {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(avatarOffsets);
-}
-
-/** Upsert avatar offset override for a specific avatar */
-export async function upsertAvatarOffset(
-  avatarId: string,
-  offsetX: number,
-  offsetY: number,
-  imgScale: number,
-): Promise<void> {
-  const db = await getDb();
-  if (!db) return;
-  await db.insert(avatarOffsets)
-    .values({ avatarId, offsetX, offsetY, imgScale })
-    .onDuplicateKeyUpdate({ set: { offsetX, offsetY, imgScale } });
 }
 
 // ─── Season Test State ───────────────────────────────────────────────────────────────────────────────────

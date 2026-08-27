@@ -89,7 +89,6 @@ import {
   getWinsLeaderboard,
   getShanyraqLeaderboard,
   getAllAvatarOffsets,
-  upsertAvatarOffset,
   getSeasonTestState,
   upsertSeasonTestState,
   getOrCreateReferralCode,
@@ -1314,24 +1313,6 @@ export const appRouter = router({
           });
         }
         return result;
-      }),
-
-    saveAvatarOffsets: adminProcedure
-      .input(z.object({
-        avatarId: z.string(),
-        offsetX: z.number(),
-        offsetY: z.number(),
-        imgScale: z.number(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        await upsertAvatarOffset(input.avatarId, input.offsetX, input.offsetY, input.imgScale);
-        await logAdminAction({
-          adminId: ctx.user.id,
-          adminName: ctx.user.name ?? null,
-          action: 'update_avatar_offsets',
-          details: { avatarId: input.avatarId, offsetX: input.offsetX, offsetY: input.offsetY, imgScale: input.imgScale },
-        });
-        return { success: true };
       }),
 
     /** Get all items (avatars + frames) owned by a player */

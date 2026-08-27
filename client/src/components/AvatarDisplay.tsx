@@ -69,8 +69,8 @@ interface AvatarDisplayProps {
  * - Wraps all avatar content in a clipping container + inner transform div
  * - neon_crown uses its own internal offset system (passed as props) for backwards compat
  *
- * This means: admin changes in AvatarEditorTab propagate to ALL places that use AvatarDisplay:
- * lobby, profile, game table, season rewards, avatar picker preview.
+ * The same offsets are applied consistently in the lobby, profile, game table,
+ * season rewards, and avatar picker preview.
  */
 export function AvatarDisplay({ avatarId, size = 48, className = '', alt = 'Avatar' }: AvatarDisplayProps) {
   const baseId = getBaseAvatarId(avatarId);

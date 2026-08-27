@@ -22,10 +22,9 @@ import { AVATAR_FRAMES } from "@/components/ShopModal";
 import { AVATAR_OPTIONS } from "@shared/avatars";
 import { EMOTION_PACKS } from "@shared/emotionPacks";
 import { SeasonTestTab } from "@/components/SeasonTestTab";
-import { AvatarEditorTab } from "@/components/AvatarEditorTab";
 import { ProfileItemsSection } from "@/components/ProfileItemsSection";
 
-type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "avatar_editor" | "tools";
+type Tab = "players" | "monitoring" | "transactions" | "audit" | "antifraud" | "shop" | "notifications" | "moderation" | "contact" | "season_test" | "tools";
 
 /* ─── helpers ─── */
 function formatDate(d: string | Date | null | undefined) {
@@ -123,7 +122,6 @@ export default function AdminPanel() {
     { id: "moderation", label: "Модерация", icon: Flag },
     { id: "contact", label: "Сообщения", icon: MessageSquare, adminOnly: true },
     { id: "season_test", label: "Тест сезона", icon: FlaskConical, adminOnly: true },
-    { id: "avatar_editor", label: "Редактор аватарок", icon: Crown, adminOnly: true },
     { id: "tools", label: "Инструменты", icon: Wrench, adminOnly: true },
   ];
   const tabs = isGM ? allTabs.filter(t => !t.adminOnly) : allTabs;
@@ -131,10 +129,19 @@ export default function AdminPanel() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 to-gray-900 text-gray-100">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-40">
+      <div
+        className="border-b border-gray-800 bg-gray-950/80 backdrop-blur sticky top-0 z-40"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="max-w-7xl mx-auto px-3 sm:px-4 h-12 sm:h-14 flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 sm:gap-3">
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/")} className="text-gray-400 hover:text-amber-100 px-2 sm:px-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setLocation("/")}
+              aria-label="Вернуться в лобби"
+              className="text-gray-400 hover:text-amber-100 px-2 sm:px-3"
+            >
               <ArrowLeft className="w-4 h-4 sm:mr-1" />
               <span className="hidden sm:inline">Лобби</span>
             </Button>
@@ -211,7 +218,6 @@ export default function AdminPanel() {
         {tab === "moderation" && (isAdmin || isGM) && <ModerationTab />}
         {tab === "contact" && isAdmin && <ContactMessagesTab />}
         {tab === "season_test" && isAdmin && <SeasonTestTab />}
-        {tab === "avatar_editor" && isAdmin && <AvatarEditorTab />}
         {tab === "tools" && isAdmin && <ToolsTab />}
       </div>
     </div>
