@@ -31,13 +31,13 @@ export async function sendEmail(options: SendEmailOptions): Promise<boolean> {
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      console.error("[emailService] Resend API error:", error);
+      const error = await response.text();
+      console.error("[emailService] Resend API error:", response.status, error);
       return false;
     }
 
-    const data = await response.json();
-    console.log("[emailService] Email sent successfully:", data.id);
+    const data = (await response.json()) as { id?: string };
+    console.log("[emailService] Email sent successfully:", data.id ?? "unknown-id");
     return true;
   } catch (error) {
     console.error("[emailService] Failed to send email:", error);

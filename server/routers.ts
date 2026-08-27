@@ -449,27 +449,6 @@ export const appRouter = router({
       const profile = await getProfileByUserId(ctx.user.id);
       if (!profile) return [];
 
-      // Auto-generate cooldown_expired notification if 12h has passed since lastFreeTopup
-      // and there's no recent unread cooldown_expired notification
-      if (profile.lastFreeTopup) {
-        const cooldownEnd = new Date(profile.lastFreeTopup.getTime() + 12 * 60 * 60 * 1000);
-        const now = new Date();
-        if (now >= cooldownEnd) {
-          // Check if we already have an unread cooldown_expired notification after the cooldown ended
-          const existingNotifs = await getNotifications(profile.id, 10);
-          const hasCooldownNotif = existingNotifs.some((n: typeof existingNotifs[number]) => {
-            if (n.type !== 'cooldown_expired') return false;
-            // Only consider notifications created after the cooldown end
-            return n.createdAt >= cooldownEnd;
-          });
-          if (!hasCooldownNotif) {
-            await createNotification(profile.id, 'cooldown_expired', {
-              message: 'Вы снова можете добить баланс шаныраков до 2000!',
-            });
-          }
-        }
-      }
-
       const rows = await getNotifications(profile.id);
       return rows.map((r: typeof rows[number]) => ({
         ...r,
