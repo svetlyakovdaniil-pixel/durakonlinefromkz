@@ -2615,17 +2615,10 @@ export async function seedLoFiChillhopPlaylist() {
   });
 }
 
-/** Seed the "Dark trap electronic" playlist if it doesn't exist */
+/** Ensure the current House playlist exists and remove the legacy playlist. */
 export async function seedDarkTrapPlaylist() {
   const db = await getDb();
   if (!db) return;
-
-  // Check if House playlist already exists (legacy name "Dark trap electronic")
-  const existing = await db.select().from(musicPlaylists).where(or(
-    eq(musicPlaylists.name, 'House'),
-    eq(musicPlaylists.name, 'Dark trap electronic'),
-  ));
-  if (existing.length > 0) return;
 
   const houseTracks = [
     '/assets/static/house-1.mp3',
@@ -2635,6 +2628,15 @@ export async function seedDarkTrapPlaylist() {
     '/assets/static/house-5.mp3',
     '/assets/static/house-6.mp3',
   ];
+
+  const existingHouse = await db.select().from(musicPlaylists).where(eq(musicPlaylists.name, 'House'));
+  if (existingHouse.length > 0) {
+    await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Dark trap electronic'));
+    return;
+  }
+
+  // Replace the old row rather than leaving stale owned playlist IDs behind.
+  await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Dark trap electronic'));
 
   await db.insert(musicPlaylists).values({
     name: 'House',
@@ -2706,6 +2708,13 @@ export async function cleanupOldPlaylists() {
     for (const dup of toDelete) {
       await db.delete(musicPlaylists).where(eq(musicPlaylists.id, dup.id));
     }
+  }
+  // The old playlist was replaced by House. Remove it even if it survived a previous deploy.
+  const houseExists = await db.select({ id: musicPlaylists.id })
+    .from(musicPlaylists)
+    .where(eq(musicPlaylists.name, 'House'));
+  if (houseExists.length > 0) {
+    await db.delete(musicPlaylists).where(eq(musicPlaylists.name, 'Dark trap electronic'));
   }
 }
 
@@ -3863,7 +3872,7 @@ export async function getOwnedEmotionPacks(userId: number): Promise<string[]> {
  * with the same starting balance as a new real player (5000 shanyraks, 25 tenge).
  * If the account already exists, updates avatar/frame/emotionPack and returns existing data.
  */
-export async function provisionGhostPlayer(nick: string, avatarId: string, equippedFrame?: string, emotionPack?: string): Promise<{
+export async function provisionGhostPlayer(nick: string, avatarId: string, equippedFrame?: string, emotionPack?: string, isPremium = false): Promise<{
   openId: string;
   gameId: number;
   profileId: number;
@@ -3906,6 +3915,7 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
       avatarId,
       equippedFrame: equippedFrame ?? null,
       activeEmotionPack: emotionPack ?? 'khan',
+      isPremium,
     }).where(eq(playerProfiles.id, existingProfile.id));
     // Read current season rating from DB
     const { getCurrentSeasonKey } = await import('../shared/seasons');
@@ -3947,6 +3957,7 @@ export async function provisionGhostPlayer(nick: string, avatarId: string, equip
     avatarId,
     equippedFrame: equippedFrame ?? null,
     activeEmotionPack: emotionPack ?? 'khan',
+    isPremium,
   });
 
   const [created] = await db.select().from(playerProfiles).where(eq(playerProfiles.userId, user.id)).limit(1);

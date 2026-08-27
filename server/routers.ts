@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, gmProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
+import { getAvatarOption, isSeasonSuffixedAvatar } from "../shared/avatars";
 import {
   getOrCreateProfile,
   getProfileByUserId,
@@ -340,6 +341,22 @@ export const appRouter = router({
     updateAvatar: protectedProcedure
       .input(z.object({ avatarId: z.string().min(1).max(32) }))
       .mutation(async ({ ctx, input }) => {
+        const avatar = getAvatarOption(input.avatarId);
+        if (!avatar || input.avatarId === 'bot') {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'Unknown avatar' });
+        }
+
+        const ownedAvatars = await getOwnedAvatars(ctx.user.id);
+        const isOwned = ownedAvatars.includes(input.avatarId);
+        const isSeasonVariant = isSeasonSuffixedAvatar(input.avatarId);
+        const canUseAvatar = isSeasonVariant
+          ? avatar.seasonReward === true && isOwned
+          : (!avatar.premium && !avatar.seasonReward) || isOwned;
+
+        if (!canUseAvatar) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'Avatar is not owned' });
+        }
+
         await updateProfileAvatar(ctx.user.id, input.avatarId);
         return { success: true };
       }),
@@ -676,6 +693,8 @@ export const appRouter = router({
     purchaseDeck: protectedProcedure
       .input(z.object({ deckId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const override = (await getShopPriceOverrides()).find((o: any) => o.itemType === 'deck' && o.itemId === input.deckId);
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         const result = await purchaseDeck(ctx.user.id, input.deckId, input.tengeCost);
         if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
@@ -701,6 +720,8 @@ export const appRouter = router({
     purchaseTable: protectedProcedure
       .input(z.object({ tableId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const override = (await getShopPriceOverrides()).find((o: any) => o.itemType === 'table' && o.itemId === input.tableId);
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         const result = await purchaseTable(ctx.user.id, input.tableId, input.tengeCost);
         if (result.success && input.tengeCost > 0) {
           const profile = await getProfileByUserId(ctx.user.id);
@@ -723,6 +744,8 @@ export const appRouter = router({
     purchaseFrame: protectedProcedure
       .input(z.object({ frameId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const override = (await getShopPriceOverrides()).find((o: any) => o.itemType === 'frame' && o.itemId === input.frameId);
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         const result = await purchaseFrame(ctx.user.id, input.frameId, input.tengeCost);
         if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
@@ -771,6 +794,8 @@ export const appRouter = router({
     purchaseAvatar: protectedProcedure
       .input(z.object({ avatarId: z.string(), tengeCost: z.number() }))
       .mutation(async ({ ctx, input }) => {
+        const override = (await getShopPriceOverrides()).find((o: any) => o.itemType === 'avatar' && o.itemId === input.avatarId);
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         const result = await purchaseAvatar(ctx.user.id, input.avatarId, input.tengeCost);
         if (result.success) {
           const profile = await getProfileByUserId(ctx.user.id);
@@ -803,6 +828,7 @@ export const appRouter = router({
         if (!pack) return { success: false, reason: 'pack_not_found' };
         const overrides = await getShopPriceOverrides();
         const override = overrides.find((o: any) => o.itemType === 'emotionpack' && o.itemId === input.packId);
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         const serverPrice = (override && override.priceTenge !== null && override.priceTenge !== undefined)
           ? override.priceTenge
           : pack.price;
@@ -1576,6 +1602,7 @@ export const appRouter = router({
         // For playlists, priceTenge in overrides is used as priceShanyrak
         const overrides = await getShopPriceOverrides();
         const override = overrides.find((o: any) => o.itemType === 'playlist' && o.itemId === String(input.playlistId));
+        if (override?.isAvailable === false) return { success: false, reason: 'unavailable' };
         let serverPrice = (override && override.priceTenge !== null && override.priceTenge !== undefined)
           ? override.priceTenge
           : playlist.priceShanyrak;

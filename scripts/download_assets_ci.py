@@ -14,6 +14,7 @@ import json
 import urllib.request
 import urllib.parse
 import urllib.error
+from urllib.parse import urlsplit
 from pathlib import Path
 
 FORGE_API_URL = os.environ.get("BUILT_IN_FORGE_API_URL", "").rstrip("/")
@@ -21,6 +22,10 @@ FORGE_API_KEY = os.environ.get("BUILT_IN_FORGE_API_KEY", "")
 
 if not FORGE_API_URL or not FORGE_API_KEY:
     print("ERROR: BUILT_IN_FORGE_API_URL and BUILT_IN_FORGE_API_KEY must be set")
+    sys.exit(1)
+
+if urlsplit(FORGE_API_URL).scheme != "https" or not urlsplit(FORGE_API_URL).netloc:
+    print("ERROR: BUILT_IN_FORGE_API_URL must be an HTTPS URL")
     sys.exit(1)
 
 # All 84 asset keys as stored in Manus S3 (from asset_upload_map.txt)
@@ -127,15 +132,21 @@ def get_presigned_url(key: str) -> str:
         url,
         headers={"Authorization": f"Bearer {FORGE_API_KEY}"},
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    # API base URL is restricted to HTTPS during startup.
+    with urllib.request.urlopen(req, timeout=30) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         data = json.loads(resp.read())
-        return data["url"]
+        presigned_url = data["url"]
+        parsed = urlsplit(presigned_url)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("presigned asset URL must use HTTPS")
+        return presigned_url
 
 
 def download_file(url: str, dest: Path) -> None:
     """Download a file from url to dest."""
     req = urllib.request.Request(url)
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    # Presigned URL is restricted to HTTPS before the request is opened.
+    with urllib.request.urlopen(req, timeout=120) as resp:  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         dest.write_bytes(resp.read())
 
 

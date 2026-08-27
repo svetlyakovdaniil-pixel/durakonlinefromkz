@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import { Buffer } from "buffer";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
 import { createServer } from "http";
 import net from "net";
 import fs from "fs";
@@ -98,24 +99,21 @@ async function startServer() {
   }
   const app = express();
   const server = createServer(app);
-  // Security headers — help browsers and Safe Browsing identify the site as legitimate
-  app.use((_req, res, next) => {
-    // Strict Transport Security (HTTPS only, 1 year)
-    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    // Prevent MIME type sniffing
-    res.setHeader('X-Content-Type-Options', 'nosniff');
-    // Prevent clickjacking
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
-    // XSS protection
-    res.setHeader('X-XSS-Protection', '1; mode=block');
-    // Referrer policy
-    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    next();
-  });
+  const isProduction = process.env.NODE_ENV === "production";
 
-  // Configure body parser with larger size limit for file uploads
-  app.use(express.json({ limit: "50mb" }));
-  app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  // Keep browser hardening in one place. CSP is intentionally disabled here because
+  // the mobile/Vite client still relies on its existing asset and inline-script setup.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginEmbedderPolicy: false,
+      hsts: isProduction,
+    })
+  );
+
+  // Keep request bodies bounded to reduce memory-exhaustion risk.
+  app.use(express.json({ limit: "2mb" }));
+  app.use(express.urlencoded({ limit: "100kb", extended: true }));
 
   // ── Rate limiting (brute-force / spam protection) ──
   // Auth endpoints: tight limits (password brute force, OTP spam)
@@ -135,7 +133,16 @@ async function startServer() {
     message: { error: "rate_limited", message: "Слишком много запросов. Попробуйте позже." },
   });
 
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000,
+    max: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: "rate_limited", message: "Слишком много запросов. Попробуйте позже." },
+  });
+
   // Apply limiters
+  app.use("/api", apiLimiter);
   app.use("/api/auth", authLimiter);
   app.use("/api/iap", iapLimiter);
 
@@ -221,32 +228,28 @@ async function startServer() {
 
   console.log('[Cron] Push notification cron jobs scheduled');
 
-  // Remote auth diagnostics — receives step beacons from Login.tsx to trace where auth hangs.
-  // Logs to server console so we can diagnose Apple reviewer failures.
-  // Fire-and-forget from client, always returns 200.
-  const authLogBuffer: string[] = [];
-  app.post("/api/auth/log", (req, res) => {
-    try {
+  // Remote auth diagnostics are development-only. Exposing them in production would
+  // leak authentication flow details and allow unauthenticated log manipulation.
+  if (!isProduction) {
+    const authLogBuffer: string[] = [];
+    app.post("/api/auth/log", (req, res) => {
       const { step, detail, ts, platform } = req.body || {};
-      const line = `[AuthLog] step=${step} platform=${platform} detail=${detail} ts=${ts}`;
+      const line = `[AuthLog] step=${String(step).slice(0, 64)} platform=${String(platform).slice(0, 32)} detail=${String(detail).slice(0, 500)} ts=${String(ts).slice(0, 32)}`;
       console.log(line);
       authLogBuffer.push(line);
       if (authLogBuffer.length > 500) authLogBuffer.shift();
-    } catch {
-      // Never fail on logging
-    }
-    res.json({ ok: true });
-  });
+      res.json({ ok: true });
+    });
 
-  // Diagnostic: read recent auth log beacons (for debugging Apple Sign-in from a device)
-  app.get("/api/auth/logs", (_req, res) => {
-    res.json({ entries: authLogBuffer.slice(-200) });
-  });
+    app.get("/api/auth/logs", (_req, res) => {
+      res.json({ entries: authLogBuffer.slice(-200) });
+    });
 
-  app.post("/api/auth/logs/clear", (_req, res) => {
-    authLogBuffer.length = 0;
-    res.json({ ok: true });
-  });
+    app.post("/api/auth/logs/clear", (_req, res) => {
+      authLogBuffer.length = 0;
+      res.json({ ok: true });
+    });
+  }
 
   // Health check endpoint — used by Login page to warm up the server on mount
   // Also used by Manus Heartbeat keep-alive pings

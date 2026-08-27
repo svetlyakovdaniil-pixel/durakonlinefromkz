@@ -382,11 +382,12 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 sm:gap-0 border-b border-amber-700/20">
+        <div className="overflow-x-auto border-b border-amber-700/20 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="flex min-w-max">
           {(['decks', 'tables', 'frames', 'avatars', 'music', 'emotions'] as const).map(tab => (
             <button
               key={tab}
-              className={`flex-1 py-2.5 px-1 text-[10px] sm:text-sm font-medium transition-colors ${
+              className={`min-w-[82px] py-3 px-3 text-xs sm:text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab
                   ? 'text-amber-100 border-b-2 border-amber-400 bg-amber-900/10'
                   : 'text-amber-200/50 hover:text-amber-200/70'
@@ -396,6 +397,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
               {tab === 'decks' ? t('shop.decks') : tab === 'tables' ? t('shop.tables') : tab === 'frames' ? t('shop.frames') : tab === 'avatars' ? t('shop.avatars') : tab === 'music' ? t('shop.music') : t('shop.emotions')}
             </button>
           ))}
+          </div>
         </div>
 
         {/* Content */}
@@ -403,7 +405,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
           {activeTab === 'decks' && (
             <div className="space-y-4">
               {/* Товарищ Мырза — бесплатная колода */}
-              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+              {isItemAvailable('deck', 'custom') && <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
@@ -421,9 +423,9 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                     </div>
                   </div>
                 </div>
-              </div>
+              </div>}
               {/* Батыры великой степи — платная колода */}
-              <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
+              {isItemAvailable('deck', 'classic') && <div className="bg-[#0f2035]/80 border border-amber-700/20 rounded-xl p-4">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-2 shrink-0">
                     <div className="w-16 h-22 rounded-lg overflow-hidden border border-amber-600/30 shadow-lg">
@@ -458,7 +460,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                     {!isClassicOwned && !canAffordClassic && <p className="text-red-400/80 text-xs mt-2">{t('shop.notEnough')}</p>}
                   </div>
                 </div>
-              </div>
+              </div>}
             </div>
           )}
 
@@ -676,7 +678,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                   {t('shop.music')}
                 </h3>
               </div>
-              {allPlaylists.map((playlist: any) => {
+              {allPlaylists.filter((playlist: any) => isItemAvailable('playlist', String(playlist.id))).map((playlist: any) => {
                 const isOwned = ownedPlaylistIds.includes(playlist.id);
                 const isFree = playlist.isDefault || playlist.priceShanyrak === 0;
                 const discount = getDiscount('playlist', String(playlist.id));
@@ -777,7 +779,7 @@ export default function ShopModal({ open, onClose, currentTenge, currentShanyrak
                 <span className="text-2xl">😊</span>
                 <h3 className="text-amber-100 font-bold text-sm">{t('shop.emotions')}</h3>
               </div>
-              {EMOTION_PACKS.map(pack => {
+              {EMOTION_PACKS.filter(pack => isItemAvailable('emotionpack', pack.id)).map(pack => {
                 const effectivePrice = getPrice('emotionpack', pack.id, pack.price);
                 const isOwned = pack.price === 0 || ownedEmotionPacks.includes(pack.id);
                 const isActive = activeEmotionPack === pack.id;

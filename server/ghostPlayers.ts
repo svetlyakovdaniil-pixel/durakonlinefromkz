@@ -14,8 +14,9 @@ import { io as ioClient, Socket } from 'socket.io-client';
 import type { ServerToClientEvents, ClientToServerEvents, Room, AvailableAction, ClientGameState } from '../shared/gameTypes';
 import { RANK_ORDER } from '../shared/gameTypes';
 import type { TableStyle } from '../shared/cardAssets';
+import { AVATAR_OPTIONS } from '../shared/avatars';
 import { getAvailableRooms } from './socketServer';
-import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats, getShopPriceOverrides, getGhostStrategyProfile, saveGhostStrategyProfile } from './db';
+import { provisionGhostPlayer, refillGhostShanyrak, getGhostLearningStats, getShopPriceOverrides, getAllPlaylists, getGhostStrategyProfile, saveGhostStrategyProfile } from './db';
 import { invokeLLM } from './_core/llm';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -51,6 +52,10 @@ interface GhostPersonality {
   preferredDeckStyle: 'classic' | 'custom';
   /** Preferred table style */
   preferredTableStyle: TableStyle;
+  /** Preferred paid playlist used when this ghost hosts a room */
+  preferredPlaylistId?: number;
+  /** Whether this ghost is presented as a premium player */
+  isPremium: boolean;
 }
 
 interface GhostPlayer {
@@ -159,12 +164,10 @@ const FREE_AVATARS = [
   'wolf', 'eagle', 'bear', 'fox', 'snow-leopard',
 ];
 
-// Shop avatars (premium purchasable — only a few ghosts use these)
-const SHOP_AVATARS = [
-  'nexus_bunny', 'goose_animated', 'kitsune_emerald', 'dragon_ryu_sapphire',
-  'fox_smug', 'bear_angry', 'owl_wise', 'cat_lazy', 'wolf_fierce',
-  'tiger_proud', 'panda_happy', 'eagle_determined', 'snow_leopard_calm', 'raccoon_mischievous',
-];
+// Use the shared catalog so newly added free/shop avatars are available to ghosts too.
+const CATALOG_GHOST_AVATARS = AVATAR_OPTIONS
+  .filter(avatar => avatar.id !== 'bot' && !avatar.seasonReward)
+  .map(avatar => avatar.id);
 
 // Frames available in shop (non-season only)
 // Free frames: fire, neon, lightning, ice, ruby_neon, amber_neon, zircon_neon
@@ -259,34 +262,16 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
       ? 'troll'
       : REASSIGNED_TEMPERAMENTS.get(nick) ?? pickSeeded(NON_TROLL_TEMPERAMENTS, nick, 31);
 
-  // Cosmetics:
-  // 65% free avatar, no frame
-  // 20% shop avatar, no frame
-  // 10% free avatar + frame (small portion use frames)
-  //  5% shop avatar + frame
-  const cosmeticRoll = nickHash(nick, 4);
-  let avatarId: string;
-  let equippedFrame: string | undefined;
-  let emotionPack: string;
-
-  if (cosmeticRoll < 0.65) {
-    avatarId = pickSeeded(FREE_AVATARS, nick, 5);
-    equippedFrame = undefined;
-    emotionPack = 'khan'; // default pack
-  } else if (cosmeticRoll < 0.85) {
-    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
-    equippedFrame = undefined;
-    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
-  } else if (cosmeticRoll < 0.95) {
-    // Ghost with frame: use SHOP_AVATARS (not wolf/free) — premium items go together
-    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
-    equippedFrame = pickSeeded(ALL_FRAMES, nick, 7);
-    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
-  } else {
-    avatarId = pickSeeded(SHOP_AVATARS, nick, 5);
-    equippedFrame = pickSeeded(ALL_FRAMES, nick, 7);
-    emotionPack = pickSeeded(EMOTION_PACKS, nick, 6);
-  }
+  // 90% use the shared free/shop avatar catalog. Rotate by index to avoid
+  // adjacent duplicates while keeping each ghost stable across restarts.
+  const avatarPool = CATALOG_GHOST_AVATARS.length > 0 ? CATALOG_GHOST_AVATARS : FREE_AVATARS;
+  const avatarOffset = Math.floor(nickHash(nick, 5) * avatarPool.length);
+  const avatarId = index % 10 !== 9
+    ? avatarPool[(index + avatarOffset) % avatarPool.length]
+    : pickSeeded(FREE_AVATARS, nick, 6);
+  const isPremium = index % 5 < 2;
+  const equippedFrame = isPremium ? pickSeeded(ALL_FRAMES, nick, 7) : undefined;
+  const emotionPack = isPremium ? pickSeeded(EMOTION_PACKS, nick, 6) : 'khan';
 
   // Preferred deck and table style (small portion use custom/premium)
   const deckStyleRoll = nickHash(nick, 8);
@@ -298,7 +283,14 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
     ...availableTableStyles.filter(s => s === 'classic'), // extra weight for classic
   ];
-  const preferredTableStyle = pickSeeded(weightedTableStyles.length > 0 ? weightedTableStyles : ['classic' as import('../shared/cardAssets').TableStyle], nick, 9);
+  const paidTableStyles = availableTableStyles.filter(style => style !== 'classic');
+  const usesShopRoomCosmetics = index % 5 < 3;
+  const preferredTableStyle = usesShopRoomCosmetics && paidTableStyles.length > 0
+    ? pickSeeded(paidTableStyles, nick, 9)
+    : pickSeeded(weightedTableStyles.length > 0 ? weightedTableStyles : ['classic' as import('../shared/cardAssets').TableStyle], nick, 9);
+  const preferredPlaylistId = usesShopRoomCosmetics && availableShopPlaylistIds.length > 0
+    ? pickSeeded(availableShopPlaylistIds, nick, 21)
+    : undefined;
 
   // Bet preferences — lower bets more common
   const betRoll = nickHash(nick, 10);
@@ -332,6 +324,8 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     playerCountRange,
     preferredDeckStyle,
     preferredTableStyle,
+    preferredPlaylistId,
+    isPremium,
   };
 }
 
@@ -877,6 +871,8 @@ const ghosts = new Map<string, GhostPlayer>();
 let managerInterval: NodeJS.Timeout | null = null;
 /** Cache of table styles that are available (not hidden by admin). Updated at init. */
 let availableTableStyles: import('../shared/cardAssets').TableStyle[] = ['classic', 'dark_kazakh', 'neon', 'apocalypse', 'galaxy', 'sea_depths', 'stargazer', 'black_velvet'];
+/** Cache of paid playlists that are available (not hidden by admin). */
+let availableShopPlaylistIds: number[] = [];
 /** Refresh the available table styles cache from DB shop_price_overrides */
 async function refreshAvailableTableStyles(): Promise<void> {
   try {
@@ -900,8 +896,11 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
   serverPort = port;
   ghostsEnabled = true;
   console.log(`[Ghost] Initializing ${count} ghost players on port ${port}`);
-  // Load available table styles from DB before building personalities
-  await refreshAvailableTableStyles();
+  // Load available shop cosmetics before building personalities.
+  await Promise.all([
+    refreshAvailableTableStyles(),
+    refreshAvailableShopPlaylists(),
+  ]);
 
   // Use a stable deterministic order (no shuffle) so the same nick always maps
   // to the same openId in the DB. Shuffling caused index-based openIds to change
@@ -917,6 +916,7 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
         personality.avatarId,
         personality.equippedFrame,
         personality.emotionPack,
+        personality.isPremium,
         // No index needed — openId is now derived from a stable hash of the nick
       );
       if (!result) {
@@ -1071,7 +1071,7 @@ function connectGhost(ghost: GhostPlayer): void {
       displayName: ghost.personality.nick,
       avatarId: ghost.personality.avatarId,
       equippedFrame: ghost.personality.equippedFrame ?? null,
-      isPremium: false,
+      isPremium: ghost.personality.isPremium,
       seasonRating: ghost.dbSeasonRating,
     });
     // Ghost will be picked up by roomManagerTick automatically
@@ -1339,6 +1339,24 @@ function rotateActivityPool(): void {
   console.log(`[Ghost] Activity pool rotated — ${allIds.length} ghosts`);
 }
 
+async function refreshAvailableShopPlaylists(): Promise<void> {
+  try {
+    const [playlists, overrides] = await Promise.all([getAllPlaylists(), getShopPriceOverrides()]);
+    const hiddenPlaylistIds = new Set(
+      overrides
+        .filter((o: any) => o.itemType === 'playlist' && !o.isAvailable)
+        .map((o: any) => o.itemId as string)
+    );
+    availableShopPlaylistIds = playlists
+      .filter((playlist: any) => !playlist.isDefault && !hiddenPlaylistIds.has(String(playlist.id)))
+      .map((playlist: any) => playlist.id);
+    console.log(`[Ghost] Available shop playlists: ${availableShopPlaylistIds.length}`);
+  } catch (err) {
+    availableShopPlaylistIds = [];
+    console.warn('[Ghost] Failed to refresh shop playlists, using classic music:', err);
+  }
+}
+
 /** Shuffle the bait creator pool — called once at startup and every hour. */
 function rotateBaitCreators(): void {
   const allIds = Array.from(ghosts.keys());
@@ -1422,6 +1440,7 @@ function createBaitRoom(ghost: GhostPlayer): void {
       botCount: 0,
       deckStyle: p.preferredDeckStyle,
       tableStyle: p.preferredTableStyle,
+      playlistId: p.preferredPlaylistId ?? null,
       betAmount,
       isPrivate: false,
     },
@@ -1647,6 +1666,7 @@ function roomManagerTick(): void {
       botCount: 0,
       deckStyle: host.personality.preferredDeckStyle,
       tableStyle: host.personality.preferredTableStyle,
+      playlistId: host.personality.preferredPlaylistId ?? null,
       betAmount: 0,
       isPrivate: true, // private — won't show in lobby
     },
