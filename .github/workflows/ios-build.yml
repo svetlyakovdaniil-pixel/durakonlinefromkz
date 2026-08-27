@@ -146,17 +146,8 @@ jobs:
            # Register MyViewController.swift in the Xcode project
           python3 .github/scripts/add_swift_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/MyViewController.swift
           python3 .github/scripts/add_resource_to_xcode.py ios/App/App.xcodeproj/project.pbxproj ios/App/App/GoogleService-Info.plist
-           # Ensure the App target includes Apple Sign In and APNs entitlements.
-           python3 - <<'PYEOF_ENTITLEMENTS'
-           import re
-           path = "ios/App/App.xcodeproj/project.pbxproj"
-           with open(path, "r") as f:
-               content = f.read()
-           if "CODE_SIGN_ENTITLEMENTS" not in content:
-               content = re.sub(r"(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)", r"\1\n\t\t\t\tCODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;", content, count=1)
-               with open(path, "w") as f:
-                   f.write(content)
-           PYEOF_ENTITLEMENTS
+            # Ensure the App target includes Apple Sign In and APNs entitlements.
+            python3 -c "import re; path='ios/App/App.xcodeproj/project.pbxproj'; content=open(path).read(); open(path,'w').write(re.sub(r'(PRODUCT_BUNDLE_IDENTIFIER = [^;]+;)', r'\\1\\n\\t\\t\\t\\tCODE_SIGN_ENTITLEMENTS = App/AppRelease.entitlements;', content, count=1)) if 'CODE_SIGN_ENTITLEMENTS' not in content else None"
 
       # ── 8b. Set version and build number ─────────────────────────────────────
       - name: Set version and build number
