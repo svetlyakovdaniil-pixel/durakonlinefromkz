@@ -455,15 +455,16 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
-            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '184px' }}>
+            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '248px' }}>
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute left-0 top-1 z-20 flex flex-col items-start">
+              <div className="absolute left-12 top-7 bottom-2 z-20 flex max-w-[38%] flex-col items-start">
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300/50">Durak online</p>
-                <h1 className="font-bold leading-tight text-amber-50" style={{ fontSize: '1.2rem' }}>
+                <h1 className="font-bold leading-[1.05] text-amber-50" style={{ fontSize: '1.2rem' }}>
                   {t('lobby.title').split(' ')[0]}
-                  <span className="text-amber-400"> from KZ</span>
+                  <br />
+                  <span className="text-amber-400">from KZ</span>
                 </h1>
                 <span className={`mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${connected ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
                   <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-red-400'}`} />
@@ -472,7 +473,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="relative mt-2 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-0 left-[-3rem] overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -501,7 +502,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
-                  top: isLandscape ? '4px' : '66px',
+                  top: isLandscape ? '4px' : '50%',
+                  transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
               >
                 <button className="rounded-full p-1 ring-1 ring-amber-300/20 transition-all hover:scale-105 hover:ring-amber-300/50" onClick={() => setLocation('/profile')}>
@@ -519,7 +521,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                   style={{ left: '8px', bottom: '8px' }}
+                   style={{ left: '8px', top: '10px' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
@@ -527,7 +529,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
               )}
               {/* Right column: Tenge top / Shanyrak bottom */}
-               <div className="relative z-20 flex flex-col items-end justify-between self-stretch pt-1">
+               <div className="relative z-20 flex flex-col items-end gap-2 self-start pt-7">
                 {/* Tenge */}
                 <button
                    className="flex min-w-[42px] flex-col items-center rounded-xl border border-amber-300/10 bg-white/[0.035] px-1.5 py-1 transition-all hover:bg-white/[0.08] active:scale-95"
