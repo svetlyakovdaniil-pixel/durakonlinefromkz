@@ -207,6 +207,23 @@ function randSeeded(min: number, max: number, nick: string, salt: number): numbe
   return min + nickHash(nick, salt) * (max - min);
 }
 
+const BASE_TEMPERAMENTS: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
+const NON_TROLL_TEMPERAMENTS: Temperament[] = ['aggressive', 'passive', 'balanced', 'friendly'];
+
+// Keep exactly five trolls in the current 100-player pool. Reassign the rest
+// deterministically so behavior remains stable across server restarts.
+const ORIGINAL_TROLL_NICKS = GHOST_NICKS
+    .slice(0, 100)
+    .filter(nick => pickSeeded(BASE_TEMPERAMENTS, nick, 3) === 'troll')
+    .sort((a, b) => nickHash(a, 30) - nickHash(b, 30));
+const TROLL_NICKS = new Set(ORIGINAL_TROLL_NICKS.slice(0, 5));
+const REASSIGNED_TEMPERAMENTS = new Map(
+  ORIGINAL_TROLL_NICKS.slice(5).map((nick, index) => [
+    nick,
+    NON_TROLL_TEMPERAMENTS[index % NON_TROLL_TEMPERAMENTS.length],
+  ]),
+);
+
 function buildPersonality(nick: string, index: number): GhostPersonality {
   // Distribute skill: 60% weak/medium, 30% decent, 10% strong
   // Use deterministic hash so personality is stable across restarts
@@ -235,8 +252,12 @@ function buildPersonality(nick: string, index: number): GhostPersonality {
     thinkMinMs = 3000; thinkMaxMs = 7000; longThinkProb = 0.0;
   }
 
-  const temperaments: Temperament[] = ['aggressive', 'passive', 'balanced', 'troll', 'friendly'];
-  const temperament = pickSeeded(temperaments, nick, 3);
+  const baseTemperament = pickSeeded(BASE_TEMPERAMENTS, nick, 3);
+  const temperament = baseTemperament !== 'troll'
+    ? baseTemperament
+    : TROLL_NICKS.has(nick)
+      ? 'troll'
+      : REASSIGNED_TEMPERAMENTS.get(nick) ?? pickSeeded(NON_TROLL_TEMPERAMENTS, nick, 31);
 
   // Cosmetics:
   // 65% free avatar, no frame
@@ -964,13 +985,15 @@ export async function initGhostPlayers(port: number, count: number = 15): Promis
     roomManagerTick();
     console.log('[Ghost] Room manager started');
 
-    // Initial bait creator pool shuffle (after ghosts are connected)
+    // Initial activity and bait creator pools shuffle (after ghosts are connected)
+    rotateActivityPool();
     rotateBaitCreators();
 
     // Hourly rotation: reshuffle the bait creator pool every hour so different
     // ghost names appear as room hosts in the lobby.
     baitRotationInterval = setInterval(() => {
       if (!ghostsEnabled) return;
+      rotateActivityPool();
       rotateBaitCreators();
       // Close all current bait rooms so they get recreated by new hosts
       const allRooms = getAvailableRooms();
@@ -1004,6 +1027,10 @@ export function stopGhostPlayers(): void {
     disconnectGhost(ghost);
   }
   ghosts.clear();
+  activityPool = [];
+  activityPoolIndex = 0;
+  baitCreatorPool = [];
+  baitCreatorIndex = 0;
 }
 
 export function getGhostStats(): { total: number; connected: number; inGame: number; inLobby: number } {
@@ -1297,6 +1324,20 @@ let lastTrainingGameStarted = 0; // timestamp
 let baitCreatorPool: string[] = []; // openIds in shuffled order
 let baitCreatorIndex = 0;           // current position in pool (round-robin)
 let baitRotationInterval: NodeJS.Timeout | null = null;
+let activityPool: string[] = [];    // openIds in shuffled order for all new room activity
+let activityPoolIndex = 0;
+
+/** Shuffle the pool used when selecting ghosts for new rooms and human rooms. */
+function rotateActivityPool(): void {
+  const allIds = Array.from(ghosts.keys());
+  for (let i = allIds.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [allIds[i], allIds[j]] = [allIds[j], allIds[i]];
+  }
+  activityPool = allIds;
+  activityPoolIndex = 0;
+  console.log(`[Ghost] Activity pool rotated — ${allIds.length} ghosts`);
+}
 
 /** Shuffle the bait creator pool — called once at startup and every hour. */
 function rotateBaitCreators(): void {
@@ -1350,8 +1391,14 @@ function countGhostsInRoom(room: Room): number {
 
 /** Get a free ghost (not in lobby/game) that is connected */
 function getFreeGhost(): GhostPlayer | null {
-  for (const g of Array.from(ghosts.values())) {
-    if (g.socket?.connected && g.state === 'browsing') return g;
+  if (activityPool.length === 0) rotateActivityPool();
+  for (let attempt = 0; attempt < activityPool.length; attempt++) {
+    const idx = (activityPoolIndex + attempt) % activityPool.length;
+    const g = ghosts.get(activityPool[idx]);
+    if (g && g.socket?.connected && g.state === 'browsing') {
+      activityPoolIndex = (idx + 1) % activityPool.length;
+      return g;
+    }
   }
   return null;
 }
@@ -1567,6 +1614,7 @@ function roomManagerTick(): void {
   const freeGhosts = Array.from(ghosts.values()).filter(
     g => g.socket?.connected && g.state === 'browsing',
   );
+  freeGhosts.sort((a, b) => activityPool.indexOf(a.id) - activityPool.indexOf(b.id));
   // Reserve BAIT_ROOM_COUNT + 2 for bait rooms (buffer)
   const reserved = BAIT_ROOM_COUNT + 2;
   const surplus = freeGhosts.length - reserved;

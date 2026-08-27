@@ -8,13 +8,12 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { trpc } from '@/lib/trpc';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import {
   User, Hash, Clock, Check, X, Loader2,
   Camera, History, ArrowUpCircle, ArrowDownCircle,
-  Coins, Banknote, Trophy, TrendingUp, Trash2, AlertTriangle,
+  Coins, Banknote, Trophy, TrendingUp,
 } from 'lucide-react';
 import AvatarPicker from '@/components/AvatarPicker';
 import { useTranslation } from '@/i18n';
@@ -275,70 +274,9 @@ function MatchHistoryTab() {
   );
 }
 
-// ── ProfilePage ───────────────────────────────────────────────
-function DeleteAccountDialog({ onClose }: { onClose: () => void }) {
-  const { t } = useTranslation();
-  const [, navigate] = useLocation();
-  const deleteAccount = trpc.auth.deleteAccount.useMutation({
-    onSuccess: () => {
-      toast.success(t('profile.deleteAccountSuccess'));
-      navigate('/');
-      window.location.reload();
-    },
-    onError: () => {
-      toast.error(t('profile.deleteAccountError'));
-    },
-  });
-
-  return (
-    <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.7)' }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-[#0f2035] border border-red-700/40 rounded-2xl p-6 max-w-sm w-full shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-red-900/40 flex items-center justify-center flex-shrink-0">
-            <AlertTriangle className="w-5 h-5 text-red-400" />
-          </div>
-          <h2 className="text-lg font-bold text-red-300">{t('profile.deleteAccountConfirmTitle')}</h2>
-        </div>
-        <p className="text-amber-200/70 text-sm mb-6 leading-relaxed">
-          {t('profile.deleteAccountConfirmText')}
-        </p>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="flex-1 border-amber-700/40 text-amber-200 hover:bg-amber-900/20"
-            onClick={onClose}
-            disabled={deleteAccount.isPending}
-          >
-            {t('profile.deleteAccountCancel')}
-          </Button>
-          <Button
-            className="flex-1 bg-red-700 hover:bg-red-600 text-white border-0"
-            onClick={() => deleteAccount.mutate()}
-            disabled={deleteAccount.isPending}
-          >
-            {deleteAccount.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              t('profile.deleteAccountConfirm')
-            )}
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function ProfilePage() {
   const [, navigate] = useLocation();
   const { t } = useTranslation();
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
     <div
@@ -391,25 +329,12 @@ export default function ProfilePage() {
 
         <TabsContent value="profile" className="flex-1 overflow-y-auto px-4 pb-6">
           <ProfileTab />
-          {/* Delete account button — required by App Store Guideline 5.1.1(v) */}
-          <div className="mt-8 pb-4">
-            <button
-              onClick={() => setShowDeleteDialog(true)}
-              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-800/40 text-red-400/70 hover:text-red-400 hover:border-red-700/60 hover:bg-red-900/10 transition-colors text-sm"
-            >
-              <Trash2 className="w-4 h-4" />
-              {t('profile.deleteAccount')}
-            </button>
-          </div>
         </TabsContent>
         <TabsContent value="history" className="flex-1 overflow-y-auto px-4 pb-6">
           <MatchHistoryTab />
         </TabsContent>
       </Tabs>
 
-      {showDeleteDialog && (
-        <DeleteAccountDialog onClose={() => setShowDeleteDialog(false)} />
-      )}
     </div>
   );
 }

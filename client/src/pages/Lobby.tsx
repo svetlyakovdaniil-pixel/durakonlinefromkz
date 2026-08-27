@@ -354,6 +354,23 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
     utils.notifications.unreadCount.invalidate();
   };
 
+  const handleDeleteAllNotifs = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    if (deleteAllNotifs.isPending) return;
+    try {
+      await deleteAllNotifs.mutateAsync();
+      await refetchNotifs();
+      utils.notifications.unreadCount.invalidate();
+    } catch {
+      toast.error(t('common.error'));
+    }
+  };
+
+  const handleCloseNotifications = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    setNotifOpen(false);
+  };
+
   const handleCreate = async () => {
     setLoading(true);
     const settings: RoomSettings = {
@@ -1521,18 +1538,21 @@ onClick={() => setShowTengeTopUp(true)}
               <div className="flex items-center gap-1">
                 {notifList.length > 0 && (
                   <button
+                    type="button"
                     className="text-amber-200/40 hover:text-red-400 transition-colors p-1"
                     title={t('lobby.deleteAll')}
-                    onClick={async () => {
-                      await deleteAllNotifs.mutateAsync();
-                      refetchNotifs();
-                      utils.notifications.unreadCount.invalidate();
-                    }}
+                    onClick={handleDeleteAllNotifs}
+                    disabled={deleteAllNotifs.isPending}
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 )}
-                <button className="text-amber-200/50 hover:text-amber-100 p-1" onClick={() => setNotifOpen(false)}>
+                <button
+                  type="button"
+                  className="text-amber-200/50 hover:text-amber-100 p-1"
+                  onClick={handleCloseNotifications}
+                  aria-label={t('common.close')}
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
