@@ -455,11 +455,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
           {/* === MOBILE LAYOUT (< sm) === */}
           <div className="sm:hidden">
             {/* Row 1: Title left + Avatar center + Right icons */}
-            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '104px' }}>
+            <div className="relative flex items-start justify-between" style={{ minHeight: isLandscape ? '60px' : '184px' }}>
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
-              {/* Title — shifted right toward avatar, 20% larger */}
-              <div className="relative z-20 flex flex-col items-start pt-1">
+              {/* Brand block stays clear of the avatar and its decorative frame. */}
+              <div className="absolute left-0 top-1 z-20 flex flex-col items-start">
                 <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-amber-300/50">Durak online</p>
                 <h1 className="font-bold leading-tight text-amber-50" style={{ fontSize: '1.2rem' }}>
                   {t('lobby.title').split(' ')[0]}
@@ -501,7 +501,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center z-30"
                 style={{
-                  top: '4px',
+                  top: isLandscape ? '4px' : '66px',
                 }}
               >
                 <button className="rounded-full p-1 ring-1 ring-amber-300/20 transition-all hover:scale-105 hover:ring-amber-300/50" onClick={() => setLocation('/profile')}>
@@ -519,7 +519,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                   style={{ right: '76px', bottom: '6px' }}
+                   style={{ left: '8px', bottom: '8px' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
