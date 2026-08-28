@@ -1152,7 +1152,7 @@ onClick={() => setShowTengeTopUp(true)}
            <div className="relative -top-[45px] sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
-            className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
+            className="relative mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
             style={{
               background: 'linear-gradient(105deg, rgba(201,168,76,0.22) 0%, rgba(201,168,76,0.08) 58%, rgba(46,119,164,0.12) 100%)',
               boxShadow: '0 12px 30px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.12)',
@@ -1162,7 +1162,7 @@ onClick={() => setShowTengeTopUp(true)}
             onClick={handleQuickGame}
             disabled={isQuickGameLoading}
           >
-            <span className="flex flex-col items-start">
+            <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
               <span className="font-bold tracking-wide text-amber-50" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
                 {isQuickGameLoading ? (t('lobby.joining') || 'Вхожу...') : t('tabBar.quickGame')}
               </span>
@@ -1173,7 +1173,7 @@ onClick={() => setShowTengeTopUp(true)}
           </button>
 
           {/* 2-column menu grid — fills remaining space */}
-          <div className="grid min-h-0 grid-cols-2 flex-1 gap-0 pt-3 pb-2" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
+          <div className="grid min-h-0 grid-cols-2 flex-1 gap-0 pt-3 pb-2 mb-[-48px]" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
