@@ -459,11 +459,13 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute left-0 top-12 bottom-2 z-20 flex w-[120px] flex-col items-start">
+              <div className="absolute left-0 top-12 bottom-2 z-20 flex w-[120px] flex-col items-center text-center">
                 <h1 className="font-bold leading-[1.02] text-amber-50" style={{ fontSize: '1.15rem' }}>
                   {t('lobby.title').split(' ')[0]}
                   <br />
-                  <span className="text-amber-400">{t('common.online').toLowerCase()}</span>
+                  <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
+                    {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
+                  </span>
                   <br />
                   <span className="text-amber-400">from KZ</span>
                 </h1>
@@ -505,7 +507,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
                   left: 'calc(50vw + 40px)',
-                  top: isLandscape ? '4px' : 'calc(50% - 30px)',
+                  top: isLandscape ? '4px' : 'calc(50% - 45px)',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
               >
@@ -520,11 +522,11 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   )}
                 </div>
               </div>
-              {/* Admin button — absolute, between avatar and right column */}
+               {/* Admin button — between the centered profile and currency column */}
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                    style={{ left: '0px', top: '0px' }}
+                    style={{ right: '72px', top: '50%', transform: 'translateY(-50%)' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
