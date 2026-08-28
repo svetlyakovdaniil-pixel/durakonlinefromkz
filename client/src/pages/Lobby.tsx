@@ -504,7 +504,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
-                  left: '50vw',
+                  left: 'calc(50vw + 20px)',
                   top: isLandscape ? '4px' : '50%',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
@@ -1143,7 +1143,7 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Mobile: Top players marquee */}
-      <div className="relative -top-6 sm:hidden">
+      <div className="sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
