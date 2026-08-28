@@ -504,7 +504,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
-                  left: 'calc(50vw + 20px)',
+                  left: 'calc(50vw + 40px)',
                   top: isLandscape ? '4px' : '50%',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
@@ -1143,13 +1143,13 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Mobile: Top players marquee */}
-      <div className="sm:hidden">
+      <div className="relative z-20 -top-3 sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-          <div className="relative -top-6 sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
+           <div className="sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
             className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
@@ -1163,7 +1163,6 @@ onClick={() => setShowTengeTopUp(true)}
             disabled={isQuickGameLoading}
           >
             <span className="flex flex-col items-start">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-amber-200/55">Быстрый старт</span>
               <span className="font-bold tracking-wide text-amber-50" style={{ fontSize: 'clamp(14px, 4.5vw, 20px)' }}>
                 {isQuickGameLoading ? (t('lobby.joining') || 'Вхожу...') : t('tabBar.quickGame')}
               </span>
