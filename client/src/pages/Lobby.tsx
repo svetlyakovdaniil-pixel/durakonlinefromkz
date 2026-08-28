@@ -1143,7 +1143,7 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Mobile: Top players marquee */}
-      <div className="relative z-20 -top-[52px] sm:hidden">
+      <div className="relative z-20 -top-[52px] h-9 shrink-0 overflow-hidden sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 

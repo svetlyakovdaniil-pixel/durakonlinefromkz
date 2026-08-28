@@ -19,9 +19,7 @@ export default function TopPlayersMarquee({ onClick }: TopPlayersMarqueeProps = 
     { refetchInterval: 60000, staleTime: 30000 }
   );
 
-  if (!topPlayers || topPlayers.length === 0) return null;
-
-  const renderPlayer = (player: typeof topPlayers[number], index: number) => {
+  const renderPlayer = (player: NonNullable<typeof topPlayers>[number], index: number) => {
     const config = PLACE_CONFIG[index];
     if (!config) return null;
     const Icon = config.icon;
@@ -68,7 +66,7 @@ export default function TopPlayersMarquee({ onClick }: TopPlayersMarqueeProps = 
   };
 
   // Duplicate content for seamless loop
-  const content = topPlayers.map((p: typeof topPlayers[number], i: number) => renderPlayer(p, i));
+  const content = (topPlayers ?? []).map((p: Parameters<typeof renderPlayer>[0], i: number) => renderPlayer(p, i));
 
   return (
     <div
@@ -81,12 +79,20 @@ export default function TopPlayersMarquee({ onClick }: TopPlayersMarqueeProps = 
       <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0a1628] to-transparent z-10 pointer-events-none" />
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0a1628] to-transparent z-10 pointer-events-none" />
       
-      <div className="marquee-track">
-        <div className="marquee-content">
-          {content}
-          {content}
+      {content.length > 0 ? (
+        <div className="marquee-track">
+          <div className="marquee-content">
+            {content}
+            {content}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="flex h-5 items-center justify-center gap-3" aria-hidden="true">
+          <span className="h-2 w-12 animate-pulse rounded-full bg-amber-300/15" />
+          <span className="h-2 w-20 animate-pulse rounded-full bg-amber-200/20" />
+          <span className="h-2 w-10 animate-pulse rounded-full bg-amber-300/15" />
+        </div>
+      )}
     </div>
   );
 }
