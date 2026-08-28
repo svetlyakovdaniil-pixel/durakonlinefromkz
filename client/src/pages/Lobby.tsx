@@ -475,7 +475,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-0 left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-6 left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -504,7 +504,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
-                  left: isLandscape ? '50%' : 'calc(50vw - 16px)',
+                  left: '50vw',
                   top: isLandscape ? '4px' : '50%',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
@@ -1143,13 +1143,13 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Mobile: Top players marquee */}
-      <div className="sm:hidden">
+      <div className="relative -top-6 sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-          <div className="sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
+          <div className="relative -top-6 sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
             className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
