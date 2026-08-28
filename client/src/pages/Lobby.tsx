@@ -475,7 +475,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-6 left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -505,7 +505,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
                   left: 'calc(50vw + 40px)',
-                  top: isLandscape ? '4px' : '50%',
+                  top: isLandscape ? '4px' : 'calc(50% - 30px)',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
               >
@@ -532,7 +532,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
               )}
               {/* Right column: Tenge top / Shanyrak bottom */}
-               <div className="relative z-20 flex flex-col items-end gap-2 self-start pt-7">
+                <div className="relative z-20 flex -translate-y-[30px] flex-col items-end gap-2 self-start pt-7">
                 {/* Tenge */}
                 <button
                    className="flex min-w-[42px] flex-col items-center rounded-xl border border-amber-300/10 bg-white/[0.035] px-1.5 py-1 transition-all hover:bg-white/[0.08] active:scale-95"
@@ -1143,13 +1143,13 @@ onClick={() => setShowTengeTopUp(true)}
       </div>
 
       {/* Mobile: Top players marquee */}
-      <div className="relative z-20 -top-3 sm:hidden">
+      <div className="relative z-20 -top-[52px] sm:hidden">
         <TopPlayersMarquee onClick={() => setShowLeaderboard(true)} />
       </div>
 
       {/* Mobile: Quick Game button + grid — visible on lobby tab only */}
       {activeTab === 'lobby' && (
-           <div className="sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
+           <div className="relative -top-[45px] sm:hidden flex min-h-0 flex-col flex-1 overflow-hidden" style={{ paddingBottom: isLandscape ? 'calc(env(safe-area-inset-bottom, 0px) + 44px)' : 'calc(env(safe-area-inset-bottom, 0px) + 64px)' }}>
           {/* Quick Game full-width button */}
           <button
             className="mx-3 mt-3 w-[calc(100%-1.5rem)] flex flex-row items-center justify-between gap-3 rounded-2xl border border-amber-300/25 px-5 transition-all active:scale-[0.98] shrink-0"
