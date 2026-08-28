@@ -524,7 +524,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {hasAdminAccess && (
                 <button
                   className="absolute z-40 text-amber-500 hover:text-amber-300 transition-colors p-1 rounded"
-                   style={{ left: '8px', top: '10px' }}
+                    style={{ left: '0px', top: '0px' }}
                   onClick={() => setLocation('/admin')}
                   title={isGM ? 'GM-панель' : 'Админ-панель'}
                 >
@@ -1173,7 +1173,7 @@ onClick={() => setShowTengeTopUp(true)}
           </button>
 
           {/* 2-column menu grid — fills remaining space */}
-          <div className="grid min-h-0 grid-cols-2 flex-1 gap-2 px-3 pt-3 pb-2" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
+          <div className="grid min-h-0 grid-cols-2 flex-1 gap-0 pt-3 pb-2" style={{ gridTemplateRows: 'repeat(5, minmax(0, 1fr))' }}>
             {[
               { icon: CalendarCheck, key: 'dailyQuests', borderR: true, borderB: true, action: () => setShowDailyQuests(true) },
               { icon: Bell, key: 'notifications', borderR: false, borderB: true, action: handleOpenNotifications },
