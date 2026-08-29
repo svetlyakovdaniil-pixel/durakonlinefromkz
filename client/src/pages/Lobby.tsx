@@ -460,8 +460,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
               <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '18px' }}>
-                <h1 className="font-bold text-amber-50" style={{ fontSize: '1.15rem', lineHeight: 'calc(1.02em + 2px)' }}>
-                  {t('lobby.title').split(' ')[0]}
+                <h1 className="font-bold text-amber-50" style={{ fontSize: '1.3225rem', lineHeight: 'calc(1.02em + 2px)' }}>
+                  <span className="text-amber-400">{t('lobby.title').split(' ')[0]}</span>
                   <br />
                   <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
                     {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
@@ -502,7 +502,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 className="absolute flex -translate-x-1/2 flex-col items-center z-30"
                 style={{
                   left: 'calc(50vw + 40px)',
-                  top: isLandscape ? '4px' : 'calc(50% - 45px)',
+                  top: isLandscape ? '4px' : 'calc(50% - 35px)',
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
               >
