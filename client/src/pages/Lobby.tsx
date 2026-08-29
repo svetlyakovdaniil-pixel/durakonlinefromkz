@@ -461,18 +461,18 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Brand block stays clear of the avatar and its decorative frame. */}
               <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '18px' }}>
                 <h1 className="font-bold text-amber-50" style={{ fontSize: '1.45475rem', lineHeight: 'calc(1.02em + 2px)' }}>
-                  <span className="text-amber-400">{t('lobby.title').split(' ')[0]}</span>
+                  <span className="text-white">{t('lobby.title').split(' ')[0]}</span>
                   <br />
                   <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
                     {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
                   </span>
                   <br />
-                  <span className="text-amber-400">from KZ</span>
+                  <span className="text-white">from KZ</span>
                 </h1>
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-[54px] left-[10px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-[15px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
