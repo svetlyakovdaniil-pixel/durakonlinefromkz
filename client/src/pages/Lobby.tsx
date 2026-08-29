@@ -459,8 +459,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute left-0 top-12 bottom-2 z-20 flex w-[120px] flex-col items-center text-center">
-                <h1 className="font-bold leading-[1.02] text-amber-50" style={{ fontSize: '1.15rem' }}>
+              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '18px' }}>
+                <h1 className="font-bold text-amber-50" style={{ fontSize: '1.15rem', lineHeight: 'calc(1.02em + 2px)' }}>
                   {t('lobby.title').split(' ')[0]}
                   <br />
                   <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
@@ -469,15 +469,10 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   <br />
                   <span className="text-amber-400">from KZ</span>
                 </h1>
-                <span
-                  className={`mt-2 h-2 w-2 rounded-full ${connected ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.9)]' : 'bg-red-400'}`}
-                  title={connected ? t('common.online') : t('common.offline')}
-                  aria-label={connected ? t('common.online') : t('common.offline')}
-                />
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-[54px] left-0 overflow-hidden rounded-full px-2.5 py-1 text-[10px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-0 overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
