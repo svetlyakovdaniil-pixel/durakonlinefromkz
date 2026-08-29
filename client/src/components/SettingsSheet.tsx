@@ -32,7 +32,15 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const utils = trpc.useUtils();
 
   const [, navigate] = useLocation();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(() => {
+    try {
+      const shouldReopen = sessionStorage.getItem('reopen-settings') === '1';
+      if (shouldReopen) sessionStorage.removeItem('reopen-settings');
+      return shouldReopen;
+    } catch {
+      return false;
+    }
+  });
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
@@ -269,44 +277,6 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
            )}
           </div>
 
-          {/* Keep account deletion immediately visible for users and App Review. */}
-          <div className="bg-red-950/20 rounded-xl p-4 border border-red-700/40">
-            <div className="flex items-center gap-3 mb-2">
-              <Trash2 className="w-4 h-4 text-red-400" />
-              <span className="text-sm font-semibold text-red-300">{t('profile.deleteAccount')}</span>
-            </div>
-            {!deleteAccountOpen ? (
-              <button
-                onClick={() => setDeleteAccountOpen(true)}
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-700/50 text-red-300 hover:text-red-200 hover:border-red-600 hover:bg-red-900/20 transition-colors text-sm"
-              >
-                <Trash2 className="w-4 h-4" />
-                {t('profile.deleteAccount')}
-              </button>
-            ) : (
-              <>
-                <p className="text-amber-200/60 text-xs mb-4 leading-relaxed">{t('profile.deleteAccountConfirmText')}</p>
-                <div className="flex gap-3">
-                  <Button
-                    className="flex-1 bg-[#0a1628] border border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100"
-                    variant="outline"
-                    onClick={() => setDeleteAccountOpen(false)}
-                    disabled={deleteAccountMutation.isPending}
-                  >
-                    {t('profile.deleteAccountCancel')}
-                  </Button>
-                  <Button
-                    className="flex-1 bg-red-700 hover:bg-red-600 text-white"
-                    onClick={() => deleteAccountMutation.mutate()}
-                    disabled={deleteAccountMutation.isPending}
-                  >
-                    {deleteAccountMutation.isPending ? <Trash2 className="w-3 h-3 animate-pulse" /> : t('profile.deleteAccountConfirm')}
-                  </Button>
-                </div>
-              </>
-            )}
-          </div>
-
           {/* 2. Sound effects */}
           <div className="bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20">
             <label className="flex items-center justify-between cursor-pointer mb-3">
@@ -455,7 +425,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 7. Contact admin */}
           <button
-            onClick={() => { setOpen(false); navigate('/contact'); }}
+             onClick={() => { sessionStorage.setItem('reopen-settings', '1'); setOpen(false); navigate('/contact'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <MessageSquare className="w-5 h-5 text-amber-400 shrink-0" />
@@ -471,7 +441,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 8. Privacy Policy */}
           <button
-            onClick={() => { setOpen(false); navigate('/privacy'); }}
+             onClick={() => { sessionStorage.setItem('reopen-settings', '1'); setOpen(false); navigate('/privacy'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <Shield className="w-5 h-5 text-amber-400 shrink-0" />
@@ -487,7 +457,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
 
           {/* 9. Terms of Service */}
           <button
-            onClick={() => { setOpen(false); navigate('/terms'); }}
+             onClick={() => { sessionStorage.setItem('reopen-settings', '1'); setOpen(false); navigate('/terms'); }}
             className="w-full flex items-center gap-3 bg-[#1a2d45]/60 rounded-xl p-4 border border-amber-700/20 hover:border-amber-500/40 transition-colors text-left"
           >
             <FileText className="w-5 h-5 text-amber-400 shrink-0" />
@@ -534,7 +504,7 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
             </div>
           )}
 
-          {/* 10. Logout */}
+           {/* 10. Logout */}
           {!logoutConfirmOpen ? (
             <Button
               className="w-full bg-red-700 hover:bg-red-600 text-white font-semibold flex items-center gap-2 h-12 mb-2"
@@ -563,7 +533,45 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
                 </Button>
               </div>
             </div>
-          )}
+           )}
+
+           {/* 11. Delete account */}
+           <div className="bg-red-950/20 rounded-xl p-4 border border-red-700/40">
+             <div className="flex items-center gap-3 mb-2">
+               <Trash2 className="w-4 h-4 text-red-400" />
+               <span className="text-sm font-semibold text-red-300">{t('profile.deleteAccount')}</span>
+             </div>
+             {!deleteAccountOpen ? (
+               <button
+                 onClick={() => setDeleteAccountOpen(true)}
+                 className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-red-700/50 text-red-300 hover:text-red-200 hover:border-red-600 hover:bg-red-900/20 transition-colors text-sm"
+               >
+                 <Trash2 className="w-4 h-4" />
+                 {t('profile.deleteAccount')}
+               </button>
+             ) : (
+               <>
+                 <p className="text-amber-200/60 text-xs mb-4 leading-relaxed">{t('profile.deleteAccountConfirmText')}</p>
+                 <div className="flex gap-3">
+                   <Button
+                     className="flex-1 bg-[#0a1628] border border-amber-700/30 text-amber-200 hover:bg-[#1a2d45] hover:text-amber-100"
+                     variant="outline"
+                     onClick={() => setDeleteAccountOpen(false)}
+                     disabled={deleteAccountMutation.isPending}
+                   >
+                     {t('profile.deleteAccountCancel')}
+                   </Button>
+                   <Button
+                     className="flex-1 bg-red-700 hover:bg-red-600 text-white"
+                     onClick={() => deleteAccountMutation.mutate()}
+                     disabled={deleteAccountMutation.isPending}
+                   >
+                     {deleteAccountMutation.isPending ? <Trash2 className="w-3 h-3 animate-pulse" /> : t('profile.deleteAccountConfirm')}
+                   </Button>
+                 </div>
+               </>
+             )}
+           </div>
         </div>
 
             {/* Close button at bottom */}
