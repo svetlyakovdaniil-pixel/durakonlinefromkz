@@ -21,10 +21,11 @@ interface SettingsSheetProps {
   onLogout: () => void;
   currentName: string;
   onNameChanged?: () => void;
+  openOnReturn?: boolean;
   children?: React.ReactNode;
 }
 
-export default function SettingsSheet({ onLogout, currentName, onNameChanged, children }: SettingsSheetProps) {
+export default function SettingsSheet({ onLogout, currentName, onNameChanged, openOnReturn = false, children }: SettingsSheetProps) {
   const { settings, setSoundEnabled, setMusicEnabled, setVibrationEnabled, setAnimationsEnabled } = useSettings();
   const { t, locale, setLocale } = useTranslation();
   const music = useMusicContext();
@@ -32,21 +33,23 @@ export default function SettingsSheet({ onLogout, currentName, onNameChanged, ch
   const utils = trpc.useUtils();
 
   const [, navigate] = useLocation();
-  const [open, setOpen] = useState(() => {
-    try {
-      const shouldReopen = sessionStorage.getItem('reopen-settings') === '1';
-      if (shouldReopen) sessionStorage.removeItem('reopen-settings');
-      return shouldReopen;
-    } catch {
-      return false;
-    }
-  });
+  const [open, setOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(currentName);
   const [langOpen, setLangOpen] = useState(false);
   const [playlistOpen, setPlaylistOpen] = useState(false);
   const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
   const [deleteAccountOpen, setDeleteAccountOpen] = useState(false);
+
+  useEffect(() => {
+    if (!openOnReturn) return;
+    try {
+      if (sessionStorage.getItem('reopen-settings') === '1') {
+        sessionStorage.removeItem('reopen-settings');
+        setOpen(true);
+      }
+    } catch {}
+  }, [openOnReturn]);
 
   const deleteAccountMutation = trpc.auth.deleteAccount.useMutation({
     onSuccess: () => {

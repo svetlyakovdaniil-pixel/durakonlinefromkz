@@ -472,7 +472,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-[54px] left-[15px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-[13px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -509,7 +509,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 <button className="rounded-full p-1 ring-1 ring-amber-300/20 transition-all hover:scale-105 hover:ring-amber-300/50" onClick={() => setLocation('/profile')}>
                   <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                 </button>
-                <div className="mt-2 flex max-w-[145px] items-center gap-1.5 rounded-full border border-white/10 bg-black/20 px-2.5 py-1">
+                <div className="mt-2 flex max-w-[145px] items-center gap-1.5">
                   <DiamondRankIcon seasonRating={mySeasonRating} size={14} showTooltip />
                   <span className="truncate text-xs font-semibold text-amber-100/85">{userName}</span>
                   {profile && (
@@ -1184,7 +1184,7 @@ onClick={() => setShowTengeTopUp(true)}
               { icon: Users, key: 'friends', borderR: false, borderB: false, action: () => setShowFriends(true), badge: onlineFriendsCount > 0 ? onlineFriendsCount : null },
             ].map(({ icon: Icon, key, borderR, borderB, action, badge }: { icon: React.ElementType; key: string; borderR: boolean; borderB: boolean; action: (() => void) | null; badge?: number | null }) => (
               action === null ? (
-                <SettingsSheet key={key} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
+                <SettingsSheet key={key} openOnReturn={key === 'settings'} onLogout={onLogout} currentName={userName} onNameChanged={refetchProfile}>
                   <button
                     className="flex flex-col items-center justify-center rounded-2xl border border-white/10 bg-white/[0.045] shadow-[0_8px_20px_rgba(0,0,0,0.12)] transition-all hover:border-amber-300/25 hover:bg-white/[0.08] active:scale-[0.97]"
                     style={{
