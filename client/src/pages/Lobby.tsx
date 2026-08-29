@@ -459,8 +459,8 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '18px' }}>
-                <h1 className="font-bold text-amber-50" style={{ fontSize: '1.45475rem', lineHeight: 'calc(1.02em + 2px)' }}>
+              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '3px' }}>
+                <h1 className="font-bold text-amber-50" style={{ fontSize: '1.6rem', lineHeight: 'calc(1.02em + 2px)' }}>
                   <span className="text-white">{t('lobby.title').split(' ')[0]}</span>
                   <br />
                   <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
@@ -472,7 +472,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-[54px] left-[13px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-[11px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -506,7 +506,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                   transform: isLandscape ? 'translateX(-50%)' : 'translate(-50%, -50%)',
                 }}
               >
-                <button className="rounded-full p-1 ring-1 ring-amber-300/20 transition-all hover:scale-105 hover:ring-amber-300/50" onClick={() => setLocation('/profile')}>
+                <button className="rounded-full transition-transform hover:scale-105" onClick={() => setLocation('/profile')}>
                   <PlayerAvatar avatarId={profile?.avatarId} frameId={(profile as any)?.equippedFrame} size={72} />
                 </button>
                 <div className="mt-2 flex max-w-[145px] items-center gap-1.5">
