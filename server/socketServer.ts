@@ -2463,19 +2463,16 @@ function handleTimeUp(roomId: string, gameState: GameState) {
   } else if (gameState.turnPhase === 'defend') {
     // Defender timed out — defender TAKES cards into hand
     engineTakeCards(gameState);
-    // Check if any REAL human attacker (not ghost, not bot) can still add cards
-    // Ghost players (id starts with 'ghost-') are treated like bots here
-    // If not, finalize take immediately so cards go to defender's hand right away
-    const hasHumanAttackerWhoCanAdd = gameState.players.some((p, i) => {
-      if (p.isBot || p.isOut || i === gameState.currentDefenderIdx) return false;
-      if (p.id.startsWith('ghost-')) return false; // ghost players don't block finalization
-      return canPlayerAddCards(gameState, i);
-    });
-    if (!hasHumanAttackerWhoCanAdd) {
-      // No real human attacker can add cards — finalize immediately
-      trackAndFinalizeTake(roomId, gameState);
+    // A defender timeout is an automatic take. Do not leave a second window
+    // for attackers to add cards after the defender's timer has expired.
+    for (const p of gameState.players) {
+      if (!p.isOut && p.id !== gameState.players[gameState.currentDefenderIdx].id) {
+        if (!gameState.passedAttackers.includes(p.id)) {
+          gameState.passedAttackers.push(p.id);
+        }
+      }
     }
-    // Otherwise leave defenderTaking=true so real human attackers can still add cards
+    trackAndFinalizeTake(roomId, gameState);
   } else if (gameState.turnPhase === 'attack') {
     if (gameState.battleField.length > 0) {
       const hasUndefended = gameState.battleField.some(p => !p.defense);

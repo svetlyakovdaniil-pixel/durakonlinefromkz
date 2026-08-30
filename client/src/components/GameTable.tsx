@@ -949,7 +949,6 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
-  const isOnlyTakeAction = canTake && visibleActionCount === 1;
   // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid 2×3 (max 3 per row, 2 rows)
   // For 5 buttons: use 2-row layout (3+2) with slightly smaller font but still readable
   const dynBtnClass = visibleActionCount <= 1
@@ -2221,12 +2220,12 @@ export default function GameTable({
                   : 'grid grid-cols-3 gap-1 w-full py-0.5'
                 }>
                   {canTake && (
-                    <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass} ${isOnlyTakeAction ? 'translate-y-[5px]' : ''}`} onClick={onTakeCards}>
+                    <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass} translate-y-[2px]`} onClick={onTakeCards}>
                       {t('game.take')}
                     </button>
                   )}
                   {canEndAttack && (
-                    <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass}`} onClick={onEndAttack}>
+                    <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass} translate-y-[2px]`} onClick={onEndAttack}>
                       {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                     </button>
                   )}
