@@ -1634,17 +1634,19 @@ export default function GameTable({
                       {!p.isBot && <DiamondRankIcon seasonRating={p.seasonRating ?? 0} size={manyOpponents ? 9 : 11} />}
                       <span className={`${manyManyOpponents ? 'text-[8px] max-w-9' : manyOpponents ? 'text-[9px] max-w-10' : 'text-[10px] max-w-14'} sm:text-xs text-amber-100 font-medium truncate sm:max-w-20`}>{p.name}</span>
                     </div>
-                    {isOppDefender && gs.defenderTaking && (
-                      <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>{t('game.taking')}</span>
-                    )}
-                    {oppRevealed && oppRevealed.cards.length > 0 && (
-                      <div className={`flex items-center gap-0.5 mb-0.5 sm:mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded ${manyOpponents ? 'px-0.5' : 'px-1'} sm:px-2 py-0.5`}>
-                        <Eye className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-yellow-400`} />
-                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-yellow-300 font-medium`}>
-                          {oppRevealed.cards.length}
-                        </span>
-                      </div>
-                    )}
+                    <div className={isLandscape ? 'min-h-0' : 'min-h-[16px]'}>
+                      {isOppDefender && gs.defenderTaking && (
+                        <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-orange-400 mb-0.5`}>{t('game.taking')}</span>
+                      )}
+                      {oppRevealed && oppRevealed.cards.length > 0 && (
+                        <div className={`flex items-center gap-0.5 mb-0.5 sm:mb-1 bg-yellow-900/40 border border-yellow-600/40 rounded ${manyOpponents ? 'px-0.5' : 'px-1'} sm:px-2 py-0.5`}>
+                          <Eye className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3 sm:h-3 text-yellow-400`} />
+                          <span className={`${manyOpponents ? 'text-[7px]' : 'text-[8px]'} sm:text-[10px] text-yellow-300 font-medium`}>
+                            {oppRevealed.cards.length}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     {p.leftGame ? (
                       <div className={`flex items-center gap-0.5 bg-gray-800/50 border border-gray-600/30 rounded ${manyOpponents ? 'px-1 py-0.5' : 'px-1.5 py-0.5'} sm:px-2 sm:py-1`}>
                         <DoorOpen className={`${manyOpponents ? 'w-2 h-2' : 'w-2.5 h-2.5'} sm:w-3.5 sm:h-3.5 text-gray-400`} />
