@@ -10,6 +10,9 @@ import type {
 } from '../../../shared/gameTypes';
 import { SUIT_SYMBOLS } from '../../../shared/cardAssets';
 import { useTranslation } from '@/i18n';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useSoundContext } from '@/contexts/SoundContext';
+import { hapticImpact } from '@/lib/haptics';
 
 type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -17,7 +20,13 @@ export function useSocket(userId: string | null, userName: string | null) {
   const socketRef = useRef<TypedSocket | null>(null);
   const trpcUtils = trpc.useUtils();
   const { t } = useTranslation();
+  const { settings } = useSettings();
+  const sound = useSoundContext();
   const tRef = useRef(t);
+  const settingsRef = useRef(settings);
+  settingsRef.current = settings;
+  const soundRef = useRef(sound);
+  soundRef.current = sound;
   tRef.current = t;
   const trpcUtilsRef = useRef(trpcUtils);
   trpcUtilsRef.current = trpcUtils;
@@ -403,6 +412,12 @@ export function useSocket(userId: string | null, userName: string | null) {
 
     // New notification received in real-time
     socket.on('newNotification', () => {
+      if (settingsRef.current.soundEnabled) {
+        soundRef.current.play('yourTurn', 0.5);
+      }
+      if (settingsRef.current.vibrationEnabled) {
+        void hapticImpact('medium').catch(() => {});
+      }
       if (trpcUtilsRef.current) {
         trpcUtilsRef.current.notifications.unreadCount.invalidate();
         trpcUtilsRef.current.notifications.list.invalidate();

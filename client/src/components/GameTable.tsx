@@ -560,6 +560,7 @@ export default function GameTable({
 
   // Sound effects
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
+  const { settings } = useSettings();
   const { settings: gameSettings } = useSettings();
    // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
   const blurClass = gameSettings.batterySaverEnabled ? '' : 'backdrop-blur-md';
@@ -824,7 +825,9 @@ export default function GameTable({
 
       // Vibrate on mobile (works even if sound is muted, but respects vibration setting)
       if (gameSettings.vibrationEnabled) {
-        void hapticError(); // uses @capacitor/haptics on native, navigator.vibrate on web
+      if (settings.vibrationEnabled) {
+        void hapticError().catch(() => {}); // uses @capacitor/haptics on native, navigator.vibrate on web
+      }
       }
 
       setShowUrgentTurn(true);
