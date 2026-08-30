@@ -195,7 +195,7 @@ export function useMusic() {
         audioRef.current.pause();
         audioRef.current.removeEventListener('ended', handleTrackEnd);
       }
-      const audio = new Audio(newTracks[0]);
+      const audio = new Audio(resolvedTracks[0]);
       audio.volume = volumeRef.current;
       audioRef.current = audio;
       audio.addEventListener('ended', handleTrackEnd);
