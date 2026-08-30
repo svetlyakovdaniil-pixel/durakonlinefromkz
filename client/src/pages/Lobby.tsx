@@ -459,15 +459,15 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '5px' }}>
+              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '8px' }}>
                 <h1 className="font-bold text-amber-50" style={{ fontSize: '1.6rem', lineHeight: 'calc(1.02em + 2px)' }}>
-                  <span className="text-white">{t('lobby.title').split(' ')[0]}</span>
+                  <span className="text-amber-100">{t('lobby.title').split(' ')[0]}</span>
                   <br />
                   <span className={connected ? 'text-emerald-400' : 'text-red-400'}>
                     {connected ? t('common.online').toLowerCase() : t('common.offline').toLowerCase()}
                   </span>
                   <br />
-                  <span className="text-white">from KZ</span>
+                  <span className="text-amber-400">from KZ</span>
                 </h1>
                 {/* Premium status animated button */}
                 <button
@@ -529,7 +529,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 </button>
               )}
               {/* Right column: Tenge top / Shanyrak bottom */}
-                <div className="relative z-20 flex -translate-y-[30px] flex-col items-end gap-2 self-start pt-7">
+                <div className="relative z-20 flex -translate-y-[26px] flex-col items-end gap-2 self-start pt-7">
                 {/* Tenge */}
                 <button
                    className="flex min-w-[42px] flex-col items-center rounded-xl border border-amber-300/10 bg-white/[0.035] px-1.5 py-1 transition-all hover:bg-white/[0.08] active:scale-95"
