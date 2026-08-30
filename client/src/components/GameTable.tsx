@@ -1804,13 +1804,6 @@ export default function GameTable({
 
               </div>
             </div>
-            {isOnlyTakeAction && !isLandscape && (
-              <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 sm:hidden">
-                <button className="game-btn game-btn-red action-btn-blink pointer-events-auto w-[min(90%,360px)] px-4 text-base font-bold" onClick={onTakeCards}>
-                  {t('game.take')}
-                </button>
-              </div>
-            )}
           </div>
 
           {/* RIGHT PANEL — Decks — DESKTOP ONLY (also shown in landscape mobile) */}
@@ -2217,7 +2210,7 @@ export default function GameTable({
               )}
 
               {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap max 3 per row (2×3 grid) */}
-              {(hasAnyAction || canTake || canEndAttack || canSkip) && !isOnlyTakeAction && (
+              {(hasAnyAction || canTake || canEndAttack || canSkip) && (
                 <div className={visibleActionCount <= 1
                   ? 'flex items-stretch h-[52px] w-full'
                   : visibleActionCount <= 3
@@ -2227,7 +2220,7 @@ export default function GameTable({
                   : 'grid grid-cols-3 gap-1 w-full py-0.5'
                 }>
                   {canTake && (
-                    <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass}`} onClick={onTakeCards}>
+                    <button className={`game-btn game-btn-red action-btn-blink ${dynBtnClass} ${isOnlyTakeAction ? 'translate-y-[5px]' : ''}`} onClick={onTakeCards}>
                       {t('game.take')}
                     </button>
                   )}
