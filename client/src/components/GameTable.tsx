@@ -2225,7 +2225,7 @@ export default function GameTable({
                     </button>
                   )}
                   {canEndAttack && (
-                    <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass} translate-y-[2px]`} onClick={onEndAttack}>
+                    <button className={`game-btn game-btn-green action-btn-blink ${dynBtnClass} ${gs.defenderTaking ? 'translate-y-[2px]' : 'translate-y-[3px]'}`} onClick={onEndAttack}>
                       {gs.defenderTaking ? t('game.bitoEnough') : t('game.bito')}
                     </button>
                   )}

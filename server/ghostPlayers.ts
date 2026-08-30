@@ -1759,8 +1759,8 @@ function scheduleGameAction(ghost: GhostPlayer): void {
     // Normal hand — quick decisions (1-4s)
     thinkMs = rand(1000, 4000);
   }
-  // Hard minimum: 1s always, 2s if hand > 20
-  thinkMs = Math.max(thinkMs, handSize > 20 ? 2000 : 1000);
+  // Keep a visible human-like pause even for the fastest decision.
+  thinkMs = Math.max(thinkMs, handSize > 20 ? 2000 : 2000);
 
   // Long think (AFK moment)
   if (Math.random() < p.longThinkProb) {
