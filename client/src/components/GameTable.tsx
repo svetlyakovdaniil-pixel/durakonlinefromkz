@@ -2113,10 +2113,7 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div
-          className={`player-hand-area shrink-0 bg-black/60${isTutorial ? ' relative z-[60]' : ''}`}
-          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
-        >
+        <div className={`player-hand-area shrink-0 bg-black/60${isTutorial ? ' relative z-[60]' : ''}`}>
           <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 bg-black/60 ${blurClass} border-t border-amber-700/20`}>
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2 relative z-0">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
