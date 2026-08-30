@@ -3704,18 +3704,22 @@ export async function fixAllPlaylistCloudFrontUrls() {
   for (const row of rows) {
     const tracks = JSON.parse(row.tracksJson || '[]') as string[];
     const hasCloudFront = tracks.some(t => t.includes(CLOUDFRONT_BASE));
-    if (!hasCloudFront) continue;
+    const hasNumberPrefix = tracks.some(t => /\/№\d+_/.test(t));
+    if (!hasCloudFront && !hasNumberPrefix) continue;
     const fixedTracks = tracks.map(t => {
-      if (!t.includes(CLOUDFRONT_BASE)) return t;
-      // Extract filename from CloudFront URL: .../path/filename.mp3 → /assets/static/filename.mp3
-      const filename = t.split('/').pop() || '';
-      return `/assets/static/${filename}`;
+      if (t.includes(CLOUDFRONT_BASE)) {
+        // Extract filename from CloudFront URL: .../path/filename.mp3 → /assets/static/filename.mp3
+        const filename = t.split('/').pop() || '';
+        return `/assets/static/${filename}`;
+      }
+      // Older classic tracks were stored with a display-only № prefix.
+      return t.replace(/\/№(?=\d+_)/g, '/');
     });
     await db.update(musicPlaylists)
       .set({ tracksJson: JSON.stringify(fixedTracks) })
       .where(eq(musicPlaylists.id, row.id));
     fixed++;
-    console.log(`[Music] Fixed CloudFront URLs in playlist: ${row.name}`);
+    console.log(`[Music] Fixed playlist track URLs: ${row.name}`);
   }
   if (fixed > 0) {
     console.log(`[Music] Fixed CloudFront URLs in ${fixed} playlist(s)`);

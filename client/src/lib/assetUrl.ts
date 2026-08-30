@@ -29,25 +29,28 @@ const AUDIO_EXTENSIONS = ['.mp3', '.wav', '.ogg', '.m4a'];
  * On web: returns the path as-is (relative URL, served from same origin).
  */
 export function getAssetUrl(path: string): string {
+  // Normalize legacy classic-playlist filenames stored with a display prefix.
+  const normalizedPath = path.replace(/\/№(?=\d+_)/g, '/');
+
   // Already an absolute URL (e.g. from backend playlists) — return as-is
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
+  if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
+    return normalizedPath;
   }
   if (Capacitor.isNativePlatform()) {
     // Audio always loads from the production server (never bundled)
-    const lower = path.toLowerCase();
+    const lower = normalizedPath.toLowerCase();
     const isAudio = AUDIO_EXTENSIONS.some(ext => lower.endsWith(ext));
     if (isAudio) {
-      return `${NATIVE_API_BASE}${path}`;
+      return `${NATIVE_API_BASE}${normalizedPath}`;
     }
     // Check if this asset is bundled in the app
-    const isBundled = BUNDLED_PREFIXES.some(prefix => path.startsWith(prefix));
+    const isBundled = BUNDLED_PREFIXES.some(prefix => normalizedPath.startsWith(prefix));
     if (isBundled) {
       // Return as-is — Capacitor serves from the app bundle
-      return path;
+      return normalizedPath;
     }
     // Not bundled — load from production server
-    return `${NATIVE_API_BASE}${path}`;
+    return `${NATIVE_API_BASE}${normalizedPath}`;
   }
-  return path;
+  return normalizedPath;
 }
