@@ -120,7 +120,7 @@ const PlayerHand = memo(function PlayerHand({
   }, []);
 
   // Card dimensions
-  const cardW = compact ? 48 : 68;
+  const cardW = compact ? 53 : 75;
   const n = sortedHand.length;
 
   // Calculate negative margin so all cards fit in the container without scrolling.
@@ -948,6 +948,7 @@ export default function GameTable({
     selectedCanPassThrough,
     selectedCardId && !isMultiSelecting, // cancel button
   ].filter(Boolean).length;
+  const isOnlyTakeAction = canTake && visibleActionCount === 1;
   // Dynamic button sizing: 1 = full area, 2 = half each, 3+ = grid 2×3 (max 3 per row, 2 rows)
   // For 5 buttons: use 2-row layout (3+2) with slightly smaller font but still readable
   const dynBtnClass = visibleActionCount <= 1
@@ -1730,7 +1731,7 @@ export default function GameTable({
           </div>
 
           {/* CENTER — Battlefield (drop zone) */}
-          <div className={`flex-1 flex justify-center px-2 sm:px-4 landscape-battlefield-area ${
+          <div className={`relative flex-1 flex justify-center px-2 sm:px-4 landscape-battlefield-area ${
             // Mobile: allow scroll when ≥15 pairs; Desktop: allow scroll when >36 pairs
             (gs.battleField.length >= 15 || gs.battleField.length > 36)
               ? 'overflow-y-auto overflow-x-hidden items-start pt-2'
@@ -1803,6 +1804,13 @@ export default function GameTable({
 
               </div>
             </div>
+            {isOnlyTakeAction && !isLandscape && (
+              <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-4 sm:hidden">
+                <button className="game-btn game-btn-red action-btn-blink pointer-events-auto w-[min(90%,360px)] px-4 text-base font-bold" onClick={onTakeCards}>
+                  {t('game.take')}
+                </button>
+              </div>
+            )}
           </div>
 
           {/* RIGHT PANEL — Decks — DESKTOP ONLY (also shown in landscape mobile) */}
@@ -2209,7 +2217,7 @@ export default function GameTable({
               )}
 
               {/* Action buttons — dynamic size: 1 btn = full area, 2+ = flex-wrap max 3 per row (2×3 grid) */}
-              {(hasAnyAction || canTake || canEndAttack || canSkip) && (
+              {(hasAnyAction || canTake || canEndAttack || canSkip) && !isOnlyTakeAction && (
                 <div className={visibleActionCount <= 1
                   ? 'flex items-stretch h-[52px] w-full'
                   : visibleActionCount <= 3

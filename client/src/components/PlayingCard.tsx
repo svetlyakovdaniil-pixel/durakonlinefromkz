@@ -158,10 +158,10 @@ export default function PlayingCard({ card, faceDown, selected, playable, highli
   const sizeClasses = small
     ? 'w-7 h-11 sm:w-11 sm:h-15'
     : compact
-      ? 'w-[48px] h-[72px]'  // landscape hand cards
+      ? 'w-[53px] h-[79px]'  // landscape hand cards (+10%)
       : medium
         ? 'w-[62px] h-[93px] sm:w-24 sm:h-[141px]'  // +10% from w-14/h-21/sm:w-22/sm:h-32
-        : 'w-[68px] h-[101px] sm:w-[106px] sm:h-[150px]';  // +10% from w-[62px]/h-[92px]/sm:w-24/sm:h-34
+        : 'w-[75px] h-[111px] sm:w-[117px] sm:h-[165px]';  // +10% from the previous hand-card size
 
   const isCustom = deckStyle === 'custom';
   const backUrl = isCustom ? _CARD_BACK_CUSTOM_URL : _CARD_BACK_URL;
