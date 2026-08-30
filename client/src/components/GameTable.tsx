@@ -29,7 +29,7 @@ import { useInteractiveTutorial } from '@/hooks/useInteractiveTutorial';
 import TutorialStepDisplay from './TutorialStepDisplay';
 import { useTutorialGameState } from '@/hooks/useTutorialGameState';
 import { DiamondRankIcon } from '@/components/DiamondRankIcon';
-import { hapticError } from '@/lib/haptics';
+import { hapticError, hapticImpact } from '@/lib/haptics';
 import { useIsLandscape, useIsTablet } from '@/hooks/useOrientation';
 import { getAssetUrl } from '@/lib/assetUrl';
 
@@ -560,7 +560,6 @@ export default function GameTable({
 
   // Sound effects
   const { play: playSound, enabled: soundEnabled, toggle: toggleSound, volume: soundVolume, setVolume: setSoundVolume } = useSoundContext();
-  const { settings } = useSettings();
   const { settings: gameSettings } = useSettings();
    // When battery saver is on, skip backdrop-blur (most expensive CSS op on mobile)
   const blurClass = gameSettings.batterySaverEnabled ? '' : 'backdrop-blur-md';
@@ -787,6 +786,10 @@ export default function GameTable({
     if (isMyTurn && (!prevIsMyTurn.current || trickChanged)) {
       yourTurnTimers.current.forEach(t => clearTimeout(t));
       yourTurnTimers.current = [];
+
+      if (gameSettings.vibrationEnabled) {
+        void hapticImpact('medium').catch(() => {});
+      }
       
       setShowYourTurn(true);
       setYourTurnPhase('enter');
@@ -824,11 +827,9 @@ export default function GameTable({
       playSound('yourTurn', 0.8);
 
       // Vibrate on mobile (works even if sound is muted, but respects vibration setting)
-      if (gameSettings.vibrationEnabled) {
-      if (settings.vibrationEnabled) {
-        void hapticError().catch(() => {}); // uses @capacitor/haptics on native, navigator.vibrate on web
-      }
-      }
+       if (gameSettings.vibrationEnabled) {
+         void hapticError().catch(() => {}); // uses @capacitor/haptics on native, navigator.vibrate on web
+       }
 
       setShowUrgentTurn(true);
       setUrgentTurnPhase('enter');
@@ -2112,7 +2113,10 @@ export default function GameTable({
             </div>
           </div>
         ) : (
-        <div className={`player-hand-area shrink-0${isTutorial ? ' relative z-[60]' : ''}`}>
+        <div
+          className={`player-hand-area shrink-0 bg-black/60${isTutorial ? ' relative z-[60]' : ''}`}
+          style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 12px)' }}
+        >
           <div className={`px-1 sm:px-2 pt-0.5 sm:pt-1 bg-black/60 ${blurClass} border-t border-amber-700/20`}>
           <div className="flex items-center justify-between mb-0.5 sm:mb-1 px-2 relative z-0">
             <span data-tutorial="player-card-count" className="text-xs sm:text-base text-white font-medium">{t('game.nCards', { n: String(gs.myHand.length) })}</span>
