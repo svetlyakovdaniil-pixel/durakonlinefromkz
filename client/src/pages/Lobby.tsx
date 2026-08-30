@@ -459,7 +459,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
               {/* Left column: placeholder to maintain layout */}
               <div className="relative z-20 w-8" />
               {/* Brand block stays clear of the avatar and its decorative frame. */}
-              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '3px' }}>
+              <div className="absolute bottom-2 z-20 flex w-[120px] flex-col items-center text-center" style={{ left: '-5px', top: '5px' }}>
                 <h1 className="font-bold text-amber-50" style={{ fontSize: '1.6rem', lineHeight: 'calc(1.02em + 2px)' }}>
                   <span className="text-white">{t('lobby.title').split(' ')[0]}</span>
                   <br />
@@ -472,7 +472,7 @@ export default function Lobby({ rooms, connected, userName, userId, onCreateRoom
                 {/* Premium status animated button */}
                 <button
                   onClick={() => setShowPremium(true)}
-                  className="absolute bottom-[54px] left-[11px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
+                  className="absolute bottom-[54px] left-[12px] overflow-hidden rounded-full px-3 py-1.5 text-[12px] font-bold tracking-[0.12em] cursor-pointer"
                   style={{
                     background: 'linear-gradient(90deg, #92400e 0%, #d97706 25%, #fbbf24 50%, #d97706 75%, #92400e 100%)',
                     backgroundSize: '200% 100%',
@@ -819,11 +819,11 @@ onClick={() => setShowTengeTopUp(true)}
                     <Plus className="w-4 h-4 mr-2" /> {t('lobby.createRoom')}
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto">
-              <DialogHeader>
-                <DialogTitle className="text-amber-100">{t('lobby.newRoom')}</DialogTitle>
+                <DialogContent className="max-h-[calc(100dvh-1rem)] overflow-hidden bg-[#1a2d45] border-amber-700/30 text-amber-100 max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto p-0">
+              <DialogHeader className="shrink-0 border-b border-amber-700/20 bg-[#1a2d45] px-5 pb-3 pt-5 sm:px-6">
+                <DialogTitle className="text-lg font-bold text-amber-100">{t('lobby.newRoom')}</DialogTitle>
               </DialogHeader>
-              <div className="space-y-3 sm:space-y-4">
+               <div className="min-h-0 overflow-y-auto px-5 py-4 space-y-3 sm:px-6 sm:space-y-4">
                 <div>
                   <Label className="text-amber-200/70 text-sm">{t('lobby.roomName')}</Label>
                   <Input
